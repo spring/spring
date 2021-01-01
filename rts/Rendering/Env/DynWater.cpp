@@ -5,6 +5,7 @@
 #include "WaterRendering.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 // #include "Game/UI/MouseHandler.h"
@@ -46,9 +47,8 @@ CDynWater::CDynWater()
 	: camPosX(0)
 	, camPosZ(0)
 {
-	if (!FBO::IsSupported()) {
+	if (!FBO::IsSupported())
 		throw content_error("DynWater Error: missing FBO support");
-	}
 
 	lastWaveFrame = 0;
 	firstDraw = true;
@@ -94,25 +94,17 @@ CDynWater::CDynWater()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, 64, 64, 0, GL_RGBA, GL_FLOAT, temp);
 
+
 	CBitmap foam;
-	if (!foam.Load(waterRendering->foamTexture))
-		throw content_error("Could not load foam from file " + waterRendering->foamTexture);
+	// NB: assumes the image is not dxt-compressed but IL will still load it (!)
+	if (!foam.LoadGrayscale(waterRendering->foamTexture))
+		LOG_L(L_WARNING, "[%s] could not load grayscale foam-texture %s\n", __func__, waterRendering->foamTexture.c_str());
 
 	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1))
-		throw content_error("Foam texture not power of two!");
+		foam.CreateRescaled(next_power_of_2(foam.xsize), next_power_of_2(foam.ysize));
 
-	unsigned char* scrap = new unsigned char[foam.xsize * foam.ysize * 4];
-	for (int a = 0; a < (foam.xsize * foam.ysize); ++a) {
-		scrap[a] = foam.GetRawMem()[a * 4];
-	}
+	foamTex = foam.CreateTexture(0.0f, 0.0f, true);
 
-	glGenTextures(1, &foamTex);
-	glBindTexture(GL_TEXTURE_2D, foamTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,  GL_LUMINANCE, foam.xsize, foam.ysize, GL_LUMINANCE, GL_UNSIGNED_BYTE, scrap);
-
-	delete[] scrap;
 
 	if (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, "ARB/waterDyn.vp")) {
 		waterVP = LoadVertexProgram("ARB/waterDyn.vp");
@@ -276,6 +268,7 @@ CDynWater::~CDynWater()
 	glDeleteTextures (1, &hoverShape);
 	glDeleteTextures (1, &zeroTex);
 	glDeleteTextures (1, &fixedUpTex);
+
 	glSafeDeleteProgram(waterFP);
 	glSafeDeleteProgram(waterVP);
 	glSafeDeleteProgram(waveFP);
@@ -290,6 +283,7 @@ CDynWater::~CDynWater()
 	glSafeDeleteProgram(dwDetailNormalFP);
 	glSafeDeleteProgram(dwAddSplashVP);
 	glSafeDeleteProgram(dwAddSplashFP);
+
 	glDeleteFramebuffersEXT(1, &frameBuffer);
 }
 
@@ -320,19 +314,22 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE6_ARB);
 	glBindTexture(GL_TEXTURE_2D, detailNormalTex);
 
-	shadowHandler->SetupShadowTexSampler(GL_TEXTURE7);
+	shadowHandler.SetupShadowTexSampler(GL_TEXTURE7);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glColor4f(1, 1, 1, 0.5f);
+
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waterFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, waterVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	const float dx = float(globalRendering->viewSizeX) / globalRendering->viewSizeY * camera->GetTanHalfFov();
 	const float dy = float(globalRendering->viewSizeY) / globalRendering->viewSizeY * camera->GetTanHalfFov();
 	const float3& L = sky->GetLight()->GetLightDir();
+
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256), 1.0f/(W_SIZE*256), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f + 0.5f, -camPosZ/256.0f + 0.5f, 0, 0);
@@ -355,6 +352,7 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 13, refractUp.x,refractUp.y, refractUp.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, 0.5f/dx, 0.5f/dy, 1, 1);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 15, refractForward.x, refractForward.y, refractForward.z, 0);
+
 
 	DrawWaterSurface();
 
@@ -452,8 +450,8 @@ void CDynWater::DrawReflection(CGame* game)
 		0.0, 1.0, 0.0, 0.0, // models
 	};
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -466,7 +464,7 @@ void CDynWater::DrawReflection(CGame* game)
 		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 
 	prvCam->Update();
 	prvCam->LoadViewPort();
@@ -537,7 +535,6 @@ void CDynWater::DrawWaves()
 	glActiveTextureARB(GL_TEXTURE0_ARB);*/
 
 
-	GLenum status;
 	float start = 0.1f / 1024;
 	float end = 1023.9f / 1024;
 
@@ -557,10 +554,8 @@ void CDynWater::DrawWaves()
 
 	glViewport(0, 0, 1024, 1024);
 
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 2");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s][1] FBO not ready", __func__);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D, waveTex2);
@@ -600,10 +595,8 @@ void CDynWater::DrawWaves()
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, frameBuffer);
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, waveTex2, 0);
 
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 1");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s][2] FBO not ready", __func__);
 
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -656,10 +649,8 @@ void CDynWater::DrawWaves()
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, frameBuffer);
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, waveTex1, 0);
 
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 3");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s][3] FBO not ready", __func__);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveNormalFP);
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, waveNormalVP);
@@ -716,10 +707,8 @@ void CDynWater::DrawHeightTex()
 
 	glViewport(0, 0, 256, 256);
 
-	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 4");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s] FBO not ready", __func__);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveCopyHeightFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -773,16 +762,14 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	CCamera* cam = CCamera::GetActiveCamera();
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	CCamera* cam = CCameraHandler::GetActiveCamera();
+	cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	camPosBig2.x = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides; // = cam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides; // = cam->GetPosFrustumSides();
-
-	std::vector<CCamera::FrustumLine>::const_iterator fli;
+	const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
+	const CCamera::FrustumLine* posLines = cam->GetPosFrustumLines();
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
 		int cx = (int)(cam->GetPos().x / WSQUARE_SIZE);
@@ -818,18 +805,22 @@ void CDynWater::DrawWaterSurface()
 			int xe = xend;
 			int xtest,xtest2;
 
-			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
-				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest  = ((int) xtf                  ) / lod * lod - lod;
-				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
+			for (int idx = 0, cnt = negLines[4].sign * 0; idx < cnt; idx++) {
+				const CCamera::FrustumLine& fl = negLines[idx];
+				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
+
+				xtest  = ((int) xtf                ) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fl.dir * lod)) / lod * lod - lod;
 
 				xtest = std::max(xtest, xtest2);
 				xs = std::max(xs, xtest);
 			}
-			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
-				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest  = ((int) xtf                  ) / lod * lod - lod;
-				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
+			for (int idx = 0, cnt = posLines[4].sign * 0; idx < cnt; idx++) {
+				const CCamera::FrustumLine& fl = posLines[idx];
+				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
+
+				xtest  = ((int) xtf                ) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fl.dir * lod)) / lod * lod - lod;
 
 				xtest = std::min(xtest, xtest2);
 				xe = std::min(xe, xtest);
@@ -956,10 +947,8 @@ void CDynWater::DrawDetailNormalTex()
 
 	glViewport(0, 0, 256, 256);
 
-	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 5");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s] FBO not ready", __func__);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwDetailNormalFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -1023,10 +1012,8 @@ void CDynWater::AddShipWakes()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 6");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		LOG_L(L_WARNING, "[DynWater::%s] FBO not ready", __func__);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -1064,9 +1051,8 @@ void CDynWater::AddShipWakes()
 				{
 					continue;
 				}
-				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 					continue;
-				}
 
 				if ((pos.y > -4.0f) && (pos.y < 4.0f)) {
 					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
@@ -1088,9 +1074,8 @@ void CDynWater::AddShipWakes()
 				{
 					continue;
 				}
-				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 					continue;
-				}
 
 				// skip submarines (which have deep waterlines)
 				if (unit->IsUnderWater() || !unit->IsInWater())
@@ -1151,11 +1136,8 @@ void CDynWater::AddExplosions()
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D, splashTex);
 
-	GLenum status;
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		LOG_L(L_WARNING, "FBO not ready - 7");
-	}
+	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT)
+		LOG_L(L_WARNING, "[DynWater::%s][1] FBO not ready", __func__);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);

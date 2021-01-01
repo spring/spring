@@ -12,13 +12,14 @@ public:
 
 	const std::string GetName() const { return "ov"; }
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override {}
+	void MouseMove(float3 move) override {}
+	void ScreenEdgeMove(float3 move) override {}
+	void MouseWheelMove(float move) override {}
 
-	void SetPos(const float3& newPos);
-	void SetDir(const float3& newDir);
+	void SetPos(const float3& newPos) override {}
+	void SetDir(const float3& newDir) override {}
+
 	float3 SwitchFrom() const;
 	void SwitchTo(const int oldCam, const bool showText);
 

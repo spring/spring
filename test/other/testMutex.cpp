@@ -4,13 +4,14 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+
+#include <mutex>
+#include <thread>
+
+#include <cstdint>
 #include <functional>
 
 #ifndef _WIN32
-	#include <mutex>
 	#include <sys/syscall.h>
 	#include <linux/futex.h>
 #endif
@@ -19,13 +20,13 @@
 	#include <windows.h>
 #endif
 
-#define BOOST_TEST_MODULE Mutex
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+InitSpringTime ist;
 
 #ifndef _WIN32
-	typedef boost::uint32_t futex;
+	typedef uint32_t futex;
 
 	static void futex_init(futex* m)
 	{
@@ -77,20 +78,17 @@ spring_time Test(const char* name, voidFnc pre, voidFnc post)
 }
 
 
-
-BOOST_AUTO_TEST_CASE( Mutex )
+TEST_CASE("Mutex")
 {
 
 	spring::mutex spmtx;
 	spring::recursive_mutex sprmtx;
-	boost::mutex mtx;
-	boost::recursive_mutex rmtx;
+	std::mutex mtx;
+	std::recursive_mutex rmtx;
 
 	spring_time tRaw    = Test("raw",                     []{                 }, []{                   });
 	spring_time tSpMtx  = Test("spring::mutex",           [&]{ spmtx.lock();  }, [&]{ spmtx.unlock();  });
 	spring_time tSpRMtx = Test("spring::recursive_mutex", [&]{ sprmtx.lock(); }, [&]{ sprmtx.unlock(); });
-	spring_time tMtx    = Test("boost::mutex",            [&]{ mtx.lock();    }, [&]{ mtx.unlock();    });
-	spring_time tRMtx   = Test("boost::recursive_mutex",  [&]{ rmtx.lock();   }, [&]{ rmtx.unlock();   });
 
 #ifndef _WIN32
 	std::mutex smtx;
@@ -113,11 +111,11 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	DeleteCriticalSection(&cs);
 #endif
 
-	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
-	//BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
+	//CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
+	//CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
 }
 
-BOOST_AUTO_TEST_CASE( ConditionVariable )
+TEST_CASE("ConditionVariable")
 {
 	spring::mutex m;
 	spring::condition_variable_any cv;

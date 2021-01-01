@@ -28,7 +28,7 @@ public:
 	 */
 	AutohostInterface(const std::string& remoteIP, int remotePort,
 			const std::string& localIP = "", int localPort = 0);
-	virtual ~AutohostInterface();
+	virtual ~AutohostInterface() {}
 
 	bool IsInitialized() const { return initialized; }
 

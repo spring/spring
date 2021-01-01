@@ -2,6 +2,7 @@
 
 #include "BasicMeshDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -127,12 +128,12 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 
 
 void CBasicMeshDrawer::Update() {
-	CCamera* activeCam = CCamera::GetActiveCamera();
+	CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	MeshPatch* meshPatch = &meshPatches[0];
 
 	patchVisTestDrawer.ResetState(activeCam, meshPatch, numPatchesX);
 
-	activeCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	activeCam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(activeCam, &patchVisTestDrawer, 1e9, PATCH_SIZE);
 }
 
@@ -539,7 +540,7 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 	// force SP and NP to equal LOD; avoids projection issues
 	if (drawPass == DrawPass::Shadow)
-		cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+		cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	{
 		const CUnit* hitUnit = nullptr;
@@ -547,8 +548,8 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 		float mapRayDist = 0.0f;
 
-		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
-			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, readMap->GetCurrMinHeight());
+		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
+			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), readMap->GetCurrMinHeight());
 		if (mapRayDist < 0.0f)
 			return lodIndx;
 
@@ -609,7 +610,7 @@ void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO
 void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 	Update();
 
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	const VBO& indexBuffer = lodSquareIndexBuffers[drawPassLOD = CalcDrawPassLOD(activeCam, drawPass)];
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -675,7 +676,7 @@ void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO
 }
 
 void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	const VBO& indexBuffer = lodBorderIndexBuffers[drawPassLOD];
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -717,4 +718,5 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 
 	indexBuffer.Unbind();
 }
+
 

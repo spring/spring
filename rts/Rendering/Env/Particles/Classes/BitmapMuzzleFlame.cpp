@@ -10,10 +10,10 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/myMath.h"
+#include "System/creg/DefTypes.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CBitmapMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
 
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (
@@ -33,10 +33,9 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 ))
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame()
-	: CProjectile()
-	, sideTexture(NULL)
-	, frontTexture(NULL)
-	, colorMap(NULL)
+	: sideTexture(nullptr)
+	, frontTexture(nullptr)
+	, colorMap(nullptr)
 	, size(0.0f)
 	, length(0.0f)
 	, sizeGrowth(0.0f)

@@ -46,7 +46,7 @@ end
 
 
 if (not (haveRules or haveSensors)) then
-	return false
+	return {}
 end
 
 

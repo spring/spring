@@ -26,30 +26,108 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Game.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/GuiHandler.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
+#include "System/Log/ILog.h"
 
-CWorldDrawer::CWorldDrawer(): numUpdates(0)
+void CWorldDrawer::InitPre() const
 {
 	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
+
+	CColorMap::InitStatic();
+
+	// these need to be loaded before featureHandler is created
+	// (maps with features have their models loaded at startup)
+	modelLoader.Init();
+
+	loadscreen->SetLoadMessage("Creating Unit Textures");
+	textureHandler3DO.Init();
+	textureHandlerS3O.Init();
+
+	CFeatureDrawer::InitStatic();
+	loadscreen->SetLoadMessage("Creating Sky");
+
+	sky = ISky::GetSky();
+	sunLighting->Init();
 }
 
-CWorldDrawer::~CWorldDrawer()
+void CWorldDrawer::InitPost() const
+{
+	char buf[512] = {0};
+
+	{
+		loadscreen->SetLoadMessage("Creating ShadowHandler");
+		shadowHandler.Init();
+	}
+	{
+		// SMFGroundDrawer accesses InfoTextureHandler, create it first
+		loadscreen->SetLoadMessage("Creating InfoTextureHandler");
+		IInfoTextureHandler::Create();
+	}
+	try {
+		loadscreen->SetLoadMessage("Creating GroundDrawer");
+		readMap->InitGroundDrawer();
+	} catch (const content_error& e) {
+		memset(buf, 0, sizeof(buf));
+		snprintf(buf, sizeof(buf), "[WorldDrawer::%s] caught exception \"%s\"", __func__, e.what());
+	}
+
+	{
+		loadscreen->SetLoadMessage("Creating TreeDrawer");
+		treeDrawer = ITreeDrawer::GetTreeDrawer();
+		grassDrawer = new CGrassDrawer();
+	}
+	{
+		inMapDrawerView = new CInMapDrawView();
+		pathDrawer = IPathDrawer::GetInstance();
+	}
+	{
+		heightMapTexture = new HeightMapTexture();
+		farTextureHandler = new CFarTextureHandler();
+	}
+	{
+		IGroundDecalDrawer::Init();
+	}
+	{
+		loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
+
+		CProjectileDrawer::InitStatic();
+		CUnitDrawer::InitStatic();
+		// see ::InitPre
+		// CFeatureDrawer::InitStatic();
+	}
+
+	// rethrow to force exit
+	if (buf[0] != 0)
+		throw content_error(buf);
+
+	{
+		loadscreen->SetLoadMessage("Creating Water");
+		water = IWater::GetWater(nullptr, -1);
+	}
+	{
+		sky->SetupFog();
+	}
+}
+
+
+void CWorldDrawer::Kill()
 {
 	spring::SafeDelete(infoTextureHandler);
 
@@ -58,99 +136,40 @@ CWorldDrawer::~CWorldDrawer()
 	spring::SafeDelete(treeDrawer);
 	spring::SafeDelete(grassDrawer);
 	spring::SafeDelete(pathDrawer);
-	spring::SafeDelete(shadowHandler);
+	shadowHandler.Kill();
 	spring::SafeDelete(inMapDrawerView);
 
-	spring::SafeDelete(featureDrawer);
-	spring::SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
-	spring::SafeDelete(projectileDrawer);
+	CFeatureDrawer::KillStatic(gu->globalReload);
+	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
+	CProjectileDrawer::KillStatic(gu->globalReload);
 
 	modelLoader.Kill();
 
 	spring::SafeDelete(farTextureHandler);
 	spring::SafeDelete(heightMapTexture);
 
-	spring::SafeDelete(texturehandler3DO);
-	spring::SafeDelete(texturehandlerS3O);
-
-	spring::SafeDelete(cubeMapHandler);
+	textureHandler3DO.Kill();
+	textureHandlerS3O.Kill();
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
 	CShaderHandler::FreeInstance(shaderHandler);
 	LuaObjectDrawer::Kill();
+
+	numUpdates = 0;
 }
 
-
-
-void CWorldDrawer::LoadPre() const
-{
-	// these need to be loaded before featureHandler is created
-	// (maps with features have their models loaded at startup)
-	modelLoader.Init();
-
-	loadscreen->SetLoadMessage("Creating Unit Textures");
-	texturehandler3DO = new C3DOTextureHandler();
-	texturehandlerS3O = new CS3OTextureHandler();
-
-	featureDrawer = new CFeatureDrawer();
-	loadscreen->SetLoadMessage("Creating Sky");
-
-	sky = ISky::GetSky();
-	sunLighting->Init();
-}
-
-void CWorldDrawer::LoadPost() const
-{
-	loadscreen->SetLoadMessage("Creating ShadowHandler");
-	cubeMapHandler = new CubeMapHandler();
-	shadowHandler = new CShadowHandler();
-
-	// SMFGroundDrawer accesses InfoTextureHandler, create it first
-	loadscreen->SetLoadMessage("Creating InfoTextureHandler");
-	IInfoTextureHandler::Create();
-
-	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readMap->InitGroundDrawer();
-
-	loadscreen->SetLoadMessage("Creating TreeDrawer");
-	treeDrawer = ITreeDrawer::GetTreeDrawer();
-	grassDrawer = new CGrassDrawer();
-
-	inMapDrawerView = new CInMapDrawView();
-	pathDrawer = IPathDrawer::GetInstance();
-
-	heightMapTexture = new HeightMapTexture();
-	farTextureHandler = new CFarTextureHandler();
-
-	IGroundDecalDrawer::Init();
-
-	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
-	projectileDrawer = new CProjectileDrawer();
-	projectileDrawer->LoadWeaponTextures();
-
-	unitDrawer = new CUnitDrawer();
-	// see ::LoadPre
-	// featureDrawer = new CFeatureDrawer();
-
-	loadscreen->SetLoadMessage("Creating Water");
-	water = IWater::GetWater(NULL, -1);
-
-	sky->SetupFog();
-}
 
 
 
 void CWorldDrawer::Update(bool newSimFrame)
 {
-	SCOPED_TIMER("Update::World");
+	SCOPED_TIMER("Update::WorldDrawer");
 	LuaObjectDrawer::Update(numUpdates == 0);
 	readMap->UpdateDraw(numUpdates == 0);
 
-	if (globalRendering->drawGround) {
-		SCOPED_TIMER("Update::World::Terrain");
+	if (globalRendering->drawGround)
 		(readMap->GetGroundDrawer())->Update();
-	}
 
 	// XXX: done in CGame, needs to get updated even when !doDrawWorld
 	// (it updates unitdrawpos which is used for maximized minimap too)
@@ -162,8 +181,17 @@ void CWorldDrawer::Update(bool newSimFrame)
 
 	if (newSimFrame) {
 		projectileDrawer->UpdateTextures();
-		sky->Update();
-		water->Update();
+
+		{
+			SCOPED_TIMER("Update::WorldDrawer::{Sky,Water}");
+
+			sky->Update();
+			water->Update();
+		}
+
+		// once every simframe is frequent enough here
+		// NB: errors will not be logged until frame 0
+		modelLoader.LogErrors();
 	}
 
 	numUpdates += 1;
@@ -174,29 +202,30 @@ void CWorldDrawer::Update(bool newSimFrame)
 void CWorldDrawer::GenerateIBLTextures() const
 {
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		SCOPED_TIMER("Draw::World::CreateShadows");
+
 		game->SetDrawMode(CGame::gameShadowDraw);
-		shadowHandler->CreateShadows();
+		shadowHandler.CreateShadows();
 		game->SetDrawMode(CGame::gameNormalDraw);
 	}
 
 	{
 		SCOPED_TIMER("Draw::World::UpdateReflTex");
-		cubeMapHandler->UpdateReflectionTexture();
+		cubeMapHandler.UpdateReflectionTexture();
 	}
 
 	if (sky->GetLight()->Update()) {
 		{
 			SCOPED_TIMER("Draw::World::UpdateSpecTex");
-			cubeMapHandler->UpdateSpecularTexture();
+			cubeMapHandler.UpdateSpecularTexture();
 		}
 		{
 			SCOPED_TIMER("Draw::World::UpdateSkyTex");
 			sky->UpdateSkyTexture();
 		}
 		{
-			SCOPED_TIMER("Draw::World::UpdateShadingTexture");
+			SCOPED_TIMER("Draw::World::UpdateShadingTex");
 			readMap->UpdateShadingTexture();
 		}
 	}
@@ -288,10 +317,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	}
 
 	selectedUnitsHandler.Draw();
-	{
-		SCOPED_TIMER("Draw::World::PreUnit");
-		eventHandler.DrawWorldPreUnit();
-	}
+	eventHandler.DrawWorldPreUnit();
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Opaque");
@@ -396,7 +422,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 		glEnableClientState(GL_VERTEX_ARRAY);
 
 		const float3& cpos = camera->GetPos();
-		const float vr = globalRendering->viewRange * 0.5f;
+		const float vr = camera->GetFarPlaneDist() * 0.5f;
 
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);

@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <assert.h>
+#include <cassert>
 
 
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "Player.h"
 #include "PlayerHandler.h"
 #include "Game/Camera.h"
@@ -18,7 +17,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/STL_Set.h"
@@ -40,10 +39,6 @@ CR_REG_METADATA(CPlayer, (
 //////////////////////////////////////////////////////////////////////
 
 CPlayer::CPlayer()
-	: PlayerBase()
-	, active(false)
-	, playerNum(-1)
-	, ping(0)
 {
 	fpsController.SetControllerPlayer(this);
 }
@@ -53,35 +48,38 @@ CPlayer::CPlayer()
 void CPlayer::SetControlledTeams()
 {
 	controlledTeams.clear();
+	controlledTeams.reserve(teamHandler.ActiveTeams());
 
-	if (gs->godMode) {
-		// anyone can control any unit
-		for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
-			controlledTeams.insert(t);
+	if (gs->godMode != 0) {
+		// anyone can control any (friendly and/or enemy) unit
+		for (int t = 0; t < teamHandler.ActiveTeams(); t++) {
+			if ((gs->godMode & GODMODE_ATC_BIT) != 0 &&  teamHandler.AlliedTeams(team, t))
+				controlledTeams.insert(t);
+			if ((gs->godMode & GODMODE_ETC_BIT) != 0 && !teamHandler.AlliedTeams(team, t))
+				controlledTeams.insert(t);
 		}
+
+		// facilitate LuaUnsyncedCtrl checks
+		if (gs->godMode == GODMODE_MAX_VAL)
+			controlledTeams.insert(CEventClient::AllAccessTeam);
+
+		// self-control
+		controlledTeams.insert(team);
 		return;
 	}
 
+	if (spectator)
+		return;
+
 	// my team
-	if (!spectator)
-		controlledTeams.insert(team);
-
-	// AI teams
-	for (const auto& p: skirmishAIHandler.GetAllSkirmishAIs()) {
-		const SkirmishAIData& sad = p.second;
-
-		if (sad.hostPlayer != playerNum)
-			continue;
-
-		controlledTeams.insert(sad.team);
-	}
+	controlledTeams.insert(team);
 }
 
 
 void CPlayer::UpdateControlledTeams()
 {
-	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
-		CPlayer* player = playerHandler->Player(p);
+	for (int p = 0; p < playerHandler.ActivePlayers(); p++) {
+		CPlayer* player = playerHandler.Player(p);
 
 		if (player == nullptr)
 			continue;
@@ -125,7 +123,7 @@ void CPlayer::JoinTeam(int newTeam)
 	if (gu->myPlayerNum == this->playerNum) {
 		// HACK: see StartSpectating
 		gu->myPlayingTeam = gu->myTeam = newTeam;
-		gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+		gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
 
 		gu->spectating           = false;
 		gu->spectatingFullView   = false;
@@ -165,7 +163,7 @@ void CPlayer::StartControllingUnit()
 			return;
 
 		// pick the first unit we have selected
-		newControlleeUnit = unitHandler->GetUnit(ourSelectedUnits[0]);
+		newControlleeUnit = unitHandler.GetUnit(ourSelectedUnits[0]);
 
 		if (newControlleeUnit == nullptr || newControlleeUnit->weapons.empty())
 			return;

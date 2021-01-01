@@ -4,7 +4,7 @@
 #include <functional>
 #include <pthread.h>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <fstream>
 #include <sys/syscall.h>
 
@@ -41,9 +41,8 @@ enum LinuxThreadState {
 /**
  * There is no glibc wrapper for this system call, so you have to write one:
  */
-static int gettid () {
-	long tid = syscall(SYS_gettid);
-	return tid;
+static int gettid() {
+	return syscall(SYS_gettid);
 }
 
 /**
@@ -61,7 +60,7 @@ static LinuxThreadState GetLinuxThreadState(int tid)
 	std::fstream sfile;
 	sfile.open(filename, std::fstream::in);
 	if (sfile.fail()) {
-		LOG_L(L_WARNING, "GetLinuxThreadState could not query %s", filename);
+		LOG_L(L_WARNING, "[%s] could not query %s", __func__, filename);
 		sfile.close();
 		return LTS_UNKNOWN;
 	}
@@ -85,34 +84,30 @@ static LinuxThreadState GetLinuxThreadState(int tid)
 
 static void ThreadSIGUSR1Handler(int signum, siginfo_t* info, void* pCtx)
 {
-	int err = 0;
-
-	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[1]");
-
+	LOG_L(L_DEBUG, "[%s][1]", __func__);
 
 	// Fill in ucontext_t structure before locking, this allows stack walking...
+	const int err = getcontext(&(localThreadControls->ucontext));
 
-	err = getcontext(&(threadCtls->ucontext));
 	if (err != 0) {
-		LOG_L(L_ERROR, "Couldn't get thread context within suspend signal handler: %s", strerror(err));
+		LOG_L(L_ERROR, "[%s] couldn't get thread context within suspend signal handler: %s", __func__, strerror(err));
 		return;
 	}
 
 	// Change the "running" flag to false. Note that we don't own a lock on the suspend mutex, but in order to get here,
 	//   it had to have been locked by some other thread.
-	threadCtls->running.store(false);
+	localThreadControls->running.store(false);
 
-	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[2]");
+	LOG_L(L_DEBUG, "[%s][2]", __func__);
 
 	// Wait on the mutex. This should block the thread.
 	{
-		threadCtls->mutSuspend.lock();
-		threadCtls->running.store(true);
-		threadCtls->mutSuspend.unlock();
+		localThreadControls->mutSuspend.lock();
+		localThreadControls->running.store(true);
+		localThreadControls->mutSuspend.unlock();
 	}
 
-	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[3]");
-
+	LOG_L(L_DEBUG, "[%s][3]", __func__);
 }
 
 
@@ -124,10 +119,10 @@ static bool SetThreadSignalHandler()
 	sigemptyset(&sigSet);
 	sigaddset(&sigSet, SIGUSR1);
 
-	err = pthread_sigmask(SIG_UNBLOCK, &sigSet, NULL);
+	err = pthread_sigmask(SIG_UNBLOCK, &sigSet, nullptr);
 
 	if (err != 0) {
-		LOG_L(L_FATAL, "Error while setting new pthread's signal mask: %s", strerror(err));
+		LOG_L(L_FATAL, "[%s] error while setting new pthread's signal mask: %s", __func__, strerror(err));
 		return false;
 	}
 
@@ -136,8 +131,8 @@ static bool SetThreadSignalHandler()
 	sa.sa_sigaction = ThreadSIGUSR1Handler;
 	sa.sa_flags |= SA_SIGINFO;
 
-	if (sigaction(SIGUSR1, &sa, NULL)) {
-		LOG_L(L_FATAL,"Error while installing pthread SIGUSR1 handler.");
+	if (sigaction(SIGUSR1, &sa, nullptr)) {
+		LOG_L(L_FATAL, "[%s] error while installing pthread SIGUSR1 handler", __func__);
 		return false;
 	}
 
@@ -145,30 +140,22 @@ static bool SetThreadSignalHandler()
 }
 
 
-void SetCurrentThreadControls(bool isLoadThread)
+void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls)
 {
-	#ifndef WIN32
-	if (isLoadThread) {
-		// do nothing if Load is actually Main (LoadingMT=0 case)
-		if ((GetCurrentThreadControls()).get() != nullptr) {
-			return;
-		}
-	}
+	assert(!Threading::IsWatchDogThread());
 
+	#ifndef _WIN32
 	if (threadCtls.get() != nullptr) {
 		// old shared_ptr will be deleted by the reset below
-		LOG_L(L_WARNING, "Setting a ThreadControls object on a thread that already has such an object registered.");
+		LOG_L(L_WARNING, "[%s] thread already has ThreadControls installed", __func__);
 	} else {
-		// Installing new ThreadControls object, so install signal handler also
-		if (!SetThreadSignalHandler()) {
+		// new ThreadControls object, so install SIGUSR1 signal handler also
+		if (!SetThreadSignalHandler())
 			return;
-		}
 	}
 
 	{
 		threadCtls.reset(new Threading::ThreadControls());
-
-		assert(threadCtls.get() != nullptr);
 
 		threadCtls->handle = GetCurrentThread();
 		threadCtls->thread_id = gettid();
@@ -184,22 +171,20 @@ void SetCurrentThreadControls(bool isLoadThread)
  */
 void ThreadStart(
 	std::function<void()> taskFunc,
-	std::shared_ptr<ThreadControls>* ppCtlsReturn,
+	std::shared_ptr<ThreadControls>* threadCtls,
 	ThreadControls* tempCtls
 ) {
-	// Install the SIGUSR1 handler
-	SetCurrentThreadControls(false);
+	// install the SIGUSR1 handler
+	SetupCurrentThreadControls(localThreadControls);
 
-	assert(threadCtls.get() != nullptr);
-
-	if (ppCtlsReturn != nullptr)
-		*ppCtlsReturn = threadCtls;
+	if (threadCtls != nullptr)
+		*threadCtls = localThreadControls;
 
 	{
 		// Lock the thread object so that users can't suspend/resume yet.
 		tempCtls->mutSuspend.lock();
 
-		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4lx", threadCtls->handle);
+		LOG_L(L_DEBUG, "[%s] new thread handle %.4lx", __func__, localThreadControls->handle);
 
 		// We are fully initialized, so notify the condition variable. The
 		// thread's parent will unblock in whatever function created this
@@ -214,31 +199,30 @@ void ThreadStart(
 	taskFunc();
 
 	// Finish up: change the thread's running state to false.
-	threadCtls->mutSuspend.lock();
-	threadCtls->running = false;
-	threadCtls->mutSuspend.unlock();
+	localThreadControls->mutSuspend.lock();
+	localThreadControls->running = false;
+	localThreadControls->mutSuspend.unlock();
 }
 
 
 
 SuspendResult ThreadControls::Suspend()
 {
-	int err = 0;
-
 	// Return an error if the running flag is false.
 	if (!running) {
-		LOG_L(L_ERROR, "Cannot suspend if a thread's running flag is set to false. Refusing to suspend using pthread_kill.");
+		LOG_L(L_ERROR, "[ThreadControls::%s] cannot suspend if a thread's running flag is set to false, refusing to use pthread_kill", __func__);
 		return Threading::THREADERR_NOT_RUNNING;
 	}
 
 	mutSuspend.lock();
 
-	LOG_L(L_DEBUG, "Sending SIGUSR1 to 0x%lx", handle);
+	LOG_L(L_DEBUG, "[ThreadControls::%s] sending SIGUSR1 to 0x%lx", __func__, handle);
 
 	// Send signal to thread to trigger its handler
-	err = pthread_kill(handle, SIGUSR1);
+	const int err = pthread_kill(handle, SIGUSR1);
+
 	if (err != 0) {
-		LOG_L(L_ERROR, "Error while trying to send signal to suspend thread: %s", strerror(err));
+		LOG_L(L_ERROR, "[ThreadControls::%s] error while trying to send signal to suspend thread: %s", __func__, strerror(err));
 		return Threading::THREADERR_MISC;
 	}
 
@@ -246,10 +230,10 @@ SuspendResult ThreadControls::Suspend()
 	// FIXME: this sort of spin-waiting inside the watchdog loop could be avoided by creating another worker thread
 	//        inside SuspendedStacktrace itself to do the work of checking that the stalled thread has been suspended and performing the trace there.
 	LinuxThreadState tstate;
-	const int max_attempts = 40; // 40 attempts * 0.025s = 1 sec max.
+	constexpr int max_attempts = 40; // 40 attempts * 0.025s = 1 sec max.
 	for (int a = 0; a < max_attempts; a++) {
-		tstate = GetLinuxThreadState(thread_id);
-		if (tstate == LTS_SLEEP) break;
+		if ((tstate = GetLinuxThreadState(thread_id)) == LTS_SLEEP)
+			break;
 	}
 
 	return Threading::THREADERR_NONE;

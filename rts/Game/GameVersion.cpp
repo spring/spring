@@ -7,10 +7,9 @@
 
 #include "System/VersionGenerated.h"
 
+#include <ciso646> // _LIBCPP*
 #include <cstring>
-#include <boost/version.hpp>
-#include <boost/config.hpp>
-#include <stdio.h>
+#include <cstdio>
 
 /**
  * @brief Defines the current version string.
@@ -136,8 +135,9 @@ const std::string& GetCompiler()
 {
 	static const std::string compiler = ""
 #ifdef __GNUC__
-	//"gcc-" QUOTEME(__GNUC__) "." QUOTEME(__GNUC_MINOR__) "." QUOTEME(__GNUC_PATCHLEVEL__);
 	"gcc-" __VERSION__;
+#elif defined(__clang__)
+	"clang-" __clang_version__ ;
 #elif defined(_MSC_VER)
 	#ifdef _MSC_FULL_VER
 		"msvc-" QUOTEME(_MSC_FULL_VER);
@@ -154,18 +154,25 @@ const std::string& GetCompiler()
 
 const std::string& GetBuildEnvironment()
 {
-	static const std::string environment = "boost-"
-#ifdef BOOST_VERSION
-	QUOTEME(BOOST_VERSION)
+#if (defined(__GNUC__) || defined(__clang__))
+	#if (defined(_LIBCPP_VERSION))
+		static const std::string environment = "clang libc++ version " QUOTEME(_LIBCPP_VERSION);
+	#elif (defined(__GLIBCXX__) || defined(__GLIBCPP__))
+		#ifdef __GLIBCXX__
+		static const std::string environment = "gcc libstdc++ version " QUOTEME(__GLIBCXX__);
+		#else
+		static const std::string environment = "gcc libstdc++ version " QUOTEME(__GLIBCPP__);
+		#endif
+	#else
+		#error "undefined lib{std}c++ version"
+	#endif
+#elif (defined(_MSC_VER))
+	// _CPPLIB_VER no longer officially exists, _CLR_VER is not what we want
+	static const std::string environment = "msvc++ version " QUOTEME(_MSC_VER);
 #else
-	"unknown"
+	static const std::string environment = "unknown";
 #endif
-	", "
-#ifdef BOOST_STDLIB
-	BOOST_STDLIB;
-#else
-	"unknown stdlib";
-#endif
+
 	return environment;
 }
 

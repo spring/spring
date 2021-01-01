@@ -3,6 +3,7 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
+#include <functional>
 #include <vector>
 
 #include "System/Object.h"
@@ -37,6 +38,9 @@ public:
 	void AimScriptFinished(bool retCode) { angleGood = retCode; }
 
 	bool HaveTarget() const { return (currentTarget.type != Target_None); }
+	bool HaveUnitTarget() const { return (currentTarget.type == Target_Unit); }
+	bool HavePosTarget() const { return (currentTarget.type == Target_Pos); }
+
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3& GetCurrentTargetPos() const { return currentTargetPos; }
 
@@ -71,7 +75,11 @@ public:
 
 	float TargetWeight(const CUnit* unit) const;
 
-	virtual float GetRange2D(const float yDiff) const;
+	static float GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity);
+	static float GetLiveRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity) { return (w->GetRange2D(0.0f, modHeightDiff)); }
+
+	virtual float GetRange2D(float boost, float ydiff) const;
+	virtual void UpdateProjectileSpeed(const float val) { projectileSpeed = val; }
 	virtual void UpdateRange(const float val) { range = val; }
 
 	bool AutoTarget();
@@ -84,7 +92,8 @@ public:
 	float SprayAngleExperience() const { return (sprayAngle * ExperienceErrorScale()); }
 	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
-	void StopAttackingAllyTeam(const int ally);
+	bool StopAttackingTargetIf(const std::function<bool(const SWeaponTarget&)>& pred);
+	bool StopAttackingAllyTeam(const int ally);
 
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
@@ -108,7 +117,9 @@ private:
 	void UpdateInterceptTarget();
 	bool AllowWeaponAutoTarget() const;
 	bool CobBlockShot() const;
-	void ReAimWeapon();
+	bool CheckAimingAngle() const;
+	bool CanCallAimingScript(bool validAngle) const;
+	bool CallAimingScript(bool waitForAim);
 	void HoldIfTargetInvalid();
 
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire = false) const;
@@ -119,20 +130,17 @@ public:
 
 	const WeaponDef* weaponDef;
 
+	const DynDamageArray* damages;
+
 	int weaponNum;                          // ordering among owner's weapons
 
 	int aimFromPiece;
 	int muzzlePiece;
 
-	int reloadTime;                         // time between succesive fires in ticks
+	int reaimTime;                          // time between successive reaims in ticks
+
+	int reloadTime;                         // time between successive fires in ticks
 	int reloadStatus;                       // next tick the weapon can fire again
-
-	float range;
-	const DynDamageArray* damages;
-
-	float projectileSpeed;
-	float accuracyError;                    // inaccuracy of whole salvo
-	float sprayAngle;                       // inaccuracy of individual shots inside salvo
 
 	int salvoDelay;                         // delay between shots in a salvo
 	int salvoSize;                          // number of shots in a salvo
@@ -140,6 +148,10 @@ public:
 	int nextSalvo;                          // when the next shot in the current salvo will fire
 	int salvoLeft;                          // number of shots left in current salvo
 
+	float range;
+	float projectileSpeed;
+	float accuracyError;                    // inaccuracy of whole salvo
+	float sprayAngle;                       // inaccuracy of individual shots inside salvo
 	float predictSpeedMod;                  // how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	bool hasBlockShot;                      // set when the script has a BlockShot() function for this weapon
@@ -158,13 +170,14 @@ public:
 	int numStockpiled;                      // how many missiles we have stockpiled
 	int numStockpileQued;                   // how many weapons the user have added to our que
 
-	int lastRequest;                        // when the last script call was done
+	int lastAimedFrame;                     // when the last AimWeapon script callin was performed
 	int lastTargetRetry;                    // when we last recalculated target selection
 
 	float maxForwardAngleDif;               // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
 	float maxMainDirAngleDif;               // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
 	float heightBoostFactor;                // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float autoTargetRangeBoost;
 
 	unsigned int avoidFlags;
 	unsigned int collisionFlags;
@@ -183,8 +196,6 @@ public:
 	float3 errorVectorAdd;
 
 	float muzzleFlareSize;                  // size of muzzle flare if drawn
-	int fireSoundId;
-	float fireSoundVolume;
 
 protected:
 	SWeaponTarget currentTarget;

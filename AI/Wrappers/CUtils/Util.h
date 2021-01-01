@@ -204,12 +204,6 @@ const char* util_map_getValueByKey(
 		const char** mapKeys, const char** mapValues,
 		const char* key);
 
-/**
- * Free memory.
- * Some of the other functions will not work anymore,
- * after calling this function.
- */
-void util_finalize();
 
 #ifdef __cplusplus
 } // extern "C"

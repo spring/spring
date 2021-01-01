@@ -5,6 +5,7 @@
 #include "GeometricObjects.h"
 #include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/GeoSquareProjectile.h"
 
 CR_BIND(CGeometricObjects, )

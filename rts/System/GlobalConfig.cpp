@@ -1,13 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/GlobalConfig.h"
+
+#ifndef UNITSYNC
+#include "System/Config/ConfigHandler.h"
 #include "System/Net/UDPConnection.h"
 #include "Rendering/TeamHighlight.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/GlobalConfig.h"
-#include "Lua/LuaConfig.h"
 
 CONFIG(int, NetworkLossFactor)
-.defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
+	.defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
 	.minimumValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
 	.maximumValue(netcode::UDPConnection::MAX_LOSS_FACTOR);
 
@@ -57,12 +58,10 @@ CONFIG(int, TeamHighlight)
 CONFIG(bool, UseNetMessageSmoothingBuffer).defaultValue(true);
 
 CONFIG(bool, LuaWritableConfigFile).defaultValue(true);
+CONFIG(bool, VFSCacheArchiveFiles).defaultValue(true);
 
-CONFIG(bool, EnableDrawCallIns).defaultValue(true);
 
-GlobalConfig* globalConfig = NULL;
-
-GlobalConfig::GlobalConfig()
+void GlobalConfig::Init()
 {
 	// Recommended semantics for "expert" type config values:
 	// <0 = disable (if applicable)
@@ -87,18 +86,11 @@ GlobalConfig::GlobalConfig()
 
 	useNetMessageSmoothingBuffer = configHandler->GetBool("UseNetMessageSmoothingBuffer");
 	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
+	vfsCacheArchiveFiles = configHandler->GetBool("VFSCacheArchiveFiles");
 
 	teamHighlight = configHandler->GetInt("TeamHighlight");
 }
+#endif
 
-void GlobalConfig::Instantiate()
-{
-	Deallocate();
-	globalConfig = new GlobalConfig();
-}
+GlobalConfig globalConfig;
 
-void GlobalConfig::Deallocate()
-{
-	delete globalConfig;
-	globalConfig = NULL;
-}

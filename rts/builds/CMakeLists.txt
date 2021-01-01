@@ -1,19 +1,19 @@
 ### builds
 #
 # Macros and functions defined in this file:
-# * CreateEngineBuildAndInstallTarget
+# * create_engine_build_and_install_target
 #
 
-Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
-Include_Directories(${gflags_BINARY_DIR}/include)
+include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
+include_directories(${gflags_BINARY_DIR}/include)
 
 # Only install the given engine target executable & dependencies
 # example:
-# 	CreateEngineBuildAndInstallTarget(headless)
+# 	create_engine_build_and_install_target(headless)
 # ->
 # 	make spring-headless
 # 	make install-spring-headless
-macro    (CreateEngineBuildAndInstallTarget targetName)
+macro    (create_engine_build_and_install_target targetName)
 	# relative source path, eg: "rts/builds/default"
 	file(RELATIVE_PATH relSrcDirPath ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -25,10 +25,10 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			${DEPS_AI_ALL}
 		)
 	if (CREATE_MAN_PAGES)
-		LIST(APPEND ${targetName}-Deps manpages)
+		list(APPEND ${targetName}-Deps manpages)
 	endif()
 	if (userdoc_INSTALL_HTML)
-		LIST(APPEND ${targetName}-Deps userdocs)
+		list(APPEND ${targetName}-Deps userdocs)
 	endif()
 
 	# Create a custom meta build target
@@ -40,7 +40,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		)
 	# This also works for custom targets
 	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
-	Add_Dependencies(engine-${targetName} generateVersionFiles basecontent)
+	add_dependencies(engine-${targetName} generateVersionFiles basecontent)
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
@@ -50,11 +50,11 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			"cont"
 			"rts/lib/luasocket"
 		)
-	If    (NOT "${AI_TYPES}" STREQUAL "NONE")
-		Set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
-	EndIf (NOT "${AI_TYPES}" STREQUAL "NONE")
+	if    (NOT "${AI_TYPES}" STREQUAL "NONE")
+		set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
+	endif (NOT "${AI_TYPES}" STREQUAL "NONE")
 
-	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
+	create_install_target(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 
 	# allow easy switching of the default engine
 	if    (${targetName} STREQUAL "legacy")
@@ -68,32 +68,32 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	else()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
-endmacro (CreateEngineBuildAndInstallTarget targetName)
+endmacro (create_engine_build_and_install_target targetName)
 
 
 # This allows us to disable each build type individually at configure stage.
-Macro    (AddEngineBuild build)
+macro    (add_engine_build build)
 	option(BUILD_spring-${build} "Configure the spring-${build} target." TRUE)
-	If     (BUILD_spring-${build})
-		Add_Subdirectory(${build})
-	EndIf  ()
-EndMacro (AddEngineBuild)
+	if     (BUILD_spring-${build})
+		add_subdirectory(${build})
+	endif  ()
+endmacro (add_engine_build)
 
 # add default dummy target which is used later on
 add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 ### Add icon and manifest to exe using windres
-IF    (WIN32)
-	SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+if    (WIN32)
+	set(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 
-	IF (MSVC)
+	if (MSVC)
 		# Make sure we disable the default manifest generation to prevent conflicts
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
-	ENDIF()
-ENDIF (WIN32)
+	endif()
+endif (WIN32)
 
 # the build targets
-AddEngineBuild(legacy)
-AddEngineBuild(dedicated)
-AddEngineBuild(headless)
+add_engine_build(legacy)
+add_engine_build(dedicated)
+add_engine_build(headless)

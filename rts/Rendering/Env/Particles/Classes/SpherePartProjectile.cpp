@@ -8,9 +8,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CSpherePartProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -126,8 +126,7 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 
 
 CSpherePartSpawner::CSpherePartSpawner()
-	: CProjectile()
-	, alpha(0.0f)
+	: alpha(0.0f)
 	, ttl(0)
 	, expansionSpeed(0.0f)
 	, color(ZeroVector)
@@ -135,7 +134,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 }
 
 
-CR_BIND_DERIVED_POOL(CSpherePartSpawner, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
 
 CR_REG_METADATA(CSpherePartSpawner,
 (

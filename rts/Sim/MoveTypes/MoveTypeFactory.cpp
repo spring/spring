@@ -27,7 +27,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 		assert(ud->pathType != -1u);
 		assert(unit->moveDef == nullptr);
 
-		unit->moveDef = moveDefHandler->GetMoveDefByPathType(ud->pathType);
+		unit->moveDef = moveDefHandler.GetMoveDefByPathType(ud->pathType);
 
 		return (new (unit->amtMemBuffer) CGroundMoveType(unit));
 	}

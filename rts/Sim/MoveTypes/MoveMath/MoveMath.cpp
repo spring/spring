@@ -4,18 +4,19 @@
 
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
 #include "System/Platform/Threading.h"
 
 bool CMoveMath::noHoverWaterMove = false;
 float CMoveMath::waterDamageCost = 0.0f;
 
+static constexpr int FOOTPRINT_XSTEP = 2;
+static constexpr int FOOTPRINT_ZSTEP = 2;
 
 
 float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
@@ -107,35 +108,38 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
-	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
-
-	if (xmin < 0 || xmax >= mapDims.mapx)
-		return BLOCK_IMPASSABLE;
-	if (zmin < 0 || zmax >= mapDims.mapy)
-		return BLOCK_IMPASSABLE;
+	const int xmin = std::max(xSquare - moveDef.xsizeh,                0);
+	const int zmin = std::max(zSquare - moveDef.zsizeh,                0);
+	const int xmax = std::min(xSquare + moveDef.xsizeh, mapDims.mapx - 1);
+	const int zmax = std::min(zSquare + moveDef.zsizeh, mapDims.mapy - 1);
 
 	BlockType ret = BLOCK_NONE;
-	const int xstep = 2, zstep = 2;
 
-	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int z = zmin; z <= zmax; z += zstep) {
+	// footprints are point-symmetric around <xSquare, zSquare>
+	// same as RangeIsBlocked but without anti-duplication test
+	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
-		for (int x = xmin; x <= xmax; x += xstep) {
-			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
-			for (const CSolidObject* collidee: cell) {
-				ret |= ObjectBlockType(moveDef, collidee, collider);
-				if (ret & BLOCK_STRUCTURE)
-					return ret;
+
+		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
+
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CSolidObject* collidee = cell[i];
+
+				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
+					continue;
+
+				return ret;
 			}
 		}
 	}
+
 	return ret;
 }
 
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	assert(Threading::IsMainThread());
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
 	return RangeIsBlocked(moveDef, xSquare - moveDef.xsizeh, xSquare + moveDef.xsizeh, zSquare - moveDef.zsizeh, zSquare + moveDef.zsizeh, collider);
 }
 
@@ -186,10 +190,8 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// owner would need to be accessible, but the path-estimator
 	// defs are not tied to any collider instances
 	//
-	#define IS_SUBMARINE(md) ((md) != nullptr && (md)->subMarine)
-	const bool colliderIsSub = IS_SUBMARINE(&colliderMD);
-	const bool collideeIsSub = IS_SUBMARINE(collidee->moveDef);
-	#undef IS_SUBMARINE
+	const bool colliderIsSub = colliderMD.isSubmarine;
+	const bool collideeIsSub = collidee->moveDef != nullptr && collidee->moveDef->isSubmarine;
 
 	if (colliderIsSub)
 		return (!collidee->IsUnderWater() && !collideeIsSub);
@@ -226,24 +228,25 @@ CMoveMath::BlockType CMoveMath::ObjectBlockType(const MoveDef& moveDef, const CS
 	if (IsNonBlocking(moveDef, collidee, collider))
 		return BLOCK_NONE;
 
-	if (!collidee->immobile) {
-		// mobile obstacle (must be a unit) --> if
-		// moving, it is probably following a path
-		if (collidee->IsMoving())
-			return BLOCK_MOVING;
+	if (collidee->immobile)
+		return ((CrushResistant(moveDef, collidee))? BLOCK_STRUCTURE: BLOCK_NONE);
 
-		// idling (no orders) mobile unit
-		if ((static_cast<const CUnit*>(collidee))->IsIdle())
-			return BLOCK_MOBILE;
+	// mobile obstacle, must be a unit
+	const CUnit* u = static_cast<const CUnit*>(collidee);
+	const AMoveType* mt = u->moveType;
 
-		// busy mobile unit
-		return BLOCK_MOBILE_BUSY;
-	}
+	// if moving, unit is probably following a path
+	if (u->IsMoving())
+		return BLOCK_MOVING;
 
-	if (CrushResistant(moveDef, collidee))
+	// not moving and not pushable, treat as blocking
+	if (mt->IsPushResistant())
 		return BLOCK_STRUCTURE;
 
-	return BLOCK_NONE;
+	// otherwise, unit is idling (no orders) or busy with a command
+	// being-built units never count as idle, but should perhaps be
+	// considered BLOCK_STRUCTURE
+	return ((u->IsIdle())? BLOCK_MOBILE: BLOCK_MOBILE_BUSY);
 }
 
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
@@ -253,10 +256,10 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 	BlockType r = BLOCK_NONE;
 
-	const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
+	const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
 
-	for (const CSolidObject* collidee: cell) {
-		r |= ObjectBlockType(moveDef, collidee, collider);
+	for (size_t i = 0, n = cell.size(); i < n; i++) {
+		r |= ObjectBlockType(moveDef, cell[i], collider);
 	}
 
 	return r;
@@ -264,33 +267,34 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin, int xmax, int zmin, int zmax, const CSolidObject* collider)
 {
-	if (xmin < 0 || xmax >= mapDims.mapx)
-		return BLOCK_IMPASSABLE;
-
-	if (zmin < 0 || zmax >= mapDims.mapy)
-		return BLOCK_IMPASSABLE;
+	xmin = std::max(xmin,                0);
+	zmin = std::max(zmin,                0);
+	xmax = std::min(xmax, mapDims.mapx - 1);
+	zmax = std::min(zmax, mapDims.mapy - 1);
 
 	BlockType ret = BLOCK_NONE;
 
-	const int xstep = 2, zstep = 2;
 	const int tempNum = gs->GetTempNum();
 
-	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int z = zmin; z <= zmax; z += zstep) {
+	// footprints are point-symmetric around <xSquare, zSquare>
+	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
 
-		for (int x = xmin; x <= xmax; x += xstep) {
-			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
+		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
-			for (CSolidObject* collidee: cell) {
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				CSolidObject* collidee = cell[i];
+
 				if (collidee->tempNum == tempNum)
 					continue;
 
 				collidee->tempNum = tempNum;
-				ret |= ObjectBlockType(moveDef, collidee, collider);
 
-				if (ret & BLOCK_STRUCTURE)
-					return ret;
+				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
+					continue;
+
+				return ret;
 			}
 		}
 	}

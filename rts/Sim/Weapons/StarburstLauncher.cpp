@@ -2,13 +2,14 @@
 
 #include "StarburstLauncher.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED_POOL(CStarburstLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CStarburstLauncher, CWeapon, )
 CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking)
@@ -43,15 +44,10 @@ void CStarburstLauncher::FireImpl(const bool scriptCall)
 
 bool CStarburstLauncher::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
-
-	if (TraceRay::TestCone(srcPos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner))
-		return false;
-
-	return true;
+	return (!TraceRay::TestCone(srcPos, weaponDef->fixedLauncher? weaponDir: UpVector, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner));
 }
 
-float CStarburstLauncher::GetRange2D(const float yDiff) const
+float CStarburstLauncher::GetRange2D(float boost, float ydiff) const
 {
-	return range + (yDiff * weaponDef->heightmod);
+	return boost + range + (ydiff * weaponDef->heightmod);
 }

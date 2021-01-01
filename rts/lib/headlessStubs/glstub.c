@@ -37,11 +37,10 @@ GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1,
 GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
-GLAPI GLuint APIENTRY glCreateProgram() {
-	return 0;
-}
+GLAPI GLuint APIENTRY glCreateProgram() { return 0; }
 //glCreateProgram = (PFNGLCREATEPROGRAMPROC) NULL;
 GLAPI void APIENTRY glDeleteProgram(GLuint program) {}
+GLAPI void APIENTRY glProgramParameteri(GLuint program, GLenum pname, GLint value) {}
 GLAPI void APIENTRY glProgramParameteriEXT(GLuint program, GLenum pname, GLint value) {}
 GLAPI void APIENTRY glLinkProgram(GLuint program) {}
 GLAPI void APIENTRY glGetProgramiv(GLuint program, GLenum pname, GLint *params) {}
@@ -84,6 +83,14 @@ GLAPI void APIENTRY glUniform1iv(GLint location, GLsizei count, const GLint *val
 GLAPI void APIENTRY glUniform2iv(GLint location, GLsizei count, const GLint *value) {}
 GLAPI void APIENTRY glUniform3iv(GLint location, GLsizei count, const GLint *value) {}
 GLAPI void APIENTRY glUniform4iv(GLint location, GLsizei count, const GLint *value) {}
+
+//Subroutines
+GLAPI void APIENTRY glUniformSubroutinesuiv (GLenum shadertype, GLsizei count, const GLuint *indices) {}
+GLAPI GLuint APIENTRY glGetSubroutineIndex (GLuint program, GLenum shadertype, const GLchar *name) { return -1; }
+//Tesselation
+GLAPI void APIENTRY glPatchParameteri (GLenum pname, GLint value) {};
+GLAPI void APIENTRY glPatchParameterfv (GLenum pname, const GLfloat *values) {};
+
 GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
@@ -153,7 +160,8 @@ GLAPI GLhandleARB APIENTRY glCreateShaderObjectARB(GLenum shaderType) {
 	return 0;
 }
 
-GLAPI void APIENTRY glShaderSourceARB(GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length) {}
+// headless include/GL is behind mingwlibs, avoid signature conflict
+// GLAPI void APIENTRY glShaderSourceARB(GLhandleARB shaderObj, GLsizei count, const GLcharARB**string, const GLint *length) {}
 GLAPI void APIENTRY glCompileShaderARB(GLhandleARB shaderObj) {}
 GLAPI GLhandleARB APIENTRY glCreateProgramObjectARB() {
 	return 0;
@@ -372,6 +380,7 @@ GLAPI void APIENTRY glTexImage1D( GLenum target, GLint level,
 GLAPI void APIENTRY glVertex3fv( const GLfloat *v ) {}
 GLAPI void APIENTRY glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {}
 GLAPI void APIENTRY glClipPlane( GLenum plane, const GLdouble *equation ) {}
+GLAPI void APIENTRY glClipPlanef( GLenum plane, const GLfloat *equation ) {}
 GLAPI void APIENTRY glMatrixMode(GLenum mode) {}
 
 GLAPI void APIENTRY  glGetBooleanv( GLenum pname, GLboolean *params ) {
@@ -432,6 +441,8 @@ GLAPI void APIENTRY glTexImage2D(GLenum target, GLint level,
                                     const GLvoid *pixels) {
   // printf( "glTexImage2D\n" );
 }
+
+GLAPI void APIENTRY glTexImage2DMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations) {}
 
 GLAPI void APIENTRY glClear(GLbitfield mask) {}
 GLAPI void APIENTRY glTexCoord2i(GLint s, GLint t ){}

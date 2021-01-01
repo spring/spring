@@ -3,6 +3,7 @@
 #ifndef _COMMAND_AI_H
 #define _COMMAND_AI_H
 
+#include <functional>
 #include <vector>
 
 #include "System/Object.h"
@@ -32,35 +33,35 @@ public:
 
 	inline void SetOrderTarget(CUnit* o);
 
-	void SetScriptMaxSpeed(float speed, bool persistent);
-	void SlowUpdateMaxSpeed();
-
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 	void AddCommandDependency(const Command& c);
 	void ClearCommandDependencies();
-	/// feeds into GiveCommandReal()
-	void GiveCommand(const Command& c, bool fromSynced = true);
+
+	// these both feed into GiveCommandReal()
+	void GiveCommand(const Command& c,                bool fromSynced = true              ); // sim
+	void GiveCommand(const Command& c, int playerNum, bool fromSynced       , bool fromLua); // net,Lua
+
 	void ClearTargetLock(const Command& fc);
+	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
+
 	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const { return true; }
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual void FinishCommand();
-	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
+
 	virtual void BuggerOff(const float3& pos, float radius) {}
+	virtual void StopMove() {}
+
+	void StopAttackingTargetIf(const std::function<bool(const CUnit*)>& pred);
+	void StopAttackingAllyTeam(int ally);
+
 	/**
 	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command
 	 */
-		bool WillCancelQueued(const Command& c);
-	virtual bool CanSetMaxSpeed() const { return false; }
-	virtual void StopMove() { return; }
-
-	/**
-	 * Removes attack commands targeted at our new ally.
-	 */
-	void StopAttackingAllyTeam(int ally);
+	bool WillCancelQueued(const Command& c) const;
 
 	bool HasCommand(int cmdID) const;
 	bool HasMoreMoveCommands(bool skipFirstCmd = true) const;
@@ -71,8 +72,7 @@ public:
 	 * @return An iterator pointing at the command, or commandQue.end(),
 	 *   if no such queued command exists
 	 */
-	CCommandQueue::iterator GetCancelQueued(const Command& c,
-	                                        CCommandQueue& queue);
+	CCommandQueue::const_iterator GetCancelQueued(const Command& c, const CCommandQueue& queue) const;
 	/**
 	 * @brief Returns commands that overlap c, but will not be canceled by c
 	 * @return a vector containing commands that overlap c
@@ -93,8 +93,8 @@ public:
 	virtual void ExecuteStop(Command& c);
 
 	void UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd);
-	void UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc);
-	void InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, SCommandDescription&& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, SCommandDescription&& cmdDesc);
 	bool RemoveCommandDescription(unsigned int cmdDescIdx);
 
 	void UpdateNonQueueingCommands();
@@ -108,7 +108,7 @@ public:
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
 	void UpdateStockpileIcon();
-	bool CanChangeFireState();
+	bool CanChangeFireState() const;
 
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 
@@ -130,14 +130,14 @@ public:
 	bool inCommand;
 	bool repeatOrders;
 	int lastSelectedCommandPage;
-	bool unimportantMove;
 
 protected:
 	// return true by default so non-AirCAI's trigger FinishCommand
 	virtual bool SelectNewAreaAttackTargetOrPos(const Command& ac) { return true; }
 
 	bool IsAttackCapable() const;
-	bool SkipParalyzeTarget(const CUnit* target);
+	bool SkipParalyzeTarget(const CUnit* target) const;
+
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
 	/**

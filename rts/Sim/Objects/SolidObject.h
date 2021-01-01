@@ -96,7 +96,6 @@ public:
 		DAMAGE_EXTSOURCE_CRUSHED = 7,
 	};
 
-	CSolidObject();
 	virtual ~CSolidObject() {}
 
 	void PostLoad();
@@ -108,6 +107,8 @@ public:
 
 	virtual void Kill(CUnit* killer, const float3& impulse, bool crushed);
 	virtual int GetBlockingMapID() const { return -1; }
+
+	virtual const YardMapStatus* GetBlockMap() const { return nullptr; }
 
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir);
@@ -142,24 +143,26 @@ public:
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
 
-	void AddHeading(short deltaHeading, bool useGroundNormal) { SetHeading(heading + deltaHeading, useGroundNormal); }
-	void SetHeading(short worldHeading, bool useGroundNormal) {
+	void AddHeading(short deltaHeading, bool useGroundNormal, bool useObjectNormal) { SetHeading(heading + deltaHeading, useGroundNormal, useObjectNormal); }
+	void SetHeading(short worldHeading, bool useGroundNormal, bool useObjectNormal) {
 		heading = worldHeading;
 
-		UpdateDirVectors(useGroundNormal);
+		UpdateDirVectors(useGroundNormal, useObjectNormal);
 		UpdateMidAndAimPos();
 	}
 
 	// update object's <heading> from current frontdir
 	// should always be called after a SetDirVectors()
 	void SetHeadingFromDirection();
+	// update object's <buildFacing> from current heading
+	void SetFacingFromHeading();
 	// update object's local coor-sys from current <heading>
 	// (unlike ForcedSpin which updates from given <updir>)
 	// NOTE: movetypes call this directly
-	void UpdateDirVectors(bool useGroundNormal);
+	void UpdateDirVectors(bool useGroundNormal, bool useObjectNormal);
 
 	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
-	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
+	virtual CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const = 0;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
 		if (lmp == nullptr)
@@ -173,18 +176,16 @@ public:
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
 	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
 
-	const LocalModelPiece* GetLastHitPiece(int frame) const {
-		if (frame < 0)
-			return lastHitPiece;
-		if (frame == lastHitPieceFrame)
-			return lastHitPiece;
+	const LocalModelPiece* GetLastHitPiece(int frame, int synced = true) const {
+		if (frame == pieceHitFrames[synced])
+			return hitModelPieces[synced];
 
 		return nullptr;
 	}
 
-	void SetLastHitPiece(const LocalModelPiece* p, int f) {
-		lastHitPiece      = p;
-		lastHitPieceFrame = f;
+	void SetLastHitPiece(const LocalModelPiece* piece, int frame, int synced = true) {
+		hitModelPieces[synced] = piece;
+		pieceHitFrames[synced] = frame;
 	}
 
 
@@ -199,6 +200,11 @@ public:
 	 * is currently marked on it, does nothing otherwise.
 	 */
 	void UnBlock();
+
+	void SetMapPos(const int2 mp) {
+		mapPos = mp;
+		groundBlockPos = pos;
+	}
 
 
 	// these transform a point or vector to object-space
@@ -218,13 +224,19 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
+
 	float3 GetDragAccelerationVec(const float4& params) const;
-	float3 GetWantedUpDir(bool useGroundNormal) const;
+	float3 GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const;
 
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
+	float CalcFootPrintMinExteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintMaxInteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintAxisStretchFactor() const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
+	bool FootPrintOnGround() const;
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
 	bool IsOnGround   () const { return (HasPhysicalStateBit(PSTATE_BIT_ONGROUND   )); }
@@ -295,65 +307,99 @@ private:
 	float3 GetAimPos() const { return (GetObjectSpacePos(relAimPos)); }
 
 public:
-	float health;
-	float maxHealth;
+	float health = 0.0f;
+	float maxHealth = 1.0f;
 
-	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
+	///< the physical mass of this object (can be changed by SetMass)
+	float mass = DEFAULT_MASS;
+	///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
+	float crushResistance = 0.0f;
 
-	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
-	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
-	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
-	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
+	///< whether this object can potentially be crushed during a collision with another object
+	bool crushable = false;
+	///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
+	bool immobile = false;
+	bool yardOpen = false;
 
-	bool noDraw;                                ///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
-	bool luaDraw;                               ///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
-	bool noSelect;                              ///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
+	///< if false, object can be pushed during enemy collisions even when modrules forbid it
+	bool blockEnemyPushing = true;
+	///< if true, map height cannot change under this object (through explosions, etc.)
+	bool blockHeightChanges = false;
 
-	int xsize;                                  ///< The x-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
-	int zsize;                                  ///< The z-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
-	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
+	///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
+	bool noDraw = false;
+	///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
+	bool luaDraw = false;
+	///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
+	bool noSelect = false;
 
-	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
-	PhysicalState physicalState;                ///< bitmask indicating current state of this object within the game world
-	CollidableState collidableState;            ///< bitmask indicating which types of objects this object can collide with
+	///< x-size of this object, according to its footprint (note: rotated depending on buildFacing)
+	int xsize = 1;
+	///< z-size of this object, according to its footprint (note: rotated depending on buildFacing)
+	int zsize = 1;
 
-	int team;                                   ///< team that "owns" this object
-	int allyteam;                               ///< allyteam that this->team is part of
+	///< unrotated x-/z-size of this object, according to its footprint
+	int2 footprint = {1, 1};
 
-	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
-	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
+	///< contains the same information as frontdir, but in a short signed integer
+	SyncedSshort heading = 0;
+	///< orientation of footprint, 4 different states
+	SyncedSshort buildFacing = 0;
 
 
-	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
+	///< objects start out non-blocking but fully collidable
+	///< SolidObjectDef::collidable controls only the SO-bit
+	///<
+	///< bitmask indicating current state of this object within the game world
+	PhysicalState physicalState = PhysicalState(PSTATE_BIT_ONGROUND);
+	///< bitmask indicating which types of objects this object can collide with
+	CollidableState collidableState = CollidableState(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+
+
+	///< team that "owns" this object
+	int team = 0;
+	///< allyteam that this->team is part of
+	int allyteam = 0;
+
+	///< [i] := frame on which hitModelPieces[i] was last hit
+	int pieceHitFrames[2] = {-1, -1};
+
+	///< mobility information about this object (if NULL, object is either static or aircraft)
+	MoveDef* moveDef = nullptr;
 
 	LocalModel localModel;
 	CollisionVolume collisionVolume;
 	CollisionVolume selectionVolume;
 
-	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
-	      SolidObjectGroundDecal* groundDecal;
+	///< pieces that were last hit by a {[0] := unsynced, [1] := synced} projectile
+	const LocalModelPiece* hitModelPieces[2];
 
-	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
-	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
-	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
+	SolidObjectGroundDecal* groundDecal = nullptr;
 
-	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos (read from model, used to initialize midPos)
-	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
-	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
-	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
+	///< object-local {z,x,y}-axes (in WS)
+	SyncedFloat3 frontdir =  FwdVector;
+	SyncedFloat3 rightdir = -RgtVector;
+	SyncedFloat3    updir =   UpVector;
 
-	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
+	///< local-space vector from pos to midPos (read from model, used to initialize midPos)
+	SyncedFloat3 relMidPos;
+	///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
+	SyncedFloat3 relAimPos;
+	///< mid-position of model in WS, used as center of mass (etc)
+	SyncedFloat3 midPos;
+	///< aim-position of model in WS, used by weapons
+	SyncedFloat3 aimPos;
+
+	///< current position on GroundBlockingObjectMap
+	int2 mapPos;
 	float3 groundBlockPos;
 
-	float3 dragScales;
+	float3 dragScales = OnesVector;
 
-	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
-	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
-
-	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
-	bool yardOpen;
-	short int buildFacing;                      ///< Orientation of footprint, 4 different states
+	///< pos + speed * timeOffset (unsynced)
+	float3 drawPos;
+	///< drawPos + relMidPos (unsynced)
+	float3 drawMidPos;
 
 	/**
 	 * @brief mod controlled parameters
@@ -366,14 +412,15 @@ public:
 	LuaRulesParams::Params  modParams;
 
 public:
-	static const float DEFAULT_MASS;
-	static const float MINIMUM_MASS;
-	static const float MAXIMUM_MASS;
+	static constexpr float DEFAULT_MASS = 1e5f;
+	static constexpr float MINIMUM_MASS = 1e0f; // 1.0f
+	static constexpr float MAXIMUM_MASS = 1e6f;
 
 	static int deletingRefID;
+
 	static void SetDeletingRefID(int id) { deletingRefID = id; }
 	// returns the object (command reference) id of the object currently being deleted,
-	// for units this equals unit->id, and for features feature->id + unitHandler->MaxUnits()
+	// for units this equals unit->id, and for features feature->id + unitHandler.MaxUnits()
 	static int GetDeletingRefID() { return deletingRefID; }
 };
 

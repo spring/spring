@@ -18,6 +18,7 @@
 #define SFX_CEG               1024
 #define SFX_FIRE_WEAPON       2048
 #define SFX_DETONATE_WEAPON   4096
+#define SFX_GLOBAL         16384
 
 
 // Indices for set/get value

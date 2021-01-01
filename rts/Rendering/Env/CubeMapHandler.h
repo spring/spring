@@ -7,7 +7,7 @@
 
 class CubeMapHandler {
 public:
-	CubeMapHandler();
+	CubeMapHandler(): reflectionCubeFBO(true) {}
 
 	bool Init();
 	void Free();
@@ -22,8 +22,8 @@ public:
 	unsigned int GetSpecularTextureSize() const { return specTexSize; }
 
 private:
-	void CreateReflectionFace(unsigned int, const float3&, bool);
-	inline void CreateSpecularFacePart(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
+	void CreateReflectionFace(unsigned int, bool);
+	void CreateSpecularFacePart(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
 	void CreateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&);
 	void UpdateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
 
@@ -36,13 +36,33 @@ private:
 
 	unsigned int currReflectionFace;
 	unsigned int specularTexIter;
-	bool mapSkyReflections;
 
-	std::vector<unsigned char> specTexBuf;
+	bool mapSkyReflections;
+	bool generateMipMaps;
+
+	std::vector<unsigned char> specTexPartBuf;
+	std::vector<unsigned char> specTexFaceBuf;
 
 	FBO reflectionCubeFBO;
+
+	const float3 faceDirs[6][3] = {
+		{ RgtVector,  FwdVector,   UpVector}, // fwd = +x, right = +z, up = +y
+		{-RgtVector, -FwdVector,   UpVector}, // fwd = -x
+		{  UpVector,  RgtVector, -FwdVector}, // fwd = +y
+		{ -UpVector,  RgtVector,  FwdVector}, // fwd = -y
+		{ FwdVector, -RgtVector,   UpVector}, // fwd = +z
+		{-FwdVector,  RgtVector,   UpVector}, // fwd = -z
+	};
+	const float4 faceColors[6] = {
+		{1.0f, 0.0f, 0.0f, 1.0f}, // red
+		{0.0f, 1.0f, 0.0f, 1.0f}, // green
+		{0.0f, 0.0f, 1.0f, 1.0f}, // blue
+		{1.0f, 1.0f, 0.0f, 1.0f}, // yellow
+		{1.0f, 0.0f, 1.0f, 1.0f}, // purple
+		{0.0f, 1.0f, 1.0f, 1.0f}, // cyan
+	};
 };
 
-extern CubeMapHandler* cubeMapHandler;
+extern CubeMapHandler cubeMapHandler;
 
 #endif

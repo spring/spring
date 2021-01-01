@@ -15,16 +15,18 @@ class CCategoryHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CCategoryHandler)
 
 public:
-	static inline unsigned int GetMaxCategories() {
-		// categories work as bitfields, so
-		// we can not support more than this
-		return (sizeof(unsigned int) * 8);
-	}
+	// categories work as bitfields, so
+	// we can not support more than this
+	static constexpr inline unsigned int GetMaxCategories() { return (sizeof(unsigned int) * 8); }
 
 	static CCategoryHandler* Instance();
 
 	static void CreateInstance();
 	static void RemoveInstance();
+
+
+	void Init() { categories.reserve(GetMaxCategories()); firstUnused = 0; }
+	void Kill() { categories.clear(); }
 
 	/**
 	 * Returns the categories bit-field value.
@@ -46,14 +48,10 @@ public:
 	std::vector<std::string> GetCategoryNames(unsigned int bits) const;
 
 private:
-	CCategoryHandler(): firstUnused(0) {}
-	~CCategoryHandler() {}
-
-private:
-	static CCategoryHandler* instance;
-
+	// iterated in GetCategoryNames; reserved size must be constant
 	spring::unordered_map<std::string, unsigned int> categories;
-	unsigned int firstUnused;
+
+	unsigned int firstUnused = 0;
 };
 
 #endif // _CATEGORY_HANDLER_H

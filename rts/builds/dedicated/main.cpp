@@ -59,7 +59,7 @@ void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
-#ifndef WIN32
+#ifndef _WIN32
 	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
 		gflags::ParseCommandLineFlags(&argc, &argv, true);
 		ParseCmdLine(argc, argv, scriptName);
 
-		GlobalConfig::Instantiate();
+		globalConfig.Init();
 		FileSystemInitializer::InitializeLogOutput();
 		FileSystemInitializer::Initialize();
 
@@ -157,35 +157,53 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		// Create the server, it will run in a separate thread
+		// create the server, it will run in a separate thread
 		CGlobalUnsyncedRNG rng;
 
-		const unsigned sleepTime = FLAGS_sleeptime;
-		const unsigned randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		const uint32_t sleepTime = FLAGS_sleeptime;
+		const uint32_t randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 
 		rng.Seed(randSeed);
 		dsGameData->SetRandomSeed(rng.NextInt());
 
-		//  Use script provided hashes if they exist
-		if (dsGameSetup->mapHash != 0) {
-			dsGameData->SetMapChecksum(dsGameSetup->mapHash);
-			dsGameSetup->LoadStartPositions(false); // reduced mode
-		} else {
-			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
+		{
+			sha512::raw_digest dsMapChecksum;
+			sha512::raw_digest dsModChecksum;
+			sha512::hex_digest dsMapChecksumHex;
+			sha512::hex_digest dsModChecksumHex;
 
-			CFileHandler f("maps/" + dsGameSetup->mapName);
-			if (!f.FileExists())
-				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
+			std::memcpy(dsMapChecksum.data(), &dsGameSetup->dsMapHash[0], sizeof(dsGameSetup->dsMapHash));
+			std::memcpy(dsModChecksum.data(), &dsGameSetup->dsModHash[0], sizeof(dsGameSetup->dsModHash));
+			sha512::dump_digest(dsMapChecksum, dsMapChecksumHex);
+			sha512::dump_digest(dsModChecksum, dsModChecksumHex);
 
-			dsGameSetup->LoadStartPositions(); // full mode
-		}
+			LOG("[script-checksums]\n\tmap=%s\n\tmod=%s", dsMapChecksumHex.data(), dsModChecksumHex.data());
 
-		if (dsGameSetup->modHash != 0) {
-			dsGameData->SetModChecksum(dsGameSetup->modHash);
-		} else {
-			const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
-			const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
-			dsGameData->SetModChecksum(modCheckSum);
+			// use script-provided hashes if any byte is non-zero; these
+			// are only used by some client-side (pregame) sanity checks
+			const auto hashPred = [](uint8_t byte) { return (byte != 0); };
+
+			if (std::find_if(dsMapChecksum.begin(), dsMapChecksum.end(), hashPred) != dsMapChecksum.end()) {
+				dsGameData->SetMapChecksum(dsMapChecksum.data());
+				dsGameSetup->LoadStartPositions(false); // reduced mode
+			} else {
+				dsGameData->SetMapChecksum(&archiveScanner->GetArchiveCompleteChecksumBytes(dsGameSetup->mapName)[0]);
+
+				CFileHandler f("maps/" + dsGameSetup->mapName);
+				if (!f.FileExists())
+					vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
+
+				dsGameSetup->LoadStartPositions(); // full mode
+			}
+
+			if (std::find_if(dsModChecksum.begin(), dsModChecksum.end(), hashPred) != dsModChecksum.end()) {
+				dsGameData->SetModChecksum(dsModChecksum.data());
+			} else {
+				const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
+				const sha512::raw_digest& modCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(modArchive);
+
+				dsGameData->SetModChecksum(&modCheckSum[0]);
+			}
 		}
 
 		LOG("starting server...");
@@ -224,7 +242,6 @@ int main(int argc, char* argv[])
 
 		LOG("exiting");
 		FileSystemInitializer::Cleanup();
-		GlobalConfig::Deallocate();
 		DataDirLocater::FreeInstance();
 
 		spring_clock::PopTickRate();
@@ -235,7 +252,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-#if defined(WIN32) && !defined(_MSC_VER)
+#if defined(_WIN32) && !defined(_MSC_VER)
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

@@ -4,6 +4,7 @@
 #define DATA_DIR_LOCATER_H
 
 #include <string>
+#include <array>
 #include <vector>
 
 struct DataDir
@@ -16,7 +17,7 @@ struct DataDir
 	DataDir(const std::string& path);
 
 	std::string path;
-	bool writable;
+	bool writable = false;
 };
 
 class DataDirLocater
@@ -57,11 +58,13 @@ public:
 	 * @brief returns the highest priority writable directory, aka the writedir
 	 */
 	std::string GetWriteDirPath() const;
+
 	std::vector<std::string> GetDataDirPaths() const;
+	std::array<std::string, 5> GetDataDirRoots() const;
 
 	/**
 	 * Returns whether isolation-mode is enabled.
-	 * In isolation-mode, we will only use a singel data-dir.
+	 * In isolation-mode, we will only use a single data-dir.
 	 * This defaults to false, but can be set to true by setting the env var
 	 * SPRING_ISOLATED.
 	 * @see #GetIsolationModeDir
@@ -176,12 +179,13 @@ private:
 
 
 private:
-	bool isolationMode;
+	bool isolationMode = false;
+
 	std::string isolationModeDir;
 	std::string forcedWriteDir;
-
 	std::vector<DataDir> dataDirs;
-	const DataDir* writeDir;
+
+	const DataDir* writeDir = nullptr;
 };
 
 #define dataDirLocater DataDirLocater::GetInstance()

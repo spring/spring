@@ -4,21 +4,19 @@
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/creg/STL_Deque.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CFireBallProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(sparks)
+	CR_MEMBER(sparks),
+	CR_MEMBER(numSparks)
 ))
 
 
@@ -43,16 +41,17 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 
 void CFireBallProjectile::Draw(CVertexArray* va)
 {
-	unsigned char col[4] = { 255, 150, 100, 1 };
+	unsigned char col[4] = {255, 150, 100, 1};
 
-	float3 interPos = checkCol ? drawPos : pos;
-	float size = radius * 1.3f;
+	const float3 interPos = mix(pos, drawPos, checkCol);
+	const float size = radius * 1.3f;
 
-	int numSparks = sparks.size();
-	int numFire = std::min(10, numSparks);
+	const unsigned int numFire = std::min(10u, numSparks);
+	const unsigned int maxCol = mix(numFire, 10u, checkCol);
+
 	va->EnlargeArrays((numSparks + numFire) * 4, 0, VA_SIZE_TC);
 
-	for (int i = 0; i < numSparks; i++) {
+	for (unsigned int i = 0; i < numSparks; i++) {
 		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (numSparks - i) * 12;
 		col[1] = (numSparks - i) *  6;
@@ -66,71 +65,75 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 		#undef ept
 	}
 
-	int maxCol = numFire;
-	if (checkCol) {
-		maxCol = 10;
-	}
-
-	for (int i = 0; i < numFire; i++) //! CAUTION: loop count must match EnlargeArrays above
-	{
+	for (unsigned int i = 0; i < numFire; i++) {
+		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (maxCol - i) * 25;
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;
 		#define dgt projectileDrawer->dguntex
-		va->AddVertexQTC(interPos - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col);
-		va->AddVertexQTC(interPos  -camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col);
+		va->AddVertexQTC(interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col);
+		va->AddVertexQTC(interPos - (speed * 0.5f * i) + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col);
+		va->AddVertexQTC(interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col);
+		va->AddVertexQTC(interPos - (speed * 0.5f * i)  -camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col);
 		#undef dgt
-		interPos = interPos - speed * 0.5f;
 	}
 }
 
 void CFireBallProjectile::Update()
 {
 	if (checkCol) {
-		if (!luaMoveCtrl) {
-			pos += speed;
-			speed.y += (mygravity * weaponDef->gravityAffected);
-		}
+		pos += (speed * (1 - luaMoveCtrl));
+		speed.y += (mygravity * weaponDef->gravityAffected * (1 - luaMoveCtrl));
 
-		if (weaponDef->noExplode && TraveledRange())
-			checkCol = false;
+		checkCol = !(weaponDef->noExplode && TraveledRange());
 
 		EmitSpark();
 	} else {
-		deleteMe |= sparks.empty();
+		deleteMe |= (numSparks == 0);
 	}
 
-	for (unsigned int i = 0; i < sparks.size(); i++) {
-		if ((--sparks[i].ttl) == 0) {
-			sparks.pop_back();
-			break;
-		}
-
-		sparks[i].pos += (sparks[i].speed * checkCol);
-		sparks[i].speed *= 0.95f;
-	}
-
-	explGenHandler->GenExplosion(cegID, pos, speed, ttl, !sparks.empty() ? sparks[0].size : 0.0f, 0.0f, NULL, NULL);
+	TickSparks();
 	UpdateGroundBounce();
 	UpdateInterception();
 }
 
+
 void CFireBallProjectile::EmitSpark()
 {
-	Spark spark;
+	constexpr unsigned int maxSparks = sizeof(sparks) / sizeof(sparks[0]);
+
+	if (numSparks == maxSparks)
+		return;
+
+	Spark& spark = sparks[numSparks++];
+
 	const float x = guRNG.NextFloat() - 0.5f;
 	const float y = guRNG.NextFloat() - 0.5f;
 	const float z = guRNG.NextFloat() - 0.5f;
 
 	spark.speed = (speed * 0.95f) + float3(x, y, z);
-	spark.pos = pos - speed * (guRNG.NextFloat() + 3) + spark.speed * 3;
+	spark.pos = pos - speed * (guRNG.NextFloat() + 3.0f) + spark.speed * 3.0f;
 	spark.size = 5.0f;
-	spark.ttl = 15;
-
-	sparks.push_front(spark);
+	spark.ttl = maxSparks;
 }
+
+void CFireBallProjectile::TickSparks()
+{
+	for (unsigned int i = 0; i < numSparks; ) {
+		if ((--sparks[i].ttl) <= 0) {
+			sparks[i] = sparks[--numSparks];
+			continue;
+		}
+
+		sparks[i].pos += (sparks[i].speed * checkCol);
+		sparks[i].speed *= 0.95f;
+
+		i++;
+	}
+
+	explGenHandler.GenExplosion(cegID, pos, speed, ttl, (numSparks > 0)? sparks[0].size: 0.0f, 0.0f, nullptr, nullptr);
+}
+
 
 void CFireBallProjectile::Collision()
 {
@@ -138,9 +141,3 @@ void CFireBallProjectile::Collision()
 	deleteMe = false;
 }
 
-int CFireBallProjectile::GetProjectilesCount() const
-{
-	int numSparks = sparks.size();
-	int numFire = std::min(10, numSparks);
-	return (numSparks + numFire);
-}

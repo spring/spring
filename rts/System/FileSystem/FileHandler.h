@@ -3,7 +3,6 @@
 #ifndef _FILE_HANDLER_H
 #define _FILE_HANDLER_H
 
-#include <set>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -43,9 +42,12 @@ public:
 	bool Eof() const;
 	int GetPos();
 	int FileSize() const { return fileSize; }
+	int LoadCode() const { return loadCode; }
 
 	bool LoadStringData(std::string& data);
 	std::string GetFileExt() const;
+	static std::string GetFileAbsolutePath(const std::string& filePath, const std::string& modes);
+	static std::string GetArchiveContainingFile(const std::string& filePath, const std::string& modes);
 
 	std::vector<std::uint8_t>& GetBuffer() { return fileBuffer; }
 
@@ -67,17 +69,19 @@ protected:
 	virtual bool TryReadFromRawFS(const std::string& fileName);
 	virtual bool TryReadFromVFS(const std::string& fileName, int section);
 
-	static bool InsertRawFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
-	static bool InsertVFSFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern, int section);
+	static bool InsertRawFiles(std::vector<std::string>& fileSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSFiles(std::vector<std::string>& fileSet, const std::string& path, const std::string& pattern, int section);
 
-	static bool InsertRawDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
-	static bool InsertVFSDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern, int section);
+	static bool InsertRawDirs(std::vector<std::string>& dirSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSDirs(std::vector<std::string>& dirSet, const std::string& path, const std::string& pattern, int section);
 
 	std::string fileName;
 	std::ifstream ifs;
 	std::vector<std::uint8_t> fileBuffer;
-	int filePos;
-	int fileSize;
+
+	int filePos = 0;
+	int fileSize = -1;
+	int loadCode = -3; // {-1,0,1} if loaded from VFS
 };
 
 #endif // _FILE_HANDLER_H

@@ -4,8 +4,8 @@
 
 #include <stdlib.h>
 
-#define BOOST_TEST_MODULE BitwiseEnum
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 using namespace Bitwise;
 
@@ -17,13 +17,13 @@ bool foo(Color c) { return true; }
 
 // NOTE: these are compile time tests
 #ifndef FAIL
-BOOST_AUTO_TEST_CASE( ShouldCompile )
+TEST_CASE("ShouldCompile")
 {
 	Color c = Colors::red | Colors::green;
 
-	BOOST_CHECK(foo(c));
-	BOOST_CHECK(foo(Colors::red));
-	BOOST_CHECK(foo(Colors::red | Colors::green));
+	CHECK(foo(c));
+	CHECK(foo(Colors::red));
+	CHECK(foo(Colors::red | Colors::green));
 
 	// test overloaded global operator| (see http://code.google.com/p/mili/issues/detail?id=40)
 	int x = Colors::red | Colors::green;
@@ -37,14 +37,14 @@ BOOST_AUTO_TEST_CASE( ShouldCompile )
 
 
 #ifdef FAIL
-BOOST_AUTO_TEST_CASE( MustNotCompile )
+TEST_CASE("MustNotCompile")
 {
 #ifdef TEST1
-	BOOST_CHECK(foo(Vehicles::car));
+	CHECK(foo(Vehicles::car));
 #endif
-	
+
 #ifdef TEST2
-	BOOST_CHECK(foo(1));
+	CHECK(foo(1));
 #endif
 
 #ifdef TEST3

@@ -20,7 +20,7 @@ public:
 	void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) {}
 
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) {}
-	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) {}
+	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel = ZeroVector) {}
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) {}
 
@@ -30,9 +30,9 @@ public:
 	float StreamGetPlayTime() { return 0.f; }
 
 protected:
-	void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative) {}
+	void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative) override {}
+	void SoundSourceFinished(CSoundSource* sndSource) override {}
 
-	void SoundSourceFinished(CSoundSource* sndSource) {}
 	friend class CSoundSource;
 };
 

@@ -11,20 +11,20 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
-#include "IAILibraryManager.h"
+#include "AILibraryManager.h"
 
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 	: interfaceId(-1)
 	, initialized(false)
-	, sAIInterfaceLibrary({ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL})
+	, sAIInterfaceLibrary({ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr})
 	, info(_info)
 {
 	libFilePath = FindLibFile();
 
 	sharedLib = SharedLib::Instantiate(libFilePath);
 
-	if (sharedLib == NULL) {
+	if (sharedLib == nullptr) {
 		LOG_L(L_ERROR, "Loading AI Interface library from file \"%s\".", libFilePath.c_str());
 		return;
 	}
@@ -94,7 +94,7 @@ LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 	const std::string& engineVersionString,
 	int engineVersionNumber
 ) const {
-	// if (sAIInterfaceLibrary.getLevelOfSupportFor != NULL)
+	// if (sAIInterfaceLibrary.getLevelOfSupportFor != nullptr)
 	//   return sAIInterfaceLibrary.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber);
 
 	return LOS_Unknown;
@@ -154,9 +154,8 @@ std::string CAIInterfaceLibrary::GetSkirmishAIOptions(int aiIndex) const {
 int CAIInterfaceLibrary::GetLoadCount() const {
 	int totalSkirmishAILibraryLoadCount = 0;
 
-	for (auto salc = skirmishAILoadCount.cbegin(); salc != skirmishAILoadCount.cend(); ++salc) {
-		totalSkirmishAILibraryLoadCount += salc->second;
-	}
+	for (const auto& item: skirmishAILoadCount)
+		totalSkirmishAILibraryLoadCount += item.second;
 
 	return totalSkirmishAILibraryLoadCount;
 }
@@ -214,7 +213,7 @@ const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 }
 
 int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+	const AILibraryManager* libMan = AILibraryManager::GetInstance();
 	const CSkirmishAILibraryInfo& aiInfo = (libMan->GetSkirmishAIInfos()).find(key)->second;
 
 	if (skirmishAILoadCount[key] == 0)

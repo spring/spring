@@ -220,7 +220,7 @@ bool isAllowed(p_socket ps, const char *address, unsigned short port, bool conne
     socklen_t len = sizeof(rawtype);
     CLuaSocketRestrictions::RestrictType type;
     int res = getsockopt(*ps, SOL_SOCKET, SO_TYPE, (char*)&rawtype, &len);
-    #ifdef WIN32
+    #ifdef _WIN32
     if (res == SOCKET_ERROR) {
 	LOG_L(L_ERROR, "Socket error (%d): %s", res, socket_strerror(WSAGetLastError()));
         return false;

@@ -2,7 +2,7 @@
 // detail/winrt_resolve_op.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,13 +19,13 @@
 
 #if defined(ASIO_WINDOWS_RUNTIME)
 
-#include "asio/detail/addressof.hpp"
 #include "asio/detail/bind_handler.hpp"
 #include "asio/detail/fenced_block.hpp"
 #include "asio/detail/handler_alloc_helpers.hpp"
 #include "asio/detail/handler_invoke_helpers.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/winrt_async_op.hpp"
-#include "asio/ip/basic_resolver_iterator.hpp"
+#include "asio/ip/basic_resolver_results.hpp"
 #include "asio/error.hpp"
 
 #include "asio/detail/push_options.hpp"
@@ -44,7 +44,7 @@ public:
 
   typedef typename Protocol::endpoint endpoint_type;
   typedef asio::ip::basic_resolver_query<Protocol> query_type;
-  typedef asio::ip::basic_resolver_iterator<Protocol> iterator_type;
+  typedef asio::ip::basic_resolver_results<Protocol> results_type;
 
   winrt_resolve_op(const query_type& query, Handler& handler)
     : winrt_async_op<
@@ -54,24 +54,25 @@ public:
       query_(query),
       handler_(ASIO_MOVE_CAST(Handler)(handler))
   {
+    handler_work<Handler>::start(handler_);
   }
 
-  static void do_complete(io_service_impl* owner, operation* base,
+  static void do_complete(void* owner, operation* base,
       const asio::error_code&, std::size_t)
   {
     // Take ownership of the operation object.
     winrt_resolve_op* o(static_cast<winrt_resolve_op*>(base));
     ptr p = { asio::detail::addressof(o->handler_), o, o };
+    handler_work<Handler> w(o->handler_);
 
-    ASIO_HANDLER_COMPLETION((o));
+    ASIO_HANDLER_COMPLETION((*o));
 
-    iterator_type iterator = iterator_type();
+    results_type results = results_type();
     if (!o->ec_)
     {
       try
       {
-        iterator = iterator_type::create(
-            o->result_, o->query_.hints(),
+        results = results_type::create(o->result_, o->query_.hints(),
             o->query_.host_name(), o->query_.service_name());
       }
       catch (Platform::Exception^ e)
@@ -87,8 +88,8 @@ public:
     // with the handler. Consequently, a local copy of the handler is required
     // to ensure that any owning sub-object remains valid until after we have
     // deallocated the memory here.
-    detail::binder2<Handler, asio::error_code, iterator_type>
-      handler(o->handler_, o->ec_, iterator);
+    detail::binder2<Handler, asio::error_code, results_type>
+      handler(o->handler_, o->ec_, results);
     p.h = asio::detail::addressof(handler.handler_);
     p.reset();
 
@@ -96,8 +97,8 @@ public:
     if (owner)
     {
       fenced_block b(fenced_block::half);
-      ASIO_HANDLER_INVOCATION_BEGIN((handler.arg1_, handler.arg2_));
-      asio_handler_invoke_helpers::invoke(handler, handler.handler_);
+      ASIO_HANDLER_INVOCATION_BEGIN((handler.arg1_, "..."));
+      w.complete(handler, handler.handler_);
       ASIO_HANDLER_INVOCATION_END;
     }
   }

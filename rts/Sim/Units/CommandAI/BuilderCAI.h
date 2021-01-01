@@ -8,7 +8,7 @@
 #include "System/Misc/BitwiseEnum.h"
 #include "System/UnorderedSet.hpp"
 
-#include <string>
+#include <vector>
 
 class CUnit;
 class CBuilder;
@@ -55,9 +55,9 @@ public:
 	/**
 	 * Checks if a unit is being reclaimed by a friendly con.
 	 */
-	static bool IsUnitBeingReclaimed(const CUnit* unit, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
+	static bool IsUnitBeingReclaimed(const CUnit* unit, const CUnit* friendUnit = nullptr);
+	static bool IsFeatureBeingReclaimed(int featureId, const CUnit* friendUnit = nullptr);
+	static bool IsFeatureBeingResurrected(int featureId, const CUnit* friendUnit = nullptr);
 
 	bool IsInBuildRange(const CWorldObject* obj) const;
 	bool IsInBuildRange(const float3& pos, const float radius) const;
@@ -68,6 +68,8 @@ public:
 	static spring::unordered_set<int> reclaimers;
 	static spring::unordered_set<int> featureReclaimers;
 	static spring::unordered_set<int> resurrecters;
+
+	static std::vector<int> removees;
 
 private:
 	enum ReclaimOptions {

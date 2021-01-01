@@ -13,8 +13,8 @@ class CGround;
 class SmoothHeightMesh
 {
 public:
-	SmoothHeightMesh(float mx, float my, float res, float smoothRad);
-	~SmoothHeightMesh();
+	void Init(float mx, float my, float res, float smoothRad);
+	void Kill();
 
 	float GetHeight(float x, float y);
 	float GetHeightAboveWater(float x, float y);
@@ -34,15 +34,20 @@ public:
 private:
 	void MakeSmoothMesh();
 
-	const int maxx, maxy;
-	const float fmaxx, fmaxy;
-	const float resolution;
-	const float smoothRadius;
+	int maxx = 0;
+	int maxy = 0;
+	float fmaxx = 0.0f;
+	float fmaxy = 0.0f;
+	float resolution = 0.0f;
+	float smoothRadius = 0.0f;
 
 	std::vector<float> mesh;
 	std::vector<float> origMesh;
+
+	std::vector<float> colsMaxima;
+	std::vector<int> maximaRows;
 };
 
-extern SmoothHeightMesh* smoothGround;
+extern SmoothHeightMesh smoothGround;
 
 #endif

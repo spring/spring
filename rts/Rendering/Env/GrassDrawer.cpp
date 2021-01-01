@@ -4,6 +4,7 @@
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -21,7 +22,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/EventHandler.h"
 #include "System/GlobalRNG.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
@@ -228,8 +229,7 @@ CGrassDrawer::CGrassDrawer()
 		CBitmap grassBladeTexBM;
 		if (!grassBladeTexBM.Load(mapInfo->grass.bladeTexName)) {
 			// map didn't define a grasstex, so generate one
-			grassBladeTexBM.channels = 4;
-			grassBladeTexBM.Alloc(256,64);
+			grassBladeTexBM.Alloc(256, 64, 4);
 
 			for (int a = 0; a < 16; ++a) {
 				CreateGrassBladeTex(&grassBladeTexBM.GetRawMem()[a * 16 * 4]);
@@ -329,8 +329,8 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
-		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler.GetShadowParams().x);
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
 
@@ -343,14 +343,11 @@ void CGrassDrawer::LoadGrassShaders() {
 
 
 void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
-	const float3 windSpeed =
-		wind.GetCurrentDirection() *
-		wind.GetCurrentStrength() *
-		mapInfo->grass.bladeWaveScale;
+	const float3 windSpeed = envResHandler.GetCurrentWindVec() * mapInfo->grass.bladeWaveScale;
 
 	grassShader = grassShaders[type];
 	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	grassShader->Enable();
 
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
@@ -362,8 +359,8 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	grassShader->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	grassShader->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
-	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+	grassShader->SetUniform4v("shadowParams", &shadowHandler.GetShadowParams().x);
 
 	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);
 	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->modelDiffuseColor.x);
@@ -504,14 +501,13 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 void CGrassDrawer::Update()
 {
 	// grass is never drawn in any special (non-opaque) pass
-	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	const CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	// update visible turfs
 	updateVisibility |= (oldCamPos != cam->GetPos());
 	updateVisibility |= (oldCamDir != cam->GetDir());
 
 	if (updateVisibility) {
-		SCOPED_TIMER("Update::Update::Grass");
 		oldCamPos = cam->GetPos();
 		oldCamDir = cam->GetDir();
 		lastVisibilityUpdate = globalRendering->drawFrame;
@@ -524,7 +520,7 @@ void CGrassDrawer::Update()
 
 		// ATI crashes w/o an error when shadows are enabled!?
 		static const bool shaders = globalRendering->haveGLSL;
-		       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
 
 		if (shaders && !shadows) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
@@ -554,7 +550,6 @@ void CGrassDrawer::Draw()
 	if (grassOff || !readMap->GetGrassShadingTexture())
 		return;
 
-	SCOPED_TIMER("Draw::World::Foliage::Grass");
 	glPushAttrib(GL_CURRENT_BIT);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -566,7 +561,7 @@ void CGrassDrawer::Draw()
 
 	// ATI crashes w/o an error when shadows are enabled!?
 	static const bool shaders = globalRendering->haveGLSL;
-	       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
 
 	if (shaders && !shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
 		SetupGlStateFar();
@@ -604,7 +599,7 @@ void CGrassDrawer::DrawShadow()
 	glPushMatrix();
 	glLoadIdentity();
 
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	static CGrassBlockDrawer blockDrawer;
 	blockDrawer.ResetState();
@@ -643,15 +638,15 @@ void CGrassDrawer::SetupGlStateNear()
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTextureARB(GL_TEXTURE5_ARB);
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler.GetSpecularTextureID());
 	}
 
 	// bind shader
 	if (globalRendering->haveGLSL) {
 		EnableShader(GRASS_PROGRAM_NEAR);
 
-		if (shadowHandler->ShadowsLoaded())
-			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+		if (shadowHandler.ShadowsLoaded())
+			shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 		glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
@@ -704,7 +699,7 @@ void CGrassDrawer::ResetGlStateNear()
 	if (globalRendering->haveGLSL) {
 		grassShader->Disable();
 
-		if (shadowHandler->ShadowsLoaded()) {
+		if (shadowHandler.ShadowsLoaded()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
@@ -770,8 +765,8 @@ void CGrassDrawer::SetupGlStateFar()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
@@ -786,7 +781,7 @@ void CGrassDrawer::ResetGlStateFar()
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
@@ -1086,3 +1081,5 @@ void CGrassDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		}
 	}
 }
+
+

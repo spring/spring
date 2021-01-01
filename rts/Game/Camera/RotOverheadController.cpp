@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -16,14 +16,12 @@ CONFIG(bool, RotOverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
 
 
-CRotOverheadController::CRotOverheadController()
-	: oldHeight(500)
+CRotOverheadController::CRotOverheadController(): oldHeight(500.0f)
 {
 	mouseScale  = configHandler->GetFloat("RotOverheadMouseScale");
 	scrollSpeed = configHandler->GetInt("RotOverheadScrollSpeed") * 0.1f;
 	enabled     = configHandler->GetBool("RotOverheadEnabled");
 	fov         = configHandler->GetFloat("RotOverheadFOV");
-	Update();
 }
 
 

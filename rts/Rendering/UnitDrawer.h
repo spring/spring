@@ -8,7 +8,9 @@
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/UnitDrawerState.hpp"
+#include "Rendering/UnitDefImage.h"
 #include "System/EventClient.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
@@ -17,7 +19,6 @@ struct SolidObjectDef;
 struct UnitDef;
 struct S3DModel;
 
-class IModelRenderContainer;
 class CSolidObject;
 class CUnit;
 class CVertexArray;
@@ -86,8 +87,13 @@ public:
 	void SunChanged();
 
 public:
-	CUnitDrawer();
-	~CUnitDrawer();
+	CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	void Update();
 
@@ -130,8 +136,14 @@ public:
 	void ResetAlphaDrawing(bool deferredPass);
 
 
-	void SetUnitDrawDist(float dist);
-	void SetUnitIconDist(float dist);
+	void SetUnitDrawDist(float dist) {
+		unitDrawDist = dist;
+		unitDrawDistSqr = unitDrawDist * unitDrawDist;
+	}
+	void SetUnitIconDist(float dist) {
+		unitIconDist = dist;
+		iconLength = unitIconDist * unitIconDist * 750.0f;
+	}
 
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
@@ -141,8 +153,8 @@ public:
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
-	IModelRenderContainer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IModelRenderContainer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
@@ -152,6 +164,10 @@ public:
 
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
 	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
+
+	void SetUnitDefImage(const UnitDef* unitDef, const std::string& texName);
+	void SetUnitDefImage(const UnitDef* unitDef, unsigned int texID, int xsize, int ysize);
+	unsigned int GetUnitDefImage(const UnitDef* unitDef);
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
@@ -204,6 +220,7 @@ private:
 public:
 	void DrawUnitIcons();
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void UpdateUnitDefMiniMapIcons(const UnitDef* ud);
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
@@ -263,8 +280,8 @@ private:
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> opaqueModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
@@ -284,8 +301,17 @@ private:
 
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
-	// [0] := fallback shader-less rendering path
-	// [1] := default shader-driven rendering path
+	std::vector<UnitDefImage> unitDefImages;
+
+
+	// caches for ShowUnitBuildSquare
+	std::vector<float3> buildableSquares;
+	std::vector<float3> featureSquares;
+	std::vector<float3> illegalSquares;
+
+
+	// [0] := no-op path
+	// [1] := default shader-path
 	// [2] := currently selected state
 	std::array<IUnitDrawerState*, DRAWER_STATE_CNT> unitDrawerStates;
 	std::array<DrawModelFunc, 3> drawModelFuncs;

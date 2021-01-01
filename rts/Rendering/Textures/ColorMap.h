@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "System/creg/creg_cond.h"
 #include "System/Color.h"
 
 /**
@@ -16,13 +15,22 @@
  */
 class CColorMap
 {
-	CR_DECLARE_STRUCT(CColorMap)
 public:
-	CColorMap();
+	CR_DECLARE_STRUCT(CColorMap)
+	CColorMap() = default;
 	/// Loads from a float vector
-	CColorMap(const std::vector<float>& vec);
+	CColorMap(const float* data, size_t size) { Load(data, size); }
 	/// Loads from a file
 	CColorMap(const std::string& fileName);
+
+	CColorMap(const CColorMap&) = delete;
+	CColorMap(CColorMap&& cm) { *this = std::move(cm); }
+
+	CColorMap& operator = (const CColorMap&) = delete;
+	CColorMap& operator = (CColorMap&&) = default;
+
+	void PostLoad();
+	void Serialize(creg::ISerializer* s);
 
 public:
 	/**
@@ -30,28 +38,41 @@ public:
 	 * @param pos value between 0.0f and 1.0f, returns pointer to color
 	 */
 	void GetColor(unsigned char* color, float pos);
+	void Clear() {
+		xsize = 2; nxsize = 1;
+		ysize = 1;
+
+		map.clear();
+	}
+	void Load(const float* data, size_t size);
+
+private:
+	void LoadMap(const unsigned char* buf, int num);
 
 public:
+	static void InitStatic();
+
+	static void SerializeColorMaps(creg::ISerializer* s);
+
 	/// Load colormap from a bitmap
 	static CColorMap* LoadFromBitmapFile(const std::string& fileName);
 
-	/// Takes a vector with float value 0.0-1.0, 4 values makes up a rgba color
-	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec);
+	/// Takes a vector with float value 0.0-1.0, every 4 values make up a (RGBA) color
+	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec) { return LoadFromRawVector(vec.data(), vec.size()); }
+	static CColorMap* LoadFromRawVector(const float* data, size_t size);
 
 	/**
 	 * Load from a string containing a number of float values or filename.
 	 * example: "1.0 0.5 1.0 ... "
 	 */
-	static CColorMap* LoadFromDefString(const std::string& dString);
+	static CColorMap* LoadFromDefString(const std::string& defString);
 
-protected:
+private:
+	int  xsize = 2;
+	int nxsize = 1;
+	int  ysize = 1;
+
 	std::vector<SColor> map;
-	int xsize;
-	int nxsize;
-	int ysize;
-	int nysize;
-
-	void LoadMap(const unsigned char* buf, int num);
 };
 
 #endif // COLOR_MAP_H

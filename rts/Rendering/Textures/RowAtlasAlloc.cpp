@@ -7,15 +7,7 @@
 #include <vector>
 
 // texture spacing in the atlas (in pixels)
-static const int ATLAS_PADDING = 1;
-
-
-CRowAtlasAlloc::CRowAtlasAlloc()
-: nextRowPos(0)
-{
-	atlasSize.x = 256;
-	atlasSize.y = 256;
-}
+static constexpr int ATLAS_PADDING = 1;
 
 
 inline int CRowAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
@@ -33,7 +25,7 @@ void CRowAtlasAlloc::EstimateNeededSize()
 	int spaceNeeded = 0;
 	int spaceFree = atlasSize.x * (atlasSize.y - nextRowPos);
 
-	for (auto it: entries) {
+	for (const auto& it: entries) {
 		spaceNeeded += it.second.size.x * it.second.size.y;
 	}
 	for (auto& row: imageRows) {
@@ -98,8 +90,8 @@ bool CRowAtlasAlloc::Allocate()
 	// sort new entries by height from large to small
 	std::vector<SAtlasEntry*> memtextures;
 	memtextures.reserve(entries.size());
-	for (auto it = entries.begin(); it != entries.end(); ++it) {
-		memtextures.push_back(&it->second);
+	for (auto& entry: entries) {
+		memtextures.push_back(&entry.second);
 	}
 	std::sort(memtextures.begin(), memtextures.end(), CRowAtlasAlloc::CompareTex);
 

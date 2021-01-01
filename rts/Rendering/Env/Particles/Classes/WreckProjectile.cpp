@@ -9,10 +9,11 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CWreckProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, )
 CR_REG_METADATA(CWreckProjectile, )
 
 
@@ -34,7 +35,7 @@ void CWreckProjectile::Update()
 
 	pos += speed;
 
-	if (!(gs->frameNum & (projectileHandler->GetParticleSaturation() < 0.5f? 1: 3))) {
+	if (!(gs->frameNum & (projectileHandler.GetParticleSaturation() < 0.5f? 1: 3))) {
 		CSmokeProjectile* hp = projMemPool.alloc<CSmokeProjectile>(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}

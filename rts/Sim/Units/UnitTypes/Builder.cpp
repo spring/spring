@@ -9,7 +9,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -24,7 +24,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitMemPool.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISoundChannels.h"
@@ -32,7 +31,7 @@
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED_POOL(CBuilder, CUnit, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED(CBuilder, CUnit, )
 CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(range3D),
 	CR_MEMBER(buildDistance),
@@ -148,7 +147,7 @@ bool CBuilder::UpdateTerraform(const Command&)
 	const float* heightmap = readMap->GetCornerHeightMapSynced();
 	float terraformScale = 0.1f;
 
-	assert(!mapDamage->disabled);
+	assert(!mapDamage->Disabled());
 
 	switch (terraformType) {
 		case Terraform_Building: {
@@ -216,7 +215,7 @@ bool CBuilder::UpdateTerraform(const Command&)
 		} break;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(curBuildee, nullptr);
 	CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
 	// smooth the x-borders
@@ -279,7 +278,7 @@ bool CBuilder::AssistTerraform(const Command&)
 		return true;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(helpTerraformee, nullptr);
 
 	helpTerraformee->terraformHelp += terraformSpeed;
 	CreateNanoParticle(helpTerraformee->terraformCenter, helpTerraformee->terraformRadius * 0.5f, false);
@@ -330,7 +329,7 @@ bool CBuilder::UpdateBuild(const Command& fCommand)
 	if (!(inBuildStance || true))
 		return true;
 
-	ScriptDecloak(true);
+	ScriptDecloak(curBuildee, nullptr);
 
 	// adjusted build-speed: use repair-speed on units with
 	// progress >= 1 rather than raw build-speed on buildees
@@ -367,7 +366,7 @@ bool CBuilder::UpdateReclaim(const Command& fCommand)
 		return true;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(curReclaimee, nullptr);
 
 	if (!curReclaimee->AddBuildPower(this, -reclaimSpeed))
 		return true;
@@ -428,12 +427,13 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 		assert(resurrecteeDef == resurrectee->unitDef);
 		resurrectee->SetSoloBuilder(this, resurrecteeDef);
+		resurrectee->SetHeading(curResurrectee->heading, !resurrectee->upright && resurrectee->IsOnGround(), false);
 
 		// TODO: make configurable if this should happen
 		resurrectee->health *= 0.05f;
 
 		for (const int resurrecterID: cai->resurrecters) {
-			CBuilder* resurrecter = static_cast<CBuilder*>(unitHandler->GetUnit(resurrecterID));
+			CBuilder* resurrecter = static_cast<CBuilder*>(unitHandler.GetUnit(resurrecterID));
 			CCommandAI* resurrecterCAI = resurrecter->commandAI;
 
 			if (resurrecterCAI->commandQue.empty())
@@ -441,13 +441,13 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 			Command& c = resurrecterCAI->commandQue.front();
 
-			if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+			if (c.GetID() != CMD_RESURRECT || c.GetNumParams() != 1)
 				continue;
 
-			if ((c.params[0] - unitHandler->MaxUnits()) != curResurrectee->id)
+			if ((c.GetParam(0) - unitHandler.MaxUnits()) != curResurrectee->id)
 				continue;
 
-			if (!teamHandler->Ally(allyteam, resurrecter->allyteam))
+			if (!teamHandler.Ally(allyteam, resurrecter->allyteam))
 				continue;
 
 			// all units that were rezzing shall assist the repair too
@@ -456,11 +456,11 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 			// prevent FinishCommand from removing this command when the
 			// feature is deleted, since it is needed to start the repair
 			// (WTF!)
-			c.params[0] = INT_MAX / 2;
+			c.SetParam(0, INT_MAX / 2);
 		}
 
 		// this takes one simframe to do the deletion
-		featureHandler->DeleteFeature(curResurrectee);
+		featureHandler.DeleteFeature(curResurrectee);
 	}
 
 	StopBuild(true);
@@ -690,7 +690,7 @@ void CBuilder::StopBuild(bool callScript)
 	if (callScript)
 		script->StopBuilding();
 
-	ReleaseTempHoldFire();
+	SetHoldFire(false);
 }
 
 
@@ -720,28 +720,44 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// note: even if construction has already started,
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
-			CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
-			CUnit* u = nullptr;
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(buildInfo.pos);
 
-			if (o != nullptr) {
-				u = dynamic_cast<CUnit*>(o);
-			} else {
-				// <pos> might map to a non-blocking portion
-				// of the buildee's yardmap, fallback check
+			const CUnit* u = nullptr;
+
+			// look for any blocking assistable buildee at build.pos
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CUnit* cu = dynamic_cast<const CUnit*>(cell[i]);
+
+				if (cu == nullptr)
+					continue;
+				if (allyteam != cu->allyteam)
+					return false; // Enemy units that block always block the cell
+				if (!CanAssistUnit(cu, buildInfo.def))
+					continue;
+
+				u = cu;
+			}
+
+			// <pos> might map to a non-blocking portion
+			// of the buildee's yardmap, fallback check
+			if (u == nullptr)
 				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
+
+			if (u != nullptr) {
+				if (CanAssistUnit(u, buildInfo.def)) {
+					// StopBuild sets this to false, fix it here if picking up the same buildee again
+					terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
+
+					AddDeathDependence(curBuild = const_cast<CUnit*>(u), DEPENDENCE_BUILD);
+					ScriptStartBuilding(u->pos, false);
+					return true;
+				}
+
+				// let BuggerOff handle this case (TODO: non-landed aircraft should not count)
+				if (buildInfo.FootPrintOverlap(u->pos, u->GetFootPrint(SQUARE_SIZE * 0.5f)))
+					return false;
 			}
-
-			if (u != nullptr && CanAssistUnit(u, buildInfo.def)) {
-				// StopBuild sets this to false, fix it here if picking up the same buildee again
-				terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
-
-				AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
-				ScriptStartBuilding(u->pos, false);
-				return true;
-			}
-
-			return false;
-		}
+		} break;
 
 		case CGameHelper::BUILDSQUARE_RECLAIMABLE:
 			// caller should handle this
@@ -749,7 +765,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 	}
 
 	// at this point we know the builder is going to create a new unit, bail if at the limit
-	if ((limitReached = (unitHandler->unitsByDefs[team][buildInfo.def->id].size() >= buildInfo.def->maxThisUnit)))
+	if ((limitReached = (unitHandler.NumUnitsByTeamAndDef(team, buildInfo.def->id) >= buildInfo.def->maxThisUnit)))
 		return false;
 
 	if ((inWaitStance = !ScriptStartBuilding(buildInfo.pos, true)))
@@ -762,7 +778,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 	// floating structures don't terraform the seabed
 	const bool buildeeOnWater = (buildee->FloatOnWater() && buildee->IsInWater());
-	const bool allowTerraform = (!mapDamage->disabled && buildeeDef->levelGround);
+	const bool allowTerraform = (!mapDamage->Disabled() && buildeeDef->levelGround);
 	const bool  skipTerraform = (buildeeOnWater || buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit());
 
 	if (!allowTerraform || skipTerraform) {
@@ -896,5 +912,5 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
-	projectileHandler->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
+	projectileHandler.AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
 }

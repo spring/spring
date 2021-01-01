@@ -13,12 +13,11 @@
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/creg/creg_cond.h"
-#include "System/Misc/RectangleOptimizer.h"
+#include "System/Misc/RectangleOverlapHandler.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
 #define USE_HEIGHTMAP_DIGESTS
 
-class CMetalMap;
 class CCamera;
 class CUnit;
 class CSolidObject;
@@ -71,8 +70,6 @@ enum {
 class CReadMap
 {
 protected:
-	CReadMap();
-
 	/// called by implementations of CReadMap
 	void Initialize();
 
@@ -97,8 +94,8 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(SRectangle hmRect, bool initialize = false);
-	void UpdateLOS(const SRectangle& hmRect);
+	void UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initialize = false);
+	void UpdateLOS(const SRectangle& hgtMapRect);
 	void BecomeSpectator();
 	void UpdateDraw(bool firstCall);
 
@@ -143,8 +140,8 @@ public:
 	 *   "metal"  -  metalmap
 	 *   "grass"  -  grassmap
 	 */
-	virtual unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) = 0;
-	virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
+	virtual unsigned char* GetInfoMap(const char* name, MapBitmapInfo* bm) = 0;
+	virtual void FreeInfoMap(const char* name, unsigned char* data) = 0;
 
 	/// Determine visibility for a rectangular grid
 	/// call ResetState for statically allocated drawer objects
@@ -195,6 +192,8 @@ public:
 	float GetCurrMinHeight() const { return currHeightBounds.x; }
 	float GetInitMaxHeight() const { return initHeightBounds.y; }
 	float GetCurrMaxHeight() const { return currHeightBounds.y; }
+	float GetInitAvgHeight() const { return ((GetInitMinHeight() + GetInitMaxHeight()) * 0.5f); }
+	float GetCurrAvgHeight() const { return ((GetCurrMinHeight() + GetCurrMaxHeight()) * 0.5f); }
 	float GetBoundingRadius() const { return boundingRadius; }
 
 	bool IsUnderWater() const { return (currHeightBounds.y <  0.0f); }
@@ -213,21 +212,18 @@ private:
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
-	inline void HeightMapUpdateLOSCheck(const SRectangle& hmRect);
-	inline bool HasHeightMapChanged(const int lmx, const int lmy);
+	inline void HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect);
+	inline bool HasHeightMapChanged(const int2 losMapPos);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
 	static constexpr int numHeightMipMaps = 7;
 
-	/// Metal-density/height-map
-	CMetalMap* metalMap;
-
 protected:
 	// these point to the actual heightmap data
 	// which is allocated by subclass instances
-	std::vector<float>* heightMapSyncedPtr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
-	std::vector<float>* heightMapUnsyncedPtr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
+	std::vector<float>* heightMapSyncedPtr = nullptr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapUnsyncedPtr = nullptr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
 
 
 	// note: intentionally declared static, s.t. repeated reloading to the same
@@ -254,8 +250,8 @@ protected:
 	static std::vector<float3> centerNormals2D;
 
 
-	CRectangleOptimizer unsyncedHeightMapUpdates;
-	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
+	CRectangleOverlapHandler unsyncedHeightMapUpdates;
+	CRectangleOverlapHandler unsyncedHeightMapUpdatesTemp;
 
 private:
 	// these combine the various synced and unsynced arrays
@@ -275,11 +271,12 @@ private:
 	static std::vector<uint8_t> unsyncedHeightMapDigests;
 #endif
 
-	unsigned int mapChecksum;
+	unsigned int mapChecksum = 0;
 
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
 	float2 currHeightBounds; //< current minimum- and maximum-height
-	float boundingRadius;
+
+	float boundingRadius = 0.0f;
 };
 
 
@@ -287,7 +284,7 @@ extern CReadMap* readMap;
 extern MapDimensions mapDims;
 
 
-
+inline float CReadMap::AddHeight(const int idx, const float a) { return SetHeight(idx, a, 1); }
 inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	float& x = (*heightMapSyncedPtr)[idx];
 
@@ -301,30 +298,21 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	return x;
 }
 
-inline float CReadMap::AddHeight(const int idx, const float a) {
-	return SetHeight(idx, a, 1);
-}
 
 
 
+static inline float3 CornerSqrToPosRaw(const float* hm, int sqx, int sqz) { return {sqx * SQUARE_SIZE * 1.0f, hm[(sqz * mapDims.mapxp1) + sqx], sqz * SQUARE_SIZE * 1.0f}; }
+static inline float3 CenterSqrToPosRaw(const float* hm, int sqx, int sqz) { return {sqx * SQUARE_SIZE * 1.0f, hm[(sqz * mapDims.mapx  ) + sqx], sqz * SQUARE_SIZE * 1.0f}; }
+
+static inline float3 CornerSqrToPos(const float* hm, int sqx, int sqz) { return (CornerSqrToPosRaw(hm, Clamp(sqx, 0, mapDims.mapx  ), Clamp(sqz, 0, mapDims.mapy  ))); }
+static inline float3 CenterSqrToPos(const float* hm, int sqx, int sqz) { return (CenterSqrToPosRaw(hm, Clamp(sqx, 0, mapDims.mapxm1), Clamp(sqz, 0, mapDims.mapym1))); }
 
 
-/// Converts a map-square into a float3-position.
-static inline float3 SquareToFloat3(int xSquare, int zSquare) {
-	const float* hm = readMap->GetCenterHeightMapSynced();
-	const float h = hm[(zSquare * mapDims.mapx) + xSquare];
-	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
-}
+static inline float3 CornerSquareToFloat3(int sqx, int sqz) { return (CornerSqrToPosRaw(readMap->GetCornerHeightMapSynced(), sqx, sqz)); }
+static inline float3       SquareToFloat3(int sqx, int sqz) { return (CenterSqrToPosRaw(readMap->GetCenterHeightMapSynced(), sqx, sqz)); }
 
-static inline float3 SquareToFloat3(int2 sq) {
-	return SquareToFloat3(sq.x, sq.y);
-}
-
-/// TODO: use in SM3 renderer also
-static inline float GetVisibleVertexHeight(int idx) {
-	const float* hm = readMap->GetCornerHeightMapUnsynced();
-	return hm[idx];
-}
+static inline float3 CornerSquareToFloat3(int2 sqr) { return (CornerSquareToFloat3(sqr.x, sqr.y)); }
+static inline float3       SquareToFloat3(int2 sqr) { return (      SquareToFloat3(sqr.x, sqr.y)); }
 
 
 #endif /* READ_MAP_H */

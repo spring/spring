@@ -23,12 +23,12 @@ class CUnit;
 /** Generalized legacy callback interface backend */
 class CAICallback
 {
-	int team;
-public:
-	bool noMessages;
 private:
-	CGroupHandler* gh;
+	int team = -1;
 
+	bool allowOrders = true;
+
+private:
 	// utility methods
 	void verify();
 
@@ -43,7 +43,10 @@ private:
 	CUnit* GetInLosAndRadarUnit(int unitId) const;
 
 public:
+	CAICallback() = default;
 	CAICallback(int teamId);
+
+	void AllowOrders(bool b) { allowOrders = b; }
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);
@@ -250,8 +253,8 @@ public:
 	// 2. if inSize is less than 0, the data size is calculated using strlen()
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
-	const char* CallLuaRules(const char* inData, int inSize = -1);
-	const char* CallLuaUI(const char* inData, int inSize = -1);
+	const char* CallLuaRules(const char* inData, int inSize, size_t* outSize);
+	const char* CallLuaUI(const char* inData, int inSize, size_t* outSize);
 
 	// never called, implemented in SSkirmishAICallbackImpl
 	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }

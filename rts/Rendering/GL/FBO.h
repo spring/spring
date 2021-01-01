@@ -25,34 +25,31 @@ public:
 	 */
 	static bool IsSupported();
 
-	/**
-	 * @brief Constructor
-	 */
-	FBO();
+	FBO(         ) { Init(false); }
+	FBO(bool noop) { Init( noop); }
+	~FBO() { Kill(); }
 
-	/**
-	 * @brief Destructor
-	 */
-	~FBO();
+	void Init(bool noop);
+	void Kill();
 
 	/**
 	 * @brief fboId
 	 *
 	 * GLuint pointing to the current framebuffer
 	 */
-	GLuint fboId;
+	GLuint fboId = 0;
 
 	/**
 	 * @brief reloadOnAltTab
 	 *
 	 * bool save all attachments in system RAM and reloaded them on OpenGL-Context lost (alt-tab) (default: false)
 	 */
-	bool reloadOnAltTab;
+	bool reloadOnAltTab = false;
 
 	/**
 	 * @brief check FBO status
 	 */
-	bool CheckStatus(std::string name);
+	bool CheckStatus(const char* name);
 
 	/**
 	 * @brief get FBO status
@@ -69,6 +66,13 @@ public:
 	 * @return whether a valid framebuffer exists
 	 */
 	bool IsValid() const;
+
+
+	void AttachTextures(const GLuint* ids, const GLenum* attachments, const GLenum texTarget, const unsigned int texCount, const int mipLevel = 0, const int zSlice = 0) {
+		for (unsigned int i = 0; i < texCount; i++) {
+			AttachTexture(ids[i], texTarget, attachments[i], mipLevel, zSlice);
+		}
+	}
 
 	/**
 	 * @brief AttachTexture
@@ -141,7 +145,7 @@ public:
 
 
 private:
-	bool valid;
+	bool valid = false;
 
 	/**
 	 * @brief rbos

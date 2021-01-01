@@ -1,10 +1,9 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp" | sort
-MakeGlobalVar(sources_engine_Game
+make_global_var(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/Action.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AviVideoCapturing.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Benchmark.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/CameraController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/FPSController.cpp"
@@ -24,6 +23,7 @@ MakeGlobalVar(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/FPSUnitController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Game.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameController.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GameControllerTextInput.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameData.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameSetup.cpp"

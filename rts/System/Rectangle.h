@@ -4,7 +4,7 @@
 #define RECTANGLE_H
 
 #include "type2.h"
-#include "myMath.h"
+#include "SpringMath.h"
 #include "System/creg/creg_cond.h"
 
 struct SRectangle {
@@ -53,11 +53,10 @@ struct SRectangle {
 	}
 
 	bool operator< (const SRectangle& other) const {
-		if (x1 == other.x1) {
+		if (x1 == other.x1)
 			return (z1 < other.z1);
-		} else {
-			return (x1 < other.x1);
-		}
+
+		return (x1 < other.x1);
 	}
 
 	template<typename T>

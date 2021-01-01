@@ -37,9 +37,13 @@ static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest
 class CglFont : public CTextWrap
 {
 public:
+	static bool LoadConfigFonts();
+	static bool LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile);
+	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
-	CglFont(const std::string& fontfile, int size, int outlinewidth, float  outlineweight);
-	virtual ~CglFont();
+	static void ReallocAtlases(bool pre);
+
+	CglFont(const std::string& fontFile, int size, int outlinewidth, float  outlineweight);
 
 	//! The calling of Begin() .. End() is optional,
 	//! but can increase the performance of drawing multiple strings a lot (upto 10x)
@@ -60,23 +64,20 @@ public:
 	void glFormat(float x, float y, float s, const int options, const char* fmt, ...);
 
 	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
-	void SetTextColor(const float4* color = NULL);
-	void SetOutlineColor(const float4* color = NULL);
-	void SetColors(const float4* textColor = NULL, const float4* outlineColor = NULL);
+	void SetTextColor(const float4* color = nullptr);
+	void SetOutlineColor(const float4* color = nullptr);
+	void SetColors(const float4* textColor = nullptr, const float4* outlineColor = nullptr);
 	void SetTextColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetTextColor(&f); };
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
 	float GetCharacterWidth(const char32_t c);
-#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 6)
-	#define _final
-#else
-	#define _final final
-#endif
-	inline float GetTextWidth(const std::string& text) _final;
-#undef _final
-	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
+
+	inline float GetTextWidth(const std::string& text) override;
+	inline float GetTextHeight(const std::string& text, float* descender = nullptr, int* numLines = nullptr);
+
 	inline static int GetTextNumLines(const std::string& text);
 	inline static std::string StripColorCodes(const std::string& text);
+
 	static std::deque<std::string> SplitIntoLines(const std::u8string&);
 
 	const std::string& GetFilePath() const { return fontPath; }
@@ -93,7 +94,8 @@ private:
 
 private:
 	float GetTextWidth_(const std::u8string& text);
-	float GetTextHeight_(const std::u8string& text, float* descender = NULL, int* numLines = NULL);
+	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
+
 	static int GetTextNumLines_(const std::u8string& text);
 	static std::string StripColorCodes_(const std::u8string& text);
 

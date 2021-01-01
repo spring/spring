@@ -23,6 +23,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
@@ -41,7 +42,7 @@
 
 #include <SDL_mouse.h>
 #include <SDL_keycode.h>
-#include <map>
+
 
 
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
@@ -51,38 +52,26 @@ CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
 CSelectedUnitsHandler selectedUnitsHandler;
 
 
-CSelectedUnitsHandler::CSelectedUnitsHandler()
-	: selectionChanged(false)
-	, possibleCommandsChanged(true)
-	, selectedGroup(-1)
-	, soundMultiselID(0)
-	, autoAddBuiltUnitsToFactoryGroup(false)
-	, autoAddBuiltUnitsToSelectedGroup(false)
-	, buildIconsFirst(false)
-{
-}
-
-
 
 void CSelectedUnitsHandler::Init(unsigned numPlayers)
 {
-	soundMultiselID = sound->GetSoundId("MultiSelect");
+	soundMultiselID = sound->GetDefSoundId("MultiSelect");
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	autoAddBuiltUnitsToFactoryGroup = configHandler->GetBool("AutoAddBuiltUnitsToFactoryGroup");
 	autoAddBuiltUnitsToSelectedGroup = configHandler->GetBool("AutoAddBuiltUnitsToSelectedGroup");
+
 	netSelected.resize(numPlayers);
 }
 
 
 bool CSelectedUnitsHandler::IsUnitSelected(const CUnit* unit) const
 {
-	return (selectedUnits.find(unit->id) != selectedUnits.end());
+	return (unit != nullptr && selectedUnits.find(unit->id) != selectedUnits.end());
 }
 
 bool CSelectedUnitsHandler::IsUnitSelected(const int unitID) const
 {
-	const CUnit* u = unitHandler->GetUnit(unitID);
-	return (u != NULL && IsUnitSelected(u));
+	return (IsUnitSelected(unitHandler.GetUnit(unitID)));
 }
 
 
@@ -101,41 +90,46 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	int foundGroup = -2;
 	int foundGroup2 = -2;
 
-	std::map<int, int> states;
+	spring::unordered_map<int, int> states;
 	std::vector<SCommandDescription> commands;
 
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
+		const CCommandAI* cai = u->commandAI;
+		const CGroup* group = u->GetGroup();
 
-		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
+		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
 			states[cmdDesc->id] = cmdDesc->disabled ? 2 : 1;
 		}
 
-		if (u->commandAI->lastSelectedCommandPage < commandPage)
-			commandPage = u->commandAI->lastSelectedCommandPage;
+		if (cai->lastSelectedCommandPage < commandPage)
+			commandPage = cai->lastSelectedCommandPage;
 
-		if (foundGroup == -2 && u->group)
-			foundGroup = u->group->id;
+		if (foundGroup == -2 && group != nullptr)
+			foundGroup = group->id;
 
-		if (!u->group || foundGroup != u->group->id)
+		if (group == nullptr || foundGroup != group->id)
 			foundGroup = -1;
 
-		if (foundGroup2 == -2 && u->group)
-			foundGroup2 = u->group->id;
+		if (foundGroup2 == -2 && group != nullptr)
+			foundGroup2 = group->id;
 
-		if (foundGroup2 >= 0 && u->group && u->group->id != foundGroup2)
+		if (foundGroup2 >= 0 && group != nullptr && group->id != foundGroup2)
 			foundGroup2 = -1;
 	}
 
 	// load the first set (separating build and non-build commands)
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
+		const CCommandAI* cai = u->commandAI;
 
-		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
+		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
 			if (buildIconsFirst) {
-				if (cmdDesc->id >= 0) { continue; }
+				if (cmdDesc->id >= 0)
+					continue;
 			} else {
-				if (cmdDesc->id < 0)  { continue; }
+				if (cmdDesc->id <  0)
+					continue;
 			}
 
 			if (cmdDesc->showUnique && selectedUnits.size() > 1)
@@ -150,13 +144,16 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 	// load the second set (all those that have not already been included)
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
+		const CCommandAI* cai = u->commandAI;
 
-		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
+		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
 			if (buildIconsFirst) {
-				if (cmdDesc->id < 0)  { continue; }
+				if (cmdDesc->id < 0)
+					continue;
 			} else {
-				if (cmdDesc->id >= 0) { continue; }
+				if (cmdDesc->id >= 0)
+					continue;
 			}
 
 			if (cmdDesc->showUnique && selectedUnits.size() > 1)
@@ -176,84 +173,102 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 }
 
 
-void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
+void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 {
-	if (gu->spectating && !gs->godMode)
+	if (gu->spectating && gs->godMode == 0)
 		return;
 	if (selectedUnits.empty())
 		return;
 
-	const int cmd_id = c.GetID();
+	const int cmdID = c.GetID();
 
-	if (fromUser) { // add some statistics
-		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
+	if (fromUser) {
+		// add some statistics
+		CPlayer* myPlayer = playerHandler.Player(gu->myPlayerNum);
+		PlayerStatistics* myPlayerStats = &myPlayer->currentStats;
+
+		myPlayerStats->numCommands++;
+
 		if (selectedGroup != -1) {
-			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands += grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			myPlayerStats->unitCommands += uiGroupHandlers[gu->myTeam].GetGroupSize(selectedGroup);
 		} else {
-			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands += selectedUnits.size();
+			myPlayerStats->unitCommands += selectedUnits.size();
 		}
 	}
 
-	if (cmd_id == CMD_GROUPCLEAR) {
+	if (cmdID == CMD_GROUPCLEAR) {
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			CUnit* u = unitHandler.GetUnit(unitID);
 
-			if (u->group != nullptr) {
+			if (u->GetGroup() != nullptr) {
 				u->SetGroup(nullptr);
 				possibleCommandsChanged = true;
 			}
 		}
 		return;
 	}
-	else if (cmd_id == CMD_GROUPSELECT) {
-		SelectGroup(unitHandler->GetUnit(*selectedUnits.begin())->group->id);
+
+	if (cmdID == CMD_GROUPSELECT) {
+		const CUnit* u = unitHandler.GetUnit(*selectedUnits.begin());
+		const CGroup* g = u->GetGroup();
+
+		SelectGroup(g->id);
 		return;
 	}
-	else if (cmd_id == CMD_GROUPADD) {
-		CGroup* group = nullptr;
+
+	if (cmdID == CMD_GROUPADD) {
+		const CGroup* group = nullptr;
 
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			const CUnit* u = unitHandler.GetUnit(unitID);
+			const CGroup* g = u->GetGroup();
 
-			if (u->group != nullptr) {
-				group = u->group;
+			if (g != nullptr) {
+				group = g;
 				possibleCommandsChanged = true;
 				break;
 			}
 		}
 		if (group != nullptr) {
 			for (const int unitID: selectedUnits) {
-				CUnit* u = unitHandler->GetUnit(unitID);
+				CUnit* u = unitHandler.GetUnit(unitID);
+				CGroup* g = nullptr;
 
 				if (u == nullptr) {
 					assert(false);
 					continue;
 				}
-				if (u->group != nullptr)
+
+				if ((g = u->GetGroup()) != nullptr)
 					continue;
 
 				// change group, but do not call SUH::AddUnit while iterating
 				// (the unit's id is already present in selectedUnits anyway)
-				u->SetGroup(group, false, false);
+				u->SetGroup(const_cast<CGroup*>(group), false, false);
 			}
 
 			SelectGroup(group->id);
 		}
+
 		return;
 	}
-	else if (cmd_id == CMD_TIMEWAIT) {
+
+	if (cmdID == CMD_TIMEWAIT) {
 		waitCommandsAI.AddTimeWait(c);
 		return;
 	}
-	else if (cmd_id == CMD_DEATHWAIT) {
+
+	if (cmdID == CMD_DEATHWAIT) {
 		waitCommandsAI.AddDeathWait(c);
 		return;
 	}
-	else if (cmd_id == CMD_SQUADWAIT) {
+
+	if (cmdID == CMD_SQUADWAIT) {
 		waitCommandsAI.AddSquadWait(c);
 		return;
 	}
-	else if (cmd_id == CMD_GATHERWAIT) {
+
+	if (cmdID == CMD_GATHERWAIT) {
 		waitCommandsAI.AddGatherWait(c);
 		return;
 	}
@@ -261,7 +276,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 	SendCommand(c);
 
 	if (!selectedUnits.empty()) {
-		const CUnit* u = unitHandler->GetUnit(*selectedUnits.begin());
+		const CUnit* u = unitHandler.GetUnit(*selectedUnits.begin());
 		const UnitDef* ud = u->unitDef;
 		Channels::UnitReply->PlayRandomSample(ud->sounds.ok, u);
 	}
@@ -270,41 +285,55 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
 {
-	CUnit* unit = NULL;
-	int addedunits = 0;
-	int team, lastTeam;
+	CUnit* unit = nullptr;
+	const CPlayer* myPlayer = gu->GetMyPlayer();
 
-	if (gu->spectatingFullSelect || gs->godMode) {
-		// any team's units can be *selected*
-		// (whether they can be given orders
-		// depends on our ability to play god)
-		team = 0;
-		lastTeam = teamHandler->ActiveTeams() - 1;
-	} else {
-		team = gu->myTeam;
-		lastTeam = gu->myTeam;
+	int numUnits = 0;
+	int minTeam = gu->myTeam;
+	int maxTeam = gu->myTeam;
+
+	// any team's units can be *selected*; whether they can
+	// be given orders depends on our ability to play god
+	if (gu->spectatingFullSelect || gs->godMode != 0) {
+		minTeam = 0;
+		maxTeam = teamHandler.ActiveTeams() - 1;
 	}
-	for (; team <= lastTeam; team++) {
-		for (CUnit* u: teamHandler->Team(team)->units) {
+
+	for (int team = minTeam; team <= maxTeam; team++) {
+		if (!gu->spectatingFullSelect && !myPlayer->CanControlTeam(team))
+			continue;
+
+		for (CUnit* u: unitHandler.GetUnitsByTeam(team)) {
 			const float4 vec(u->midPos, 1.0f);
 
-			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
-				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(u->id) != selectedUnits.end())) {
-					RemoveUnit(u);
-				} else {
-					AddUnit(u);
-					unit = u;
-					addedunits++;
-				}
+			if (vec.dot4(planeRight) >= 0.0f)
+				continue;
+			if (vec.dot4(planeLeft) >= 0.0f)
+				continue;
+			if (vec.dot4(planeTop) >= 0.0f)
+				continue;
+			if (vec.dot4(planeBottom) >= 0.0f)
+				continue;
+
+			if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(u->id) != selectedUnits.end())) {
+				RemoveUnit(u);
+				continue;
 			}
+
+			AddUnit(unit = u);
+			numUnits++;
 		}
 	}
 
-	if (addedunits >= 2) {
-		Channels::UserInterface->PlaySample(soundMultiselID);
-	}
-	else if (addedunits == 1) {
-		Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
+	switch (numUnits) {
+		case 0: {
+		} break;
+		case 1: {
+			Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
+		} break;
+		default: {
+			Channels::UserInterface->PlaySample(soundMultiselID);
+		} break;
 	}
 }
 
@@ -312,10 +341,9 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType)
 {
 	//FIXME make modular?
-
-	if (unit == NULL)
+	if (unit == nullptr)
 		return;
-	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
+	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && gs->godMode == 0)
 		return;
 
 	if (!selectType) {
@@ -325,23 +353,27 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			AddUnit(unit);
 		}
 	} else {
-		//double click, select all units of same type (on screen, unless CTRL is pressed)
-		int team, lastTeam;
+		const CPlayer* myPlayer = gu->GetMyPlayer();
 
-		if (gu->spectatingFullSelect || gs->godMode) {
-			team = 0;
-			lastTeam = teamHandler->ActiveTeams() - 1;
-		} else {
-			team = gu->myTeam;
-			lastTeam = gu->myTeam;
+		// double click, select all units of same type (on screen, unless CTRL is pressed)
+		int minTeam = gu->myTeam;
+		int maxTeam = gu->myTeam;
+
+		if (gu->spectatingFullSelect || gs->godMode != 0) {
+			minTeam = 0;
+			maxTeam = teamHandler.ActiveTeams() - 1;
 		}
-		for (; team <= lastTeam; team++) {
-			for (CUnit* u: teamHandler->Team(team)->units) {
-				if (u->unitDef->id == unit->unitDef->id) {
-					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((u)->midPos)) {
-						AddUnit(u);
-					}
-				}
+
+		for (int team = minTeam; team <= maxTeam; team++) {
+			if (!gu->spectatingFullSelect && !myPlayer->CanControlTeam(team))
+				continue;
+
+			for (CUnit* u: unitHandler.GetUnitsByTeam(team)) {
+				if (u->unitDef->id != unit->unitDef->id)
+					continue;
+
+				if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((u)->midPos))
+					AddUnit(u);
 			}
 		}
 	}
@@ -355,6 +387,7 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported, we should not be able to select it
 	const CUnit* trans = unit->GetTransporter();
+
 	if (trans != nullptr && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform)
 		return;
 
@@ -367,7 +400,9 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 
-	if (!(unit->group) || unit->group->id != selectedGroup)
+	const CGroup* g = unit->GetGroup();
+
+	if (g == nullptr || g->id != selectedGroup)
 		selectedGroup = -1;
 
 	unit->isSelected = true;
@@ -389,7 +424,7 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 void CSelectedUnitsHandler::ClearSelected()
 {
 	for (const int unitID: selectedUnits) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 
 		// not possible unless ::RemoveUnit is not called when it should
 		if (u == nullptr) {
@@ -412,10 +447,10 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 {
 	ClearSelected();
 	selectedGroup = num;
-	CGroup* group = grouphandlers[gu->myTeam]->groups[num];
+	CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(num);
 
 	for (const int unitID: group->units) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 
 		if (!u->noSelect) {
 			u->isSelected = true;
@@ -431,9 +466,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 
 void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 {
-	const std::vector<string>& args = CSimpleParser::Tokenize(line, 0);
-	for (int i = 0; i < (int)args.size(); i++) {
-		const std::string& arg = args[i];
+	for (const std::string& arg : CSimpleParser::Tokenize(line, 0)) {
 		if (arg == "clear") {
 			selectedUnitsHandler.ClearSelected();
 		} else if ((arg[0] == '+') || (arg[0] == '-')) {
@@ -443,10 +476,10 @@ void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 			if (endPtr == startPtr)
 				continue; // bad number
 
-			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits()))
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler.MaxUnits()))
 				continue; // bad index
 
-			CUnit* unit = unitHandler->GetUnit(unitIndex);
+			CUnit* unit = unitHandler.GetUnit(unitIndex);
 			if (unit == nullptr)
 				continue;
 
@@ -471,57 +504,65 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 
 	if (command == "restore") {
 		ClearSelected();
-		for (const int& unitID: unitIDs) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
 
-			if (unit != nullptr)
-				AddUnit(unit);
+		for (const int unitID: unitIDs) {
+			CUnit* unit = unitHandler.GetUnit(unitID);
+
+			if (unit == nullptr)
+				continue;
+
+			AddUnit(unit);
 		}
+
 		return;
 	}
 
 	if (selectedUnits.size() >= 2) {
 		// assign the cycle units
 		unitIDs.clear();
+
 		for (const int unitID: selectedUnits) {
-			const CUnit* u = unitHandler->GetUnit(unitID);
+			const CUnit* u = unitHandler.GetUnit(unitID);
 			unitIDs.insert(u->id);
 		}
+
 		ClearSelected();
-		lastID = *unitIDs.begin();
-		AddUnit(unitHandler->GetUnit(lastID));
+		AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
 		return;
 	}
 
 	// clean the list
 	spring::unordered_set<int> tmpSet;
 	for (const int unitID: unitIDs) {
-		if (unitHandler->GetUnit(unitID) != nullptr) {
-			tmpSet.insert(unitID);
-		}
+		if (unitHandler.GetUnit(unitID) == nullptr)
+			continue;
+		tmpSet.insert(unitID);
 	}
 
-	unitIDs = tmpSet;
+	unitIDs = std::move(tmpSet);
 
-	if ((lastID >= 0) && (unitHandler->GetUnit(lastID) == nullptr))
+	if ((lastID >= 0) && (unitHandler.GetUnit(lastID) == nullptr))
 		lastID = -1;
 
 	// selectedUnits size is 0 or 1
 	ClearSelected();
-	if (!unitIDs.empty()) {
-		auto fit = unitIDs.find(lastID);
-		if (fit == unitIDs.end()) {
-			lastID = *unitIDs.begin();
-		} else {
-			++fit;
-			if (fit != unitIDs.end()) {
-				lastID = *fit;
-			} else {
-				lastID = *unitIDs.begin();
-			}
-		}
-		AddUnit(unitHandler->GetUnit(lastID));
+
+	if (unitIDs.empty())
+		return;
+
+	auto fit = unitIDs.find(lastID);
+
+	if (fit == unitIDs.end()) {
+		AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
+		return;
 	}
+
+	if ((++fit) != unitIDs.end()) {
+		AddUnit(unitHandler.GetUnit(lastID = *fit));
+		return;
+	}
+
+	AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
 }
 
 
@@ -548,8 +589,9 @@ void CSelectedUnitsHandler::Draw()
 		// if autoAddBuiltUnitsToSelectedGroup is true, so we check IsUnitSelected
 		// for each
 		if (selectedGroup != -1) {
-			const CGroupHandler* gh = grouphandlers[gu->myTeam];
-			const CGroup* g = gh->groups[selectedGroup];
+			const CGroupHandler* gh = &uiGroupHandlers[gu->myTeam];
+			const CGroup* g = gh->GetGroup(selectedGroup);
+
 			unitSet = &g->units;
 		}
 
@@ -558,17 +600,20 @@ void CSelectedUnitsHandler::Draw()
 		va->EnlargeArrays(unitSet->size() * 8, 0, VA_SIZE_C);
 
 		for (const int unitID: *unitSet) {
-			const CUnit* unit = unitHandler->GetUnit(unitID);
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 			const MoveDef* moveDef = unit->moveDef;
 
-			if (unit->isIcon) continue;
-			if (!IsUnitSelected(unit)) continue;
+			if (unit->isIcon)
+				continue;
+			if (!IsUnitSelected(unit))
+				continue;
 
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
 				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
-				mhxsize = (moveDef == NULL)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
-				mhzsize = (moveDef == NULL)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
+				mhxsize = (moveDef == nullptr)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (moveDef == nullptr)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
+
 			const float3 verts[8] = {
 				// UnitDef footprint corners
 				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
@@ -587,7 +632,7 @@ void CSelectedUnitsHandler::Draw()
 			va->AddVertexQC(verts[2], color1);
 			va->AddVertexQC(verts[3], color1);
 
-			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
+			if (globalRendering->drawDebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
 				va->AddVertexQC(verts[4], color2);
 				va->AddVertexQC(verts[5], color2);
 				va->AddVertexQC(verts[6], color2);
@@ -610,7 +655,7 @@ void CSelectedUnitsHandler::Draw()
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 
-			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+			for (const auto bi: unitHandler.GetBuilderCAIs()) {
 				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 
@@ -621,7 +666,8 @@ void CSelectedUnitsHandler::Draw()
 					}
 					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
-				else if (teamHandler->AlliedTeams(builder->team, gu->myTeam)) {
+
+				else if (teamHandler.AlliedTeams(builder->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
@@ -641,29 +687,32 @@ void CSelectedUnitsHandler::Draw()
 }
 
 
-void CSelectedUnitsHandler::DependentDied(CObject *o)
+void CSelectedUnitsHandler::DependentDied(CObject* o)
 {
 	selectedUnits.erase(static_cast<CUnit*>(o)->id);
+
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 }
 
 
+// handles NETMSG_SELECT's
 void CSelectedUnitsHandler::NetSelect(std::vector<int>& s, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
 	netSelected[playerId] = s;
 }
 
-
+// handles NETMSG_COMMAND's
 void CSelectedUnitsHandler::NetOrder(Command& c, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
-	selectedUnitsAI.GiveCommandNet(c, playerId);
 
-	if (netSelected[playerId].size() > 0) {
-		eoh->PlayerCommandGiven(netSelected[playerId], c, playerId);
-	}
+	if (netSelected[playerId].empty())
+		return;
+
+	selectedUnitsAI.GiveCommandNet(c, playerId);
+	eoh->PlayerCommandGiven(netSelected[playerId], c, playerId);
 }
 
 void CSelectedUnitsHandler::ClearNetSelect(int playerId)
@@ -671,33 +720,32 @@ void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 	netSelected[playerId].clear();
 }
 
-void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
+// handles NETMSG_AICOMMAND{S}'s sent by AICallback / LuaUnsyncedCtrl (!)
+void CSelectedUnitsHandler::AINetOrder(int unitID, int aiTeamID, int playerID, const Command& c)
 {
-	CUnit* unit = unitHandler->GetUnit(unitid);
+	CUnit* unit = unitHandler.GetUnit(unitID);
+
 	if (unit == nullptr)
 		return;
 
-	const CPlayer* player = playerHandler->Player(playerId);
+	const CPlayer* player = playerHandler.Player(playerID);
+
 	if (player == nullptr)
 		return;
 
-	if (!player->CanControlTeam(unit->team)) {
-		// Outputting a warning will result in false bug reports due to lag
-		// between time of giving valid orders on units which then change team
-		// due to e.g. LuaRules.
-
-		//LOG_L(L_WARNING, "Invalid order from player %i for (unit %i %s, team %i)",
-		//		playerId, unitid, unit->unitDefName.c_str(), unit->team);
+	// no warning; will result in false bug reports due to latency between
+	// time of giving valid orders on units which then change team through
+	// e.g. LuaRules
+	// AI's are hosted by players, but do not have any Player representation
+	// themselves and should not be automatically controllable by their host
+	// on the other hand they should always be able to control their OWN team
+	if ((aiTeamID == MAX_TEAMS && !player->CanControlTeam(unit->team)) || (aiTeamID != MAX_TEAMS && aiTeamID != unit->team))
 		return;
-	}
 
-	unit->commandAI->GiveCommand(c, false);
-}
-
-
-bool CSelectedUnitsHandler::CommandsChanged()
-{
-	return possibleCommandsChanged;
+	// always pulled from net, synced command by definition
+	// (fromSynced determines whether CMD_UNLOAD_UNITS uses
+	// synced or unsynced randomized position sampling, etc)
+	unit->commandAI->GiveCommand(c, playerID, true, false);
 }
 
 
@@ -707,14 +755,8 @@ bool CSelectedUnitsHandler::CommandsChanged()
 //
 
 static bool targetIsEnemy = false;
-static const CUnit* targetUnit = NULL;
-static const CFeature* targetFeature = NULL;
-
-
-static inline bool CanDamage(const UnitDef* ud)
-{
-	return ((ud->canAttack && !ud->weapons.empty()) || ud->canKamikaze);
-}
+static const CUnit* targetUnit = nullptr;
+static const CFeature* targetFeature = nullptr;
 
 
 static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
@@ -722,37 +764,53 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 	// There is a lot more that could be done here to make better
 	// selections, but the users may prefer simplicity over smarts.
 
-	if (targetUnit) {
+	if (targetUnit != nullptr) {
 		if (targetIsEnemy) {
-			const bool newCanDamage = CanDamage(newDef);
-			const bool oldCanDamage = CanDamage(oldDef);
-			if ( newCanDamage && !oldCanDamage) { return true;  }
-			if (!newCanDamage &&  oldCanDamage) { return false; }
-			if (!CanDamage(targetUnit->unitDef)) {
-				if ( newDef->canReclaim && !oldDef->canReclaim) { return true;  }
-				if (!newDef->canReclaim &&  oldDef->canReclaim) { return false; }
+			const bool newCanDamage = newDef->CanDamage();
+			const bool oldCanDamage = oldDef->CanDamage();
+
+			if ( newCanDamage && !oldCanDamage)
+				return true;
+			if (!newCanDamage &&  oldCanDamage)
+				return false;
+			if (!targetUnit->unitDef->CanDamage()) {
+				if ( newDef->canReclaim && !oldDef->canReclaim)
+					return true;
+				if (!newDef->canReclaim &&  oldDef->canReclaim)
+					return false;
 			}
-		}
-		else { // targetIsAlly
+		} else { // targetIsAlly
 			if (targetUnit->health < targetUnit->maxHealth) {
-				if ( newDef->canRepair && !oldDef->canRepair) { return true;  }
-				if (!newDef->canRepair &&  oldDef->canRepair) { return false; }
+				if ( newDef->canRepair && !oldDef->canRepair)
+					return true;
+				if (!newDef->canRepair &&  oldDef->canRepair)
+					return false;
 			}
+
 			const bool newCanLoad = (newDef->transportCapacity > 0);
 			const bool oldCanLoad = (oldDef->transportCapacity > 0);
-			if ( newCanLoad && !oldCanLoad) { return true;  }
-			if (!newCanLoad &&  oldCanLoad) { return false; }
-			if ( newDef->canGuard && !oldDef->canGuard) { return true;  }
-			if (!newDef->canGuard &&  oldDef->canGuard) { return false; }
+
+			if ( newCanLoad && !oldCanLoad)
+				return true;
+			if (!newCanLoad &&  oldCanLoad)
+				return false;
+			if ( newDef->canGuard && !oldDef->canGuard)
+				return true;
+			if (!newDef->canGuard &&  oldDef->canGuard)
+				return false;
 		}
 	}
-	else if (targetFeature) {
-		if (targetFeature->udef != NULL) {
-			if ( newDef->canResurrect && !oldDef->canResurrect) { return true;  }
-			if (!newDef->canResurrect &&  oldDef->canResurrect) { return false; }
+	else if (targetFeature != nullptr) {
+		if (targetFeature->udef != nullptr) {
+			if ( newDef->canResurrect && !oldDef->canResurrect)
+				return true;
+			if (!newDef->canResurrect &&  oldDef->canResurrect)
+				return false;
 		}
-		if ( newDef->canReclaim && !oldDef->canReclaim) { return true;  }
-		if (!newDef->canReclaim &&  oldDef->canReclaim) { return false; }
+		if ( newDef->canReclaim && !oldDef->canReclaim)
+			return true;
+		if (!newDef->canReclaim &&  oldDef->canReclaim)
+			return false;
 	}
 
 	return (newDef->speed > oldDef->speed); // CMD_MOVE?
@@ -765,11 +823,6 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
-	int luaCmd;
-	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
-		return luaCmd;
-	}
-
 	// return the default if there are no units selected
 	if (selectedUnits.empty())
 		return CMD_STOP;
@@ -777,16 +830,16 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 	// setup the locals for IsBetterLeader()
 	targetUnit = unit;
 	targetFeature = feature;
-	if (targetUnit) {
-		targetIsEnemy = !teamHandler->Ally(gu->myAllyTeam, targetUnit->allyteam);
-	}
+
+	if (targetUnit != nullptr)
+		targetIsEnemy = !teamHandler.Ally(gu->myAllyTeam, targetUnit->allyteam);
 
 	// find the best leader to pick the command
-	const CUnit* leaderUnit = unitHandler->GetUnit(*selectedUnits.begin());
+	const CUnit* leaderUnit = unitHandler.GetUnit(*selectedUnits.begin());
 	const UnitDef* leaderDef = leaderUnit->unitDef;
 
 	for (const int unitID: selectedUnits) {
-		const CUnit* testUnit = unitHandler->GetUnit(unitID);
+		const CUnit* testUnit = unitHandler.GetUnit(unitID);
 		const UnitDef* testDef = testUnit->unitDef;
 
 		if (testDef == leaderDef)
@@ -799,7 +852,9 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		leaderUnit = testUnit;
 	}
 
-	return (leaderUnit->commandAI->GetDefaultCmd(unit, feature));
+	int cmd = leaderUnit->commandAI->GetDefaultCmd(unit, feature);
+	eventHandler.DefaultCommand(unit, feature, cmd);
+	return cmd;
 }
 
 
@@ -807,8 +862,7 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 
 void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 {
-	if (sender == NULL || selectedUnits.find(sender->id) != selectedUnits.end())
-		possibleCommandsChanged = true;
+	possibleCommandsChanged |= (sender == nullptr || selectedUnits.find(sender->id) != selectedUnits.end());
 }
 
 // CALLINFO:
@@ -831,14 +885,15 @@ void CSelectedUnitsHandler::DrawCommands()
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	if (selectedGroup != -1) {
-		const auto& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
+		const auto& groupHandler = uiGroupHandlers[gu->myTeam];
+		const auto& groupUnits = groupHandler.GetGroup(selectedGroup)->units;
 
 		for (const int unitID: groupUnits) {
-			commandDrawer->Draw((unitHandler->GetUnit(unitID))->commandAI);
+			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI);
 		}
 	} else {
 		for (const int unitID: selectedUnits) {
-			commandDrawer->Draw((unitHandler->GetUnit(unitID))->commandAI);
+			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI);
 		}
 	}
 
@@ -864,15 +919,15 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		if (selectedUnits.empty())
 			return s;
 
-		const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
+		const CUnit* unit = unitHandler.GetUnit(*selectedUnits.begin());
 		const CTeam* team = nullptr;
 
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if (unit->unitDef->showPlayerName) {
-			team = teamHandler->Team(unit->team);
+			team = teamHandler.Team(unit->team);
 			s = team->GetControllerName();
 		} else {
-			s = unit->tooltip;
+			s = unitToolTipMap.Get(unit->id);
 		}
 	}
 
@@ -888,7 +943,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		SUnitStats stats;
 
 		for (const int unitID: selectedUnits) {
-			const CUnit* unit = unitHandler->GetUnit(unitID);
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 			stats.AddUnit(unit, false);
 
 			if (ctrlTeam == NO_TEAM) {
@@ -900,21 +955,16 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 		s += CTooltipConsole::MakeUnitStatsString(stats);
 
-		if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
-			const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
-			char tmp[500];
-			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]", unit->unitDef->techLevel);
-			s += tmp;
-		}
+		const char* ctrlName = "";
 
-		std::string ctrlName = "";
 		if (ctrlTeam == MULTI_TEAM) {
 			ctrlName = "(Multiple teams)";
 		} else if (ctrlTeam != NO_TEAM) {
-			ctrlName = teamHandler->Team(ctrlTeam)->GetControllerName();
+			ctrlName = teamHandler.Team(ctrlTeam)->GetControllerName();
 		}
-		s += "\n\xff\xff\xff\xff" + ctrlName;
 
+		s += "\n\xff\xff\xff\xff";
+		s += ctrlName;
 		return s;
 	}
 }
@@ -923,7 +973,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
 	for (const int unitID: selectedUnits) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 		CCommandAI* c = u->commandAI;
 		c->lastSelectedCommandPage = page;
 	}
@@ -934,97 +984,121 @@ void CSelectedUnitsHandler::SetCommandPage(int page)
 void CSelectedUnitsHandler::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
-		// send new selection
+		// send new selection; first gather unit IDs
+		selectedUnitIDs.clear();
+		selectedUnitIDs.resize(selectedUnits.size(), 0);
 
-		// first, convert CUnit* to unit IDs.
-		std::vector<short> selectedUnitIDs(selectedUnits.size());
-		std::vector<short>::iterator i = selectedUnitIDs.begin();
-
-		for (auto ui = selectedUnits.begin(); ui != selectedUnits.end(); ++i, ++ui) {
-			*i = *ui;
-		}
+		std::copy(selectedUnits.begin(), selectedUnits.end(), selectedUnitIDs.begin());
 
 		clientNet->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
 		selectionChanged = false;
 	}
 
-	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.GetTimeOut(), c.GetOpts(), c.GetNumParams(), c.GetParams()));
 }
 
 
+// despite the NETMSG_AICOMMANDS packet-id, this only services LuaUnsyncedCtrl
 void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
-	if (gu->spectating && !gs->godMode) {
-		// do not waste bandwidth (units can be selected
-		// by any spectator, but not given orders without
-		// god-mode)
-		// note: clients verify this every NETMSG_SELECT
+	// do not waste bandwidth (units can be selected
+	// by any spectator, but not given orders without
+	// god-mode)
+	// note: clients verify this every NETMSG_SELECT
+	if (gu->spectating && gs->godMode == 0)
 		return;
-	}
 
 	const unsigned unitIDCount  = unitIDs.size();
 	const unsigned commandCount = commands.size();
 
-	if ((unitIDCount == 0) || (commandCount == 0)) {
+	if ((unitIDCount == 0) || (commandCount == 0))
 		return;
+
+	uint32_t totalParams = 0;
+
+	// if all commands share the same ID / options / number of parameters,
+	// insert only these values into the packet to save a bit of bandwidth
+	int32_t refCmdID = commands[0].GetID();
+	uint8_t refCmdOpts = commands[0].GetOpts();
+	int32_t refCmdSize = commands[0].GetNumParams();
+
+	for (unsigned int c = 0; c < commandCount; c++) {
+		totalParams += commands[c].GetNumParams();
+
+		if (refCmdID != 0 && refCmdID != commands[c].GetID())
+			refCmdID = 0;
+		if (refCmdOpts != 0xFF && refCmdOpts != commands[c].GetOpts())
+			refCmdOpts = 0xFF;
+		if (refCmdSize != 0xFFFF && refCmdSize != commands[c].GetNumParams())
+			refCmdSize = 0xFFFF;
 	}
 
-	unsigned totalParams = 0;
-	int sameCmdID = commands[0].GetID();
-	unsigned char sameCmdOpt = commands[0].options;
-	int sameCmdParamSize = commands[0].params.size();
-	for (unsigned c = 0; c < commandCount; c++) {
-		totalParams += commands[c].params.size();
-		if (sameCmdID != 0 && sameCmdID != commands[c].GetID())
-			sameCmdID = 0;
-		if (sameCmdOpt != 0xFF && sameCmdOpt != commands[c].options)
-			sameCmdOpt = 0xFF;
-		if (sameCmdParamSize != 0xFFFF && sameCmdParamSize != commands[c].params.size())
-			sameCmdParamSize = 0xFFFF;
+	unsigned int optBytesPerCmd = 0;
+	unsigned int totalPacketLen = 0;
+
+	// optional data per command (cmdID, cmdOpts, #cmdParams)
+	optBytesPerCmd += (sizeof(uint32_t) * (refCmdID   == 0     ));
+	optBytesPerCmd += (sizeof(uint8_t ) * (refCmdOpts == 0xFF  ));
+	optBytesPerCmd += (sizeof(uint16_t) * (refCmdSize == 0xFFFF));
+
+	// msg type, msg size
+	totalPacketLen += (sizeof(uint8_t) + sizeof(static_cast<uint16_t>(totalPacketLen)));
+	// player ID, AI ID, pairwise
+	totalPacketLen += (sizeof(uint8_t) * 3);
+	totalPacketLen += (
+		sizeof(static_cast<uint32_t>(refCmdID  )) +
+		sizeof(static_cast<uint8_t >(refCmdOpts)) +
+		sizeof(static_cast<uint16_t>(refCmdSize))
+	);
+
+	totalPacketLen += sizeof(static_cast<uint16_t>(unitIDCount));
+	totalPacketLen += (unitIDCount * sizeof(uint16_t));
+
+	totalPacketLen += sizeof(static_cast<uint16_t>(commandCount));
+	totalPacketLen += (commandCount * optBytesPerCmd);
+	totalPacketLen += (totalParams * sizeof(float)); // params are floats
+
+	if (totalPacketLen > 8192) {
+		LOG_L(L_WARNING, "[%s] discarded oversized (len=%i) NETMSG_AICOMMANDS packet", __func__, totalPacketLen);
+		return; // do not send oversized packets
 	}
 
-	unsigned msgLen = 0;
-	msgLen += (1 + 2 + 1 + 1 + 1 + 4 + 1 + 2); // msg type, msg size, player ID, AI ID, pairwise, sameCmdID, sameCmdOpt, sameCmdParamSize
-	msgLen += 2; // unitID count
-	msgLen += unitIDCount * 2;
-	msgLen += 2; // command count
-	int psize = ((sameCmdID == 0) ? 4 : 0) + ((sameCmdOpt == 0xFF) ? 1 : 0) + ((sameCmdParamSize == 0xFFFF) ? 2 : 0);
-	msgLen += commandCount * psize; // id, options, params size
-	msgLen += totalParams * 4;
-	if (msgLen > 8192) {
-		LOG_L(L_WARNING, "Discarded oversized NETMSG_AICOMMANDS packet: %i",
-				msgLen);
-		return; // drop the oversized packet
-	}
-	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
-	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS)
-	        << static_cast<unsigned short>(msgLen)
-	        << static_cast<unsigned char>(gu->myPlayerNum)
-	        << skirmishAIHandler.GetCurrentAIID()
-	        << static_cast<unsigned char>(pairwise)
-	        << static_cast<unsigned int>(sameCmdID)
-	        << static_cast<unsigned char>(sameCmdOpt)
-	        << static_cast<unsigned short>(sameCmdParamSize);
+	netcode::PackPacket* packet = new netcode::PackPacket(totalPacketLen);
+	*packet << static_cast<uint8_t >(NETMSG_AICOMMANDS)
+	        << static_cast<uint16_t>(totalPacketLen)
+
+	        << static_cast<uint8_t>(gu->myPlayerNum)
+	        << static_cast<uint8_t>(MAX_AIS)
+	        // << static_cast<uint8_t>(MAX_TEAMS)
+
+	        << static_cast<uint8_t >(pairwise)
+	        << static_cast<uint32_t>(refCmdID)
+	        << static_cast<uint8_t >(refCmdOpts)
+	        << static_cast<uint16_t>(refCmdSize);
 
 	// NOTE: does not check for invalid unitIDs
-	*packet << static_cast<unsigned short>(unitIDCount);
-	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it) {
-		*packet << static_cast<short>(*it);
+	*packet << static_cast<uint16_t>(unitIDCount);
+	for (const int unitID: unitIDs) {
+		*packet << static_cast<int16_t>(unitID);
 	}
 
-	*packet << static_cast<unsigned short>(commandCount);
+	*packet << static_cast<uint16_t>(commandCount);
 
-	for (unsigned i = 0; i < commandCount; ++i) {
+	for (unsigned int i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
-		if (sameCmdID == 0)
-			*packet << static_cast<unsigned int>(cmd.GetID());
-		if (sameCmdOpt == 0xFF)
-			*packet << cmd.options;
-		if (sameCmdParamSize == 0xFFFF)
-			*packet << static_cast<unsigned short>(cmd.params.size());
-		*packet << cmd.params;
+
+		if (refCmdID == 0)
+			*packet << static_cast<uint32_t>(cmd.GetID());
+		if (refCmdOpts == 0xFF)
+			*packet << static_cast<uint8_t>(cmd.GetOpts());
+		if (refCmdSize == 0xFFFF)
+			*packet << static_cast<uint16_t>(cmd.GetNumParams());
+
+		for (unsigned int j = 0, n = cmd.GetNumParams(); j < n; j++) {
+			*packet << cmd.GetParam(j);
+		}
 	}
 
 	clientNet->Send(std::shared_ptr<netcode::RawPacket>(packet));
-	return;
 }
+

@@ -63,8 +63,18 @@
 
 #if defined(_MSC_VER)
 	#define _threadlocal __declspec(thread)
+#elif defined(__clang__)
+	// clang's __thread does not allow objects with non-trivial dtors
+	#define _threadlocal thread_local
 #else
 	#define _threadlocal __thread
+#endif
+
+
+#ifdef __GNUC__
+	#define _deprecated __attribute__ ((deprecated))
+#else
+	#define _deprecated
 #endif
 
 
@@ -163,7 +173,7 @@
    more info: http://www.peterstock.co.uk/games/mingw_sse/ (TLDR: mingw-32 aligns
    thread stacks to 4 bytes but we want 16-byte alignment)
 */
-#if (defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ == 4))
+#if (defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ >= 4))
 #define __FORCE_ALIGN_STACK__ __attribute__ ((force_align_arg_pointer))
 #else
 #define __FORCE_ALIGN_STACK__

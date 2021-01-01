@@ -23,6 +23,8 @@ class LuaSyncedRead {
 		static int IsGodModeEnabled(lua_State* L);
 		static int IsDevLuaEnabled(lua_State* L);
 		static int IsEditDefsEnabled(lua_State* L);
+		static int IsNoCostEnabled(lua_State* L);
+		static int GetGlobalLos(lua_State* L);
 		static int AreHelperAIsEnabled(lua_State* L);
 		static int FixedAllies(lua_State* L);
 
@@ -36,6 +38,7 @@ class LuaSyncedRead {
 		static int GetGameRulesParam(lua_State* L);
 		static int GetGameRulesParams(lua_State* L);
 
+		static int GetTidal(lua_State* L);
 		static int GetWind(lua_State* L);
 
 		static int GetHeadingFromVector(lua_State* L);
@@ -45,6 +48,7 @@ class LuaSyncedRead {
 
 		static int GetAllyTeamStartBox(lua_State* L);
 		static int GetTeamStartPosition(lua_State* L);
+		static int GetMapStartPositions(lua_State* L);
 
 		static int GetAllyTeamList(lua_State* L);
 		static int GetTeamList(lua_State* L);
@@ -150,6 +154,7 @@ class LuaSyncedRead {
 		static int GetUnitMoveTypeData(lua_State* L);
 
 		static int GetUnitCommands(lua_State* L);
+		static int GetUnitCurrentCommand(lua_State* L);
 		static int GetFactoryCounts(lua_State* L);
 		static int GetFactoryCommands(lua_State* L);
 
@@ -167,6 +172,8 @@ class LuaSyncedRead {
 		static int GetUnitSeparation(lua_State* L);
 		static int GetUnitFeatureSeparation(lua_State* L);
 		static int GetUnitDefDimensions(lua_State* L);
+
+		static int GetCEGID(lua_State* L);
 
 		static int GetAllFeatures(lua_State* L);
 
@@ -227,6 +234,7 @@ class LuaSyncedRead {
 		static int TestMoveOrder(lua_State* L);
 		static int TestBuildOrder(lua_State* L);
 		static int Pos2BuildPos(lua_State* L);
+		static int ClosestBuildPos(lua_State* L);
 
 		static int GetPositionLosState(lua_State* L);
 		static int IsPosInLos(lua_State* L);

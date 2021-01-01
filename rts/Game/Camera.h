@@ -3,24 +3,13 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 
-#include <vector>
-
-#include "Rendering/GL/myGL.h"
+#include "System/AABB.hpp"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
 
-class CCamera
-{
+class CCamera {
 public:
-	struct FrustumLine {
-		float base;
-		float dir;
-		int sign;
-		float minz;
-		float maxz;
-	};
-
 	enum {
 		CAMTYPE_PLAYER = 0, // main camera
 		CAMTYPE_UWREFL = 1, // used for underwater reflections
@@ -62,16 +51,54 @@ public:
 		MOVE_STATE_SLW = 7, // slow
 	};
 
+	struct Frustum {
+	public:
+		bool IntersectSphere(const float3& cp, const float4& sp) const;
+		bool IntersectAABB(const AABB& b) const;
+
+	public:
+		// corners
+		float3 verts[8];
+		// normals
+		float3 planes[FRUSTUM_PLANE_CNT];
+		// ntr - ntl, ntl - nbl, ftl - ntl, ftr - ntr, fbr - nbr, fbl - nbl
+		float3 edges[6];
+
+		// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
+		float4 scales;
+	};
+	struct FrustumLine {
+		int sign = 0;
+
+		float base = 0.0f;
+		float dir = 0.0f;
+
+		float minz = 0.0f;
+		float maxz = 0.0f;
+	};
+
+	struct UpdateParams {
+		bool updateDirs;
+		bool updateMats;
+		bool updateFrustum;
+		bool updateViewPort;
+		bool updateViewRange;
+	};
+
 public:
 	CCamera(unsigned int cameraType = CAMTYPE_PLAYER, unsigned int projectionType = PROJTYPE_PERSP);
 
 	void CopyState(const CCamera*);
 	void CopyStateReflect(const CCamera*);
-	void Update(bool updateDirs = true, bool updateMats = true, bool updatePort = true);
+
+	void Update(const UpdateParams& p);
+	void Update(bool updateDirs = true, bool updateMats = true, bool updateViewPort = true, bool updateViewRange = true) {
+		Update({updateDirs, updateMats, true, updateViewPort, updateViewRange});
+	}
 
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
-	void SetDir(const float3 dir);
+	void SetDir(const float3& dir);
 
 	const float3& GetPos() const { return pos; }
 	const float3& GetDir() const { return forward; }
@@ -81,32 +108,31 @@ public:
 	const float3& GetUp() const      { return up; }
 	const float3& GetRot() const     { return rot; }
 
-	void SetRot(const float3 r) { UpdateDirsFromRot(rot = r); }
+	void SetRot(const float3& r) { UpdateDirsFromRot(rot = r); }
 	void SetRotX(const float x) { SetRot(float3(    x, rot.y, rot.z)); }
 	void SetRotY(const float y) { SetRot(float3(rot.x,     y, rot.z)); }
 	void SetRotZ(const float z) { SetRot(float3(rot.x, rot.y,     z)); }
 
-	float3 CalcPixelDir(int x,int y) const;
+	float3 CalcPixelDir(int x, int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 
-	bool InView(const float3& p, float radius = 0) const;
-	bool InView(const float3& mins, const float3& maxs) const;
+	bool InView(const float3& point, float radius = 0.0f) const { return (frustum.IntersectSphere(pos, {point, radius})); }
+	bool InView(const float3& mins, const float3& maxs) const { return (InView(AABB{mins, maxs})); }
+	bool InView(const AABB& aabb) const { return (InView(aabb.CalcCenter(), aabb.CalcRadius()) && frustum.IntersectAABB(aabb)); }
 
-	void GetFrustumSides(float miny, float maxy, float scale, bool negOnly = false);
-	void GetFrustumSide(
+	void CalcFrustumLines(float miny, float maxy, float scale, bool neg = false);
+	void CalcFrustumLine(
 		const float3& normal,
 		const float3& offset,
-		float miny,
-		float maxy,
-		float scale,
+		const float3& params,
 		unsigned int side
 	);
 
-	void ClipFrustumLines(bool left, const float zmin, const float zmax);
-	void SetFrustumScales(const float4 scales) { frustumScales = scales; }
+	void ClipFrustumLines(const float zmin, const float zmax, bool neg);
+	void SetFrustumScales(const float4 scales) { frustum.scales = scales; }
 
-	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
-	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
+	const FrustumLine* GetPosFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_POS][0]; }
+	const FrustumLine* GetNegFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_NEG][0]; }
 
 	void SetClipCtrlMatrix(const CMatrix44f& mat) { clipControlMatrix = mat; }
 	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
@@ -131,17 +157,25 @@ public:
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 	const CMatrix44f& GetClipControlMatrix() const { return clipControlMatrix; }
 
+	const float3& GetFrustumVert (unsigned int i) const { return frustum.verts [i]; }
+	const float3& GetFrustumPlane(unsigned int i) const { return frustum.planes[i]; }
+	const float3& GetFrustumEdge (unsigned int i) const { return frustum.edges [i]; }
+
 	void LoadMatrices() const;
 	void LoadViewPort() const;
 	void UpdateLoadViewPort(int px, int py, int sx, int sy);
 
-	void SetVFOV(const float angle);
+	void SetVFOV(float angle);
+	void SetAspectRatio(float ar) { aspectRatio = ar; }
 
 	float GetVFOV() const { return fov; }
 	float GetHFOV() const;
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
+	float GetNearPlaneDist() const { return frustum.scales.z; }
+	float GetFarPlaneDist() const { return frustum.scales.w; }
+	float GetAspectRatio() const { return aspectRatio; }
 
 	float3 GetMoveVectorFromState(bool fromKeyState) const;
 
@@ -150,20 +184,21 @@ public:
 	const bool* GetMovState() const { return movState; }
 	const bool* GetRotState() const { return rotState; }
 
-	static float3 GetRotFromDir(float3 fwd);
-	static float3 GetFwdFromRot(const float3 r);
-	static float3 GetRgtFromRot(const float3 r);
+	static CCamera* GetActive();
 
-	float ProjectedDistance(const float3 objPos) const {
-		const float3 diff = objPos - GetPos();
-		const float dist = diff.dot(GetDir());
-		return dist;
+	static float3 GetRotFromDir(float3 fwd);
+	static float3 GetFwdFromRot(const float3& r);
+	static float3 GetRgtFromRot(const float3& r);
+
+
+	float ProjectedDistance(const float3& objPos) const {
+		return (forward.dot(objPos - pos));
 	}
 
 	/*
-	float ProjectedDistanceShadow(const float3 objPos, const float3 sunDir) const {
+	float ProjectedDistanceShadow(const float3& objPos, const float3& sunDir) const {
 		// FIXME: fix it, cap it for shallow shadows?
-		const float3 diff = (GetPos() - objPos);
+		const float3 diff = pos - objPos;
 		const float  dot  = diff.dot(sunDir);
 		const float3 gap  = diff - (sunDir * dot);
 		return (gap.Length());
@@ -175,18 +210,6 @@ public:
 	unsigned int SetCamType(unsigned int ct) { return (camType = ct); }
 	unsigned int SetProjType(unsigned int pt) { return (projType = pt); }
 
-
-	static void InitializeStatic();
-	static void SetActiveCamera(unsigned int camType);
-
-	static CCamera* GetCamera(unsigned int camType);
-	static CCamera* GetActiveCamera();
-
-	// sets the current active camera, returns the previous
-	static CCamera* GetSetActiveCamera(unsigned int camType) {
-		CCamera* cam = GetActiveCamera(); SetActiveCamera(camType); return cam;
-	}
-
 public:
 	void UpdateViewRange();
 	void UpdateFrustum();
@@ -195,36 +218,29 @@ public:
 
 private:
 	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
-	void glFrustumSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
 	void glOrthoScaledSpring(const float sx, const float sy, const float zn, const float zf);
-	void glOrthoSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
 	void gluLookAtSpring(const float3&, const float3&, const float3&);
 
-	void UpdateDirsFromRot(const float3 r);
+	void UpdateDirsFromRot(const float3& r);
 
 public:
 	float3 pos;
-	float3 rot;        ///< x = inclination, y = azimuth (to the -z axis!), z = roll
-	float3 forward;    ///< local z-axis
-	float3 right;      ///< local x-axis
-	float3 up;         ///< local y-axis
-
-	float fov;         ///< vertical viewing angle, in degrees
-	float halfFov;     ///< half the fov in radians
-	float tanHalfFov;  ///< math::tan(halfFov)
-	float lppScale;    ///< length-per-pixel scale
-
-public:
-	// frustum-volume planes (infinite)
-	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
-	// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
-	float4 frustumScales;
+	float3 rot;                   ///< x = inclination, y = azimuth (to the -z axis!), z = roll
+	float3 forward = FwdVector;   ///< local z-axis
+	float3 right   = RgtVector;   ///< local x-axis
+	float3 up      =  UpVector;   ///< local y-axis
 
 	// Lua-controlled parameters, player-camera only
 	float3 posOffset;
 	float3 tiltOffset;
 
-	GLint viewport[4];
+	float fov         = 0.0f;  ///< vertical viewing angle, in degrees
+	float halfFov     = 0.0f;  ///< half the fov in radians
+	float tanHalfFov  = 0.0f;  ///< math::tan(halfFov)
+	float lppScale    = 0.0f;  ///< length-per-pixel scale
+	float aspectRatio = 1.0f;  ///< horizontal
+
+	int viewport[4];
 
 private:
 	CMatrix44f projectionMatrix;
@@ -236,18 +252,19 @@ private:
 	CMatrix44f billboardMatrix;
 	CMatrix44f clipControlMatrix;
 
-	// positive sides [0], negative sides [1]
-	std::vector<FrustumLine> frustumLines[2];
+	Frustum frustum;
+	// positive (right-to-left) lines [0], negative (left-to-right) lines [1]
+	FrustumLine frustumLines[2][4 + 1];
 
 	// CAMTYPE_*
-	unsigned int camType;
+	unsigned int camType = -1u;
 	// PROJTYPE_*
-	unsigned int projType;
+	unsigned int projType = -1u;
 
 	bool movState[8]; // fwd, back, left, right, up, down, fast, slow
 	bool rotState[4]; // unused
 };
 
-#define camera (CCamera::GetActiveCamera())
+#define camera (CCamera::GetActive())
 #endif // _CAMERA_H
 

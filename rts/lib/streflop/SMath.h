@@ -708,7 +708,7 @@ enum
 
 	inline bool isunorderedl(Extended x, Extended y) {return isunordered(x, y);}
 	inline bool isgreaterl(Extended x, Extended y) {return isgreater(x, y);}
-	inline bool isgreaterequall(Extended x, Extended y) {return isgreaterequall(x, y);}
+	inline bool isgreaterequall(Extended x, Extended y) {return isgreaterequal(x, y);}
 	inline bool islessl(Extended x, Extended y) {return isless(x, y);}
 	inline bool islessequall(Extended x, Extended y) {return islessequal(x, y);}
 	inline bool islessgreaterl(Extended x, Extended y) {return islessgreater(x, y);}

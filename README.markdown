@@ -40,3 +40,4 @@ though it has [a LOT of additional ways of control and customizability](https://
 ### Notes
 
 A more extensive readme can be found [here](https://springrts.com/wiki/Read_Me_First).
+

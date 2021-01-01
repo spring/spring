@@ -20,27 +20,34 @@ enum {
 
 static CLuaHandle* GetLuaHandle(lua_State* L, int index)
 {
-	int* addr = (int*) lua_touserdata(L, index);
-	if (addr == NULL) {
-		luaL_error(L, "Bad XCall target");
-		return NULL;
+	const int* addr = (const int*) lua_touserdata(L, index);
+
+	if (addr == nullptr) {
+		luaL_error(L, "[LuaInterCall::%s] nil XCall target", __func__);
+		return nullptr;
 	}
 
-	const bool isSrcSynced = CLuaHandle::GetHandleSynced(L);
 	switch (*addr) {
 		case LUA_UI:
-			if (!luaUI) return NULL; // handle is not currently active
 			return luaUI;
 		case LUA_RULES:
-			if (!luaRules) return NULL; // handle is not currently active
-			return (isSrcSynced) ? static_cast<CLuaHandle*>(&luaRules->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaRules->unsyncedLuaHandle);
+			// handle is not currently active
+			if (luaRules == nullptr)
+				return nullptr;
+
+			return (CLuaHandle::GetHandleSynced(L)) ? static_cast<CLuaHandle*>(&luaRules->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaRules->unsyncedLuaHandle);
 		case LUA_GAIA:
-			if (!luaGaia) return NULL; // handle is not currently active
-			return (isSrcSynced) ? static_cast<CLuaHandle*>(&luaGaia->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaGaia->unsyncedLuaHandle);
+			// handle is not currently active
+			if (luaGaia == nullptr)
+				return nullptr;
+
+			return (CLuaHandle::GetHandleSynced(L)) ? static_cast<CLuaHandle*>(&luaGaia->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaGaia->unsyncedLuaHandle);
+
 		default:
-			luaL_error(L, "Bad XCall target");
-			return NULL;
+			luaL_error(L, "[LuaInterCall::%s] bad XCall target %d", __func__, *addr);
 	};
+
+	return nullptr;
 }
 
 
@@ -54,18 +61,19 @@ static int HandleXCall(lua_State* L)
 	const int nameIndex = lua_upvalueindex(2);
 
 	CLuaHandle* lh = GetLuaHandle(L, addrIndex);
-	const std::string funcName = luaL_checksstring(L, nameIndex);
+	const char* funcName = luaL_checkstring(L, nameIndex);
 
-	if (lh == NULL) return 0;
+	if (lh == nullptr)
+		return 0;
+
 	return lh->XCall(L, funcName);
 }
 
 
 static int IndexHook(lua_State* L)
 {
-	if (!lua_israwstring(L, -1)) {
+	if (!lua_israwstring(L, -1))
 		return luaL_error(L, "Script.XYZ: only strings allowed got ", lua_typename(L, -1));
-	}
 
 	lua_pushvalue(L, lua_upvalueindex(1));
 	lua_pushvalue(L, -2);
@@ -77,22 +85,20 @@ static int IndexHook(lua_State* L)
 static int CallHook(lua_State* L)
 {
 	const int addrIndex = lua_upvalueindex(1);
-	CLuaHandle* lh = GetLuaHandle(L, addrIndex);
-	if (lh == NULL) return 0;
+	const CLuaHandle* lh = GetLuaHandle(L, addrIndex);
 
-	const int args = lua_gettop(L); // arg 1 is the table
-	if (args <= 1) {
-		// is the handle currently active?
-		lua_pushboolean(L, (lh != NULL));
-		return 1;
-	}
-	else if (args >= 2) {
+	if (lh == nullptr)
+		return 0;
+
+	if (lua_gettop(L) <= 1) {
+		// see if the handle currently active (arg 1 is the table)
+		lua_pushboolean(L, (lh != nullptr));
+	} else {
 		// see if the specified function exists
-		const string funcName = luaL_checksstring(L, 2);
-		lua_pushboolean(L, lh->HasXCall(funcName));
-		return 1;
+		lua_pushboolean(L, lh->HasXCall(luaL_checksstring(L, 2)));
 	}
-	return 0;
+
+	return 1;
 }
 
 

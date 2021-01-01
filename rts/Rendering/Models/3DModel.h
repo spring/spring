@@ -16,17 +16,18 @@
 #include "System/creg/creg_cond.h"
 
 
-#define NUM_MODEL_TEXTURES 2
-#define NUM_MODEL_UVCHANNS 2
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+#define MAX_MODEL_OBJECTS  2048
+#define NUM_MODEL_TEXTURES    2
+#define NUM_MODEL_UVCHANNS    2
+
+static constexpr float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static constexpr float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
 enum ModelType {
-	MODELTYPE_3DO   = 0,
-	MODELTYPE_S3O   = 1,
-	MODELTYPE_OBJ   = 2,
-	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
-	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
+	MODELTYPE_3DO    = 0,
+	MODELTYPE_S3O    = 1,
+	MODELTYPE_ASS    = 2, // Assimp
+	MODELTYPE_OTHER  = 3  // count
 };
 
 struct CollisionVolume;
@@ -78,17 +79,38 @@ public:
  */
 
 struct S3DModelPiece {
-	S3DModelPiece()
-		: parent(nullptr)
-		, scales(OnesVector)
-		, mins(DEF_MIN_SIZE)
-		, maxs(DEF_MAX_SIZE)
-		, dispListID(0)
-		, hasBakedMat(false)
-		, dummyPadding(false)
-	{}
+	S3DModelPiece() = default;
 
-	virtual ~S3DModelPiece();
+	// runs during global deinit, can not Clear() since that touches OpenGL
+	virtual ~S3DModelPiece() { assert(vboIndices.vboId == 0 && vboShatterIndices.vboId == 0); }
+
+	virtual void Clear() {
+		name.clear();
+		children.clear();
+
+		for (S3DModelPiecePart& p: shatterParts) {
+			p.renderData.clear();
+		}
+
+		parent = nullptr;
+		colvol = {};
+
+		pieceMatrix.LoadIdentity();
+		bakedMatrix.LoadIdentity();
+
+		offset = ZeroVector;
+		goffset = ZeroVector;
+		scales = OnesVector;
+
+		mins = DEF_MIN_SIZE;
+		maxs = DEF_MAX_SIZE;
+
+		DeleteDispList();
+		DeleteBuffers();
+
+		hasBakedMat = false;
+		dummyPadding = false;
+	}
 
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;
@@ -117,6 +139,13 @@ protected:
 public:
 	void DrawStatic() const;
 	void CreateDispList();
+	void DeleteDispList();
+	void DeleteBuffers() {
+		vboIndices = {};
+		vboAttributes = {};
+		vboShatterIndices = {};
+	}
+
 	unsigned int GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
@@ -167,17 +196,18 @@ public:
 	std::vector<S3DModelPiece*> children;
 	std::array<S3DModelPiecePart, S3DModelPiecePart::SHATTER_VARIATIONS> shatterParts;
 
-	S3DModelPiece* parent;
+	S3DModelPiece* parent = nullptr;
 	CollisionVolume colvol;
 
-	CMatrix44f pieceMatrix;    /// bind-pose transform, including baked rots
-	CMatrix44f bakedMatrix;    /// baked local-space rotations
+	CMatrix44f pieceMatrix;      /// bind-pose transform, including baked rots
+	CMatrix44f bakedMatrix;      /// baked local-space rotations
 
-	float3 offset;             /// local (piece-space) offset wrt. parent piece
-	float3 goffset;            /// global (model-space) offset wrt. root piece
-	float3 scales;             /// baked uniform scaling factors (assimp-only)
-	float3 mins;
-	float3 maxs;
+	float3 offset;               /// local (piece-space) offset wrt. parent piece
+	float3 goffset;              /// global (model-space) offset wrt. root piece
+	float3 scales = OnesVector;  /// baked uniform scaling factors (assimp-only)
+
+	float3 mins = DEF_MIN_SIZE;
+	float3 maxs = DEF_MAX_SIZE;
 
 protected:
 	VBO vboIndices;
@@ -248,7 +278,12 @@ struct S3DModel
 	}
 
 	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
-	void DeletePieces();
+	void DeletePieces() {
+		assert(!pieces.empty());
+
+		// NOTE: actual piece memory is owned by parser pools
+		pieces.clear();
+	}
 	void FlattenPieceTree(S3DModelPiece* root) {
 		assert(root != nullptr);
 
@@ -288,7 +323,7 @@ public:
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
-	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or ASSIMP)
 
 	ModelType type;
 

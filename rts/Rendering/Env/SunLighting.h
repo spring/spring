@@ -15,9 +15,9 @@ public:
 	void Init();
 	void Copy(const CSunLighting& sl);
 
-	bool SetValue(unsigned int keyHash, const float4 val);
-	bool SetValue(unsigned int keyHash, const float val) {
-		return (SetValue(keyHash, float4(val, 0.0f, 0.0f, 0.0f)));
+	bool SetValue(const char* key, const float4 val);
+	bool SetValue(const char* key, const float val) {
+		return (SetValue(key, float4(val, 0.0f, 0.0f, 0.0f)));
 	}
 
 	bool operator == (const CSunLighting& sl) const;
@@ -31,7 +31,7 @@ private:
 public:
 	float4 groundAmbientColor; // RGB
 	float4 groundDiffuseColor; // RGB
-	float4 groundSpecularColor; // RBG
+	float4 groundSpecularColor; // RGB
 
 	float4 modelAmbientColor;
 	float4 modelDiffuseColor;

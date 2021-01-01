@@ -15,56 +15,26 @@ COverviewController::COverviewController()
 	enabled = false;
 	minimizeMinimap = false;
 
-	pos.x = mapDims.mapx * 0.5f * SQUARE_SIZE;
-	pos.z = mapDims.mapy * 0.5f * SQUARE_SIZE;
-	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
-
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * std::max(pos.x / globalRendering->aspectRatio, pos.z));
 	dir = float3(0.0f, -1.0f, -0.001f).ANormalize();
 }
 
-void COverviewController::KeyMove(float3 move)
-{
-}
-
-void COverviewController::MouseMove(float3 move)
-{
-}
-
-void COverviewController::ScreenEdgeMove(float3 move)
-{
-}
-
-void COverviewController::MouseWheelMove(float move)
-{
-}
-
-void COverviewController::SetDir(const float3& newDir)
-{
-}
-
-void COverviewController::SetPos(const float3& newPos)
-{
-}
 
 float3 COverviewController::SwitchFrom() const
 {
-	float3 dir = mouse->dir;
-	float length = CGround::LineGroundCol(pos, pos + dir * 50000, false);
-	float3 rpos = pos + dir * length;
+	const float3 mdir = mouse->dir;
+	const float3 rpos = pos + mdir * CGround::LineGroundCol(pos, pos + mdir * 50000.0f, false);
 
-	if (!globalRendering->dualScreenMode) {
+	if (!globalRendering->dualScreenMode)
 		minimap->SetMinimized(minimizeMinimap);
-	}
 
 	return rpos;
 }
 
 void COverviewController::SwitchTo(const int oldCam, const bool showText)
 {
-	if (showText) {
+	if (showText)
 		LOG("Switching to Overview style camera");
-	}
 
 	if (!globalRendering->dualScreenMode) {
 		minimizeMinimap = minimap->GetMinimized();

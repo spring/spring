@@ -22,7 +22,7 @@ private:
 	virtual void Draw();
 
 	static GameSetupDrawer* instance;
-	bool lctrl_pressed;
+
 	spring_time readyCountdown;
 	spring_time lastTick;
 };

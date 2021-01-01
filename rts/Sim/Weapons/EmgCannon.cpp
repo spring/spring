@@ -3,16 +3,15 @@
 #include "EmgCannon.h"
 
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/Sync/SyncTracer.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CEmgCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CEmgCannon, CWeapon, )
 CR_REG_METADATA(CEmgCannon, )
 
 

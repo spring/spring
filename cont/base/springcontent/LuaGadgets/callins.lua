@@ -19,6 +19,8 @@ CALLIN_LIST = {
 	"Save",
 	"Load",
 
+	"Pong",
+
 	-- called when Lua is disabled or this client exits
 	"Shutdown",
 
@@ -99,6 +101,12 @@ CALLIN_LIST = {
 	"AllowUnitCreation",
 	"AllowUnitTransfer",
 	"AllowUnitBuildStep",
+	"AllowUnitTransport",
+	"AllowUnitTransportLoad",
+	"AllowUnitTransportUnload",
+	"AllowUnitCloak",
+	"AllowUnitDecloak",
+	"AllowUnitKamikaze",
 	"AllowFeatureBuildStep",
 	"AllowFeatureCreation",
 	"AllowResourceLevel",
@@ -130,6 +138,7 @@ CALLIN_LIST = {
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
 	"DrawGroundPreForward",
+	"DrawGroundPostForward",
 	"DrawGroundPreDeferred",
 	"DrawGroundPostDeferred",
 	"DrawUnitsPostDeferred",
@@ -143,6 +152,9 @@ CALLIN_LIST = {
 	"DrawFeature",
 	"DrawShield",
 	"DrawProjectile",
+	"DrawMaterial",
+
+	"SunChanged",
 
 	-- unsynced message callins
 	"RecvFromSynced",
@@ -162,6 +174,7 @@ CALLIN_LIST = {
 	"KeyPress",
 	"KeyRelease",
 	"TextInput",
+	"TextEditing",
 	"MousePress",
 	"MouseRelease",
 	"MouseMove",
@@ -187,4 +200,3 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-

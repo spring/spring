@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 #include "System/UnorderedSet.hpp"
@@ -18,15 +19,19 @@ class CVertexArray;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-class IModelRenderContainer;
 class LuaTable;
 
 
 
 class CProjectileDrawer: public CEventClient {
 public:
-	CProjectileDrawer();
-	~CProjectileDrawer();
+	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinFB(true) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -46,9 +51,17 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+
+	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
+
 	void IncPerlinTexObjectCount() { perlinTexObjects++; }
 	void DecPerlinTexObjectCount() { perlinTexObjects--; }
 
+	bool EnableSorting(bool b) { return (drawSorted =           b); }
+	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
+
+
+	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
 	CVertexArray* fxVA = nullptr;
 	CVertexArray* gfVA = nullptr;
@@ -93,8 +106,6 @@ public:
 
 	AtlasedTexture* seismictex = nullptr;
 
-	std::vector<const AtlasedTexture*> smoketex;
-
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
@@ -117,25 +128,30 @@ private:
 private:
 	static constexpr int perlinBlendTexSize = 16;
 	static constexpr int perlinTexSize = 128;
+
 	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
-	FBO perlinFB;
-	int perlinTexObjects;
-	bool drawPerlinTex;
 
-	/// projectiles without a model
-	std::vector<CProjectile*> renderProjectiles;
-	/// projectiles with a model
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
+	int perlinTexObjects = 0;
+	bool drawPerlinTex = false;
+
+	FBO perlinFB;
 
 	ProjectileDistanceComparator zSortCmp;
 
-	/**
-	 * distance-sorted projectiles without models; used
-	 * to render particle effects in back-to-front order
-	 */
-	std::vector<CProjectile*> zSortedProjectiles;
-	std::vector<CProjectile*> unsortedProjectiles;
+
+	std::vector<const AtlasedTexture*> smokeTextures;
+
+	/// projectiles without a model, e.g. nano-particles
+	std::vector<CProjectile*> renderProjectiles;
+	/// projectiles with a model
+	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
+
+	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
+	/// used to render particle effects in back-to-front order
+	std::vector<CProjectile*> sortedProjectiles[2];
+
+	bool drawSorted = true;
 };
 
 extern CProjectileDrawer* projectileDrawer;

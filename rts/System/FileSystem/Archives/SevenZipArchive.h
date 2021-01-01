@@ -8,7 +8,7 @@ extern "C" {
 #include "lib/7z/7z.h"
 }
 
-#include "ArchiveFactory.h"
+#include "IArchiveFactory.h"
 #include "BufferedArchive.h"
 #include <vector>
 #include <string>
@@ -20,7 +20,7 @@ extern "C" {
  */
 class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
-	CSevenZipArchiveFactory();
+	CSevenZipArchiveFactory(): IArchiveFactory("sd7") {}
 	bool CheckForSolid() const { return true; }
 private:
 	IArchive* DoCreateArchive(const std::string& filePath) const;
@@ -36,37 +36,44 @@ public:
 	CSevenZipArchive(const std::string& name);
 	virtual ~CSevenZipArchive();
 
-	virtual bool IsOpen();
+	int GetType() const override { return ARCHIVE_TYPE_SD7; }
 
-	virtual unsigned int NumFiles() const;
-	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
-	virtual bool HasLowReadingCost(unsigned int fid) const;
-	virtual unsigned GetCrc32(unsigned int fid);
+	bool IsOpen() override { return isOpen; }
+	bool HasLowReadingCost(unsigned int fid) const override;
+
+	unsigned int NumFiles() const override { return (fileEntries.size()); }
+	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+
+	#if 0
+	unsigned GetCrc32(unsigned int fid) {
+		assert(IsFileId(fid));
+		return fileEntries[fid].crc;
+	}
+	#endif
 
 private:
-	UInt32 blockIndex;
-	Byte* outBuffer;
-	size_t outBufferSize;
+	int GetFileName(const CSzArEx* db, int i);
 
+private:
 	/**
 	 * How much more unpacked data may be allowed in a solid block,
 	 * besides a meta-file.
-	 * @see FileData#size
-	 * @see FileData#unpackedSize
+	 * @see FileEntry#size
+	 * @see FileEntry#unpackedSize
 	 */
-	static const size_t COST_LIMIT_UNPACK_OVERSIZE;
+	static constexpr size_t COST_LIMIT_UNPACK_OVERSIZE = 32 * 1024;
 	/**
 	 * Maximum allowed packed data allowed in a solid block
 	 * that contains a meta-file.
 	 * This is only checked for if the unpack-oversize limit was not met.
-	 * @see FileData#size
-	 * @see FileData#unpackedSize
+	 * @see FileEntry#size
+	 * @see FileEntry#unpackedSize
 	 */
-	static const size_t COST_LIMIT_DISC_READ;
+	static constexpr size_t COST_LIMIT_DISK_READ = 32 * 1024;
 
-	struct FileData
-	{
+	// actual data is in BufferedArchive
+	struct FileEntry {
 		int fp;
 		/**
 		 * Real/unpacked size of the file in bytes.
@@ -94,11 +101,15 @@ private:
 		 */
 		int packedSize;
 	};
-	int GetFileName(const CSzArEx* db, int i);
 
-	std::vector<FileData> fileData;
-	UInt16 *tempBuf;
-	size_t tempBufSize;
+	std::vector<FileEntry> fileEntries;
+
+	UInt32 blockIndex = 0xFFFFFFFF;
+	size_t outBufferSize = 0;
+
+	Byte* outBuffer = nullptr;
+	// used for file names
+	UInt16 tempBuffer[2048];
 
 	CFileInStream archiveStream;
 	CSzArEx db;
@@ -106,7 +117,7 @@ private:
 	ISzAlloc allocImp;
 	ISzAlloc allocTempImp;
 
-	bool isOpen;
+	bool isOpen = false;
 };
 
 #endif // _7ZIP_ARCHIVE_H

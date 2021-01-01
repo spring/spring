@@ -2,11 +2,7 @@
 
 #include "SkirmishAIWrapper.h"
 
-#include "AICallback.h"
-#include "AICheats.h"
-#include "EngineOutHandler.h"
-#include "IAILibraryManager.h"
-
+#include "AILibraryManager.h"
 #include "SkirmishAIHandler.h"
 #include "SkirmishAILibrary.h"
 #include "SkirmishAILibraryInfo.h"
@@ -25,9 +21,11 @@
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/SharedLib.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
 
+#include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -39,10 +37,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(key),
 
 	CR_IGNORED(library),
-	CR_IGNORED(sCallback),
-
 	CR_IGNORED(callback),
-	CR_IGNORED(cheats),
 
 	CR_MEMBER(timerName),
 
@@ -52,184 +47,145 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	// handled in PostLoad
 	CR_IGNORED(initialized),
 	CR_IGNORED(released),
-	CR_MEMBER(cheatEvents),
+	CR_MEMBER(libraryInit),
 
-	CR_MEMBER(initOk),
-	CR_MEMBER(dieing),
+	CR_MEMBER(cheatEvents),
+	CR_MEMBER(blockEvents),
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ))
 
-/// used only by creg
-CSkirmishAIWrapper::CSkirmishAIWrapper():
-	library(nullptr),
-	sCallback(nullptr),
-
-	skirmishAIId(-1),
-	teamId(-1),
-
-	initialized(false),
-	released(false),
-	cheatEvents(false),
-
-	initOk(false),
-	dieing(false)
+void CSkirmishAIWrapper::PreInit(int aiID)
 {
-}
-
-CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
-	library(nullptr),
-	sCallback(nullptr),
-
-	skirmishAIId(skirmishAIId),
-	teamId(-1),
-
-	initialized(false),
-	released(false),
-	cheatEvents(false),
-
-	initOk(false),
-	dieing(false)
-{
-	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-
-	teamId = aiData->team;
-	key    = aiLibManager->ResolveSkirmishAIKey(SkirmishAIKey(aiData->shortName, aiData->version));
-
-	timerName += ("AI::t:" + IntToString(teamId));
-	timerName += (" id:" + IntToString(skirmishAIId));
-	timerName += (" " + key.GetShortName());
-	timerName += (" " + key.GetVersion());
-
-	CreateCallback();
-}
-
-void CSkirmishAIWrapper::CreateCallback() {
-	callback.reset(new CAICallback(teamId));
-	cheats.reset(new CAICheats(this));
-
-	sCallback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
-}
-
-CSkirmishAIWrapper::~CSkirmishAIWrapper() {
-	// send release event
-	Release(skirmishAIHandler.GetLocalSkirmishAIDieReason(skirmishAIId));
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiID);
 
 	{
-		SCOPED_TIMER(timerName.c_str());
+		key = aiLibManager->ResolveSkirmishAIKey(SkirmishAIKey(aiData->shortName, aiData->version));
+	}
+	{
+		skirmishAIId = aiID;
+		teamId       = aiData->team;
+	}
+	{
+		initialized = false;
+		released = false;
+		libraryInit = false;
 
-		if (initOk)
-			library->Release(skirmishAIId);
+		cheatEvents = false;
+		blockEvents = false;
+	}
+	{
+		const std::string& kn = key.GetShortName();
+		const std::string& kv = key.GetVersion();
 
-		IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
+		CTimeProfiler::UnRegisterTimer(GetTimerName());
+
+		memset(&timerName[0], 0, sizeof(timerName));
+		snprintf(GetTimerName(), sizeof(timerName) - sizeof(uint32_t) - 1, "AI::{id=%d team=%d name=%s version=%s}", teamId, skirmishAIId, kn.c_str(), kv.c_str());
+
+		const uint32_t hash = hashString(GetTimerName());
+		memcpy(&timerName[0], &hash, sizeof(hash));
+
+		CTimeProfiler::RegisterTimer(GetTimerName());
 	}
 
-	// NOTE: explicitly ordered so callback is valid in AI's dtor
-	cheats.reset();
-	callback.reset();
-
-	skirmishAiCallback_release(skirmishAIId);
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] creating callbacks", __func__, skirmishAIId, teamId);
+	CreateCallback();
 }
 
 void CSkirmishAIWrapper::PreDestroy() {
-	callback->noMessages = true;
-}
-
-void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {
-}
-
-void CSkirmishAIWrapper::PostLoad() {
-	CreateCallback();
-	LoadSkirmishAI(true);
+	skirmishAiCallback_BlockOrders(this);
 }
 
 
+void CSkirmishAIWrapper::CreateCallback() {
+	library = nullptr;
+	callback = skirmishAiCallback_GetInstance(this);
+}
 
-bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
+
+
+bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
+	AILibraryManager* libManager = AILibraryManager::GetInstance();
+
 	{
-		SCOPED_TIMER(timerName.c_str());
+		ScopedTimer timer(GetTimerNameHash());
 
-		library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
-
-		if (library == nullptr) {
-			dieing = true;
-			skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
-		} else {
-			initOk = library->Init(skirmishAIId, sCallback);
-		}
+		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr || !(libraryInit = library->Init(skirmishAIId, callback)))
+			skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 	}
 
 	// check if initialization went ok
-	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
+	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId)) {
+		SetBlockEvents(true);
 		return false;
+	}
 
-	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
+	#if 0
 	libManager->FetchSkirmishAILibrary(key);
 
-	const CSkirmishAILibraryInfo& infos = (libManager->GetSkirmishAIInfos().find(key))->second;
-	const bool loadSupported = (infos.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
+	const auto& libInfoMap = libManager->GetSkirmishAIInfos();
+	const auto& libInfoIt  = libInfoMap.find(key);
+
+	const bool loadSupported = (libInfoIt != libInfoMap.end() && libInfoIt->second.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
 
 	libManager->ReleaseSkirmishAILibrary(key);
+
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] postLoad=%d loadSupported=%d numUnits=%u", __func__, skirmishAIId, teamId, postLoad, loadSupported, unitHandler.NumUnitsByTeam(teamId));
 
 	if (!postLoad || loadSupported)
 		return true;
 
-	// fallback code to help the AI if it
-	// doesn't implement load/save support
-	Init();
-
-	for (size_t a = 0; a < unitHandler->MaxUnits(); a++) {
-		const CUnit* unit = unitHandler->GetUnit(a);
-
-		if (unit == nullptr)
-			continue;
-
-		if (unit->team == teamId) {
-			UnitCreated(a, -1);
-
-			if (!unit->beingBuilt) {
-				UnitFinished(a);
-			}
-		} else {
-			if (unit->allyteam == teamHandler->AllyTeam(teamId))
-				continue;
-
-			if (teamHandler->Ally(teamHandler->AllyTeam(teamId), unit->allyteam))
-				continue;
-
-			if (unit->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
-				EnemyEnterRadar(a);
-			}
-
-			if (unit->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
-				EnemyEnterLOS(a);
-			}
-		}
-	}
+	SendInitEvent();
+	SendUnitEvents();
+	#else
+	assert(!postLoad);
+	#endif
 
 	return true;
 }
 
 
 void CSkirmishAIWrapper::Init() {
-	if (!LoadSkirmishAI(false))
+	if (!InitLibrary(false))
 		return;
 
-	const SInitEvent evtData = {skirmishAIId, sCallback};
-	const int error = HandleEvent(EVENT_INIT, &evtData);
-
-	if (error == 0) {
-		initialized = true;
-		return;
-	}
-
-	// init failed
-	LOG_L(L_ERROR, "Failed to handle init event: AI for team %d, error %d", teamId, error);
-	skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+	SendInitEvent();
 }
 
-void CSkirmishAIWrapper::Release(int reason) {
+void CSkirmishAIWrapper::Kill()
+{
+	assert(Active());
+	// send release event
+	Release(skirmishAIHandler.GetLocalKillFlag(skirmishAIId));
+
+	{
+		ScopedTimer timer(GetTimerNameHash());
+
+		if (libraryInit)
+			library->Release(skirmishAIId);
+
+		AILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
+	}
+
+	{
+		skirmishAiCallback_Release(this);
+	}
+	{
+		library = nullptr;
+		callback = nullptr;
+	}
+	{
+		// mark as inactive for EngineOutHandler::{Load,Save}; AI data
+		// remains present in SkirmishAIHandler until RemoveSkirmishAI
+		skirmishAIId = -1;
+		teamId = -1;
+	}
+}
+
+void CSkirmishAIWrapper::Release(int reason)
+{
 	if (!initialized || released)
 		return;
 
@@ -241,20 +197,66 @@ void CSkirmishAIWrapper::Release(int reason) {
 }
 
 
+void CSkirmishAIWrapper::SendInitEvent()
+{
+	const SInitEvent evtData = {skirmishAIId, callback};
+	const int error = HandleEvent(EVENT_INIT, &evtData);
+
+	if (error == 0) {
+		initialized = true;
+		return;
+	}
+
+	// init failed
+	LOG_L(L_ERROR, "[AIWrapper::%s][AI=%d team=%d] error %d handling EVENT_INIT", __func__, skirmishAIId, teamId, error);
+	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
+}
+
+void CSkirmishAIWrapper::SendUnitEvents()
+{
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] numUnits=%u", __func__, skirmishAIId, teamId, unitHandler.NumUnitsByTeam(teamId));
+
+	// fallback code to help the AI if it
+	// doesn't implement load/save support
+	for (const CUnit* unit: unitHandler.GetActiveUnits()) {
+		if (unit->team == teamId) {
+			UnitCreated(unit->id, -1);
+
+			if (!unit->beingBuilt)
+				UnitFinished(unit->id);
+
+			continue;
+		}
+
+		if (unit->allyteam == teamHandler.AllyTeam(teamId))
+			continue;
+
+		if (teamHandler.Ally(teamHandler.AllyTeam(teamId), unit->allyteam))
+			continue;
+
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS))
+			EnemyEnterRadar(unit->id);
+
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & LOS_INLOS)
+			EnemyEnterLOS(unit->id);
+	}
+}
+
+
 
 static void streamCopy(/*const*/ std::istream* in, std::ostream* out)
 {
-	std::vector<char> buffer(128);
+	std::array<char, 128> buffer;
 	std::streampos start = in->tellg();
 
-	in->read(&buffer[0], buffer.size());
+	in->read(buffer.data(), buffer.size());
 
 	while (in->good()) {
-		out->write(&buffer[0], in->gcount());
-		in->read(&buffer[0], buffer.size());
+		out->write(buffer.data(), in->gcount());
+		in->read(buffer.data(), buffer.size());
 	}
 
-	out->write(&buffer[0], in->gcount());
+	out->write(buffer.data(), in->gcount());
 
 	in->clear();  // clear fail and eof bits
 	in->seekg(start, std::ios::beg);  // back to the start!
@@ -282,6 +284,7 @@ void CSkirmishAIWrapper::Load(std::istream* loadStream)
 		tmpFileStream.close();
 	}
 
+	assert(Active());
 	HandleEvent(EVENT_LOAD, &evtData);
 
 	FileSystem::DeleteFile(tmpFile);
@@ -292,6 +295,7 @@ void CSkirmishAIWrapper::Save(std::ostream* saveStream)
 	const std::string tmpFile = createTempFileName("save", teamId, skirmishAIId);
 	const SSaveEvent evtData = {tmpFile.c_str()};
 
+	assert(Active());
 	HandleEvent(EVENT_SAVE, &evtData);
 
 	if (!FileSystem::FileExists(tmpFile))
@@ -436,7 +440,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 ) {
 	std::vector<int> unitIds = playerSelectedUnits;
 
-	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
+	const int cCommandId = extractAICommandTopic(&c, unitHandler.MaxUnits());
 	const SPlayerCommandEvent evtData = {&unitIds[0], static_cast<int>(playerSelectedUnits.size()), cCommandId, playerId};
 
 	HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
@@ -453,7 +457,7 @@ void CSkirmishAIWrapper::SeismicPing(
 	const float3& pos,
 	float strength
 ) {
-	float3 cpyPos = pos;
+	/*const*/ float3 cpyPos = pos;
 	const SSeismicPingEvent evtData = {&cpyPos[0], strength};
 
 	HandleEvent(EVENT_SEISMIC_PING, &evtData);
@@ -461,9 +465,9 @@ void CSkirmishAIWrapper::SeismicPing(
 
 
 int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const {
-	SCOPED_TIMER(timerName.c_str());
+	ScopedTimer timer(GetTimerNameHash());
 
-	if (!dieing || (topic == EVENT_RELEASE))
+	if (!blockEvents || (topic == EVENT_RELEASE))
 		return library->HandleEvent(skirmishAIId, topic, data);
 
 	// to prevent log error spam, signal: OK

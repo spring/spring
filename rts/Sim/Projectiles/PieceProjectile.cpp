@@ -10,14 +10,16 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Rendering/Models/3DModel.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #define SMOKE_TIME 40
 
@@ -53,42 +55,46 @@ CPieceProjectile::CPieceProjectile(
 	omp((lmp != nullptr) ? lmp->original : nullptr),
 	smokeTrail(nullptr)
 {
-	checkCol = false;
-
 	if (owner != nullptr) {
-		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		const UnitDef* ud = owner->unitDef;
+
+		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExpGenCount() > 0) {
+			cegID = guRNG.NextInt(ud->GetPieceExpGenCount());
+			cegID = ud->GetPieceExpGenID(cegID);
+
+			explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		}
 
 		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
+	{
+		// neither spinVector nor spinParams technically need to be
+		// synced, but since instances of this class are themselves
+		// synced and have LuaSynced{Ctrl, Read} exposure we treat
+		// them that way for consistency
+		spinVec = gsRNG.NextVector();
+		spinSpeed = gsRNG.NextFloat() * 20.0f;
+		spinAngle = 0.0f;
 
-	oldSmokePos = pos;
-	oldSmokeDir = speed;
-	oldSmokeDir.Normalize();
+		oldSmokePos = pos;
+		oldSmokeDir = speed;
 
-	// neither spinVec nor spinSpeed technically
-	// needs to be synced, but since instances of
-	// this class are themselves synced and have
-	// LuaSynced{Ctrl, Read} exposure we treat
-	// them that way for consistency
-	spinAngle = 0.0f;
-	spinVec = gsRNG.NextVector().Normalize();
-	spinSpeed = gsRNG.NextFloat() * 20;
+		spinVec.Normalize();
+		oldSmokeDir.Normalize();
+	}
 
 	for (auto& ftp: fireTrailPoints) {
-		ftp.pos = pos;
-		ftp.size = 0.f;
+		ftp = {pos, 0.0f};
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
+
+	checkCol = false;
 	castShadow = true;
+	useAirLos = (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10.0f);
 
-	if (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10) {
-		useAirLos = true;
-	}
-
-	projectileHandler->AddProjectile(this);
+	projectileHandler.AddProjectile(this);
 	assert(!detached);
 }
 
@@ -202,7 +208,7 @@ void CPieceProjectile::Update()
 
 	if ((explFlags & PF_NoCEGTrail) == 0) {
 		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 		return;
 	}
 

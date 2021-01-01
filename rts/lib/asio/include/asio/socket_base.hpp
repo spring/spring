@@ -2,7 +2,7 @@
 // socket_base.hpp
 // ~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -75,6 +75,22 @@ public:
       message_end_of_record = ASIO_OS_DEF(MSG_EOR));
 #endif
 
+  /// Wait types.
+  /**
+   * For use with basic_socket::wait() and basic_socket::async_wait().
+   */
+  enum wait_type
+  {
+    /// Wait for a socket to become ready to read.
+    wait_read,
+
+    /// Wait for a socket to become ready to write.
+    wait_write,
+
+    /// Wait for a socket to have error conditions pending.
+    wait_error
+  };
+
   /// Socket option to permit sending of broadcast messages.
   /**
    * Implements the SOL_SOCKET/SO_BROADCAST socket option.
@@ -82,7 +98,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::udp::socket socket(io_service); 
+   * asio::ip::udp::socket socket(io_context); 
    * ...
    * asio::socket_base::broadcast option(true);
    * socket.set_option(option);
@@ -91,7 +107,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::udp::socket socket(io_service); 
+   * asio::ip::udp::socket socket(io_context); 
    * ...
    * asio::socket_base::broadcast option;
    * socket.get_option(option);
@@ -116,7 +132,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::debug option(true);
    * socket.set_option(option);
@@ -125,7 +141,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::debug option;
    * socket.get_option(option);
@@ -149,7 +165,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::udp::socket socket(io_service); 
+   * asio::ip::udp::socket socket(io_context); 
    * ...
    * asio::socket_base::do_not_route option(true);
    * socket.set_option(option);
@@ -158,7 +174,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::udp::socket socket(io_service); 
+   * asio::ip::udp::socket socket(io_context); 
    * ...
    * asio::socket_base::do_not_route option;
    * socket.get_option(option);
@@ -183,7 +199,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::keep_alive option(true);
    * socket.set_option(option);
@@ -192,7 +208,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::keep_alive option;
    * socket.get_option(option);
@@ -216,7 +232,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::send_buffer_size option(8192);
    * socket.set_option(option);
@@ -225,7 +241,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::send_buffer_size option;
    * socket.get_option(option);
@@ -250,7 +266,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::send_low_watermark option(1024);
    * socket.set_option(option);
@@ -259,7 +275,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::send_low_watermark option;
    * socket.get_option(option);
@@ -284,7 +300,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::receive_buffer_size option(8192);
    * socket.set_option(option);
@@ -293,7 +309,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::receive_buffer_size option;
    * socket.get_option(option);
@@ -318,7 +334,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::receive_low_watermark option(1024);
    * socket.set_option(option);
@@ -327,7 +343,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::receive_low_watermark option;
    * socket.get_option(option);
@@ -353,7 +369,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::acceptor acceptor(io_service); 
+   * asio::ip::tcp::acceptor acceptor(io_context); 
    * ...
    * asio::socket_base::reuse_address option(true);
    * acceptor.set_option(option);
@@ -362,7 +378,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::acceptor acceptor(io_service); 
+   * asio::ip::tcp::acceptor acceptor(io_context); 
    * ...
    * asio::socket_base::reuse_address option;
    * acceptor.get_option(option);
@@ -388,7 +404,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::linger option(true, 30);
    * socket.set_option(option);
@@ -397,7 +413,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::linger option;
    * socket.get_option(option);
@@ -416,6 +432,40 @@ public:
       linger;
 #endif
 
+  /// Socket option for putting received out-of-band data inline.
+  /**
+   * Implements the SOL_SOCKET/SO_OOBINLINE socket option.
+   *
+   * @par Examples
+   * Setting the option:
+   * @code
+   * asio::ip::tcp::socket socket(io_context);
+   * ...
+   * asio::socket_base::out_of_band_inline option(true);
+   * socket.set_option(option);
+   * @endcode
+   *
+   * @par
+   * Getting the current option value:
+   * @code
+   * asio::ip::tcp::socket socket(io_context);
+   * ...
+   * asio::socket_base::out_of_band_inline option;
+   * socket.get_option(option);
+   * bool value = option.value();
+   * @endcode
+   *
+   * @par Concepts:
+   * Socket_Option, Boolean_Socket_Option.
+   */
+#if defined(GENERATING_DOCUMENTATION)
+  typedef implementation_defined out_of_band_inline;
+#else
+  typedef asio::detail::socket_option::boolean<
+    ASIO_OS_DEF(SOL_SOCKET), ASIO_OS_DEF(SO_OOBINLINE)>
+      out_of_band_inline;
+#endif
+
   /// Socket option to report aborted connections on accept.
   /**
    * Implements a custom socket option that determines whether or not an accept
@@ -425,7 +475,7 @@ public:
    * @par Examples
    * Setting the option:
    * @code
-   * asio::ip::tcp::acceptor acceptor(io_service); 
+   * asio::ip::tcp::acceptor acceptor(io_context); 
    * ...
    * asio::socket_base::enable_connection_aborted option(true);
    * acceptor.set_option(option);
@@ -434,7 +484,7 @@ public:
    * @par
    * Getting the current option value:
    * @code
-   * asio::ip::tcp::acceptor acceptor(io_service); 
+   * asio::ip::tcp::acceptor acceptor(io_context); 
    * ...
    * asio::socket_base::enable_connection_aborted option;
    * acceptor.get_option(option);
@@ -453,28 +503,6 @@ public:
     enable_connection_aborted;
 #endif
 
-  /// (Deprecated: Use non_blocking().) IO control command to
-  /// set the blocking mode of the socket.
-  /**
-   * Implements the FIONBIO IO control command.
-   *
-   * @par Example
-   * @code
-   * asio::ip::tcp::socket socket(io_service); 
-   * ...
-   * asio::socket_base::non_blocking_io command(true);
-   * socket.io_control(command);
-   * @endcode
-   *
-   * @par Concepts:
-   * IO_Control_Command, Boolean_IO_Control_Command.
-   */
-#if defined(GENERATING_DOCUMENTATION)
-  typedef implementation_defined non_blocking_io;
-#else
-  typedef asio::detail::io_control::non_blocking_io non_blocking_io;
-#endif
-
   /// IO control command to get the amount of data that can be read without
   /// blocking.
   /**
@@ -482,7 +510,7 @@ public:
    *
    * @par Example
    * @code
-   * asio::ip::tcp::socket socket(io_service); 
+   * asio::ip::tcp::socket socket(io_context); 
    * ...
    * asio::socket_base::bytes_readable command(true);
    * socket.io_control(command);
@@ -500,11 +528,22 @@ public:
 
   /// The maximum length of the queue of pending incoming connections.
 #if defined(GENERATING_DOCUMENTATION)
+  static const int max_listen_connections = implementation_defined;
+#else
+  ASIO_STATIC_CONSTANT(int, max_listen_connections
+      = ASIO_OS_DEF(SOMAXCONN));
+#endif
+
+#if !defined(ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use max_listen_connections.) The maximum length of the queue
+  /// of pending incoming connections.
+#if defined(GENERATING_DOCUMENTATION)
   static const int max_connections = implementation_defined;
 #else
   ASIO_STATIC_CONSTANT(int, max_connections
       = ASIO_OS_DEF(SOMAXCONN));
 #endif
+#endif // !defined(ASIO_NO_DEPRECATED)
 
 protected:
   /// Protected destructor to prevent deletion through this type.

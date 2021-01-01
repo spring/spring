@@ -62,12 +62,15 @@ class LuaShaders {
 
 		static int GetActiveUniforms(lua_State* L);
 		static int GetUniformLocation(lua_State* L);
+		static int GetSubroutineIndex(lua_State* L);
 		static int Uniform(lua_State* L);
 		static int UniformInt(lua_State* L);
 		static int UniformArray(lua_State* L);
 		static int UniformMatrix(lua_State* L);
+		static int UniformSubroutine(lua_State* L);
 
-		static int SetShaderParameter(lua_State* );
+		static int SetGeometryShaderParameter(lua_State* L);
+		static int SetTesselationShaderParameter(lua_State* L);
 
 		static int GetShaderLog(lua_State* L);
 

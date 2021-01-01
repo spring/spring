@@ -135,8 +135,17 @@ using std::sort;
 using std::string;
 using std::vector;
 
+static void flush_exit(int ec) {
+	// exit(1) is supposed to be a normal termination, but force a flush
+	std::fprintf(stdout, "[gflags::%s]\n", __func__);
+	std::fflush(stdout);
+	std::exit(ec);
+}
+
 // This is used by the unittest to test error-exit code
-void GFLAGS_DLL_DECL (*gflags_exitfunc)(int) = &exit;  // from stdlib.h
+// void GFLAGS_DLL_DECL (*gflags_exitfunc)(int) = &exit;  // from stdlib.h
+//SPRING
+void GFLAGS_DLL_DECL (*gflags_exitfunc)(int) = &flush_exit;
 
 
 // The help message indicating that the commandline flag has been

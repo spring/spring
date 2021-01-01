@@ -5,12 +5,12 @@
 
 #include "Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/SimObjectMemPool.h"
+#include "System/MemPoolTypes.h"
 
 #if (defined(__x86_64) || defined(__x86_64__))
 typedef StaticMemPool<MAX_FEATURES, sizeof(CFeature)> FeatureMemPool;
 #else
-typedef DynMemPool<sizeof(CFeature)> FeatureMemPool;
+typedef FixedDynMemPool<sizeof(CFeature), MAX_FEATURES / 1000, MAX_FEATURES / 32> FeatureMemPool;
 #endif
 
 extern FeatureMemPool featureMemPool;

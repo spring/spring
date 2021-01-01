@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #ifdef DEBUG
-	#include <string.h> // strncmp
+	#include <cstring> // strncmp
 #endif
 
 
@@ -295,19 +295,19 @@ namespace Shader {
 
 		for (const auto& p : uniformStates) {
 			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
-			if (p.second.IsUninit()) {
-				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+			if (!p.second.IsInitialized()) {
+				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()), int(curUsed));
 			} else {
-				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
 			}
 		}
 	#endif
 	}
 
-	UniformState* IProgramObject::GetNewUniformState(const std::string name)
+	UniformState* IProgramObject::GetNewUniformState(const char* name)
 	{
-		const size_t hash = hashString(name.c_str());
-		const auto it = uniformStates.emplace(hash, name);
+		const size_t hash = hashString(name);
+		const auto it = uniformStates.emplace(hash, {name});
 
 		UniformState* us = &(it.first->second);
 		us->SetLocation(GetUniformLoc(name));
@@ -412,13 +412,16 @@ namespace Shader {
 
 	void GLSLProgramObject::Enable() {
 		RecompileIfNeeded(true);
+		EnableRaw();
+	}
+
+	void GLSLProgramObject::EnableRaw() {
 		glUseProgram(objID);
 		IProgramObject::Enable();
 	}
-
-	void GLSLProgramObject::Disable() {
-		glUseProgram(0);
+	void GLSLProgramObject::DisableRaw() {
 		IProgramObject::Disable();
+		glUseProgram(0);
 	}
 
 	void GLSLProgramObject::Link() {
@@ -588,8 +591,8 @@ namespace Shader {
 		return type;
 	}
 
-	int GLSLProgramObject::GetUniformLoc(const std::string& name) {
-		return glGetUniformLocation(objID, name.c_str());
+	int GLSLProgramObject::GetUniformLoc(const char* name) {
+		return glGetUniformLocation(objID, name);
 	}
 
 	void GLSLProgramObject::SetUniformLocation(const std::string& name) {

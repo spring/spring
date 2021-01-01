@@ -25,24 +25,6 @@ public:
 	typedef spring::unordered_map<std::string, std::string> valueMap_t;
 	typedef spring::unordered_map<std::string, TdfSection*> sectionsMap_t;
 
-	struct parse_error : public content_error
-	{
-	public:
-		parse_error(std::string const& line_of_error, size_t line, size_t column, std::string const& filename) throw();
-		parse_error(size_t line, size_t column, std::string const& filename) throw();
-		parse_error(std::string const& message, std::string const& line_of_error, size_t line, size_t column, std::string const& filename) throw();
-		~parse_error() throw();
-
-		size_t get_line() const;
-		size_t get_column() const;
-		std::string const& get_filename() const;
-
-	private:
-		size_t line;
-		size_t column;
-		std::string filename;
-	};
-
 	struct TdfSection
 	{
 		~TdfSection();

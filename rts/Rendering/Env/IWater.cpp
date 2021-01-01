@@ -18,6 +18,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 
 CONFIG(int, Water)

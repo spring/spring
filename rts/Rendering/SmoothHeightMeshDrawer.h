@@ -4,10 +4,6 @@
 #define SMOOTH_HEIGHTMESH_DRAWER_H
 
 struct SmoothHeightMeshDrawer {
-private:
-	SmoothHeightMeshDrawer();
-	~SmoothHeightMeshDrawer();
-
 public:
 	static SmoothHeightMeshDrawer* GetInstance();
 

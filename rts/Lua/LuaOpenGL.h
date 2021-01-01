@@ -3,7 +3,6 @@
 #ifndef LUA_GL_H
 #define LUA_GL_H
 
-#include <string>
 #include <vector>
 
 #include "Lua/LuaHandle.h"
@@ -77,6 +76,7 @@ class LuaOpenGL {
 
 		// no-ops (should probably guard some state)
 		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPostForward)
 		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
 		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
 		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
@@ -158,7 +158,9 @@ class LuaOpenGL {
 
 		static int ConfigScreen(lua_State* L);
 
+		static int GetScreenViewTrans(lua_State* L);
 		static int GetViewSizes(lua_State* L);
+		static int GetViewRange(lua_State* L);
 
 		static int DrawMiniMap(lua_State* L);
 		static int SlaveMiniMap(lua_State* L);
@@ -209,6 +211,7 @@ class LuaOpenGL {
 
 		static int Texture(lua_State* L);
 		static int CreateTexture(lua_State* L);
+		static int ChangeTextureParams(lua_State* L);
 		static int DeleteTexture(lua_State* L);
 		static int DeleteTextureFBO(lua_State* L);
 		static int TextureInfo(lua_State* L);

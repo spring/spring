@@ -5,10 +5,12 @@
 
 #include <string>
 
+#include "ConsoleHistory.h"
+#include "GameControllerTextInput.h"
+
 class CGameController
 {
 public:
-	CGameController();
 	virtual ~CGameController();
 
 	virtual bool Draw() { return true; }
@@ -16,19 +18,8 @@ public:
 	virtual int KeyPressed(int key, bool isRepeat) { return 0; }
 	virtual int KeyReleased(int key) { return 0; }
 	virtual int TextInput(const std::string& utf8Text) { return 0; }
+	virtual int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) { return 0; }
 	virtual void ResizeEvent() {}
-
-	void PasteClipboard();
-
-public:
-	/// true if user is writing
-	bool userWriting;
-	/// current writing position
-	int  writingPos;
-	bool ignoreNextChar;
-
-	std::string userInput;
-	std::string userPrompt;
 };
 
 extern CGameController* activeController;

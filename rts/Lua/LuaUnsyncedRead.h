@@ -19,10 +19,15 @@ class LuaUnsyncedRead {
 		static int GetGameName(lua_State* L);
 		static int GetMenuName(lua_State* L);
 
+		static int GetProfilerTimeRecord(lua_State* L);
+		static int GetProfilerRecordNames(lua_State* L);
+
+		static int GetLuaMemUsage(lua_State* L);
+		static int GetVidMemUsage(lua_State* L);
+
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
-		static int GetHasLag(lua_State* L);
 		static int GetVideoCapturingMode(lua_State* L);
 
 		static int GetViewGeometry(lua_State* L);
@@ -51,6 +56,8 @@ class LuaUnsyncedRead {
 		static int GetFeatureSelectionVolumeData(lua_State* L);
 
 		static int GetUnitTransformMatrix(lua_State* L);
+		static int GetFeatureTransformMatrix(lua_State* L);
+
 		static int GetUnitViewPosition(lua_State* L);
 
 		static int GetVisibleUnits(lua_State* L);
@@ -98,6 +105,7 @@ class LuaUnsyncedRead {
 
 		static int GetFPS(lua_State* L);
 		static int GetGameSpeed(lua_State* L);
+		static int GetGameState(lua_State* L);
 
 		static int GetMouseState(lua_State* L);
 		static int GetMouseCursor(lua_State* L);
@@ -127,6 +135,7 @@ class LuaUnsyncedRead {
 
 		static int GetConsoleBuffer(lua_State* L);
 		static int GetCurrentTooltip(lua_State* L);
+		static int IsUserWriting(lua_State* L);
 
 		static int GetKeyCode(lua_State* L);
 		static int GetKeySymbol(lua_State* L);
@@ -150,7 +159,9 @@ class LuaUnsyncedRead {
 		static int GetDrawSelectionInfo(lua_State* L);
 
 		static int GetConfigParams(lua_State* L);
-
+		static int GetConfigInt(lua_State* L);
+		static int GetConfigFloat(lua_State* L);
+		static int GetConfigString(lua_State* L);
 		static int GetLogSections(lua_State* L);
 
 		static int GetAllDecals(lua_State* L);

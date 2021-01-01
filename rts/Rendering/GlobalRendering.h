@@ -3,6 +3,8 @@
 #ifndef _GLOBAL_RENDERING_H
 #define _GLOBAL_RENDERING_H
 
+#include <string>
+
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
@@ -23,28 +25,43 @@ class CGlobalRendering {
 public:
 	CGlobalRendering();
 	~CGlobalRendering();
+
+	static void InitStatic();
+	static void KillStatic();
+
 	/**
 	 * @return whether setting the video mode was successful
 	 *
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
-	bool CreateGLContext(const int2& minCtx);
-	void DestroyWindowAndContext();
+	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
+	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
+	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
+	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
+
+	void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context);
+	void KillSDL() const;
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
+
+	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
 
 	void CheckGLExtensions() const;
 	void SetGLSupportFlags();
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
-	void LogDisplayMode() const;
+	void LogDisplayMode(SDL_Window* window) const;
 
-	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
+	void SetWindowTitle(const std::string& title);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
+
+	bool SetWindowInputGrabbing(bool enable);
+	bool ToggleWindowInputGrabbing();
+
+	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
@@ -61,6 +78,7 @@ public:
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
+
 
 public:
 	/**
@@ -115,20 +133,14 @@ public:
 	float pixelX;
 	float pixelY;
 
+	float minViewRange;
+	float maxViewRange;
 	/**
 	 * @brief aspect ratio
 	 *
 	 * (float)viewSizeX / (float)viewSizeY
 	 */
 	float aspectRatio;
-
-	/**
-	 * @brief view range
-	 *
-	 * Player's view range
-	 */
-	float zNear;
-	float viewRange;
 
 
 	int forceDisableShaders;
@@ -148,8 +160,6 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
-
-	int gpuMemorySize;
 
 	float maxTexAnisoLvl;
 
@@ -171,8 +181,9 @@ public:
 	 *
 	 * Whether debugging info is drawn
 	 */
-	bool drawdebug;
-	bool drawdebugtraceray;
+	bool drawDebug;
+	bool drawDebugTraceRay;
+	bool drawDebugCubeMap;
 
 	bool glDebug;
 	bool glDebugErrors;
@@ -189,9 +200,6 @@ public:
 	 * Whether the graphics need to be drawn
 	 */
 	bool active;
-
-	/// whether we're capturing video - relevant for frame timing
-	bool isVideoCapturing;
 
 	/**
 	 * @brief compressTextures
@@ -227,6 +235,7 @@ public:
 	bool supportNonPowerOfTwoTex;
 	bool supportTextureQueryLOD;
 
+	bool supportMSAAFrameBuffer;
 	/**
 	 * @brief support24bitDepthBuffer
 	 *
@@ -236,6 +245,7 @@ public:
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
+	bool supportSeamlessCubeMaps;
 	bool supportFragDepthLayout;
 
 	/**
@@ -276,28 +286,30 @@ public:
 	bool borderless;
 
 public:
-	SDL_Window* window;
-	SDL_GLContext glContext;
+	// [0] := primary, [1] := secondary (hidden)
+	SDL_Window* sdlWindows[2];
+	SDL_GLContext glContexts[2];
 
 public:
 	/**
 	* @brief max view range in elmos
 	*/
-	static const float MAX_VIEW_RANGE;
+	static constexpr float MAX_VIEW_RANGE = 65536.0f;
 
 	/**
 	* @brief near z-plane distance in elmos
 	*/
-	static const float NEAR_PLANE;
+	static constexpr float MIN_ZNEAR_DIST = 0.5f;
 
 
 	/// magic constant to reduce overblending on SMF maps
-	/// (scales the MapInfo::light_t::ground*Color values)
-	static const float SMF_INTENSITY_MULT;
+	/// (scales the MapInfo::light_t::ground*Color values;
+	/// roughly equal to 210.0f / 255.0f)
+	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
 
-	static const int minWinSizeX;
-	static const int minWinSizeY;
+	static constexpr int MIN_WIN_SIZE_X = 400;
+	static constexpr int MIN_WIN_SIZE_Y = 300;
 };
 
 extern CGlobalRendering* globalRendering;

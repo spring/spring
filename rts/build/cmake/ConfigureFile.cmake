@@ -16,4 +16,4 @@
 #		"Configure output.txt" VERBATIM
 #	)
 
-Configure_File("${file.in}" "${file.out}")
+configure_file("${file.in}" "${file.out}")

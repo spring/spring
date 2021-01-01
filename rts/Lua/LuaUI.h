@@ -56,7 +56,7 @@ public:
 	static void UpdateTeams();
 
 public: // call-ins
-	bool HasCallIn(lua_State* L, const string& name);
+	bool HasCallIn(lua_State* L, const string& name) const;
 
 	bool LayoutButtons(int& xButtons, int& yButtons,
 	                   const vector<SCommandDescription>& cmds,
@@ -70,7 +70,7 @@ public: // call-ins
 	                   spring::unordered_map<int, int>& iconList,
 	                   string& menuName);
 
-	bool ConfigCommand(const string& command);
+	bool ConfigureLayout(const string& command);
 
 	void ShockFront(const float3& pos, float power, float areaOfEffect, const float* distMod = NULL);
 

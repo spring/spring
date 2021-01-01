@@ -7,7 +7,7 @@
 
 #include <vector>
 #include "System/type2.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 struct SLosInstance;
@@ -17,13 +17,21 @@ struct SLosInstance;
 class CLosMap
 {
 public:
-	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_, const int2 mapDims)
-	: size(size_)
-	, LOS2HEIGHT(mapDims / size)
-	, losmap(size.x * size.y, 0)
-	, sendReadmapEvents(sendReadmapEvents_)
-	, heightmap(heightmap_)
-	{ }
+	void Init(const int2 size_, const int2 mapDims, const float* ctrHeightMap_, const float* mipHeightMap_, bool sendReadmapEvents_)
+	{
+		size = size_;
+		LOS2HEIGHT = mapDims / size;
+
+		losmap.clear();
+		losmap.resize(size.x * size.y, 0);
+
+		ctrHeightMap = ctrHeightMap_;
+		mipHeightMap = mipHeightMap_;
+
+		sendReadmapEvents = sendReadmapEvents_;
+	}
+
+	void Kill() {}
 
 public:
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
@@ -43,21 +51,25 @@ public:
 	}
 
 	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data
-	unsigned short& front() { return losmap.front(); }
+	const unsigned short& front() const { return (losmap.front()); }
 
 private:
 	void LosAdd(SLosInstance* instance) const;
 	void UnsafeLosAdd(SLosInstance* instance) const;
 	void SafeLosAdd(SLosInstance* instance) const;
 
-	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& squaresMap) const;
+	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& losRaySquares) const;
 
 protected:
-	const int2 size;
-	const int2 LOS2HEIGHT;
+	int2 size;
+	int2 LOS2HEIGHT;
+
 	std::vector<unsigned short> losmap;
-	bool sendReadmapEvents;
-	const float* const heightmap;
+
+	const float* ctrHeightMap = nullptr;
+	const float* mipHeightMap = nullptr;
+
+	bool sendReadmapEvents = false;
 };
 
 #endif // LOS_MAP_H

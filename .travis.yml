@@ -26,8 +26,8 @@ env:
      #   you have to test using a branch in the main repo
     - secure: "QSZUdSH72Y+X73FBy6cDdhlMH3ppMewbU/LquXe/sIUdJE0LmcCFHnPayI91TTRgS8r6YXKh3DIhE9XTs1OUxmV+RUL84z85byAtotb+ukHSzlSLSGGZfrqey+/vrCXbYykfaxhazlVDfk5vx63lRYiD5lp5KLL24+PIdK6Qd5E="
   matrix:
-    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI demotool"
-    - TARGET="engine-headless tests check"
+    - TARGET="CppTestAI HughAI KAIK NullAI NullJavaAI NullOOJavaAI CircuitAI demotool engine-dedicated"
+    - TARGET="tests engine-headless check"
 matrix:
   fast_finish: true
 
@@ -51,3 +51,16 @@ notifications:
       - chat.freenode.net#taspring
     on_success: change
     on_failure: change
+matrix:
+  include:
+    - language: python
+      name: CMake lint
+      python: 2.7
+      compiler: ""
+      env: ""
+      before_install: ""
+      install: ""
+      before_script:
+        - pip install cmakelint
+      script:
+        - find . \( -name "CMakeLists.txt" -o -name "*.cmake" \) -not -path './rts/lib/*' -exec cmakelint --config=.cmakelintrc {} \;

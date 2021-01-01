@@ -17,7 +17,9 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
@@ -116,15 +118,12 @@ static void GetDecoyResources(const CUnit* unit,
 	mMake = mUse = eMake = eUse = 0.0f;
 	const UnitDef* rd = unit->unitDef;;
 	const UnitDef* ud = rd->decoyDef;
-	if (ud == NULL) {
+	if (ud == nullptr)
 		return;
-	}
 
 	mMake += ud->metalMake;
 	eMake += ud->energyMake;
-	if (ud->tidalGenerator > 0.0f) {
-		eMake += (ud->tidalGenerator * mapInfo->map.tidalStrength);
-	}
+	eMake += (ud->tidalGenerator * envResHandler.GetCurrentTidalStrength() * (ud->tidalGenerator > 0.0f));
 
 	bool active = ud->activateWhenBuilt;
 	if (rd->onoffable && ud->onoffable) {
@@ -141,10 +140,10 @@ static void GetDecoyResources(const CUnit* unit,
 		mUse += ud->metalUpkeep;
 
 		if (ud->windGenerator > 0.0f) {
-			if (wind.GetCurrentStrength() > ud->windGenerator) {
+			if (envResHandler.GetCurrentWindStrength() > ud->windGenerator) {
 				eMake += ud->windGenerator;
 			} else {
-				eMake += wind.GetCurrentStrength();
+				eMake += envResHandler.GetCurrentWindStrength();
 			}
 		}
 		eUse += ud->energyUpkeep;
@@ -154,21 +153,19 @@ static void GetDecoyResources(const CUnit* unit,
 
 std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 {
-	string custom = eventHandler.WorldTooltip(unit, NULL, NULL);
-	if (!custom.empty()) {
+	string custom = eventHandler.WorldTooltip(unit, nullptr, nullptr);
+	if (!custom.empty())
 		return custom;
-	}
 
 	std::string s;
 	s.reserve(512);
 
-	const bool enemyUnit = (teamHandler->AllyTeam(unit->team) != gu->myAllyTeam) &&
-	                       !gu->spectatingFullView;
+	const bool enemyUnit = (teamHandler.AllyTeam(unit->team) != gu->myAllyTeam) && !gu->spectatingFullView;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : NULL;
+	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : nullptr;
 	const UnitDef* effectiveDef = !enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
-	const CTeam* team = NULL;
+	const CTeam* team = teamHandler.Team(unit->team);
 
 	// don't show the unit type if it is not known
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -181,10 +178,10 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		team = teamHandler->Team(unit->team);
 		s = team->GetControllerName();
 	} else {
-		s = unit->tooltip;
+		s = unitToolTipMap.Get(unit->id);
+
 		if (decoyDef) {
 			s = decoyDef->humanName + " - " + decoyDef->tooltip;
 		}
@@ -199,12 +196,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		s += MakeUnitStatsString(stats);
 	}
 
-	if (gs->cheatEnabled) {
-		s += IntToString(unit->unitDef->techLevel, DARKBLUE "  [TechLevel %i]");
-	}
-
-	s += "\n" + teamHandler->Team(unit->team)->GetControllerName();
-
+	s += "\n";
+	s += team->GetControllerName();
 	return s;
 }
 
@@ -298,7 +291,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		pos.x, pos.z, pos.y, tt->name.c_str(),
 		tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
 		tt->hardness * mapDamage->mapHardness,
-		readMap->metalMap->GetMetalAmount(px, pz)
+		metalMap.GetMetalAmount(px, pz)
 	);
 	return tmp;
 }

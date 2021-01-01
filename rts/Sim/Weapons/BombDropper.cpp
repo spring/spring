@@ -2,7 +2,6 @@
 
 #include "BombDropper.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
@@ -10,11 +9,11 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 
-CR_BIND_DERIVED_POOL(CBombDropper, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CBombDropper, CWeapon, )
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
@@ -151,6 +150,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponMuzzlePos;
+		params.end = currentTargetPos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
 		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;

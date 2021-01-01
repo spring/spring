@@ -9,7 +9,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 static const float EXPLOSION_SPEED = 2.f;
@@ -17,7 +17,7 @@ static const float EXPLOSION_SPEED = 2.f;
 //TODO: add to creg
 
 /////////////////////////////////////////////////////////////////////
-/// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION
+/// NEW S3O,ASSIMP,... IMPLEMENTATION
 ///
 
 FlyingPiece::FlyingPiece(

@@ -12,10 +12,11 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CONFIG(int, TreeRadius)
 	.defaultValue((int) (5.5f * 256))
@@ -32,6 +33,8 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
+	configHandler->NotifyOnChange(this, {"TreeRadius"});
+
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
 
 	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
@@ -40,18 +43,23 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 }
 
 ITreeDrawer::~ITreeDrawer() {
-	eventHandler.RemoveClient(this);
+	configHandler->RemoveObserver(this);
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
+
+	eventHandler.RemoveClient(this);
 }
 
+
+void ITreeDrawer::ConfigNotify(const std::string& key, const std::string& value)
+{
+	baseTreeDistance = float(std::max(0, std::atoi(value.c_str())));
+}
 
 
 void ITreeDrawer::AddTrees()
 {
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-
-	for (const int featureID: activeFeatureIDs) {
-		const CFeature* f = featureHandler->GetFeature(featureID);
+	for (const int featureID: featureHandler.GetActiveFeatureIDs()) {
+		const CFeature* f = featureHandler.GetFeature(featureID);
 
 		if (f->def->drawType >= DRAWTYPE_TREE) {
 			AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
@@ -62,6 +70,21 @@ void ITreeDrawer::AddTrees()
 
 void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
 {
+	if (treeSquares.empty())
+		return; // NullDrawer
+
+	CFeature* f = featureHandler.GetFeature(treeID);
+
+	{
+		// FeatureDrawer does not take care of this for trees, update the
+		// draw-positions here since FeatureCreated and FeatureMoved both
+		// call us
+		f->drawPos = f->pos;
+		f->drawMidPos = f->midPos;
+
+		f->UpdateTransform(f->drawPos, false);
+	}
+
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;

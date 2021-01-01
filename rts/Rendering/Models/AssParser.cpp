@@ -24,13 +24,14 @@
 #include "lib/assimp/include/assimp/Importer.hpp"
 #include "lib/assimp/include/assimp/DefaultLogger.hpp"
 
+#include <regex>
 
 
 #define IS_QNAN(f) (f != f)
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
-static const unsigned int ASS_POSTPROCESS_OPTIONS =
+static constexpr unsigned int ASS_POSTPROCESS_OPTIONS =
 	  aiProcess_RemoveComponent
 	| aiProcess_FindInvalidData
 	| aiProcess_CalcTangentSpace
@@ -42,12 +43,12 @@ static const unsigned int ASS_POSTPROCESS_OPTIONS =
 	//| aiProcess_ImproveCacheLocality // FIXME crashes in an assert in VertexTriangleAdjancency.h (date 04/2011)
 	| aiProcess_SplitLargeMeshes;
 
-static const unsigned int ASS_IMPORTER_OPTIONS =
+static constexpr unsigned int ASS_IMPORTER_OPTIONS =
 	aiComponent_CAMERAS |
 	aiComponent_LIGHTS |
 	aiComponent_TEXTURES |
 	aiComponent_ANIMATIONS;
-static const unsigned int ASS_LOGGING_OPTIONS =
+static constexpr unsigned int ASS_LOGGING_OPTIONS =
 	Assimp::Logger::Debugging |
 	Assimp::Logger::Info |
 	Assimp::Logger::Err |
@@ -58,7 +59,7 @@ static const unsigned int ASS_LOGGING_OPTIONS =
 static inline float3 aiVectorToFloat3(const aiVector3D v)
 {
 	// no-op; AssImp's internal coordinate-system matches Spring's modulo handedness
-	return float3(v.x, v.y, v.z);
+	return {v.x, v.y, v.z};
 
 	// Blender --> Spring
 	// return float3(v.x, v.z, -v.y);
@@ -117,26 +118,36 @@ static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 class AssLogStream : public Assimp::LogStream
 {
 public:
-	void write(const char* message) {
+	void write(const char* message) override {
 		LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "Assimp: %s", message);
 	}
 };
 
 
-CAssParser::CAssParser()
+void CAssParser::Init()
 {
 	// FIXME: non-optimal, maybe compute these ourselves (pre-TL cache size!)
 	maxIndices = std::max(globalRendering->glslMaxRecommendedIndices, 1024);
 	maxVertices = std::max(globalRendering->glslMaxRecommendedVertices, 1024);
+	numPoolPieces = 0;
 
 	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
-	// Create a logger for debugging model loading issues
+	// create a logger for debugging model loading issues
 	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
 }
 
-CAssParser::~CAssParser()
+void CAssParser::Kill()
 {
 	Assimp::DefaultLogger::kill();
+	LOG_L(L_INFO, "[AssParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
 }
 
 
@@ -147,13 +158,15 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
 
+	CFileHandler file(modelFilePath, SPRING_VFS_ZIP);
+
+	std::vector<unsigned char> fileBuf;
 	// load the lua metafile containing properties unique to Spring models (must return a table)
 	std::string metaFileName = modelFilePath + ".lua";
 
 	// try again without the model file extension
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
-		metaFileName = modelPath + '/' + modelName + ".lua";
-
+		metaFileName = modelPath + modelName + ".lua";
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
 
@@ -169,16 +182,25 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
 
 
-	// create a model importer instance
 	Assimp::Importer importer;
 
-
-	// give the importer an IO class that handles Spring's VFS
-	importer.SetIOHandler(new AssVFSSystem());
 	// speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, ASS_IMPORTER_OPTIONS);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+		file.Read(fileBuf.data(), fileBuf.size());
+	} else {
+		fileBuf = std::move(file.GetBuffer());
+	}
+
+	if (modelTable.GetBool("nodenamesfromids", false)) {
+		assert(FileSystem::GetExtension(modelFilePath) == "dae");
+		PreProcessFileBuffer(fileBuf);
+	}
+
 
 	// Read the model file to build a scene object
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
@@ -188,17 +210,17 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	{
 		// ASSIMP spams many SIGFPEs atm in normal & tangent generation
 		ScopedDisableFpuExceptions fe;
-		scene = importer.ReadFile(modelFilePath, ASS_POSTPROCESS_OPTIONS);
+		scene = importer.ReadFileFromMemory(fileBuf.data(), fileBuf.size(), ASS_POSTPROCESS_OPTIONS);
 	}
 
-	if (scene != nullptr) {
-		LOG_SL(LOG_SECTION_MODEL, L_INFO,
-			"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
-			modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
-			scene->mNumTextures);
-	} else {
+	if (scene == nullptr)
 		throw content_error("[AssimpParser] Model Import: " + std::string(importer.GetErrorString()));
-	}
+
+	LOG_SL(LOG_SECTION_MODEL, L_INFO,
+		"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
+		modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
+		scene->mNumTextures
+	);
 
 	ModelPieceMap pieceMap;
 	ParentNameMap parentMap;
@@ -211,7 +233,7 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	FindTextures(&model, scene, modelTable, modelPath, modelName);
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model.texs[0].c_str(), model.texs[1].c_str());
 
-	texturehandlerS3O->PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
+	textureHandlerS3O.PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
@@ -232,6 +254,49 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	return model;
 }
 
+
+void CAssParser::PreProcessFileBuffer(std::vector<unsigned char>& fileBuffer)
+{
+	// the Collada specification requires node uid's to be unique
+	// (names can be repeated) which certain exporters obey while
+	// others do not
+	// however, obedient exporters actually make life inconvenient
+	// for modellers since assimp's Collada importer extracts node
+	// names (aiNode::mName) from the *id* field
+	// as a workaround, let the model metadata decide if id's and
+	// names should be swapped before assimp processes the buffer
+	const std::regex nodePattern{"<node id=\"([a-zA-Z0-9_-]+)\" name=\"([a-zA-Z0-9_-]+)\" type=\"([a-zA-Z]+)\">"};
+
+	std::array<unsigned char, 1024> lineBuffer;
+	std::cmatch matchGroups;
+
+	const char* beg = reinterpret_cast<const char*>(fileBuffer.data());
+	const char* end = reinterpret_cast<const char*>(fileBuffer.data() + fileBuffer.size());
+
+	if (strstr(beg, "COLLADA") == nullptr)
+		return;
+
+	for (size_t i = 0, n = fileBuffer.size(); i < n; ) {
+		matchGroups = std::move(std::cmatch{});
+
+		if (!std::regex_search(beg + i, matchGroups, nodePattern))
+			break;
+
+		const std::string   id = std::move(matchGroups[1].str());
+		const std::string name = std::move(matchGroups[2].str());
+		const std::string type = std::move(matchGroups[3].str());
+
+		assert(matchGroups[0].first  >= beg && matchGroups[0].first  < end);
+		assert(matchGroups[0].second >= beg && matchGroups[0].second < end);
+
+		// just swap id and name fields; preserves line length
+		memset(lineBuffer.data(), 0, lineBuffer.size());
+		snprintf(reinterpret_cast<char*>(lineBuffer.data()), lineBuffer.size(), "<node id=\"%s\" name=\"%s\" type=\"%s\">", name.c_str(), id.c_str(), type.c_str());
+		memcpy(const_cast<char*>(matchGroups[0].first), lineBuffer.data(), matchGroups[0].length());
+
+		i = matchGroups[0].second - beg;
+	}
+}
 
 /*
 void CAssParser::CalculateModelMeshBounds(S3DModel* model, const aiScene* scene)
@@ -352,9 +417,9 @@ void CAssParser::SetPieceName(
 			// root is always the first piece created, so safe to assign this
 			piece->name = "$$root$$";
 			return;
-		} else {
-			piece->name = "$$piece$$";
 		}
+
+		piece->name = "$$piece$$";
 	}
 
 	// find a new name if none given or if a piece with the same name already exists
@@ -379,6 +444,10 @@ void CAssParser::SetPieceParentName(
 	const LuaTable& pieceTable,
 	ParentNameMap& parentMap
 ) {
+	// parent was updated in GetPieceTableRecursively
+	if (parentMap.find(piece->name) != parentMap.end())
+		return;
+
 	// Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
 		parentMap[piece->name] = pieceTable.GetString("parent", "");
@@ -400,6 +469,8 @@ void CAssParser::SetPieceParentName(
 
 void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene)
 {
+	std::vector<unsigned> meshVertexMapping;
+
 	// Get vertex data from node meshes
 	for (unsigned meshListIndex = 0; meshListIndex < pieceNode->mNumMeshes; ++meshListIndex) {
 		const unsigned int meshIndex = pieceNode->mMeshes[meshListIndex];
@@ -418,7 +489,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
 		piece->indices.reserve(piece->indices.size() + mesh->mNumFaces * 3);
 
-		std::vector<unsigned> mesh_vertex_mapping;
+		meshVertexMapping.clear();
+		meshVertexMapping.reserve(mesh->mNumVertices);
 
 		// extract vertex data per mesh
 		for (unsigned vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
@@ -434,23 +506,19 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			piece->maxs = float3::max(piece->maxs, vertex.pos);
 
 			// vertex normal
-			LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching normal for vertex %d", vertexIndex);
-
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
-			if (!IS_QNAN(aiNormal)) {
+			if (!IS_QNAN(aiNormal))
 				vertex.normal = (aiVectorToFloat3(aiNormal)).SafeANormalize();
-			}
 
 			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
-				LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching tangent for vertex %d", vertexIndex);
-
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 
 				vertex.sTangent = (aiVectorToFloat3(aiTangent)).SafeANormalize();
 				vertex.tTangent = (aiVectorToFloat3(aiBitangent)).SafeANormalize();
+				vertex.tTangent *= -1.0f; // LH (assimp) to RH
 			}
 
 			// vertex tex-coords per channel
@@ -464,7 +532,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 				vertex.texCoords[uvChanIndex].y = mesh->mTextureCoords[uvChanIndex][vertexIndex].y;
 			}
 
-			mesh_vertex_mapping.push_back(piece->vertices.size());
+			meshVertexMapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
 		}
 
@@ -488,11 +556,55 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				const unsigned int vertexFaceIdx = face.mIndices[vertexListID];
-				const unsigned int vertexDrawIdx = mesh_vertex_mapping[vertexFaceIdx];
+				const unsigned int vertexDrawIdx = meshVertexMapping[vertexFaceIdx];
 				piece->indices.push_back(vertexDrawIdx);
 			}
 		}
 	}
+}
+
+// Not efficient, but there aren't that many pieces
+// So fast anyway
+static LuaTable GetPieceTableRecursively(
+	const LuaTable& table,
+	const std::string& name,
+	const std::string& parentName,
+	CAssParser::ParentNameMap& parentMap)
+{
+	LuaTable ret = table.SubTable(name);
+	if (ret.IsValid()) {
+		if (!parentName.empty())
+			parentMap[name] = parentName;
+		return ret;
+	}
+
+	std::vector<std::string> keys;
+	table.GetKeys(keys);
+	for (const std::string& key: keys) {
+		ret = GetPieceTableRecursively(table.SubTable(key), name, key, parentMap);
+		if (ret.IsValid())
+			break;
+	}
+	return ret;
+}
+
+
+SAssPiece* CAssParser::AllocPiece()
+{
+	std::lock_guard<spring::mutex> lock(poolMutex);
+
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
 }
 
 SAssPiece* CAssParser::LoadPiece(
@@ -505,7 +617,7 @@ SAssPiece* CAssParser::LoadPiece(
 ) {
 	++model->numPieces;
 
-	SAssPiece* piece = new SAssPiece();
+	SAssPiece* piece = AllocPiece();
 
 	if (pieceNode->mParent == nullptr) {
 		// set the model's root piece ASAP, needed in SetPiece*Name
@@ -518,7 +630,7 @@ SAssPiece* CAssParser::LoadPiece(
 	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
 
 	// Load additional piece properties from metadata
-	const LuaTable& pieceTable = modelTable.SubTable("pieces").SubTable(piece->name);
+	const LuaTable& pieceTable = GetPieceTableRecursively(modelTable.SubTable("pieces"), piece->name, "", parentMap);
 
 	if (pieceTable.IsValid())
 		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());

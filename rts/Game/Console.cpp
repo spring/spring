@@ -1,34 +1,32 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "Console.h" 
+#include "Console.h"
 
 #include "System/Log/ILog.h"
 #include "Action.h"
 
 #include <cassert>
+#include <algorithm>
+
+CommandConsole gameCommandConsole;
 
 
-void CommandReceiver::RegisterAction(const std::string& name)
+void CommandReceiver::RegisterAction(const std::string& name) { gameCommandConsole.AddCommandReceiver(name, this); }
+void CommandReceiver::SortRegisteredActions() { gameCommandConsole.SortCommandMap(); }
+
+
+void CommandConsole::SortCommandMap()
 {
-	commandConsole.AddCommandReceiver(name, this);
-}
+	const auto cmpPred = [](const CmdPair& a, const CmdPair& b) { return (a.first <  b.first); };
+	const auto dupPred = [](const CmdPair& a, const CmdPair& b) { return (a.first == b.first); };
 
+	std::sort(commandMap.begin(), commandMap.end(), cmpPred);
 
-CommandConsole& CommandConsole::Instance()
-{
-	// commandMap gets cleared by CGame, so this is fine wrt. reloading
-	static CommandConsole myInstance;
-	return myInstance;
-}
+	const auto end = commandMap.end();
+	const auto iter = std::unique(commandMap.begin(), end, dupPred);
 
-void CommandConsole::AddCommandReceiver(const std::string& name, CommandReceiver* rec)
-{
-	if (commandMap.find(name) != commandMap.end()) {
-		LOG_L(L_WARNING, "Overwriting command: %s", name.c_str());
-	}
-
-	commandMap[name] = rec;
+	commandMap.erase(iter, end);
 }
 
 bool CommandConsole::ExecuteAction(const Action& action)
@@ -36,19 +34,20 @@ bool CommandConsole::ExecuteAction(const Action& action)
 	if (action.command == "commands") {
 		LOG("Registered commands:");
 
-		for (auto cri = commandMap.cbegin(); cri != commandMap.cend(); ++cri) {
-			LOG("%s", cri->first.c_str());
+		for (const auto& pair: commandMap) {
+			LOG("%s", pair.first.c_str());
 		}
 
 		return true;
 	}
 
-	const auto cri = commandMap.find(action.command);
+	const auto pred = [](const CmdPair& a, const CmdPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(commandMap.begin(), commandMap.end(), CmdPair{action.command, nullptr}, pred);
 
-	if (cri == commandMap.end())
+	if (iter == commandMap.end() || iter->first != action.command)
 		return false;
 
-	cri->second->PushAction(action);
+	iter->second->PushAction(action);
 	return true;
 }
 

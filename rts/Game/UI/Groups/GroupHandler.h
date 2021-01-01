@@ -3,7 +3,9 @@
 #ifndef	_GROUP_HANDLER_H
 #define	_GROUP_HANDLER_H
 
+#include "Group.h"
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedMap.hpp"
 
 #include <string>
 #include <vector>
@@ -21,35 +23,71 @@ class CGroupHandler {
 	CR_DECLARE_STRUCT(CGroupHandler)
 public:
 	CGroupHandler(int teamId);
-	~CGroupHandler();
+
+	CGroupHandler(const CGroupHandler& ) = delete;
+	CGroupHandler(      CGroupHandler&&) = default;
+
+	~CGroupHandler() = default;
+
+	CGroupHandler& operator = (const CGroupHandler& ) = delete;
+	CGroupHandler& operator = (      CGroupHandler&&) = default;
 
 	/// lowest ID of the first group not reachable through a hot-key
-	static const size_t FIRST_SPECIAL_GROUP = 10;
+	static constexpr size_t FIRST_SPECIAL_GROUP = 10;
 
 	void Update();
 
 	bool GroupCommand(int num);
 	bool GroupCommand(int num, const std::string& cmd);
 
+	// NOTE: only invoked by AI's, but can invalidate pointers
 	CGroup* CreateNewGroup();
+	CGroup* GetUnitGroup(int unitID) {
+		const auto iter = unitGroups.find(unitID);
+
+		if (iter == unitGroups.end())
+			return nullptr;
+
+		return &groups[iter->second];
+	}
+
+	const CGroup* GetGroup(int groupID) const { return &groups[groupID]; }
+	      CGroup* GetGroup(int groupID)       { return &groups[groupID]; }
+
+	const std::vector<CGroup>& GetGroups() const { return groups; }
+
+	bool HasGroup(int groupID) const { return (groupID >= 0 && groupID < groups.size()); }
+	bool SetUnitGroup(int unitID, const CGroup* g) {
+		unitGroups.erase(unitID);
+
+		if (g == nullptr)
+			return false;
+
+		unitGroups.insert(unitID, g->id);
+		return true;
+	}
+
 	void RemoveGroup(CGroup* group);
 
 	void PushGroupChange(int id);
 
-public:
-	std::vector<CGroup*> groups;
-	int team;
+	int GetTeam() const { return team; }
+	int GetGroupSize(int groupID) const { return (groups[groupID].units.size()); }
 
-protected:
+private:
+	std::vector<CGroup> groups;
+
 	std::vector<int> freeGroups;
-	/**
-	 * The lowest ID not in use.
-	 * This is always greater or equal FIRST_SPECIAL_GROUP.
-	 */
-	int firstUnusedGroup;
 	std::vector<int> changedGroups;
+
+	spring::unsynced_map<int, int> unitGroups;
+
+	int team = 0;
+	// lowest ID not in use, always >= FIRST_SPECIAL_GROUP
+	int firstUnusedGroup = FIRST_SPECIAL_GROUP;
+
 };
 
-extern std::vector<CGroupHandler*> grouphandlers;
+extern std::vector<CGroupHandler> uiGroupHandlers;
 
 #endif	// _GROUP_HANDLER_H

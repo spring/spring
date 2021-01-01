@@ -3,19 +3,32 @@
 
 #include "glFont.h"
 #include "FontLogSection.h"
+
 #include <stdarg.h>
 #include <stdexcept>
 
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "System/Log/ILog.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 
 #undef GetCharWidth // winapi.h
+
+CONFIG(std::string,      FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
+CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
+
+CONFIG(int,      FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
+CONFIG(int, SmallFontSize).defaultValue(14).description("Sets the font size (in pixels) of the engine GUIs and more.");
+CONFIG(int,      FontOutlineWidth).defaultValue(3).description("Sets the width of the black outline around Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
+CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
+CONFIG(float,      FontOutlineWeight).defaultValue(25.0f).description("Sets the opacity of Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
+CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
 
 
 bool CglFont::threadSafety = false;
@@ -26,9 +39,9 @@ bool CglFont::threadSafety = false;
 CglFont* font = nullptr;
 CglFont* smallFont = nullptr;
 
-static const float4        white(1.00f, 1.00f, 1.00f, 0.95f);
-static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
-static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
+static constexpr float4        white(1.00f, 1.00f, 1.00f, 0.95f);
+static constexpr float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
+static constexpr float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
 
 static const float darkLuminosity = 0.05 +
 	0.2126f * std::pow(darkOutline[0], 2.2) +
@@ -38,9 +51,78 @@ static const float darkLuminosity = 0.05 +
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
-: CTextWrap(fontfile,size,_outlinewidth,_outlineweight)
-, fontPath(fontfile)
+bool CglFont::LoadConfigFonts()
+{
+	spring::SafeDelete(font);
+	spring::SafeDelete(smallFont);
+
+	font = CglFont::LoadFont("", false);
+	smallFont = CglFont::LoadFont("", true);
+
+	if (font == nullptr)
+		throw content_error("Failed to load FontFile \"" + configHandler->GetString("FontFile") + "\", did you forget to run make install?");
+
+	if (smallFont == nullptr)
+		throw content_error("Failed to load SmallFontFile \"" + configHandler->GetString("SmallFontFile") + "\", did you forget to run make install?");
+
+	return true;
+}
+
+bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile)
+{
+	CglFont* newLargeFont = CglFont::LoadFont(largeFontFile, false);
+	CglFont* newSmallFont = CglFont::LoadFont(smallFontFile, true);
+
+	if (newLargeFont != nullptr && newSmallFont != nullptr) {
+		spring::SafeDelete(font);
+		spring::SafeDelete(smallFont);
+		font = newLargeFont;
+		smallFont = newSmallFont;
+
+		LOG("[%s] loaded fonts \"%s\" and \"%s\"", __func__, smallFontFile.c_str(), largeFontFile.c_str());
+		configHandler->SetString(     "FontFile", largeFontFile);
+		configHandler->SetString("SmallFontFile", smallFontFile);
+	}
+	return true;
+}
+
+CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
+{
+	const std::string fontFiles[] = {configHandler->GetString("FontFile"), configHandler->GetString("SmallFontFile")};
+	const std::string& fontFile = (fontFileOverride.empty())? fontFiles[smallFont]: fontFileOverride;
+
+	const   int fontSizes[] = {configHandler->GetInt("FontSize"), configHandler->GetInt("SmallFontSize")};
+	const   int fontWidths[] = {configHandler->GetInt("FontOutlineWidth"), configHandler->GetInt("SmallFontOutlineWidth")};
+	const float fontWeights[] = {configHandler->GetFloat("FontOutlineWeight"), configHandler->GetFloat("SmallFontOutlineWeight")};
+
+	return (CglFont::LoadFont(fontFile, fontSizes[smallFont], fontWidths[smallFont], fontWeights[smallFont]));
+}
+
+
+CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
+{
+	try {
+		return (new CglFont(fontFile, size, outlinewidth, outlineweight));
+	} catch (const content_error& ex) {
+		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
+		return nullptr;
+	}
+}
+
+
+void CglFont::ReallocAtlases(bool pre)
+{
+	if (font != nullptr)
+		static_cast<CFontTexture*>(font)->ReallocAtlases(pre);
+	if (smallFont != nullptr)
+		static_cast<CFontTexture*>(smallFont)->ReallocAtlases(pre);
+}
+
+
+
+CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
+: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
+, fontPath(fontFile)
 , inBeginEnd(false)
 , autoOutlineColor(true)
 , setColor(false)
@@ -49,33 +131,18 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	outlineColor = darkOutline;
 }
 
-CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
-{
-	try {
-		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
-		return newFont;
-	} catch (const content_error& ex) {
-		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
-		return NULL;
-	}
-}
-
-
-CglFont::~CglFont()
-{ }
-
 
 /*******************************************************************************/
 /*******************************************************************************/
 
 template <typename T>
-static inline int SkipColorCodes(const std::u8string& text, T pos)
+static inline int SkipColorCodes(const std::u8string& text, T idx)
 {
-	while (text[pos] == CglFont::ColorCodeIndicator) {
-		pos += 4;
-		if (pos >= text.size()) { return -1; }
+	while (idx < text.size() && text[idx] == CglFont::ColorCodeIndicator) {
+		idx += 4;
 	}
-	return pos;
+
+	return (std::min(T(text.size()), idx));
 }
 
 
@@ -163,57 +230,58 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	if (text.empty())
 		return 0.0f;
 
-	float w = 0.0f;
+	float curw = 0.0f;
 	float maxw = 0.0f;
 
-	const GlyphInfo* prv_g = nullptr;
-	const GlyphInfo* cur_g = nullptr;
+	char32_t prvGlyphIdx = 0;
+	char32_t curGlyphIdx = 0;
 
-	int pos = 0;
-	while (pos < text.length()) {
-		const char32_t u = utf8::GetNextChar(text, pos);
+	const GlyphInfo* prvGlyphPtr = nullptr;
+	const GlyphInfo* curGlyphPtr = nullptr;
 
-		switch (u) {
-			// inlined colorcode
-			case ColorCodeIndicator:
-				pos = SkipColorCodes(text, pos - 1);
-				if (pos < 0)
-					pos = text.length();
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
+		switch (curGlyphIdx = utf8::GetNextChar(text, idx)) {
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
+			case ColorCodeIndicator: {
+				idx = SkipColorCodes(text, idx - 1);
+			} break;
 
-				break;
+			// reset color; no-op since GetNextChar increments idx
+			case ColorResetIndicator: {
+			} break;
 
-			// reset color
-			case ColorResetIndicator:
-				break;
+			case 0x0d: {
+				// CR; fall-through
+				idx += (idx < end && text[idx] == 0x0a);
+			}
+			case 0x0a: {
+				// LF
+				if (prvGlyphPtr != nullptr)
+					curw += GetGlyph(prvGlyphIdx).advance;
 
-			// newline
-			case 0x0d: // CR+LF
-				pos += (pos < text.length() && text[pos] == 0x0a);
-			case 0x0a: // LF
-				if (prv_g != nullptr)
-					w += prv_g->advance;
-				if (w > maxw)
-					maxw = w;
-				w = 0.0f;
-				prv_g = nullptr;
-				break;
+				maxw = std::max(curw, maxw);
+				curw = 0.0f;
+
+				prvGlyphPtr = nullptr;
+			} break;
 
 			// printable char
 			default: {
-				cur_g = &GetGlyph(u);
-				if (prv_g != nullptr)
-					w += GetKerning(*prv_g, *cur_g);
-				prv_g = cur_g;
-			}
+				curGlyphPtr = &GetGlyph(curGlyphIdx);
+
+				if (prvGlyphPtr != nullptr)
+					curw += GetKerning(GetGlyph(prvGlyphIdx), *curGlyphPtr);
+
+				prvGlyphPtr = curGlyphPtr;
+				prvGlyphIdx = curGlyphIdx;
+			} break;
 		}
 	}
 
-	if (prv_g != nullptr)
-		w += prv_g->advance;
-	if (w > maxw)
-		maxw = w;
+	if (prvGlyphPtr != nullptr)
+		curw += GetGlyph(prvGlyphIdx).advance;
 
-	return maxw;
+	return (std::max(curw, maxw));
 }
 
 
@@ -225,42 +293,46 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 		return 0.0f;
 	}
 
-	float h = 0.0f, d = GetLineHeight() + GetDescender();
+	float h = 0.0f;
+	float d = GetLineHeight() + GetDescender();
+
 	unsigned int multiLine = 1;
 
-	int pos = 0;
-	while (pos < text.length()) {
-		const char32_t u = utf8::GetNextChar(text, pos);
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
+		const char32_t u = utf8::GetNextChar(text, idx);
+
 		switch (u) {
-			// inlined colorcode
-			case ColorCodeIndicator:
-				pos = SkipColorCodes(text, pos - 1);
-				if (pos < 0)
-					pos = text.length();
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
+			case ColorCodeIndicator: {
+				idx = SkipColorCodes(text, idx - 1);
+			} break;
 
-				break;
+			// reset color; no-op since GetNextChar increments idx
+			case ColorResetIndicator: {
+			} break;
 
-			// reset color
-			case ColorResetIndicator:
-				break;
-
-			// newline
-			case 0x0d: // CR+LF
-				pos += (pos < text.length() && text[pos] == 0x0a);
-			case 0x0a: // LF
+			case 0x0d: {
+				// CR; fall-through
+				idx += (idx < end && text[idx] == 0x0a);
+			}
+			case 0x0a: {
+				// LF
 				multiLine++;
 				d = GetLineHeight() + GetDescender();
-				break;
+			} break;
 
 			// printable char
-			default:
+			default: {
 				const GlyphInfo& g = GetGlyph(u);
-				if (g.descender < d) d = g.descender;
-				if (multiLine < 2 && g.height > h) h = g.height; // only calc height for the first line
+
+				d = std::min(d, g.descender);
+				h = std::max(h, g.height * (multiLine < 2)); // only calculate height for the first line
+			} break;
 		}
 	}
 
-	if (multiLine > 1) d -= ((multiLine - 1) * GetLineHeight());
+	d -= ((multiLine - 1) * GetLineHeight() * (multiLine > 1));
+
 	if (descender != nullptr) *descender = d;
 	if (numLines != nullptr) *numLines = multiLine;
 
@@ -321,19 +393,20 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 		const char8_t& c = text[pos];
 		switch (c) {
 			// inlined colorcode
-			case ColorCodeIndicator:
+			case ColorCodeIndicator: {
 				if ((pos + 3) < text.length()) {
 					colorCodeStack.push_back(text.substr(pos, 4));
 					lines.back() += colorCodeStack.back();
 					pos += 3;
 				}
-				break;
+			} break;
 
 			// reset color
-			case ColorResetIndicator:
-				colorCodeStack.pop_back();
+			case ColorResetIndicator: {
+				if (!colorCodeStack.empty())
+					colorCodeStack.pop_back();
 				lines.back() += c;
-				break;
+			} break;
 
 			// newline
 			case 0x0d:

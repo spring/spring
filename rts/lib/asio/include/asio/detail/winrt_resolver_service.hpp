@@ -2,7 +2,7 @@
 // detail/winrt_resolver_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,10 +19,10 @@
 
 #if defined(ASIO_WINDOWS_RUNTIME)
 
-#include "asio/ip/basic_resolver_iterator.hpp"
 #include "asio/ip/basic_resolver_query.hpp"
-#include "asio/detail/addressof.hpp"
+#include "asio/ip/basic_resolver_results.hpp"
 #include "asio/detail/bind_handler.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/socket_ops.hpp"
 #include "asio/detail/winrt_async_manager.hpp"
 #include "asio/detail/winrt_resolve_op.hpp"
@@ -34,7 +34,8 @@ namespace asio {
 namespace detail {
 
 template <typename Protocol>
-class winrt_resolver_service
+class winrt_resolver_service :
+  public service_base<winrt_resolver_service<Protocol> >
 {
 public:
   // The implementation type of the resolver. A cancellation token is used to
@@ -48,13 +49,14 @@ public:
   // The query type.
   typedef asio::ip::basic_resolver_query<Protocol> query_type;
 
-  // The iterator type.
-  typedef asio::ip::basic_resolver_iterator<Protocol> iterator_type;
+  // The results type.
+  typedef asio::ip::basic_resolver_results<Protocol> results_type;
 
   // Constructor.
-  winrt_resolver_service(asio::io_service& io_service)
-    : io_service_(use_service<io_service_impl>(io_service)),
-      async_manager_(use_service<winrt_async_manager>(io_service))
+  winrt_resolver_service(asio::io_context& io_context)
+    : service_base<winrt_resolver_service<Protocol> >(io_context),
+      io_context_(use_service<io_context_impl>(io_context)),
+      async_manager_(use_service<winrt_async_manager>(io_context))
   {
   }
 
@@ -64,17 +66,29 @@ public:
   }
 
   // Destroy all user-defined handler objects owned by the service.
-  void shutdown_service()
+  void shutdown()
   {
   }
 
   // Perform any fork-related housekeeping.
-  void fork_service(asio::io_service::fork_event)
+  void notify_fork(asio::io_context::fork_event)
   {
   }
 
   // Construct a new resolver implementation.
   void construct(implementation_type&)
+  {
+  }
+
+  // Move-construct a new resolver implementation.
+  void move_construct(implementation_type&,
+      implementation_type&)
+  {
+  }
+
+  // Move-assign from another resolver implementation.
+  void move_assign(implementation_type&,
+      winrt_resolver_service&, implementation_type&)
   {
   }
 
@@ -89,7 +103,7 @@ public:
   }
 
   // Resolve a query to a list of entries.
-  iterator_type resolve(implementation_type&,
+  results_type resolve(implementation_type&,
       const query_type& query, asio::error_code& ec)
   {
     try
@@ -101,9 +115,9 @@ public:
             winrt_utils::string(query.service_name())), ec);
 
       if (ec)
-        return iterator_type();
+        return results_type();
 
-      return iterator_type::create(
+      return results_type::create(
           endpoint_pairs, query.hints(),
           query.host_name(), query.service_name());
     }
@@ -111,13 +125,13 @@ public:
     {
       ec = asio::error_code(e->HResult,
           asio::system_category());
-      return iterator_type();
+      return results_type();
     }
   }
 
   // Asynchronously resolve a query to a list of entries.
   template <typename Handler>
-  void async_resolve(implementation_type&,
+  void async_resolve(implementation_type& impl,
       const query_type& query, Handler& handler)
   {
     bool is_continuation =
@@ -126,11 +140,12 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef winrt_resolve_op<Protocol, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(query, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "resolver", &impl, "async_resolve"));
+    ASIO_HANDLER_CREATION((io_context_.context(),
+          *p.p, "resolver", &impl, 0, "async_resolve"));
+    (void)impl;
 
     try
     {
@@ -144,17 +159,17 @@ public:
     {
       p.p->ec_ = asio::error_code(
           e->HResult, asio::system_category());
-      io_service_.post_immediate_completion(p.p, is_continuation);
+      io_context_.post_immediate_completion(p.p, is_continuation);
       p.v = p.p = 0;
     }
   }
 
   // Resolve an endpoint to a list of entries.
-  iterator_type resolve(implementation_type&,
+  results_type resolve(implementation_type&,
       const endpoint_type&, asio::error_code& ec)
   {
     ec = asio::error::operation_not_supported;
-    return iterator_type();
+    return results_type();
   }
 
   // Asynchronously resolve an endpoint to a list of entries.
@@ -163,13 +178,13 @@ public:
       const endpoint_type&, Handler& handler)
   {
     asio::error_code ec = asio::error::operation_not_supported;
-    const iterator_type iterator;
-    io_service_.get_io_service().post(
-        detail::bind_handler(handler, ec, iterator));
+    const results_type results;
+    io_context_.get_io_context().post(
+        detail::bind_handler(handler, ec, results));
   }
 
 private:
-  io_service_impl& io_service_;
+  io_context_impl& io_context_;
   winrt_async_manager& async_manager_;
 };
 

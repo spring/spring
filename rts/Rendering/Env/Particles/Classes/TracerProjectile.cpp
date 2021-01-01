@@ -4,9 +4,8 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CTracerProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
 
 CR_REG_METADATA(CTracerProjectile,
 (

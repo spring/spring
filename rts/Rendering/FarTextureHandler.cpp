@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 #define LOG_SECTION_FAR_TEXTURE_HANDLER "FarTextureHandler"
@@ -91,7 +91,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int farTextureNum, const int 
 
 	const int row = texnum       / (texSize.x / iconSize.x);
 	const int col = texnum - row * (texSize.x / iconSize.x);
-	return int2(col, row);
+	return {col, row};
 }
 
 /**

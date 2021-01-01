@@ -3,6 +3,8 @@
 #ifndef _GLOBAL_UNSYNCED_H
 #define _GLOBAL_UNSYNCED_H
 
+#include <atomic>
+
 #include "System/creg/creg_cond.h"
 #include "System/GlobalRNG.h"
 
@@ -18,8 +20,8 @@ class CGlobalUnsynced {
 public:
 	CR_DECLARE_STRUCT(CGlobalUnsynced)
 
-	CGlobalUnsynced();
-	~CGlobalUnsynced();
+	void Init() { ResetState(); }
+	void Kill() { ResetState(); }
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
@@ -29,13 +31,12 @@ public:
 
 public:
 	/**
-	 * @brief minimum FramesPerSecond
+	 * @brief minimum Frames Per Second
 	 *
-	 * Defines how many Frames per second
-	 * should be rendered. To reach it we
-	 * will delay simframes.
+	 * Defines how many frames per second should minimally be
+	 * rendered. To reach this number we will delay simframes.
 	 */
-	static const int minFPS = 2;
+	static constexpr int minDrawFPS = 2;
 
 	/**
 	 * @brief simulation drawing balance
@@ -48,7 +49,7 @@ public:
 	 * cpu time is spend for drawing and 85%
 	 * for reconnecting/simulation.
 	 */
-	static const float reconnectSimDrawBalance;
+	static constexpr float reconnectSimDrawBalance = 0.15f;
 
 	/**
 	 * @brief simulation frames per second
@@ -57,14 +58,14 @@ public:
 	 * simFPS ~= GAME_SPEED * gs->wantedSpeedFactor;
 	 * Only differs if the client lags or reconnects.
 	 */
-	float simFPS;
+	float simFPS = 0.0f;
 
 	/**
 	 * @brief average frame time (in ms)
 	 */
-	float avgSimFrameTime;
-	float avgDrawFrameTime;
-	float avgFrameTime;
+	float avgSimFrameTime = 0.001f;
+	float avgDrawFrameTime = 0.001f;
+	float avgFrameTime = 0.001f;
 
 	/**
 	 * @brief mod game time
@@ -72,7 +73,7 @@ public:
 	 * How long the game has been going on
 	 * (modified with game's speed factor)
 	 */
-	float modGameTime;
+	float modGameTime = 0.0f;
 
 	/**
 	 * @brief game time
@@ -80,21 +81,21 @@ public:
 	 * How long the game has been going on
 	 * in real time
 	 */
-	float gameTime;
+	float gameTime = 0.0f;
 
 	/**
 	 * @brief start time
 	 *
 	 * The value of gameTime when the game was started
 	 */
-	float startTime;
+	float startTime = 0.0f;
 
 	/**
 	 * @brief my player num
 	 *
 	 * Local player's number
 	 */
-	int myPlayerNum;
+	int myPlayerNum = 0;
 
 	/**
 	 * @brief my team
@@ -102,7 +103,7 @@ public:
 	 *
 	 * Local player's team
 	 */
-	int myTeam;
+	int myTeam = 1;
 
 	/**
 	 * @brief my ally team
@@ -110,7 +111,7 @@ public:
 	 *
 	 * Local player's ally team
 	 */
-	int myAllyTeam;
+	int myAllyTeam = 1;
 
 	/**
 	 * @brief my team used when playing
@@ -119,7 +120,7 @@ public:
 	 *
 	 * Local player's team
 	 */
-	int myPlayingTeam;
+	int myPlayingTeam = -1;
 
 	/**
 	 * @brief my ally team
@@ -128,7 +129,7 @@ public:
 	 *
 	 * Local player's ally team
 	 */
-	int myPlayingAllyTeam;
+	int myPlayingAllyTeam = -1;
 
 
 	/**
@@ -137,7 +138,7 @@ public:
 	 * Whether this player is spectating
 	 * (can't give orders, and can see everything if spectateFullView is true)
 	 */
-	bool spectating;
+	bool spectating = false;
 
 	/**
 	 * @brief spectatingFullView
@@ -145,21 +146,21 @@ public:
 	 * Whether this player is a spectator, and can see everything
 	 * (if set to false, visibility is determined by the current team)
 	 */
-	bool spectatingFullView;
+	bool spectatingFullView = false;
 
 	/**
 	 * @brief spectatingFullSelect
 	 *
 	 * Can all units be selected when spectating?
 	 */
-	bool spectatingFullSelect;
+	bool spectatingFullSelect = false;
 
 	/**
 	 * @brief fpsMode
 	 *
 	 * if true, player is controlling a unit in FPS mode
 	 */
-	bool fpsMode;
+	bool fpsMode = false;
 
 	/**
 	* @brief global quit
@@ -167,9 +168,8 @@ public:
 	* Global boolean indicating whether the user
 	* wants to quit
 	*/
-	volatile bool globalQuit;
-	volatile bool globalReload;
-	std::string reloadScript;
+	std::atomic<bool> globalQuit = {false};
+	std::atomic<bool> globalReload = {false};
 };
 
 

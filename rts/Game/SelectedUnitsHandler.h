@@ -18,13 +18,11 @@ struct SCommandDescription;
 class CSelectedUnitsHandler : public CObject
 {
 public:
-	CSelectedUnitsHandler();
-
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
-	void AiOrder(int unitid, const Command& c, int playerID);
+	void AINetOrder(int unitID, int aiTeamID, int playerID, const Command& c);
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
-	bool CommandsChanged();
+
 	void NetOrder(Command& c, int playerId);
 	void NetSelect(std::vector<int>& s, int playerId);
 	void ClearNetSelect(int playerId);
@@ -36,7 +34,7 @@ public:
 		int commandPage;
 	};
 	AvailableCommandsStruct GetAvailableCommands();
-	void GiveCommand(Command c, bool fromUser = true);
+	void GiveCommand(const Command& c, bool fromUser = true);
 	void AddUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	void ClearSelected();
@@ -55,6 +53,7 @@ public:
 	void SendCommand(const Command& c);
 	void SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise = false);
 
+	bool CommandsChanged() const { return possibleCommandsChanged; }
 	bool IsUnitSelected(const CUnit* unit) const;
 	bool IsUnitSelected(const int unitID) const;
 	bool AutoAddBuiltUnitsToFactoryGroup() const { return autoAddBuiltUnitsToFactoryGroup; }
@@ -65,20 +64,24 @@ public:
 	void SelectUnits(const std::string& line);
 	void SelectCycle(const std::string& command);
 
+private:
+	int selectedGroup = -1;
+	int soundMultiselID = 0;
+
+	bool autoAddBuiltUnitsToFactoryGroup = false;
+	bool autoAddBuiltUnitsToSelectedGroup = false;
+	bool buildIconsFirst = false;
+
 public:
-	bool selectionChanged;
-	bool possibleCommandsChanged;
+	bool selectionChanged = false;
+	bool possibleCommandsChanged = true;
 
 	spring::unordered_set<int> selectedUnits;
 	std::vector< std::vector<int> > netSelected;
 
 private:
-	int selectedGroup;
-	int soundMultiselID;
-
-	bool autoAddBuiltUnitsToFactoryGroup;
-	bool autoAddBuiltUnitsToSelectedGroup;
-	bool buildIconsFirst;
+	// buffer for SendCommand unordered_set->vector conversion
+	std::vector<int16_t> selectedUnitIDs;
 };
 
 extern CSelectedUnitsHandler selectedUnitsHandler;

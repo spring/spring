@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -413,7 +414,7 @@ enum aiTextureFlags
  *    SourceColor * SourceBlend + DestColor * DestBlend
  *  @endcode
  *  where DestColor is the previous color in the framebuffer at this
- *  position and SourceColor is the material colro before the transparency
+ *  position and SourceColor is the material color before the transparency
  *  calculation.<br>
  *  This corresponds to the #AI_MATKEY_BLEND_FUNC property.
 */
@@ -515,7 +516,7 @@ enum aiPropertyTypeInfo
      *  aiMaterial::Get()) to query properties stored in floating-point format.
      *  The material system performs the type conversion automatically.
     */
-    //aiPTI_Double   = 0x2,
+    aiPTI_Double   = 0x2,
 
     /** The material property is an aiString.
      *
@@ -824,6 +825,12 @@ public:
         unsigned int index = 0);
 
     aiReturn AddProperty (const float* pInput,
+        unsigned int pNumValues,
+        const char* pKey,
+        unsigned int type  = 0,
+        unsigned int index = 0);
+
+    aiReturn AddProperty (const double* pInput,
         unsigned int pNumValues,
         const char* pKey,
         unsigned int type  = 0,

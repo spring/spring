@@ -3,38 +3,37 @@
 #ifndef LUA_HASH_STRING_H
 #define LUA_HASH_STRING_H
 
+#include <algorithm>
 #include <string>
-using std::string;
-
 
 #include "LuaInclude.h"
+#include "System/StringHash.h"
 
 
 struct LuaHashString {
 	public:
-		LuaHashString(const string& s)
-		: str(s), hash(lua_calchash(s.c_str(), s.size())) {}
+		LuaHashString(const char* s): hash(lua_calchash(s, slen = strlen(s))) {
+			assert(slen <= sizeof(str));
+			memset(str, 0, sizeof(str));
+			memcpy(str, s, std::min(size_t(slen), sizeof(str) - 1));
+		}
 
-		LuaHashString(const LuaHashString& hs)
-		: str(hs.str), hash(hs.hash) {}
+		LuaHashString(const LuaHashString& hs) { *this = hs; }
 
-		LuaHashString& operator=(const LuaHashString& hs) {
-			str = hs.str;
+		LuaHashString& operator = (const LuaHashString& hs) {
+			memcpy(str, hs.str, sizeof(str));
+
+			slen = hs.slen;
 			hash = hs.hash;
-			return (*this);
+			return *this;
 		}
 
-		inline unsigned int GetHash() const { return hash; }
-		inline const string& GetString() const { return str; }
-
-		void SetString(const string& s) {
-			str = s;
-			hash = lua_calchash(s.c_str(), s.size());
-		}
+		inline uint32_t GetHash() const { return hash; }
+		inline const char* GetString() const { return str; }
 
 	public:
 		inline void Push(lua_State* L) const {
-			lua_pushhstring(L, hash, str.c_str(), str.size());
+			lua_pushhstring(L, hash, str, slen);
 		}
 
 		inline void GetGlobal(lua_State* L) const {
@@ -43,9 +42,10 @@ struct LuaHashString {
 		}
 		inline bool GetGlobalFunc(lua_State* L) const {
 			GetGlobal(L);
-			if (lua_isfunction(L, -1)) {
+
+			if (lua_isfunction(L, -1))
 				return true;
-			}
+
 			lua_pop(L, 1);
 			return false;
 		}
@@ -56,9 +56,10 @@ struct LuaHashString {
 		}
 		inline bool GetRegistryFunc(lua_State* L) const {
 			GetRegistry(L);
-			if (lua_isfunction(L, -1)) {
+
+			if (lua_isfunction(L, -1))
 				return true;
-			}
+
 			lua_pop(L, 1);
 			return false;
 		}
@@ -78,14 +79,9 @@ struct LuaHashString {
 			lua_pushstring(L, value);
 			lua_rawset(L, -3);
 		}
-		inline void PushString(lua_State* L, const string& value) const {
+		inline void PushString(lua_State* L, const std::string& value) const {
 			Push(L);
 			lua_pushsstring(L, value);
-			lua_rawset(L, -3);
-		}
-		inline void PushHashString(lua_State* L, const LuaHashString& hs) const {
-			Push(L);
-			hs.Push(L);
 			lua_rawset(L, -3);
 		}
 
@@ -96,32 +92,33 @@ struct LuaHashString {
 		}
 
 	private:
-		string str;
-		unsigned int hash;
+		char str[32];
+		uint32_t slen = 0;
+		uint32_t hash = 0;
 };
 
 
 // NOTE: scoped to avoid name conflicts
 // NOTE: since all the following are static, if name can change (e.g. within a loop)
 //       peculiar things will happen. => Only use raw strings (and not variables) in name.
-   
+
 #define HSTR_PUSH(L, name) \
-	{ static const LuaHashString hsPriv(name); hsPriv.Push(L); }
+	{ lua_pushhstring(L, COMPILE_TIME_HASH(name), name, sizeof(name) - 1); }
 
 #define HSTR_PUSH_BOOL(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushBool(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushboolean(L, val); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_NUMBER(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushNumber(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushnumber(L, val); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_STRING(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushString(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushsstring(L, val); lua_rawset(L, -3); }
 
-#define HSTR_PUSH_HSTR(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushHashString(L, val); }
+#define HSTR_PUSH_CSTRING(L, name, val) \
+	{ HSTR_PUSH(L, name); lua_pushhstring(L, COMPILE_TIME_HASH(val), val, sizeof(val) - 1); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_CFUNC(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushCFunc(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushcfunction(L, val); lua_rawset(L, -3); }
 
 
 #endif // LUA_HASH_STRING_H

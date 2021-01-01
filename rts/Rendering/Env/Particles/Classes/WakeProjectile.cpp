@@ -9,10 +9,9 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CWakeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),

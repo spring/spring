@@ -22,22 +22,6 @@ class CUnitScript
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
-public:
-	static const int UNIT_VAR_COUNT   = 8;
-	static const int TEAM_VAR_COUNT   = 64;
-	static const int ALLY_VAR_COUNT   = 64;
-	static const int GLOBAL_VAR_COUNT = 4096;
-
-	static const int UNIT_VAR_START   = 1024;
-	static const int TEAM_VAR_START   = 2048;
-	static const int ALLY_VAR_START   = 3072;
-	static const int GLOBAL_VAR_START = 4096;
-
-	static const int UNIT_VAR_END   = UNIT_VAR_START   + UNIT_VAR_COUNT   - 1;
-	static const int TEAM_VAR_END   = TEAM_VAR_START   + TEAM_VAR_COUNT   - 1;
-	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
-	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
-
 protected:
 	CUnit* unit;
 	bool busy;
@@ -83,7 +67,7 @@ public:
 
 	bool PieceExists(unsigned int scriptPieceNum) const {
 		// NOTE: there can be NULL pieces present from the remapping in CobInstance
-		return ((scriptPieceNum < pieces.size()) && (pieces[scriptPieceNum] != NULL));
+		return ((scriptPieceNum < pieces.size()) && (pieces[scriptPieceNum] != nullptr));
 	}
 
 	LocalModelPiece* GetScriptLocalModelPiece(unsigned int scriptPieceNum) const {
@@ -94,16 +78,16 @@ public:
 	int ScriptToModel(int scriptPieceNum) const;
 	int ModelToScript(int lmodelPieceNum) const;
 
-#define SCRIPT_TO_LOCALPIECE_FUNC(x, y, z, w)                          \
-	x y(int scriptPieceNum) const {                                    \
-		if (!PieceExists(scriptPieceNum))                              \
-			return w;                                                  \
-		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum); \
-		return (p->z());                                               \
+#define SCRIPT_TO_LOCALPIECE_FUNC(RetType, ScriptFunc, PieceFunc)       \
+	RetType ScriptFunc(int scriptPieceNum) const {                      \
+		if (!PieceExists(scriptPieceNum))                               \
+			return {};                                                  \
+		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum);  \
+		return (p->PieceFunc());                                        \
 	}
 
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
-	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
+	SCRIPT_TO_LOCALPIECE_FUNC(    float3, GetPiecePos,    GetAbsolutePos     )
+	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix, GetModelSpaceMatrix)
 
 	bool GetEmitDirPos(int scriptPieceNum, float3& pos, float3& dir) const {
 		if (!PieceExists(scriptPieceNum))

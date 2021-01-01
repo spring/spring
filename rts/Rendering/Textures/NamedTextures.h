@@ -32,7 +32,7 @@ namespace CNamedTextures {
 
 	size_t GetInfoIndex(const std::string& texName);
 
-	const TexInfo* GetInfo(const std::string& texName, bool forceLoad = false, bool persist = false);
+	const TexInfo* GetInfo(const std::string& texName, bool forceLoad = false, bool persist = false, bool secondaryGLContext = false);
 	const TexInfo* GetInfo(size_t texIdx);
 }
 

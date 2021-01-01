@@ -14,18 +14,19 @@ class CExpGenSpawner : public CProjectile
 public:
 	CExpGenSpawner();
 	~CExpGenSpawner() {}
+	void Serialize(creg::ISerializer* s);
 
 	virtual void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	virtual int GetProjectilesCount() const override { return 0; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
-	int delay;
-	float damage;
+	int delay = 1;
+	float damage = 0.0f;
 
-	IExplosionGenerator* explosionGenerator;
+	IExplosionGenerator* explosionGenerator = nullptr;
 };
 
 #endif // EXP_GEN_SPAWNER_H

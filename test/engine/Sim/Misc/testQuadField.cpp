@@ -2,12 +2,12 @@
 
 #include "Sim/Misc/QuadField.h"
 #include "System/float3.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include <stdlib.h>
 #include <time.h>
 
-#define BOOST_TEST_MODULE QuadField
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 static inline float randf()
 {
@@ -16,19 +16,16 @@ static inline float randf()
 
 
 
-BOOST_AUTO_TEST_CASE( QuadField )
+TEST_CASE("QuadField")
 {
-	srand( time(NULL) );
+	srand( time(nullptr) );
 
-	static const int WIDTH  = 3;
-	static const int HEIGHT = 3;
-	static const int TEST_RUNS = 50000;
+	static constexpr int WIDTH  = 3;
+	static constexpr int HEIGHT = 3;
+	static constexpr int TEST_RUNS = 50000;
 
-	int2 mapDims = int2(WIDTH, HEIGHT);
-	CQuadField qf(mapDims, SQUARE_SIZE);
+	quadField.Init(int2(WIDTH, HEIGHT), SQUARE_SIZE);
 
-	// necessary for QuadFieldQuery
-	quadField = &qf;
 	int bitmap[WIDTH * HEIGHT];
 
 	bool fail = false;
@@ -69,7 +66,7 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		// #2: raytrace via QuadField
 		{
 			QuadFieldQuery qfQuery;
-			qf.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
+			quadField.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
 			assert( std::adjacent_find(qfQuery.quads->begin(), qfQuery.quads->end()) == qfQuery.quads->end() ); // check for duplicates
 			for (int qi: *qfQuery.quads) {
 				bitmap[qi] |= 2;
@@ -99,5 +96,6 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		if (fail) break;
 	}
 
-	BOOST_CHECK_MESSAGE(!fail, "Too less quads returned!");
+	INFO("Too little quads returned!");
+	CHECK_FALSE(fail);
 }

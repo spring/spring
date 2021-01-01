@@ -3,13 +3,13 @@
 #include "FlameThrower.h"
 
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CFlameThrower, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CFlameThrower, CWeapon, )
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),

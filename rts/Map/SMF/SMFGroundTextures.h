@@ -75,7 +75,8 @@ private:
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
-	int tileTexFormat;
+	unsigned int tileTexFormat = 0;
+	// unsigned int pboUnsyncedBit = 0;
 };
 
 #endif // _BF_GROUND_TEXTURES_H_

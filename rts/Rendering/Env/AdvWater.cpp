@@ -6,6 +6,7 @@
 #include "WaterRendering.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
@@ -56,10 +57,12 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = 26.5f*math::DEG_TO_RAD;
 			const float pos = y*2+x;
+
 			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
 			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -69,10 +72,12 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = -19.0f * math::DEG_TO_RAD;
 			const float pos = 3.0f * y - x;
+
 			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
 			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -318,8 +323,8 @@ void CAdvWater::UpdateWater(CGame* game)
 		0.0, 1.0, 0.0, 0.0,
 	};
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -328,7 +333,7 @@ void CAdvWater::UpdateWater(CGame* game)
 		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
 	prvCam->LoadViewPort();
 

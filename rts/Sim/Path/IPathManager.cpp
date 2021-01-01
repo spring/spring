@@ -5,19 +5,21 @@
 #include "QTPFS/PathManager.hpp"
 #include "System/Log/ILog.h"
 
-IPathManager* pathManager = nullptr;
+IPathManager nullPathManager;
+IPathManager* pathManager = &nullPathManager;
 
-IPathManager* IPathManager::GetInstance(unsigned int type) {
-	if (pathManager == nullptr) {
-		const char* fmtStr = "[IPathManager::GetInstance] using %s path-manager";
+IPathManager* IPathManager::GetInstance(int type) {
+	if (pathManager == &nullPathManager) {
+		const char* fmtStr = "[IPathManager::%s] using %sPFS";
 		const char* typeStr = "";
 
 		switch (type) {
-			case PFS_TYPE_DEFAULT: { typeStr = "DEFAULT"; pathManager = new       CPathManager(); } break;
-			case PFS_TYPE_QTPFS:   { typeStr = "QTPFS";   pathManager = new QTPFS::PathManager(); } break;
+			case NOPFS_TYPE: { typeStr = "NO";                                         } break;
+			case HAPFS_TYPE: { typeStr = "HA"; pathManager = new       CPathManager(); } break;
+			case QTPFS_TYPE: { typeStr = "QT"; pathManager = new QTPFS::PathManager(); } break;
 		}
 
-		LOG(fmtStr, typeStr);
+		LOG(fmtStr, __func__, typeStr);
 	}
 
 	return pathManager;
@@ -25,7 +27,10 @@ IPathManager* IPathManager::GetInstance(unsigned int type) {
 
 void IPathManager::FreeInstance(IPathManager* pm) {
 	assert(pm == pathManager);
-	delete pm;
-	pathManager = nullptr;
+
+	if (pm != &nullPathManager)
+		delete pm;
+
+	pathManager = &nullPathManager;
 }
 

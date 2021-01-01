@@ -14,80 +14,81 @@
 # * PIC_FLAG
 #
 # Functions and macros defined in this file:
-# * FixLibName
-# * CreateInstallTarget
-# * RemoveString
-# * RemoveFlag
-# * SetGlobal
-# * MakeGlobal
-# * GetListOfSubModules
-# * GetVersionFromFile
-# * GetLastPathPart
-# * MakeAbsolute
-# * GetVersionPlusDepFile
-# * GetNativeSourcesRecursive
-# * CheckMinCMakeVersion
-# * MakeGlobalVar
+# * fix_lib_name
+# * create_install_target
+# * remove_string
+# * remove_flag
+# * set_global
+# * make_global
+# * get_list_of_submodules
+# * get_version_from_file
+# * get_last_path_part
+# * make_absolute
+# * get_version_plus_dep_file
+# * get_native_sources_recursive
+# * catch_regex_group
+# * find_freetype_hack
+# * make_global_var
 
 
-If   (CMAKE_HOST_WIN32)
-	Set(PATH_SEP_H      "\\")
-	Set(PATH_DELIM_H    ";")
-	Set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
-Else (CMAKE_HOST_WIN32)
-	Set(PATH_SEP_H      "/")
-	Set(PATH_DELIM_H    ":")
-	Set(ABS_DIR_REGEX_H "^/")
-EndIf (CMAKE_HOST_WIN32)
-If    (WIN32)
-	Set(PATH_SEP_T      "\\")
-	Set(PATH_DELIM_T    ";")
-	Set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
-Else  (WIN32)
-	Set(PATH_SEP_T      "/")
-	Set(PATH_DELIM_T    ":")
-	Set(ABS_DIR_REGEX_T "^/")
-EndIf (WIN32)
+if   (CMAKE_HOST_WIN32)
+	set(PATH_SEP_H      "\\")
+	set(PATH_DELIM_H    ";")
+	set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
+else (CMAKE_HOST_WIN32)
+	set(PATH_SEP_H      "/")
+	set(PATH_DELIM_H    ":")
+	set(ABS_DIR_REGEX_H "^/")
+endif (CMAKE_HOST_WIN32)
+if    (WIN32)
+	set(PATH_SEP_T      "\\")
+	set(PATH_DELIM_T    ";")
+	set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
+else  (WIN32)
+	set(PATH_SEP_T      "/")
+	set(PATH_DELIM_T    ":")
+	set(ABS_DIR_REGEX_T "^/")
+endif (WIN32)
 
 
 # define the fPic compiler flag
-If     (APPLE)
-	Set(PIC_FLAG "-fPIC")
-ElseIf (MINGW)
-	Set(PIC_FLAG "")
-Else   ()
+if     (APPLE)
+	set(PIC_FLAG "-fPIC")
+elseif (MINGW)
+	set(PIC_FLAG "")
+else   ()
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8) # add fpic flag on 64 bit platforms
-		Set(PIC_FLAG "-fpic")
+		set(PIC_FLAG "-fpic")
 	else () #no fpic needed on 32bit
 		set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
-		Set(PIC_FLAG "")
+		set(PIC_FLAG "")
 	endif()
-EndIf  ()
+endif  ()
 
 
 # This is needed because CMake, or at least some versions of it (eg. 2.8),
 # falsely use the ".so" suffix under Mac OS X for MODULE's
-Macro    (FixLibName targetName)
-	If    (UNIX)
-		Set_TARGET_PROPERTIES(${targetName} PROPERTIES PREFIX "lib")
-		If    (APPLE)
-			Set_TARGET_PROPERTIES(${targetName} PROPERTIES SUFFIX ".dylib")
-		EndIf (APPLE)
-	EndIf (UNIX)
-EndMacro (FixLibName targetName)
+macro    (fix_lib_name targetName)
+	if    (UNIX)
+		set_target_properties(${targetName} PROPERTIES PREFIX "lib")
+		if    (APPLE)
+			set_target_properties(${targetName} PROPERTIES SUFFIX ".dylib")
+		endif (APPLE)
+	endif (UNIX)
+endmacro (fix_lib_name targetName)
 
 
 # Create an install target which installs multiple sub-projects.
 # Sub-projects have to be specified by paths relative to CMAKE_SOURCE_DIR.
 # All install instructions in the specified dirs (recursively) are executed.
 # example:
-# 	Set(myInstallDirs
+# 	set(myInstallDirs
 # 			"rts/builds/default"
 # 			"tools/unitsync"
 # 			"cont"
 # 			"AI"
 # 		)
-# 	Set(myInstallDeps
+# 	set(myInstallDeps
 # 			spring
 # 			gamedata
 # 			unitsync
@@ -95,30 +96,30 @@ EndMacro (FixLibName targetName)
 # 			NullAI
 # 			KAIK
 # 		)
-# 	CreateInstallTarget(myPkg myInstallDeps myInstallDirs)
+# 	create_install_target(myPkg myInstallDeps myInstallDirs)
 # This creates a new target "install-myPkg"
-Macro    (CreateInstallTarget targetName var_list_depends var_list_instDirs)
+macro    (create_install_target targetName var_list_depends var_list_instDirs)
 	# Assemble the list of commands
-	Set(installCmds "")
-	ForEach    (instDir ${${var_list_instDirs}})
-		If    (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
-			Message(FATAL_ERROR "Not a valid dir for installer target: ${instDir}, \"${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt\" does not exist.")
-		EndIf (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
-		Set(installCmds ${installCmds} 
+	set(installCmds "")
+	foreach    (instDir ${${var_list_instDirs}})
+		if    (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
+			message(FATAL_ERROR "Not a valid dir for installer target: ${instDir}, \"${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt\" does not exist.")
+		endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
+		set(installCmds ${installCmds}
 			COMMAND "${CMAKE_COMMAND}"
 				"-P" "${CMAKE_BINARY_DIR}/${instDir}/cmake_install.cmake"
 				# NOTE: The following does not work in CMake 2.6.4
 				#"-DCMAKE_INSTALL_COMPONENT=${targetName}"
 			)
-	EndForEach (instDir)
+	endforeach (instDir)
 
 	# Make sure we do have commands at all
-	If    ("${installCmds}" STREQUAL "")
-		Message(FATAL_ERROR "No valid install dirs supplied.")
-	EndIf ("${installCmds}" STREQUAL "")
+	if    ("${installCmds}" STREQUAL "")
+		message(FATAL_ERROR "No valid install dirs supplied.")
+	endif ("${installCmds}" STREQUAL "")
 
 	# Create a custom install target
-	Add_Custom_Target(install-${targetName}
+	add_custom_target(install-${targetName}
 		${installCmds}
 		WORKING_DIRECTORY
 			"${CMAKE_BINARY_DIR}"
@@ -126,140 +127,120 @@ Macro    (CreateInstallTarget targetName var_list_depends var_list_instDirs)
 			"  ${targetName}: Installing ..." VERBATIM
 		)
 	# This also works for custom targets
-	Add_Dependencies(install-${targetName} ${${var_list_depends}})
-EndMacro (CreateInstallTarget targetName)
+	add_dependencies(install-${targetName} ${${var_list_depends}})
+endmacro (create_install_target targetName)
 
 
 # Removes a given string from a variable
-Macro    (RemoveString var str)
-	String(REPLACE "${str}" "" ${var} "${${var}}")
-EndMacro (RemoveString)
+macro    (remove_string var str)
+	string(REPLACE "${str}" "" ${var} "${${var}}")
+endmacro (remove_string)
 
 
 # Removes a compiler flag from all commonly used vars used for that purpose
-Macro    (RemoveFlag flag)
-	RemoveString(CMAKE_CXX_FLAGS "${flag}")
-	RemoveString(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} "${flag}")
-	RemoveString(CMAKE_C_FLAGS "${flag}")
-	RemoveString(CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE} "${flag}")
-	RemoveString(CMAKE_EXE_LINKER_FLAGS "${flag}")
-	RemoveString(CMAKE_MODULE_LINKER_FLAGS "${flag}")
-EndMacro (RemoveFlag)
+macro    (remove_flag flag)
+	remove_string(CMAKE_CXX_FLAGS "${flag}")
+	remove_string(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} "${flag}")
+	remove_string(CMAKE_C_FLAGS "${flag}")
+	remove_string(CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE} "${flag}")
+	remove_string(CMAKE_EXE_LINKER_FLAGS "${flag}")
+	remove_string(CMAKE_MODULE_LINKER_FLAGS "${flag}")
+endmacro (remove_flag)
 
 
 # Sets a variable in global scope
-Function    (SetGlobal var value)
-	Set(${var} "${value}" CACHE INTERNAL "" FORCE)
-	Mark_As_Advanced(${var})
-EndFunction (SetGlobal)
+function    (set_global var value)
+	set(${var} "${value}" CACHE INTERNAL "" FORCE)
+	mark_as_advanced(${var})
+endfunction (set_global)
 
 
 # Makes variables available in global scope
-# MakeGlobal(var0 [var1 [var2 [var3 ...]]])
-Function    (MakeGlobal)
-	ForEach    (var ${ARGV})
-		SetGlobal(${var} "${${var}}")
-	EndForEach (var)
-EndFunction (MakeGlobal)
+# make_global(var0 [var1 [var2 [var3 ...]]])
+function    (make_global)
+	foreach    (var ${ARGV})
+		set_global(${var} "${${var}}")
+	endforeach (var)
+endfunction (make_global)
 
 
 # Find all CMakeLists.txt files in sub-directories
-Macro    (GetListOfSubModules list_var)
-	File(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" FOLLOW_SYMLINKS "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
+macro    (get_list_of_submodules list_var)
+	file(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
 	# Strip away the "/CMakeLists.txt" parts, so we end up with just a list of dirs,
 	# for example: AAI;RAI;KAIK
 	# GLOB can prefix with "//" or "/" (perhaps changed in cmake 3.1.0), this double replace will support both "//" and "/"
-	String(REPLACE "/CMakeLists.txt" "" ${list_var} "${${list_var}}")
-	String(REPLACE "/" "" ${list_var} "${${list_var}}")
-EndMacro (GetListOfSubModules list_var)
+	string(REPLACE "/CMakeLists.txt" "" ${list_var} "${${list_var}}")
+	string(REPLACE "/" "" ${list_var} "${${list_var}}")
+endmacro (get_list_of_submodules list_var)
 
 
 # Gets the version from a text file.
 # (actually just reads the text file content into a variable)
-Macro    (GetVersionFromFile vers_var vers_file)
-	If    (EXISTS ${vers_file})
-		File(STRINGS "${vers_file}" ${vers_var} LIMIT_COUNT 1)
-	Else  (EXISTS ${vers_file})
-		Set(${vers_var} "UNKNOWN_VERSION")
-	EndIf (EXISTS ${vers_file})
-EndMacro (GetVersionFromFile vers_var vers_file)
+macro    (get_version_from_file vers_var vers_file)
+	if    (EXISTS ${vers_file})
+		file(STRINGS "${vers_file}" ${vers_var} LIMIT_COUNT 1)
+	else  (EXISTS ${vers_file})
+		set(${vers_var} "UNKNOWN_VERSION")
+	endif (EXISTS ${vers_file})
+endmacro (get_version_from_file vers_var vers_file)
 
 
 # Returns the name of the dir or file specified by a path.
 # example: "/A/B/C" -> "C"
-Macro    (GetLastPathPart part_var dir)
-	String(REGEX REPLACE ".*[\\/]" "" ${part_var} ${dir})
-EndMacro (GetLastPathPart part_var dir)
+macro    (get_last_path_part part_var dir)
+	string(REGEX REPLACE ".*[\\/]" "" ${part_var} ${dir})
+endmacro (get_last_path_part part_var dir)
 
 
 # Create an absolute directory from a base- and a relative-dir
-Function    (MakeAbsolute absDir_var baseDir relDir)
-	Set(_absDir "${baseDir}")
-	If    (NOT "${relDir}" STREQUAL "")
-		Set(_absDir "${_absDir}/${relDir}")
-	EndIf (NOT "${relDir}" STREQUAL "")
-	Set(${absDir_var} ${_absDir} PARENT_SCOPE)
-EndFunction (MakeAbsolute)
+function    (make_absolute absDir_var baseDir relDir)
+	set(_absDir "${baseDir}")
+	if    (NOT "${relDir}" STREQUAL "")
+		set(_absDir "${_absDir}/${relDir}")
+	endif (NOT "${relDir}" STREQUAL "")
+	set(${absDir_var} ${_absDir} PARENT_SCOPE)
+endfunction (make_absolute)
 
 
 # Gets the version from a text file (${CMAKE_CURRENT_SOURCE_DIR}/VERSION),
 # and prepare a file for dependency tracking.
 # The project will reconfigure whenever the VERSION file gets touched.
-Macro    (GetVersionPlusDepFile vers_var versDepFile_var)
-	Set(myVersionFile    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
-	Set(myVersionDepFile "${CMAKE_CURRENT_BINARY_DIR}/VERSION")
-	If    (EXISTS ${myVersionFile})
-		GetVersionFromFile(${vers_var} "${myVersionFile}")
-		Configure_File("${myVersionFile}" "${myVersionDepFile}" COPYONLY)
-		Set_source_files_properties("${myVersionDepFile}" PROPERTIES HEADER_FILE_ONLY TRUE)
-		Set_source_files_properties("${myVersionDepFile}" PROPERTIES GENERATED TRUE)
-		Set(${versDepFile_var} "${myVersionDepFile}")
-	Else  (EXISTS ${myVersionFile})
-		Set(${vers_var}        "UNKNOWN_VERSION")
-		Set(${versDepFile_var} "${myVersionFile}")
-	EndIf (EXISTS ${myVersionFile})
-EndMacro (GetVersionPlusDepFile vers_var versDepFile_var)
+macro    (get_version_plus_dep_file vers_var versDepFile_var)
+	set(myVersionFile    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+	set(myVersionDepFile "${CMAKE_CURRENT_BINARY_DIR}/VERSION")
+	if    (EXISTS ${myVersionFile})
+		get_version_from_file(${vers_var} "${myVersionFile}")
+		configure_file("${myVersionFile}" "${myVersionDepFile}" COPYONLY)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES HEADER_FILE_ONLY TRUE)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES GENERATED TRUE)
+		set(${versDepFile_var} "${myVersionDepFile}")
+	else  (EXISTS ${myVersionFile})
+		set(${vers_var}        "UNKNOWN_VERSION")
+		set(${versDepFile_var} "${myVersionFile}")
+	endif (EXISTS ${myVersionFile})
+endmacro (get_version_plus_dep_file vers_var versDepFile_var)
 
 
 # Recursively lists all native source files in a given directory,
 # relative to _relDir, or absolut, If _relDir == "".
-Macro    (GetNativeSourcesRecursive _var _dir _relDir)
-	Set(NATIVE_SOURCE_EXTENSIONS ".c;.cpp;.c++;.cxx")
-	ForEach    (_ext ${NATIVE_SOURCE_EXTENSIONS})
+macro    (get_native_sources_recursive _var _dir _relDir)
+	set(NATIVE_SOURCE_EXTENSIONS ".c;.cpp;.c++;.cxx")
+	foreach    (_ext ${NATIVE_SOURCE_EXTENSIONS})
 		# Recursively get sources for source extension _ext
-		If    ("${_relDir}" STREQUAL "")
-			File(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
-		Else  ("${_relDir}" STREQUAL "")
-			File(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
-		EndIf ("${_relDir}" STREQUAL "")
+		if    ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		else  ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		endif ("${_relDir}" STREQUAL "")
 		# Concatenate to previous results
-		If    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
-			Set(${_var} "${${_var}}${_sources}")
-		Else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
-			Set(${_var} "${${_var}};${_sources}")
-		EndIf ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
-	EndForEach (_ext)
-EndMacro (GetNativeSourcesRecursive _var _dir _relDir)
-
-
-# Check If the CMake version used is >= "major.minor.patch".
-Macro    (CheckMinCMakeVersion res_var major minor patch)
-	Set(${res_var} FALSE)
-	If     (${CMAKE_MAJOR_VERSION} GREATER ${major})
-		Set(${res_var} TRUE)
-	ElseIf (${CMAKE_MAJOR_VERSION} EQUAL ${major})
-		If     (${CMAKE_MINOR_VERSION} GREATER ${minor})
-			Set(${res_var} TRUE)
-		ElseIf (${CMAKE_MINOR_VERSION} EQUAL ${minor})
-			If     (${CMAKE_PATCH_VERSION} GREATER ${patch})
-				Set(${res_var} TRUE)
-			ElseIf (${CMAKE_PATCH_VERSION} EQUAL ${patch})
-				Set(${res_var} TRUE)
-			EndIf  ()
-		EndIf  ()
-	EndIf  ()
-EndMacro (CheckMinCMakeVersion res_var major minor patch)
-
+		if    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}}${_sources}")
+		else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}};${_sources}")
+		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+	endforeach (_ext)
+endmacro (get_native_sources_recursive _var _dir _relDir)
 
 # Tries to capture a specific regex group from a string.
 # The regex has to match the whole string.
@@ -267,41 +248,39 @@ EndMacro (CheckMinCMakeVersion res_var major minor patch)
 # @param group starts at 1
 # @param var to write the result to, "" in case of no match
 # @param str the string that will be tried to be match
-Macro    (CatchRegexGroup pattern group var str)
-	String(REGEX MATCH "^${pattern}\$" "${var}_MATCH_TEST" "${str}")
-	Set(${var} "")
-	If     ("${${var}_MATCH_TEST}" STREQUAL "${str}")
-		String(REGEX REPLACE "${pattern}" "\\${group}" ${var} "${str}")
-	EndIf  ()
-EndMacro (CatchRegexGroup)
+macro    (catch_regex_group pattern group var str)
+	string(REGEX MATCH "^${pattern}\$" "${var}_MATCH_TEST" "${str}")
+	set(${var} "")
+	if     ("${${var}_MATCH_TEST}" STREQUAL "${str}")
+		string(REGEX REPLACE "${pattern}" "\\${group}" ${var} "${str}")
+	endif  ()
+endmacro (catch_regex_group)
 
 
 # macro that adds "freetype-6 freetype6" to find_library on win32
-Macro(FindFreetypeHack)
-	if(WIN32)
-
-PREFER_STATIC_LIBS()
-find_library(FREETYPE_LIBRARY
-  NAMES freetype libfreetype freetype219 freetype-6 freetype6
-  HINTS
-    ENV FREETYPE_DIR
-  PATH_SUFFIXES lib
-  PATHS
-  /usr/X11R6
-  /usr/local/X11R6
-  /usr/local/X11
-  /usr/freeware
-)
-UNPREFER_STATIC_LIBS()
+macro(find_freetype_hack)
+	if (WIN32)
+		prefer_static_libs()
+		find_library(FREETYPE_LIBRARY
+		  NAMES freetype libfreetype freetype219 freetype-6 freetype6
+		  HINTS
+		    ENV FREETYPE_DIR
+		  PATH_SUFFIXES lib
+		  PATHS
+		  /usr/X11R6
+		  /usr/local/X11R6
+		  /usr/local/X11
+		  /usr/freeware
+		)
+		unprefer_static_libs()
 	endif()
-EndMacro()
+endmacro()
 
 
 # make a var global (not cached in CMakeCache.txt!)
 # both calls are required, else the variable is empty
 # http://www.cmake.org/Bug/view.php?id=15093
-macro(MakeGlobalVar varname)
+macro(make_global_var varname)
         set(${varname} ${ARGN} PARENT_SCOPE)
         set(${varname} ${ARGN})
 endmacro()
-

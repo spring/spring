@@ -21,11 +21,13 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(piece),
 	CR_MEMBER(hitscan),
 
+	CR_IGNORED(luaDraw),
 	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
+
+	CR_IGNORED(createMe),
 	CR_MEMBER(deleteMe),
-	CR_IGNORED(callEvent), //we want the render event called for all projectiles
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),
@@ -35,10 +37,10 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
 
+	CR_MEMBER(myrange),
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
 	CR_MEMBER(sortDistOffset),
-	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -47,6 +49,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
+	CR_IGNORED(renderIndex),
 
 	CR_MEMBER(quads)
 ))
@@ -54,31 +57,8 @@ CR_REG_METADATA(CProjectile,
 
 
 CProjectile::CProjectile()
-	: synced(false)
-	, weapon(false)
-	, piece(false)
-	, hitscan(false)
-
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-	, castShadow(false)
-	, drawSorted(true)
-
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDist(0.0f)
-	, sortDistOffset(0.0f)
-	, tempNum(0)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	: myrange(0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 }
 
@@ -97,25 +77,8 @@ CProjectile::CProjectile(
 	, piece(isPiece)
 	, hitscan(isHitScan)
 
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-	, castShadow(false)
-	, drawSorted(true)
-
-	, dir(ZeroVector) // set via Init()
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDistOffset(0.f)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	, myrange(/*params.weaponDef->range*/0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(owner, ZeroVector);
@@ -124,37 +87,35 @@ CProjectile::CProjectile(
 
 CProjectile::~CProjectile()
 {
-	if (synced) {
-		quadField->RemoveProjectile(this);
-#ifdef TRACE_SYNC
-		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-#endif
-	}
+	if (!synced)
+		return;
+
+	quadField.RemoveProjectile(this);
 }
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	if (owner != NULL) {
+	if (owner != nullptr) {
 		// must be set before the AddProjectile call
 		ownerID = owner->id;
 		teamID = owner->team;
-		allyteamID =  teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
+		allyteamID =  teamHandler.IsValidTeam(teamID)? teamHandler.AllyTeam(teamID): -1;
 	}
 	if (!hitscan) {
 		SetPosition(pos + offset);
 		SetVelocityAndSpeed(speed);
 	}
-	if (!weapon && !piece) {
-		// NOTE:
-		//   new CWeapon- and CPieceProjectile*'s add themselves
-		//   to CProjectileHandler (other code needs to be able
-		//   to dyna-cast CProjectile*'s to those derived types,
-		//   and adding them here would throw away too much RTTI)
-		projectileHandler->AddProjectile(this);
-	}
-	if (synced && !weapon) {
-		quadField->AddProjectile(this);
-	}
+
+	// NOTE:
+	//   new CWeapon- and CPieceProjectile*'s add themselves
+	//   to CProjectileHandler (other code needs to be able
+	//   to dyna-cast CProjectile*'s to those derived types,
+	//   and adding them here would throw away too much RTTI)
+	if (!weapon && !piece)
+		projectileHandler.AddProjectile(this);
+
+	if (synced && !weapon)
+		quadField.AddProjectile(this);
 }
 
 
@@ -163,8 +124,8 @@ void CProjectile::Update()
 	if (luaMoveCtrl)
 		return;
 
-	SetPosition(pos + speed);
 	SetVelocityAndSpeed(speed + (UpVector * mygravity));
+	SetPosition(pos + speed);
 }
 
 
@@ -186,7 +147,7 @@ CUnit* CProjectile::owner() const {
 	//   this death dependency optimization using "ownerID" is logically flawed:
 	//   because ID's are reused it could return a unit that is not the original
 	//   owner (unlikely however unless ID's get recycled very rapidly)
-	return (unitHandler->GetUnit(ownerID));
+	return (unitHandler.GetUnit(ownerID));
 }
 
 
@@ -216,3 +177,4 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
+

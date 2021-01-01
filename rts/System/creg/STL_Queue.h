@@ -13,11 +13,11 @@ namespace creg {
 	// From http://stackoverflow.com/a/1385520
 	// It's insane and I hope it works
 	template <class T, class S, class C>
-    S& Container(std::priority_queue<T, S, C>& q) {
-        struct HackedQueue : private std::priority_queue<T, S, C> {
-            static S& Container(std::priority_queue<T, S, C>& q) {
-                return q.*&HackedQueue::c;
-            }
+	S& Container(std::priority_queue<T, S, C>& q) {
+		struct HackedQueue : private std::priority_queue<T, S, C> {
+			static S& Container(std::priority_queue<T, S, C>& q) {
+				return q.*&HackedQueue::c;
+			}
 		};
 		return HackedQueue::Container(q);
 	}
@@ -26,8 +26,8 @@ namespace creg {
 	template<class T, class S, class C>
 	struct PQueueType : public IType
 	{
-		PQueueType(std::shared_ptr<IType> t):elemType(t) {}
-		~PQueueType() {}
+		PQueueType() : IType(sizeof(std::priority_queue<T, S, C>)) { }
+		~PQueueType() { }
 
 		void Serialize(ISerializer* s, void* inst) {
 			S& ct = Container(*(std::priority_queue<T, S, C>*)inst);
@@ -36,7 +36,7 @@ namespace creg {
 				s->SerializeInt(&size,sizeof(int));
 				for (typename S::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			} else {
 				ct.clear();
@@ -45,22 +45,19 @@ namespace creg {
 				ct.resize(size);
 				for (typename S::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			}
 		}
-		std::string GetName() const { return "priority_queue<" + elemType->GetName() + ">"; }
-		size_t GetSize() const { return sizeof(std::priority_queue<T, S, C>); }
-
-		std::shared_ptr<IType> elemType;
+		std::string GetName() const { return "priority_queue<" + DeduceType<T>::Get()->GetName() + ">"; }
 	};
 
 
 	// List type
 	template<class T, class S, class C>
 	struct DeduceType< std::priority_queue<T, S, C> > {
-		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new PQueueType<T, S, C>(DeduceType<T>::Get()));
+		static std::unique_ptr<IType> Get() {
+			return std::unique_ptr<IType>(new PQueueType<T, S, C>());
 		}
 	};
 }

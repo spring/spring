@@ -12,16 +12,20 @@
 class IMouseInput
 {
 public:
-	static IMouseInput* GetInstance();
+	static IMouseInput* GetInstance(bool relModeWarp);
 	static void FreeInstance(IMouseInput*);
 
-	IMouseInput ();
+	IMouseInput() = default;
+	IMouseInput(bool relModeWarp);
 	virtual ~IMouseInput();
 
 	virtual void InstallWndCallback() {}
 
-	virtual int2 GetPos() { return mousepos; }
-	void SetPos(int2 pos);
+	int2 GetPos() const { return mousepos; }
+
+	bool SetPos(int2 pos);
+	bool WarpPos(int2 pos);
+	bool SetWarpPos(int2 pos) { return (SetPos(pos) && WarpPos(pos)); }
 
 	bool HandleSDLMouseEvent(const SDL_Event& event);
 

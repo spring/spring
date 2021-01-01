@@ -6,11 +6,14 @@
 #include <vector>
 
 #include "Rendering/Icon.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
+
+#define MAX_UNITDEF_EXPGEN_IDS 32
 
 
 struct Command;
@@ -21,23 +24,24 @@ class LuaTable;
 
 
 struct UnitDefWeapon {
-	UnitDefWeapon();
+	UnitDefWeapon() = default;
 	UnitDefWeapon(const WeaponDef* weaponDef);
 	UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable);
 	UnitDefWeapon(const UnitDefWeapon& udw) { *this = udw; }
 
 	// unused
-	std::string name;
+	// std::string name;
 
-	const WeaponDef* def;
-	int slavedTo;
+	const WeaponDef* def = nullptr;
 
-	float maxMainDirAngleDif;
+	int slavedTo = 0;
 
-	unsigned int badTargetCat;
-	unsigned int onlyTargetCat;
+	float maxMainDirAngleDif = -1.0f;
 
-	float3 mainDir;
+	unsigned int badTargetCat = 0;
+	unsigned int onlyTargetCat = 0;
+
+	float3 mainDir = FwdVector;
 };
 
 
@@ -46,9 +50,7 @@ struct UnitDef: public SolidObjectDef
 public:
 	UnitDef(const LuaTable& udTable, const std::string& unitName, int id);
 	UnitDef();
-	~UnitDef();
 
-	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	void SetNoCost(bool noCost);
 
 	bool IsTransportUnit()     const { return (transportCapacity > 0 && transportMass > 0.0f); }
@@ -63,33 +65,51 @@ public:
 	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
 	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !(IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
 	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  (IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
-	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
-	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
+	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && HasWeapon(0) && !HasBomberWeapon(0)); }
+	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && HasWeapon(0) &&  HasBomberWeapon(0)); }
 
+	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
-	bool HasBomberWeapon() const;
-	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
+	bool CanChangeFireState() const { return (canFireControl && (canKamikaze || HasWeapons() || IsFactoryUnit())); }
 
-	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
-	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[idx] = egID; }
+	bool HasWeapons() const { return (HasWeapon(0)); }
+	bool HasWeapon(unsigned int idx) const { return (weapons[idx].def != nullptr); }
+	bool HasBomberWeapon(unsigned int idx) const;
 
-	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const {
-		if (modelExplGenIDs.empty())
-			return -1u;
-		return (modelExplGenIDs[idx % modelExplGenIDs.size()]);
+	bool CanAttack() const { return (canAttack && (canKamikaze || HasWeapons() || IsFactoryUnit())); }
+	bool CanDamage() const { return (canKamikaze || (canAttack && HasWeapons())); }
+
+	unsigned int NumWeapons() const {
+		unsigned int n = 0;
+
+		while (n < weapons.size() && HasWeapon(n)) {
+			n++;
+		}
+
+		return n;
 	}
-	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const {
-		if (pieceExplGenIDs.empty())
-			return -1u;
-		return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]);
-	}
+
+	const UnitDefWeapon& GetWeapon(unsigned int idx) const { return weapons[idx]; }
+	const YardMapStatus* GetYardMapPtr() const { return (yardmap.data()); }
+
+
+	void AddModelExpGenID(unsigned int egID) { modelExplGenIDs[1 + modelExplGenIDs[0]] = egID; modelExplGenIDs[0] += (egID != -1u); }
+	void AddPieceExpGenID(unsigned int egID) { pieceExplGenIDs[1 + pieceExplGenIDs[0]] = egID; pieceExplGenIDs[0] += (egID != -1u); }
+	void AddCrashExpGenID(unsigned int egID) { crashExplGenIDs[1 + crashExplGenIDs[0]] = egID; crashExplGenIDs[0] += (egID != -1u); }
+
+	// UnitScript::EmitSFX can pass in any index, unlike PieceProjectile and AAirMoveType code
+	unsigned int GetModelExpGenID(unsigned int idx) const { return modelExplGenIDs[1 + (idx % MAX_UNITDEF_EXPGEN_IDS)]; }
+	unsigned int GetPieceExpGenID(unsigned int idx) const { return pieceExplGenIDs[1 + (idx                         )]; }
+	unsigned int GetCrashExpGenID(unsigned int idx) const { return crashExplGenIDs[1 + (idx                         )]; }
+
+	unsigned int GetModelExpGenCount() const { return modelExplGenIDs[0]; }
+	unsigned int GetPieceExpGenCount() const { return pieceExplGenIDs[0]; }
+	unsigned int GetCrashExpGenCount() const { return crashExplGenIDs[0]; }
 
 public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
 
 	const UnitDef* decoyDef;
-
-	int techLevel;
 
 	float metalUpkeep;
 	float energyUpkeep;
@@ -157,6 +177,7 @@ public:
 	bool floatOnWater;
 	bool pushResistant;
 	bool strafeToAttack;  /// should the unit move sideways when it can't shoot?
+	bool stopToAttack;
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxHeightDif;   /// maximum terraform height this building allows
@@ -189,7 +210,7 @@ public:
 	std::string categoryString;
 	std::string buildPicName;
 
-	std::vector<UnitDefWeapon> weapons;
+	std::array<UnitDefWeapon, MAX_WEAPONS_PER_UNIT> weapons;
 
 	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
@@ -198,12 +219,15 @@ public:
 	///< buildingMask used to disallow construction on certain map squares
 	std::uint16_t buildingMask;
 
-	std::vector<std::string> modelCEGTags;
-	std::vector<std::string> pieceCEGTags;
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> modelCEGTags;
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> pieceCEGTags;
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> crashCEGTags;
 
-	// TODO: privatize
-	std::vector<unsigned int> modelExplGenIDs;
-	std::vector<unsigned int> pieceExplGenIDs;
+	// *ExplGenIDs[0] stores the number of valid CEG's (TODO: privatize)
+	// valid CEG id's are all in front s.t. they can be randomly sampled
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> modelExplGenIDs;
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> pieceExplGenIDs;
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> crashExplGenIDs;
 
 	spring::unordered_map<int, std::string> buildOptions;
 
@@ -287,7 +311,6 @@ public:
 	int transportCapacity;
 	int transportSize;
 	int minTransportSize;
-	bool isAirBase;
 	bool isFirePlatform;							///< should the carried units still be able to shoot?
 	float transportMass;
 	float minTransportMass;
@@ -305,7 +328,6 @@ public:
 	float decloakDistance;							///< if enemy unit come within this range decloaking is forced
 	bool decloakSpherical;							///< use a spherical test instead of a cylindrical test?
 	bool decloakOnFire;								///< should the unit decloak upon firing
-	int cloakTimeout;								///< minimum time between decloak and subsequent cloak
 
 	float kamikazeDist;
 	bool kamikazeUseLOS;
@@ -354,7 +376,7 @@ public:
 
 private:
 	void ParseWeaponsTable(const LuaTable& weaponsTable);
-	void CreateYardMap(std::string yardMapStr);
+	void CreateYardMap(std::string&& yardMapStr);
 
 	float realMetalCost;
 	float realEnergyCost;

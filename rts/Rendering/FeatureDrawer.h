@@ -6,12 +6,11 @@
 #include <vector>
 #include <array>
 #include "Game/Camera.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
-#include "Rendering/Models/ModelRenderContainer.h"
 
 class CFeature;
-class IModelRenderContainer;
 
 namespace GL {
 	struct GeometryBuffer;
@@ -20,8 +19,15 @@ namespace GL {
 class CFeatureDrawer: public CEventClient
 {
 public:
-	CFeatureDrawer();
-	~CFeatureDrawer();
+	CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
+
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 	void UpdateDrawQuad(CFeature* feature);
 	void Update();
@@ -103,30 +109,19 @@ private:
 private:
 	friend class CFeatureQuadDrawer;
 	struct RdrContProxy {
-		RdrContProxy(): lastDrawFrame(0) {
-			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				rendererTypes[modelType] = IModelRenderContainer::GetInstance(modelType);
-			}
-		}
-		~RdrContProxy() {
-			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				delete rendererTypes[modelType];
-			}
-		}
-
-		const IModelRenderContainer* GetRenderer(unsigned int i) const { return rendererTypes[i]; }
-		      IModelRenderContainer* GetRenderer(unsigned int i)       { return rendererTypes[i]; }
+		const ModelRenderContainer<CFeature>& GetRenderer(unsigned int i) const { return rendererTypes[i]; }
+		      ModelRenderContainer<CFeature>& GetRenderer(unsigned int i)       { return rendererTypes[i]; }
 
 		unsigned int GetLastDrawFrame() const { return lastDrawFrame; }
 		void SetLastDrawFrame(unsigned int f) { lastDrawFrame = f; }
 
 	private:
-		std::array<IModelRenderContainer*, MODELTYPE_OTHER> rendererTypes;
+		std::array<ModelRenderContainer<CFeature>, MODELTYPE_OTHER> rendererTypes;
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)
 		// during *any* pass
-		unsigned int lastDrawFrame;
+		unsigned int lastDrawFrame = 0;
 	};
 
 	std::vector<RdrContProxy> modelRenderers;

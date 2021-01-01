@@ -9,14 +9,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
-
-CR_BIND_DERIVED_POOL(CExplosiveProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -34,7 +29,7 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	mygravity = params.gravity;
 	useAirLos = true;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
@@ -44,11 +39,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	} else {
 		invttl = 1.0f / ttl;
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "New explosive: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
-#endif
 }
 
 void CExplosiveProjectile::Update()
@@ -58,9 +48,8 @@ void CExplosiveProjectile::Update()
 	if (--ttl == 0) {
 		Collision();
 	} else {
-		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
-		}
+		if (ttl > 0)
+			explGenHandler.GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
 	}
 
 	curTime += invttl;
@@ -83,22 +72,24 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 
 	unsigned char col[4] = {0};
 
-	if (weaponDef->visuals.colorMap) {
-		weaponDef->visuals.colorMap->GetColor(col, curTime);
+	const WeaponDef::Visuals& wdVisuals = weaponDef->visuals;
+	const AtlasedTexture* tex = wdVisuals.texture1;
+
+	if (wdVisuals.colorMap != nullptr) {
+		wdVisuals.colorMap->GetColor(col, curTime);
 	} else {
-		col[0] = weaponDef->visuals.color.x * 255;
-		col[1] = weaponDef->visuals.color.y * 255;
-		col[2] = weaponDef->visuals.color.z * 255;
-		col[3] = weaponDef->intensity       * 255;
+		col[0] = wdVisuals.color.x    * 255;
+		col[1] = wdVisuals.color.y    * 255;
+		col[2] = wdVisuals.color.z    * 255;
+		col[3] = weaponDef->intensity * 255;
 	}
 
-	const AtlasedTexture* tex = weaponDef->visuals.texture1;
-	const float  alphaDecay = weaponDef->visuals.alphaDecay;
-	const float  sizeDecay  = weaponDef->visuals.sizeDecay;
-	const float  separation = weaponDef->visuals.separation;
-	const bool   noGap      = weaponDef->visuals.noGap;
-	const int    stages     = weaponDef->visuals.stages;
-	const float  invStages  = 1.0f / stages;
+	const float  alphaDecay = wdVisuals.alphaDecay;
+	const float  sizeDecay  = wdVisuals.sizeDecay;
+	const float  separation = wdVisuals.separation;
+	const bool   noGap      = wdVisuals.noGap;
+	const int    stages     = wdVisuals.stages;
+	const float  invStages  = 1.0f / std::max(1, stages);
 
 	const float3 ndir = dir * separation * 0.6f;
 

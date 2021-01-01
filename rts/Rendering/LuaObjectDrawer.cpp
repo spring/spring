@@ -21,11 +21,15 @@
 #include "System/SafeUtil.h"
 
 
+// optimisation for team-color, but potentially breaks
+// the alpha-pass and matrices can not be bucket-sorted
 #define USE_OBJECT_RENDERING_BUCKETS
 
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDrawModelPostDeferredEvents).defaultValue(true);
+CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -162,14 +166,12 @@ static void SetupShadowUnitDrawState(unsigned int modelType, bool deferredPass) 
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 }
 
 static void ResetShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	po->Disable();
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -180,39 +182,53 @@ static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
-
-static const void SetObjectTeamColorNoType(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2) {
-	// material without any shader for the current (fwd/def) pass
-	const LuaMatShader* s = &m->shaders[deferredPass];
-	assert((!s->IsCustomType() && !s->IsEngineType()) || (o->team == LuaObjectDrawer::GetBinObjTeam()));
-}
-
-static const void SetObjectTeamColorCustom(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
+static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, const float2, bool) {}
+static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
 {
 	assert(m->shaders[deferredPass].IsCustomType());
-	m->ExecuteInstance(deferredPass, o, alpha);
+	m->ExecuteInstanceTeamColor(IUnitDrawerState::GetTeamColor(o->team, a.x), deferredPass);
 }
 
-static const void SetObjectTeamColorEngine(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
+static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
 {
 	// only useful to set this if the object has a standard
 	// (engine) shader attached, otherwise requires testing
-	// if shader is bound in DrawerState etc (there is *no*
-	// FFP texenv fallback for customs to rely on anymore!)
+	// if shader is bound in DrawerState etc
 	assert(m->shaders[deferredPass].IsEngineType());
-
-	unitDrawer->SetTeamColour(o->team, alpha);
-	//FIXME binObjTeam = o->team;
+	unitDrawer->SetTeamColour(o->team, a);
 }
 
-static const TeamColorFunc teamColorFuncs[] = {
-	SetObjectTeamColorNoType,
-	SetObjectTeamColorCustom,
-	SetObjectTeamColorEngine,
+
+static const void SetObjectUniformsNop(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+static const void SetObjectUniformsLua(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) { m->ExecuteInstanceUniforms(o->id, objectType, deferredPass); }
+static const void SetObjectUniformsDef(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+
+
+
+static const decltype(&SetObjectTeamColorDef) tcUniformFuncs[] = {
+	SetObjectTeamColorNop,
+	SetObjectTeamColorLua,
+	SetObjectTeamColorDef,
 };
 
-static inline unsigned int GetTeamColorFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
-	return ((int(s->IsCustomType()) * 1 + int(s->IsEngineType()) * 2) * (o->team != LuaObjectDrawer::GetBinObjTeam())); //FIXME
+static const decltype(&SetObjectUniformsDef) soUniformFuncs[] = {
+	SetObjectUniformsNop,
+	SetObjectUniformsLua,
+	SetObjectUniformsDef,
+};
+
+
+static inline unsigned int CalcTeamColorUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	// if still in the same team{-bucket}, pick the no-op func
+	return ((isCustomType | isEngineType) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
+}
+
+static inline unsigned int CalcSetObjectUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
 }
 
 
@@ -234,8 +250,7 @@ void LuaObjectDrawer::Init()
 	assert(geomBuffer == nullptr);
 
 	// cannot be a unique_ptr because it is leaked
-	geomBuffer = new GL::GeometryBuffer();
-	geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
+	geomBuffer = new GL::GeometryBuffer("LUAOBJECTDRAWER-GBUFFER");
 }
 
 void LuaObjectDrawer::Kill()
@@ -265,17 +280,16 @@ void LuaObjectDrawer::Update(bool init)
 	if ((drawDeferredEnabled = geomBuffer->Valid())) {
 		drawDeferredEnabled &= (geomBuffer->Update(init));
 
-		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
-		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred();
 
 		// if both object types are going to be drawn deferred, only
 		// reset buffer for the first s.t. just a single shading pass
 		// is needed (in Lua)
-		if (bufferClearFlags[LUAOBJ_UNIT] && bufferClearFlags[LUAOBJ_FEATURE]) {
+		if (bufferClearFlags[LUAOBJ_UNIT] && bufferClearFlags[LUAOBJ_FEATURE])
 			bufferClearFlags[LUAOBJ_FEATURE] = bufferClearAllowed;
-		}
 	}
 }
 
@@ -290,7 +304,7 @@ void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
 
 void LuaObjectDrawer::SetDrawPassGlobalLODFactor(LuaObjType objType)
 {
-	if (shadowHandler->InShadowPass()) {
+	if (shadowHandler.InShadowPass()) {
 		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleShadow(objType) * camera->GetLPPScale());
 		return;
 	}
@@ -337,9 +351,10 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
 
-	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		DrawMaterialBin(*it, prevMat, objType, matType, deferredPass, inAlphaBin);
-		prevMat = *it;
+	for (const auto& bin: bins) {
+		assert(matType == bin->type);
+		DrawMaterialBin(bin, prevMat, objType, matType, deferredPass, inAlphaBin);
+		prevMat = bin;
 	}
 
 	LuaMaterial::defMat.Execute(*prevMat, deferredPass);
@@ -366,6 +381,11 @@ void LuaObjectDrawer::DrawMaterialBin(
 
 	// skip entire bin if we need a shader for this pass and have none
 	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
+		return;
+
+	// objType and matType can be inferred from the material's (custom) uuid
+	// deferredPass and alphaMatBin can be inferred from drawMode and matType
+	if (currBin->HasDrawCall() && eventHandler.DrawMaterial(currBin))
 		return;
 
 	// reset; also sort objects by team
@@ -417,24 +437,32 @@ void LuaObjectDrawer::DrawBinObject(
 ) {
 	const unsigned int preList  = lodMat->preDisplayList;
 	const unsigned int postList = lodMat->postDisplayList;
-	const unsigned int tcFunIdx = GetTeamColorFuncIndex(obj, &luaMat->shaders[deferredPass]);
+
+	const unsigned int tcFuncIdx = CalcTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int soFuncIdx = CalcSetObjectUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const UnitDrawFunc drawFunc = unitDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
+			const auto udFunc = unitDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
+
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			tcolFunc(deferredPass, unit, luaMat, float2(1.0f, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
+			tcFunc(unit, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
+			soFunc(unit, luaMat, objType, deferredPass);
+			CALL_FUNC_VA(unitDrawer, udFunc, unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const FeatureDrawFunc drawFunc = featureDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
+			const auto fdFunc = featureDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
+
 			const CFeature* feat = static_cast<const CFeature*>(obj);
 
-			tcolFunc(deferredPass, feat, luaMat, float2(feat->drawAlpha, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
+			tcFunc(feat, luaMat, {feat->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
+			soFunc(feat, luaMat, objType, deferredPass);
+			CALL_FUNC_VA(featureDrawer, fdFunc, feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);

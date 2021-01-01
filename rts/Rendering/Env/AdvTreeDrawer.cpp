@@ -2,6 +2,7 @@
 
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -365,7 +366,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -409,7 +410,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -457,7 +458,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 void CAdvTreeDrawer::Draw(float treeDistance)
 {
 	// trees are never drawn in any special (non-opaque) pass
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = nullptr;
 
 	const int activeFarTex = treeGen.farTex[cam->GetDir().z >= 0.0f];
@@ -468,18 +469,18 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 	sky->SetupFog();
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE0);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0);
 
 		treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 		treeShader->Enable();
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
-			treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
+			treeShader->SetUniformMatrix4fv(7, false, shadowHandler.GetShadowMatrixRaw());
+			treeShader->SetUniform4fv(8, &(shadowHandler.GetShadowParams().x));
 		} else {
 			treeShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			treeShader->SetUniform4f(10, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 1.0f);
@@ -487,7 +488,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
 			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+			glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
 			glMatrixMode(GL_MODELVIEW);
 		}
 	} else {
@@ -512,14 +513,14 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
-		if (shadowHandler->ShadowsLoaded()) {
+		if (shadowHandler.ShadowsLoaded()) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_SHADOW];
 			treeShader->Enable();
 
 			if (globalRendering->haveGLSL) {
-				treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
-				treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
+				treeShader->SetUniformMatrix4fv(7, false, shadowHandler.GetShadowMatrixRaw());
+				treeShader->SetUniform4fv(8, &(shadowHandler.GetShadowParams().x));
 			}
 
 			glActiveTexture(GL_TEXTURE1);
@@ -575,7 +576,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (f == NULL)
 						continue;
@@ -637,7 +638,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 		// draw trees that have been marked as falling
 		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
-			// const CFeature* f = featureHandler->GetFeature(fti->id);
+			// const CFeature* f = featureHandler.GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
 			// featureID is invalid for falling trees
@@ -674,7 +675,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 		}
 
 
-		if (shadowHandler->ShadowsLoaded()) {
+		if (shadowHandler.ShadowsLoaded()) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 			treeShader->Enable();
@@ -693,7 +694,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 		// draw faded mid-distance trees
 		for (const FadeTree& fTree: fadeTrees) {
-			const CFeature* f = featureHandler->GetFeature(fTree.id);
+			const CFeature* f = featureHandler.GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;
@@ -713,11 +714,12 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 		}
 	}
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		treeShader->Disable();
 
 		glActiveTexture(GL_TEXTURE1);
 		glDisable(GL_TEXTURE_2D);
+
 		glActiveTexture(GL_TEXTURE0);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
@@ -776,7 +778,6 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 }
 
 
-
 struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 {
 	void ResetState() {
@@ -827,7 +828,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -868,7 +869,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -908,7 +909,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	if (!drawTrees)
 		return;
 
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* po = nullptr;
 
 	const float treeDistance = oldTreeDistance;
@@ -944,7 +945,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 		glEnable(GL_TEXTURE_2D);
 
-		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
+		po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
 		po->Enable();
 
 		if (globalRendering->haveGLSL) {
@@ -978,7 +979,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (f == NULL)
 						continue;
@@ -1034,8 +1035,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
-			// const CFeature* f = featureHandler->GetFeature(fti->id);
-			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
+			// const CFeature* f = featureHandler.GetFeature(ft.id);
+			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20.0f);
 
 			// featureID is invalid for falling trees
 			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
@@ -1070,8 +1071,9 @@ void CAdvTreeDrawer::DrawShadowPass()
 			glPopMatrix();
 		}
 
+
 		po->Disable();
-		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_FAR);
+		po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_FAR);
 		po->Enable();
 
 		// draw far-distance trees
@@ -1080,7 +1082,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 		// draw faded mid-distance trees
 		for (const FadeTree& fTree: fadeTrees) {
-			const CFeature* f = featureHandler->GetFeature(fTree.id);
+			const CFeature* f = featureHandler.GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;

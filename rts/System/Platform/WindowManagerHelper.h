@@ -22,15 +22,6 @@ namespace WindowManagerHelper {
 	void SetIcon(CBitmap* bmp);
 	bool SetIconSurface(SDL_Window* win, CBitmap* bmp = nullptr);
 
-	/**
-	 * Sets the window-manager caption/title for the running process.
-	 * @param title will be displayed in the window title (in windowed mode)
-	 *   and in the OS task-bar
-	 *   example: "MyGame"
-	 * @see #SetCaption(const std::string&, const std::string&)
-	 */
-	void SetCaption(const std::string& title);
-
 
 	/**
 	 * @brief disables desktop compositing (kwin, aero, compiz, ...) to fix tearing & vsync problems

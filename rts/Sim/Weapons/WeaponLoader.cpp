@@ -26,21 +26,31 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
 
+static std::array<uint8_t, 2048> udWeaponCounts;
+
 WeaponMemPool weaponMemPool;
 
-void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
-void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
+static_assert((sizeof(UnitDef::weapons) / sizeof(UnitDef::weapons[0])) == MAX_WEAPONS_PER_UNIT, "");
+static_assert(MAX_WEAPONS_PER_UNIT < std::numeric_limits<decltype(udWeaponCounts)::value_type>::max(), "");
+
+void CWeaponLoader::InitStatic() { udWeaponCounts.fill(MAX_WEAPONS_PER_UNIT + 1); weaponMemPool.reserve(128); }
+void CWeaponLoader::KillStatic() { udWeaponCounts.fill(MAX_WEAPONS_PER_UNIT + 1); weaponMemPool.clear(); }
 
 
 
 void CWeaponLoader::LoadWeapons(CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
+	const UnitDefWeapon* udWeapons = &unitDef->GetWeapon(0);
 
-	unit->weapons.reserve(unitDef->weapons.size());
+	unsigned int i = 0;
+	unsigned int n = 0;
 
-	for (const UnitDefWeapon& defWeapon: unitDef->weapons) {
-		CWeapon* weapon = LoadWeapon(unit, defWeapon.def);
+	if ((n = udWeaponCounts.at(unitDef->id)) > MAX_WEAPONS_PER_UNIT)
+		n = (udWeaponCounts.at(unitDef->id) = unitDef->NumWeapons());
+
+	for (unit->weapons.reserve(n); i < n; i++) {
+		CWeapon* weapon = LoadWeapon(unit, udWeapons[i].def);
 
 		weapon->SetWeaponNum(unit->weapons.size());
 		unit->weapons.push_back(weapon);
@@ -52,7 +62,7 @@ void CWeaponLoader::InitWeapons(CUnit* unit)
 	const UnitDef* unitDef = unit->unitDef;
 
 	for (size_t n = 0; n < unit->weapons.size(); n++) {
-		InitWeapon(unit, unit->weapons[n], &unitDef->weapons[n]);
+		InitWeapon(unit, unit->weapons[n], &unitDef->GetWeapon(n));
 	}
 }
 
@@ -139,12 +149,6 @@ void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapo
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;
 
-	// TODO?
-	// weapon->dryHitSoundId = weaponDef->hitSound.getID(0);
-	// weapon->wetHitSoundId = weaponDef->hitSound.getID(1);
-	weapon->fireSoundId = weaponDef->fireSound.getID(0);
-	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
-
 	weapon->onlyForward = weaponDef->onlyForward;
 	weapon->maxForwardAngleDif = math::cos(weaponDef->maxAngle);
 	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
@@ -164,6 +168,7 @@ void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapo
 	weapon->avoidFlags |= (Collision::NOFRIENDLIES * (!weaponDef->avoidFriendly));
 	weapon->avoidFlags |= (Collision::NOFEATURES   * (!weaponDef->avoidFeature));
 	weapon->avoidFlags |= (Collision::NOGROUND     * (!weaponDef->avoidGround));
+	weapon->avoidFlags |= (Collision::NOCLOAKED    * (!weaponDef->avoidCloaked));
 
 	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
 

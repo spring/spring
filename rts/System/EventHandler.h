@@ -14,7 +14,7 @@
 class CWeapon;
 struct Command;
 struct BuildInfo;
-
+class LuaMaterial;
 
 class CEventHandler
 {
@@ -79,8 +79,8 @@ class CEventHandler
 		void RenderProjectileDestroyed(const CProjectile* proj);
 
 		void UnitIdle(const CUnit* unit);
-		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, const Command& command);
+		void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua);
+		void UnitCmdDone(const CUnit* unit, const Command& command                                              );
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -110,8 +110,8 @@ class CEventHandler
 		void UnitCloaked(const CUnit* unit);
 		void UnitDecloaked(const CUnit* unit);
 
-		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
-		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
+		bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
+		bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
 		void UnitMoved(const CUnit* unit);
 		void UnitMoveFailed(const CUnit* unit);
 
@@ -134,15 +134,21 @@ class CEventHandler
 		                      const CWeapon* weapon, int oldCount);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+		bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua);
 
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
+		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed);
+		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed);
+		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy);
+		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon);
+		bool AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed);
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
 		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
 		bool AllowResourceLevel(int teamID, const string& type, float level);
-		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
@@ -208,16 +214,16 @@ class CEventHandler
 		bool KeyPress(int key, bool isRepeat);
 		bool KeyRelease(int key);
 		bool TextInput(const std::string& utf8);
+		bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
 		void MouseRelease(int x, int y, int button);
 		bool MouseWheel(bool up, float value);
-		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
 
 		std::string GetTooltip(int x, int y);
 
-		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
+		void DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		bool CommandNotify(const Command& cmd);
 
@@ -257,6 +263,7 @@ class CEventHandler
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
 		void DrawGroundPreForward();
+		void DrawGroundPostForward();
 		void DrawGroundPreDeferred();
 		void DrawGroundPostDeferred();
 		void DrawUnitsPostDeferred();
@@ -271,14 +278,16 @@ class CEventHandler
 		bool DrawFeature(const CFeature* feature);
 		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
 		bool DrawProjectile(const CProjectile* projectile);
+		bool DrawMaterial(const LuaMaterial* material);
 
 		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
 		/// it skips network queuing and caching and can be used to calculate the current catchup
 		/// percentage when reconnecting to a running game
 		void GameProgress(int gameFrame);
 
-		void CollectGarbage();
+		void CollectGarbage(bool forced);
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime);
 		void MetalMapChanged(const int x, const int z);
 		/// @}
 
@@ -348,8 +357,8 @@ extern CEventHandler eventHandler;
 		CEventClient* ec = list##name[i];                          \
 		ec->name(__VA_ARGS__);                                     \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 #define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...)      \
@@ -359,8 +368,8 @@ extern CEventHandler eventHandler;
 		if (ec->CanReadAllyTeam(allyTeam))                         \
 			ec->name(__VA_ARGS__);                                 \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 #define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...)     \
@@ -371,8 +380,8 @@ extern CEventHandler eventHandler;
 		if (ec->CanReadAllyTeam(unitAllyTeam))                     \
 			ec->name(unit, __VA_ARGS__);                           \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
@@ -396,9 +405,8 @@ inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacke
 			if (ec->CanReadAllyTeam(unitAllyTeam))                 \
 				ec->name(unit);                                    \
                                                                    \
-			if (i < list##name.size() && ec == list##name[i])      \
-				++i; /* the call-in may remove itself from the list */ \
-		} \
+			i += (i < list##name.size() && ec == list##name[i]);   \
+		}                                                          \
 	}
 
 UNIT_CALLIN_NO_PARAM(UnitReverseBuilt);
@@ -446,28 +454,56 @@ UNIT_CALLIN_NO_PARAM(UnitCloaked)
 UNIT_CALLIN_NO_PARAM(UnitDecloaked)
 
 
-inline void CEventHandler::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
+inline bool CEventHandler::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	ITERATE_EVENTCLIENTLIST(UnitUnitCollision, collider, collidee)
+	auto& clients = listUnitUnitCollision;
+
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
+
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watchWeaponDefs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->UnitUnitCollision(collider, collidee) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
-inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
+inline bool CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	ITERATE_EVENTCLIENTLIST(UnitFeatureCollision, collider, collidee)
+	auto& clients = listUnitFeatureCollision;
+
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
+
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watch{U,F}*Defs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->UnitFeatureCollision(collider, collidee) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 
 
-inline void CEventHandler::UnitCommand(const CUnit* unit,
-                                           const Command& command)
+inline void CEventHandler::UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua)
 {
-	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCommand, unit, command)
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCommand, unit, command, playerNum, fromSynced, fromLua)
 }
 
-
-
-inline void CEventHandler::UnitCmdDone(const CUnit* unit,
-                                           const Command& command)
+inline void CEventHandler::UnitCmdDone(const CUnit* unit, const Command& command)
 {
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCmdDone, unit, command)
 }
@@ -635,17 +671,23 @@ inline void CEventHandler::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 inline bool CEventHandler::Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner)
 {
-	const size_t count = listExplosion.size();
-	bool noGfx = false;
+	auto& clients = listExplosion;
 
-	for (size_t i = 0; i < count; i++) {
-		CEventClient* ec = listExplosion[i];
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
 
-		if (ec->GetFullRead())
-			noGfx = noGfx || ec->Explosion(weaponDefID, projectileID, pos, owner);
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watchWeaponDefs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->Explosion(weaponDefID, projectileID, pos, owner) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
 	}
 
-	return noGfx;
+	return false;
 }
 
 
@@ -657,21 +699,15 @@ inline void CEventHandler::StockpileChanged(const CUnit* unit,
 }
 
 
-inline bool CEventHandler::DefaultCommand(const CUnit* unit,
-                                              const CFeature* feature,
-                                              int& cmd)
+inline void CEventHandler::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd)
 {
 	const size_t count = listDefaultCommand.size();
 
-	// reverse order, user has the override
 	for (size_t i = 0; i < count; i++) {
-		CEventClient* ec = listDefaultCommand[count - 1 - i];
+		CEventClient* ec = listDefaultCommand[i];
 
-		if (ec->DefaultCommand(unit, feature, cmd))
-			return true;
+		ec->DefaultCommand(unit, feature, cmd);
 	}
-
-	return false;
 }
 
 
@@ -713,4 +749,3 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 #undef UNIT_CALLIN_LOS_PARAM
 
 #endif /* EVENT_HANDLER_H */
-

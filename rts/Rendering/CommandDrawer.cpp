@@ -21,7 +21,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 static const CUnit* GetTrackableUnit(const CUnit* caiOwner, const CUnit* cmdUnit)
@@ -80,7 +80,7 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	for (auto ui = luaQueuedUnitSet.cbegin(); ui != luaQueuedUnitSet.cend(); ++ui) {
-		const CUnit* unit = unitHandler->GetUnit(*ui);
+		const CUnit* unit = unitHandler.GetUnit(*ui);
 
 		if (unit == nullptr || unit->commandAI == nullptr)
 			continue;
@@ -99,9 +99,8 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
-	if (owner->selfDCountdown != 0) {
+	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
 
 	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
@@ -109,35 +108,33 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 		switch (cmdID) {
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				if (ci->GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
-					}
-				} else {
-					assert(ci->params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+				} else {
+					assert(ci->GetNumParams() >= 3);
+
+					const float x = ci->GetParam(0);
+					const float z = ci->GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
-				break;
-			}
+			} break;
+
 			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
-				break;
-			}
+			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
-				break;
-			}
+			} break;
+
 			default: {
 				DrawDefaultCommand(*ci, owner);
-				break;
-			}
+			} break;
 		}
 	}
 
@@ -153,9 +150,8 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
-	if (owner->selfDCountdown != 0) {
+	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
 
 	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
@@ -163,65 +159,62 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 		switch (cmdID) {
 			case CMD_MOVE: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.move);
-				break;
-			}
+			} break;
 			case CMD_FIGHT: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.fight);
-				break;
-			}
+			} break;
 			case CMD_PATROL: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.patrol);
-				break;
-			}
+			} break;
+
 			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				if (ci->GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
-					}
-				} else {
-					assert(ci->params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+				} else {
+					assert(ci->GetNumParams() >= 3);
+
+					const float x = ci->GetParam(0);
+					const float z = ci->GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
+			} break;
 
-				break;
-			}
 			case CMD_AREA_ATTACK: {
 				const float3& endPos = ci->GetPos(0);
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
-				glColor4fv(cmdColors.attack);
-				glSurfaceCircle(endPos, ci->params[3], 20.0f);
-				lineDrawer.RestartWithColor(cmdColors.attack);
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
-				if (unit != nullptr) {
+				glColor4fv(cmdColors.attack);
+				glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+
+				lineDrawer.RestartWithColor(cmdColors.attack);
+			} break;
+
+			case CMD_GUARD: {
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
+
+				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
-				}
-				break;
-			}
+
+			} break;
+
 			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
-				break;
-			}
+			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
-				break;
-			}
+			} break;
+
 			default: {
 				DrawDefaultCommand(*ci, owner);
-				break;
-			}
+			} break;
 		}
 	}
 
@@ -237,30 +230,24 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
-	if (owner->selfDCountdown != 0) {
+	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
 
-	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int cmdID = ci->GetID();
+	for (const Command& ci: commandQue) {
+		const int cmdID = ci.GetID();
 
 		if (cmdID < 0) {
 			if (cai->buildOptions.find(cmdID) != cai->buildOptions.end()) {
 				BuildInfo bi;
-				bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
-				if (ci->params.size() == 4) {
-					bi.buildFacing = abs((int)ci->params[3]) % NUM_FACINGS;
-				}
-
-				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+				if (!bi.Parse(ci))
+					continue;
 
 				cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
 				lineDrawer.DrawLine(bi.pos, cmdColors.build);
 
 				// draw metal extraction range
-				if (bi.def->extractRange > 0) {
+				if (bi.def->extractRange > 0.0f) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
 					glColor4fv(cmdColors.rangeExtract);
 					glSurfaceCircle(bi.pos, bi.def->extractRange, 40.0f);
@@ -272,127 +259,128 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.move);
-				break;
-			}
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.move);
+			} break;
 			case CMD_FIGHT:{
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.fight);
-				break;
-			}
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.fight);
+			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.patrol);
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.patrol);
+			} break;
 
-				if (unit != nullptr) {
+			case CMD_GUARD: {
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+
+				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
-				}
-				break;
-			}
+
+			} break;
+
 			case CMD_RESTORE: {
-				const float3& endPos = ci->GetPos(0);
+				const float3& endPos = ci.GetPos(0);
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
+
 				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci->params[3], 20.0f);
+				glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+
 				lineDrawer.RestartWithColor(cmdColors.restore);
-				break;
-			}
+			} break;
+
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				if (ci.GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
-					}
-				} else {
-					assert(ci->params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+				} else {
+					assert(ci.GetNumParams() >= 3);
+
+					const float x = ci.GetParam(0);
+					const float z = ci.GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
+			} break;
 
-				break;
-			}
 			case CMD_RECLAIM:
 			case CMD_RESURRECT: {
 				const float* color = (cmdID == CMD_RECLAIM) ? cmdColors.reclaim
 				                                             : cmdColors.resurrect;
-				if (ci->params.size() == 4) {
-					const float3& endPos = ci->GetPos(0);
+				if (ci.GetNumParams() == 4) {
+					const float3& endPos = ci.GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
+
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+
 					lineDrawer.RestartWithColor(color);
 				} else {
-					assert(ci->params[0] >= 0.0f);
+					assert(ci.GetParam(0) >= 0.0f);
 
-					const unsigned int id = std::max(0.0f, ci->params[0]);
+					const unsigned int id = std::max(0.0f, ci.GetParam(0));
 
-					if (id >= unitHandler->MaxUnits()) {
-						const CFeature* feature = featureHandler->GetFeature(id - unitHandler->MaxUnits());
+					if (id >= unitHandler.MaxUnits()) {
+						const CFeature* feature = featureHandler.GetFeature(id - unitHandler.MaxUnits());
 
-						if (feature != nullptr) {
+						if (feature != nullptr)
 							lineDrawer.DrawLineAndIcon(cmdID, feature->GetObjDrawMidPos(), color);
-						}
-					} else {
-						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
-						if (unit != nullptr && unit != owner) {
+					} else {
+						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(id));
+
+						if (unit != nullptr && unit != owner)
 							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
-						}
+
 					}
 				}
-				break;
-			}
+			} break;
+
 			case CMD_REPAIR:
 			case CMD_CAPTURE: {
-				const float* color = (ci->GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
-				if (ci->params.size() == 4) {
-					const float3& endPos = ci->GetPos(0);
+				const float* color = (ci.GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
+
+				if (ci.GetNumParams() == 4) {
+					const float3& endPos = ci.GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
+
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+
 					lineDrawer.RestartWithColor(color);
 				} else {
-					if (ci->params.size() >= 1) {
-						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+					if (ci.GetNumParams() >= 1) {
+						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
 
-						if (unit != nullptr) {
+						if (unit != nullptr)
 							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
-						}
+
 					}
 				}
-				break;
-			}
+			} break;
+
 			case CMD_LOAD_ONTO: {
-				const CUnit* unit = unitHandler->GetUnitUnsafe(ci->params[0]);
+				const CUnit* unit = unitHandler.GetUnitUnsafe(ci.GetParam(0));
 				lineDrawer.DrawLineAndIcon(cmdID, unit->pos, cmdColors.load);
-				break;
-			}
+			} break;
 			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
+				DrawWaitIcon(ci);
+			} break;
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->GetID());
-				break;
-			}
+				lineDrawer.DrawIconAtLastPos(ci.GetID());
+			} break;
+
 			default: {
-				DrawDefaultCommand(*ci, owner);
-				break;
-			}
+				DrawDefaultCommand(ci, owner);
+			} break;
 		}
 	}
 
@@ -409,86 +397,75 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
-	if (owner->selfDCountdown != 0) {
+	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
 
-	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT)) {
+	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT))
 		DrawWaitIcon(commandQue.front());
-	}
 
-	for (auto ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
-		const int cmdID = ci->GetID();
+	for (const Command& ci: newUnitCommands) {
+		const int cmdID = ci.GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.move);
-				break;
-			}
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.move);
+			} break;
 			case CMD_FIGHT: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.fight);
-				break;
-			}
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.fight);
+			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
-				break;
-			}
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
+			} break;
+
 			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				if (ci.GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
-					}
-				} else {
-					assert(ci->params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+				} else {
+					assert(ci.GetNumParams() >= 3);
+
+					const float x = ci.GetParam(0);
+					const float z = ci.GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
+			} break;
 
-				break;
-			}
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
 
-				if (unit != nullptr) {
+				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
-				}
-				break;
-			}
+
+			} break;
+
 			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
+				DrawWaitIcon(ci);
+			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
-				break;
-			}
+			} break;
+
 			default: {
-				DrawDefaultCommand(*ci, owner);
-				break;
-			}
+				DrawDefaultCommand(ci, owner);
+			} break;
 		}
 
-		if ((cmdID < 0) && (ci->params.size() >= 3)) {
+		if ((cmdID < 0) && (ci.GetNumParams() >= 3)) {
 			BuildInfo bi;
-			bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
-			if (ci->params.size() == 4)
-				bi.buildFacing = int(ci->params[3]);
-
-			bi.pos = ci->GetPos(0);
-			bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+			if (!bi.Parse(ci))
+				continue;
 
 			cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
 			lineDrawer.DrawLine(bi.pos, cmdColors.build);
 
 			// draw metal extraction range
-			if (bi.def->extractRange > 0) {
+			if (bi.def->extractRange > 0.0f) {
 				lineDrawer.Break(bi.pos, cmdColors.build);
 				glColor4fv(cmdColors.rangeExtract);
 				glSurfaceCircle(bi.pos, bi.def->extractRange, 40.0f);
@@ -509,9 +486,8 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
-	if (owner->selfDCountdown != 0) {
+	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
 
 	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
@@ -519,97 +495,95 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 		switch (cmdID) {
 			case CMD_MOVE: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.move);
-				break;
-			}
+			} break;
 			case CMD_PATROL: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.patrol);
-				break;
-			}
+			} break;
 			case CMD_FIGHT: {
-				if (ci->params.size() >= 3) {
+				if (ci->GetNumParams() >= 3)
 					lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.fight);
-				}
-				break;
-			}
+
+			} break;
+
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				if (ci->GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
-					}
+
 				}
 
-				if (ci->params.size() >= 3) {
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+				if (ci->GetNumParams() >= 3) {
+					const float x = ci->GetParam(0);
+					const float z = ci->GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
+			} break;
 
-				break;
-			}
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
-				if (unit != nullptr) {
+				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
-				}
-				break;
-			}
+
+			} break;
+
 			case CMD_LOAD_ONTO: {
-				const CUnit* unit = unitHandler->GetUnitUnsafe(ci->params[0]);
+				const CUnit* unit = unitHandler.GetUnitUnsafe(ci->GetParam(0));
 				lineDrawer.DrawLineAndIcon(cmdID, unit->pos, cmdColors.load);
-				break;
-			}
+			} break;
+
 			case CMD_LOAD_UNITS: {
-				if (ci->params.size() == 4) {
+				if (ci->GetNumParams() == 4) {
 					const float3& endPos = ci->GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
+
 					glColor4fv(cmdColors.load);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
-					if (unit != nullptr) {
+					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.load);
-					}
+
 				}
-				break;
-			}
+			} break;
+
 			case CMD_UNLOAD_UNITS: {
-				if (ci->params.size() == 5) {
+				if (ci->GetNumParams() == 5) {
 					const float3& endPos = ci->GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
+
 					glColor4fv(cmdColors.unload);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+
 					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
-				break;
-			}
+			} break;
+
 			case CMD_UNLOAD_UNIT: {
 				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.unload);
-				break;
-			}
+			} break;
 			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
-				break;
-			}
+			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
-				break;
-			}
+			} break;
+
 			default: {
 				DrawDefaultCommand(*ci, owner);
-				break;
-			}
+			} break;
 		}
 	}
 
@@ -630,31 +604,33 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 	if (dd == nullptr)
 		return;
 
-	const unsigned int paramsCount = c.params.size();
+	switch (c.GetNumParams()) {
+		case  0: { return; } break;
+		case  1: {         } break;
+		case  2: {         } break;
+		default: {
+			const float3 endPos = c.GetPos(0) + UpVector * 3.0f;
 
-	if (paramsCount >= 3) {
-		const float3 endPos = c.GetPos(0) + UpVector * 3.0f;
+			if (!dd->showArea || (c.GetNumParams() < 4)) {
+				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+			} else {
+				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+				lineDrawer.Break(endPos, dd->color);
+				glSurfaceCircle(endPos, c.GetParam(3), 20.0f);
+				lineDrawer.RestartWithColor(dd->color);
+			}
 
-		if (!dd->showArea || (paramsCount < 4)) {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-		} else {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-			lineDrawer.Break(endPos, dd->color);
-			glSurfaceCircle(endPos, c.params[3], 20.0f);
-			lineDrawer.RestartWithColor(dd->color);
+			return;
 		}
+	}
 
+	// allow a second param (ignored here) for custom commands
+	const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(c.GetParam(0)));
+
+	if (unit == nullptr)
 		return;
-	}
 
-	if (paramsCount >= 1) {
-		// allow a second param (ignored here) for custom commands
-		const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(c.params[0]));
-
-		if (unit != nullptr) {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, unit->GetObjDrawErrorPos(owner->allyteam), dd->color);
-		}
-	}
+	lineDrawer.DrawLineAndIcon(dd->cmdIconID, unit->GetObjDrawErrorPos(owner->allyteam), dd->color);
 }
 
 void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
@@ -669,7 +645,11 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		buildCommands += 1;
@@ -692,7 +672,11 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		const float xsize = bi.GetXSize() * (SQUARE_SIZE >> 1);

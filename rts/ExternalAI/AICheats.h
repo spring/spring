@@ -8,7 +8,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 struct Command;
 struct UnitDef;
@@ -22,7 +21,7 @@ class CSkirmishAIWrapper;
 
 class CAICheats
 {
-	CSkirmishAIWrapper* ai;
+	CSkirmishAIWrapper* ai = nullptr;
 
 	// utility methods
 
@@ -30,8 +29,8 @@ class CAICheats
 	CUnit* GetUnit(int unitId) const;
 
 public:
-	CAICheats(CSkirmishAIWrapper* ai);
-	~CAICheats();
+	CAICheats() = default;
+	CAICheats(CSkirmishAIWrapper* w): ai(w) {}
 
 	void SetMyIncomeMultiplier(float incomeMultiplier);
 

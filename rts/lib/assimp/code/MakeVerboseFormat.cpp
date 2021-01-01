@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -168,6 +169,8 @@ bool MakeVerboseFormatProcess::MakeVerboseFormat(aiMesh* pcMesh)
         }
     }
 
+
+
     // build output vertex weights
     for (unsigned int i = 0;i < pcMesh->mNumBones;++i)
     {
@@ -177,11 +180,11 @@ bool MakeVerboseFormatProcess::MakeVerboseFormat(aiMesh* pcMesh)
             aiVertexWeight *weightToCopy = &( newWeights[i][0] );
             memcpy(pcMesh->mBones[i]->mWeights, weightToCopy,
                 sizeof(aiVertexWeight) * newWeights[i].size());
-            delete[] newWeights;
         } else {
             pcMesh->mBones[i]->mWeights = NULL;
         }
     }
+    delete[] newWeights;
 
     // delete the old members
     delete[] pcMesh->mVertices;
@@ -190,14 +193,14 @@ bool MakeVerboseFormatProcess::MakeVerboseFormat(aiMesh* pcMesh)
     p = 0;
     while (pcMesh->HasTextureCoords(p))
     {
-        delete pcMesh->mTextureCoords[p];
+        delete[] pcMesh->mTextureCoords[p];
         pcMesh->mTextureCoords[p] = apvTextureCoords[p];
         ++p;
     }
     p = 0;
     while (pcMesh->HasVertexColors(p))
     {
-        delete pcMesh->mColors[p];
+        delete[] pcMesh->mColors[p];
         pcMesh->mColors[p] = apvColorSets[p];
         ++p;
     }
