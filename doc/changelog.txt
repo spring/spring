@@ -2,7 +2,7 @@ Spring changelog
 (since 85.0 a "!" prefix indicates backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
--- 105.0 --------------------------------------------------------
+-- 106.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features
  - consider partially reclaimed wrecks nonfresh for area-resurrection commands
@@ -296,6 +296,8 @@ Fixes:
  - fix Spring.GetPlayerRoster sometimes excluding active players
 
 
+-- 105.0 --------------------------------------------------------
+ - special maintenance release: contains only bugfixes
 
 -- 104.0 --------------------------------------------------------
 Major:
