@@ -4,8 +4,10 @@
 #include <array>
 #include <cstdint>
 
+#include "System/float3.h"
 #include "System/float4.h"
 #include "System/Matrix44f.h"
+#include "System/SpringMath.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
 
@@ -31,11 +33,12 @@ struct UniformMatricesBuffer {
 };
 
 struct UniformParamsBuffer {
+	float3 rndVec3; //new every draw frame.
+	uint32_t renderCaps; //various render booleans
+
 	float4 timeInfo; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
 	float4 viewGeometry; //vsx, vsy, vpx, vpy
 	float4 mapSize; //xz, xzPO2
-
-	float4 rndVec3; //new every draw frame. Only xyz are initialized
 
 	float4 fogColor; //fog color
 	float4 fogParams; //fog {start, end, 0.0, scale}
@@ -48,7 +51,7 @@ public:
 		return uniformConstantsInstance;
 	};
 	static bool Supported() {
-		static bool supported = GLEW_ARB_uniform_buffer_object && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
+		static bool supported = VBO::IsSupported(GL_UNIFORM_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
 		return supported;
 	}
 public:
@@ -73,19 +76,6 @@ private:
 	void UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
 
 	static void InitVBO(VBO*& vbo, const int vboSingleSize);
-
-	template<typename TBuffType>
-	static GLint RoundBuffSizeUp() {
-		const auto getAllignment = []() {
-			GLint buffAlignment = 0;
-			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &buffAlignment);
-			return std::max(buffAlignment, 32);
-		};
-		static uint32_t uboAlignment = getAllignment(); //executed once
-		constexpr uint32_t buffTypeSize = sizeof(TBuffType);
-
-		return (buffTypeSize + (uboAlignment - buffTypeSize % uboAlignment) % uboAlignment);
-	}
 
 	static intptr_t GetBufferOffset(const int vboSingleSize);
 	static void UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer);

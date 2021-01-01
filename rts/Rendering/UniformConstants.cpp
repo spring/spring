@@ -19,7 +19,7 @@ void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 {
 	vbo = new VBO{GL_UNIFORM_BUFFER, globalRendering->supportPersistentMapping};
 	vbo->Bind(GL_UNIFORM_BUFFER);
-	vbo->New(BUFFERING * vboSingleSize, GL_DYNAMIC_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
+	vbo->New(BUFFERING * vboSingleSize, GL_STREAM_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
 	vbo->Unbind();
 }
 
@@ -34,8 +34,8 @@ void UniformConstants::Init()
 		return;
 	}
 
-	umbBufferSize = RoundBuffSizeUp<UniformMatricesBuffer>();
-	upbBufferSize = RoundBuffSizeUp<UniformParamsBuffer  >();
+	umbBufferSize = VBO::GetAlignedSize(GL_UNIFORM_BUFFER, sizeof(UniformMatricesBuffer));
+	upbBufferSize = VBO::GetAlignedSize(GL_UNIFORM_BUFFER, sizeof(UniformParamsBuffer  ));
 
 	InitVBO(umbVBO, umbBufferSize);
 	InitVBO(upbVBO, upbBufferSize);
@@ -49,8 +49,8 @@ void UniformConstants::Kill()
 		return;
 
 	//unbind the whole ring buffer range
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, 0, umbBufferSize * BUFFERING);
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, 0, upbBufferSize * BUFFERING);
+	umbVBO->UnbindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, BUFFERING * umbBufferSize);
+	upbVBO->UnbindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, BUFFERING * upbBufferSize);
 
 	spring::SafeDelete(umbVBO);
 	spring::SafeDelete(upbVBO);
@@ -89,11 +89,14 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 
 void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 {
+	updateBuffer->rndVec3 = guRNG.NextVector();
+	//TODO add something else
+	updateBuffer->renderCaps =
+		globalRendering->supportClipSpaceControl << 0;
+
 	updateBuffer->timeInfo = float4{(float)gs->frameNum, gs->frameNum / (1.0f * GAME_SPEED), (float)globalRendering->drawFrame, globalRendering->timeOffset}; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
 	updateBuffer->viewGeometry = float4{(float)globalRendering->viewSizeX, (float)globalRendering->viewSizeY, (float)globalRendering->viewPosX, (float)globalRendering->viewPosY}; //vsx, vsy, vpx, vpy
 	updateBuffer->mapSize = float4{(float)mapDims.mapx, (float)mapDims.mapy, (float)mapDims.pwr2mapx, (float)mapDims.pwr2mapy} *(float)SQUARE_SIZE; //xz, xzPO2
-
-	updateBuffer->rndVec3 = float4{guRNG.NextVector(), 0.0f};
 
 	float4 forColor = (sky != nullptr) ? float4{sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f} : float4{0.7f, 0.7f, 0.8f, 1.0f};
 	updateBuffer->fogColor = forColor;
@@ -172,6 +175,6 @@ void UniformConstants::Bind()
 
 	assert(umbVBO != nullptr && upbVBO != nullptr);
 
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbVBO->GetId(), GetBufferOffset(umbBufferSize), umbBufferSize);
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbVBO->GetId(), GetBufferOffset(upbBufferSize), upbBufferSize);
+	umbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, GetBufferOffset(umbBufferSize), umbBufferSize);
+	upbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, GetBufferOffset(upbBufferSize), upbBufferSize);
 }
