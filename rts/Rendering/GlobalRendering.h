@@ -29,6 +29,8 @@ public:
 	CGlobalRendering();
 	~CGlobalRendering();
 
+	void PreKill();
+
 	static void InitStatic();
 	static void KillStatic();
 
@@ -278,6 +280,8 @@ public:
 	int glslMaxRecommendedVertices;
 	int glslMaxUniformBufferBindings;
 	int glslMaxUniformBufferSize; ///< in bytes
+	int glslMaxStorageBufferBindings;
+	int glslMaxStorageBufferSize; ///< in bytes
 
 	/**
 	 * @brief dual screen mode

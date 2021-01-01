@@ -153,6 +153,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(glslMaxRecommendedVertices),
 	CR_IGNORED(glslMaxUniformBufferBindings),
 	CR_IGNORED(glslMaxUniformBufferSize),
+	CR_IGNORED(glslMaxStorageBufferBindings),
+	CR_IGNORED(glslMaxStorageBufferSize),
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
 
@@ -165,7 +167,7 @@ CR_REG_METADATA(CGlobalRendering, (
 
 
 void CGlobalRendering::InitStatic() { globalRendering = new (globalRenderingMem) CGlobalRendering(); }
-void CGlobalRendering::KillStatic() { spring::SafeDestruct(globalRendering); }
+void CGlobalRendering::KillStatic() { globalRendering->PreKill();  spring::SafeDestruct(globalRendering); }
 
 
 CGlobalRendering::CGlobalRendering()
@@ -255,6 +257,8 @@ CGlobalRendering::CGlobalRendering()
 	, glslMaxRecommendedVertices(0)
 	, glslMaxUniformBufferBindings(0)
 	, glslMaxUniformBufferSize(0)
+	, glslMaxStorageBufferBindings(0)
+	, glslMaxStorageBufferSize(0)
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
@@ -272,8 +276,6 @@ CGlobalRendering::CGlobalRendering()
 
 CGlobalRendering::~CGlobalRendering()
 {
-	UniformConstants::GetInstance().Kill();
-
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
 
@@ -285,6 +287,11 @@ CGlobalRendering::~CGlobalRendering()
 	sdlWindows[1] = nullptr;
 	glContexts[0] = nullptr;
 	glContexts[1] = nullptr;
+}
+
+void CGlobalRendering::PreKill()
+{
+	UniformConstants::GetInstance().Kill(); //unsafe to kill in ~CGlobalRendering()
 }
 
 
@@ -737,13 +744,21 @@ void CGlobalRendering::QueryGLMaxVals()
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxTexAnisoLvl);
 
 	// some GLSL relevant information
-	glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
-	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
-	glGetIntegerv(GL_MAX_VARYING_FLOATS,          &glslMaxVaryings);
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,          &glslMaxAttributes);
-	glGetIntegerv(GL_MAX_DRAW_BUFFERS,            &glslMaxDrawBuffers);
-	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,        &glslMaxRecommendedIndices);
-	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,       &glslMaxRecommendedVertices);
+	if (GLEW_ARB_uniform_buffer_object) {
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
+	}
+
+	if (GLEW_ARB_shader_storage_buffer_object) {
+		glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &glslMaxStorageBufferBindings);
+		glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,      &glslMaxStorageBufferSize);
+	}
+
+	glGetIntegerv(GL_MAX_VARYING_FLOATS,                 &glslMaxVaryings);
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,                 &glslMaxAttributes);
+	glGetIntegerv(GL_MAX_DRAW_BUFFERS,                   &glslMaxDrawBuffers);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,               &glslMaxRecommendedIndices);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &glslMaxRecommendedVertices);
 
 	// GL_MAX_VARYING_FLOATS is the maximum number of floats, we count float4's
 	glslMaxVaryings /= 4;
@@ -824,6 +839,8 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tmax. rec. indices/vertices   : %i/%i", glslMaxRecommendedIndices, glslMaxRecommendedVertices);
 	LOG("\tmax. uniform buffer-bindings : %i", glslMaxUniformBufferBindings);
 	LOG("\tmax. uniform block-size      : %iKB", glslMaxUniformBufferSize / 1024);
+	LOG("\tmax. storage buffer-bindings : %i", glslMaxStorageBufferBindings);
+	LOG("\tmax. storage block-size      : %iMB", glslMaxStorageBufferSize / (1024 * 1024));
 	LOG("\t");
 	LOG("\tenable ATI-hacks : %i", atiHacks);
 	LOG("\tcompress MIP-maps: %i", compressTextures);
