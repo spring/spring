@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LUA_BUFFER_IMPL_H
-#define LUA_BUFFER_IMPL_H
+#ifndef LUA_VBO_IMPL_H
+#define LUA_VBO_IMPL_H
 
 #include <map>
 #include <vector>
@@ -19,14 +19,14 @@ namespace sol {
 	using this_state_container = char[8]; //enough room to hold 64 bit pointer
 }
 
-class LuaBufferImpl {
+class LuaVBOImpl {
 public:
-	LuaBufferImpl() = delete;
-	LuaBufferImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_);
-	LuaBufferImpl(const LuaBufferImpl&) = delete; //no copy cons
-	LuaBufferImpl(LuaBufferImpl&&) = default; //move cons
+	LuaVBOImpl() = delete;
+	LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_);
+	LuaVBOImpl(const LuaVBOImpl&) = delete; //no copy cons
+	LuaVBOImpl(LuaVBOImpl&&) = default; //move cons
 
-	~LuaBufferImpl();
+	~LuaVBOImpl();
 	void Delete();
 
 	void Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt);
@@ -109,4 +109,4 @@ private:
 
 
 
-#endif //LUA_BUFFER_IMPL_H
+#endif //LUA_VBO_IMPL_H
