@@ -25,12 +25,17 @@ Preparation
 Release Time
 ------------
 
+**** 105.0 is a special release: it was created from the "maintenance" branch which
+has a lot of commits which are not in the develop branch with several
+cherry-picks from the develop branch. these commits needs
+to be reverted before 106.0 is released. ****
+
 1) Merge the develop branch into master:
 		git checkout master
 		git reset --hard origin/master
 		git merge develop --no-ff
 2) Tag the release:
-		export REL_VERS=103.0
+		export REL_VERS=106.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
 3) switch back your local branch to develop so you don't commit into the master branch by accident:
 		git checkout develop
