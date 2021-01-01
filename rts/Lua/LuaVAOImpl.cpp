@@ -4,6 +4,8 @@
 #include <limits>
 #include <algorithm>
 
+#include "lib/fmt/format.h"
+
 #if 0
 #include "System/Log/ILog.h"
 //			LOG("%s, %f, %p, %d, %d", attr.name.c_str(), *iter, mappedBuf, outValSize, bytesWritten);

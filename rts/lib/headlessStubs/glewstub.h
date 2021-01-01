@@ -70,6 +70,7 @@ extern "C" {
 #define GLEW_ARB_instanced_arrays GL_FALSE
 #define GLEW_ARB_transform_feedback_instanced GL_FALSE
 #define GLEW_ARB_uniform_buffer_object GL_FALSE
+#define GLEW_ARB_shader_storage_buffer_object GL_FALSE
 #define GLEW_ARB_transform_feedback3 GL_FALSE
 #define GLEW_EXT_blend_equation_separate GL_FALSE
 #define GLEW_EXT_blend_func_separate GL_FALSE

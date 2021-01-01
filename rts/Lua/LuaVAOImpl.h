@@ -8,7 +8,6 @@
 
 #include "Rendering/GL/myGL.h"
 #include "lib/sol2/sol.hpp"
-#include "lib/fmt/format.h"
 
 struct VAO;
 struct VBO;
