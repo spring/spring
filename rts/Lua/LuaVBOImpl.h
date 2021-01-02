@@ -17,7 +17,7 @@ struct LuaVAOImpl;
 
 // Workaround to continue using lib/sol2/forward.hpp
 namespace sol {
-	using this_state_container = char[8]; //enough room to hold 64 bit pointer
+	using this_state_container = unsigned char[sizeof(void*)]; //enough room to hold a pointer
 }
 
 class LuaVBOImpl {
@@ -44,8 +44,6 @@ public:
 private:
 	void AllocGLBuffer(size_t byteSize);
 	void CopyAttrMapToVec();
-	void DeleteImpl();
-	void SetAttachedToVAO(bool attach);
 
 	int BindBufferRangeImpl(const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, const bool bind);
 
@@ -83,8 +81,6 @@ private:
 	};
 private:
 	bool freqUpdated;
-
-	int vaoAttachCount;
 
 	GLenum defTarget;
 

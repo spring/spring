@@ -1,6 +1,7 @@
 #include "LuaVBO.h"
 
 #include <unordered_map>
+#include <memory>
 
 #include "lib/sol2/sol.hpp"
 
@@ -77,6 +78,7 @@ int LuaVBO::GetVBO(lua_State* L)
 		return 0;
 
 	return sol::stack::call_lua(L, 1, [L](const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt) {
-		return LuaVBOImpl{defTargetOpt, freqUpdatedOpt, L};
+		return std::make_shared<LuaVBOImpl>(defTargetOpt, freqUpdatedOpt, L);
+		//return LuaVBOImpl{defTargetOpt, freqUpdatedOpt, L};
 	});
 }

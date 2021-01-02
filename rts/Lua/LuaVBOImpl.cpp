@@ -17,29 +17,22 @@
 
 LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_):
 	defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}, freqUpdated{freqUpdatedOpt.value_or(false)},
-	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}, vaoAttachCount{0u}
+	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}
 {
 	memcpy(&L[0], &L_, std::min(sizeof(sol::this_state_container), sizeof(sol::this_state)));
 }
 
 LuaVBOImpl::~LuaVBOImpl()
 {
-	DeleteImpl();
-}
-
-void LuaVBOImpl::DeleteImpl()
-{
-	//safe to call multiple times
-	spring::SafeDestruct(vbo);
-	bufferAttribDefs.clear();
+	//LOG_L(L_WARNING, "[LuaVBOImpl::%s]", __func__);
+	Delete();
 }
 
 void LuaVBOImpl::Delete()
 {
-	if (vaoAttachCount != 0)
-		LuaError("[LuaVBOImpl::%s] Attempt to Delete a VBO attached to one or more VAOs. Delete() VAOs first", __func__);
-
-	DeleteImpl();
+	//safe to call multiple times
+	spring::SafeDestruct(vbo);
+	bufferAttribDefs.clear();
 }
 
 /////////////////////////////////
@@ -696,16 +689,6 @@ void LuaVBOImpl::DumpDefinition()
 	ss << fmt::format("Count of elements={}\nSize of one element={}\nTotal buffer size={}", elementsCount, elemSizeInBytes, vbo->GetSize());
 
 	LOG("%s", ss.str().c_str());
-}
-
-void LuaVBOImpl::SetAttachedToVAO(bool attach)
-{
-	if (attach)
-		++vaoAttachCount;
-	else {
-		--vaoAttachCount;
-		vaoAttachCount = std::max(vaoAttachCount, 0);
-	}
 }
 
 void LuaVBOImpl::AllocGLBuffer(size_t byteSize)

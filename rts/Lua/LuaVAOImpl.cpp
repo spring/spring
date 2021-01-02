@@ -29,18 +29,16 @@ LuaVAOImpl::LuaVAOImpl(sol::this_state L_)
 
 void LuaVAOImpl::Delete()
 {
+	//LOG_L(L_WARNING, "[LuaVAOImpl::%s]", __func__);
 	if (vertLuaVBO) {
-		vertLuaVBO->SetAttachedToVAO(false);
 		vertLuaVBO = nullptr;
 	}
 
 	if (instLuaVBO) {
-		instLuaVBO->SetAttachedToVAO(false);
 		instLuaVBO = nullptr;
 	}
 
 	if (indxLuaVBO) {
-		indxLuaVBO->SetAttachedToVAO(false);
 		indxLuaVBO = nullptr;
 	}
 
@@ -59,21 +57,21 @@ bool LuaVAOImpl::Supported()
 }
 
 
-void LuaVAOImpl::AttachBufferImpl(LuaVBOImpl& luaVBO, LuaVBOImpl*& thisLuaVBO, GLenum reqTarget)
+void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std::shared_ptr<LuaVBOImpl>& thisLuaVBO, GLenum reqTarget)
 {
 	if (thisLuaVBO) {
 		LuaError("[LuaVAOImpl::%s] LuaVBO already attached", __func__);
 	}
 
-	if (luaVBO.defTarget != reqTarget) {
-		LuaError("[LuaVAOImpl::%s] LuaVBO should have been created with [%u] target, got [%u] target instead", __func__, reqTarget, luaVBO.defTarget);
+	if (luaVBO->defTarget != reqTarget) {
+		LuaError("[LuaVAOImpl::%s] LuaVBO should have been created with [%u] target, got [%u] target instead", __func__, reqTarget, luaVBO->defTarget);
 	}
 
-	if (!luaVBO.vbo) {
+	if (!luaVBO->vbo) {
 		LuaError("[LuaVAOImpl::%s] LuaVBO is invalid. Did you sucessfully call vbo:Define()?", __func__);
 	}
 
-	for (const auto& kv : luaVBO.bufferAttribDefsVec) {
+	for (const auto& kv : luaVBO->bufferAttribDefsVec) {
 		if (vertLuaVBO && vertLuaVBO->bufferAttribDefs.find(kv.first) != vertLuaVBO->bufferAttribDefs.cend()) {
 			LuaError("[LuaVAOImpl::%s] LuaVBO attached as [%s] has defined a duplicate attribute [%d]", __func__, "vertex buffer", kv.first);
 		}
@@ -83,21 +81,20 @@ void LuaVAOImpl::AttachBufferImpl(LuaVBOImpl& luaVBO, LuaVBOImpl*& thisLuaVBO, G
 		}
 	}
 
-	thisLuaVBO = &luaVBO;
-	thisLuaVBO->SetAttachedToVAO(true);
+	thisLuaVBO = luaVBO;
 }
 
-void LuaVAOImpl::AttachVertexBuffer(LuaVBOImpl& luaVBO)
+void LuaVAOImpl::AttachVertexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
 	AttachBufferImpl(luaVBO, vertLuaVBO, GL_ARRAY_BUFFER);
 }
 
-void LuaVAOImpl::AttachInstanceBuffer(LuaVBOImpl& luaVBO)
+void LuaVAOImpl::AttachInstanceBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
 	AttachBufferImpl(luaVBO, instLuaVBO, GL_ARRAY_BUFFER);
 }
 
-void LuaVAOImpl::AttachIndexBuffer(LuaVBOImpl& luaVBO)
+void LuaVAOImpl::AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
 	AttachBufferImpl(luaVBO, indxLuaVBO, GL_ELEMENT_ARRAY_BUFFER);
 }
