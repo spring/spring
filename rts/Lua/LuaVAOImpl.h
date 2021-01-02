@@ -20,18 +20,6 @@ namespace sol {
 	using this_state_container = char[8]; //enough room to hold 64 bit pointer
 }
 
-struct VAOAttrib {
-	int divisor;
-	GLint size; // in number of elements
-	GLenum type;
-	GLboolean normalized;
-	GLsizei stride;
-	GLsizei pointer;
-	//AUX
-	int typeSizeInBytes;
-	std::string name;
-};
-
 class LuaVAOImpl {
 public:
 	LuaVAOImpl() = delete;
@@ -67,8 +55,6 @@ private:
 	LuaVBOImpl* vertLuaVBO = nullptr;
 	LuaVBOImpl* instLuaVBO = nullptr;
 	LuaVBOImpl* indxLuaVBO = nullptr;
-
-	std::map<int, VAOAttrib> vaoAttribs;
 };
 
 #endif //LUA_VAO_IMPL_H

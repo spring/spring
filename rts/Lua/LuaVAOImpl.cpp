@@ -138,10 +138,10 @@ void LuaVAOImpl::CondInitVAO()
 	vao->Bind();
 
 	// vertLuaVBO existence is checked before
-	vertLuaVBO->vbo->Bind();
+	vertLuaVBO->vbo->Bind(GL_ARRAY_BUFFER); //type is needed cause same buffer could have been rebounded as something else using LuaVBO functions
 
 	if (indxLuaVBO)
-		indxLuaVBO->vbo->Bind();
+		indxLuaVBO->vbo->Bind(GL_ELEMENT_ARRAY_BUFFER);
 
 	#define INT2PTR(x) ((void*)static_cast<intptr_t>(x))
 
@@ -159,7 +159,7 @@ void LuaVAOImpl::CondInitVAO()
 
 	if (instLuaVBO) {
 		vertLuaVBO->vbo->Unbind();
-		instLuaVBO->vbo->Bind();
+		instLuaVBO->vbo->Bind(GL_ARRAY_BUFFER);
 
 		for (const auto& va : instLuaVBO->bufferAttribDefsVec) {
 			const auto& attr = va.second;
