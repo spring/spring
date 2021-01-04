@@ -78,6 +78,7 @@ extern "C" {
 #define GLEW_ARB_shading_language_420pack GL_FALSE
 #define GLEW_ARB_buffer_storage GL_FALSE
 #define GLEW_ARB_draw_elements_base_vertex GL_FALSE
+#define GLEW_ARB_copy_buffer GL_FALSE
 
 #define GLXEW_SGI_video_sync GL_FALSE
 

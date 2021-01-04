@@ -98,7 +98,7 @@ private:
 	static constexpr bool MapPersistently() { return false; }; //with Lua transaction costs persistent mapping optimization makes little sense
 private:
 	static constexpr uint32_t uboMinIndex = 5 + 1; // glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId()); //DecalsDrawerGL4
-	static constexpr uint32_t ssboMinIndex = 3 + 1; // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, uboDecalsStructures.GetId()); //DecalsDrawerGL4
+	static constexpr uint32_t ssboMinIndex = 4 + 1; // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, uboDecalsStructures.GetId()); //DecalsDrawerGL4
 private:
 	static constexpr uint32_t VA_NUMBER_OF_ATTRIBUTES = 16u;
 	static constexpr uint32_t UBO_SAFE_SIZE_BYTES = 0x4000u; //16 KB

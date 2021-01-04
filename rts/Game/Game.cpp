@@ -42,6 +42,7 @@
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/MatrixUploader.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/UniformConstants.h"
@@ -629,6 +630,7 @@ void CGame::PreLoadRendering()
 	geometricObjects = new CGeometricObjects();
 
 	// load components that need to exist before PostLoadSimulation
+	MatrixUploader::GetInstance().Init();
 	worldDrawer.InitPre();
 }
 
@@ -872,6 +874,7 @@ void CGame::KillRendering()
 	icon::iconHandler.Kill();
 	spring::SafeDelete(geometricObjects);
 	worldDrawer.Kill();
+	MatrixUploader::GetInstance().Kill();
 }
 
 void CGame::KillInterface()
@@ -1212,7 +1215,10 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		// TODO call only when camera changed
 		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
-
+	{
+		SCOPED_TIMER("Update::NewGL");
+		MatrixUploader::GetInstance().UpdateAndBind();
+	}
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
 	if (luaUI != nullptr) {
