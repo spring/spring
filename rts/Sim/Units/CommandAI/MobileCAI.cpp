@@ -615,9 +615,10 @@ void CMobileCAI::ExecuteGuard(Command& c)
 		return;
 	}
 
+	constexpr int retaliationTimeout = 40;
 	const bool pushAttackCommand =
 		owner->unitDef->canAttack &&
-		(guardee->lastAttackFrame + 40 < gs->frameNum) &&
+		(guardee->lastAttackFrame + retaliationTimeout > gs->frameNum) &&
 		IsValidTarget(guardee->lastAttacker, nullptr);
 
 	if (pushAttackCommand) {
