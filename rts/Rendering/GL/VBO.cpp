@@ -39,6 +39,7 @@ bool VBO::IsSupported(GLenum target) {
 	static bool isVBOSupported  = (GLEW_ARB_vertex_buffer_object && configHandler->GetBool("UseVBO"));
 	static bool isUBOSupported  = (GLEW_ARB_uniform_buffer_object && configHandler->GetBool("UseVBO"));
 	static bool isSSBOSupported = (GLEW_ARB_shader_storage_buffer_object && configHandler->GetBool("UseVBO"));
+	static bool isCopyBuffSupported = (GLEW_ARB_copy_buffer && configHandler->GetBool("UseVBO"));
 
 	switch (target) {
 	case GL_PIXEL_PACK_BUFFER:
@@ -51,6 +52,9 @@ bool VBO::IsSupported(GLenum target) {
 		return isUBOSupported;
 	case GL_SHADER_STORAGE_BUFFER:
 		return isSSBOSupported;
+	case GL_COPY_WRITE_BUFFER:
+	case GL_COPY_READ_BUFFER:
+		return isCopyBuffSupported;
 	default: {
 		LOG_L(L_ERROR, "[VBO:%s]: wrong target [%u] is specified", __func__, target);
 		return false;
