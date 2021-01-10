@@ -189,6 +189,7 @@ GLAPI GLint APIENTRY glGetAttribLocationARB(GLhandleARB programObj, const GLchar
 
 GLAPI void APIENTRY glVertexAttribPointerARB(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer) {}
 GLAPI void APIENTRY glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer) {}
+GLAPI void APIENTRY glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer) {}
 GLAPI void APIENTRY glVertexAttribDivisor(GLuint index, GLuint divisor) {}
 GLAPI void APIENTRY glEnableVertexAttribArrayARB(GLuint index) {}
 GLAPI void APIENTRY glEnableVertexAttribArray(GLuint index) {}
