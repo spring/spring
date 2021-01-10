@@ -6,6 +6,7 @@
 #include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
+#include "System/SpringMath.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -283,19 +284,15 @@ void MatrixUploader::UpdateAndBind()
 
 	//LOG_L(L_INFO, "MatrixUploader::%s matrices.size = [%u]", __func__, static_cast<uint32_t>(matrices.size()));
 
-	//resize
-	const uint32_t matrixElemCount = GetMatrixElemCount();
-	int newElemCount = 0;
-
-	if (matrices.size() > matrixElemCount) {
-		newElemCount = std::max(matrixElemCount + elemIncreaseBy, static_cast<uint32_t>(matrices.size()));
-		LOG_L(L_INFO, "MatrixUploader::%s sizing matrixSSBO %s. New elements count = %d", __func__, "up", newElemCount);
-	}
-
 	matrixSSBO->UnbindBufferRange(GL_SHADER_STORAGE_BUFFER, MATRIX_SSBO_BINDING_IDX, 0, matrixSSBO->GetSize());
 	matrixSSBO->Bind(GL_SHADER_STORAGE_BUFFER);
 
-	if (newElemCount > 0) {
+	//resize
+	const uint32_t matrixElemCount = GetMatrixElemCount();
+	const uint32_t realBufferElemCount = elemUpdateOffset + static_cast<uint32_t>(matrices.size());
+	if (realBufferElemCount > matrixElemCount) {
+		const uint32_t newElemCount = AlignUp(realBufferElemCount, elemIncreaseBy);
+		LOG_L(L_INFO, "MatrixUploader::%s sizing matrixSSBO %s. New elements count = %u, matrices.size() = %u, realBufferElemCount = %u", __func__, "up", newElemCount, static_cast<uint32_t>(matrices.size()), realBufferElemCount);
 		matrixSSBO->Resize(newElemCount * sizeof(CMatrix44f), GL_STREAM_DRAW);
 	}
 
