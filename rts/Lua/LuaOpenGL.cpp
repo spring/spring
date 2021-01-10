@@ -365,6 +365,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MultiTexEnv);
 	REGISTER_LUA_CFUNC(TexGen);
 	REGISTER_LUA_CFUNC(MultiTexGen);
+	REGISTER_LUA_CFUNC(BindImageTexture);
 
 	REGISTER_LUA_CFUNC(Shape);
 	REGISTER_LUA_CFUNC(BeginEnd);
@@ -3348,7 +3349,6 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 	return 1;
 }
 
-
 // FIXME: obsolete
 int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 {
@@ -3674,6 +3674,118 @@ int LuaOpenGL::MultiTexGen(lua_State* L)
 	else {
 		luaL_error(L, "Incorrect arguments to gl.MultiTexGen()");
 	}
+
+	return 0;
+}
+
+int LuaOpenGL::BindImageTexture(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	int argNum = 1;
+	//unit
+	GLint maxUnit = 0;
+	glGetIntegerv(GL_MAX_IMAGE_UNITS, &maxUnit);
+	GLuint unit = (GLuint)luaL_checknumber(L, argNum);
+	if (unit < 0 || unit > maxUnit)
+		luaL_error(L, "%s Invalid image unit specified %d. The level must be >=0 and <= %d (spec. guaranteed 8)", __func__, unit, maxUnit);
+
+	++argNum;
+	//texID
+	GLuint texID;
+	int maxMipLevel;
+	if (lua_isnil(L, argNum)) {
+		texID = 0u;
+		maxMipLevel = 0;
+	}
+	else {
+		LuaMatTexture luaTex;
+		const std::string luaTexStr = lua_tostring(L, argNum);
+		if (!LuaOpenGLUtils::ParseTextureImage(L, luaTex, luaTexStr))
+			luaL_error(L, "%s Failed to find a Lua texture %s", __func__, luaTexStr.c_str());
+
+		texID = luaTex.GetTextureID();
+		int maxDim = std::max(luaTex.GetSize().x, luaTex.GetSize().y);
+		maxDim = std::max(maxDim, 1);
+		maxMipLevel = static_cast<int>(std::log2(maxDim)) + 1;
+	}
+
+	++argNum;
+	//level
+	GLint level = luaL_optnumber(L, argNum, 0);
+	if (level < 0 || level > maxMipLevel)
+		luaL_error(L, "%s Invalid level specified %d. The level must be >=0 and <= %d", __func__, level, maxMipLevel);
+
+	++argNum;
+	//layer
+	GLint layer;
+	GLboolean layered;
+	if (lua_isnil(L, argNum)) {
+		layer = 0;
+		layered = GL_FALSE;
+	}
+	else {
+		layered = luaL_optnumber(L, argNum, 0);
+		layered = GL_TRUE;
+	}
+
+	++argNum;
+	//access
+	GLenum access = luaL_optnumber(L, argNum, 0);
+	if (access != GL_READ_ONLY || access != GL_WRITE_ONLY || access != GL_READ_WRITE)
+		luaL_error(L, "%s Invalid access specified %d. The access must be GL_READ_ONLY or GL_WRITE_ONLY or GL_READ_WRITE.", __func__, access);
+
+	++argNum;
+	//format
+	GLenum format = luaL_optnumber(L, argNum, 0);
+	switch (format)
+	{
+	case GL_RGBA32F:
+	case GL_RGBA16F:
+	case GL_RG32F:
+	case GL_RG16F:
+	case GL_R11F_G11F_B10F:
+	case GL_R32F:
+	case GL_R16F:
+	case GL_RGBA32UI:
+	case GL_RGBA16UI:
+	case GL_RGB10_A2UI:
+	case GL_RGBA8UI:
+	case GL_RG32UI:
+	case GL_RG16UI:
+	case GL_RG8UI:
+	case GL_R32UI:
+	case GL_R16UI:
+	case GL_R8UI:
+	case GL_RGBA32I:
+	case GL_RGBA16I:
+	case GL_RGBA8I:
+	case GL_RG32I:
+	case GL_RG16I:
+	case GL_RG8I:
+	case GL_R32I:
+	case GL_R16I:
+	case GL_R8I:
+	case GL_RGBA16:
+	case GL_RGB10_A2:
+	case GL_RGBA8:
+	case GL_RG16:
+	case GL_RG8:
+	case GL_R16:
+	case GL_R8:
+	case GL_RGBA16_SNORM:
+	case GL_RGBA8_SNORM:
+	case GL_RG16_SNORM:
+	case GL_RG8_SNORM:
+	case GL_R16_SNORM:
+	case GL_R8_SNORM:
+		break; //valid
+	default:
+		luaL_error(L, "%s Invalid format specified %d", __func__, format);
+		break;
+	}
+
+	glBindImageTexture(unit, texID, level, layered, layer, access, format);
 
 	return 0;
 }

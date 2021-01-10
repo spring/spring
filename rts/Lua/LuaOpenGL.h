@@ -231,6 +231,7 @@ class LuaOpenGL {
 		static int TexGen(lua_State* L);
 		static int MultiTexEnv(lua_State* L);
 		static int MultiTexGen(lua_State* L);
+		static int BindImageTexture(lua_State* L);
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
@@ -244,6 +245,8 @@ class LuaOpenGL {
 
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
+
+		static int DispatchCompute(lua_State* L);
 
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
