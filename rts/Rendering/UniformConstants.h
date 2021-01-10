@@ -42,6 +42,8 @@ struct UniformParamsBuffer {
 
 	float4 fogColor; //fog color
 	float4 fogParams; //fog {start, end, 0.0, scale}
+
+	float4 teamColor[MAX_TEAMS]; //all team colors
 };
 
 class UniformConstants {

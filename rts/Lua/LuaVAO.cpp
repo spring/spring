@@ -16,7 +16,7 @@ bool LuaVAO::PushEntries(lua_State* L)
 	auto gl = sol::stack::get<sol::table>(L, -1);
 
 	gl.new_usertype<LuaVAOImpl>("VAO",
-		sol::constructors<LuaVAOImpl(sol::this_state)>(),
+		sol::constructors<LuaVAOImpl()>(),
 		"Delete", &LuaVAOImpl::Delete,
 
 		"AttachVertexBuffer", &LuaVAOImpl::AttachVertexBuffer,
@@ -25,7 +25,7 @@ bool LuaVAO::PushEntries(lua_State* L)
 
 		"DrawArrays", &LuaVAOImpl::DrawArrays,
 		"DrawElements", &LuaVAOImpl::DrawElements
-		);
+	);
 
 	gl.set("VAO", sol::lua_nil); //because :)
 
@@ -41,7 +41,7 @@ int LuaVAO::GetVAO(lua_State* L)
 		return 0;
 	}
 
-	return sol::stack::call_lua(L, 1, [=]() {
-		return LuaVAOImpl{L};
+	return sol::stack::call_lua(L, 1, []() {
+		return LuaVAOImpl();
 	});
 }

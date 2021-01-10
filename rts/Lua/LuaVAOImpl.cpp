@@ -22,9 +22,12 @@
 
 #include "LuaUtils.h"
 
-LuaVAOImpl::LuaVAOImpl(sol::this_state L_)
+LuaVAOImpl::LuaVAOImpl()
+	: vertLuaVBO{nullptr}
+	, instLuaVBO{nullptr}
+	, indxLuaVBO{nullptr}
 {
-	memcpy(&L[0], &L_, std::min(sizeof(sol::this_state_container), sizeof(sol::this_state)));
+
 }
 
 void LuaVAOImpl::Delete()
@@ -52,7 +55,7 @@ LuaVAOImpl::~LuaVAOImpl()
 
 bool LuaVAOImpl::Supported()
 {
-	static bool supported = VBO::IsSupported(GL_ARRAY_BUFFER) && GLEW_ARB_vertex_array_object && GLEW_ARB_instanced_arrays && GLEW_ARB_draw_elements_base_vertex;
+	static bool supported = VBO::IsSupported(GL_ARRAY_BUFFER) && VAO::IsSupported() && GLEW_ARB_instanced_arrays && GLEW_ARB_draw_elements_base_vertex;
 	return supported;
 }
 
@@ -71,17 +74,17 @@ void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std
 		LuaError("[LuaVAOImpl::%s] LuaVBO is invalid. Did you sucessfully call vbo:Define()?", __func__);
 	}
 
-	for (const auto& kv : luaVBO->bufferAttribDefsVec) {
-		if (vertLuaVBO && vertLuaVBO->bufferAttribDefs.find(kv.first) != vertLuaVBO->bufferAttribDefs.cend()) {
-			LuaError("[LuaVAOImpl::%s] LuaVBO attached as [%s] has defined a duplicate attribute [%d]", __func__, "vertex buffer", kv.first);
-		}
+	thisLuaVBO = luaVBO;
 
-		if (instLuaVBO && instLuaVBO->bufferAttribDefs.find(kv.first) != instLuaVBO->bufferAttribDefs.cend()) {
-			LuaError("[LuaVAOImpl::%s] LuaVBO attached as [%s] has defined a duplicate attribute [%d]", __func__, "instance buffer", kv.first);
+	if (vertLuaVBO && instLuaVBO) {
+		for (const auto& v : vertLuaVBO->bufferAttribDefs) {
+			for (const auto& i : instLuaVBO->bufferAttribDefs) {
+				if (v.first == i.first) {
+					LuaError("[LuaVAOImpl::%s] Vertex and Instance LuaVBO have defined a duplicate attribute [%d]", __func__, v.first);
+				}
+			}
 		}
 	}
-
-	thisLuaVBO = luaVBO;
 }
 
 void LuaVAOImpl::AttachVertexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
@@ -102,7 +105,8 @@ void LuaVAOImpl::AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 template<typename ...Args>
 void LuaVAOImpl::LuaError(std::string format, Args ...args)
 {
-	luaL_error(*reinterpret_cast<sol::this_state*>(L), fmt::sprintf(format, args...).c_str());
+	std::string what = fmt::sprintf(format, args...);
+	throw std::runtime_error(what.c_str());
 }
 
 void LuaVAOImpl::CheckDrawPrimitiveType(GLenum mode)
@@ -145,13 +149,20 @@ void LuaVAOImpl::CondInitVAO()
 	GLenum indMin = ~0u;
 	GLenum indMax =  0u;
 
+	const auto glVertexAttribPointerFunc = [](GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer) {
+		if (type == GL_FLOAT)
+			glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+		else //assume int types
+			glVertexAttribIPointer(index, size, type, stride, pointer);
+	};
+
 	for (const auto& va : vertLuaVBO->bufferAttribDefsVec) {
 		const auto& attr = va.second;
 		glEnableVertexAttribArray(va.first);
-		glVertexAttribPointer(va.first, attr.size, attr.type, attr.normalized, vertLuaVBO->elemSizeInBytes, INT2PTR(attr.pointer));
+		glVertexAttribPointerFunc(va.first, attr.size, attr.type, attr.normalized, vertLuaVBO->elemSizeInBytes, INT2PTR(attr.pointer));
 		glVertexAttribDivisor(va.first, 0);
 		indMin = std::min(indMin, static_cast<GLenum>(va.first));
-		indMin = std::min(indMin, static_cast<GLenum>(va.first));
+		indMax = std::max(indMax, static_cast<GLenum>(va.first));
 	}
 
 	if (instLuaVBO) {
@@ -161,10 +172,10 @@ void LuaVAOImpl::CondInitVAO()
 		for (const auto& va : instLuaVBO->bufferAttribDefsVec) {
 			const auto& attr = va.second;
 			glEnableVertexAttribArray(va.first);
-			glVertexAttribPointer(va.first, attr.size, attr.type, attr.normalized, instLuaVBO->elemSizeInBytes, INT2PTR(attr.pointer));
+			glVertexAttribPointerFunc(va.first, attr.size, attr.type, attr.normalized, instLuaVBO->elemSizeInBytes, INT2PTR(attr.pointer));
 			glVertexAttribDivisor(va.first, 1);
 			indMin = std::min(indMin, static_cast<GLenum>(va.first));
-			indMin = std::min(indMin, static_cast<GLenum>(va.first));
+			indMax = std::max(indMax, static_cast<GLenum>(va.first));
 		}
 	}
 
@@ -200,12 +211,13 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 			LuaError("[LuaVAOImpl::%s]: No index buffer is attached. Did you succesfully call vao:AttachIndexBuffer()?", __func__);
 
 		drawCount = drawCountOpt.value_or(indxLuaVBO->elementsCount);
+		if (drawCount <= 0)
+			drawCount = indxLuaVBO->elementsCount;
 	} else {
 		drawCount = drawCountOpt.value_or(vertLuaVBO->elementsCount);
+		if (drawCount <= 0)
+			drawCount = vertLuaVBO->elementsCount;
 	}
-
-	if (drawCount <= 0)
-		LuaError("[LuaVAOImpl::%s]: %s count[%d] is <= 0", __func__, indexed ? "Indices" : "Vertices", drawCount);
 
 	const auto instanceCount = std::max(instanceCountOpt.value_or(0), 0); // 0 - forces ordinary version, while 1 - calls *Instanced()
 	if (instanceCount > 0 && !instLuaVBO)

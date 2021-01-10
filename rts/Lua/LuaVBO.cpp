@@ -19,18 +19,29 @@ bool LuaVBO::PushEntries(lua_State* L)
 	auto gl = sol::stack::get<sol::table>(L, -1);
 
 	gl.new_usertype<LuaVBOImpl>("VBO",
-		sol::constructors<LuaVBOImpl(const sol::optional<GLenum>, const sol::optional<bool>, sol::this_state)>(),
+		sol::constructors<LuaVBOImpl(const sol::optional<GLenum>, const sol::optional<bool>)>(),
 		"Delete", &LuaVBOImpl::Delete,
 
 		"Define", &LuaVBOImpl::Define,
 		"Upload", &LuaVBOImpl::Upload,
 		"Download", &LuaVBOImpl::Download,
 
+		"ShapeFromUnitDefID", &LuaVBOImpl::ShapeFromUnitDefID,
+		"ShapeFromFeatureDefID", &LuaVBOImpl::ShapeFromFeatureDefID,
+		"ShapeFromUnitID", &LuaVBOImpl::ShapeFromUnitID,
+		"ShapeFromFeatureID", &LuaVBOImpl::ShapeFromFeatureID,
+
+		"OffsetFromUnitDefID", &LuaVBOImpl::OffsetFromUnitDefID,
+		"OffsetFromFeatureDefID", &LuaVBOImpl::OffsetFromFeatureDefID,
+		"OffsetFromUnitID", &LuaVBOImpl::OffsetFromUnitID,
+		"OffsetFromFeatureID", &LuaVBOImpl::OffsetFromFeatureID,
+
 		"BindBufferRange", &LuaVBOImpl::BindBufferRange,
 		"UnbindBufferRange", &LuaVBOImpl::UnbindBufferRange,
 
-		"DumpDefinition", &LuaVBOImpl::DumpDefinition
-		);
+		"DumpDefinition", &LuaVBOImpl::DumpDefinition,
+		"GetBufferSize", &LuaVBOImpl::GetBufferSize
+	);
 
 	gl.set("VBO", sol::lua_nil); //because :)
 
@@ -77,8 +88,8 @@ int LuaVBO::GetVBO(lua_State* L)
 	if (!LuaVBO::CheckAndReportSupported(L, target))
 		return 0;
 
-	return sol::stack::call_lua(L, 1, [L](const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt) {
-		return std::make_shared<LuaVBOImpl>(defTargetOpt, freqUpdatedOpt, L);
+	return sol::stack::call_lua(L, 1, [](const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt) {
+		return std::make_shared<LuaVBOImpl>(defTargetOpt, freqUpdatedOpt);
 		//return LuaVBOImpl{defTargetOpt, freqUpdatedOpt, L};
 	});
 }

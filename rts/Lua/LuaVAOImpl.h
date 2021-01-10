@@ -16,15 +16,9 @@ struct VAO;
 struct VBO;
 struct LuaVBOImpl;
 
-// Workaround to continue using lib/sol2/forward.hpp
-namespace sol {
-	using this_state_container = unsigned char[sizeof(void*)]; //enough room to hold a pointer
-}
-
 class LuaVAOImpl {
 public:
-	LuaVAOImpl() = delete;
-	LuaVAOImpl(sol::this_state L_);
+	LuaVAOImpl();
 
 	LuaVAOImpl(const LuaVAOImpl& lva) = delete; //no copy cons
 	LuaVAOImpl(LuaVAOImpl&& lva) = default; //move cons
@@ -48,8 +42,6 @@ private:
 private:
 	template <typename... Args>
 	void LuaError(std::string format, Args... args);
-private:
-	sol::this_state_container L;
 private:
 	VAO* vao = nullptr;
 

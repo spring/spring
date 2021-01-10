@@ -48,6 +48,13 @@ the build system, or the command line options of your compiler.
 
 */
 
+#define LUA_VERSION_NUM 501
+#define SOL_USING_CXX_LUA 1 //Tons of undefined references if not set
+#define SOL_ALL_SAFETIES_ON 1
+#define SOL_NO_CHECK_NUMBER_PRECISION 1
+//#define SOL_NO_EXCEPTIONS 1 //crashes system on load
+
+
 // end of sol/config.hpp
 
 #endif // SOL_SINGLE_CONFIG_HPP

@@ -13,6 +13,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
+#include "System/SafeUtil.h"
 #include "System/creg/creg_cond.h"
 
 
@@ -37,21 +38,29 @@ struct LocalModel;
 struct LocalModelPiece;
 
 
-
-
 struct SVertexData {
-	SVertexData() : normal(UpVector) {}
+	SVertexData() = default;
+	SVertexData(const float3& p, const float3& n, const float3& s, const float3& t, const float2& uv0, const float2& uv1, uint32_t i) {
+		pos = p;
+		normal = n;
+		sTangent = s;
+		tTangent = t;
+		texCoords[0] = uv0;
+		texCoords[1] = uv1;
+		pieceIndex = i;
+	}
 
 	float3 pos;
-	float3 normal;
+	float3 normal = UpVector;
 	float3 sTangent;
 	float3 tTangent;
 
-	//< Second channel is optional, still good to have. Also makes
-	//< sure the struct is 64bytes in size (ATi's prefers such VBOs)
-	//< supporting an arbitrary number of channels would be easy but
-	//< overkill (for now)
+	// TODO:
+	//   with pieceIndex this struct is no longer 64 bytes in size which ATI's prefer
+	//   support an arbitrary number of channels, would be easy but overkill (for now)
 	float2 texCoords[NUM_MODEL_UVCHANNS];
+
+	uint32_t pieceIndex = 0;
 };
 
 
@@ -82,7 +91,7 @@ struct S3DModelPiece {
 	S3DModelPiece() = default;
 
 	// runs during global deinit, can not Clear() since that touches OpenGL
-	virtual ~S3DModelPiece() { assert(vboIndices.vboId == 0 && vboShatterIndices.vboId == 0); }
+	virtual ~S3DModelPiece() { assert(vboShatterIndices.vboId == 0); }
 
 	virtual void Clear() {
 		name.clear();
@@ -95,7 +104,7 @@ struct S3DModelPiece {
 		parent = nullptr;
 		colvol = {};
 
-		pieceMatrix.LoadIdentity();
+		bposeMatrix.LoadIdentity();
 		bakedMatrix.LoadIdentity();
 
 		offset = ZeroVector;
@@ -109,53 +118,53 @@ struct S3DModelPiece {
 		DeleteBuffers();
 
 		hasBakedMat = false;
-		dummyPadding = false;
 	}
 
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;
 
 	// internal use
-	virtual unsigned int GetVertexCount() const = 0;
-	virtual unsigned int GetVertexDrawIndexCount() const = 0;
+	uint32_t GetVertexCount() const { return vertices.size();  }
+	uint32_t GetVertexDrawIndexCount() const { return indices.size(); }
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 
-	virtual void UploadGeometryVBOs() = 0;
-	virtual void BindVertexAttribVBOs() const = 0;
-	virtual void UnbindVertexAttribVBOs() const = 0;
+	virtual void PostProcessGeometry();
+	void UploadToVBO();
+
+	void BindVertexAttribVBOs() const;
+	void UnbindVertexAttribVBOs() const;
+
+	void BindIndexVBO() const;
+	void UnbindIndexVBO() const;
+
+	void DrawElements(GLuint prim = GL_TRIANGLES) const;
 
 	void BindShatterIndexVBO() const { vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
 	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
 
-	const VBO& GetIndexVBO() const { return vboIndices; }
-	const VBO& GetAttribVBO() const { return vboAttributes; }
 	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
 
 protected:
 	virtual void DrawForList() const = 0;
-	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
-
 public:
 	void DrawStatic() const;
 	void CreateDispList();
 	void DeleteDispList();
 	void DeleteBuffers() {
-		vboIndices = {};
-		vboAttributes = {};
 		vboShatterIndices = {};
 	}
 
-	unsigned int GetDisplayListID() const { return dispListID; }
+	uint32_t GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
 	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
 	void SetPieceMatrix(const CMatrix44f& m) {
-		pieceMatrix = m * ComposeTransform(offset, ZeroVector, scales);
+		bposeMatrix = m * ComposeTransform(offset, ZeroVector, scales);
 
 		for (S3DModelPiece* c: children) {
-			c->SetPieceMatrix(pieceMatrix);
+			c->SetPieceMatrix(bposeMatrix);
 		}
 	}
 	void SetBakedMatrix(const CMatrix44f& m) {
@@ -187,6 +196,7 @@ public:
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
+	void SetParentModel(S3DModel* model_) { model = model_; }
 
 private:
 	void CreateShatterPiecesVariation(const int num);
@@ -199,7 +209,7 @@ public:
 	S3DModelPiece* parent = nullptr;
 	CollisionVolume colvol;
 
-	CMatrix44f pieceMatrix;      /// bind-pose transform, including baked rots
+	CMatrix44f bposeMatrix;      /// bind-pose transform, including baked rots
 	CMatrix44f bakedMatrix;      /// baked local-space rotations
 
 	float3 offset;               /// local (piece-space) offset wrt. parent piece
@@ -210,14 +220,22 @@ public:
 	float3 maxs = DEF_MAX_SIZE;
 
 protected:
-	VBO vboIndices;
-	VBO vboAttributes;
+	uint32_t vboIndxStart = 0u;
+	uint32_t vboVertStart = 0u;
+
+	std::vector<SVertexData> vertices;
+	std::vector<uint32_t> indices;
+	std::vector<uint32_t> indicesVBO; //used only to upload to VBO with shifted indices
+
 	VBO vboShatterIndices;
 
-	unsigned int dispListID;
+	S3DModel* model;
+
+	uint32_t dispListID;
 
 	bool hasBakedMat;
-	bool dummyPadding;
+public:
+	friend class CAssParser;
 };
 
 
@@ -237,7 +255,14 @@ struct S3DModel
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
 		, relMidPos(ZeroVector)
+
+		, vertVBO(nullptr)
+		, indxVBO(nullptr)
+
+		, curVertStartIndx(0u)
+		, curIndxStartIndx(0u)
 	{
+
 	}
 
 	S3DModel(const S3DModel& m) = delete;
@@ -262,7 +287,14 @@ struct S3DModel
 		maxs = m.maxs;
 		relMidPos = m.relMidPos;
 
+		vertVBO = std::move(m.vertVBO);
+		indxVBO = std::move(m.indxVBO);
+
+		curVertStartIndx = m.curVertStartIndx;
+		curIndxStartIndx = m.curIndxStartIndx;
+
 		pieces = std::move(m.pieces);
+		for_each(pieces.begin(), pieces.end(), [this](S3DModelPiece* p) { p->SetParentModel(this); });
 		return *this;
 	}
 
@@ -276,6 +308,21 @@ struct S3DModel
 			piece->DrawStatic();
 		}
 	}
+
+	void CreateVBOs();
+
+	void BindVertexAttribs() const;
+	void UnbindVertexAttribs() const;
+
+	void BindIndexVBO() const;
+	void UnbindIndexVBO() const;
+
+	void BindVertexVBO() const;
+	void UnbindVertexVBO() const;
+
+	void DrawElements(GLenum prim, uint32_t vboIndxStart, uint32_t vboIndxEnd) const;
+
+	void UploadToVBO(const std::vector<SVertexData>& vertices, const std::vector<uint32_t>& indices, const uint32_t vertStart, const uint32_t indxStart) const;
 
 	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
 	void DeletePieces() {
@@ -324,6 +371,12 @@ public:
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
 	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or ASSIMP)
+
+	std::unique_ptr<VBO> vertVBO;
+	std::unique_ptr<VBO> indxVBO;
+
+	uint32_t curVertStartIndx;
+	uint32_t curIndxStartIndx;
 
 	ModelType type;
 

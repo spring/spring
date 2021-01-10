@@ -11,15 +11,25 @@
 #include "System/Log/ILog.h"
 #include "System/SpringMath.h"
 #include "System/SafeUtil.h"
+#include "Rendering/MatrixUploader.h"
 #include "Rendering/GL/VBO.h"
+#include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 #include "LuaUtils.h"
 
-LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_):
+LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt):
 	defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}, freqUpdated{freqUpdatedOpt.value_or(false)},
 	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}
 {
-	memcpy(&L[0], &L_, std::min(sizeof(sol::this_state_container), sizeof(sol::this_state)));
+
 }
 
 LuaVBOImpl::~LuaVBOImpl()
@@ -31,8 +41,11 @@ LuaVBOImpl::~LuaVBOImpl()
 void LuaVBOImpl::Delete()
 {
 	//safe to call multiple times
-	spring::SafeDestruct(vbo);
+	if (vboOwner)
+		spring::SafeDestruct(vbo);
+
 	bufferAttribDefs.clear();
+	bufferAttribDefsVec.clear();
 }
 
 /////////////////////////////////
@@ -356,13 +369,15 @@ bool LuaVBOImpl::DefineElementArray(const sol::optional<sol::object> attribDefAr
 		static_cast<GLsizei>(elemSizeInBytes) // strideSizeInBytes
 	};
 
+	attributesCount = 1;
+
 	return true;
 }
 
 void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt)
 {
 	if (vbo) {
-		LuaError("[LuaVBOImpl::%s] Attempt to call %s multiple times. VBO definition is immutable.", __func__);
+		LuaError("[LuaVBOImpl::%s] Attempt to call %s() multiple times. VBO definition is immutable.", __func__, __func__);
 	}
 
 	if (elementsCount <= 0) {
@@ -406,10 +421,19 @@ void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object
 	AllocGLBuffer(elemSizeInBytes * elementsCount);
 }
 
+std::tuple<uint32_t, uint32_t, uint32_t> LuaVBOImpl::GetBufferSize()
+{
+	return std::make_tuple(
+		elementsCount,
+		bufferSizeInBytes,
+		static_cast<uint32_t>(vbo != nullptr ? vbo->GetSize() : 0u)
+	);
+}
+
 size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> attribIdxOpt)
 {
 	if (!vbo) {
-		LuaError("[LuaVBOImpl::%s] Invalid VBO. Did you call :Define()?", __func__);
+		LuaError("[LuaVBOImpl::%s] Invalid VBO. Did you call :Define() or :ShapeFromUnitDefID/ShapeFromFeatureDefID()?", __func__);
 	}
 
 	const uint32_t elemOffset = static_cast<uint32_t>(std::max(elemOffsetOpt.value_or(0), 0));
@@ -422,7 +446,6 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 		LuaError("[LuaVBOImpl::%s] attribIdx is not found in bufferAttribDefs", __func__);
 	}
 
-	const uint32_t bufferOffsetInBytes = elemOffset * elemSizeInBytes;
 	const int luaTblDataSize = luaTblData.size();
 
 	std::vector<lua_Number> dataVec;
@@ -433,95 +456,7 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 		dataVec[k] = luaTblData.raw_get_or<lua_Number>(k + 1, defaultValue);
 	}
 
-	vbo->Bind();
-	const int mappedBufferSizeInBytes = bufferSizeInBytes - bufferOffsetInBytes;
-	auto mappedBuf = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_WRITE_BIT);
-
-	/*
-	#define TRANSFORM_COPY_ATTRIB(outT, sz, iter, mcpy) \
-	{ \
-		constexpr int outValSize = sizeof(outT); \
-		const int outValSizeStride = sz * outValSize; \
-		if (bytesWritten + outValSizeStride > mappedBufferSizeInBytes) { \
-			vbo->UnmapBuffer(); \
-			vbo->Unbind(); \
-			LuaError("[LuaVBOImpl::%s] Upload array contains too much data", __func__); \
-			return bytesWritten; \
-		} \
-		if (mcpy) { \
-			for (int n = 0; n < sz; ++n) { \
-				const auto outVal = TransformFunc<lua_Number, outT>(*iter); \
-				memcpy(mappedBuf, &outVal, outValSize); \
-				mappedBuf += outValSize; \
-				++iter; \
-			} \
-		} else { \
-			mappedBuf += outValSizeStride; \
-		} \
-		bytesWritten += outValSizeStride; \
-	}
-	*/
-
-	int bytesWritten = 0;
-	for (auto bdvIter = dataVec.cbegin(); bdvIter < dataVec.cend(); ) {
-		for (const auto& va : bufferAttribDefsVec) {
-			const int   attrID  = va.first;
-			const auto& attrDef = va.second;
-
-			int basicTypeSize = attrDef.size;
-
-			//vec4, uvec4, ivec4, mat4, etc...
-			// for the purpose of type cast we need basic types
-			if (attrDef.typeSizeInBytes > 4) {
-				assert(attrDef.typeSizeInBytes % 4 == 0);
-				basicTypeSize *= attrDef.typeSizeInBytes >> 2; // / 4;
-			}
-
-			bool copyData = attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
-
-			#define TRANSFORM_AND_WRITE(T) { \
-				if (!TransformAndWrite<T>(bytesWritten, mappedBuf, mappedBufferSizeInBytes, basicTypeSize, bdvIter, copyData)) { \
-					vbo->UnmapBuffer(); \
-					vbo->Unbind(); \
-					return bytesWritten; \
-				} \
-			}
-
-			switch (attrDef.type) {
-			case GL_BYTE:
-				TRANSFORM_AND_WRITE(int8_t)
-				break;
-			case GL_UNSIGNED_BYTE:
-				TRANSFORM_AND_WRITE(uint8_t);
-				break;
-			case GL_SHORT:
-				TRANSFORM_AND_WRITE(int16_t);
-				break;
-			case GL_UNSIGNED_SHORT:
-				TRANSFORM_AND_WRITE(uint16_t);
-				break;
-			case GL_INT:
-			case GL_INT_VEC4:
-				TRANSFORM_AND_WRITE(int32_t);
-				break;
-			case GL_UNSIGNED_INT:
-			case GL_UNSIGNED_INT_VEC4:
-				TRANSFORM_AND_WRITE(uint32_t);
-				break;
-			case GL_FLOAT:
-			case GL_FLOAT_VEC4:
-			case GL_FLOAT_MAT4:
-				TRANSFORM_AND_WRITE(GLfloat);
-				break;
-			}
-
-			#undef TRANSFORM_AND_WRITE
-		}
-	}
-
-	vbo->UnmapBuffer();
-	vbo->Unbind();
-	return bytesWritten;
+	return UploadImpl<lua_Number>(dataVec, elemOffset, attribIdx);
 }
 
 sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<int> attribIdxOpt)
@@ -613,6 +548,317 @@ sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optiona
 	return sol::as_table(dataVec);
 }
 
+/*
+	float3 pos;
+	float3 normal = UpVector;
+	float3 sTangent;
+	float3 tTangent;
+
+	// TODO:
+	//   with pieceIndex this struct is no longer 64 bytes in size which ATI's prefer
+	//   support an arbitrary number of channels, would be easy but overkill (for now)
+	float2 texCoords[NUM_MODEL_UVCHANNS];
+
+	uint32_t pieceIndex = 0;
+*/
+template<typename TObj>
+size_t LuaVBOImpl::ShapeFromDefIDImpl(const int defID)
+{
+	const auto engineVertAttribDefFunc = [this]() {
+		// float3 pos
+		this->bufferAttribDefs[0] = {
+			GL_FLOAT, //type
+			3, //size
+			GL_FALSE, //normalized
+			"pos", //name
+			offsetof(SVertexData, pos), //pointer
+			sizeof(float), //typeSizeInBytes
+			3 * sizeof(float) //strideSizeInBytes
+		};
+
+		// float3 normal
+		this->bufferAttribDefs[1] = {
+			GL_FLOAT, //type
+			3, //size
+			GL_FALSE, //normalized
+			"normal", //name
+			offsetof(SVertexData, normal), //pointer
+			sizeof(float), //typeSizeInBytes
+			3 * sizeof(float) //strideSizeInBytes
+		};
+
+		// float3 sTangent
+		this->bufferAttribDefs[2] = {
+			GL_FLOAT, //type
+			3, //size
+			GL_FALSE, //normalized
+			"sTangent", //name
+			offsetof(SVertexData, sTangent), //pointer
+			sizeof(float), //typeSizeInBytes
+			3 * sizeof(float) //strideSizeInBytes
+		};
+
+		// float3 tTangent
+		this->bufferAttribDefs[3] = {
+			GL_FLOAT, //type
+			3, //size
+			GL_FALSE, //normalized
+			"tTangent", //name
+			offsetof(SVertexData, tTangent), //pointer
+			sizeof(float), //typeSizeInBytes
+			3 * sizeof(float) //strideSizeInBytes
+		};
+
+		// 2 x float2 texCoords, packed as vec4
+		this->bufferAttribDefs[4] = {
+			GL_FLOAT, //type
+			4, //size
+			GL_FALSE, //normalized
+			"texCoords", //name
+			offsetof(SVertexData, texCoords), //pointer
+			sizeof(float), //typeSizeInBytes
+			4 * sizeof(float) //strideSizeInBytes
+		};
+
+		// uint32_t pieceIndex
+		this->bufferAttribDefs[5] = {
+			GL_UNSIGNED_INT, //type
+			1, //size
+			GL_FALSE, //normalized
+			"pieceIndex", //name
+			offsetof(SVertexData, pieceIndex), //pointer
+			sizeof(uint32_t), //typeSizeInBytes
+			1 * sizeof(uint32_t) //strideSizeInBytes
+		};
+
+		this->attributesCount = 6;
+		this->elemSizeInBytes = sizeof(SVertexData);
+		this->bufferSizeInBytes = vbo->GetSize();
+		this->elementsCount = this->bufferSizeInBytes / this->elemSizeInBytes;
+	};
+
+	const auto engineIndxAttribDefFunc = [this]() {
+		// float3 pos
+		this->bufferAttribDefs[0] = {
+			GL_UNSIGNED_INT, //type
+			1, //size
+			GL_FALSE, //normalized
+			"index", //name
+			0, //pointer
+			sizeof(uint32_t), //typeSizeInBytes
+			1 * sizeof(uint32_t) //strideSizeInBytes
+		};
+
+		this->attributesCount = 1;
+		this->elemSizeInBytes = sizeof(uint32_t);
+		this->bufferSizeInBytes = vbo->GetSize();
+		this->elementsCount = this->bufferSizeInBytes / this->elemSizeInBytes;
+	};
+
+	const SolidObjectDef* objDef;
+	if constexpr (std::is_same<TObj, UnitDef>::value)
+		objDef = unitDefHandler->GetUnitDefByID(defID);
+
+	if constexpr (std::is_same<TObj, FeatureDef>::value)
+		objDef = featureDefHandler->GetFeatureDefByID(defID);
+
+	if (objDef == nullptr)
+		LuaError("[LuaVBOImpl::%s] Supplied invalid objectDefID [%u]", __func__, defID);
+
+	const S3DModel* model = objDef->LoadModel();
+	if (model == nullptr)
+		LuaError("[LuaVBOImpl::%s] failed to load model for objectDefID [%u]", __func__, defID);
+
+	switch (defTarget) {
+	case GL_ARRAY_BUFFER: {
+		vbo = model->vertVBO.get(); //hack but should be fine
+		if (vbo == nullptr)
+			LuaError("[LuaVBOImpl::%s] Vertex VBO for objectDefID [%u] is unexpectedly nullptr", __func__, defID);
+
+		engineVertAttribDefFunc();
+	} break;
+	case GL_ELEMENT_ARRAY_BUFFER: {
+		vbo = model->indxVBO.get(); //hack but should be fine
+		if (vbo == nullptr)
+			LuaError("[LuaVBOImpl::%s] Index VBO for objectDefID [%u] is unexpectedly nullptr", __func__, defID);
+
+		engineIndxAttribDefFunc();
+	} break;
+	default:
+		LuaError("[LuaVBOImpl::%s] Invalid buffer target [%u]", __func__, defTarget);
+	}
+
+	CopyAttrMapToVec();
+
+	vboOwner = false;
+
+	return bufferSizeInBytes;
+}
+
+template<typename TObj>
+size_t LuaVBOImpl::OffsetFromImpl(const int id, const int attrID)
+{
+	if (!vbo) {
+		LuaError("[LuaVBOImpl::%s] Invalid instance VBO. Did you call :Define() succesfully?", __func__);
+	}
+
+	if (bufferAttribDefs.find(attrID) == bufferAttribDefs.cend()) {
+		LuaError("[LuaVBOImpl::%s] No instance attribute definition %d found", __func__, attrID);
+	}
+
+	const BufferAttribDef& bad = bufferAttribDefs[attrID];
+	if (bad.type != GL_UNSIGNED_INT) {
+		LuaError("[LuaVBOImpl::%s] Instance VBO attribute %d must have a type of GL_UNSIGNED_INT", __func__, attrID);
+	}
+
+	uint32_t ssboElemOffset;
+	if constexpr (std::is_same<TObj, CUnit>::value) {
+		ssboElemOffset = MatrixUploader::GetInstance().GetUnitElemOffset(id);
+	}
+
+	if constexpr (std::is_same<TObj, CFeature>::value) {
+		ssboElemOffset = MatrixUploader::GetInstance().GetFeatureElemOffset(id);
+	}
+
+	if constexpr (std::is_same<TObj, UnitDef>::value) {
+		ssboElemOffset = MatrixUploader::GetInstance().GetUnitDefElemOffset(id);
+	}
+
+	if constexpr (std::is_same<TObj, FeatureDef>::value) {
+		ssboElemOffset = MatrixUploader::GetInstance().GetFeatureDefElemOffset(id);
+	}
+
+	if (ssboElemOffset == ~0u) {
+		LuaError("[LuaVBOImpl::%s] Invalid data supplied. See infolog for details", __func__);
+	}
+
+	std::vector<uint32_t> elemOffsets;
+	elemOffsets.resize(elementsCount);
+	std::fill(elemOffsets.begin(), elemOffsets.end(), ssboElemOffset);
+
+	size_t bytesWritten = 0u;
+	return UploadImpl<uint32_t>(elemOffsets, 0u, attrID);
+}
+
+template<typename TIn>
+size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t elemOffset, const int attribIdx)
+{
+	vbo->Bind();
+	const uint32_t bufferOffsetInBytes = elemOffset * elemSizeInBytes;
+	const int mappedBufferSizeInBytes = bufferSizeInBytes - bufferOffsetInBytes;
+	auto mappedBuf = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_WRITE_BIT);
+
+	int bytesWritten = 0;
+	for (auto bdvIter = dataVec.cbegin(); bdvIter < dataVec.cend();) {
+		for (const auto& va : bufferAttribDefsVec) {
+			const int   attrID = va.first;
+			const auto& attrDef = va.second;
+
+			int basicTypeSize = attrDef.size;
+
+			//vec4, uvec4, ivec4, mat4, etc...
+			// for the purpose of type cast we need basic types
+			if (attrDef.typeSizeInBytes > 4) {
+				assert(attrDef.typeSizeInBytes % 4 == 0);
+				basicTypeSize *= attrDef.typeSizeInBytes >> 2; // / 4;
+			}
+
+			bool copyData = attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
+
+			#define TRANSFORM_AND_WRITE(T) { \
+				if (!TransformAndWrite<TIn, T>(bytesWritten, mappedBuf, mappedBufferSizeInBytes, basicTypeSize, bdvIter, copyData)) { \
+					vbo->UnmapBuffer(); \
+					vbo->Unbind(); \
+					return bytesWritten; \
+				} \
+			}
+
+			switch (attrDef.type) {
+			case GL_BYTE:
+				TRANSFORM_AND_WRITE(int8_t)
+					break;
+			case GL_UNSIGNED_BYTE:
+				TRANSFORM_AND_WRITE(uint8_t);
+				break;
+			case GL_SHORT:
+				TRANSFORM_AND_WRITE(int16_t);
+				break;
+			case GL_UNSIGNED_SHORT:
+				TRANSFORM_AND_WRITE(uint16_t);
+				break;
+			case GL_INT:
+			case GL_INT_VEC4:
+				TRANSFORM_AND_WRITE(int32_t);
+				break;
+			case GL_UNSIGNED_INT:
+			case GL_UNSIGNED_INT_VEC4:
+				TRANSFORM_AND_WRITE(uint32_t);
+				break;
+			case GL_FLOAT:
+			case GL_FLOAT_VEC4:
+			case GL_FLOAT_MAT4:
+				TRANSFORM_AND_WRITE(GLfloat);
+				break;
+			}
+
+		#undef TRANSFORM_AND_WRITE
+		}
+	}
+
+	vbo->UnmapBuffer();
+	vbo->Unbind();
+	return bytesWritten;
+}
+
+
+size_t LuaVBOImpl::ShapeFromUnitDefID(const int id)
+{
+	return ShapeFromDefIDImpl<UnitDef>(id);
+}
+
+size_t LuaVBOImpl::ShapeFromFeatureDefID(const int id)
+{
+	return ShapeFromDefIDImpl<FeatureDef>(id);
+}
+
+size_t LuaVBOImpl::ShapeFromUnitID(const int id)
+{
+	const CUnit* obj = unitHandler.GetUnit(id);
+	if (obj == nullptr)
+		LuaError("[LuaVBOImpl::%s] Supplied invalid unitID %d", __func__, id);
+
+	return ShapeFromUnitDefID(obj->unitDef->id);
+}
+
+size_t LuaVBOImpl::ShapeFromFeatureID(const int id)
+{
+	const CFeature* obj = featureHandler.GetFeature(id);
+	if (obj == nullptr)
+		LuaError("[LuaVBOImpl::%s] Supplied invalid featureID %d", __func__, id);
+
+	return ShapeFromFeatureDefID(obj->def->id);
+}
+
+size_t LuaVBOImpl::OffsetFromUnitDefID(const int id, const int attrID)
+{
+	return OffsetFromImpl<UnitDef>(id, attrID);
+}
+
+size_t LuaVBOImpl::OffsetFromFeatureDefID(const int id, const int attrID)
+{
+	return OffsetFromImpl<FeatureDef>(id, attrID);
+}
+
+size_t LuaVBOImpl::OffsetFromUnitID(const int id, const int attrID)
+{
+	return OffsetFromImpl<CUnit>(id, attrID);
+}
+
+size_t LuaVBOImpl::OffsetFromFeatureID(const int id, const int attrID)
+{
+	return OffsetFromImpl<CFeature>(id, attrID);
+}
+
 int LuaVBOImpl::BindBufferRangeImpl(const GLuint index,  const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, const bool bind)
 {
 	if (!vbo) {
@@ -693,7 +939,7 @@ void LuaVBOImpl::DumpDefinition()
 
 void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 {
-	if (defTarget == GL_UNIFORM_BUFFER && bufferSizeInBytes > BUFFER_SANE_LIMIT_BYTES) {
+	if (defTarget == GL_UNIFORM_BUFFER && bufferSizeInBytes > UBO_SAFE_SIZE_BYTES) {
 		LuaError("[LuaVBOImpl::%s] Exceeded [%u] safe UBO buffer size limit of [%u] bytes", __func__, bufferSizeInBytes, LuaVBOImpl::UBO_SAFE_SIZE_BYTES);
 	}
 
@@ -707,6 +953,8 @@ void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 	vbo->Bind();
 	vbo->New(byteSize, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	vbo->Unbind();
+
+	vboOwner = true;
 }
 
 // Allow for a ~magnitude faster loops than other the map
@@ -728,7 +976,7 @@ T LuaVBOImpl::MaybeFunc(const sol::table& tbl, const std::string& key, T defValu
 	return maybeValue.value_or(defValue);
 }
 
-template<typename TOut, typename TIter>
+template<typename TIn, typename TOut, typename TIter>
 bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int count, TIter& bdvIter, const bool copyData)
 {
 	constexpr int outValSize = sizeof(TOut);
@@ -741,7 +989,7 @@ bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const
 
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
-			const auto outVal = TransformFunc<lua_Number, TOut>(*bdvIter);
+			const auto outVal = TransformFunc<TIn, TOut>(*bdvIter);
 			memcpy(mappedBuf, &outVal, outValSize);
 			mappedBuf += outValSize;
 			++bdvIter;
@@ -782,7 +1030,8 @@ bool LuaVBOImpl::TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int
 }
 
 template<typename ...Args>
-void LuaVBOImpl::LuaError(std::string format, Args ...args)
+void LuaVBOImpl::LuaError(const std::string& format, Args ...args)
 {
-	luaL_error(*reinterpret_cast<sol::this_state*>(L), fmt::sprintf(format, args...).c_str());
+	std::string what = fmt::sprintf(format, args...);
+	throw std::runtime_error(what.c_str());
 }

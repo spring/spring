@@ -467,7 +467,7 @@ void CAssParser::SetPieceParentName(
 	}
 }
 
-void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene)
+void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const aiScene* scene)
 {
 	std::vector<unsigned> meshVertexMapping;
 
@@ -496,10 +496,11 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 		for (unsigned vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
 			const aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
 
-			SAssVertex vertex;
+			SVertexData vertex;
 
 			// vertex coordinates
 			vertex.pos = aiVectorToFloat3(aiVertex);
+			vertex.pieceIndex = model->numPieces - 1;
 
 			// update piece min/max extents
 			piece->mins = float3::min(piece->mins, vertex.pos);
@@ -626,6 +627,7 @@ SAssPiece* CAssParser::LoadPiece(
 	}
 
 	SetPieceName(piece, model, pieceNode, pieceMap);
+	piece->SetParentModel(model);
 
 	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
 
@@ -637,7 +639,7 @@ SAssPiece* CAssParser::LoadPiece(
 
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
-	LoadPieceGeometry(piece, pieceNode, scene);
+	LoadPieceGeometry(piece, model, pieceNode, scene);
 	SetPieceParentName(piece, model, pieceNode, pieceTable, parentMap);
 
 	{
@@ -823,85 +825,6 @@ void CAssParser::FindTextures(
 	model->texs[1] = FindTexture(modelTable.GetString("tex2", ""), modelPath, model->texs[1]);
 }
 
-
-void SAssPiece::UploadGeometryVBOs()
-{
-	if (!HasGeometryData())
-		return;
-
-	//FIXME share 1 VBO for ALL models
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.New(vertices.size() * sizeof(SAssVertex), GL_STATIC_DRAW, &vertices[0]);
-	vboAttributes.Unbind();
-
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
-	vboIndices.Unbind();
-
-	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
-	// vertices.clear();
-	// indices.clear();
-}
-
-
-void SAssPiece::BindVertexAttribVBOs() const
-{
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, pos)));
-
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, normal)));
-
-		// primary and secondary texture use first UV channel
-		for (unsigned int n = 0; n < NUM_MODEL_TEXTURES; n++) {
-			glClientActiveTexture(GL_TEXTURE0 + n);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (0 * sizeof(float2))));
-		}
-
-		// extra UV channels (currently at most one)
-		for (unsigned int n = 1; n < GetNumTexCoorChannels(); n++) {
-			assert((GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1)) < GL_TEXTURE5);
-			glClientActiveTexture(GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1));
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (n * sizeof(float2))));
-		}
-
-		glClientActiveTexture(GL_TEXTURE5);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, sTangent)));
-
-		glClientActiveTexture(GL_TEXTURE6);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, tTangent)));
-	vboAttributes.Unbind();
-}
-
-
-void SAssPiece::UnbindVertexAttribVBOs() const
-{
-	glClientActiveTexture(GL_TEXTURE6);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE5);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE2);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE1);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE0);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-
 void SAssPiece::DrawForList() const
 {
 	if (!HasGeometryData())
@@ -915,9 +838,9 @@ void SAssPiece::DrawForList() const
 	 * being split thanks to aiProcess_Triangulate
 	 */
 	BindVertexAttribVBOs();
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
+	BindIndexVBO();
+		DrawElements(GL_TRIANGLES);
+	UnbindIndexVBO();
 	UnbindVertexAttribVBOs();
 }
 

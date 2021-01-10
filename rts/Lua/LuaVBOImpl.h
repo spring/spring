@@ -8,6 +8,7 @@
 #include <string>
 
 #include "lib/lua/include/lua.h" //for lua_Number
+//#include "lib/sol2/forward.hpp"
 #include "lib/sol2/forward.hpp"
 
 #include "Rendering/GL/myGL.h"
@@ -15,15 +16,10 @@
 struct VBO;
 struct LuaVAOImpl;
 
-// Workaround to continue using lib/sol2/forward.hpp
-namespace sol {
-	using this_state_container = unsigned char[sizeof(void*)]; //enough room to hold a pointer
-}
-
 class LuaVBOImpl {
 public:
 	LuaVBOImpl() = delete;
-	LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_);
+	LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt);
 	LuaVBOImpl(const LuaVBOImpl&) = delete; //no copy cons
 	LuaVBOImpl(LuaVBOImpl&&) = default; //move cons
 
@@ -31,9 +27,20 @@ public:
 	void Delete();
 
 	void Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt);
+	std::tuple<uint32_t, uint32_t, uint32_t> GetBufferSize();
 
 	size_t Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> attribIdxOpt);
 	sol::as_table_t<std::vector<lua_Number>> Download(const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<int> attribIdxOpt);
+
+	size_t ShapeFromUnitDefID(const int id);
+	size_t ShapeFromFeatureDefID(const int id);
+	size_t ShapeFromUnitID(const int id);
+	size_t ShapeFromFeatureID(const int id);
+
+	size_t OffsetFromUnitDefID(const int id, const int attrID);
+	size_t OffsetFromFeatureDefID(const int id, const int attrID);
+	size_t OffsetFromUnitID(const int id, const int attrID);
+	size_t OffsetFromFeatureID(const int id, const int attrID);
 
 	int BindBufferRange  (const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
 	int UnbindBufferRange(const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
@@ -55,13 +62,22 @@ private:
 	bool FillAttribsNumberImpl(const int numVec4Attribs);
 	bool DefineElementArray(const sol::optional<sol::object> attribDefArgOpt);
 private:
-	template <typename... Args>
-	void LuaError(std::string format, Args... args);
+	template<typename... Args>
+	void LuaError(const std::string& format, Args... args);
+
+	template<typename TObj>
+	size_t ShapeFromDefIDImpl(const int defID);
+
+	template<typename TObj>
+	size_t OffsetFromImpl(const int id, const int attrID);
+
+	template<typename TIn>
+	size_t UploadImpl(const std::vector<TIn>& dataVec, const uint32_t elemOffset, const int attribIdx);
 
 	template<typename T>
 	static T MaybeFunc(const sol::table& tbl, const std::string& key, T defValue);
 
-	template<typename TOut, typename TIter>
+	template<typename TIn, typename TOut, typename TIter>
 	bool TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int size, TIter& bdvIter, const bool copyData);
 
 	template<typename TIn>
@@ -91,6 +107,7 @@ private:
 	uint32_t bufferSizeInBytes;
 
 	VBO* vbo = nullptr;
+	bool vboOwner;
 
 	std::vector<std::pair<const int, const BufferAttribDef>> bufferAttribDefsVec;
 	std::map<const int, BufferAttribDef> bufferAttribDefs;
@@ -106,8 +123,6 @@ private:
 	static constexpr GLenum DEFAULT_VERT_ATTR_TYPE = GL_FLOAT;
 	static constexpr GLenum DEFAULT_BUFF_ATTR_TYPE = GL_FLOAT_VEC4;
 	static constexpr GLenum DEFAULT_INDX_ATTR_TYPE = GL_UNSIGNED_SHORT;
-private:
-	sol::this_state_container L;
 };
 
 

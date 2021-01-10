@@ -5,8 +5,14 @@
 
 #include <cstdint>
 #include <utility>
+#include "Rendering/GL/myGL.h"
 
 struct VAO {
+public:
+	static bool IsSupported() {
+		static bool supported = GLEW_ARB_vertex_array_object;
+		return supported;
+	}
 public:
 	VAO() = default;
 	VAO(const VAO& v) = delete;

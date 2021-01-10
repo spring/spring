@@ -11,12 +11,6 @@ project(Spring)
 
 add_definitions(-DFMT_HEADER_ONLY) #for fmt lib
 
-# for sol2 lib
-add_definitions(-DLUA_VERSION_NUM=501)
-add_definitions(-DSOL_USING_CXX_LUA=1)
-add_definitions(-DSOL_ALL_SAFETIES_ON=1)
-add_definitions(-DSOL_NO_CHECK_NUMBER_PRECISION=1)
-
 # dummy so that qtcreator shows all files (even those of windows)
 if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 	add_library(platform_sources EXCLUDE_FROM_ALL "")

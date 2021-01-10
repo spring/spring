@@ -11,6 +11,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
@@ -105,6 +106,14 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	float4 fogParams = (sky != nullptr) ? float4{sky->fogStart * camPlayer->GetFarPlaneDist(), sky->fogEnd * camPlayer->GetFarPlaneDist(), 0.0f, 0.0f} : float4{0.1f * CGlobalRendering::MAX_VIEW_RANGE, 1.0f * CGlobalRendering::MAX_VIEW_RANGE, 0.0f, 0.0f};
 	fogParams.w = 1.0f / (fogParams.y - fogParams.x);
 	updateBuffer->fogParams = fogParams;
+
+	for (int teamID = 0; teamID < teamHandler.ActiveTeams(); ++teamID) {
+		const CTeam* team = teamHandler.Team(teamID);
+		if (team == nullptr || !teamHandler.IsActiveTeam(teamID))
+			continue;
+
+		updateBuffer->teamColor[teamID] = float4{team->color[0] / 255.0f, team->color[1] / 255.0f, team->color[2] / 255.0f, team->color[3] / 255.0f};
+	}
 }
 
 template<typename TBuffType, typename TUpdateFunc>

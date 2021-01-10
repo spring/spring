@@ -1,6 +1,7 @@
 #ifndef MATRIX_UPLOADER_H
 #define MATRIX_UPLOADER_H
 
+#include <string>
 #include <cstdint>
 #include <vector>
 #include <unordered_set>
@@ -38,7 +39,8 @@ public:
 
 class MatrixUploader {
 public:
-	static const bool enabled = false; ////////!!!!!!!!!!!!!!!!!!!!
+	static constexpr bool enabled = true;
+	static constexpr bool checkInView = false;
 	static MatrixUploader& GetInstance() {
 		static MatrixUploader instance;
 		return instance;
@@ -52,31 +54,47 @@ public:
 	void Kill();
 	void UpdateAndBind();
 public:
+	uint32_t GetUnitDefElemOffset(int32_t unitDefID);
+	uint32_t GetFeatureDefElemOffset(int32_t featureDefID);
+	uint32_t GetUnitElemOffset(int32_t unitID);
+	uint32_t GetFeatureElemOffset(int32_t featureID);
+public:
 	friend class ProxyProjectileListener;
 private:
 	template<typename TObj>
 	bool IsObjectVisible(const TObj* obj);
+
 	template<typename TObj>
 	bool IsInView(const TObj* obj);
+
 	template<typename TObj>
-	void GetVisibleObjects();
+	void GetVisibleObjects(std::unordered_map<int, const TObj*>& visibleObjects);
 private:
 	void KillVBO();
 	void InitVBO(const uint32_t newElemCount);
 	uint32_t GetMatrixElemCount();
+
+	bool UpdateObjectDefs();
+
+	template<typename TObj>
+	void UpdateVisibleObjects();
 private:
-	static constexpr uint32_t MATRIX_SSBO_BINDING_IDX = 4;
+	static constexpr uint32_t MATRIX_SSBO_BINDING_IDX = 0;
 	static constexpr uint32_t elemCount0 = 1u << 12;
-	static constexpr uint32_t elemIncreaseBy = 1u << 9;
-	static constexpr uint32_t elemSizingDownDiv = 4;
+	static constexpr uint32_t elemIncreaseBy = 1u << 10;
 private:
 	bool initialized = false;
+	uint32_t elemUpdateOffset = 0u; // a index offset separating constant part of the buffer from varying part
 
 	ProxyProjectileListener* proxyProjectileListener;
 
-	std::vector<const CUnit*> visibleUnits;
-	std::vector<const CFeature*> visibleFeatures;
-	std::vector<const CProjectile*> visibleProjectiles;
+	std::unordered_map<int32_t, std::string> unitDefToModel;
+	std::unordered_map<int32_t, std::string> featureDefToModel;
+	std::unordered_map<std::string, uint32_t> modelToOffsetMap;
+
+	std::unordered_map<int32_t, uint32_t> unitIDToOffsetMap;
+	std::unordered_map<int32_t, uint32_t> featureIDToOffsetMap;
+	std::unordered_map<int32_t, uint32_t> weaponIDToOffsetMap;
 
 	std::unordered_set<const CProjectile*> visibleProjectilesSet;
 
