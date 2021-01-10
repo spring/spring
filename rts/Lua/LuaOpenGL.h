@@ -247,6 +247,7 @@ class LuaOpenGL {
 		static int TexRect(lua_State* L);
 
 		static int DispatchCompute(lua_State* L);
+		static int MemoryBarrier(lua_State* L);
 
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);

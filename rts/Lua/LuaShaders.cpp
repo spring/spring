@@ -510,6 +510,7 @@ int LuaShaders::CreateShader(lua_State* L)
 	std::vector<std::string> tesSrcs;
 	std::vector<std::string> geomSrcs;
 	std::vector<std::string> fragSrcs;
+	std::vector<std::string> compSrcs;
 
 	ParseShaderTable(L, 1, "defines", shdrDefs);
 	ParseShaderTable(L, 1, "definitions", shdrDefs);
@@ -525,8 +526,18 @@ int LuaShaders::CreateShader(lua_State* L)
 	if (!ParseShaderTable(L, 1, "fragment", fragSrcs))
 		return 0;
 
+	if (!ParseShaderTable(L, 1, "compute", compSrcs))
+		return 0;
+
+	const bool graphicSrcEmpty = vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty() && tcsSrcs.empty() && tesSrcs.empty();
+	const bool computeSrcEmpty = compSrcs.empty();
+
 	// tables might have contained empty strings
-	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty() && tcsSrcs.empty() && tesSrcs.empty())
+	if (graphicSrcEmpty && computeSrcEmpty)
+		return 0;
+
+	// tables might have contained both types of shader programs
+	if (!graphicSrcEmpty && !computeSrcEmpty)
 		return 0;
 
 	bool success;
@@ -535,21 +546,21 @@ int LuaShaders::CreateShader(lua_State* L)
 	if (!success)
 		return 0;
 
-	const GLuint tcsObj = CompileObject(L, shdrDefs, tcsSrcs, GL_TESS_CONTROL_SHADER, success);
+	const GLuint tcsObj = CompileObject(L, shdrDefs,  tcsSrcs, GL_TESS_CONTROL_SHADER, success);
 
 	if (!success) {
 		glDeleteShader(vertObj);
 		return 0;
 	}
 
-	const GLuint tesObj = CompileObject(L, shdrDefs, tesSrcs,  GL_TESS_EVALUATION_SHADER, success);
+	const GLuint tesObj = CompileObject(L, shdrDefs,  tesSrcs,  GL_TESS_EVALUATION_SHADER, success);
 
 	if (!success) {
 		glDeleteShader(vertObj);
 		glDeleteShader(tcsObj);
 		return 0;
 	}
-	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
+	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER, success);
 
 	if (!success) {
 		glDeleteShader(vertObj);
@@ -567,6 +578,11 @@ int LuaShaders::CreateShader(lua_State* L)
 		glDeleteShader(geomObj);
 		return 0;
 	}
+
+	const GLuint compObj = CompileObject(L, shdrDefs, compSrcs, GL_COMPUTE_SHADER, success);
+
+	if (!success)
+		return 0;
 
 	const GLuint prog = glCreateProgram();
 
@@ -588,12 +604,18 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (geomObj != 0) {
 		glAttachShader(prog, geomObj);
-		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER_EXT);
+		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER);
 		ApplyGeometryParameters(L, 1, prog); // done before linking
 	}
+
 	if (fragObj != 0) {
 		glAttachShader(prog, fragObj);
 		p.objects.emplace_back(fragObj, GL_FRAGMENT_SHADER);
+	}
+
+	if (compObj != 0) {
+		glAttachShader(prog, compObj);
+		p.objects.emplace_back(compObj, GL_COMPUTE_SHADER);
 	}
 
 	GLint linkStatus;

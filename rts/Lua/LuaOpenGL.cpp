@@ -380,6 +380,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
 
+	REGISTER_LUA_CFUNC(DispatchCompute);
+	REGISTER_LUA_CFUNC(MemoryBarrier);
+
 	REGISTER_LUA_CFUNC(BeginText);
 	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(EndText);
@@ -2399,6 +2402,38 @@ int LuaOpenGL::TexRect(lua_State* L)
 
 	return 0;
 }
+
+int LuaOpenGL::DispatchCompute(lua_State* L)
+{
+	const GLuint numGroupX = (GLuint)luaL_checknumber(L, 1);
+	const GLuint numGroupY = (GLuint)luaL_checknumber(L, 2);
+	const GLuint numGroupZ = (GLuint)luaL_checknumber(L, 3);
+
+	GLint maxNumGroups[3];
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &maxNumGroups[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &maxNumGroups[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &maxNumGroups[2]);
+
+	if (numGroupX < 0 && numGroupX > maxNumGroups[0] ||
+		numGroupY < 0 && numGroupY > maxNumGroups[1] ||
+		numGroupZ < 0 && numGroupZ > maxNumGroups[2])
+		luaL_error(L, "%s Incorrect number of work groups specified x: 0 > %d < %d; y: 0 > %d < %d; z: 0 > %d < %d", __func__, numGroupX, maxNumGroups[0], numGroupY, maxNumGroups[1], numGroupZ, maxNumGroups[2]);
+
+	glDispatchCompute(numGroupX, numGroupY, numGroupZ);
+	return 0;
+}
+
+int LuaOpenGL::MemoryBarrier(lua_State* L)
+{
+	GLbitfield barriers = (GLbitfield)luaL_optint(L, 1, 0);
+	//skip checking the correctness of values :)
+
+	if (barriers > 0u)
+		glMemoryBarrier(barriers);
+
+	return 0;
+}
+
 
 
 /******************************************************************************/
