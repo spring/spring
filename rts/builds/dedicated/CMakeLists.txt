@@ -180,6 +180,11 @@ if    (MSVC)
 endif (MSVC)
 add_dependencies(engine-dedicated generateVersionFiles)
 
+if    (MINGW)
+	# To enable console output/force a console window to open
+	set_target_properties(engine-dedicated PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+endif (MINGW)
+
 install(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
 # Only build & install spring-dedicated executable & dependencies
