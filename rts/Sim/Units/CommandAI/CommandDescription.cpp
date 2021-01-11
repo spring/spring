@@ -7,9 +7,6 @@
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Pair.h"
-#include "System/Config/ConfigHandler.h"
-
-CONFIG(int, CommandDescriptionCacheSize).defaultValue(1024).safemodeValue(1024).description("Size of Command Cache Description Array");
 
 CR_BIND(SCommandDescription, )
 CR_REG_METADATA(SCommandDescription, (
@@ -71,14 +68,8 @@ CCommandDescriptionCache commandDescriptionCache;
 
 void CCommandDescriptionCache::Init()
 {
-	int neededCacheSize = std::max(CCommandDescriptionCache::CACHE_SIZE, configHandler->GetInt("CommandDescriptionCacheSize"));
-
-	index.resize(neededCacheSize);
-	slots.resize(neededCacheSize);
-	cache.resize(neededCacheSize + 1);
-
-	std::fill(index.begin(), index.end(), std::make_pair<int, unsigned int>(0, 0u));
-	std::fill(slots.begin(), slots.end(), -1u);
+	index.fill({0, 0});
+	slots.fill(-1u);
 
 	for (SCommandDescription& cd: cache) {
 		cd = std::move(SCommandDescription());
@@ -168,7 +159,7 @@ const SCommandDescription* CCommandDescriptionCache::GetPtr(SCommandDescription&
 
 	if (iter == iend || iter->first != cdHash) {
 		if (numFreeSlots == 0) {
-			LOG_L(L_WARNING, "[CmdDescrCache::%s] too many unique command-descriptions (increase CommandDescriptionCacheSize param).\nid: %d, type: %d, queueing: %d, hidden: %d, disabled: %d, showUnique: %d, onlyTexture: %d, name: %s, action: %s, iconname: %s, mouseicon: %s, tooltip: %s, hash: %d", __func__, cd.id, cd.type, cd.queueing, cd.hidden, cd.disabled, cd.showUnique, cd.onlyTexture, cd.name.c_str(), cd.action.c_str(), cd.iconname.c_str(), cd.mouseicon.c_str(), cd.tooltip.c_str(), cdHash);
+			LOG_L(L_WARNING, "[CmdDescrCache::%s] too many unique command-descriptions.\nid: %d, type: %d, queueing: %d, hidden: %d, disabled: %d, showUnique: %d, onlyTexture: %d, name: %s, action: %s, iconname: %s, mouseicon: %s, tooltip: %s, hash: %d", __func__, cd.id, cd.type, cd.queueing, cd.hidden, cd.disabled, cd.showUnique, cd.onlyTexture, cd.name.c_str(), cd.action.c_str(), cd.iconname.c_str(), cd.mouseicon.c_str(), cd.tooltip.c_str(), cdHash);
 			Dump((cacheFullCtr++ % 100) == 0);
 			return &cache[cache.size() - 1];
 		}
