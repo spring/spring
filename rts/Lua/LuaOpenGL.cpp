@@ -2420,6 +2420,13 @@ int LuaOpenGL::DispatchCompute(lua_State* L)
 		luaL_error(L, "%s Incorrect number of work groups specified x: 0 > %d < %d; y: 0 > %d < %d; z: 0 > %d < %d", __func__, numGroupX, maxNumGroups[0], numGroupY, maxNumGroups[1], numGroupZ, maxNumGroups[2]);
 
 	glDispatchCompute(numGroupX, numGroupY, numGroupZ);
+
+	GLbitfield barriers = (GLbitfield)luaL_optint(L, 1, 4);
+	//skip checking the correctness of values :)
+
+	if (barriers > 0u)
+		glMemoryBarrier(barriers);
+
 	return 0;
 }
 
