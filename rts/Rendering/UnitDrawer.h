@@ -145,6 +145,13 @@ public:
 		iconLength = unitIconDist * unitIconDist * 750.0f;
 	}
 
+	static float GetUnitIconScaleUI() { return iconScale; }
+	static float GetUnitIconFadeStart() { return iconFadeStart; }
+	static float GetUnitIconFadeVanish() { return iconFadeVanish; }
+	static void SetUnitIconScaleUI(float scale) { iconScale = std::clamp(scale, 0.5f, 2.0f); }
+	static void SetUnitIconFadeStart(float scale) { iconFadeStart = std::clamp(scale, 1.0f, 10000.0f); }
+	static void SetUnitIconFadeVanish(float scale) { iconFadeVanish = std::clamp(scale, 1.0f, 10000.0f); }
+
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
@@ -197,6 +204,7 @@ public:
 private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+	bool DrawAsIconScreen(CUnit* unit) const;
 
 	bool CanDrawOpaqueUnit(const CUnit* unit, bool drawReflection, bool drawRefraction) const;
 	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
@@ -219,13 +227,16 @@ private:
 
 public:
 	void DrawUnitIcons();
+	void DrawUnitIconsScreen();
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
 	void UpdateUnitDefMiniMapIcons(const UnitDef* ud);
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
+	void UpdateUnitIconStateScreen(CUnit* unit);
 
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
+	static void DrawIconScreenArray(const CUnit* unit, bool asRadarBlip, CVertexArray* va);
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
@@ -261,6 +272,7 @@ public:
 	float unitIconDist;
 	float iconLength;
 	float sqCamDistToGroundForIcons;
+	bool useScreenIcons = false;
 
 	// .x := regular unit alpha
 	// .y := ghosted unit alpha (out of radar)
@@ -276,6 +288,13 @@ private:
 	bool advShading;
 
 	bool useDistToGroundForIcons;
+
+	// "icons as UI" fields
+	static constexpr float iconSizeMult = 1 / 128.0f;
+	static float iconSizeBase;
+	static float iconScale;
+	static float iconFadeStart;
+	static float iconFadeVanish;
 
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);

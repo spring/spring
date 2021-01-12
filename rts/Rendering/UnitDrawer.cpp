@@ -52,7 +52,11 @@
 
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
 CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
+CONFIG(float, UnitIconScaleUI).defaultValue(1.0f).minimumValue(0.5f).maximumValue(2.0f);
+CONFIG(float, UnitIconFadeStart).defaultValue(3000.0f).minimumValue(1.0f).maximumValue(10000.0f);
+CONFIG(float, UnitIconFadeVanish).defaultValue(1000.0f).minimumValue(1.0f).maximumValue(10000.0f);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
+CONFIG(bool, UnitIconsAsUI).defaultValue(false).description("Draw unit icons like it is an UI element and not like unit's LOD.");
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
@@ -64,6 +68,10 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 CUnitDrawer* unitDrawer = nullptr;
+float CUnitDrawer::iconSizeBase = 32;
+float CUnitDrawer::iconScale = 1;
+float CUnitDrawer::iconFadeStart = 3000;
+float CUnitDrawer::iconFadeVanish = 1000;
 
 // can not be a CUnitDrawer; destruction in global
 // scope might happen after ~EventHandler which is
@@ -271,6 +279,10 @@ void CUnitDrawer::Init() {
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
+	iconScale = configHandler->GetFloat("UnitIconScaleUI");
+	iconFadeStart = configHandler->GetFloat("UnitIconFadeStart");
+	iconFadeVanish = configHandler->GetFloat("UnitIconFadeVanish");
+	useScreenIcons = configHandler->GetBool("UnitIconsAsUI");
 
 	alphaValues.x = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
@@ -319,6 +331,7 @@ void CUnitDrawer::Init() {
 	// note: state must be pre-selected before the first drawn frame
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
+	iconSizeBase = std::max(16.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
 }
 
 void CUnitDrawer::Kill()
@@ -385,13 +398,14 @@ void CUnitDrawer::Update()
 		UpdateTempDrawUnits(tempAlphaUnits[modelType]);
 	}
 
-	{
-		iconUnits.clear();
+	iconUnits.clear();
 
-		for (CUnit* unit: unsortedUnits) {
+	for (CUnit* unit: unsortedUnits) {
+		if (useScreenIcons)
+			UpdateUnitIconStateScreen(unit);
+		else
 			UpdateUnitIconState(unit);
-			UpdateUnitDrawPos(unit);
-		}
+		UpdateUnitDrawPos(unit);
 	}
 
 	if ((useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons())) {
@@ -516,7 +530,6 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 }
 
 
-
 void CUnitDrawer::DrawUnitIcons()
 {
 	// draw unit icons and radar blips
@@ -541,6 +554,54 @@ void CUnitDrawer::DrawUnitIcons()
 	glPopAttrib();
 }
 
+void CUnitDrawer::DrawUnitIconsScreen()
+{
+	// draw unit icons and radar blips
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.05f);
+
+	CVertexArray* va = GetVertexArray();
+	iconSizeBase = std::max(16.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
+
+	for (auto iconIt = unitsByIcon.cbegin(); iconIt != unitsByIcon.cend(); ++iconIt)
+	{
+		const icon::CIconData* icon = iconIt->first;
+		const std::vector<const CUnit*>& units = iconIt->second;
+
+		if (icon == nullptr)
+			continue;
+		if (units.empty())
+			continue;
+
+		va->Initialize();
+		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
+		icon->BindTexture();
+
+		for (const CUnit* unit: units)
+		{
+			if (unit->noDraw)
+				continue;
+			if (unit->IsInVoid())
+				continue;
+			if (unit->health <= 0 || unit->beingBuilt)
+				continue;
+			
+			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));
+			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+
+			assert(unit->myIcon == icon);
+			DrawIconScreenArray(unit, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), va);
+		}
+
+		va->DrawArray2dTC(GL_QUADS);
+	}
+	glPopAttrib();
+}
 
 
 /******************************************************************************/
@@ -671,7 +732,60 @@ void CUnitDrawer::DrawShadowPass()
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
+void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, CVertexArray* va)
+{
+	// iconUnits should not never contain void-space units, see UpdateUnitIconState
+	assert(!unit->IsInVoid());
 
+	// If the icon is to be drawn as a radar blip, we want to get the default icon.
+	const icon::CIconData* iconData = nullptr;
+
+	if (useDefaultIcon)
+		iconData = icon::iconHandler.GetDefaultIconData();
+	else
+		iconData = unit->unitDef->iconType.GetIconData();
+
+	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+	float3 pos = (!gu->spectatingFullView) ?
+		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+		unit->GetObjDrawMidPos();
+	
+	const float dist = fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos));
+
+	pos = camera->CalcWindowCoordinates(pos);
+	if (pos.z < 0)
+		return;
+	
+	// use white for selected units
+	const uint8_t* srcColor = unit->isSelected? color4::white: teamHandler.Team(unit->team)->color;
+	uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
+
+	float unitRadiusMult = iconData->GetSize();
+	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
+		unitRadiusMult *= (unit->radius / iconData->GetRadiusScale());
+	unitRadiusMult = (unitRadiusMult - 1) / 2 + 1;
+
+	// fade icons away in high zoom in levels
+	if (!unit->isIcon)
+		if (dist / unitRadiusMult < iconFadeVanish)
+			return;
+		else if (iconFadeVanish < iconFadeStart && dist / unitRadiusMult < iconFadeStart)
+			color[3] = 255.0f * (dist / unitRadiusMult - iconFadeVanish) / (iconFadeStart - iconFadeVanish);
+
+	// calculate the vertices
+	const float offset = iconSizeBase / 2.0f * unitRadiusMult;
+
+	const float x0 = (pos.x - offset) / globalRendering->viewSizeX;
+	const float y0 = (pos.y + offset) / globalRendering->viewSizeY;
+	const float x1 = (pos.x + offset) / globalRendering->viewSizeX;
+	const float y1 = (pos.y - offset) / globalRendering->viewSizeY;
+
+	if (x1 < 0 || x0 > 1 || y0 < 0 || y1 > 1)
+		return; // don't try to draw outside the screen
+
+	// Draw the icon.
+	iconData->DrawArray(va, x0, y0, x1, y1, color);
+}
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
@@ -1652,6 +1766,41 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	iconUnits.push_back(unit);
 }
 
+inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
+{
+	// If the icon is to be drawn as a radar blip, we want to get the default icon.
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	const unsigned short plosBits = (losStatus & (LOS_PREVLOS | LOS_CONTRADAR));
+	bool useDefaultIcon = !gu->spectatingFullView && !(losStatus & (LOS_INLOS)) && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
+
+	const icon::CIconData* iconData = useDefaultIcon ? icon::iconHandler.GetDefaultIconData() : unit->unitDef->iconType.GetIconData();
+
+	float iconSizeMult = iconData->GetSize();
+	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
+		iconSizeMult *= (unit->radius / iconData->GetRadiusScale());
+	iconSizeMult = (iconSizeMult - 1) / 2 + 1;
+
+	float limit = iconSizeBase/2 * iconSizeMult;
+
+	// calculate unit's radius in screen space and compare with the size of the icon
+	float3 pos = unit->pos;
+	float3 radiusPos = pos + camera->right * unit->radius;
+
+	pos = camera->CalcWindowCoordinates(pos);
+	radiusPos = camera->CalcWindowCoordinates(radiusPos);
+
+	unit->iconRadius = unit->radius * ( (limit * 0.9) / std::abs(pos.x-radiusPos.x) ); // used for clicking on iconified units (world space!!!)
+
+	if (!(losStatus & LOS_INLOS) && !gu->spectatingFullView)
+	{
+		unit->isIcon = losStatus & LOS_INRADAR;
+		return;
+	}
+
+	// don't render unit's model if it is smaller than icon by 10% in screen space
+	unit->isIcon = std::abs(pos.x-radiusPos.x) < limit * 0.9;
+}
+
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CUnit* t = u->GetTransporter();
 
@@ -1671,18 +1820,11 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 	const float sqIconDistMult = unit->unitDef->iconType->GetDistanceSqr();
 	const float realIconLength = iconLength * sqIconDistMult;
 
-	bool asIcon = false;
-
-	if (useDistToGroundForIcons) {
-		asIcon = (sqCamDistToGroundForIcons > realIconLength);
-	} else {
-		asIcon = (sqUnitCamDist > realIconLength);
-	}
-
-	return asIcon;
+	if (useDistToGroundForIcons)
+		return (sqCamDistToGroundForIcons > realIconLength);
+	else
+		return (sqUnitCamDist > realIconLength);
 }
-
-
 
 
 // visualize if a unit can be built at specified position
@@ -1884,10 +2026,6 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	unit->myIcon->DrawArray(va, x0, y0, x1, y1, color);
 }
 
-// TODO:
-//   UnitDrawer::DrawIcon was half-duplicate of MiniMap::DrawUnit&co
-//   the latter has been replaced by this, do the same for the former
-//   (mini-map icons and real-map radar icons are the same anyway)
 void CUnitDrawer::DrawUnitMiniMapIcons() const {
 	CVertexArray* va = GetVertexArray();
 

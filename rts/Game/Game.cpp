@@ -1337,6 +1337,8 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Draw::Screen");
+		if (unitDrawer->useScreenIcons)
+			unitDrawer->DrawUnitIconsScreen();
 
 		eventHandler.DrawScreenEffects();
 
