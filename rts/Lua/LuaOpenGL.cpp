@@ -366,6 +366,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TexGen);
 	REGISTER_LUA_CFUNC(MultiTexGen);
 	REGISTER_LUA_CFUNC(BindImageTexture);
+	REGISTER_LUA_CFUNC(CreateTextureAtlas);
+	REGISTER_LUA_CFUNC(DeleteTextureAtlas);
+	REGISTER_LUA_CFUNC(GetAtlasTexture);
 
 	REGISTER_LUA_CFUNC(Shape);
 	REGISTER_LUA_CFUNC(BeginEnd);
@@ -3829,6 +3832,19 @@ int LuaOpenGL::BindImageTexture(lua_State* L)
 
 	glBindImageTexture(unit, texID, level, layered, layer, access, format);
 
+	return 0;
+}
+
+int LuaOpenGL::CreateTextureAtlas(lua_State* L)
+{
+	return 0;
+}
+int LuaOpenGL::DeleteTextureAtlas(lua_State* L)
+{
+	return 0;
+}
+int LuaOpenGL::GetAtlasTexture(lua_State* L)
+{
 	return 0;
 }
 

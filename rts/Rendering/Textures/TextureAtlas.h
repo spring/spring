@@ -40,7 +40,7 @@ public:
 	};
 
 public:
-	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY);
+	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0);
 	~CTextureAtlas();
 
 	// add a texture from a memory pointer

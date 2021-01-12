@@ -13,7 +13,7 @@
 /******************************************************************************/
 
 std::string LuaTextures::Create(const Texture& tex)
-{	
+{
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 
@@ -128,7 +128,7 @@ std::string LuaTextures::Create(const Texture& tex)
 
 
 bool LuaTextures::Bind(const std::string& name) const
-{	
+{
 	const auto it = textureMap.find(name);
 
 	if (it != textureMap.end()) {

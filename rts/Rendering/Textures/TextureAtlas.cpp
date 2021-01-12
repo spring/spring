@@ -28,7 +28,7 @@ static AtlasedTexture dummy;
 bool CTextureAtlas::debug = false;
 
 
-CTextureAtlas::CTextureAtlas(unsigned int allocType)
+CTextureAtlas::CTextureAtlas(unsigned int allocType, const int atlasSizeX_, const int atlasSizeY_)
 {
 	switch (allocType) {
 		case ATLAS_ALLOC_LEGACY  : { atlasAllocator = new   CLegacyAtlasAlloc(); } break;
@@ -37,8 +37,8 @@ CTextureAtlas::CTextureAtlas(unsigned int allocType)
 	}
 
 	// NB: maxTextureSize can be as large as 32768, resulting in a 4GB atlas
-	const int atlasSizeX = std::min(globalRendering->maxTextureSize, configHandler->GetInt("MaxTextureAtlasSizeX"));
-	const int atlasSizeY = std::min(globalRendering->maxTextureSize, configHandler->GetInt("MaxTextureAtlasSizeY"));
+	const int atlasSizeX = std::min(globalRendering->maxTextureSize, (atlasSizeX_ > 0) ? atlasSizeX_ : configHandler->GetInt("MaxTextureAtlasSizeX"));
+	const int atlasSizeY = std::min(globalRendering->maxTextureSize, (atlasSizeY_ > 0) ? atlasSizeY_ : configHandler->GetInt("MaxTextureAtlasSizeY"));
 
 	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	atlasAllocator->SetMaxSize(atlasSizeX, atlasSizeY);

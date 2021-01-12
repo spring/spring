@@ -232,6 +232,9 @@ class LuaOpenGL {
 		static int MultiTexEnv(lua_State* L);
 		static int MultiTexGen(lua_State* L);
 		static int BindImageTexture(lua_State* L);
+		static int CreateTextureAtlas(lua_State* L);
+		static int DeleteTextureAtlas(lua_State* L);
+		static int GetAtlasTexture(lua_State* L);
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);

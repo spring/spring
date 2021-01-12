@@ -9,6 +9,7 @@
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 #include "LuaShaders.h"
 #include "LuaTextures.h"
+#include "LuaAtlasTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
@@ -107,6 +108,7 @@ public:
 	//   safe)
 	LuaShaders shaders;
 	LuaTextures textures;
+	LuaAtlasTextures atlasTextures;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;
