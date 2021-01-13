@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-10-03 21:34:25.034794 UTC
-// This header was generated with sol v3.2.1 (revision 48eea7b5)
+// Generated 2021-01-12 23:42:11.736174 UTC
+// This header was generated with sol v3.2.3 (revision 68fd0c01)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_CONFIG_HPP
@@ -53,7 +53,6 @@ the build system, or the command line options of your compiler.
 #define SOL_ALL_SAFETIES_ON 1
 #define SOL_NO_CHECK_NUMBER_PRECISION 1
 //#define SOL_NO_EXCEPTIONS 1 //crashes system on load
-
 
 // end of sol/config.hpp
 
