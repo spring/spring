@@ -28,9 +28,10 @@ public:
 
 	std::string Create(const std::string& name, const int xsize, const int ysize, const int allocatorType = 0);
 	bool Delete(const std::string& idStr);
-	CTextureAtlas* GetAtlasByIdx(const size_t idx) const;
-	size_t GetIdx(const std::string& idStr) const;
-
+	CTextureAtlas* GetAtlasById(const std::string& idStr) const;
+	CTextureAtlas* GetAtlasByIndex(const size_t index) const;
+	size_t GetAtlasIndexById(const std::string& idStr) const;
+	size_t GetNextId() { return lastIndex; }
 private:
 	bool GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::iterator& iter);
 	bool GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator& iter) const;

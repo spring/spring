@@ -376,7 +376,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		case LuaAtlasTextures::prefix: {
 			// dynamic texture
 			const LuaAtlasTextures& atlasTextures = CLuaHandle::GetActiveAtlasTextures(L);
-			const size_t idx = atlasTextures.GetIdx(image);
+			const size_t idx = atlasTextures.GetAtlasIndexById(image);
 
 			if (idx == size_t(-1))
 				return false;
@@ -506,7 +506,7 @@ GLuint LuaMatTexture::GetTextureID() const
 			assert(state != nullptr);
 
 			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
-			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIdx(*reinterpret_cast<const size_t*>(&data));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
 
 			texID = atlas->GetTexID();
 		} break;

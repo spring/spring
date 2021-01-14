@@ -21,10 +21,12 @@ std::string LuaAtlasTextures::Create(const std::string& name, const int xsize, c
 	CTextureAtlas* atlas = new CTextureAtlas(allocatorType, xsize, ysize);
 	atlas->SetName(name);
 
-	textureAtlasMap[lastIndex++] = atlas;
+	textureAtlasMap[lastIndex] = atlas;
 
 	std::ostringstream ss;
 	ss << prefix << lastIndex;
+
+	++lastIndex;
 
 	return ss.str();
 }
@@ -38,16 +40,25 @@ bool LuaAtlasTextures::Delete(const std::string& idStr)
 	return false;
 }
 
-CTextureAtlas* LuaAtlasTextures::GetAtlasByIdx(const size_t idx) const
+CTextureAtlas* LuaAtlasTextures::GetAtlasById(const std::string& idStr) const
 {
-	const auto iter = textureAtlasMap.find(idx);
+	spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator iter;
+	if (GetIterator(idStr, iter))
+		return iter->second;
+
+	return nullptr;
+}
+
+CTextureAtlas* LuaAtlasTextures::GetAtlasByIndex(const size_t index) const
+{
+	const auto iter = textureAtlasMap.find(index);
 	if (iter == textureAtlasMap.end())
 		return nullptr;
 
 	return iter->second;
 }
 
-size_t LuaAtlasTextures::GetIdx(const std::string& idStr) const
+size_t LuaAtlasTextures::GetAtlasIndexById(const std::string& idStr) const
 {
 	spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator iter;
 	if (GetIterator(idStr, iter))

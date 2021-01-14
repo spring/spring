@@ -59,6 +59,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -367,7 +368,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MultiTexGen);
 	REGISTER_LUA_CFUNC(BindImageTexture);
 	REGISTER_LUA_CFUNC(CreateTextureAtlas);
+	REGISTER_LUA_CFUNC(FinalizeTextureAtlas);
 	REGISTER_LUA_CFUNC(DeleteTextureAtlas);
+	REGISTER_LUA_CFUNC(AddAtlasTexture);
 	REGISTER_LUA_CFUNC(GetAtlasTexture);
 
 	REGISTER_LUA_CFUNC(Shape);
@@ -3835,17 +3838,120 @@ int LuaOpenGL::BindImageTexture(lua_State* L)
 	return 0;
 }
 
+//TODO DRY pass
 int LuaOpenGL::CreateTextureAtlas(lua_State* L)
 {
-	return 0;
+	constexpr int minSize = 256; //atlas less than that doesn't make sense
+	const int maxSizeX = configHandler->GetInt("MaxTextureAtlasSizeX");
+	const int maxSizeY = configHandler->GetInt("MaxTextureAtlasSizeY");
+	const int xsize = luaL_checkint(L, 1);
+	const int ysize = luaL_checkint(L, 2);
+
+	if (std::min(xsize, ysize) < minSize)
+		luaL_error(L, "%s The specified atlas dimensions (%d, %d) are too small. The minimum side size is %d", __func__, xsize, ysize, minSize);
+
+	if (xsize > maxSizeX || ysize > maxSizeY)
+		luaL_error(L, "%s The specified atlas dimensions (%d, %d) are too large. The maximum side sizes are (%d, %d)", __func__, xsize, ysize, maxSizeX, maxSizeY);
+
+	const int allocType = std::clamp(luaL_optint(L, 3, 0), (int)CTextureAtlas::ATLAS_ALLOC_LEGACY, (int)CTextureAtlas::ATLAS_ALLOC_QUADTREE);
+
+	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
+	const std::string atlasName = luaL_optstring(L, 4, std::to_string(atlasTexes.GetNextId()).c_str());
+	const string& texName = atlasTexes.Create(atlasName, xsize, ysize, allocType);
+
+	lua_pushstring(L, texName.c_str());
+	return 1;
 }
+
+int LuaOpenGL::FinalizeTextureAtlas(lua_State* L)
+{
+	const std::string idStr = luaL_checksstring(L, 1);
+	if (idStr[0] != LuaAtlasTextures::prefix)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
+	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
+	if (atlas == nullptr)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	lua_pushboolean(L, atlas->Finalize());
+	return 1;
+}
+
 int LuaOpenGL::DeleteTextureAtlas(lua_State* L)
 {
+	const std::string idStr = luaL_checksstring(L, 1);
+	if (idStr[0] != LuaAtlasTextures::prefix)
+		luaL_error(L, "%s Call is only suitable for destroying Texture Atlases. Use gl.DeleteTexture/gl.DeleteTextureFBO for other texture types", __func__);
+
+	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
+	lua_pushboolean(L, atlasTexes.Delete(idStr));
+	return 1;
+}
+
+int LuaOpenGL::AddAtlasTexture(lua_State* L)
+{
+	const std::string idStr = luaL_checksstring(L, 1);
+	if (idStr[0] != LuaAtlasTextures::prefix)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
+	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
+	if (atlas == nullptr)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	LuaMatTexture luaTex;
+	const std::string luaTexStr = luaL_checksstring(L, 2);
+	if (!LuaOpenGLUtils::ParseTextureImage(L, luaTex, luaTexStr))
+		luaL_error(L, "%s Failed to find a Lua texture %s", __func__, luaTexStr.c_str());
+
+	if (luaTex.GetTextureTarget() != GL_TEXTURE_2D)
+		luaL_error(L, "%s Atlas can only be of type GL_TEXTURE_2D", __func__);
+
+	const auto texSize = luaTex.GetSize();
+
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+
+	luaTex.Bind();
+	std::vector<uint8_t> buffer;
+	buffer.resize(texSize.x * texSize.y * sizeof(uint32_t));  //hope texture is indeed RGBA/UNORM
+
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+
+	const std::string subAtlasTexName = luaL_optstring(L, 3, luaTexStr.c_str());
+	atlas->AddTexFromMem(subAtlasTexName, texSize.x, texSize.y, CTextureAtlas::TextureType::RGBA32, buffer.data()); //whelp double copy
+
+	luaTex.Unbind();
+
+	glBindTexture(GL_TEXTURE_2D, currentBinding);
+
+	//lua_pushboolean(L, true);
 	return 0;
 }
+
 int LuaOpenGL::GetAtlasTexture(lua_State* L)
 {
-	return 0;
+	const std::string idStr = luaL_checksstring(L, 1);
+	if (idStr[0] != LuaAtlasTextures::prefix)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
+	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
+	if (atlas == nullptr)
+		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+
+	const std::string subAtlasTexName = luaL_checksstring(L, 2);
+
+	AtlasedTexture atlTex = atlas->GetTexture(subAtlasTexName);
+	if (atlTex == AtlasedTexture())
+		luaL_error(L, "%s Invalid atlas named texture specified %s", __func__, subAtlasTexName.c_str());
+
+	lua_pushnumber(L, atlTex.x1);
+	lua_pushnumber(L, atlTex.x2);
+	lua_pushnumber(L, atlTex.y1);
+	lua_pushnumber(L, atlTex.y2);
+	return 4;
 }
 
 /******************************************************************************/
