@@ -5,6 +5,7 @@
 
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
+#include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -57,6 +58,7 @@ CONFIG(float, UnitIconFadeStart).defaultValue(3000.0f).minimumValue(1.0f).maximu
 CONFIG(float, UnitIconFadeVanish).defaultValue(1000.0f).minimumValue(1.0f).maximumValue(10000.0f);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
 CONFIG(bool, UnitIconsAsUI).defaultValue(false).description("Draw unit icons like it is an UI element and not like unit's LOD.");
+CONFIG(bool, UnitIconsHideWithUI).defaultValue(true).description("Hide unit icons when UI is hidden.");
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
@@ -283,6 +285,7 @@ void CUnitDrawer::Init() {
 	iconFadeStart = configHandler->GetFloat("UnitIconFadeStart");
 	iconFadeVanish = configHandler->GetFloat("UnitIconFadeVanish");
 	useScreenIcons = configHandler->GetBool("UnitIconsAsUI");
+	iconHideWithUI = configHandler->GetBool("UnitIconsHideWithUI");
 
 	alphaValues.x = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
@@ -556,6 +559,9 @@ void CUnitDrawer::DrawUnitIcons()
 
 void CUnitDrawer::DrawUnitIconsScreen()
 {
+	if (game->hideInterface && iconHideWithUI)
+		return;
+	
 	// draw unit icons and radar blips
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -566,7 +572,12 @@ void CUnitDrawer::DrawUnitIconsScreen()
 	glAlphaFunc(GL_GREATER, 0.05f);
 
 	CVertexArray* va = GetVertexArray();
-	iconSizeBase = std::max(16.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
+	iconSizeBase = std::max(12.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
+	const float3 camPos = (camHandler->GetCurrentController()).GetPos();
+	const float3 camDir = (camHandler->GetCurrentController()).GetDir();
+	float dist = CGround::LineGroundCol(camPos, camDir * 150000.0f, false);
+	if (dist < 0)
+		dist = std::max(0.0f, CGround::LinePlaneCol(camPos, camDir, 150000.0f, readMap->GetCurrAvgHeight()));
 
 	for (auto iconIt = unitsByIcon.cbegin(); iconIt != unitsByIcon.cend(); ++iconIt)
 	{
@@ -595,7 +606,7 @@ void CUnitDrawer::DrawUnitIconsScreen()
 			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
 
 			assert(unit->myIcon == icon);
-			DrawIconScreenArray(unit, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), va);
+			DrawIconScreenArray(unit, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), dist, va);
 		}
 
 		va->DrawArray2dTC(GL_QUADS);
@@ -732,11 +743,20 @@ void CUnitDrawer::DrawShadowPass()
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
-void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, CVertexArray* va)
+void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, const float dist, CVertexArray* va)
 {
 	// iconUnits should not never contain void-space units, see UpdateUnitIconState
 	assert(!unit->IsInVoid());
 
+	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+	float3 pos = (!gu->spectatingFullView) ?
+		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+		unit->GetObjDrawMidPos();
+	
+	pos = camera->CalcWindowCoordinates(pos);
+	if (pos.z < 0)
+		return;
+	
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	const icon::CIconData* iconData = nullptr;
 
@@ -745,17 +765,6 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, CV
 	else
 		iconData = unit->unitDef->iconType.GetIconData();
 
-	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
-	float3 pos = (!gu->spectatingFullView) ?
-		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
-		unit->GetObjDrawMidPos();
-	
-	const float dist = fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos));
-
-	pos = camera->CalcWindowCoordinates(pos);
-	if (pos.z < 0)
-		return;
-	
 	// use white for selected units
 	const uint8_t* srcColor = unit->isSelected? color4::white: teamHandler.Team(unit->team)->color;
 	uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
@@ -763,14 +772,15 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, CV
 	float unitRadiusMult = iconData->GetSize();
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
 		unitRadiusMult *= (unit->radius / iconData->GetRadiusScale());
-	unitRadiusMult = (unitRadiusMult - 1) / 2 + 1;
+	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
 	// fade icons away in high zoom in levels
 	if (!unit->isIcon)
 		if (dist / unitRadiusMult < iconFadeVanish)
 			return;
 		else if (iconFadeVanish < iconFadeStart && dist / unitRadiusMult < iconFadeStart)
-			color[3] = 255.0f * (dist / unitRadiusMult - iconFadeVanish) / (iconFadeStart - iconFadeVanish);
+			// alpha range [64, 255], since icons is unrecognisable with alpha < 64
+			color[3] = 64 + 191.0f * (dist / unitRadiusMult - iconFadeVanish) / (iconFadeStart - iconFadeVanish);
 
 	// calculate the vertices
 	const float offset = iconSizeBase / 2.0f * unitRadiusMult;
@@ -1768,6 +1778,12 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 
 inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
 {
+	if (unit->health <= 0 || unit->beingBuilt)
+	{
+		unit->isIcon = false;
+		return;
+	}
+
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 	const unsigned short plosBits = (losStatus & (LOS_PREVLOS | LOS_CONTRADAR));
@@ -1778,7 +1794,7 @@ inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
 	float iconSizeMult = iconData->GetSize();
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
 		iconSizeMult *= (unit->radius / iconData->GetRadiusScale());
-	iconSizeMult = (iconSizeMult - 1) / 2 + 1;
+	iconSizeMult = (iconSizeMult - 1) * 0.75 + 1;
 
 	float limit = iconSizeBase/2 * iconSizeMult;
 

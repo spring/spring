@@ -2736,8 +2736,8 @@ public:
 
 class IconsAsUIActionExecutor : public IUnsyncedActionExecutor {
 public:
-	IconsAsUIActionExecutor() : IUnsyncedActionExecutor("IconsAsUI", "Set whether unit icons are drawn as an UI element (true) or old LOD-like style (false, default).") {
-	}
+	IconsAsUIActionExecutor() : IUnsyncedActionExecutor("IconsAsUI",
+			"Set whether unit icons are drawn as an UI element (true) or old LOD-like style (false, default).") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		InverseOrSetBool(unitDrawer->useScreenIcons, action.GetArgs());
@@ -2809,6 +2809,18 @@ public:
 	}
 };
 
+class IconsHideWithUIActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconsHideWithUIActionExecutor() : IUnsyncedActionExecutor("IconsHideWithUI",
+			"Set whether unit icons are hidden when UI is hidden.") {}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		InverseOrSetBool(unitDrawer->iconHideWithUI, action.GetArgs());
+		configHandler->Set("IconsHideWithUI", unitDrawer->iconHideWithUI ? 1 : 0);
+		LogSystemStatus("Hide unit icons with UI: ", unitDrawer->iconHideWithUI);
+		return true;
+	}
+};
 
 class DistDrawActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3576,6 +3588,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<IconScaleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IconFadeStartActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IconFadeVanishActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconsHideWithUIActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DistDrawActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LODScaleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<AirMeshActionExecutor>());

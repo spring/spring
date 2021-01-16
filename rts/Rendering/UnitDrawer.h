@@ -236,7 +236,7 @@ private:
 	void UpdateUnitIconStateScreen(CUnit* unit);
 
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
-	static void DrawIconScreenArray(const CUnit* unit, bool asRadarBlip, CVertexArray* va);
+	static void DrawIconScreenArray(const CUnit* unit, bool asRadarBlip, const float dist, CVertexArray* va);
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
@@ -273,6 +273,7 @@ public:
 	float iconLength;
 	float sqCamDistToGroundForIcons;
 	bool useScreenIcons = false;
+	bool iconHideWithUI = true;
 
 	// .x := regular unit alpha
 	// .y := ghosted unit alpha (out of radar)
@@ -290,7 +291,7 @@ private:
 	bool useDistToGroundForIcons;
 
 	// "icons as UI" fields
-	static constexpr float iconSizeMult = 1 / 128.0f;
+	static constexpr float iconSizeMult = 0.005f; // 1/200
 	static float iconSizeBase;
 	static float iconScale;
 	static float iconFadeStart;
