@@ -1192,9 +1192,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	// set camera
 	camHandler->UpdateController(playerHandler.Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
-	//Update per-drawFrame UBO
-	UniformConstants::GetInstance().Update();
-
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 
@@ -1250,6 +1247,11 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		SCOPED_TIMER("Update::EventHandler");
 		eventHandler.Update();
 	}
+
+	camera->Update();
+	//Update per-drawFrame UBO
+	UniformConstants::GetInstance().Update();
+
 	eventHandler.DbgTimingInfo(TIMING_UNSYNCED, currentTime, spring_now());
 	return false;
 }
@@ -1328,8 +1330,8 @@ bool CGame::Draw() {
 		// (unlikely); the minimap update also depends on GenerateIBLTextures for unbinding its FBO
 		worldDrawer.GenerateIBLTextures();
 
-		camera->Update();
-		UniformConstants::GetInstance().UpdateMatrices();
+		//camera->Update();
+		//UniformConstants::GetInstance().UpdateMatrices();
 
 		worldDrawer.Draw();
 		worldDrawer.ResetMVPMatrices();
