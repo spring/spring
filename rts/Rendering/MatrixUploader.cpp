@@ -28,22 +28,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Camera.h"
 
-
-void ProxyProjectileListener::RenderProjectileCreated(const CProjectile* projectile)
-{
-	MatrixUploader::GetInstance().visibleProjectilesSet.emplace(projectile);
-}
-
-void ProxyProjectileListener::RenderProjectileDestroyed(const CProjectile* projectile)
-{
-	MatrixUploader::GetInstance().visibleProjectilesSet.erase(projectile);
-}
-
-
-//////////////////
-
-
-
 void MatrixUploader::InitVBO(const uint32_t newElemCount)
 {
 	matrixSSBO = new VBO(GL_SHADER_STORAGE_BUFFER, false);
@@ -63,7 +47,6 @@ void MatrixUploader::Init()
 	if (!MatrixUploader::Supported())
 		return;
 
-	proxyProjectileListener = new ProxyProjectileListener{};
 	InitVBO(elemCount0);
 	matrices.reserve(elemCount0);
 	initialized = true;
@@ -83,7 +66,6 @@ void MatrixUploader::Kill()
 		return;
 
 	KillVBO();
-	spring::SafeDelete(proxyProjectileListener);
 }
 
 template<typename TObj>
@@ -147,9 +129,7 @@ void MatrixUploader::GetVisibleObjects(std::unordered_map<int, const TObj*>& vis
 	//CProjectile part is a mess. TODO figure out how to retrieve an addressable ID
 	if constexpr (std::is_same<TObj, CProjectile>::value) {
 		int iter = 0;
-		for (const auto* obj : visibleProjectilesSet) {
-		//for (const int pID : visibleProjectilesSet) {
-			//const auto* obj = projectileHandler.GetProjectileByUnsyncedID(pID);
+		for (const auto* obj : projectileHandler.GetActiveProjectiles(true)) {
 
 			if (!obj->weapon) // is this a weapon projectile? (true implies synced true)
 				continue;

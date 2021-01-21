@@ -4,38 +4,12 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include <unordered_set>
+#include <unordered_map>
 
-#include "System/EventClient.h"
-#include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
 #include "Rendering/GL/myGL.h"
-
-/*
-struct MatrixInfo {
-	uint32_t elemOffset;
-};
-*/
-struct VBO;
-
-class ProxyProjectileListener : public CEventClient {
-public:
-	static ProxyProjectileListener& GetInstance() {
-		static ProxyProjectileListener instance;
-		return instance;
-	};
-public:
-	ProxyProjectileListener() : CEventClient("[ProxyProjectileListener]", 123455, false) { eventHandler.AddClient(this); }
-	virtual ~ProxyProjectileListener() { eventHandler.RemoveClient(this); }
-	bool WantsEvent(const std::string& eventName) {
-		return
-			(eventName == "RenderProjectileCreated") ||
-			(eventName == "RenderProjectileDestroyed");
-	}
-	void RenderProjectileCreated(const CProjectile* projectile);
-	void RenderProjectileDestroyed(const CProjectile* projectile);
-};
+#include "Rendering/GL/VBO.h"
 
 class MatrixUploader {
 public:
@@ -58,8 +32,6 @@ public:
 	uint32_t GetFeatureDefElemOffset(int32_t featureDefID);
 	uint32_t GetUnitElemOffset(int32_t unitID);
 	uint32_t GetFeatureElemOffset(int32_t featureID);
-public:
-	friend class ProxyProjectileListener;
 private:
 	template<typename TObj>
 	bool IsObjectVisible(const TObj* obj);
@@ -86,8 +58,6 @@ private:
 	bool initialized = false;
 	uint32_t elemUpdateOffset = 0u; // a index offset separating constant part of the buffer from varying part
 
-	ProxyProjectileListener* proxyProjectileListener;
-
 	std::unordered_map<int32_t, std::string> unitDefToModel;
 	std::unordered_map<int32_t, std::string> featureDefToModel;
 	std::unordered_map<std::string, uint32_t> modelToOffsetMap;
@@ -95,8 +65,6 @@ private:
 	std::unordered_map<int32_t, uint32_t> unitIDToOffsetMap;
 	std::unordered_map<int32_t, uint32_t> featureIDToOffsetMap;
 	std::unordered_map<int32_t, uint32_t> weaponIDToOffsetMap;
-
-	std::unordered_set<const CProjectile*> visibleProjectilesSet;
 
 	std::vector<CMatrix44f> matrices;
 

@@ -41,6 +41,10 @@ public:
 	CProjectile* GetProjectileBySyncedID(int id);
 	CProjectile* GetProjectileByUnsyncedID(int id);
 
+	const ProjectileContainer& GetActiveProjectiles(const bool synced) const {
+		return projectileContainers[synced];
+	}
+
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3, const float3);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3, const float3);
 	void CheckShieldCollisions(CProjectile*, std::vector<CPlasmaRepulser*>&, const float3, const float3);
