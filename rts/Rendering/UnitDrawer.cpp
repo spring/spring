@@ -58,7 +58,7 @@ CONFIG(float, UnitIconFadeStart).defaultValue(3000.0f).minimumValue(1.0f).maximu
 CONFIG(float, UnitIconFadeVanish).defaultValue(1000.0f).minimumValue(1.0f).maximumValue(10000.0f);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
 CONFIG(bool, UnitIconsAsUI).defaultValue(false).description("Draw unit icons like it is an UI element and not like unit's LOD.");
-CONFIG(bool, UnitIconsHideWithUI).defaultValue(true).description("Hide unit icons when UI is hidden.");
+CONFIG(bool, UnitIconsHideWithUI).defaultValue(false).description("Hide unit icons when UI is hidden.");
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
@@ -74,6 +74,7 @@ float CUnitDrawer::iconSizeBase = 32;
 float CUnitDrawer::iconScale = 1;
 float CUnitDrawer::iconFadeStart = 3000;
 float CUnitDrawer::iconFadeVanish = 1000;
+float CUnitDrawer::iconZoomDist;
 
 // can not be a CUnitDrawer; destruction in global
 // scope might happen after ~EventHandler which is
@@ -403,6 +404,13 @@ void CUnitDrawer::Update()
 
 	iconUnits.clear();
 
+	const float3 camPos = (camHandler->GetCurrentController()).GetPos();
+	const float3 camDir = (camHandler->GetCurrentController()).GetDir();
+	float dist = CGround::LineGroundCol(camPos, camDir * 150000.0f, false);
+	if (dist < 0)
+		dist = std::max(0.0f, CGround::LinePlaneCol(camPos, camDir, 150000.0f, readMap->GetCurrAvgHeight()));
+	iconZoomDist = dist;
+
 	for (CUnit* unit: unsortedUnits) {
 		if (useScreenIcons)
 			UpdateUnitIconStateScreen(unit);
@@ -573,11 +581,6 @@ void CUnitDrawer::DrawUnitIconsScreen()
 
 	CVertexArray* va = GetVertexArray();
 	iconSizeBase = std::max(12.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
-	const float3 camPos = (camHandler->GetCurrentController()).GetPos();
-	const float3 camDir = (camHandler->GetCurrentController()).GetDir();
-	float dist = CGround::LineGroundCol(camPos, camDir * 150000.0f, false);
-	if (dist < 0)
-		dist = std::max(0.0f, CGround::LinePlaneCol(camPos, camDir, 150000.0f, readMap->GetCurrAvgHeight()));
 
 	for (auto iconIt = unitsByIcon.cbegin(); iconIt != unitsByIcon.cend(); ++iconIt)
 	{
@@ -606,7 +609,7 @@ void CUnitDrawer::DrawUnitIconsScreen()
 			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
 
 			assert(unit->myIcon == icon);
-			DrawIconScreenArray(unit, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), dist, va);
+			DrawIconScreenArray(unit, icon, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), iconZoomDist, va);
 		}
 
 		va->DrawArray2dTC(GL_QUADS);
@@ -743,7 +746,7 @@ void CUnitDrawer::DrawShadowPass()
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
-void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, const float dist, CVertexArray* va)
+void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, const icon::CIconData* icon, bool useDefaultIcon, const float dist, CVertexArray* va)
 {
 	// iconUnits should not never contain void-space units, see UpdateUnitIconState
 	assert(!unit->IsInVoid());
@@ -756,22 +759,14 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, co
 	pos = camera->CalcWindowCoordinates(pos);
 	if (pos.z < 0)
 		return;
-	
-	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const icon::CIconData* iconData = nullptr;
-
-	if (useDefaultIcon)
-		iconData = icon::iconHandler.GetDefaultIconData();
-	else
-		iconData = unit->unitDef->iconType.GetIconData();
 
 	// use white for selected units
 	const uint8_t* srcColor = unit->isSelected? color4::white: teamHandler.Team(unit->team)->color;
 	uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
 
-	float unitRadiusMult = iconData->GetSize();
-	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
-		unitRadiusMult *= (unit->radius / iconData->GetRadiusScale());
+	float unitRadiusMult = icon->GetSize();
+	if (icon->GetRadiusAdjust() && !useDefaultIcon)
+		unitRadiusMult *= (unit->radius / icon->GetRadiusScale());
 	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
 	// fade icons away in high zoom in levels
@@ -794,7 +789,7 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, bool useDefaultIcon, co
 		return; // don't try to draw outside the screen
 
 	// Draw the icon.
-	iconData->DrawArray(va, x0, y0, x1, y1, color);
+	icon->DrawArray(va, x0, y0, x1, y1, color);
 }
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
@@ -1778,6 +1773,12 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 
 inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
 {
+	if (game->hideInterface && iconHideWithUI) // icons are hidden with UI
+	{
+		unit->isIcon = false; // draw unit model always
+		return;
+	}
+
 	if (unit->health <= 0 || unit->beingBuilt)
 	{
 		unit->isIcon = false;
@@ -1807,14 +1808,15 @@ inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
 
 	unit->iconRadius = unit->radius * ( (limit * 0.9) / std::abs(pos.x-radiusPos.x) ); // used for clicking on iconified units (world space!!!)
 
-	if (!(losStatus & LOS_INLOS) && !gu->spectatingFullView)
+	if (!(losStatus & LOS_INLOS) && !gu->spectatingFullView) // no LOS on unit
 	{
-		unit->isIcon = losStatus & LOS_INRADAR;
+		unit->isIcon = losStatus & LOS_INRADAR; // draw icon if unit is on radar
 		return;
 	}
 
 	// don't render unit's model if it is smaller than icon by 10% in screen space
-	unit->isIcon = std::abs(pos.x-radiusPos.x) < limit * 0.9;
+	// render it anyway in case icon isn't completely opaque (below FadeStart distance)
+	unit->isIcon = iconZoomDist/iconSizeMult > iconFadeStart && std::abs(pos.x-radiusPos.x) < limit * 0.9;
 }
 
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
@@ -1969,7 +1971,8 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 
 	// use the unit's custom icon if we can currently see it,
 	// or have seen it before and did not lose contact since
-	const bool unitVisible = ((losStatus & (LOS_INLOS | LOS_INRADAR)) && ((losStatus & prevMask) == prevMask));
+	bool unitVisible = ((losStatus & (LOS_INLOS | LOS_INRADAR)) && ((losStatus & prevMask) == prevMask));
+	unitVisible |= gameSetup->ghostedBuildings && unit->unitDef->IsBuildingUnit() && (losStatus & LOS_PREVLOS);
 	const bool customIcon = (minimap->UseUnitIcons() && (unitVisible || gu->spectatingFullView));
 
 	if (customIcon)

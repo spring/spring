@@ -236,7 +236,7 @@ private:
 	void UpdateUnitIconStateScreen(CUnit* unit);
 
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
-	static void DrawIconScreenArray(const CUnit* unit, bool asRadarBlip, const float dist, CVertexArray* va);
+	static void DrawIconScreenArray(const CUnit* unit, const icon::CIconData* icon, bool asRadarBlip, const float dist, CVertexArray* va);
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
@@ -296,6 +296,7 @@ private:
 	static float iconScale;
 	static float iconFadeStart;
 	static float iconFadeVanish;
+	static float iconZoomDist;
 
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
