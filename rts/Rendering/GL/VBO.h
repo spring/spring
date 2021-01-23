@@ -74,6 +74,10 @@ public:
 		return vboId;
 	}
 
+	GLuint GetIdRaw() const {
+		return vboId;
+	};
+
 	size_t GetSize() const { return bufSize; }
 	size_t GetAlignedSize(size_t sz) const { return VBO::GetAlignedSize(curBoundTarget, sz); };;
 	size_t GetOffsetAlignment() const { return VBO::GetOffsetAlignment(curBoundTarget); };

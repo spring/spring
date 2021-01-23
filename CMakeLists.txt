@@ -332,7 +332,7 @@ endif (LDGOLD_FOUND)
 
 message(STATUS "Compiling with C++17")
 if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /Zc:__cplusplus")
 else (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
 endif(MSVC)
