@@ -315,6 +315,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(LogicOp);
 	REGISTER_LUA_CFUNC(Fog);
 	REGISTER_LUA_CFUNC(AlphaTest);
+	if (GLEW_ARB_multisample)
+		REGISTER_LUA_CFUNC(AlphaToCoverage);
 	REGISTER_LUA_CFUNC(LineStipple);
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
@@ -2917,6 +2919,22 @@ int LuaOpenGL::AlphaTest(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.AlphaTest()");
+	}
+	return 0;
+}
+
+int LuaOpenGL::AlphaToCoverage(lua_State* L)
+{
+	const bool force = luaL_optboolean(L, 2, false);
+	if (!force && globalRendering->msaaLevel < 4)
+		return 0;
+
+	CheckDrawingEnabled(L, __func__);
+	if (luaL_checkboolean(L, 1)) {
+		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+	}
+	else {
+		glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 	}
 	return 0;
 }
