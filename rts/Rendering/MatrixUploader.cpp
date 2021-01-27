@@ -39,17 +39,14 @@ void MatrixUploader::InitVBO(const uint32_t newElemCount)
 
 void MatrixUploader::Init()
 {
+	//LOG("MatrixUploader::Init()");
 	elemUpdateOffset = 0u;
-
-	if (initialized)
-		return;
 
 	if (!MatrixUploader::Supported())
 		return;
 
 	InitVBO(elemCount0);
 	matrices.reserve(elemCount0);
-	initialized = true;
 }
 
 void MatrixUploader::KillVBO()
@@ -62,6 +59,7 @@ void MatrixUploader::KillVBO()
 
 void MatrixUploader::Kill()
 {
+	//LOG("MatrixUploader::Kill()");
 	if (!MatrixUploader::Supported())
 		return;
 

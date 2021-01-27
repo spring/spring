@@ -55,7 +55,6 @@ private:
 	static constexpr uint32_t elemCount0 = 1u << 13;
 	static constexpr uint32_t elemIncreaseBy = 1u << 12;
 private:
-	bool initialized = false;
 	uint32_t elemUpdateOffset = 0u; // a index offset separating constant part of the buffer from varying part
 
 	std::unordered_map<int32_t, std::string> unitDefToModel;
