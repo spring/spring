@@ -51,8 +51,12 @@ void MatrixUploader::Init()
 
 void MatrixUploader::KillVBO()
 {
-	if (matrixSSBO && matrixSSBO->bound)
-		matrixSSBO->Unbind();
+	if (matrixSSBO && matrixSSBO->GetIdRaw() > 0u) {
+		matrixSSBO->UnbindBufferRange(GL_SHADER_STORAGE_BUFFER, MATRIX_SSBO_BINDING_IDX, 0, matrixSSBO->GetSize());
+
+		if (matrixSSBO->bound)
+			matrixSSBO->Unbind();
+	}
 
 	spring::SafeDelete(matrixSSBO);
 }
