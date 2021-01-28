@@ -13,7 +13,7 @@
 
 class MatrixUploader {
 public:
-	static constexpr bool enabled = true;
+	static constexpr bool enabled = false;
 	static constexpr bool checkInView = false;
 	static MatrixUploader& GetInstance() {
 		static MatrixUploader instance;
