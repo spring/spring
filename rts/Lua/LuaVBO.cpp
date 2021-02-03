@@ -84,12 +84,14 @@ bool LuaVBO::CheckAndReportSupported(lua_State* L, const unsigned int target) {
 
 int LuaVBO::GetVBO(lua_State* L)
 {
+	LOG("LuaVBO::GetVBO 1");
 	unsigned int target = luaL_optint(L, 1, GL_ARRAY_BUFFER);
 	if (!LuaVBO::CheckAndReportSupported(L, target))
 		return 0;
-
+	LOG("LuaVBO::GetVBO 2");
 	return sol::stack::call_lua(L, 1, [](const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt) {
 		return std::make_shared<LuaVBOImpl>(defTargetOpt, freqUpdatedOpt);
 		//return LuaVBOImpl{defTargetOpt, freqUpdatedOpt, L};
 	});
+	LOG("LuaVBO::GetVBO 3");
 }

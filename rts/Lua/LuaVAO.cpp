@@ -40,8 +40,9 @@ int LuaVAO::GetVAO(lua_State* L)
 
 		return 0;
 	}
-
+	LOG("LuaVAO::GetVAO 1");
 	return sol::stack::call_lua(L, 1, []() {
 		return LuaVAOImpl();
 	});
+	LOG("LuaVAO::GetVAO 2");
 }
