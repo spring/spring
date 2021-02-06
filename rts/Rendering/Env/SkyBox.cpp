@@ -63,7 +63,9 @@ void CSkyBox::Draw()
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
+		glScalef(static_cast<float>(globalRendering->viewSizeX) / static_cast<float>(globalRendering->viewSizeY), 1.0, 1.0);
 		gluOrtho2D(0, 1, 0, 1);
+
 
 	GLfloat verts[] = {
 		0.0f, 1.0f,
