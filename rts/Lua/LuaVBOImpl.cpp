@@ -376,11 +376,10 @@ bool LuaVBOImpl::DefineElementArray(const sol::optional<sol::object> attribDefAr
 
 void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt)
 {
-	LOG("LuaVBOImpl::Define 1");
 	if (vbo) {
 		LuaError("[LuaVBOImpl::%s] Attempt to call %s() multiple times. VBO definition is immutable.", __func__, __func__);
 	}
-	LOG("LuaVBOImpl::Define 2");
+
 	if (elementsCount <= 0) {
 		LuaError("[LuaVBOImpl::%s] Elements count cannot be <= 0", __func__);
 	}
@@ -398,7 +397,6 @@ void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object
 		return false;
 	};
 
-	LOG("LuaVBOImpl::Define 3");
 	bool result;
 	switch (defTarget) {
 	case GL_ELEMENT_ARRAY_BUFFER:
@@ -419,12 +417,8 @@ void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object
 		LuaError("[LuaVBOImpl::%s] Error in definition. See infolog for possible reasons", __func__);
 	}
 
-	LOG("LuaVBOImpl::Define 4");
-
 	CopyAttrMapToVec();
-	LOG("LuaVBOImpl::Define 5");
 	AllocGLBuffer(elemSizeInBytes * elementsCount);
-	LOG("LuaVBOImpl::Define 6");
 }
 
 std::tuple<uint32_t, uint32_t, uint32_t> LuaVBOImpl::GetBufferSize()
@@ -438,16 +432,15 @@ std::tuple<uint32_t, uint32_t, uint32_t> LuaVBOImpl::GetBufferSize()
 
 size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> attribIdxOpt)
 {
-	LOG("LuaVBOImpl::Upload 1");
 	if (!vbo) {
 		LuaError("[LuaVBOImpl::%s] Invalid VBO. Did you call :Define() or :ShapeFromUnitDefID/ShapeFromFeatureDefID()?", __func__);
 	}
-	LOG("LuaVBOImpl::Upload 2");
+
 	const uint32_t elemOffset = static_cast<uint32_t>(std::max(elemOffsetOpt.value_or(0), 0));
 	if (elemOffset >= elementsCount) {
 		LuaError("[LuaVBOImpl::%s] Invalid elemOffset [%u] >= elementsCount [%u]", __func__, elemOffset, elementsCount);
 	}
-	LOG("LuaVBOImpl::Upload 3");
+
 	const int attribIdx = std::max(attribIdxOpt.value_or(-1), -1);
 	if (attribIdx != -1 && bufferAttribDefs.find(attribIdx) == bufferAttribDefs.cend()) {
 		LuaError("[LuaVBOImpl::%s] attribIdx is not found in bufferAttribDefs", __func__);
@@ -458,12 +451,11 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 	std::vector<lua_Number> dataVec;
 	dataVec.resize(luaTblDataSize);
 
-	LOG("LuaVBOImpl::Upload 4");
 	constexpr auto defaultValue = static_cast<lua_Number>(0);
 	for (auto k = 0; k < luaTblDataSize; ++k) {
 		dataVec[k] = luaTblData.raw_get_or<lua_Number>(k + 1, defaultValue);
 	}
-	LOG("LuaVBOImpl::Upload 5");
+
 	return UploadImpl<lua_Number>(dataVec, elemOffset, attribIdx);
 }
 

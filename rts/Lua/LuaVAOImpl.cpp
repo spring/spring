@@ -89,23 +89,17 @@ void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std
 
 void LuaVAOImpl::AttachVertexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
-	LOG("LuaVAOImpl::AttachVertexBuffer 1");
 	AttachBufferImpl(luaVBO, vertLuaVBO, GL_ARRAY_BUFFER);
-	LOG("LuaVAOImpl::AttachVertexBuffer 2");
 }
 
 void LuaVAOImpl::AttachInstanceBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
-	LOG("LuaVAOImpl::AttachInstanceBuffer 1");
 	AttachBufferImpl(luaVBO, instLuaVBO, GL_ARRAY_BUFFER);
-	LOG("LuaVAOImpl::AttachInstanceBuffer 2");
 }
 
 void LuaVAOImpl::AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
 {
-	LOG("LuaVAOImpl::AttachIndexBuffer 1");
 	AttachBufferImpl(luaVBO, indxLuaVBO, GL_ELEMENT_ARRAY_BUFFER);
-	LOG("LuaVAOImpl::AttachIndexBuffer 2");
 }
 
 template<typename ...Args>
@@ -242,22 +236,18 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 
 void LuaVAOImpl::DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt)
 {
-	LOG("LuaVAOImpl::DrawArrays 1");
 	const auto vertInstCount = DrawCheck(mode, vertCountOpt, instanceCountOpt, false); //pair<vertCount,instCount>
 
 	const auto first = std::max(firstOpt.value_or(0), 0);
 
-	LOG("LuaVAOImpl::DrawArrays 2");
 	vao->Bind();
-	LOG("LuaVAOImpl::DrawArrays 3");
+
 	if (vertInstCount.second == 0)
 		glDrawArrays(mode, first, vertInstCount.first);
 	else
 		glDrawArraysInstanced(mode, first, vertInstCount.first, vertInstCount.second);
 
-	LOG("LuaVAOImpl::DrawArrays 4");
 	vao->Unbind();
-	LOG("LuaVAOImpl::DrawArrays 5");
 }
 
 void LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt)
