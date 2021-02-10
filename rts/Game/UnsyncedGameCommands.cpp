@@ -2055,11 +2055,12 @@ public:
 		if (mouse->offscreen)
 			return false;
 
-		if (args.empty()) {
-			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
-		} else {
-			LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
-		}
+        // disabled input grabbing message because it needs to spammed by games (in order to keep grabbing input after alt-tabbing back into the game)
+		//if (args.empty()) {
+		//	LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
+		//} else {
+		//	LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
+		//}
 
 		return true;
 	}
