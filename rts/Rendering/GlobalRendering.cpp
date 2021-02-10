@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <string>
+#include <algorithm>
+#include <cctype>
 
 #include <SDL.h>
 
@@ -634,7 +636,10 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
-	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
+	std::string glVendorLower = glVendor;
+	std::transform(glVendor.begin(), glVendor.end(), glVendorLower.begin(), ::tolower);
+
+	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos) || (glVendorLower.find("radeon ") != std::string::npos);
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
 	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
 	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
