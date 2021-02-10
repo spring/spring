@@ -294,7 +294,7 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 	newSize = GetAlignedSize(newSize);
 
 	// ATI interprets unsynchronized access differently; (un)mapping does not sync
-	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
+	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveAMD);
 
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
 	if (newData == nullptr && newSize == bufSize && newUsage == usage)

@@ -41,7 +41,7 @@ CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1)
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
-CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
+CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with AMD video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
@@ -129,12 +129,12 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(active),
 	CR_IGNORED(compressTextures),
 
-	CR_IGNORED(haveATI),
+	CR_IGNORED(haveAMD),
 	CR_IGNORED(haveMesa),
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
 
-	CR_IGNORED(atiHacks),
+	CR_IGNORED(amdHacks),
 	CR_IGNORED(supportPersistentMapping),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
@@ -232,11 +232,11 @@ CGlobalRendering::CGlobalRendering()
 	, active(true)
 	, compressTextures(false)
 
-	, haveATI(false)
+	, haveAMD(false)
 	, haveMesa(false)
 	, haveIntel(false)
 	, haveNvidia(false)
-	, atiHacks(false)
+	, amdHacks(false)
 
 	, supportPersistentMapping(false)
 	, supportNonPowerOfTwoTex(false)
@@ -634,14 +634,14 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
-	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos) || (glRenderer.find("radeon ") != std::string::npos);
+	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos) || (glRenderer.find("radeon ") != std::string::npos);
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
 	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
 	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
 
-	if (haveATI) {
+	if (haveAMD) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-		globalRenderingInfo.gpuVendor = "ATI";
+		globalRenderingInfo.gpuVendor = "AMD";
 	} else if (haveIntel) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
 		globalRenderingInfo.gpuVendor = "Intel";
@@ -659,7 +659,7 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportPersistentMapping = GLEW_ARB_buffer_storage && !(forceDisablePersistentMapping > 0);
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
 	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
@@ -680,10 +680,10 @@ void CGlobalRendering::SetGLSupportFlags()
 
 	{
 		// use some ATI bugfixes?
-		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI;
-		atiHacks &= (atiHacksCfg < 0); // runtime detect
-		atiHacks |= (atiHacksCfg > 0); // user override
+		const int amdHacksCfg = configHandler->GetInt("AtiHacks");
+		amdHacks = haveAMD;
+		amdHacks &= (amdHacksCfg < 0); // runtime detect
+		amdHacks |= (amdHacksCfg > 0); // user override
 	}
 
 	// runtime-compress textures? (also already required for SMF ground textures)
@@ -724,7 +724,7 @@ void CGlobalRendering::SetGLSupportFlags()
 		support24bitDepthBuffer = (state > 0);
 	}
 	#else
-	if (FBO::IsSupported() && !atiHacks) {
+	if (FBO::IsSupported() && !amdHacks) {
 		FBO fbo;
 		fbo.Bind();
 		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
@@ -842,7 +842,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tmax. storage buffer-bindings : %i", glslMaxStorageBufferBindings);
 	LOG("\tmax. storage block-size      : %iMB", glslMaxStorageBufferSize / (1024 * 1024));
 	LOG("\t");
-	LOG("\tenable ATI-hacks : %i", atiHacks);
+	LOG("\tenable AMD-hacks : %i", amdHacks);
 	LOG("\tcompress MIP-maps: %i", compressTextures);
 }
 

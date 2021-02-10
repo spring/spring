@@ -224,7 +224,7 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 
 void WorkaroundATIPointSizeBug()
 {
-	if (!globalRendering->atiHacks)
+	if (!globalRendering->amdHacks)
 		return;
 	if (!globalRendering->haveGLSL)
 		return;
@@ -332,10 +332,10 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->atiHacks) {
+	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->amdHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		if (globalRendering->atiHacks) {
+		if (globalRendering->amdHacks) {
 			glEnable(target);
 			glGenerateMipmap(target);
 			glDisable(target);

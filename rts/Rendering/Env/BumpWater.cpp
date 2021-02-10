@@ -291,7 +291,7 @@ CBumpWater::CBumpWater()
 	// CREATE TEXTURES
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
-		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
+		if (GLEW_ARB_texture_rectangle && !globalRendering->amdHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		} else if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
@@ -338,7 +338,7 @@ CBumpWater::CBumpWater()
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		GLuint depthFormat = GL_DEPTH_COMPONENT32;
-		if (!globalRendering->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
+		if (!globalRendering->amdHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 

@@ -1545,12 +1545,12 @@ static const void DrawModelFillBuildStageShadow(
 
 
 static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[4 + 4] = {
-	// atiHacks=0
+	// amdHacks=0
 	DrawModelNoopBuildStageOpaque,
 	DrawModelWireBuildStageOpaque,
 	DrawModelFlatBuildStageOpaque,
 	DrawModelFillBuildStageOpaque,
-	// atiHacks=1
+	// amdHacks=1
 	DrawModelNoopBuildStageOpaque,
 	DrawModelWireBuildStageOpaqueATI,
 	DrawModelFlatBuildStageOpaque,
@@ -1558,12 +1558,12 @@ static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[4 + 4] =
 };
 
 static constexpr DrawModelBuildStageFunc drawModelBuildStageShadowFuncs[4 + 4] = {
-	// atiHacks=0
+	// amdHacks=0
 	DrawModelNoopBuildStageShadow,
 	DrawModelWireBuildStageShadow,
 	DrawModelFlatBuildStageShadow,
 	DrawModelFillBuildStageShadow,
-	// atiHacks=1
+	// amdHacks=1
 	DrawModelNoopBuildStageShadow,
 	DrawModelWireBuildStageShadowATI,
 	DrawModelFlatBuildStageShadow,
@@ -1613,12 +1613,12 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// wireframe, unconditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
 	{
 		// flat-colored, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 	}
 
@@ -1627,7 +1627,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// fully-shaded, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 	}
 
@@ -1677,19 +1677,19 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	// wireframe, unconditional
 	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 
 	// flat-colored, conditional
 	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
 	// fully-shaded, conditional
 	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);

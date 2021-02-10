@@ -192,7 +192,7 @@ CGrassDrawer::CGrassDrawer()
 	const int detail = configHandler->GetInt("GrassDetail");
 
 	// some ATI drivers crash with grass enabled, default to disabled
-	if ((detail == 0) || ((detail == 7) && globalRendering->haveATI)) {
+	if ((detail == 0) || ((detail == 7) && globalRendering->haveAMD)) {
 		grassOff = true;
 		return;
 	}
@@ -520,7 +520,7 @@ void CGrassDrawer::Update()
 
 		// ATI crashes w/o an error when shadows are enabled!?
 		static const bool shaders = globalRendering->haveGLSL;
-		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
+		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->amdHacks);
 
 		if (shaders && !shadows) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
@@ -561,7 +561,7 @@ void CGrassDrawer::Draw()
 
 	// ATI crashes w/o an error when shadows are enabled!?
 	static const bool shaders = globalRendering->haveGLSL;
-	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
+	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->amdHacks);
 
 	if (shaders && !shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
 		SetupGlStateFar();

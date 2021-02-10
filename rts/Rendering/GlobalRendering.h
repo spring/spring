@@ -223,7 +223,7 @@ public:
 	 * These can be used to enable workarounds for bugs in their drivers.
 	 * Note, you should always give the user the possiblity to override such workarounds via config-tags.
 	 */
-	bool haveATI;
+	bool haveAMD;
 	bool haveMesa;
 	bool haveIntel;
 	bool haveNvidia;
@@ -234,7 +234,7 @@ public:
 	 *
 	 * enables some ATI bugfixes
 	 */
-	bool atiHacks;
+	bool amdHacks;
 
 	/**
 	* @brief whether the GPU supports persistent buffer mapping

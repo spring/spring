@@ -215,7 +215,7 @@ void CInMapDrawView::Draw()
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
-	if (globalRendering->atiHacks) {
+	if (globalRendering->amdHacks) {
 		glLineWidth(1.f);
 		linesVa->DrawArrayC(GL_LINES);
 	}
