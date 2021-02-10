@@ -106,7 +106,7 @@ static constexpr unsigned playerBandwidthInterval = 100;
 
 /// every 10 sec we'll broadcast current frame in a message that skips queue & cache
 /// to let clients that are fast-forwarding to current point to know their loading %
-static constexpr unsigned gameProgressFrameInterval = GAME_SPEED * 10;
+static constexpr unsigned gameProgressFrameInterval = GAME_SPEED * 5;
 
 static constexpr unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
