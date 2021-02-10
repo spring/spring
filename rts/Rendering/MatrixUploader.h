@@ -13,14 +13,14 @@
 
 class MatrixUploader {
 public:
-	static constexpr bool enabled = false;
+	static constexpr bool enabled = true;
 	static constexpr bool checkInView = false;
 	static MatrixUploader& GetInstance() {
 		static MatrixUploader instance;
 		return instance;
 	};
 	static bool Supported() {
-		static bool supported = enabled && VBO::IsSupported(GL_UNIFORM_BUFFER) && VBO::IsSupported(GL_SHADER_STORAGE_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
+		static bool supported = enabled && VBO::IsSupported(GL_SHADER_STORAGE_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
 		return supported;
 	}
 public:
