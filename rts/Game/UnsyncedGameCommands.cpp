@@ -2055,11 +2055,12 @@ public:
 		if (mouse->offscreen)
 			return false;
 
-		if (args.empty()) {
-			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
-		} else {
-			LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
-		}
+		bool prevGrabInput = globalRendering->grabInput;
+		InverseOrSetBool(globalRendering->grabInput, action.GetArgs());
+		LogSystemStatus("Input grabbing", globalRendering->grabInput);
+
+		if (prevGrabInput != globalRendering->grabInput)
+			globalRendering->SetWindowInputGrabbing(globalRendering->grabInput);
 
 		return true;
 	}

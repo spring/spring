@@ -210,6 +210,8 @@ public:
 	 */
 	bool active;
 
+	bool grabInput; //what it says
+
 	/**
 	 * @brief compressTextures
 	 *
