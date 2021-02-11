@@ -15,6 +15,16 @@ if (TRACE_SYNC)
 	add_definitions(-DTRACE_SYNC)
 endif (TRACE_SYNC)
 
+option(TRACE_SYNC_HSIEH "Use HsiehHash for hash checksum)" FALSE)
+if (TRACE_SYNC_HSIEH)
+	add_definitions(-DTRACE_SYNC_HSIEH)
+endif (TRACE_SYNC_HSIEH)
+
+option(TRACE_SYNC_HEAVY "Enable sync tracker (Heavy)" FALSE)
+if (TRACE_SYNC_HEAVY)
+	add_definitions(-DTRACE_SYNC_HEAVY)
+endif (TRACE_SYNC_HEAVY)
+
 option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
 	add_definitions(-DSYNCDEBUG)
