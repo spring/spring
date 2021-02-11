@@ -5,6 +5,10 @@
 
 #ifdef SYNCCHECK
 
+#ifdef TRACE_SYNC
+	#include "SyncTracer.h"
+#endif
+
 #ifdef TRACE_SYNC_HEAVY
 	#include "HsiehHash.h"
 #endif
