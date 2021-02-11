@@ -44,6 +44,7 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Sound/ISoundChannels.h"
+#include "System/Sync/SyncTracer.h"
 
 #endif
 

@@ -19,6 +19,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
+#include "System/Sync/SyncTracer.h"
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 

@@ -11,6 +11,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
+#include "System/Sync/SyncTracer.h"
 #include "System/ContainerUtil.h"
 
 

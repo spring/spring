@@ -23,6 +23,7 @@
 #include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/Sound/ISoundChannels.h"
+#include "System/Sync/SyncTracer.h"
 
 #include "Game/GlobalUnsynced.h"
 

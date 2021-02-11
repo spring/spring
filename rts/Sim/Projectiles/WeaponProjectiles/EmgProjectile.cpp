@@ -9,6 +9,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/Sync/SyncTracer.h"
 
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, )
 

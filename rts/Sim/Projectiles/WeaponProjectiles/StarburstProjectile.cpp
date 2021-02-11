@@ -15,6 +15,7 @@
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/Sync/SyncTracer.h"
 #include "System/Color.h"
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
