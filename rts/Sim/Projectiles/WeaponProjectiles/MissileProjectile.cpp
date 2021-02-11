@@ -95,6 +95,11 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	drawRadius = radius + maxSpeed * 8.0f;
 	castShadow = true;
 
+#ifdef TRACE_SYNC
+	tracefile << "New missile: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
+
 	CUnit* u = dynamic_cast<CUnit*>(target);
 	if (u == nullptr)
 		return;

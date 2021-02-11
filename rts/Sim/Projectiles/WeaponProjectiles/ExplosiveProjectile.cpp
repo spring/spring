@@ -11,6 +11,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
+#ifdef TRACE_SYNC
+	#include "System/Sync/SyncTracer.h"
+#endif
+
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CExplosiveProjectile, (
@@ -39,6 +43,11 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	} else {
 		invttl = 1.0f / ttl;
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "New explosive: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 void CExplosiveProjectile::Update()

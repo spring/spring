@@ -120,6 +120,11 @@ CUnit::~CUnit()
 	if (selfdExpDamages != nullptr)
 		DynDamageArray::DecRef(selfdExpDamages);
 
+#ifdef TRACE_SYNC
+	tracefile << "Unit died: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
+#endif
+
 	if (fpsControlPlayer != nullptr) {
 		fpsControlPlayer->StopControllingUnit();
 		assert(fpsControlPlayer == nullptr);
@@ -249,6 +254,11 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	quadField.MovedUnit(this);
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+
+#ifdef TRACE_SYNC
+	tracefile << "[" << __func__ << "] id: " << id << ", name: " << unitDef->name << " ";
+	tracefile << "pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
+#endif
 
 	ASSERT_SYNCED(pos);
 
@@ -1280,6 +1290,11 @@ void CUnit::DoDamage(
 
 		eoh->UnitDamaged(*this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "Damage: ";
+	tracefile << id << " " << baseDamage << "\n";
+#endif
 
 	if (!isCollision && baseDamage > 0.0f) {
 		if ((attacker != nullptr) && !teamHandler.Ally(allyteam, attacker->allyteam)) {

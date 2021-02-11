@@ -11,6 +11,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
+#ifdef TRACE_SYNC
+	#include "System/Sync/SyncTracer.h"
+#endif
+
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CLaserProjectile,(
@@ -56,6 +60,11 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 	}
 
 	drawRadius = maxLength;
+
+#ifdef TRACE_SYNC
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 void CLaserProjectile::Update()

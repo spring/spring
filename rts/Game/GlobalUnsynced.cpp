@@ -96,7 +96,13 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
-	const CPlayer* myPlayer = playerHandler.Player(myPlayerNum = myNumber);
+	myPlayerNum = myNumber;
+
+#ifdef TRACE_SYNC
+	tracefile.Initialize(myPlayerNum);
+#endif
+
+	const CPlayer* myPlayer = playerHandler.Player(myPlayerNum);
 
 	myTeam = myPlayer->team;
 	if (!teamHandler.IsValidTeam(myTeam))

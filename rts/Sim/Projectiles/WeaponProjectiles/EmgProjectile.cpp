@@ -33,6 +33,11 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 	} else {
 		intensity = 0.0f;
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "New emg: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 void CEmgProjectile::Update()

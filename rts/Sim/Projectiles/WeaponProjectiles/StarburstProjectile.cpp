@@ -94,6 +94,11 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	castShadow = true;
 	leaveSmokeTrail = (weaponDef != nullptr && weaponDef->visuals.smokeTrail);
 
+#ifdef TRACE_SYNC
+	tracefile << "[" << __func__ << "] ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
+
 	InitTracerParts();
 }
 
