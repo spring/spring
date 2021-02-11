@@ -151,13 +151,13 @@ inline static void FindRadialMaximum(
 ) {
 	const float cury = y * resolution;
 
-	for (int x = 0; x < maxx; ++x) {
+	for (int x = 0; x <= maxx; ++x) {
 		float maxRowHeight = -std::numeric_limits<float>::max();
 
 		// find current maximum within radius smoothRadius
 		// (in every column stack) along the current row
 		const int startx = std::max(x - winSize, 0);
-		const int endx = std::min(maxx - 1, x + winSize);
+		const int endx = std::min(maxx, x + winSize);
 
 		for (int i = startx; i <= endx; ++i) {
 			assert(i >= 0);
@@ -256,27 +256,50 @@ inline static void BlurHorizontal(
 	const int maxy,
 	const int blurSize,
 	const float resolution,
-	const std::vector<float>& kernel,
-	      std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
 	const float n = 2.0f * blurSize + 1.0f;
-	const int lineSize = maxx;
+	const float recipn = 1.0f / n;
+	const int lineSize = maxx + 1;
 
-	for_mt(0, maxy, [&](const int y)
-	{
-		for (int x = 0; x < maxx; ++x)
-		{
-			float avg = 0.0f;
-			for (int x1 = x - blurSize; x1 <= x + blurSize; ++x1)
-				avg += kernel[abs(x1 - x)] * mesh[std::max(0, std::min(maxx-1, x1)) + y * lineSize];
+	for_mt(0, maxy+1, [&](const int y) {
+		float avg = 0.0f;
 
-			const float ghaw = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+		for (int x = 0; x <= 2 * blurSize; ++x) {
+			avg += mesh[x + y * lineSize];
+		}
 
-			smoothed[x + y * lineSize] = std::max(ghaw, avg);
+		for (int x = 0; x <= maxx; ++x) {
+			const int idx = x + y * lineSize;
 
-			assert(smoothed[x + y * lineSize] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
-			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()       );
+			if (x <= blurSize || x > (maxx - blurSize)) {
+				// map-border case
+				smoothed[idx] = 0.0f;
+
+				const int xstart = std::max(x - blurSize, 0);
+				const int xend   = std::min(x + blurSize, maxx);
+
+				for (int x1 = xstart; x1 <= xend; ++x1) {
+					smoothed[idx] += mesh[x1 + y * lineSize];
+				}
+
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float sh = smoothed[idx] / (xend - xstart + 1);
+
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
+			} else {
+				// non-border case
+				avg += mesh[idx + blurSize] - mesh[idx - blurSize - 1];
+
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float sh = recipn * avg;
+
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
+			}
+
+			assert(smoothed[idx] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+			assert(smoothed[idx] >=          readMap->GetCurrMinHeight()       );
 		}
 	});
 }
@@ -286,27 +309,50 @@ inline static void BlurVertical(
 	const int maxy,
 	const int blurSize,
 	const float resolution,
-	const std::vector<float>& kernel,
-	      std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
 	const float n = 2.0f * blurSize + 1.0f;
-	const int lineSize = maxx;
+	const float recipn = 1.0f / n;
+	const int lineSize = maxx + 1;
 
-	for_mt(0, maxx, [&](const int x)
-	{
-		for (int y = 0; y < maxy; ++y)
-		{
-			float avg = 0.0f;
-			for (int y1 = y - blurSize; y1 <= y + blurSize; ++y1)
-				avg += kernel[abs(y1 - y)] * mesh[ x + std::max(0, std::min(maxy-1, y1)) * lineSize];
+	for_mt(0, maxx+1, [&](const int x) {
+		float avg = 0.0f;
 
-			const float ghaw = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+		for (int y = 0; y <= 2 * blurSize; ++y) {
+			avg += mesh[x + y * lineSize];
+		}
 
-			smoothed[x + y * lineSize] = std::max(ghaw, avg);
+		for (int y = 0; y <= maxy; ++y) {
+			const int idx = x + y * lineSize;
 
-			assert(smoothed[x + y * lineSize] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
-			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()       );
+			if (y <= blurSize || y > (maxy - blurSize)) {
+				// map-border case
+				smoothed[idx] = 0.0f;
+
+				const int ystart = std::max(y - blurSize, 0);
+				const int yend   = std::min(y + blurSize, maxy);
+
+				for (int y1 = ystart; y1 <= yend; ++y1) {
+					smoothed[idx] += mesh[x + y1 * lineSize];
+				}
+
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float sh = smoothed[idx] / (yend - ystart + 1);
+
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
+			} else {
+				// non-border case
+				avg += mesh[x + (y + blurSize) * lineSize] - mesh[x + (y - blurSize - 1) * lineSize];
+
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float sh = recipn * avg;
+
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
+			}
+
+			assert(smoothed[idx] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+			assert(smoothed[idx] >=          readMap->GetCurrMinHeight()       );
 		}
 	});
 }
@@ -359,35 +405,8 @@ void SmoothHeightMesh::MakeSmoothMesh()
 	//   Nth row has indices [maxx*(N-1) + (N-1), maxx*(N) + (N-1)] inclusive
 	//
 	// use sliding window of maximums to reduce computational complexity
-	const int winSize = smoothRadius / resolution;
-	const int blurSize = std::max(1, winSize / 2);
-	constexpr int blurPassesCount = 2;
-
-	const auto fillGaussianKernelFunc = [blurSize](std::vector<float>& gaussianKernel, const float sigma) {
-		gaussianKernel.resize(blurSize + 1);
-
-		const auto gaussianG = [](const int x, const float sigma) {
-			// 0.3989422804f = 1/sqrt(2*pi)
-			return 0.3989422804f * exp(-0.5f * x * x / (sigma * sigma)) / sigma;
-		};
-
-		float sum;
-		gaussianKernel[0] = gaussianG(0, sigma);
-		sum = gaussianKernel[0];
-
-		for (int i = 1; i < blurSize + 1; ++i) {
-			gaussianKernel[i] = gaussianG(i, sigma);
-			sum += 2.0f * gaussianKernel[i];
-		}
-
-		for (auto& gk : gaussianKernel) {
-			gk /= sum;
-		}
-	};
-
-	constexpr float gSigma = 5.0f;
-	std::vector<float> gaussianKernel;
-	fillGaussianKernelFunc(gaussianKernel, gSigma);
+	const     int winSize = smoothRadius / resolution;
+	constexpr int blurSize = 3;
 
 	assert(mesh.empty());
 	mesh.resize((maxx + 1) * (maxy + 1), 0.0f);
@@ -411,9 +430,9 @@ void SmoothHeightMesh::MakeSmoothMesh()
 	}
 
 	// actually smooth with approximate Gaussian blur passes
-	for (int numBlurs = blurPassesCount; numBlurs > 0; --numBlurs) {
-		BlurHorizontal(maxx, maxy, blurSize, resolution, gaussianKernel, mesh, origMesh); mesh.swap(origMesh);
-		BlurVertical(maxx, maxy, blurSize, resolution, gaussianKernel, mesh, origMesh); mesh.swap(origMesh);
+	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
+		BlurHorizontal(maxx, maxy, blurSize, resolution, mesh, origMesh); mesh.swap(origMesh);
+		BlurVertical(maxx, maxy, blurSize, resolution, mesh, origMesh); mesh.swap(origMesh);
 	}
 
 	// <mesh> now contains the final smoothed heightmap, save it in origMesh
