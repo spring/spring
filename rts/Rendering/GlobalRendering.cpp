@@ -636,7 +636,8 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
-	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos) || (glRenderer.find("radeon ") != std::string::npos);
+	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
+				 (glRenderer.find("radeon ") != std::string::npos) || (glRenderer.find("amd ") != std::string::npos); //it's amazing how inconsistent AMD detection can be
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
 	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
 	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
