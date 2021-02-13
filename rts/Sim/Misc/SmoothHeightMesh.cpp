@@ -366,9 +366,9 @@ void SmoothHeightMesh::MakeSmoothMesh()
 	const auto fillGaussianKernelFunc = [blurSize](std::vector<float>& gaussianKernel, const float sigma) {
 		gaussianKernel.resize(blurSize + 1);
 
-		const auto gaussianG = [](const int x, const float sigma) {
+		const auto gaussianG = [](const int x, const float sigma) -> float {
 			// 0.3989422804f = 1/sqrt(2*pi)
-			return 0.3989422804f * exp(-0.5f * x * x / (sigma * sigma)) / sigma;
+			return 0.3989422804f * math::expf(-0.5f * x * x / (sigma * sigma)) / sigma;
 		};
 
 		float sum;
