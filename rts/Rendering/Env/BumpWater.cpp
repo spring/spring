@@ -173,8 +173,7 @@ CBumpWater::CBumpWater()
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
 	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
-	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffer)
-		depthBits = 16;
+	depthBits    = std::min(depthBits, static_cast<char>(globalRendering->supportDepthBufferBestBits));
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && waterRendering->shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && waterRendering->hasWaterPlane
@@ -335,8 +334,9 @@ CBumpWater::CBumpWater()
 		glBindTexture(target, depthTexture);
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		GLuint depthFormat = GL_DEPTH_COMPONENT32;
-		if (!globalRendering->amdHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
+		//GLuint depthFormat = GL_DEPTH_COMPONENT32;
+		//if (!globalRendering->amdHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
+		GLuint depthFormat = CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits);
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
@@ -362,12 +362,7 @@ CBumpWater::CBumpWater()
 
 	// CREATE FBOs
 	if (FBO::IsSupported()) {
-		GLuint depthRBOFormat = GL_DEPTH_COMPONENT;
-		switch (depthBits) {
-			case 16: depthRBOFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: depthRBOFormat = GL_DEPTH_COMPONENT24; break;
-			case 32: depthRBOFormat = GL_DEPTH_COMPONENT32; break;
-		}
+		GLuint depthRBOFormat = static_cast<GLuint>(CGlobalRendering::DepthBitsToFormat(depthBits));
 
 		if (reflection>0) {
 			reflectFBO.Bind();

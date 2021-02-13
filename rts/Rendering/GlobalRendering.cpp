@@ -140,7 +140,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(supportMSAAFrameBuffer),
-	CR_IGNORED(support24bitDepthBuffer),
+	CR_IGNORED(supportDepthBufferBestBits),
+	CR_IGNORED(supportDepthBufferBits),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(supportSeamlessCubeMaps),
@@ -244,7 +245,7 @@ CGlobalRendering::CGlobalRendering()
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, supportMSAAFrameBuffer(false)
-	, support24bitDepthBuffer(false)
+	, supportDepthBufferBestBits(0)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
 	, supportSeamlessCubeMaps(false)
@@ -716,26 +717,33 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
 	supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
 
-	#if 0
-	{
-		// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
-		// they seem to support GL_DEPTH_COMPONENT24 for static textures
-		// but those can't be rendered to)
-		GLint state = 0;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
-		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffer = (state > 0);
+	int iter = 0;
+	for (const int bits : {0, 16, 24, 32}) {
+		bool supported = false;
+		if (FBO::IsSupported()) {
+			FBO fbo;
+			fbo.Bind();
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
+			const GLint format = DepthBitsToFormat(bits);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, format, 16, 16);
+			supported = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+			fbo.Unbind();
+		}
+
+		if (supported)
+			supportDepthBufferBestBits = std::max(supportDepthBufferBestBits, bits);
+
+		supportDepthBufferBits[iter] = supported;
+
+		++iter;
 	}
-	#else
-	if (FBO::IsSupported() && !amdHacks) {
-		FBO fbo;
-		fbo.Bind();
-		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
-		fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-		support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
-		fbo.Unbind();
+
+	//TODO figure out if needed
+	if (globalRendering->amdHacks) {
+		supportDepthBufferBits[3] = false; //32
+		supportDepthBufferBits[2] = false; //24
+		supportDepthBufferBestBits = 16;
 	}
-	#endif
 }
 
 void CGlobalRendering::QueryGLMaxVals()
@@ -827,7 +835,9 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
 	LOG("\tMSAA frame-buffer support : %i (%i)", supportMSAAFrameBuffer, glewIsExtensionSupported("GL_EXT_framebuffer_multisample"));
-	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
+	LOG("\t16-bit Z-buffer support   : %i (-)", supportDepthBufferBits[1]);
+	LOG("\t24-bit Z-buffer support   : %i (-)", supportDepthBufferBits[2]);
+	LOG("\t32-bit Z-buffer support   : %i (-)", supportDepthBufferBits[3]);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
@@ -1154,6 +1164,20 @@ void CGlobalRendering::InitGLState()
 	// this does not accomplish much
 	// SwapBuffers(true, true);
 	LogDisplayMode(sdlWindows[0]);
+}
+
+int CGlobalRendering::DepthBitsToFormat(int bits)
+{
+	switch (bits)
+	{
+	case 16:
+		return GL_DEPTH_COMPONENT16;
+	case 24:
+		return GL_DEPTH_COMPONENT24;
+	case 32:
+		return GL_DEPTH_COMPONENT32;
+	}
+	return GL_DEPTH_COMPONENT;
 }
 
 /**

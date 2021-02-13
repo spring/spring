@@ -893,9 +893,11 @@ void CGrassDrawer::CreateFarTex()
 	fboTex.AttachTexture(farTex);
 	fboTex.CheckStatus("GRASSDRAWER1");
 
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX * sizeMod, texSizeY * sizeMod);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, texSizeX * sizeMod, texSizeY * sizeMod);
 	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, texSizeX * sizeMod, texSizeY * sizeMod);
 	fbo.CheckStatus("GRASSDRAWER2");
 

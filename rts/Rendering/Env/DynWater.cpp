@@ -239,12 +239,14 @@ CDynWater::CDynWater()
 
 	glGenFramebuffersEXT(1, &frameBuffer);
 
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+
 	reflectFBO.Bind();
 	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT32, 512, 512);
+	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, 512, 512);
 	refractFBO.Bind();
 	refractFBO.AttachTexture(refractTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-	refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT32, refractSize, refractSize);
+	refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, refractSize, refractSize);
 	FBO::Unbind();
 
 	if (!reflectFBO.IsValid() || !refractFBO.IsValid()) {

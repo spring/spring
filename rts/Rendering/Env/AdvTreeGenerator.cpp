@@ -45,7 +45,8 @@ void CAdvTreeGenerator::Init()
 
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256, 256);
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, 256, 256);
 	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256, 256);
 	if (!fbo.CheckStatus("ADVTREE")) {
 		fbo.Unbind();
@@ -281,7 +282,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 {
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 64, 64);
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, 64, 64);
 	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 64, 64);
 	if (!fbo.CheckStatus("ADVTREE")) {
 		FBO::Unbind();

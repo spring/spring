@@ -254,12 +254,9 @@ public:
 	bool supportTextureQueryLOD;
 
 	bool supportMSAAFrameBuffer;
-	/**
-	 * @brief support24bitDepthBuffer
-	 *
-	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
-	 */
-	bool support24bitDepthBuffer;
+
+	int supportDepthBufferBestBits;
+	bool supportDepthBufferBits[4];
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
@@ -309,7 +306,9 @@ public:
 	// [0] := primary, [1] := secondary (hidden)
 	SDL_Window* sdlWindows[2];
 	SDL_GLContext glContexts[2];
-
+public:
+	//helper function
+	static int DepthBitsToFormat(int bits);
 public:
 	/**
 	* @brief max view range in elmos
