@@ -291,9 +291,7 @@ CBumpWater::CBumpWater()
 	// CREATE TEXTURES
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
-		if (GLEW_ARB_texture_rectangle && !globalRendering->amdHacks) {
-			target = GL_TEXTURE_RECTANGLE_ARB;
-		} else if (!globalRendering->supportNonPowerOfTwoTex) {
+		if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
 			screenTextureY = next_power_of_2(screenTextureY);
 		}
@@ -414,7 +412,6 @@ CBumpWater::CBumpWater()
 	if (depthCopy)    definitions += "#define opt_depth\n";
 	if (blurRefl)     definitions += "#define opt_blurreflection\n";
 	if (endlessOcean) definitions += "#define opt_endlessocean\n";
-	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
 
 	GLSLDefineConstf3(definitions, "MapMid",                    float3(mapDims.mapx * SQUARE_SIZE * 0.5f, 0.0f, mapDims.mapy * SQUARE_SIZE * 0.5f));
 	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
@@ -1243,5 +1240,3 @@ void CBumpWater::OcclusionQuery()
 	}
 #endif
 }
-
-

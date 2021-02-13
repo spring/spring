@@ -12,15 +12,6 @@
 #define CausticRange 0.45
 #define WavesLength  0.15
 
-
-#ifdef opt_texrect
-  #extension GL_ARB_texture_rectangle : enable
-#else
-  #define texture2DRect texture2D
-  #define sampler2DRect sampler2D
-#endif
-
-
 //////////////////////////////////////////////////
 // Uniforms + Varyings
 
@@ -29,9 +20,9 @@
   uniform sampler2D caustic;
   uniform sampler2D foam;
   uniform sampler2D reflection;
-  uniform sampler2DRect refraction;
+  uniform sampler2D refraction;
   uniform sampler2D coastmap;
-  uniform sampler2DRect depthmap;
+  uniform sampler2D depthmap;
   uniform sampler2D waverand;
   uniform float frame;
   uniform vec3 eyePos;
@@ -47,15 +38,9 @@
 //////////////////////////////////////////////////
 // Screen Coordinates (normalized and screen dimensions)
 
-#ifdef opt_texrect
-  vec2 screencoord = (gl_FragCoord.xy - ViewPos);
-  vec2 reftexcoord = (screencoord*ScreenInverse);
-#else
-  vec2 screenPos = gl_FragCoord.xy - ViewPos;
-  vec2 screencoord = screenPos*ScreenTextureSizeInverse;
-  vec2 reftexcoord = screenPos*ScreenInverse;
-#endif
-
+vec2 screenPos = gl_FragCoord.xy - ViewPos;
+vec2 screencoord = screenPos * ScreenTextureSizeInverse;
+vec2 reftexcoord = screenPos * ScreenInverse;
 
 //////////////////////////////////////////////////
 // Depth conversion
@@ -178,7 +163,7 @@ float GetWaterDepthFromDepthBuffer(float waterdepth)
 	// calculate difference between texel-z and fragment-z; convert
 	// since both are non-linear mappings from 0=dr.min to 1=dr.max
 	// absolute differences larger than 3 elmos are clamped to 1
-	float  texZ = ConvertDepthToEyeZ(texture2DRect(depthmap, screencoord).r);
+	float  texZ = ConvertDepthToEyeZ(texture2D(depthmap, screencoord).r);
 	float fragZ = ConvertDepthToEyeZ(gl_FragCoord.z);
 	#if 0
 	float fragZ = eyeVertexZ;
@@ -304,13 +289,8 @@ void main()
 
   // REFRACTION
 #ifdef opt_refraction
-  #ifdef opt_texrect
-    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz * refractDistortion ).rgb;
-  #else
-    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz * refractDistortion * ScreenInverse ).rgb;
-  #endif
+    vec3 refrColor = texture2D(refraction, screencoord + normal.xz * refractDistortion * ScreenInverse).rgb;
     gl_FragColor.rgb = mix(refrColor, waterSurface, 0.1 + surfaceMix);
-
 #else
     gl_FragColor.rgb = waterSurface;
     gl_FragColor.a   = surfaceMix + specular;
