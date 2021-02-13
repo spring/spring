@@ -398,10 +398,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTextHeight);
 
 	REGISTER_LUA_CFUNC(Unit);
+	REGISTER_LUA_CFUNC(UnitGL4);
 	REGISTER_LUA_CFUNC(UnitRaw);
 	REGISTER_LUA_CFUNC(UnitTextures);
 	REGISTER_LUA_CFUNC(UnitShape);
-	//REGISTER_LUA_CFUNC(UnitShapeGL4);
+	REGISTER_LUA_CFUNC(UnitShapeGL4);
 	REGISTER_LUA_CFUNC(UnitShapeTextures);
 	REGISTER_LUA_CFUNC(UnitMultMatrix);
 	REGISTER_LUA_CFUNC(UnitPiece);
@@ -409,9 +410,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UnitPieceMultMatrix);
 
 	REGISTER_LUA_CFUNC(Feature);
+	REGISTER_LUA_CFUNC(FeatureGL4);
 	REGISTER_LUA_CFUNC(FeatureRaw);
 	REGISTER_LUA_CFUNC(FeatureTextures);
 	REGISTER_LUA_CFUNC(FeatureShape);
+	REGISTER_LUA_CFUNC(FeatureShapeGL4);
 	REGISTER_LUA_CFUNC(FeatureShapeTextures);
 	REGISTER_LUA_CFUNC(FeatureMultMatrix);
 	REGISTER_LUA_CFUNC(FeaturePiece);
@@ -1522,6 +1525,11 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true, true)); }
 int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 
+int LuaOpenGL::UnitGL4(lua_State* L)
+{
+	return 0;
+}
+
 int LuaOpenGL::UnitTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
@@ -1533,6 +1541,11 @@ int LuaOpenGL::UnitShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	GLObjectShape(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
+	return 0;
+}
+
+int LuaOpenGL::UnitShapeGL4(lua_State* L)
+{
 	return 0;
 }
 
@@ -1628,6 +1641,11 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 int LuaOpenGL::Feature(lua_State* L) { return (FeatureCommon(L, true, true)); }
 int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)); }
 
+int LuaOpenGL::FeatureGL4(lua_State* L)
+{
+	return 0;
+}
+
 int LuaOpenGL::FeatureTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
@@ -1639,6 +1657,11 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	GLObjectShape(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	return 0;
+}
+
+int LuaOpenGL::FeatureShapeGL4(lua_State* L)
+{
 	return 0;
 }
 
