@@ -33,6 +33,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Platform/Misc.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -390,7 +391,11 @@ void CProjectileDrawer::ViewResize()
 
 bool CProjectileDrawer::CheckSoftenExt()
 {
-	static bool result = FBO::IsSupported() && GLEW_EXT_framebuffer_blit && globalRendering->haveGLSL; //eval once
+	static bool result =
+		(!(globalRendering->amdHacks && Platform::GetOSFamilyStr() == "Linux")) &&
+		FBO::IsSupported() &&
+		GLEW_EXT_framebuffer_blit &&
+		globalRendering->haveGLSL; //eval once
 	return result;
 }
 
