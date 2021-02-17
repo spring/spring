@@ -1682,7 +1682,9 @@ void CLuaHandle::Update()
 		return;
 
 	// call the routine
+	inUpdate = true;
 	RunCallIn(L, cmdStr, 0, 0);
+	inUpdate = false;
 }
 
 
