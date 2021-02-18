@@ -403,7 +403,7 @@ void CProjectileDrawer::CopyDepthBufferToTexture()
 {
 #if 1
 	//no need to touch glViewport
-	int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
+	const int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
 
 	GLint currentFBO;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
