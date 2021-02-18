@@ -851,15 +851,8 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
-	if (CLuaHandle::GetHandle(L)->GetInUpdate()) {
-		//luaL_error(L, "[%s] Attempt to update camera state outside of Update() call. It's a breaking change in the transition branch.", __func__);
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "[%s(stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ])] incorrect arguments", __func__);
-	}
 
 	camHandler->SetTransitionParams(luaL_optfloat(L, 3, camHandler->GetTransitionTimeFactor()), luaL_optfloat(L, 4, camHandler->GetTransitionTimeExponent()));
 	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));

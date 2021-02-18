@@ -266,9 +266,11 @@ class LuaOpenGL {
 		static int UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit);
 
 		static int Unit(lua_State* L);
+		static int UnitGL4(lua_State* L);
 		static int UnitRaw(lua_State* L);
 		static int UnitTextures(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitShapeGL4(lua_State* L);
 		static int UnitShapeTextures(lua_State* L);
 		static int UnitMultMatrix(lua_State* L);
 		static int UnitPiece(lua_State* L);
@@ -279,9 +281,11 @@ class LuaOpenGL {
 		static int FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature);
 
 		static int Feature(lua_State* L);
+		static int FeatureGL4(lua_State* L);
 		static int FeatureRaw(lua_State* L);
 		static int FeatureTextures(lua_State* L);
 		static int FeatureShape(lua_State* L);
+		static int FeatureShapeGL4(lua_State* L);
 		static int FeatureShapeTextures(lua_State* L);
 		static int FeatureMultMatrix(lua_State* L);
 		static int FeaturePiece(lua_State* L);

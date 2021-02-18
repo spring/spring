@@ -65,7 +65,6 @@ class CLuaHandle : public CEventClient
 
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
-		bool GetInUpdate() const { return inUpdate; }
 		bool GetUserMode() const { return userMode; }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
@@ -300,7 +299,6 @@ class CLuaHandle : public CEventClient
 		void RunDrawCallIn(const LuaHashString& hs);
 
 	protected:
-		bool inUpdate = false;
 		bool userMode = false;
 		bool killMe = false; // set for handles that fail to RunCallIn
 
