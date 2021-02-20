@@ -61,5 +61,6 @@ jobs:
           file_glob: true
           overwrite: true
           prerelease: ${{ github.event.inputs.bin-type == 'prerelease' }}
+          asset_name: ${{ steps.dl-artifacts.outputs.release_tag }}
           tag: ${{ steps.dl-artifacts.outputs.release_tag }}
           body: "Github Action Upload"
