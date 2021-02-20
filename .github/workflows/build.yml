@@ -247,12 +247,12 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
-      - name: Remove BAR-specific release tags
-        run: |
-          git fetch --tags origin || true
-          git tag -d $(git tag | grep '{.*}') || true
-        shell: bash
-        working-directory: ${{ github.workspace }}/spring
+#      - name: Remove BAR-specific release tags
+#        run: |
+#          git fetch --tags origin || true
+#          git tag -d $(git tag | grep '{.*}') || true
+#        shell: bash
+#        working-directory: ${{ github.workspace }}/spring
 
 #      - name: Setup tmate session
 #        if: matrix.config.os == 'linux-64'
