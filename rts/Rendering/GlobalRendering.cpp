@@ -741,7 +741,6 @@ void CGlobalRendering::SetGLSupportFlags()
 	//TODO figure out if needed
 	if (globalRendering->amdHacks) {
 		supportDepthBufferBits[3] = false; //32
-		supportDepthBufferBits[1] = false; //16
 		supportDepthBufferBestBits = 24;
 	}
 }
