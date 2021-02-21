@@ -63,13 +63,14 @@ bool VBO::IsSupported(GLenum target) {
 }
 
 
-VBO::VBO(GLenum _defTarget, const bool storage)
+VBO::VBO(GLenum _defTarget, const bool storage, bool readable)
 {
 	curBoundTarget = _defTarget;
 	defTarget = _defTarget;
 
 	isSupported = IsSupported();
 	immutableStorage = storage;
+	readableStorage = readable;
 
 #ifdef GLEW_ARB_buffer_storage
 	if (immutableStorage && !GLEW_ARB_buffer_storage) {
@@ -106,6 +107,7 @@ VBO& VBO::operator=(VBO&& other)
 
 	std::swap(isSupported, other.isSupported);
 	std::swap(immutableStorage, other.immutableStorage);
+	std::swap(readableStorage, other.readableStorage);
 
 	std::swap(data, other.data);
 	return *this;
@@ -310,7 +312,7 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 
 	#ifdef GLEW_ARB_buffer_storage
 		if (immutableStorage) {
-			glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/ GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
+			glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/(GL_MAP_READ_BIT * readableStorage) | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
 		} else
 	#endif
 		{

@@ -15,7 +15,7 @@
 class VBO
 {
 public:
-	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false, bool readable = false);
 	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO();
@@ -82,6 +82,9 @@ public:
 	size_t GetAlignedSize(size_t sz) const { return VBO::GetAlignedSize(curBoundTarget, sz); };;
 	size_t GetOffsetAlignment() const { return VBO::GetOffsetAlignment(curBoundTarget); };
 
+	GLenum GetUsage() const { return usage; }
+	void SetUsage(const GLenum _usage) { usage = _usage; }
+
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 public:
 	static bool IsSupported(GLenum target);
@@ -121,6 +124,7 @@ private:
 	};
 public:
 	bool immutableStorage = false;
+	bool readableStorage = false;
 	GLuint mapUnsyncedBit;
 
 	mutable bool bound = false;

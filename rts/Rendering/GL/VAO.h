@@ -16,21 +16,32 @@ public:
 public:
 	VAO() = default;
 	VAO(const VAO& v) = delete;
-	VAO(VAO&& v) { *this = std::move(v); }
+	VAO(VAO&& v) noexcept { *this = std::move(v); }
 	~VAO() { Delete(); }
 
 	VAO& operator = (const VAO& v) = delete;
-	VAO& operator = (VAO&& v) { id = v.id; v.id = 0; return *this; }
+	VAO& operator = (VAO&& v) noexcept { id = v.id; v.id = 0; return *this; }
 
-	uint32_t GetId() { if (id == 0) Generate(); return id; }
+	uint32_t GetId() const { Generate(); return id; }
 
-	void Bind();
-	void Unbind() const;
+	void Generate() const {
+		if (id > 0)
+			return;
+
+		glGenVertexArrays(1, &id);
+	};
+
+	void Delete() {
+		if (id > 0) {
+			glDeleteVertexArrays(1, &id);
+			id = 0;
+		}
+	}
+	void Bind() const { glBindVertexArray(GetId()); }
+	void Unbind() const { glBindVertexArray(0); }
+
 private:
-	void Generate();
-	void Delete();
-private:
-	uint32_t id = 0;
+	mutable uint32_t id = 0;
 };
 
 #endif
