@@ -378,7 +378,7 @@ void CModelLoader::CreateLists(S3DModel* model) {
 
 	model->curVertStartIndx = 0u;
 	model->curIndxStartIndx = 0u;
-	for (S3DModelPiece* p: model->pieces) {
+	for (S3DModelPiece* p: model->pieceObjects) {
 		p->PostProcessGeometry();
 		p->CreateShatterPieces();
 		model->curVertStartIndx += p->GetVertexCount();
@@ -386,11 +386,11 @@ void CModelLoader::CreateLists(S3DModel* model) {
 	}
 
 	model->CreateVBOs();
-	for (S3DModelPiece* p : model->pieces) {
+	for (S3DModelPiece* p : model->pieceObjects) {
 		p->UploadToVBO();
 		//p->CreateDispList();
 	}
-	for (S3DModelPiece* p : model->pieces) {
+	for (S3DModelPiece* p : model->pieceObjects) {
 		//p->UploadToVBO();
 		p->CreateDispList();
 	}

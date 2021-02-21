@@ -293,19 +293,19 @@ struct S3DModel
 		curVertStartIndx = m.curVertStartIndx;
 		curIndxStartIndx = m.curIndxStartIndx;
 
-		pieces = std::move(m.pieces);
-		for_each(pieces.begin(), pieces.end(), [this](S3DModelPiece* p) { p->SetParentModel(this); });
+		pieceObjects = std::move(m.pieceObjects);
+		for_each(pieceObjects.begin(), pieceObjects.end(), [this](S3DModelPiece* p) { p->SetParentModel(this); });
 		return *this;
 	}
 
-	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieces.size()); return pieces[i]; }
+	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieceObjects.size()); return pieceObjects[i]; }
 	S3DModelPiece* GetRootPiece() const { return (GetPiece(0)); }
 
-	void AddPiece(S3DModelPiece* p) { pieces.push_back(p); }
+	void AddPiece(S3DModelPiece* p) { pieceObjects.push_back(p); }
 	void DrawStatic() const {
 		// draw pieces in their static bind-pose (ie. without script-transforms)
-		for (const S3DModelPiece* piece: pieces) {
-			piece->DrawStatic();
+		for (const S3DModelPiece* pieceObj: pieceObjects) {
+			pieceObj->DrawStatic();
 		}
 	}
 
@@ -324,18 +324,18 @@ struct S3DModel
 
 	void UploadToVBO(const std::vector<SVertexData>& vertices, const std::vector<uint32_t>& indices, const uint32_t vertStart, const uint32_t indxStart) const;
 
-	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
+	void SetPieceMatrices() { pieceObjects[0]->SetPieceMatrix(CMatrix44f()); }
 	void DeletePieces() {
-		assert(!pieces.empty());
+		assert(!pieceObjects.empty());
 
 		// NOTE: actual piece memory is owned by parser pools
-		pieces.clear();
+		pieceObjects.clear();
 	}
 	void FlattenPieceTree(S3DModelPiece* root) {
 		assert(root != nullptr);
 
-		pieces.clear();
-		pieces.reserve(numPieces);
+		pieceObjects.clear();
+		pieceObjects.reserve(numPieces);
 
 		std::vector<S3DModelPiece*> stack = {root};
 
@@ -343,7 +343,7 @@ struct S3DModel
 			S3DModelPiece* p = stack.back();
 
 			stack.pop_back();
-			pieces.push_back(p);
+			pieceObjects.push_back(p);
 
 			// add children in reverse for the correct DF traversal order
 			for (size_t n = 0; n < p->children.size(); n++) {
@@ -365,8 +365,8 @@ public:
 	std::string name;
 	std::string texs[NUM_MODEL_TEXTURES];
 
-	// flattened tree; pieces[0] is the root
-	std::vector<S3DModelPiece*> pieces;
+	// flattened tree; pieceObjects[0] is the root
+	std::vector<S3DModelPiece*> pieceObjects;
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;

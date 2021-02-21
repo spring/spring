@@ -732,7 +732,7 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 // Calculate model radius from the min/max extents
 void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& modelTable)
 {
-	CalculateModelDimensions(model, model->pieces[0]);
+	CalculateModelDimensions(model, model->pieceObjects[0]);
 
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
