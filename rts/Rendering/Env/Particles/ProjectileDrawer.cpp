@@ -392,7 +392,6 @@ void CProjectileDrawer::ViewResize()
 bool CProjectileDrawer::CheckSoftenExt()
 {
 	static bool result =
-		(!(globalRendering->amdHacks && Platform::GetOSFamilyStr() == "Linux")) &&
 		FBO::IsSupported() &&
 		GLEW_EXT_framebuffer_blit &&
 		globalRendering->haveGLSL; //eval once
