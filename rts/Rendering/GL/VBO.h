@@ -17,7 +17,7 @@ class VBO
 public:
 	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false, bool readable = false);
 	VBO(const VBO& other) = delete;
-	VBO(VBO&& other) { *this = std::move(other); }
+	VBO(VBO&& other) noexcept { *this = std::move(other); }
 	virtual ~VBO();
 
 	VBO& operator=(const VBO& other) = delete;
@@ -70,7 +70,9 @@ public:
 	}
 
 	GLuint GetId() const {
-		if (isSupported && (vboId == 0)) Generate(); //lazy init
+		if (isSupported && (vboId == 0))
+			Generate(); //lazy init
+
 		return vboId;
 	}
 
