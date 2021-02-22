@@ -2442,10 +2442,15 @@ int LuaOpenGL::DispatchCompute(lua_State* L)
 	const GLuint numGroupY = (GLuint)luaL_checknumber(L, 2);
 	const GLuint numGroupZ = (GLuint)luaL_checknumber(L, 3);
 
-	GLint maxNumGroups[3];
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &maxNumGroups[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &maxNumGroups[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &maxNumGroups[2]);
+	const auto maxCompWGFunc = []() {
+		std::array<GLint, 3> maxNumGroups;
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &maxNumGroups[0]);
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &maxNumGroups[1]);
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &maxNumGroups[2]);
+		return maxNumGroups;
+	};
+
+	static std::array<GLint, 3> maxNumGroups = maxCompWGFunc();
 
 	if (numGroupX < 0 && numGroupX > maxNumGroups[0] ||
 		numGroupY < 0 && numGroupY > maxNumGroups[1] ||

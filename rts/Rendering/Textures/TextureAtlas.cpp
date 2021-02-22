@@ -188,6 +188,7 @@ bool CTextureAtlas::CreateTexture()
 
 	pbo.Invalidate();
 	pbo.Unbind();
+	pbo.Release();
 
 	return (data != nullptr);
 }
