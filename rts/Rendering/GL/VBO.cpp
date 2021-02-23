@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <vector>
+#include <stdint.h>
 
 #include "VBO.h"
 
@@ -176,7 +177,7 @@ bool VBO::BindBufferRangeImpl(GLenum target, GLuint index, GLuint _vboId, GLuint
 
 	const size_t neededAlignment = GetOffsetAlignment(target);
 	if (offset % neededAlignment != 0 || size % neededAlignment != 0) { //assert(?)
-		LOG_L(L_ERROR, "[VBO::%s]: attempt to bind with wrong offset [%I64u] or size [%I64u]. Needed alignment [%I64u]", __func__, static_cast<size_t>(offset), size, neededAlignment);
+		LOG_L(L_ERROR, "[VBO::%s]: attempt to bind with wrong offset [%u] or size [%d]. Needed alignment [%u]", __func__, static_cast<uint32_t>(offset), static_cast<int32_t>(size), static_cast<uint32_t>(neededAlignment));
 		return false;
 	}
 
