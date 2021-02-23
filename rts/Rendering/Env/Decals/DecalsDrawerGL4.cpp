@@ -29,6 +29,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Cpp11Compat.hpp"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -338,7 +339,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	decals.resize(maxDecals);
 	freeIds.resize(maxDecals - 1); // idx = 0 is invalid, so -1
 	std::iota(freeIds.begin(), freeIds.end(), 1); // start with 1, 0 is illegal
-	std::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
+	spring::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
 	groups.reserve(maxDecalGroups);
 }
 

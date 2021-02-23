@@ -4,6 +4,7 @@
 #include "GlobalConstants.h"
 #include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/Cpp11Compat.hpp"
 #include "System/creg/STL_Map.h"
 
 
@@ -25,8 +26,8 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	std::generate(newIDs.begin(), newIDs.begin() + numIDs, [&baseID]() { return (baseID++); });
 
 	// randomize so that Lua widgets can not easily determine counts
-	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
-	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
+	spring::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
+	spring::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
 
 	// lambda capture ("[n = baseID]() mutable { return (n++); }") requires std=c++14
 	baseID -= numIDs;
