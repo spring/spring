@@ -17,9 +17,13 @@ GLAPI void APIENTRY glClientActiveTexture(GLenum texture) {}
 GLAPI void APIENTRY glActiveTexture(GLenum texture) {}
 GLAPI void APIENTRY glActiveTextureARB(GLenum texture) {}
 GLAPI void APIENTRY glDeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers) {}
+GLAPI void APIENTRY glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers) {}
 GLAPI void APIENTRY glBindFramebufferEXT(GLenum target, GLuint framebuffer) {}
+GLAPI void APIENTRY glBindFramebuffer(GLenum target, GLuint framebuffer) {}
 GLAPI void APIENTRY glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
+GLAPI void APIENTRY glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferRenderbufferEXT(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) {}
+GLAPI void APIENTRY glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) {}
 
 GLAPI void APIENTRY glDrawBuffers(GLsizei n, const GLenum *bufs) {}
 
@@ -30,10 +34,15 @@ GLAPI void APIENTRY glBindBufferARB(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid *data, GLenum usage) {}
 
 GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
+GLAPI void APIENTRY glGenFramebuffers(GLsizei n, GLuint* framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) {
 	return 0;
 }
+GLAPI GLenum APIENTRY glCheckFramebufferStatus(GLenum target) {
+	return 0;
+}
 GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
+GLAPI void APIENTRY glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
 GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
@@ -61,6 +70,9 @@ GLAPI void APIENTRY glGenQueries(GLsizei n, GLuint *ids) {}
 GLAPI void APIENTRY glBeginQuery(GLenum target, GLuint id) {}
 GLAPI void APIENTRY glEndQuery(GLenum target) {}
 GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params) {}
+GLAPI void APIENTRY glGetQueryObjectiv(GLuint id, GLenum pname, GLint* params) {}
+GLAPI void APIENTRY glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64* params) {}
+GLAPI void APIENTRY glQueryCounter(GLuint id, GLenum target) {}
 GLAPI GLint APIENTRY glGetUniformLocation(GLuint program, const GLchar *name) {
 	return 0;
 }
@@ -88,16 +100,24 @@ GLAPI void APIENTRY glUniform4iv(GLint location, GLsizei count, const GLint *val
 GLAPI void APIENTRY glUniformSubroutinesuiv (GLenum shadertype, GLsizei count, const GLuint *indices) {}
 GLAPI GLuint APIENTRY glGetSubroutineIndex (GLuint program, GLenum shadertype, const GLchar *name) { return -1; }
 //Tesselation
-GLAPI void APIENTRY glPatchParameteri (GLenum pname, GLint value) {};
-GLAPI void APIENTRY glPatchParameterfv (GLenum pname, const GLfloat *values) {};
+GLAPI void APIENTRY glPatchParameteri (GLenum pname, GLint value) {}
+GLAPI void APIENTRY glPatchParameterfv (GLenum pname, const GLfloat *values) {}
 
 GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
+GLAPI void APIENTRY glBindRenderbuffer(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
+GLAPI void APIENTRY glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
+GLAPI void APIENTRY glGenRenderbuffers(GLsizei n, GLuint* renderbuffers) {}
 GLAPI void APIENTRY glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glRenderbufferStorageMultisampleEXT(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glBlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha) {}
 GLAPI GLboolean APIENTRY glIsRenderbufferEXT(GLuint renderbuffer) {
+	return GL_FALSE;
+}
+GLAPI GLboolean APIENTRY glIsRenderbuffer(GLuint renderbuffer) {
 	return GL_FALSE;
 }
 GLAPI void APIENTRY glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {}
@@ -200,9 +220,13 @@ GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLenum
 GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) {}
 GLAPI void APIENTRY glCompressedTexImage1DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data) {}
 GLAPI void APIENTRY glCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data) {}
 GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data) {}
 GLAPI void APIENTRY glCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid* data) {}
 GLAPI void APIENTRY glGetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img) {}
+GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint level, GLvoid* img) {}
 
 GLAPI void APIENTRY glProgramStringARB(GLenum target, GLenum format, GLsizei len, const GLvoid *string) {}
 GLAPI void APIENTRY glBindProgramARB(GLenum target, GLuint program) {}
@@ -232,9 +256,13 @@ GLAPI void APIENTRY glBindBuffer(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBufferStorage(GLenum target, GLsizeiptr size, const void* data, GLbitfield flags) {}
-GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {}
+GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage) {}
+GLAPI void APIENTRY glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data) {}
+GLAPI void APIENTRY glCopyBufferSubData(GLenum readtarget, GLenum writetarget, GLintptr readoffset, GLintptr writeoffset, GLsizeiptr size) {}
 GLAPI void APIENTRY glBindBufferBase(GLenum target, GLuint index, GLuint buffer) {}
 GLAPI void APIENTRY glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) {}
+
+GLAPI void APIENTRY glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) {}
 
 GLAPI void APIENTRY glGenVertexArrays(GLsizei n, GLuint* arrays) {}
 GLAPI void APIENTRY glBindVertexArray(GLuint array) {}
@@ -251,8 +279,8 @@ GLAPI GLboolean APIENTRY glUnmapBuffer(GLenum target) {
 	return GL_FALSE;
 }
 
-GLAPI void APIENTRY glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z) {};
-GLAPI void APIENTRY glMemoryBarrier(GLbitfield barriers) {};
+GLAPI void APIENTRY glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z) {}
+GLAPI void APIENTRY glMemoryBarrier(GLbitfield barriers) {}
 
 GLAPI void APIENTRY glMultiTexCoord2i(GLenum target, GLint s, GLint t) {}
 GLAPI void APIENTRY glMultiTexCoord2iv(GLenum target, const GLint *v) {}
@@ -270,13 +298,17 @@ GLAPI void APIENTRY glFinishFenceNV(GLuint fence) {}
 GLAPI void APIENTRY glSetFenceNV(GLuint fence, GLenum condition) {}
 
 GLAPI void APIENTRY glGetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params) {}
+GLAPI void APIENTRY glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params) {}
 GLAPI GLboolean APIENTRY glIsFramebufferEXT(GLuint framebuffer) {
 	return GL_FALSE;
 }
 GLAPI void APIENTRY glFramebufferTextureEXT(GLenum target, GLenum attachment, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture1DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
+GLAPI void APIENTRY glFramebufferTexture1D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture3DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) {}
+GLAPI void APIENTRY glFramebufferTexture3D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) {}
 GLAPI void APIENTRY glGetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment, GLenum pname, GLint *params) {}
+GLAPI void APIENTRY glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* params) {}
 
 GLAPI void APIENTRY glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices) {}
 GLAPI void APIENTRY glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels) {}
@@ -464,7 +496,7 @@ GLAPI void APIENTRY glTexImage2D(GLenum target, GLint level,
 
 GLAPI void APIENTRY glTexImage2DMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations) {}
 
-GLAPI void APIENTRY glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format) {};
+GLAPI void APIENTRY glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format) {}
 
 GLAPI void APIENTRY glClear(GLbitfield mask) {}
 GLAPI void APIENTRY glTexCoord2i(GLint s, GLint t ){}
@@ -476,8 +508,9 @@ GLAPI void APIENTRY glEnd() {}
 GLAPI void APIENTRY glDeleteTextures(GLsizei n, const GLuint *textures) {}
 
 GLAPI void APIENTRY glGetIntegerv(GLenum pname, GLint *params) {}
-GLAPI void APIENTRY glGetIntegeri_v(GLenum target, GLuint index, GLint* data) {};
+GLAPI void APIENTRY glGetIntegeri_v(GLenum target, GLuint index, GLint* data) {}
 GLAPI void APIENTRY glDepthFunc(GLenum func) {}
+GLAPI void APIENTRY glDepthRangef(GLclampf n, GLclampf f) {}
 GLAPI void APIENTRY glShadeModel(GLenum mode) {}
 
 GLAPI void APIENTRY glHint(GLenum target, GLenum mode) {}
@@ -533,8 +566,11 @@ GLAPI void APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {}
 GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
 
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
-GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}
+GLAPI void APIENTRY glPrimitiveRestartIndex(GLuint index) {}
 GLAPI void APIENTRY glDepthRange(GLdouble nearVal, GLdouble farVal) {}
+
+GLAPI void APIENTRY  glBeginConditionalRender(GLuint id, GLenum mode) {}
+GLAPI void APIENTRY  glEndConditionalRender(void) {}
 
 #ifdef __cplusplus
 } // extern "C"
