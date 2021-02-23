@@ -13,9 +13,9 @@
 #include "Lua/LuaOpenGLUtils.h"
 #include "System/UnorderedMap.hpp"
 #include "System/StringHash.h"
+#include "System/Cpp11Compat.hpp"
 
-
-struct fast_hash : public std::unary_function<int, size_t>
+struct fast_hash : public spring::unary_function<int, size_t>
 {
 	size_t operator()(const int a) const
 	{
