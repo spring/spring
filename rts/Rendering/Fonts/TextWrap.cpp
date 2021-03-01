@@ -564,6 +564,8 @@ int CTextWrap::WrapInPlace(std::u8string& text, float _fontSize, float maxWidth,
 	if (_fontSize <= 0.0f)
 		_fontSize = GetSize();
 
+	maxWidth = std::max(maxWidth, 10.0f); //otherwise endless loop with OOM might happen
+
 	const float maxWidthf  = maxWidth / _fontSize;
 	const float maxHeightf = maxHeight / _fontSize;
 
