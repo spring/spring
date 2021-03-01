@@ -85,6 +85,8 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 	updateBuffer->shadowView = shadowHandler.GetShadowViewMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
 	updateBuffer->shadowProj = shadowHandler.GetShadowProjMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
 	updateBuffer->shadowViewProj = updateBuffer->shadowProj * updateBuffer->shadowView;
+
+	updateBuffer->orthoProj01 = CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f);
 }
 
 

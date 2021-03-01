@@ -29,6 +29,7 @@ struct UniformMatricesBuffer {
 	CMatrix44f shadowProj;
 	CMatrix44f shadowViewProj;
 
+	CMatrix44f orthoProj01;
 	//TODO: minimap matrices
 };
 
