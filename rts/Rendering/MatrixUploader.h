@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
@@ -26,7 +27,7 @@ public:
 public:
 	void Init();
 	void Kill();
-	void UpdateAndBind();
+	void Update();
 public:
 	uint32_t GetUnitDefElemOffset(int32_t unitDefID);
 	uint32_t GetFeatureDefElemOffset(int32_t featureDefID);
@@ -40,7 +41,7 @@ private:
 	bool IsInView(const TObj* obj);
 
 	template<typename TObj>
-	void GetVisibleObjects(std::unordered_map<int, const TObj*>& visibleObjects);
+	void GetVisibleObjects(std::map<int, const TObj*>& visibleObjects);
 private:
 	void KillVBO();
 	void InitVBO(const uint32_t newElemCount);

@@ -67,7 +67,6 @@ bool VBO::IsSupported(GLenum target) {
 VBO::VBO(GLenum _defTarget, const bool storage, bool readable)
 {
 	curBoundTarget = _defTarget;
-	defTarget = _defTarget;
 
 	isSupported = IsSupported();
 	immutableStorage = storage;
@@ -102,7 +101,6 @@ VBO& VBO::operator=(VBO&& other)
 	std::swap(memSize, other.memSize);
 
 	std::swap(curBoundTarget, other.curBoundTarget);
-	std::swap(defTarget, other.defTarget);
 	std::swap(usage, other.usage);
 	std::swap(mapUnsyncedBit, other.mapUnsyncedBit);
 
@@ -425,6 +423,13 @@ void VBO::UnmapBuffer()
 		glUnmapBuffer(curBoundTarget);
 
 	mapped = false;
+}
+
+void VBO::SetBufferSubData(GLintptr offset, GLsizeiptr size, void* data)
+{
+	assert(!mapped);
+	assert((offset + size) <= bufSize);
+	glBufferSubData(curBoundTarget, offset, size, data);
 }
 
 

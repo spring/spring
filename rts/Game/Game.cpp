@@ -1217,8 +1217,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
 	{
-		SCOPED_TIMER("Update::NewGL");
-		MatrixUploader::GetInstance().UpdateAndBind();
+		SCOPED_TIMER("Update::MatrixUploader");
+		MatrixUploader::GetInstance().Update();
 	}
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
