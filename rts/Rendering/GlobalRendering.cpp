@@ -825,6 +825,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
+	LOG("\tInitialized OpenGL Context: %i.%i (%s)", globalRenderingInfo.glContextVersion.x, globalRenderingInfo.glContextVersion.y, globalRenderingInfo.glContextIsCore ? "Core" : "Compat");
 	LOG("\tARB shader support        : %i", haveARB);
 	LOG("\tGLSL shader support       : %i", haveGLSL);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());
@@ -840,8 +841,9 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
+	LOG("\tfrag-depth layout support : %i (%i)", supportFragDepthLayout, glewIsExtensionSupported("GL_ARB_conservative_depth"));
 	LOG("\tpersistent maps support   : %i (%i)", supportPersistentMapping, glewIsExtensionSupported("GL_ARB_buffer_storage"));
-	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
+
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
@@ -1210,6 +1212,14 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
+
+	GLint profile = 0;
+	glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profile);
+
+	if (profile != 0)
+		globalRenderingInfo.glContextIsCore = (profile == GL_CONTEXT_CORE_PROFILE_BIT);
+	else
+		globalRenderingInfo.glContextIsCore = !GLEW_ARB_compatibility;
 
 	// keep this for convenience
 	globalRenderingInfo.glContextVersion = tmpCtx;

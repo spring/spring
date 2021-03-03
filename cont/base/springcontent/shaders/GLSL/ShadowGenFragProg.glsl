@@ -50,7 +50,7 @@ void main() {
 
 	#else
 
-	// no-op
-	gl_FragDepth = gl_FragCoord.z;
+	// no-op. No need to OP a NO-OP
+	//gl_FragDepth = gl_FragCoord.z;
 	#endif
 }
