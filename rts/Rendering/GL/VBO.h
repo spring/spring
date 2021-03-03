@@ -31,7 +31,7 @@ public:
 		Delete();
 	}
 	void Generate() const;
-	void Delete() const;
+	void Delete();
 
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
@@ -51,8 +51,8 @@ public:
 	 * @param data (optional) initialize the VBO with the data (the array must have minimum `size` length!)
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBufferData.xml
 	 */
-	bool Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
-	bool New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
+	void Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
+	void New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
 	void Invalidate(); //< discards all current data (frees the memory w/o resizing)
 
 	/**

@@ -36,9 +36,9 @@ CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
-
-CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with AMD video cards.\n -1:=runtime detect, 0:=off, 1:=on");
@@ -117,7 +117,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
-	CR_IGNORED(forceDisablePersistentMapping),
 	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
@@ -207,7 +206,6 @@ CGlobalRendering::CGlobalRendering()
 	, maxViewRange(MAX_VIEW_RANGE * 0.5f)
 	, aspectRatio(1.0f)
 
-	, forceDisablePersistentMapping(configHandler->GetInt("ForceDisablePersistentMapping"))
 	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
@@ -660,7 +658,8 @@ void CGlobalRendering::SetGLSupportFlags()
 		globalRenderingInfo.gpuVendor = "Unknown";
 	}
 
-	supportPersistentMapping = GLEW_ARB_buffer_storage && !(forceDisablePersistentMapping > 0);
+	supportPersistentMapping = GLEW_ARB_buffer_storage;
+	supportPersistentMapping &= (configHandler->GetInt("ForceDisablePersistentMapping") == 0);
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
 	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
@@ -709,13 +708,19 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_EXT_framebuffer_multisample
 	supportMSAAFrameBuffer = GLEW_EXT_framebuffer_multisample;
 	#endif
-
 	// CC did not exist as an extension before GL4.5, too recent to enforce
-	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
+
+	//stick to the theory that reported = exist
+	//supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
-	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
-	supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
+	//supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
+	#ifdef GLEW_ARB_conservative_depth
+	supportFragDepthLayout = GLEW_ARB_conservative_depth; //stick to the theory that reported = exist
+	#endif
+
+	//stick to the theory that reported = exist
+	//supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
 
 	int iter = 0;
 	for (const int bits : {0, 16, 24, 32}) {

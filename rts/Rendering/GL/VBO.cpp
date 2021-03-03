@@ -90,7 +90,7 @@ VBO::~VBO()
 }
 
 
-VBO& VBO::operator=(VBO&& other)
+VBO& VBO::operator=(VBO&& other) noexcept
 {
 	std::swap(vboId, other.vboId);
 	std::swap(bound, other.bound);
