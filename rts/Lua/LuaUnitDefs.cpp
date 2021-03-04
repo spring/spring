@@ -444,7 +444,7 @@ static int MoveDefTable(lua_State* L, const void* data)
 	const MoveDef* md = moveDefHandler.GetMoveDefByPathType(mdPathType);
 
 	assert(md->pathType == mdPathType);
-	lua_createtable(L, 0, 13);
+	lua_createtable(L, 0, 14);
 
 	HSTR_PUSH_NUMBER(L, "id"           , md->pathType);
 	HSTR_PUSH_NUMBER(L, "smClass"      , md->speedModClass);
@@ -455,6 +455,7 @@ static int MoveDefTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "slopeMod"     , md->slopeMod);
 	HSTR_PUSH_NUMBER(L, "depthMod"     , md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
+	HSTR_PUSH_BOOL  (L, "isSubmarine"  , md->isSubmarine);
 
 	HSTR_PUSH_BOOL  (L, "heatMapping"  , md->heatMapping);
 	HSTR_PUSH_NUMBER(L, "heatMod"      , md->heatMod);
