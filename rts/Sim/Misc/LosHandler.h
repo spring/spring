@@ -277,6 +277,10 @@ public:
 	float GetBaseRadarErrorSize() const { return baseRadarErrorSize; }
 	float GetBaseRadarErrorMult() const { return baseRadarErrorMult; }
 
+	void FlipGlobalLOS(const int allyTeamId) { SetGlobalLOS(allyTeamId, !globalLOS[allyTeamId]); }
+	void SetGlobalLOS(const int allyTeamId, const bool newState);
+	bool GetGlobalLOS(const int allyTeamId) { return globalLOS[allyTeamId]; }
+
 public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) override {
@@ -295,14 +299,6 @@ public:
 	void UpdateHeightMapSynced(SRectangle rect);
 
 public:
-	/**
-	* @brief global line-of-sight
-	*
-	* Whether everything on the map is visible at all times to a given ALLYteam
-	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
-	*/
-	std::array<bool, MAX_TEAMS> globalLOS;
-
 	ILosType los;
 	ILosType airLos;
 	ILosType radar;
@@ -310,7 +306,15 @@ public:
 	ILosType seismic;
 	ILosType jammer;
 	ILosType sonarJammer;
+private:
+	/**
+	* @brief global line-of-sight
+	*
+	* Whether everything on the map is visible at all times to a given ALLYteam
+	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
+	*/
 
+	std::array<bool, MAX_TEAMS> globalLOS;
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
 	static constexpr float defBaseRadarErrorMult =  2.0f;

@@ -769,7 +769,7 @@ int LuaSyncedCtrl::SetGlobalLos(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	losHandler->globalLOS[allyTeam] = luaL_checkboolean(L, 2);
+	losHandler->SetGlobalLOS(allyTeam, luaL_checkboolean(L, 2));
 	return 0;
 }
 

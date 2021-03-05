@@ -77,7 +77,7 @@ void MatrixUploader::Kill()
 template<typename TObj>
 bool MatrixUploader::IsObjectVisible(const TObj* obj)
 {
-	if (losHandler->globalLOS[gu->myAllyTeam])
+	if (losHandler->GetGlobalLOS(gu->myAllyTeam))
 		return true;
 
 	if constexpr (std::is_same<TObj, CProjectile>::value) //CProjectile has no IsInLosForAllyTeam()
@@ -217,7 +217,7 @@ void MatrixUploader::UpdateVisibleObjects()
 			const int objID = kv.first;
 			const TObj* obj = kv.second;
 
-			matrices.emplace_back(obj->GetTransformMatrix(false, losHandler->globalLOS[gu->myAllyTeam]));
+			matrices.emplace_back(obj->GetTransformMatrix(false, losHandler->GetGlobalLOS(gu->myAllyTeam)));
 			const auto& lm = obj->localModel;
 			for (const auto& lmp : lm.pieces) {
 				matrices.emplace_back(lmp.GetModelSpaceMatrix());

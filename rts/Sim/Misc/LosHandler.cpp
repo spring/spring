@@ -1,3 +1,4 @@
+#include "LosHandler.h"
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LosHandler.h"
@@ -160,8 +161,9 @@ float ILosType::GetHeight(const CUnit* unit) const
 
 inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 {
-	if (losHandler->globalLOS[unit->allyteam])
+	if (losHandler->GetGlobalLOS(unit->allyteam))
 		return;
+
 	// do not check if the unit is inside a transporter here
 	// non-firebase transporters stun their cargo, so are already handled below
 	// firebase transporters should not deprive sensor coverage from their cargo
@@ -741,6 +743,14 @@ void CLosHandler::Kill()
 }
 
 
+void CLosHandler::SetGlobalLOS(const int allyTeamId, const bool newState)
+{
+	globalLOS[allyTeamId] = newState;
+
+	if (globalLOS[allyTeamId])
+		readMap->BecomeSpectator(); //update unsynced heightmap
+}
+
 void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
 	for (ILosType* lt: losTypes) {
@@ -841,6 +851,7 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 	// isCloaked always overrides globalLOS
 	if (globalLOS[allyTeam])
 		return true;
+
 	if (unit->useAirLos)
 		return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
 

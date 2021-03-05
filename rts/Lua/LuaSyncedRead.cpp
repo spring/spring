@@ -846,7 +846,7 @@ int LuaSyncedRead::GetGlobalLos(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		return 0;
 
-	lua_pushboolean(L, losHandler->globalLOS[allyTeam]);
+	lua_pushboolean(L, losHandler->GetGlobalLOS(allyTeam));
 	return 1;
 }
 
