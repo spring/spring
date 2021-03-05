@@ -4,6 +4,7 @@
 #define READ_MAP_H
 
 #include <array>
+#include <map>
 #include <vector>
 
 #include "MapTexture.h"
@@ -204,6 +205,8 @@ public:
 
 	unsigned int GetMapChecksum() const { return mapChecksum; }
 	unsigned int CalcHeightmapChecksum();
+	void UpdateHeightsRefMap(const float h, const bool remove = false);
+	void UpdateHeightBounds();
 	unsigned int CalcTypemapChecksum();
 
 private:
@@ -276,6 +279,8 @@ private:
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
 	float2 currHeightBounds; //< current minimum- and maximum-height
 
+	std::map<const float, int> heightRefMap;
+
 	float boundingRadius = 0.0f;
 };
 
@@ -290,10 +295,11 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 
 	// add=0 <--> x = x*0 + h =   h
 	// add=1 <--> x = x*1 + h = x+h
+	UpdateHeightsRefMap(x, true);
 	x = x * add + h;
+	UpdateHeightsRefMap(x, false);
 
-	currHeightBounds.x = std::min(x, currHeightBounds.x);
-	currHeightBounds.y = std::max(x, currHeightBounds.y);
+	UpdateHeightBounds();
 
 	return x;
 }

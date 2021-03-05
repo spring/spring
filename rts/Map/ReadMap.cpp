@@ -59,6 +59,7 @@ CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(initHeightBounds),
 	CR_IGNORED(currHeightBounds),
+	CR_IGNORED(heightRefMap),
 	CR_IGNORED(boundingRadius),
 	CR_IGNORED(mapChecksum),
 
@@ -378,32 +379,52 @@ void CReadMap::Initialize()
 }
 
 
+void CReadMap::UpdateHeightsRefMap(const float h, const bool remove)
+{
+	if (!remove) {
+		heightRefMap[h]++; //increment references counter
+	}
+	else { //remove
+		auto heightRef = heightRefMap.find(h);
+		assert(heightRef == heightRefMap.end()); //shouldn't ever happen
+
+		if (heightRef->second <= 1) {
+			heightRefMap.erase(heightRef);
+			return;
+		}
+
+		(heightRef->second)--;
+	}
+}
+
+void CReadMap::UpdateHeightBounds()
+{
+	currHeightBounds = float2{ heightRefMap.begin()->first, heightRefMap.rbegin()->first };
+}
+
 unsigned int CReadMap::CalcHeightmapChecksum()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
-	initHeightBounds.x =  std::numeric_limits<float>::max();
-	initHeightBounds.y = -std::numeric_limits<float>::max();
+	heightRefMap.clear();
 
 	unsigned int checksum = 0;
 
 	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
 		originalHeightMap[i] = heightmap[i];
 
-		initHeightBounds.x = std::min(initHeightBounds.x, heightmap[i]);
-		initHeightBounds.y = std::max(initHeightBounds.y, heightmap[i]);
+		UpdateHeightsRefMap(heightmap[i]);
 
 		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
 	}
 
 	checksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 
-	currHeightBounds.x = initHeightBounds.x;
-	currHeightBounds.y = initHeightBounds.y;
+	UpdateHeightBounds();
+	initHeightBounds = currHeightBounds;
 
 	return checksum;
 }
-
 
 unsigned int CReadMap::CalcTypemapChecksum()
 {
