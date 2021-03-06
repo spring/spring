@@ -16,4 +16,4 @@
 [submodule "AI/Skirmish/BARb"]
 	path = AI/Skirmish/BARb
 	url = https://github.com/rlcevg/CircuitAI.git
-	branch = barb3
+	branch = barbarian
