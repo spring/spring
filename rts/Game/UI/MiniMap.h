@@ -7,6 +7,7 @@
 #include <deque>
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
+#include "System/Matrix44f.h"
 #include "System/Color.h"
 #include "System/float3.h"
 #include "System/type2.h"
@@ -68,6 +69,9 @@ public:
 	const unsigned char* GetMyTeamIconColor() const { return &myColor[0]; }
 	const unsigned char* GetAllyTeamIconColor() const { return &allyColor[0]; }
 	const unsigned char* GetEnemyTeamIconColor() const { return &enemyColor[0]; }
+
+	const CMatrix44f& GetViewMat(unsigned int idx) const { return viewMats[idx]; }
+	const CMatrix44f& GetProjMat(unsigned int idx) const { return projMats[idx]; }
 
 	void ApplyConstraintsMatrix() const;
 
@@ -170,6 +174,10 @@ protected:
 	SColor myColor;
 	SColor allyColor;
 	SColor enemyColor;
+
+	// transforms for [0] := Draw, [1] := DrawInMiniMap, [2] := Lua DrawInMiniMap
+	CMatrix44f viewMats[3];
+	CMatrix44f projMats[3];
 
 	FBO fbo;
 	FBO fboResolve;
