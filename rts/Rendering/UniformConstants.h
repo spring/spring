@@ -19,7 +19,7 @@ struct UniformMatricesBuffer {
 	CMatrix44f cameraView;
 	CMatrix44f cameraProj;
 	CMatrix44f cameraViewProj;
-	CMatrix44f cameraBillboard;
+	CMatrix44f cameraBillboardProj;
 
 	CMatrix44f cameraViewInv;
 	CMatrix44f cameraProjInv;

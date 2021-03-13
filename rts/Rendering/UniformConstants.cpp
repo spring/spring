@@ -76,7 +76,7 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 	updateBuffer->cameraView = camPlayer->GetViewMatrix();
 	updateBuffer->cameraProj = camPlayer->GetProjectionMatrix();
 	updateBuffer->cameraViewProj = camPlayer->GetViewProjectionMatrix();
-	updateBuffer->cameraBillboard = updateBuffer->cameraView * camPlayer->GetBillBoardMatrix(); //GetBillBoardMatrix() is supposed to be multiplied by the view Matrix
+	updateBuffer->cameraBillboardProj = updateBuffer->cameraView * camPlayer->GetBillBoardMatrix(); //GetBillBoardMatrix() is supposed to be multiplied by the view Matrix
 
 	updateBuffer->cameraViewInv = camPlayer->GetViewMatrixInverse();
 	updateBuffer->cameraProjInv = camPlayer->GetProjectionMatrixInverse();
