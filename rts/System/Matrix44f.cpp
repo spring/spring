@@ -2,6 +2,7 @@
 
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
+#include "Rendering/GlobalRendering.h"
 
 #include <memory.h>
 #include <algorithm>
@@ -730,6 +731,11 @@ CMatrix44f CMatrix44f::OrthoProj(float l, float r, float b, float t, float zn, f
 	proj[15] = 1.0f;
 
 	return proj;
+}
+
+CMatrix44f CMatrix44f::ClipOrthoProj01()
+{
+	return ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f);
 }
 
 CMatrix44f CMatrix44f::LookAtView(const float3& eye, const float3& center, const float3& up)
