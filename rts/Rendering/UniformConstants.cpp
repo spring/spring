@@ -96,6 +96,10 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 	updateBuffer->mmDrawProj = minimap->GetProjMat(0);
 	updateBuffer->mmDrawIMMProj = minimap->GetProjMat(1);
 	updateBuffer->mmDrawDimProj = minimap->GetProjMat(2);
+
+	updateBuffer->mmDrawViewProj = updateBuffer->mmDrawProj * updateBuffer->mmDrawView;
+	updateBuffer->mmDrawIMMViewProj = updateBuffer->mmDrawIMMProj * updateBuffer->mmDrawIMMView;
+	updateBuffer->mmDrawDimViewProj = updateBuffer->mmDrawDimProj * updateBuffer->mmDrawDimView;
 }
 
 

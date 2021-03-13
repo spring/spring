@@ -30,7 +30,6 @@ struct UniformMatricesBuffer {
 	CMatrix44f shadowViewProj;
 
 	CMatrix44f orthoProj01;
-	//TODO: minimap matrices
 
 	// transforms for [0] := Draw, [1] := DrawInMiniMap, [2] := Lua DrawInMiniMap
 	CMatrix44f mmDrawView; //world to MM
@@ -40,6 +39,10 @@ struct UniformMatricesBuffer {
 	CMatrix44f mmDrawProj; //world to MM
 	CMatrix44f mmDrawIMMProj; //heightmap to MM
 	CMatrix44f mmDrawDimProj; //mm dims
+
+	CMatrix44f mmDrawViewProj; //world to MM
+	CMatrix44f mmDrawIMMViewProj; //heightmap to MM
+	CMatrix44f mmDrawDimViewProj; //mm dims
 };
 
 struct UniformParamsBuffer {
