@@ -57,7 +57,7 @@ CR_REG_METADATA(MapDimensions, (
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-	CR_IGNORED(initHeightBounds),
+	CR_MEMBER(initHeightBounds),
 	CR_IGNORED(currHeightBounds),
 	CR_IGNORED(heightRefMap),
 	CR_IGNORED(boundingRadius),
@@ -214,10 +214,14 @@ void CReadMap::Serialize(creg::ISerializer* s)
 			s->Serialize(&type, sizeof(uint8_t));
 		}
 	} else {
+		heightRefMap.clear();
 		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
 			s->Serialize(&height, sizeof(int32_t));
 			ichms[i] = height ^ iochms[i];
+			const float h = *reinterpret_cast<float*>(&ichms[i]);
+			UpdateHeightsRefMap(h);
 		}
+		UpdateHeightBounds();
 
 		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			s->Serialize(&type, sizeof(uint8_t));
