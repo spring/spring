@@ -16,6 +16,8 @@
 #include "System/creg/creg_cond.h"
 #include "System/Misc/RectangleOverlapHandler.h"
 
+#include "System/TimeProfiler.h"
+
 #define USE_UNSYNCED_HEIGHTMAP
 #define USE_HEIGHTMAP_DIGESTS
 
@@ -291,17 +293,22 @@ extern MapDimensions mapDims;
 
 inline float CReadMap::AddHeight(const int idx, const float a) { return SetHeight(idx, a, 1); }
 inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
-	float& x = (*heightMapSyncedPtr)[idx];
+	SCOPED_TIMER("CReadMap::SetHeight");
+	float& curH = (*heightMapSyncedPtr)[idx];
+	float newH = curH * add + h;
+
+	if (newH == curH)
+		return curH;
 
 	// add=0 <--> x = x*0 + h =   h
 	// add=1 <--> x = x*1 + h = x+h
-	UpdateHeightsRefMap(x, true);
-	x = x * add + h;
-	UpdateHeightsRefMap(x, false);
+	UpdateHeightsRefMap(curH,  true); //remove old height
+	curH = newH;
+	UpdateHeightsRefMap(newH, false); //add new height
 
 	UpdateHeightBounds();
 
-	return x;
+	return curH;
 }
 
 
