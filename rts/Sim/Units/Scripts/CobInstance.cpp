@@ -61,17 +61,10 @@ inline bool CCobInstance::HasFunction(int id) const
 
 void CCobInstance::Init()
 {
-	assert(cobFile != nullptr);
+	InitCommon();
 
 	staticVars.clear();
 	staticVars.resize(cobFile->numStaticVars, 0);
-
-	MapScriptToModelPieces(&unit->localModel);
-
-	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
-	hasRockUnit      = HasFunction(COBFN_RockUnit);
-	hasStartBuilding = HasFunction(COBFN_StartBuilding);
-
 }
 
 void CCobInstance::PostLoad()
@@ -88,7 +81,7 @@ void CCobInstance::PostLoad()
 		t->cobFile = cobFile;
 	}
 
-	Init();
+	InitCommon();
 }
 
 
@@ -108,6 +101,18 @@ CCobInstance::~CCobInstance()
 	}
 
 	cobEngine->SanityCheckThreads(this);
+}
+
+
+void CCobInstance::InitCommon()
+{
+	assert(cobFile != nullptr);
+
+	MapScriptToModelPieces(&unit->localModel);
+
+	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
+	hasRockUnit      = HasFunction(COBFN_RockUnit);
+	hasStartBuilding = HasFunction(COBFN_StartBuilding);
 }
 
 
