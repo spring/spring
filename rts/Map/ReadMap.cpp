@@ -214,21 +214,15 @@ void CReadMap::Serialize(creg::ISerializer* s)
 			s->Serialize(&type, sizeof(uint8_t));
 		}
 	} else {
-		heightRefMap.clear();
 		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
 			s->Serialize(&height, sizeof(int32_t));
 			ichms[i] = height ^ iochms[i];
-			const float h = *reinterpret_cast<float*>(&ichms[i]);
-			UpdateHeightsRefMap(h);
 		}
-		UpdateHeightBounds();
 
 		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			s->Serialize(&type, sizeof(uint8_t));
 			itm[i] = type ^ iotm[i];
 		}
-
-		mapDamage->RecalcArea(2, mapDims.mapx - 3, 2, mapDims.mapy - 3);
 	}
 
 }
@@ -255,6 +249,12 @@ void CReadMap::PostLoad()
 	sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 	sharedSlopeMaps[1] = &slopeMap[0];
 
+	heightRefMap.clear();
+	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
+		UpdateHeightsRefMap(sharedCornerHeightMaps[1][i]);
+	}
+	UpdateHeightBounds();
+
 	//FIXME reconstruct
 	/*
 	mipPointerHeightMaps.fill(nullptr);
@@ -263,6 +263,19 @@ void CReadMap::PostLoad()
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 	*/
+
+	mipPointerHeightMaps.fill(nullptr);
+	mipPointerHeightMaps[0] = &centerHeightMap[0];
+
+	for (int i = 1; i < numHeightMipMaps; i++) {
+		mipCenterHeightMaps[i - 1].clear();
+		mipCenterHeightMaps[i - 1].resize((mapDims.mapx >> i)* (mapDims.mapy >> i));
+
+		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
+	}
+
+	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
+
 }
 #endif //USING_CREG
 
