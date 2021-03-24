@@ -31,6 +31,9 @@ void CGroup::PostLoad()
 
 bool CGroup::AddUnit(CUnit* unit)
 {
+	if (unit->team != ghIndex)
+		return false;
+
 	units.insert(unit->id);
 	uiGroupHandlers[ghIndex].PushGroupChange(id);
 	return true;
@@ -38,6 +41,9 @@ bool CGroup::AddUnit(CUnit* unit)
 
 void CGroup::RemoveUnit(CUnit* unit)
 {
+	if (unit->team != ghIndex)
+		return;
+
 	units.erase(unit->id);
 	uiGroupHandlers[ghIndex].PushGroupChange(id);
 }
