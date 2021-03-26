@@ -328,12 +328,14 @@ void SS3OPiece::SetVertexTangents()
 
 		// if d is 0, texcoors are degenerate
 		const float d = (tc10.x * tc20.y - tc20.x * tc10.y);
-		const float r = (d > -0.0001f && d < 0.0001f)? 1.0f: 1.0f / d;
+		const float r = ((abs(d) < 1e-3f) ? 1.0f : abs(1.0f / d)) * Sign(d);
+
+		// Total time wasted here ~12H. Increment if something goes wrong and you will be trying to fix it
 
 		// note: not necessarily orthogonal to each other
 		// or to vertex normal, only to the triangle plane
-		const float3 sdir = {tc20.y * p10.x - tc10.y * p20.x, tc20.y * p10.y - tc10.y * p20.y, tc20.y * p10.z - tc10.y * p20.z};
-		const float3 tdir = {tc10.x * p20.x - tc20.x * p10.x, tc10.x * p20.y - tc20.x * p10.y, tc10.x * p20.z - tc20.x * p10.z};
+		const float3 sdir =  p10 * tc20.y - p20 * tc10.y;
+		const float3 tdir = -p10 * tc20.x + p20 * tc10.x;
 
 		v0.sTangent += (sdir * r);
 		v1.sTangent += (sdir * r);
@@ -355,9 +357,13 @@ void SS3OPiece::SetVertexTangents()
 		B.AssertNaNs();
 
 		const float bitangentAngle = B.dot(N.cross(T)); // dot(B,B')
-		const float handednessSign = Sign(bitangentAngle);
+		const float handednessSign = 1.0f;
 
 		T = (T - N * N.dot(T));
-		B = (N.cross(T.SafeANormalize())) * handednessSign;
+		B = (B - N * N.dot(B));
+
+		N.SafeANormalize();
+		T.SafeANormalize();
+		B.SafeANormalize();
 	}
 }
