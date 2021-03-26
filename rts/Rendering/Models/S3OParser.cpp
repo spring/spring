@@ -352,18 +352,22 @@ void SS3OPiece::SetVertexTangents()
 		float3& T = vertices[i].sTangent;
 		float3& B = vertices[i].tTangent; // bi
 
-		N.AssertNaNs();
+		N.AssertNaNs(); N.SafeANormalize();
 		T.AssertNaNs();
 		B.AssertNaNs();
 
 		const float bitangentAngle = B.dot(N.cross(T)); // dot(B,B')
-		const float handednessSign = 1.0f;
+		const float handednessSign = Sign(bitangentAngle);
 
-		T = (T - N * N.dot(T));
-		B = (B - N * N.dot(B));
-
-		N.SafeANormalize();
+		T = (T - N * N.dot(T)) * handednessSign;
 		T.SafeANormalize();
+
+		//B = (B - N * N.dot(B));
+		B = N.cross(T); //probably better
 		B.SafeANormalize();
+
+
+
+
 	}
 }
