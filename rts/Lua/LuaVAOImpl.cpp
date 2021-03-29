@@ -260,6 +260,9 @@ void LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> in
 
 	const auto indexType = indxLuaVBO->bufferAttribDefsVec[0].second.type;
 
+	glEnable(GL_PRIMITIVE_RESTART);
+	glPrimitiveRestartIndex(indxLuaVBO->primitiveRestartIndex);
+
 	vao->Bind();
 
 #define INT2PTR(x) ((void*)static_cast<intptr_t>(x))
@@ -277,4 +280,6 @@ void LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> in
 #undef INT2PTR
 
 	vao->Unbind();
+
+	glDisable(GL_PRIMITIVE_RESTART);
 }

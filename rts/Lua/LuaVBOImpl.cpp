@@ -25,9 +25,14 @@
 
 #include "LuaUtils.h"
 
-LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt):
-	defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}, freqUpdated{freqUpdatedOpt.value_or(false)},
-	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}
+LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt)
+	: defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}
+	, freqUpdated{freqUpdatedOpt.value_or(false)}
+	, elemSizeInBytes{ 0u }
+	, elementsCount{ 0u }
+	, bufferSizeInBytes{ 0u }
+	, attributesCount{ 0u }
+	, primitiveRestartIndex{ 0u }
 {
 
 }
@@ -343,15 +348,19 @@ bool LuaVBOImpl::DefineElementArray(const sol::optional<sol::object> attribDefAr
 	}
 
 	switch (indexType) {
-	case GL_UNSIGNED_BYTE:
+	case GL_UNSIGNED_BYTE: {
 		elemSizeInBytes = sizeof(uint8_t);
-		break;
-	case GL_UNSIGNED_SHORT:
+		primitiveRestartIndex = 0xff;
+	} break;
+	case GL_UNSIGNED_SHORT: {
 		elemSizeInBytes = sizeof(uint16_t);
-		break;
-	case GL_UNSIGNED_INT:
+		primitiveRestartIndex = 0xffff;
+	} break;
+	case GL_UNSIGNED_INT: {
 		elemSizeInBytes = sizeof(uint32_t);
-		break;
+		primitiveRestartIndex = 0xffffff; //NB: less than (2^32 - 1) due to Lua 2^24 limitation
+	} break;
+
 	}
 
 	if (elemSizeInBytes == 0u) {
