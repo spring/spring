@@ -439,7 +439,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> LuaVBOImpl::GetBufferSize()
 	);
 }
 
-size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> attribIdxOpt)
+size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> luaIndexOffsetOpt, const sol::optional<int> attribIdxOpt)
 {
 	if (!vbo) {
 		LuaError("[LuaVBOImpl::%s] Invalid VBO. Did you call :Define() or :ShapeFromUnitDefID/ShapeFromFeatureDefID()?", __func__);
@@ -455,13 +455,18 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 		LuaError("[LuaVBOImpl::%s] attribIdx is not found in bufferAttribDefs", __func__);
 	}
 
-	const int luaTblDataSize = luaTblData.size();
+	const uint32_t luaTblDataSize = luaTblData.size();
+
+	const uint32_t luaIndexOffset = static_cast<uint32_t>(std::max(luaIndexOffsetOpt.value_or(1), 1)) - 1;
+	if (luaIndexOffset >= luaTblDataSize) {
+		LuaError("[LuaVBOImpl::%s] Invalid luaIndexOffset [%u] exceeds table size [%u]", __func__, luaIndexOffset + 1, luaTblDataSize);
+	}
 
 	std::vector<lua_Number> dataVec;
 	dataVec.resize(luaTblDataSize);
 
 	constexpr auto defaultValue = static_cast<lua_Number>(0);
-	for (auto k = 0; k < luaTblDataSize; ++k) {
+	for (auto k = luaIndexOffset; k < luaTblDataSize; ++k) {
 		dataVec[k] = luaTblData.raw_get_or<lua_Number>(k + 1, defaultValue);
 	}
 
