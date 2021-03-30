@@ -95,6 +95,8 @@ private:
 	static intptr_t GetBufferOffset(const int vboSingleSize);
 	static void UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer);
 	static void UpdateParamsImpl(UniformParamsBuffer* updateBuffer);
+
+	static bool WantPersistentMapping();
 private:
 	static constexpr int BUFFERING = 3;
 

@@ -19,7 +19,7 @@
 
 void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 {
-	vbo = new VBO{GL_UNIFORM_BUFFER, globalRendering->supportPersistentMapping};
+	vbo = new VBO{GL_UNIFORM_BUFFER, WantPersistentMapping()};
 	vbo->Bind(GL_UNIFORM_BUFFER);
 	vbo->New(BUFFERING * vboSingleSize, GL_STREAM_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
 	vbo->Unbind();
@@ -169,7 +169,7 @@ void UniformConstants::UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const 
 template<typename TBuffType, typename TUpdateFunc>
 void UniformConstants::UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
 {
-	if (globalRendering->supportPersistentMapping)
+	if (WantPersistentMapping())
 		UpdateMapPersistent(vbo, buffMap, updateFunc, vboSingleSize);
 	else
 		UpdateMapStandard  (vbo, buffMap, updateFunc, vboSingleSize);
@@ -201,4 +201,10 @@ void UniformConstants::Bind()
 
 	umbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, GetBufferOffset(umbBufferSize), umbBufferSize);
 	upbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, GetBufferOffset(upbBufferSize), upbBufferSize);
+}
+
+bool UniformConstants::WantPersistentMapping()
+{
+	static bool wantPersistentMapping = globalRendering->supportPersistentMapping & false; //persistent mapping needs fences, tripple buffering alone is not enough :(
+	return wantPersistentMapping;
 }
