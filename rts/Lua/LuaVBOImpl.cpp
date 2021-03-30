@@ -457,9 +457,9 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 
 	const uint32_t luaTblDataSize = luaTblData.size();
 
-	const uint32_t luaIndexOffset = static_cast<uint32_t>(std::max(luaIndexOffsetOpt.value_or(1), 1)) - 1;
+	const uint32_t luaIndexOffset = static_cast<uint32_t>(std::max(luaIndexOffsetOpt.value_or(0), 0));
 	if (luaIndexOffset >= luaTblDataSize) {
-		LuaError("[LuaVBOImpl::%s] Invalid luaIndexOffset [%u] exceeds table size [%u]", __func__, luaIndexOffset + 1, luaTblDataSize);
+		LuaError("[LuaVBOImpl::%s] Invalid luaIndexOffset [%u] exceeds table size [%u]", __func__, luaIndexOffset, luaTblDataSize);
 	}
 
 	std::vector<lua_Number> dataVec;
