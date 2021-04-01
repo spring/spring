@@ -29,8 +29,8 @@ public:
 	void Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt);
 	std::tuple<uint32_t, uint32_t, uint32_t> GetBufferSize();
 
-	size_t Upload(const sol::stack_table& luaTblData, const sol::optional<int> elemOffsetOpt, const sol::optional<int> luaIndexOffsetOpt, const sol::optional<int> attribIdxOpt);
-	sol::as_table_t<std::vector<lua_Number>> Download(const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<int> attribIdxOpt);
+	size_t Upload(const sol::stack_table& luaTblData, const sol::optional<int> attribIdxOpt, const sol::optional<int> elemOffsetOpt, const sol::optional<int> luaStartIndexOpt, const sol::optional<int> luaFinishIndexOpt);
+	sol::as_table_t<std::vector<lua_Number>> Download(const sol::optional<int> attribIdxOpt, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt);
 
 	size_t ShapeFromUnitDefID(const int id);
 	size_t ShapeFromFeatureDefID(const int id);
