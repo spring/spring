@@ -236,23 +236,23 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 
 void LuaVAOImpl::DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt)
 {
-	const auto vertInstCount = DrawCheck(mode, vertCountOpt, instanceCountOpt, false); //pair<vertCount,instCount>
+	const auto [vertCount, instCount] = DrawCheck(mode, vertCountOpt, instanceCountOpt, false); //pair<vertCount,instCount>
 
 	const auto first = std::max(firstOpt.value_or(0), 0);
 
 	vao->Bind();
 
-	if (vertInstCount.second == 0)
-		glDrawArrays(mode, first, vertInstCount.first);
+	if (instCount == 0)
+		glDrawArrays(mode, first, vertCount);
 	else
-		glDrawArraysInstanced(mode, first, vertInstCount.first, vertInstCount.second);
+		glDrawArraysInstanced(mode, first, vertCount, instCount);
 
 	vao->Unbind();
 }
 
 void LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt)
 {
-	const auto indxInstCount = DrawCheck(mode, indCountOpt, instanceCountOpt, true); //pair<indxCount,instCount>
+	const auto [indxCount, instCount] = DrawCheck(mode, indCountOpt, instanceCountOpt, true); //pair<indxCount,instCount>
 
 	const auto indElemOffset = std::max(indElemOffsetOpt.value_or(0), 0);
 	const auto indElemOffsetInBytes = indElemOffset * indxLuaVBO->elemSizeInBytes;
@@ -266,16 +266,16 @@ void LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> in
 	vao->Bind();
 
 #define INT2PTR(x) ((void*)static_cast<intptr_t>(x))
-	if (indxInstCount.second == 0) {
+	if (instCount == 0) {
 		if (baseVertex == 0)
-			glDrawElements(mode, indxInstCount.first, indexType, INT2PTR(indElemOffsetInBytes));
+			glDrawElements(mode, indxCount, indexType, INT2PTR(indElemOffsetInBytes));
 		else
-			glDrawElementsBaseVertex(mode, indxInstCount.first, indexType, INT2PTR(indElemOffsetInBytes), baseVertex);
+			glDrawElementsBaseVertex(mode, indxCount, indexType, INT2PTR(indElemOffsetInBytes), baseVertex);
 	} else {
 		if (baseVertex == 0)
-			glDrawElementsInstanced(mode, indxInstCount.first, indexType, INT2PTR(indElemOffsetInBytes), indxInstCount.second);
+			glDrawElementsInstanced(mode, indxCount, indexType, INT2PTR(indElemOffsetInBytes), instCount);
 		else
-			glDrawElementsInstancedBaseVertex(mode, indxInstCount.first, indexType, INT2PTR(indElemOffsetInBytes), indxInstCount.second, baseVertex);
+			glDrawElementsInstancedBaseVertex(mode, indxCount, indexType, INT2PTR(indElemOffsetInBytes), instCount, baseVertex);
 	}
 #undef INT2PTR
 
