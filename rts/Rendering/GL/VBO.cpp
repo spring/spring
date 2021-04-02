@@ -383,7 +383,6 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	case GL_WRITE_ONLY: {
 			// https://computergraphics.stackexchange.com/questions/7586/what-are-the-performance-implications-of-the-optional-flags-used-when-mapping-a/7587
 			// Also, you can map a buffer and only overwrite part of it. Invalidation is negatively useful for that too.
-			// mapUnsyncedBit causes huge CPU load
 			const GLbitfield irBit = GL_MAP_INVALIDATE_RANGE_BIT * (offset == 0 && size == bufSize);
 			access = GL_MAP_WRITE_BIT | irBit | mapUnsyncedBit;
 			#ifdef GLEW_ARB_buffer_storage

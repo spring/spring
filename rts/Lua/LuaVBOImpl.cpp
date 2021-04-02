@@ -780,7 +780,7 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t el
 
 	const auto uploadToGPU = [this, buffDataWithOffset, bufferOffsetInBytes, mappedBufferSizeInBytes](int bytesWritten) -> int {
 		vbo->Bind();
-#if 0
+#if 1
 		vbo->SetBufferSubData(bufferOffsetInBytes, bytesWritten, buffDataWithOffset);
 #else
 		// very CPU heavy for some reason (NV & Windows)
