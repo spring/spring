@@ -109,6 +109,8 @@ private:
 	VBO* vbo = nullptr;
 	bool vboOwner;
 
+	void* bufferData;
+
 	uint32_t primitiveRestartIndex;
 
 	std::vector<std::pair<const int, const BufferAttribDef>> bufferAttribDefsVec;

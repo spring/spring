@@ -9,6 +9,7 @@
 #include "lib/fmt/printf.h"
 
 #include "System/Log/ILog.h"
+#include "System/SpringMem.h"
 #include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "Rendering/MatrixUploader.h"
@@ -33,6 +34,7 @@ LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::opti
 	, bufferSizeInBytes{ 0u }
 	, attributesCount{ 0u }
 	, primitiveRestartIndex{ 0u }
+	, bufferData{ nullptr }
 {
 
 }
@@ -48,6 +50,11 @@ void LuaVBOImpl::Delete()
 	//safe to call multiple times
 	if (vboOwner)
 		spring::SafeDestruct(vbo);
+
+	if (bufferData) {
+		spring::FreeAlignedMemory(bufferData);
+		bufferData = nullptr;
+	}
 
 	bufferAttribDefs.clear();
 	bufferAttribDefsVec.clear();
@@ -766,12 +773,29 @@ size_t LuaVBOImpl::OffsetFromImpl(const int id, const int attrID)
 template<typename TIn>
 size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t elemOffset, const int attribIdx)
 {
-	vbo->Bind();
 	const uint32_t bufferOffsetInBytes = elemOffset * elemSizeInBytes;
 	const int mappedBufferSizeInBytes = bufferSizeInBytes - bufferOffsetInBytes;
-	auto mappedBuf = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_WRITE_BIT);
+
+	auto buffDataWithOffset = static_cast<uint8_t*>(bufferData) + bufferOffsetInBytes;
+
+	const auto uploadToGPU = [this, buffDataWithOffset, bufferOffsetInBytes, mappedBufferSizeInBytes](int bytesWritten) -> int {
+		vbo->Bind();
+#if 0
+		vbo->SetBufferSubData(bufferOffsetInBytes, bytesWritten, buffDataWithOffset);
+#else
+		// very CPU heavy for some reason (NV & Windows)
+		auto gpuMappedBuff = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_WRITE_BIT);
+		memcpy(gpuMappedBuff, buffDataWithOffset, bytesWritten);
+		vbo->UnmapBuffer();
+#endif
+		vbo->Unbind();
+
+		//LOG("buffDataWithOffset = %p, bufferOffsetInBytes = %u, mappedBufferSizeInBytes = %d, bytesWritten = %d", (void*)buffDataWithOffset, bufferOffsetInBytes, mappedBufferSizeInBytes, bytesWritten);
+		return bytesWritten;
+	};
 
 	int bytesWritten = 0;
+
 	for (auto bdvIter = dataVec.cbegin(); bdvIter < dataVec.cend();) {
 		for (const auto& va : bufferAttribDefsVec) {
 			const int   attrID = va.first;
@@ -789,10 +813,8 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t el
 			bool copyData = attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
 
 			#define TRANSFORM_AND_WRITE(T) { \
-				if (!TransformAndWrite<TIn, T>(bytesWritten, mappedBuf, mappedBufferSizeInBytes, basicTypeSize, bdvIter, copyData)) { \
-					vbo->UnmapBuffer(); \
-					vbo->Unbind(); \
-					return bytesWritten; \
+				if (!TransformAndWrite<TIn, T>(bytesWritten, buffDataWithOffset, mappedBufferSizeInBytes, basicTypeSize, bdvIter, copyData)) { \
+					return uploadToGPU(bytesWritten); \
 				} \
 			}
 
@@ -828,9 +850,7 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t el
 		}
 	}
 
-	vbo->UnmapBuffer();
-	vbo->Unbind();
-	return bytesWritten;
+	return uploadToGPU(bytesWritten);
 }
 
 
@@ -974,8 +994,12 @@ void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 
 	vbo = new VBO(defTarget, MapPersistently());
 	vbo->Bind();
+	LOG("freqUpdated = %d", freqUpdated);
 	vbo->New(byteSize, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	vbo->Unbind();
+
+	//allocate shadow buffer
+	bufferData = spring::AllocateAlignedMemory(bufferSizeInBytes, 32);
 
 	vboOwner = true;
 }
