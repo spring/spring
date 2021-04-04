@@ -851,13 +851,21 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
-	if (!lua_istable(L, 1))
-		luaL_error(L, "[%s(stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ])] incorrect arguments", __func__);
+	const bool hasState = lua_istable(L, 1);
+
+	if (!(hasState || lua_isnil(L, 1)))
+		luaL_error(L, "[%s([ stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ] ])] incorrect arguments", __func__);
 
 	camHandler->SetTransitionParams(luaL_optfloat(L, 3, camHandler->GetTransitionTimeFactor()), luaL_optfloat(L, 4, camHandler->GetTransitionTimeExponent()));
 	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
-	const bool retval = camHandler->SetState(ParseCamStateMap(L, 1));
+	CCameraController::StateMap camState;
+	if (hasState)
+		camState = ParseCamStateMap(L, 1);
+	else
+		camHandler->GetState(camState);
+
+	const bool retval = camHandler->SetState(camState);
 	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	// always push false in synced
