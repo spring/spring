@@ -8,6 +8,9 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
+#include "lib/meshoptimizer/src/meshoptimizer.h"
+
+#include "System/Log/ILog.h"
 
 #include <algorithm>
 #include <cctype>
@@ -224,6 +227,8 @@ void S3DModelPiece::PostProcessGeometry()
 	vboVertStart = model->curVertStartIndx;
 	vboIndxStart = model->curIndxStartIndx;
 
+	MeshOptimize();
+
 	indicesVBO.resize(indices.size());
 	std::transform(indices.cbegin(), indices.cend(), indicesVBO.begin(), [this](uint32_t indx) { return indx + this->vboVertStart; });
 }
@@ -237,6 +242,66 @@ void S3DModelPiece::UploadToVBO()
 	model->UploadToVBO(vertices, indicesVBO, vboVertStart, vboIndxStart);
 
 	indicesVBO.clear(); //no longer needed
+}
+
+void S3DModelPiece::MeshOptimize()
+{
+	if (!HasGeometryData())
+		return;
+
+	decltype(indices)  optIndices = indices;
+	decltype(vertices) optVertices = vertices;
+
+	{
+		// First, generate a remap table from your existing vertex (and, optionally, index) data:
+		std::vector<uint32_t> remap(vertices.size()); // allocate temporary memory for the remap table
+		size_t vertexCount = meshopt_generateVertexRemap(remap.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(SVertexData));
+
+		// After generating the remap table, you can allocate space for the target vertex buffer (vertex_count elements) and index buffer (index_count elements) and generate them:
+		optVertices.resize(vertexCount);
+
+		meshopt_remapIndexBuffer(optIndices.data(), indices.data(), indices.size(), remap.data());
+		meshopt_remapVertexBuffer(optVertices.data(), vertices.data(), vertices.size(), sizeof(SVertexData), remap.data());
+	}
+
+	// Vertex cache optimization
+	meshopt_optimizeVertexCache(optIndices.data(), optIndices.data(), optIndices.size(), optVertices.size());
+
+	// Vertex fetch optimization
+	optVertices.resize(meshopt_optimizeVertexFetch(optVertices.data(), optIndices.data(), optIndices.size(), optVertices.data(), optVertices.size(), sizeof(SVertexData)));
+
+#if 0 //uncomment when Lod system will need to be implemented
+	{
+		const float2 optTarget{ 0.7f, 0.05f };
+
+		size_t target_index_count = size_t(optIndices.size() * optTarget.x);
+		float result_error = 0.0f;
+
+		decltype(indices)  lodIndices  = optIndices;
+		decltype(vertices) lodVertices = optVertices;
+
+		lodIndices.resize(meshopt_simplify(lodIndices.data(), optIndices.data(), optIndices.size(), &optVertices[0].pos.x, optVertices.size(), sizeof(SVertexData), target_index_count, optTarget.y, &result_error));
+		lodVertices.resize(meshopt_optimizeVertexFetch(lodVertices.data(), lodIndices.data(), lodIndices.size(), lodVertices.data(), lodVertices.size(), sizeof(SVertexData)));
+
+		LOG("[%s] vertices.size() = %u, indices.size() = %u || optVertices.size() = %u, optIndices.size() = %u || lodIndices.size() = %u, lodVertices = %u || result_error = %f",
+			model->name.c_str(),
+			static_cast<uint32_t>(vertices.size()), static_cast<uint32_t>(indices.size()),
+			static_cast<uint32_t>(optVertices.size()), static_cast<uint32_t>(optIndices.size()),
+			static_cast<uint32_t>(lodVertices.size()), static_cast<uint32_t>(lodIndices.size()),
+			static_cast<double>(result_error)
+		);
+
+		if (lodIndices.size() < optIndices.size() || lodVertices.size() < optVertices.size()) {
+			optIndices  = lodIndices;
+			optVertices = lodVertices;
+		}
+	}
+#endif
+
+	if (optIndices.size() < indices.size() || optVertices.size() < vertices.size()) {
+		indices  = optIndices;
+		vertices = optVertices;
+	}
 }
 
 void S3DModelPiece::BindVertexAttribVBOs() const

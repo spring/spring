@@ -64,6 +64,7 @@ if    (USE_LIBSQUISH)
 	list(APPEND engineLibraries squish rgetc1)
 endif (USE_LIBSQUISH)
 
+list(APPEND engineLibraries meshoptimizer)
 list(APPEND engineLibraries ${sound-impl})
 list(APPEND engineLibraries engineSystemNet)
 list(APPEND engineLibraries ${engineCommonLibraries})
