@@ -33,7 +33,7 @@ LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::opti
 	, elementsCount{ 0u }
 	, bufferSizeInBytes{ 0u }
 	, attributesCount{ 0u }
-	, primitiveRestartIndex{ 0u }
+	, primitiveRestartIndex{ ~0u }
 	, bufferData{ nullptr }
 {
 
@@ -683,6 +683,7 @@ size_t LuaVBOImpl::ShapeFromDefIDImpl(const int defID)
 		this->elemSizeInBytes = sizeof(uint32_t);
 		this->bufferSizeInBytes = vbo->GetSize();
 		this->elementsCount = this->bufferSizeInBytes / this->elemSizeInBytes;
+		this->primitiveRestartIndex = 0xffffff;
 	};
 
 	const SolidObjectDef* objDef;
