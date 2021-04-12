@@ -114,8 +114,8 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	updateBuffer->viewGeometry = float4{(float)globalRendering->viewSizeX, (float)globalRendering->viewSizeY, (float)globalRendering->viewPosX, (float)globalRendering->viewPosY}; //vsx, vsy, vpx, vpy
 	updateBuffer->mapSize = float4{(float)mapDims.mapx, (float)mapDims.mapy, (float)mapDims.pwr2mapx, (float)mapDims.pwr2mapy} *(float)SQUARE_SIZE; //xz, xzPO2
 
-	float4 forColor = (sky != nullptr) ? float4{sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f} : float4{0.7f, 0.7f, 0.8f, 1.0f};
-	updateBuffer->fogColor = forColor;
+	float4 fogColor = (sky != nullptr) ? float4{sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f} : float4{0.7f, 0.7f, 0.8f, 1.0f};
+	updateBuffer->fogColor = fogColor;
 
 	const auto camPlayer = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	float4 fogParams = (sky != nullptr) ? float4{sky->fogStart * camPlayer->GetFarPlaneDist(), sky->fogEnd * camPlayer->GetFarPlaneDist(), 0.0f, 0.0f} : float4{0.1f * CGlobalRendering::MAX_VIEW_RANGE, 1.0f * CGlobalRendering::MAX_VIEW_RANGE, 0.0f, 0.0f};
