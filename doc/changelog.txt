@@ -28,6 +28,7 @@ Sim:
  - change default ownerExpAccWeight to 0 for all weapon-types
  - remove salvoError multiplier hack for positional and out-of-los targets
  - add new UnitDef tag "stopToAttack"
+ - defs: accept "health" in addition to "maxdamage" (units) or "damage" (features)
 
 Lua:
  - add math.tau
