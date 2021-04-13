@@ -277,7 +277,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	makesMetal   = udTable.GetFloat("makesMetal", 0.0f);
 	energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
-	health       = std::max(0.1f, udTable.GetFloat("maxDamage",  0.0f)); //avoid some nasty divide by 0
+	/* maxDamage is the legacy Total Annihilation spelling,
+	 * and what most games use, so not really deprecatable */
+	health       = udTable.GetFloat("health", udTable.GetFloat("maxDamage", 0.0f));
+	health       = std::max(0.1f, health); // avoid some nasty divide by 0
+
 	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
