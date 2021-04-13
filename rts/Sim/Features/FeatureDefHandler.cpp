@@ -104,7 +104,11 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 
 	fd.metal       = fdTable.GetFloat("metal",  0.0f);
 	fd.energy      = fdTable.GetFloat("energy", 0.0f);
-	fd.health      = fdTable.GetFloat("damage", 0.0f);
+
+	// "damage" is the legacy Total Annihilation spelling
+	fd.health      = fdTable.GetFloat("health", fdTable.GetFloat("damage", 0.0f));
+	fd.health      = std::max(0.1f, fd.health);
+
 	fd.reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd.metal + fd.energy) * 6.0f));
 
 	fd.smokeTime = fdTable.GetInt("smokeTime", 300);
