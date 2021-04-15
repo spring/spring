@@ -32,7 +32,7 @@ public:
 	void AttachInstanceBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO);
 	void AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO);
 
-	void DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt);
+	void DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> instanceFirstOpt);
 	void DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);
 private:
 	std::pair<GLsizei, GLsizei> DrawCheck(const GLenum mode, const sol::optional<GLsizei> drawCountOpt, const sol::optional<int> instanceCountOpt, const bool indexed);

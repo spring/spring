@@ -453,6 +453,7 @@ GLAPI void APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, cons
 GLAPI void APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr) {}
 GLAPI void APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count) {}
 GLAPI void APIENTRY glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount) {}
+GLAPI void APIENTRY glDrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance) {}
 
 GLAPI void APIENTRY glTexEnvi(GLenum target, GLenum pname, GLint param) {}
 
