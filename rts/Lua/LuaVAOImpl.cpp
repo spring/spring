@@ -234,22 +234,22 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 	return std::make_pair(drawCount, instanceCount);
 }
 
-void LuaVAOImpl::DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> instanceFirstOpt)
+void LuaVAOImpl::DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> vertexFirstOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> instanceFirstOpt)
 {
 	const auto [vertCount, instCount] = DrawCheck(mode, vertCountOpt, instanceCountOpt, false); //pair<vertCount,instCount>
 
-	const auto first = std::max(firstOpt.value_or(0), 0);
+	const auto vertexFirst = std::max(vertexFirstOpt.value_or(0), 0);
 	const auto baseInstance = std::max(instanceFirstOpt.value_or(0), 0);
 
 	vao->Bind();
 
 	if (instCount == 0)
-		glDrawArrays(mode, first, vertCount);
+		glDrawArrays(mode, vertexFirst, vertCount);
 	else {
 		if (baseInstance > 0)
-			glDrawArraysInstancedBaseInstance(mode, first, vertCount, instCount, baseInstance);
+			glDrawArraysInstancedBaseInstance(mode, vertexFirst, vertCount, instCount, baseInstance);
 		else
-			glDrawArraysInstanced(mode, first, vertCount, instCount);
+			glDrawArraysInstanced(mode, vertexFirst, vertCount, instCount);
 	}
 
 	vao->Unbind();
