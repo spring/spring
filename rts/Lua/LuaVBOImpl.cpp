@@ -995,7 +995,7 @@ void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 
 	vbo = new VBO(defTarget, MapPersistently());
 	vbo->Bind();
-	LOG("freqUpdated = %d", freqUpdated);
+	//LOG("freqUpdated = %d", freqUpdated);
 	vbo->New(byteSize, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	vbo->Unbind();
 
