@@ -191,18 +191,6 @@ CGrassDrawer::CGrassDrawer()
 
 	const int detail = configHandler->GetInt("GrassDetail");
 
-	// some ATI drivers crash with grass enabled, default to disabled
-	if ((detail == 0) || ((detail == 7) && globalRendering->haveAMD)) {
-		grassOff = true;
-		return;
-	}
-
-	// needed to create the far tex
-	if (!GLEW_EXT_framebuffer_blit) {
-		grassOff = true;
-		return;
-	}
-
 	// load grass density from map
 	{
 		MapBitmapInfo grassbm;
@@ -222,6 +210,19 @@ CGrassDrawer::CGrassDrawer()
 		grassMap.resize(mapDims.mapx * mapDims.mapy / (grassSquareSize * grassSquareSize));
 		memcpy(grassMap.data(), grassdata, grassMap.size());
 		readMap->FreeInfoMap("grass", grassdata);
+		
+		// some ATI drivers crash with grass enabled, default to disabled
+		if ((detail == 0) || ((detail == 7) && globalRendering->haveAMD)) {
+			grassOff = true;
+			return;
+		}
+		
+		// needed to create the far tex
+		if (!GLEW_EXT_framebuffer_blit) {
+			grassOff = true;
+			return;
+		}
+
 	}
 
 	// create/load blade texture
