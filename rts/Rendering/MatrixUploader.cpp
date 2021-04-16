@@ -1,6 +1,7 @@
 #include "MatrixUploader.h"
 
 #include <limits>
+#include <cassert>
 
 #include "System/float4.h"
 #include "System/Matrix44f.h"
@@ -156,7 +157,7 @@ void MatrixUploader::GetVisibleObjects(std::map<int, const TObj*>& visibleObject
 		return;
 	}
 
-	static_assert("Wrong TObj in MatrixSSBO::GetVisibleObjects()");
+	assert(false); // Wrong TObj in MatrixSSBO::GetVisibleObjects()
 }
 
 uint32_t MatrixUploader::GetMatrixElemCount()
