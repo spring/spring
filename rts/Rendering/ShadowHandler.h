@@ -84,6 +84,7 @@ public:
 	bool ShadowsLoaded() const { return shadowsLoaded; }
 	bool InShadowPass() const { return inShadowPass; }
 
+	void Update();
 private:
 	void FreeTextures();
 

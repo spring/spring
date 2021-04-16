@@ -43,6 +43,7 @@
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/MatrixUploader.h"
+#include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/UniformConstants.h"
@@ -1255,7 +1256,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	//TODO figure out the right order of operations
 	if (unitTracker.Enabled())
 		unitTracker.SetCam();
+
 	camera->Update();
+	shadowHandler.Update();
 
 	//Update per-drawFrame UBO
 	UniformConstants::GetInstance().Update();
