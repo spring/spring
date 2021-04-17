@@ -307,6 +307,10 @@ public:
 	SDL_GLContext glContexts[2];
 public:
 	/**
+	* @brief maximum texture unit number
+	*/
+	static constexpr int MAX_TEXTURE_UNITS = 32;
+	/**
 	* @brief max view range in elmos
 	*/
 	static constexpr float MAX_VIEW_RANGE = 65536.0f;
