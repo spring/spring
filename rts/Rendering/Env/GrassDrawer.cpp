@@ -1036,7 +1036,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 
 void CGrassDrawer::AddGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassMap.size() == 0)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1050,7 +1050,7 @@ void CGrassDrawer::AddGrass(const float3& pos)
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassMap.size() == 0)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1064,7 +1064,7 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 unsigned char CGrassDrawer::GetGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassMap.size() == 0)
 		return -1;
 
 	const int x = int(pos.x) / GSSSQ;
