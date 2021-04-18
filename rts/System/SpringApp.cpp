@@ -1012,7 +1012,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
 					// update keydown table
 					KeyInput::Update(0, keyBindings.GetFakeMetaKey());
-					globalRendering->SetWindowInputGrabbing(globalRendering->grabInput);
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_LOST: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
