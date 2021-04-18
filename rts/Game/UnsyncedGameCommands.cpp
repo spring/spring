@@ -2055,10 +2055,16 @@ public:
 		if (mouse->offscreen)
 			return false;
 
+		const bool prevState = globalRendering->GetWindowInputGrabbing();
 		if (args.empty()) {
 			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
-			LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
+			const bool preState = globalRendering->GetWindowInputGrabbing();
+			const bool reqState = static_cast<bool>(atoi(args.c_str()));
+			if (reqState != preState)
+				LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(reqState));
+			else
+				globalRendering->SetWindowInputGrabbing(reqState);
 		}
 
 		return true;

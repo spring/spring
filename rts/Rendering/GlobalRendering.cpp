@@ -941,6 +941,11 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 }
 
 
+bool CGlobalRendering::GetWindowInputGrabbing()
+{
+	return static_cast<bool>(SDL_GetWindowGrab(sdlWindows[0]));
+}
+
 bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 {
 	SDL_SetWindowGrab(sdlWindows[0], enable? SDL_TRUE: SDL_FALSE);
@@ -949,7 +954,7 @@ bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 
 bool CGlobalRendering::ToggleWindowInputGrabbing()
 {
-	if (SDL_GetWindowGrab(sdlWindows[0]))
+	if (GetWindowInputGrabbing())
 		return (SetWindowInputGrabbing(false));
 
 	return (SetWindowInputGrabbing(true));

@@ -63,6 +63,7 @@ public:
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+	bool GetWindowInputGrabbing();
 	bool SetWindowInputGrabbing(bool enable);
 	bool ToggleWindowInputGrabbing();
 
