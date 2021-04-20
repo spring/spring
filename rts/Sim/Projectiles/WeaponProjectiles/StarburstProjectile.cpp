@@ -287,14 +287,14 @@ void CStarburstProjectile::UpdateTracerPart()
 
 void CStarburstProjectile::UpdateSmokeTrail()
 {
-	trailAge++;
-	numParts++;
-
 	if (!leaveSmokeTrail)
 		return;
 
 	if (smokeTrail != nullptr)
 		smokeTrail->UpdateEndPos(oldSmoke = pos, oldSmokeDir = dir);
+
+	trailAge++;
+	numParts++;
 
 	if ((trailAge % SMOKE_INTERVAL) != 0)
 		return;
