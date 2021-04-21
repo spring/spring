@@ -28,7 +28,6 @@ namespace spring {
         size_t Allocate(size_t numElems);
         void Free(size_t firstElem, size_t numElems);
         const size_t GetSize() const { return data.size(); }
-        const T* GetDataPtr() const { return static_cast<T*>(data.data()); }
         std::vector<T>& GetData() { return data; }
     private:
         std::vector<T> data;
