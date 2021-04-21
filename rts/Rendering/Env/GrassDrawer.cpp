@@ -1034,7 +1034,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 }
 
 
-void CGrassDrawer::AddGrass(const float3& pos)
+void CGrassDrawer::AddGrass(const float3& pos, const int grassValue)
 {
 	if (grassMap.size() == 0)
 		return;
@@ -1044,7 +1044,7 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
-	grassMap[z * mapDims.mapx / grassSquareSize + x] = 1;
+	grassMap[z * mapDims.mapx / grassSquareSize + x] = grassValue;
 	ResetPos(pos);
 }
 
