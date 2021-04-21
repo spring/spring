@@ -25,7 +25,7 @@ public:
 
 	void Draw();
 	void DrawShadow();
-	void AddGrass(const float3& pos);
+	void AddGrass(const float3& pos,  const int grassValue);
 	void ResetPos(const float3& pos);
 	void RemoveGrass(const float3& pos);
 	unsigned char GetGrass(const float3& pos);
