@@ -1034,7 +1034,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 }
 
 
-void CGrassDrawer::AddGrass(const float3& pos, const int grassValue)
+void CGrassDrawer::AddGrass(const float3& pos, const uint8_t grassValue)
 {
 	if (grassMap.size() == 0)
 		return;
