@@ -2845,8 +2845,9 @@ int LuaSyncedCtrl::RemoveObjectDecal(lua_State* L)
 int LuaSyncedCtrl::AddGrass(lua_State* L)
 {
 	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-
-	grassDrawer->AddGrass(pos.cClampInBounds());
+	int grassValue = luaL_optint(L, 3, 1);
+	
+	grassDrawer->AddGrass(pos.cClampInBounds(), grassValue);
 	return 0;
 }
 
