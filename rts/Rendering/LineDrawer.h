@@ -4,6 +4,7 @@
 #define _LINE_DRAWER_H
 
 #include <vector>
+#include <array>
 
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/VertexArrayTypes.h"
