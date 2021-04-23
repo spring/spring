@@ -59,8 +59,8 @@ CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).descri
 CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
 CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
-CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosX).minimumValue(0).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosY).minimumValue(0).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 
 
 /**
@@ -1049,6 +1049,10 @@ void CGlobalRendering::ReadWindowPosAndSize()
 
 	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
 	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
+
+	//enforce >=0 https://github.com/beyond-all-reason/spring/issues/23
+	winPosX = std::max(winPosX, 0);
+	winPosY = std::max(winPosY, 0);
 #endif
 
 	// should be done by caller
