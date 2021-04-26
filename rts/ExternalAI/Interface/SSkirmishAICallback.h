@@ -1887,6 +1887,10 @@ struct SSkirmishAICallback {
 	 */
 	const char*       (CALLING_CONV *Feature_getRulesParamString)(int skirmishAIId, int unitId, const char* featureRulesParamName, const char* defaultValue);
 
+	int               (CALLING_CONV *Feature_getResurrectDef)(int skirmishAIId, int featureId); //$ REF:RETURN->UnitDef
+
+	short             (CALLING_CONV *Feature_getBuildingFacing)(int skirmishAIId, int featureId);
+
 // END OBJECT Feature
 
 
