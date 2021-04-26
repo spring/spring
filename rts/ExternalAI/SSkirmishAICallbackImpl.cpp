@@ -4306,6 +4306,28 @@ EXPORT(const char*) skirmishAiCallback_Feature_getRulesParamString(int skirmishA
 	return getRulesParamStringValueByName(feature->modParams, featureModParamLosMask(skirmishAIId, feature), rulesParamName, defaultValue);
 }
 
+EXPORT(int) skirmishAiCallback_Feature_getResurrectDef(int skirmishAIId, int featureId) {
+	const CFeature* f = featureHandler.GetFeature(featureId);
+	if ((f == nullptr) || (f->udef == nullptr)) {
+		return -1;
+	}
+
+	const UnitDef* def = nullptr;
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		def = f->udef;
+	} else {
+		if (f->IsInLosForAllyTeam(teamHandler.AllyTeam(AI_TEAM_IDS[skirmishAIId])))
+			def = f->udef;
+	}
+
+	return (def != nullptr)? def->id: -1;
+}
+
+EXPORT(short) skirmishAiCallback_Feature_getBuildingFacing(int skirmishAIId, int featureId) {
+	const CFeature* f = featureHandler.GetFeature(featureId);
+	return (f != nullptr)? (short)f->buildFacing: -1;
+}
+
 
 //########### BEGINN WeaponDef
 EXPORT(int) skirmishAiCallback_getWeaponDefs(int skirmishAIId) {
@@ -5510,6 +5532,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Feature_getPosition = &skirmishAiCallback_Feature_getPosition;
 	callback->Feature_getRulesParamFloat = &skirmishAiCallback_Feature_getRulesParamFloat;
 	callback->Feature_getRulesParamString = &skirmishAiCallback_Feature_getRulesParamString;
+	callback->Feature_getResurrectDef = &skirmishAiCallback_Feature_getResurrectDef;
+	callback->Feature_getBuildingFacing = &skirmishAiCallback_Feature_getBuildingFacing;
 	callback->getWeaponDefs = &skirmishAiCallback_getWeaponDefs;
 	callback->getWeaponDefByName = &skirmishAiCallback_getWeaponDefByName;
 	callback->WeaponDef_getName = &skirmishAiCallback_WeaponDef_getName;

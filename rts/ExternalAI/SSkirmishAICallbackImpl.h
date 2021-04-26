@@ -1039,6 +1039,10 @@ EXPORT(float            ) skirmishAiCallback_Feature_getRulesParamFloat(int skir
 
 EXPORT(const char*      ) skirmishAiCallback_Feature_getRulesParamString(int skirmishAIId, int featureId, const char* rulesParamName, const char* defaultValue);
 
+EXPORT(int              ) skirmishAiCallback_Feature_getResurrectDef(int skirmishAIId, int featureId);
+
+EXPORT(short            ) skirmishAiCallback_Feature_getBuildingFacing(int skirmishAIId, int featureId);
+
 // END OBJECT Feature
 
 
