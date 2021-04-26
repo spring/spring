@@ -6,6 +6,7 @@
 #include <cstring> // strcmp
 #include <string>
 #include <vector>
+#include <array>
 
 /*
 LuaMaterial
