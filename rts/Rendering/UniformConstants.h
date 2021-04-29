@@ -64,6 +64,10 @@ struct UniformParamsBuffer {
 	float4 sunSpecularMap;
 
 	float4 windInfo; // windx, windy, windz, windStrength
+	float2 mouseScreenPos; //x, y. Screen space.
+	uint32_t mouseStatus; // bits 0th to 32th: LMB, MMB, RMB, offscreen, mmbScroll, locked
+	uint32_t mouseUnused;
+	float4 mouseWorldPos; //x,y,z; w=0 -- offmap. Ignores water, doesn't ignore units/features under the mouse cursor
 
 	float4 teamColor[MAX_TEAMS]; //all team colors
 };

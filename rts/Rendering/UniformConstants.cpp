@@ -10,7 +10,11 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/TraceRay.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/UI/MouseHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -18,6 +22,7 @@
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
+#include "SDL2/SDL_mouse.h"
 
 void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 {
@@ -137,6 +142,51 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	updateBuffer->sunSpecularMap = sunLighting->groundSpecularColor;
 
 	updateBuffer->windInfo = float4{ envResHandler.GetCurrentWindVec(), envResHandler.GetCurrentWindStrength() };
+
+	updateBuffer->mouseScreenPos = float2{
+		static_cast<float>(mouse->lastx - globalRendering->viewPosX),
+		static_cast<float>(globalRendering->viewSizeY - mouse->lasty - 1)
+	};
+
+	updateBuffer->mouseStatus = (
+		mouse->buttons[SDL_BUTTON_LEFT  ].pressed << 1 |
+		mouse->buttons[SDL_BUTTON_MIDDLE].pressed << 2 |
+		mouse->buttons[SDL_BUTTON_RIGHT ].pressed << 3 |
+		mouse->offscreen                          << 4 |
+		mouse->mmbScroll                          << 5 |
+		mouse->locked                             << 6
+	);
+	updateBuffer->mouseUnused = 0u;
+
+	{
+		const int wx = mouse->lastx;
+		const int wy = mouse->lasty - globalRendering->viewPosY;
+
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
+
+		const float rawRange = camPlayer->GetFarPlaneDist() * 1.4f;
+		const float badRange = rawRange - 300.0f;
+
+		const float3 camPos = camPlayer->GetPos();
+		const float3 pxlDir = camPlayer->CalcPixelDir(wx, wy);
+
+		// trace for player's allyteam
+		const float traceDist = TraceRay::GuiTraceRay(camPos, pxlDir, rawRange, nullptr, unit, feature, true, false, true);
+
+		const float3 tracePos = camPos + (pxlDir * traceDist);
+
+		if (unit)
+			updateBuffer->mouseWorldPos = float4{ unit->drawPos, 1.0f };
+		else if (feature)
+			updateBuffer->mouseWorldPos = float4{ feature->drawPos, 1.0f };
+		else
+			updateBuffer->mouseWorldPos = float4{ tracePos, 1.0f };
+
+		if ((traceDist < 0.0f || traceDist > badRange) && unit == nullptr && feature == nullptr) {
+			updateBuffer->mouseWorldPos.w = 0.0f;
+		}
+	}
 
 	for (int teamID = 0; teamID < teamHandler.ActiveTeams(); ++teamID) {
 		const CTeam* team = teamHandler.Team(teamID);
