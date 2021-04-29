@@ -19,7 +19,7 @@ struct UniformMatricesBuffer {
 	CMatrix44f cameraView;
 	CMatrix44f cameraProj;
 	CMatrix44f cameraViewProj;
-	CMatrix44f cameraBillboardProj;
+	CMatrix44f cameraBillboardView;
 
 	CMatrix44f cameraViewInv;
 	CMatrix44f cameraProjInv;
@@ -33,15 +33,15 @@ struct UniformMatricesBuffer {
 
 	// transforms for [0] := Draw, [1] := DrawInMiniMap, [2] := Lua DrawInMiniMap
 	CMatrix44f mmDrawView; //world to MM
-	CMatrix44f mmDrawIMMView; //heightmap to MM
-	CMatrix44f mmDrawDimView; //mm dims
-
 	CMatrix44f mmDrawProj; //world to MM
-	CMatrix44f mmDrawIMMProj; //heightmap to MM
-	CMatrix44f mmDrawDimProj; //mm dims
-
 	CMatrix44f mmDrawViewProj; //world to MM
+
+	CMatrix44f mmDrawIMMView; //heightmap to MM
+	CMatrix44f mmDrawIMMProj; //heightmap to MM
 	CMatrix44f mmDrawIMMViewProj; //heightmap to MM
+
+	CMatrix44f mmDrawDimView; //mm dims
+	CMatrix44f mmDrawDimProj; //mm dims
 	CMatrix44f mmDrawDimViewProj; //mm dims
 };
 
@@ -49,12 +49,21 @@ struct UniformParamsBuffer {
 	float3 rndVec3; //new every draw frame.
 	uint32_t renderCaps; //various render booleans
 
-	float4 timeInfo; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
+	float4 timeInfo;     //gameFrame, gameSeconds, drawFrame, frameTimeOffset
 	float4 viewGeometry; //vsx, vsy, vpx, vpy
-	float4 mapSize; //xz, xzPO2
+	float4 mapSize;      //xz, xzPO2
 
-	float4 fogColor; //fog color
+	float4 fogColor;  //fog color
 	float4 fogParams; //fog {start, end, 0.0, scale}
+
+	float4 sunAmbientModel;
+	float4 sunAmbientMap;
+	float4 sunDiffuseModel;
+	float4 sunDiffuseMap;
+	float4 sunSpecularModel;
+	float4 sunSpecularMap;
+
+	float4 windInfo; // windx, windy, windz, windStrength
 
 	float4 teamColor[MAX_TEAMS]; //all team colors
 };
