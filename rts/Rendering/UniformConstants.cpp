@@ -149,12 +149,12 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	};
 
 	updateBuffer->mouseStatus = (
-		mouse->buttons[SDL_BUTTON_LEFT  ].pressed << 1 |
-		mouse->buttons[SDL_BUTTON_MIDDLE].pressed << 2 |
-		mouse->buttons[SDL_BUTTON_RIGHT ].pressed << 3 |
-		mouse->offscreen                          << 4 |
-		mouse->mmbScroll                          << 5 |
-		mouse->locked                             << 6
+		mouse->buttons[SDL_BUTTON_LEFT  ].pressed << 0 |
+		mouse->buttons[SDL_BUTTON_MIDDLE].pressed << 1 |
+		mouse->buttons[SDL_BUTTON_RIGHT ].pressed << 2 |
+		mouse->offscreen                          << 3 |
+		mouse->mmbScroll                          << 4 |
+		mouse->locked                             << 5
 	);
 	updateBuffer->mouseUnused = 0u;
 
