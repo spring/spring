@@ -246,10 +246,6 @@ void S3DModelPiece::UploadToVBO()
 
 void S3DModelPiece::MeshOptimize()
 {
-	#if 1
-		return;
-	#endif
-
 	if (!HasGeometryData())
 		return;
 
@@ -274,7 +270,7 @@ void S3DModelPiece::MeshOptimize()
 	// Vertex fetch optimization
 	optVertices.resize(meshopt_optimizeVertexFetch(optVertices.data(), optIndices.data(), optIndices.size(), optVertices.data(), optVertices.size(), sizeof(SVertexData)));
 
-	#if 0 //uncomment when Lod system will need to be implemented
+#if 0 //uncomment when Lod system will need to be implemented
 	{
 		const float2 optTarget{ 0.7f, 0.05f };
 
@@ -300,7 +296,7 @@ void S3DModelPiece::MeshOptimize()
 			optVertices = lodVertices;
 		}
 	}
-	#endif
+#endif
 
 	if (optIndices.size() < indices.size() || optVertices.size() < vertices.size()) {
 		indices  = optIndices;
