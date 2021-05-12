@@ -403,7 +403,7 @@ void CReadMap::UpdateHeightsRefMap(const float h, const bool remove)
 	}
 	else { //remove
 		auto heightRef = heightRefMap.find(h);
-		assert(heightRef == heightRefMap.end()); //shouldn't ever happen
+		assert(heightRef != heightRefMap.end()); //shouldn't ever happen
 
 		if (heightRef->second <= 1) {
 			heightRefMap.erase(heightRef);
