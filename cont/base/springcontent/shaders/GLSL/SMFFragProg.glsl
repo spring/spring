@@ -381,6 +381,8 @@ void main() {
 	{
 		// cameraDir does not need to be normalized for reflect()
 		vec3 reflectDir = reflect(cameraDir, normal);
+		reflectDir = reflectDir.xzy; // swizzle and invert z because it was wrong
+		reflectDir.z = 1.0 - reflectDir.z;
 		vec3 reflectCol = textureCube(skyReflectTex, gl_NormalMatrix * reflectDir).rgb;
 		vec3 reflectMod = texture2D(skyReflectModTex, specTexCoords).rgb;
 
