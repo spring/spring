@@ -17,7 +17,7 @@
 
 #include "HsiehHash.h"
 #include "Logger.h"
-#include "SyncTracer.h"
+
 
 #ifndef _WIN32
 	/* for backtrace() function */
