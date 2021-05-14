@@ -22,7 +22,7 @@ public:
 
 	void Generate() const;
 
-	void Delete();
+	void Delete() const;
 	void Bind() const;
 	void Unbind() const;
 

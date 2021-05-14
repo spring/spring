@@ -17,7 +17,7 @@ void VAO::Generate() const
 	glGenVertexArrays(1, &id);
 }
 
-void VAO::Delete()
+void VAO::Delete() const
 {
 	if (id > 0) {
 		glDeleteVertexArrays(1, &id);
