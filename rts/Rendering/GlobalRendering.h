@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
@@ -13,8 +14,6 @@
 struct SDL_version;
 struct SDL_Window;
 typedef void* SDL_GLContext;
-
-class CMatrix44f;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -138,8 +137,8 @@ public:
 	int viewSizeY;
 
 	/// screen {View,Proj} matrices for rendering in pixel coordinates
-	std::unique_ptr<CMatrix44f> screenViewMatrix;
-	std::unique_ptr<CMatrix44f> screenProjMatrix;
+	CMatrix44f screenViewMatrix;
+	CMatrix44f screenProjMatrix;
 
 	/// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
 	float pixelX;

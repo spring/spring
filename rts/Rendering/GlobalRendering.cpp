@@ -193,8 +193,8 @@ CGlobalRendering::CGlobalRendering()
 	, viewSizeX(1)
 	, viewSizeY(1)
 
-	, screenViewMatrix(nullptr)
-	, screenProjMatrix(nullptr)
+	, screenViewMatrix()
+	, screenProjMatrix()
 
 	// pixel geometry
 	, pixelX(0.01f)
@@ -266,9 +266,6 @@ CGlobalRendering::CGlobalRendering()
 	, sdlWindows{nullptr, nullptr}
 	, glContexts{nullptr, nullptr}
 {
-	screenViewMatrix = std::make_unique<CMatrix44f>();
-	screenProjMatrix = std::make_unique<CMatrix44f>();
-
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
 }
@@ -1119,8 +1116,8 @@ void CGlobalRendering::UpdateScreenMatrices()
 	const float top = ((vpy + vsy) - hssy) * zfact;
 
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
-	*screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
-	*screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
+	screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
+	screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
 }
 
 void CGlobalRendering::UpdateGLGeometry()

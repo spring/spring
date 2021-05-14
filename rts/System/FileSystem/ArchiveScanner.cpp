@@ -1308,7 +1308,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 			if (aii == archiveInfosIndex.end()) {
 				if (!HandleUnresolvedDep(lowerCaseName))
-					throw content_error("Dependent archive \"" + resolvedName + "\" not found");
+					throw content_error("Dependent archive \"" + lowerCaseName + "\" (resolved to \"" + resolvedName + "\") not found");
 
 				return nullptr;
 			}

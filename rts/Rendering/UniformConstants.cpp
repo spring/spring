@@ -75,8 +75,8 @@ intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)
 
 void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 {
-	updateBuffer->screenView = *globalRendering->screenViewMatrix;
-	updateBuffer->screenProj = *globalRendering->screenProjMatrix;
+	updateBuffer->screenView = globalRendering->screenViewMatrix;
+	updateBuffer->screenProj = globalRendering->screenProjMatrix;
 	updateBuffer->screenViewProj = updateBuffer->screenProj * updateBuffer->screenView;
 
 	const auto camPlayer = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
