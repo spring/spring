@@ -1424,8 +1424,8 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
  		}
 
 		ASSERT_SYNCED(unit->buildTime);
-		ASSERT_SYNCED(unit->cost.metal);
-		ASSERT_SYNCED(unit->cost.energy);
+		ASSERT_SYNCED(unit->metalCost);
+		ASSERT_SYNCED(unit->energyCost);
 	}
 
 	return 0;
