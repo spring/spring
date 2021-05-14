@@ -2,8 +2,9 @@
 
 #include "lib/sol2/sol.hpp"
 
-#include "LuaVBOImpl.h"
 #include "LuaVAOImpl.h"
+#include "LuaVBOImpl.h"
+
 #include "LuaUtils.h"
 
 ///////////////////////////////////////////////////////////
