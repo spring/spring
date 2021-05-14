@@ -12,8 +12,6 @@
 #include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/Threading/ThreadPool.h"
-#include "System/Sync/SyncTracer.h"
-
 
 SmoothHeightMesh smoothGround;
 
@@ -415,17 +413,4 @@ void SmoothHeightMesh::MakeSmoothMesh()
 
 	// <mesh> now contains the final smoothed heightmap, save it in origMesh
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
-
-#ifdef TRACE_SYNC
-	tracefile << "[" << __func__ << "] \n";
-	tracefile << "mesh :";
-	for (const float f : mesh)
-		tracefile << " " << f;
-	tracefile << "\n";
-
-	tracefile << "origMesh :";
-	for (const float f : origMesh)
-		tracefile << " " << f;
-	tracefile << "\n";
-#endif
 }
