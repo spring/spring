@@ -364,13 +364,6 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 }
 
 
-GLubyte* VBO::MapBuffer(GLbitfield access)
-{
-	assert(!mapped);
-	return MapBuffer(0, bufSize, access);
-}
-
-
 GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 {
 	assert(!mapped);

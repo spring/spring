@@ -52,13 +52,19 @@ public:
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBufferData.xml
 	 */
 	void Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
+
+	template<typename TData>
+	void New(std::vector<TData> data, GLenum newUsage = GL_STATIC_DRAW) { New(sizeof(TData) * data.size(), newUsage, data.data()); };
 	void New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
+
 	void Invalidate(); //< discards all current data (frees the memory w/o resizing)
 
 	/**
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glMapBufferRange.xml
 	 */
-	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
+	template<typename TData>
+	GLubyte* MapBuffer(std::vector<TData> data, GLintptr elemOffset = 0, GLbitfield access = GL_WRITE_ONLY) { return MapBuffer(sizeof(TData) * elemOffset, sizeof(TData) * data.size(), access); };
+	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY) { return MapBuffer(0, bufSize, access); };
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
 
 	void UnmapBuffer();
@@ -70,10 +76,10 @@ public:
 		UnmapBuffer();
 		Unbind();
 	}
+
+	template<typename TData>
+	void SetBufferSubData(std::vector<TData> data, GLintptr elemOffset = 0) { SetBufferSubData(sizeof(TData) * elemOffset, sizeof(TData) * data.size(), data.data()); }
 	void SetBufferSubData(GLintptr offset, GLsizeiptr size, void* data);
-
-
-
 
 	GLuint GetId() const {
 		if (vboId == 0)
