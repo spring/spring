@@ -57,9 +57,9 @@ CR_REG_METADATA(MapDimensions, (
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-	CR_MEMBER(initHeightBounds),
+	CR_IGNORED(initHeightBounds),
+	CR_IGNORED(tempHeightBounds),
 	CR_IGNORED(currHeightBounds),
-	CR_IGNORED(heightRefMap),
 	CR_IGNORED(boundingRadius),
 	CR_IGNORED(mapChecksum),
 
@@ -223,6 +223,8 @@ void CReadMap::Serialize(creg::ISerializer* s)
 			s->Serialize(&type, sizeof(uint8_t));
 			itm[i] = type ^ iotm[i];
 		}
+
+		mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
 	}
 
 }
@@ -249,24 +251,17 @@ void CReadMap::PostLoad()
 	sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 	sharedSlopeMaps[1] = &slopeMap[0];
 
-	heightRefMap.clear();
-	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
-		UpdateHeightsRefMap(sharedCornerHeightMaps[1][i]);
-	}
-	UpdateHeightBounds();
-
 	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
 		mipCenterHeightMaps[i - 1].clear();
-		mipCenterHeightMaps[i - 1].resize((mapDims.mapx >> i)* (mapDims.mapy >> i));
+		mipCenterHeightMaps[i - 1].resize((mapDims.mapx >> i) * (mapDims.mapy >> i));
 
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
 	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
-
 }
 #endif //USING_CREG
 
@@ -387,52 +382,34 @@ void CReadMap::Initialize()
 }
 
 
-void CReadMap::UpdateHeightsRefMap(const float h, const bool remove)
-{
-	if (!remove) {
-		heightRefMap[h]++; //increment references counter
-	}
-	else { //remove
-		auto heightRef = heightRefMap.find(h);
-		assert(heightRef != heightRefMap.end()); //shouldn't ever happen
-
-		if (heightRef->second <= 1) {
-			heightRefMap.erase(heightRef);
-			return;
-		}
-
-		(heightRef->second)--;
-	}
-}
-
-void CReadMap::UpdateHeightBounds()
-{
-	currHeightBounds = float2{ heightRefMap.begin()->first, heightRefMap.rbegin()->first };
-}
-
 unsigned int CReadMap::CalcHeightmapChecksum()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
-	heightRefMap.clear();
+	initHeightBounds.x = std::numeric_limits<float>::max();
+	initHeightBounds.y = std::numeric_limits<float>::lowest();
+
+	tempHeightBounds = initHeightBounds;
 
 	unsigned int checksum = 0;
 
 	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
 		originalHeightMap[i] = heightmap[i];
 
-		UpdateHeightsRefMap(heightmap[i]);
+		initHeightBounds.x = std::min(initHeightBounds.x, heightmap[i]);
+		initHeightBounds.y = std::max(initHeightBounds.y, heightmap[i]);
 
 		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
 	}
 
 	checksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 
-	UpdateHeightBounds();
-	initHeightBounds = currHeightBounds;
+	currHeightBounds.x = initHeightBounds.x;
+	currHeightBounds.y = initHeightBounds.y;
 
 	return checksum;
 }
+
 
 unsigned int CReadMap::CalcTypemapChecksum()
 {
@@ -564,6 +541,29 @@ void CReadMap::UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initiali
 	#endif
 }
 
+
+void CReadMap::UpdateHeightBounds(int syncFrame)
+{
+	int dataChunk = syncFrame % GAME_SPEED;
+
+	int idxBeg = (dataChunk + 0) * mapDims.mapxp1 * mapDims.mapyp1 / GAME_SPEED;
+	int idxEnd = (dataChunk + 1) * mapDims.mapxp1 * mapDims.mapyp1 / GAME_SPEED;
+
+	if (dataChunk == 0) {
+		if (syncFrame > 0)
+			currHeightBounds = tempHeightBounds;
+
+		tempHeightBounds.x = std::numeric_limits<float>::max();
+		tempHeightBounds.y = std::numeric_limits<float>::lowest();
+	}
+
+	for (int idx = idxBeg; idx < idxEnd; ++idx) {
+		float h = (*heightMapSyncedPtr)[idx];
+
+		tempHeightBounds.x = std::min(h, tempHeightBounds.x);
+		tempHeightBounds.y = std::max(h, tempHeightBounds.y);
+	}
+}
 
 void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
 {

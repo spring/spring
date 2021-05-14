@@ -1540,6 +1540,7 @@ void CGame::SimFrame() {
 		}
 
 		helper->Update();
+		readMap->Update();
 		mapDamage->Update();
 		pathManager->Update();
 		unitHandler.Update();
