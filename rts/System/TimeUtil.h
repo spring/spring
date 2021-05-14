@@ -29,7 +29,7 @@ public:
 	 * Returns the current local time formatted as follows:
 	 * "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	 */
-	static std::string GetCurrentTimeStr();
+	static std::string GetCurrentTimeStr(bool utc = false);
 };
 
 #endif // TIME_UTIL_H
