@@ -85,6 +85,7 @@ public:
 	 * @brief write current camera settings in a vector
 	 */
 	void GetState(CCameraController::StateMap& sm) const;
+	CCameraController::StateMap GetState() const;
 
 	/**
 	 * @brief restore a camera state

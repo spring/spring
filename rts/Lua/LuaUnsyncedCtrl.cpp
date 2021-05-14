@@ -859,13 +859,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	camHandler->SetTransitionParams(luaL_optfloat(L, 3, camHandler->GetTransitionTimeFactor()), luaL_optfloat(L, 4, camHandler->GetTransitionTimeExponent()));
 	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
-	CCameraController::StateMap camState;
-	if (hasState)
-		camState = ParseCamStateMap(L, 1);
-	else
-		camHandler->GetState(camState);
-
-	const bool retval = camHandler->SetState(camState);
+	const bool retval = camHandler->SetState(hasState ? ParseCamStateMap(L, 1) : camHandler->GetState());
 	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	// always push false in synced
