@@ -1334,9 +1334,6 @@ bool CGame::Draw() {
 		// (unlikely); the minimap update also depends on GenerateIBLTextures for unbinding its FBO
 		worldDrawer.GenerateIBLTextures();
 
-		//camera->Update();
-		//UniformConstants::GetInstance().UpdateMatrices();
-
 		worldDrawer.Draw();
 		worldDrawer.ResetMVPMatrices();
 	}
