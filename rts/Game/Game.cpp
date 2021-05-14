@@ -282,10 +282,6 @@ CGame::CGame(const std::string& mapFileName, const std::string& modFileName, ILo
 
 CGame::~CGame()
 {
-#ifdef TRACE_SYNC
-	tracefile << "[" << __func__ << "]";
-#endif
-
 	ENTER_SYNCED_CODE();
 	LOG("[Game::%s][1]", __func__);
 
@@ -1512,10 +1508,6 @@ void CGame::SimFrame() {
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
 	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
-
-#ifdef TRACE_SYNC
-	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetLastSeed() << "\n";
-#endif
 
 	if (!skipping) {
 		// everything here is unsynced and should ideally moved to Game::Update()
