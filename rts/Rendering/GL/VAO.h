@@ -5,14 +5,10 @@
 
 #include <cstdint>
 #include <utility>
-#include "Rendering/GL/myGL.h"
 
 struct VAO {
 public:
-	static bool IsSupported() {
-		static bool supported = GLEW_ARB_vertex_array_object;
-		return supported;
-	}
+	static bool IsSupported();
 public:
 	VAO() = default;
 	VAO(const VAO& v) = delete;
@@ -24,21 +20,11 @@ public:
 
 	uint32_t GetId() const { Generate(); return id; }
 
-	void Generate() const {
-		if (id > 0)
-			return;
+	void Generate() const;
 
-		glGenVertexArrays(1, &id);
-	};
-
-	void Delete() {
-		if (id > 0) {
-			glDeleteVertexArrays(1, &id);
-			id = 0;
-		}
-	}
-	void Bind() const { glBindVertexArray(GetId()); }
-	void Unbind() const { glBindVertexArray(0); }
+	void Delete();
+	void Bind() const;
+	void Unbind() const;
 
 private:
 	mutable uint32_t id = 0;
