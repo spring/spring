@@ -305,7 +305,7 @@ bool CShadowHandler::InitDepthTarget()
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	} else {
-		GLint depthFormat = static_cast<GLint>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+		GLint depthFormat = static_cast<GLint>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
 
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, depthFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -345,7 +345,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		const int depthBits = std::min(globalRendering->supportDepthBufferBestBits, 24);
+		const int depthBits = std::min(globalRendering->supportDepthBufferBitDepth, 24);
 		const GLint texFormat = CGlobalRendering::DepthBitsToFormat(depthBits);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);

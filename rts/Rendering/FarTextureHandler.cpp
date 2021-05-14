@@ -140,7 +140,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	if (!CheckResizeAtlas())
 		return;
 
-	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
 
 	fbo.Bind();
 	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, texSize.x, texSize.y);

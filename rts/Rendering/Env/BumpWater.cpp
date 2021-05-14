@@ -173,7 +173,7 @@ CBumpWater::CBumpWater()
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
 	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
-	depthBits    = std::min(depthBits, static_cast<char>(globalRendering->supportDepthBufferBestBits));
+	depthBits    = std::min(depthBits, static_cast<char>(globalRendering->supportDepthBufferBitDepth));
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && waterRendering->shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && waterRendering->hasWaterPlane
@@ -336,7 +336,7 @@ CBumpWater::CBumpWater()
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		//GLuint depthFormat = GL_DEPTH_COMPONENT32;
 		//if (!globalRendering->amdHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
-		GLuint depthFormat = CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits);
+		GLuint depthFormat = CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth);
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 

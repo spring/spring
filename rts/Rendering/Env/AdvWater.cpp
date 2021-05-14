@@ -92,7 +92,7 @@ CAdvWater::CAdvWater(bool loadShader)
 
 	reflectFBO.Bind();
 	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBestBits));
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
 	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, 512, 512);
 	bumpFBO.Bind();
 	bumpFBO.AttachTexture(bumpTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);

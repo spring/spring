@@ -31,9 +31,7 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedBool(L, "glSupportTextureQueryLOD" , globalRendering->supportTextureQueryLOD);
 	LuaPushNamedBool(L, "glSupportMSAAFrameBuffer" , globalRendering->supportMSAAFrameBuffer);
 
-	LuaPushNamedBool(L, "glSupport16bitDepthBuffer", globalRendering->supportDepthBufferBits[1]);
-	LuaPushNamedBool(L, "glSupport24bitDepthBuffer", globalRendering->supportDepthBufferBits[2]);
-	LuaPushNamedBool(L, "glSupport32bitDepthBuffer", globalRendering->supportDepthBufferBits[3]);
+	LuaPushNamedBool(L, "supportDepthBufferBitDepth", globalRendering->supportDepthBufferBitDepth);
 
 	LuaPushNamedBool(L, "glSupportRestartPrimitive", globalRendering->supportRestartPrimitive);
 	LuaPushNamedBool(L, "glSupportClipSpaceControl", globalRendering->supportClipSpaceControl);

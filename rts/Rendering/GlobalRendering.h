@@ -255,8 +255,7 @@ public:
 
 	bool supportMSAAFrameBuffer;
 
-	int supportDepthBufferBestBits;
-	bool supportDepthBufferBits[4];
+	int supportDepthBufferBitDepth;
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;

@@ -138,8 +138,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(supportMSAAFrameBuffer),
-	CR_IGNORED(supportDepthBufferBestBits),
-	CR_IGNORED(supportDepthBufferBits),
+	CR_IGNORED(supportDepthBufferBitDepth),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(supportSeamlessCubeMaps),
@@ -241,7 +240,7 @@ CGlobalRendering::CGlobalRendering()
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, supportMSAAFrameBuffer(false)
-	, supportDepthBufferBestBits(0)
+	, supportDepthBufferBitDepth(16)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
 	, supportSeamlessCubeMaps(false)
@@ -717,8 +716,7 @@ void CGlobalRendering::SetGLSupportFlags()
 	//stick to the theory that reported = exist
 	//supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
 
-	int iter = 0;
-	for (const int bits : {0, 16, 24, 32}) {
+	for (const int bits : {16, 24, 32}) {
 		bool supported = false;
 		if (FBO::IsSupported()) {
 			FBO fbo;
@@ -731,17 +729,12 @@ void CGlobalRendering::SetGLSupportFlags()
 		}
 
 		if (supported)
-			supportDepthBufferBestBits = std::max(supportDepthBufferBestBits, bits);
-
-		supportDepthBufferBits[iter] = supported;
-
-		++iter;
+			supportDepthBufferBitDepth = std::max(supportDepthBufferBitDepth, bits);
 	}
 
 	//TODO figure out if needed
 	if (globalRendering->amdHacks) {
-		supportDepthBufferBits[3] = false; //32
-		supportDepthBufferBestBits = 24;
+		supportDepthBufferBitDepth = 24;
 	}
 }
 
@@ -835,9 +828,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
 	LOG("\tMSAA frame-buffer support : %i (%i)", supportMSAAFrameBuffer, glewIsExtensionSupported("GL_EXT_framebuffer_multisample"));
-	LOG("\t16-bit Z-buffer support   : %i (-)", supportDepthBufferBits[1]);
-	LOG("\t24-bit Z-buffer support   : %i (-)", supportDepthBufferBits[2]);
-	LOG("\t32-bit Z-buffer support   : %i (-)", supportDepthBufferBits[3]);
+	LOG("\tZ-buffer depth            : %i (-)", supportDepthBufferBitDepth);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
@@ -1186,8 +1177,9 @@ int CGlobalRendering::DepthBitsToFormat(int bits)
 		return GL_DEPTH_COMPONENT24;
 	case 32:
 		return GL_DEPTH_COMPONENT32;
+	default:
+		return GL_DEPTH_COMPONENT; //should never hit this
 	}
-	return GL_DEPTH_COMPONENT;
 }
 
 /**
