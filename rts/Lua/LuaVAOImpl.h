@@ -20,8 +20,8 @@ class LuaVAOImpl {
 public:
 	LuaVAOImpl();
 
-	LuaVAOImpl(const LuaVAOImpl& lva) = delete; //no copy cons
-	LuaVAOImpl(LuaVAOImpl&& lva) = default; //move cons
+	LuaVAOImpl(const LuaVAOImpl& lva) = delete;
+	LuaVAOImpl(LuaVAOImpl&& lva) = default;
 
 	void Delete();
 	~LuaVAOImpl();

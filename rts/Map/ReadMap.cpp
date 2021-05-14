@@ -255,15 +255,6 @@ void CReadMap::PostLoad()
 	}
 	UpdateHeightBounds();
 
-	//FIXME reconstruct
-	/*
-	mipPointerHeightMaps.fill(nullptr);
-	mipPointerHeightMaps[0] = &centerHeightMap[0];
-	for (int i = 1; i < numHeightMipMaps; i++) {
-		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
-	}
-	*/
-
 	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 

@@ -10,7 +10,6 @@
 
 #include "System/Log/ILog.h"
 #include "System/SpringMem.h"
-#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "Rendering/MatrixUploader.h"
 #include "Rendering/GL/VBO.h"
@@ -1037,7 +1036,7 @@ bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const
 
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
-			const auto outVal = TransformFunc<TIn, TOut>(*bdvIter);
+			const auto outVal = spring::SafeCast<TIn, TOut>(*bdvIter);
 			memcpy(mappedBuf, &outVal, outValSize);
 			mappedBuf += outValSize;
 			++bdvIter;
@@ -1065,7 +1064,7 @@ bool LuaVBOImpl::TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
 			TIn inVal; memcpy(&inVal, mappedBuf, inValSize);
-			vec.push_back(TransformFunc<TIn, lua_Number>(inVal));
+			vec.push_back(spring::SafeCast<TIn, lua_Number>(inVal));
 
 			mappedBuf += inValSize;
 		}

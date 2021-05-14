@@ -22,6 +22,7 @@ public:
 	void Init();
 	void Kill();
 	void Reload(const char* argv);
+	void Update();
 
 	void SetupShadowTexSampler(unsigned int texUnit, bool enable = false) const;
 	void SetupShadowTexSamplerRaw() const;
@@ -83,8 +84,6 @@ public:
 
 	bool ShadowsLoaded() const { return shadowsLoaded; }
 	bool InShadowPass() const { return inShadowPass; }
-
-	void Update();
 private:
 	void FreeTextures();
 

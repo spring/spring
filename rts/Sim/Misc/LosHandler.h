@@ -279,7 +279,7 @@ public:
 
 	void FlipGlobalLOS(const int allyTeamId) { SetGlobalLOS(allyTeamId, !globalLOS[allyTeamId]); }
 	void SetGlobalLOS(const int allyTeamId, const bool newState);
-	bool GetGlobalLOS(const int allyTeamId) { return globalLOS[allyTeamId]; }
+	bool GetGlobalLOS(const int allyTeamId) const { return globalLOS[allyTeamId]; }
 
 public:
 	// CEventClient interface

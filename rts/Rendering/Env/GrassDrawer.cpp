@@ -210,13 +210,13 @@ CGrassDrawer::CGrassDrawer()
 		grassMap.resize(mapDims.mapx * mapDims.mapy / (grassSquareSize * grassSquareSize));
 		memcpy(grassMap.data(), grassdata, grassMap.size());
 		readMap->FreeInfoMap("grass", grassdata);
-		
+
 		// some ATI drivers crash with grass enabled, default to disabled
 		if ((detail == 0) || ((detail == 7) && globalRendering->haveAMD)) {
 			grassOff = true;
 			return;
 		}
-		
+
 		// needed to create the far tex
 		if (!GLEW_EXT_framebuffer_blit) {
 			grassOff = true;
@@ -1036,7 +1036,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 
 void CGrassDrawer::AddGrass(const float3& pos, const uint8_t grassValue)
 {
-	if (grassMap.size() == 0)
+	if (grassMap.empty())
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1050,7 +1050,7 @@ void CGrassDrawer::AddGrass(const float3& pos, const uint8_t grassValue)
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
 {
-	if (grassMap.size() == 0)
+	if (grassMap.empty())
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1064,7 +1064,7 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 unsigned char CGrassDrawer::GetGrass(const float3& pos)
 {
-	if (grassMap.size() == 0)
+	if (grassMap.empty())
 		return -1;
 
 	const int x = int(pos.x) / GSSSQ;

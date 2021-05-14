@@ -85,7 +85,9 @@ public:
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
-
+public:
+	//helper function
+	static int DepthBitsToFormat(int bits);
 public:
 	/**
 	 * @brief time offset
@@ -305,9 +307,6 @@ public:
 	// [0] := primary, [1] := secondary (hidden)
 	SDL_Window* sdlWindows[2];
 	SDL_GLContext glContexts[2];
-public:
-	//helper function
-	static int DepthBitsToFormat(int bits);
 public:
 	/**
 	* @brief max view range in elmos

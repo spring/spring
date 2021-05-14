@@ -51,14 +51,12 @@ static uint8_t projectileDrawerMem[sizeof(CProjectileDrawer)];
 
 
 void CProjectileDrawer::InitStatic() {
-	//LOG_L(L_WARNING, "CProjectileDrawer::InitStatic()");
 	if (projectileDrawer == nullptr)
 		projectileDrawer = new (projectileDrawerMem) CProjectileDrawer();
 
 	projectileDrawer->Init();
 }
 void CProjectileDrawer::KillStatic(bool reload) {
-	//LOG_L(L_WARNING, "CProjectileDrawer::KillStatic() %s", reload ? "true" : "false");
 	projectileDrawer->Kill();
 
 	if (reload)
@@ -69,7 +67,6 @@ void CProjectileDrawer::KillStatic(bool reload) {
 }
 
 void CProjectileDrawer::Init() {
-	//LOG_L(L_WARNING, "CProjectileDrawer::Init()");
 	eventHandler.AddClient(this);
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
@@ -287,7 +284,6 @@ void CProjectileDrawer::Init() {
 }
 
 void CProjectileDrawer::Kill() {
-	//LOG_L(L_WARNING, "CProjectileDrawer::Kill()");
 	eventHandler.RemoveClient(this);
 	autoLinkedEvents.clear();
 
@@ -345,8 +341,6 @@ void CProjectileDrawer::ViewResize()
 		depthTexture = 0u;
 	}
 	glGenTextures(1, &depthTexture);
-
-	//LOG("%s depthTexture = %d", __func__, depthTexture);
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, depthTexture);

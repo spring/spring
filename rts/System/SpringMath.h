@@ -134,24 +134,6 @@ constexpr T AlignDown(T value, size_t size)
 	return static_cast<T>(value - value % size);
 }
 
-
-template<typename TIn, typename TOut>
-TOut TransformFunc(const TIn input)
-{
-	if constexpr (std::is_same_v<TIn, TOut>)
-		return input;
-
-	constexpr TOut minOut = std::numeric_limits<TOut>::lowest();
-	constexpr TOut maxOut = std::numeric_limits<TOut>::max();
-
-	const TIn minIn = static_cast<TIn>(minOut);
-	const TIn maxIn = static_cast<TIn>(maxOut);
-
-	if (input < minIn) return minOut; // overflow
-	if (input > maxIn) return maxOut; // overflow
-	return static_cast<TOut>(input);
-}
-
 /**
  * @brief does a division and returns additionally the remnant
  */

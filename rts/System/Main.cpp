@@ -24,7 +24,7 @@
 #endif
 
 // https://stackoverflow.com/a/27881472/9819318
-EXTERNALIZER_B EXPORT_CLAUSE uint32_t NvOptimusEnablement = 0x00000001;         EXTERNALIZER_E //Optimus/NV use discrete GPU hint
+EXTERNALIZER_B EXPORT_CLAUSE uint32_t NvOptimusEnablement =                  1; EXTERNALIZER_E //Optimus/NV use discrete GPU hint
 EXTERNALIZER_B EXPORT_CLAUSE uint32_t AmdPowerXpressRequestHighPerformance = 1; EXTERNALIZER_E // AMD use discrete GPU hint
 
 int Run(int argc, char* argv[])

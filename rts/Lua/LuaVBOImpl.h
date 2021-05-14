@@ -20,8 +20,8 @@ class LuaVBOImpl {
 public:
 	LuaVBOImpl() = delete;
 	LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt);
-	LuaVBOImpl(const LuaVBOImpl&) = delete; //no copy cons
-	LuaVBOImpl(LuaVBOImpl&&) = default; //move cons
+	LuaVBOImpl(const LuaVBOImpl&) = delete;
+	LuaVBOImpl(LuaVBOImpl&&) = default;
 
 	~LuaVBOImpl();
 	void Delete();

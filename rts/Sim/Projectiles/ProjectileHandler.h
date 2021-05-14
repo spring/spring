@@ -41,7 +41,7 @@ public:
 	CProjectile* GetProjectileBySyncedID(int id);
 	CProjectile* GetProjectileByUnsyncedID(int id);
 
-	const ProjectileContainer& GetActiveProjectiles(const bool synced) const {
+	const ProjectileContainer& GetActiveProjectiles(bool synced) const {
 		return projectileContainers[synced];
 	}
 

@@ -257,7 +257,7 @@ inline static void BlurHorizontal(
 	const int blurSize,
 	const float resolution,
 	const std::vector<float>& kernel,
-	      std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
 	const float n = 2.0f * blurSize + 1.0f;
@@ -287,7 +287,7 @@ inline static void BlurVertical(
 	const int blurSize,
 	const float resolution,
 	const std::vector<float>& kernel,
-	      std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
 	const float n = 2.0f * blurSize + 1.0f;
@@ -371,13 +371,10 @@ void SmoothHeightMesh::MakeSmoothMesh()
 			return 0.3989422804f * math::expf(-0.5f * x * x / (sigma * sigma)) / sigma;
 		};
 
-		float sum;
-		gaussianKernel[0] = gaussianG(0, sigma);
-		sum = gaussianKernel[0];
+		float sum = (gaussianKernel[0] = gaussianG(0, sigma));
 
 		for (int i = 1; i < blurSize + 1; ++i) {
-			gaussianKernel[i] = gaussianG(i, sigma);
-			sum += 2.0f * gaussianKernel[i];
+			sum += 2.0f * (gaussianKernel[i] = gaussianG(i, sigma));
 		}
 
 		for (auto& gk : gaussianKernel) {

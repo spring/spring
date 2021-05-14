@@ -328,9 +328,7 @@ void SS3OPiece::SetVertexTangents()
 
 		// if d is 0, texcoors are degenerate
 		const float d = (tc10.x * tc20.y - tc20.x * tc10.y);
-		const float r = ((abs(d) < 1e-3f) ? 1.0f : abs(1.0f / d)) * Sign(d);
-
-		// Total time wasted here ~12H. Increment if something goes wrong and you will be trying to fix it
+		const float r = (abs(d) < 1e-3f) ? 1.0f : 1.0f / d;
 
 		// note: not necessarily orthogonal to each other
 		// or to vertex normal, only to the triangle plane
@@ -365,9 +363,5 @@ void SS3OPiece::SetVertexTangents()
 		//B = (B - N * N.dot(B));
 		B = N.cross(T); //probably better
 		B.SafeANormalize();
-
-
-
-
 	}
 }
