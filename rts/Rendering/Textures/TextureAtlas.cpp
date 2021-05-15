@@ -28,7 +28,8 @@ static AtlasedTexture dummy;
 bool CTextureAtlas::debug = false;
 
 
-CTextureAtlas::CTextureAtlas(unsigned int allocType, const int atlasSizeX_, const int atlasSizeY_)
+CTextureAtlas::CTextureAtlas(unsigned int allocType, const int atlasSizeX_, const int atlasSizeY_, std::string name_)
+	: name{ name_ }
 {
 	switch (allocType) {
 		case ATLAS_ALLOC_LEGACY  : { atlasAllocator = new   CLegacyAtlasAlloc(); } break;

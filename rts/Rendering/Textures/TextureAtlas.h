@@ -40,8 +40,15 @@ public:
 	};
 
 public:
-	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0);
+	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0, std::string name_ = "");
+
+	CTextureAtlas(CTextureAtlas&&) = default;
+	CTextureAtlas(const CTextureAtlas&) = delete;
+
 	~CTextureAtlas();
+
+	CTextureAtlas& operator= (CTextureAtlas&&) = default;
+	CTextureAtlas& operator= (const CTextureAtlas&) = delete;
 
 	// add a texture from a memory pointer
 	size_t AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);

@@ -4,16 +4,13 @@
 #define LUA_ATLAS_TEXTURES_H
 
 #include <string>
-#include <vector>
 
 #include "Rendering/GL/myGL.h"
 #include "System/UnorderedMap.hpp"
 #include "System/SafeUtil.h"
 
-struct CTextureAtlas;
+class CTextureAtlas;
 struct AtlasedTexture;
-
-//namespace LuaTextures { struct Texture; }
 
 class LuaAtlasTextures {
 public:
@@ -33,10 +30,12 @@ public:
 	size_t GetAtlasIndexById(const std::string& idStr) const;
 	size_t GetNextId() { return lastIndex; }
 private:
-	bool GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::iterator& iter);
-	bool GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator& iter) const;
+	using TextureAtlasMap = spring::unsynced_map<size_t, CTextureAtlas*>;
+private:
+	bool GetIterator(const std::string& idStr, TextureAtlasMap::iterator& iter);
+	bool GetIterator(const std::string& idStr, TextureAtlasMap::const_iterator& iter) const;
 	// maps names to textureVec indices
-	spring::unsynced_map<size_t, CTextureAtlas*> textureAtlasMap;
+	TextureAtlasMap textureAtlasMap;
 	size_t lastIndex = 1;
 };
 

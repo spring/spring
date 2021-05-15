@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <sstream>
-
 #include "LuaTextures.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -18,22 +16,16 @@ void LuaAtlasTextures::Clear()
 
 std::string LuaAtlasTextures::Create(const std::string& name, const int xsize, const int ysize, const int allocatorType)
 {
-	CTextureAtlas* atlas = new CTextureAtlas(allocatorType, xsize, ysize);
-	atlas->SetName(name);
+	CTextureAtlas* atlas = new CTextureAtlas(allocatorType, xsize, ysize, name);
 
 	textureAtlasMap[lastIndex] = atlas;
 
-	std::ostringstream ss;
-	ss << prefix << lastIndex;
-
-	++lastIndex;
-
-	return ss.str();
+	return prefix + std::to_string(lastIndex++); // ++ is executed after to_string()
 }
 
 bool LuaAtlasTextures::Delete(const std::string& idStr)
 {
-	spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator iter;
+	TextureAtlasMap::const_iterator iter;
 	if (GetIterator(idStr, iter))
 		return textureAtlasMap.erase(iter->first);
 
@@ -42,7 +34,7 @@ bool LuaAtlasTextures::Delete(const std::string& idStr)
 
 CTextureAtlas* LuaAtlasTextures::GetAtlasById(const std::string& idStr) const
 {
-	spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator iter;
+	TextureAtlasMap::const_iterator iter;
 	if (GetIterator(idStr, iter))
 		return iter->second;
 
@@ -60,14 +52,14 @@ CTextureAtlas* LuaAtlasTextures::GetAtlasByIndex(const size_t index) const
 
 size_t LuaAtlasTextures::GetAtlasIndexById(const std::string& idStr) const
 {
-	spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator iter;
+	TextureAtlasMap::const_iterator iter;
 	if (GetIterator(idStr, iter))
 		return iter->first;
 
 	return size_t(-1);
 }
 
-bool LuaAtlasTextures::GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::iterator& iter)
+bool LuaAtlasTextures::GetIterator(const std::string& idStr, TextureAtlasMap::iterator& iter)
 {
 	if (idStr[0] != prefix)
 		return false;
@@ -85,7 +77,7 @@ bool LuaAtlasTextures::GetIterator(const std::string& idStr, spring::unsynced_ma
 	}
 }
 
-bool LuaAtlasTextures::GetIterator(const std::string& idStr, spring::unsynced_map<size_t, CTextureAtlas*>::const_iterator& iter) const
+bool LuaAtlasTextures::GetIterator(const std::string& idStr, TextureAtlasMap::const_iterator& iter) const
 {
 	if (idStr[0] != prefix)
 		return false;
