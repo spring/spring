@@ -3,6 +3,8 @@
 #ifndef SAFE_UTIL_H
 #define SAFE_UTIL_H
 
+#include <limits>
+
 namespace spring {
 	template<class T> inline void SafeDestruct(T*& p)
 	{
