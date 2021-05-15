@@ -5,7 +5,6 @@
 
 #include <array>
 #include <vector>
-#include <atomic>
 
 #include "MapTexture.h"
 #include "MapDimensions.h"
@@ -277,8 +276,7 @@ private:
 	unsigned int mapChecksum = 0;
 
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
-	std::atomic<float> tempHeightBoundMin; //< temporary minimum- and maximum-height
-	std::atomic<float> tempHeightBoundMax;
+	float2 tempHeightBounds; //< temporary minimum- and maximum-height
 	float2 currHeightBounds; //< current minimum- and maximum-height
 
 	float boundingRadius = 0.0f;
