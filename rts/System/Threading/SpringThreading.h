@@ -10,7 +10,6 @@
 #include <thread>
 #include <condition_variable>
 
-
 #if   defined(_WIN32)
 	#include "System/Platform/Win/CriticalSection.h"
 #elif defined(__APPLE__) || !defined(USE_FUTEX)
@@ -98,6 +97,17 @@ namespace spring {
 			}
 		}
 	};
+
+	template<typename BinaryOp, typename T>
+	T AtomicOp(std::atomic<T>& f, const T d, BinaryOp&& op = BinaryOp {})
+	{
+		T old = f;
+		T desired;
+		do {
+			desired = op(old, d);
+		} while (!f.compare_exchange_weak(old, desired));
+		return desired;
+	}
 }
 
 #endif // SPRINGTHREADING_H
