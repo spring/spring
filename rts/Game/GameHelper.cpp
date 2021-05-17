@@ -1367,8 +1367,7 @@ bool CGameHelper::CheckTerrainConstraints(
 			maxDepth = unitDef->maxWaterDepth;
 		} else {
 			// submerging or floating aircraft
-			maxDepth *= unitDef->canSubmerge;
-			maxDepth *= (1 - unitDef->floatOnWater);
+			maxDepth *= (unitDef->canSubmerge || unitDef->floatOnWater);
 		}
 	}
 
