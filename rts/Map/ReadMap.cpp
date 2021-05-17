@@ -568,13 +568,6 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 		tempHeightBounds.y = std::max(h, tempHeightBounds.y);
 	}
 #else
-	// // Cache align check
-	// int alignOff = ((int)(*heightMapSyncedPtr)[0]) & 0x3f; // MSBs are not needed
-
-	// if (alignOff != 0) { // well shit...
-	// // TODO sort this out
-	// }
-
 	int elements = idxEnd - idxBeg;
 	static const int chunkSize = 16; // 64 / sizeof(float)
 	int minChunksForCacheLine = elements / chunkSize;
