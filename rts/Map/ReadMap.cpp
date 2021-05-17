@@ -559,7 +559,7 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 		tempHeightBounds.x = std::numeric_limits<float>::max();
 		tempHeightBounds.y = std::numeric_limits<float>::lowest();
 	}
-	
+
 #if 0
 	for (int idx = idxBeg; idx < idxEnd; ++idx) {
 		float h = (*heightMapSyncedPtr)[idx];
