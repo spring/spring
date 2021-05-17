@@ -559,13 +559,64 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 		tempHeightBounds.x = std::numeric_limits<float>::max();
 		tempHeightBounds.y = std::numeric_limits<float>::lowest();
 	}
-
+	
+#if 0
 	for (int idx = idxBeg; idx < idxEnd; ++idx) {
 		float h = (*heightMapSyncedPtr)[idx];
 
 		tempHeightBounds.x = std::min(h, tempHeightBounds.x);
 		tempHeightBounds.y = std::max(h, tempHeightBounds.y);
 	}
+#else
+	// // Cache align check
+	// int alignOff = ((int)(*heightMapSyncedPtr)[0]) & 0x3f; // MSBs are not needed
+
+	// if (alignOff != 0) { // well shit...
+	// // TODO sort this out
+	// }
+
+	int elements = idxEnd - idxBeg;
+	static const int chunkSize = 16; // 64 / sizeof(float)
+	int minChunksForCacheLine = elements / chunkSize;
+	minChunksForCacheLine = elements % chunkSize ? minChunksForCacheLine + 1 : minChunksForCacheLine;
+
+	int maxThreads = ThreadPool::GetMaxThreads();
+	int chunksPerThread = 1;
+	int usingThreads = minChunksForCacheLine;
+
+	if (minChunksForCacheLine > maxThreads) {
+		chunksPerThread = minChunksForCacheLine / maxThreads;
+		chunksPerThread = minChunksForCacheLine % maxThreads ? chunksPerThread + 1: chunksPerThread;
+		usingThreads = maxThreads;
+	}
+
+	std::vector<float2> threadResults(usingThreads);
+
+	for_mt (0, usingThreads, [this, chunksPerThread, &threadResults, idxBeg, idxEnd](const int jobId) {
+
+		int startIdx = idxBeg + jobId*chunksPerThread*chunkSize;
+		int endIdx = startIdx + chunksPerThread*chunkSize;
+		endIdx = endIdx > idxEnd ? idxEnd : endIdx;
+
+		float2 result;
+		result.x = std::numeric_limits<float>::max();
+		result.y = std::numeric_limits<float>::lowest();
+
+		for (int idx = startIdx; idx < endIdx; ++idx) {
+			float h = (*heightMapSyncedPtr)[idx];
+
+			result.x = std::min(h, result.x);
+			result.y = std::max(h, result.y);
+		}
+
+		threadResults[jobId] = result;
+	});
+
+	for (int idx = 0; idx < usingThreads; ++idx) {
+		tempHeightBounds.x = std::min(threadResults[idx].x, tempHeightBounds.x);
+		tempHeightBounds.y = std::max(threadResults[idx].y, tempHeightBounds.y);
+	}
+#endif
 }
 
 void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
