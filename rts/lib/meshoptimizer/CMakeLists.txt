@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
 
-if (NOT CMAKE_VERSION VERSION_LESS 3.12)
+if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW) # Enables override of options from parent CMakeLists.txt
 endif()
 
-if (NOT CMAKE_VERSION VERSION_LESS 3.15)
+if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW) # Enables use of MSVC_RUNTIME_LIBRARY
+endif()
+if(POLICY CMP0092)
     cmake_policy(SET CMP0092 NEW) # Enables clean /W4 override for MSVC
 endif()
 
