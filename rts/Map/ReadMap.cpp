@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring> // memcpy
 
+#include "xsimd/xsimd.hpp"
 #include "ReadMap.h"
 #include "MapDamage.h"
 #include "MapInfo.h"
@@ -57,6 +58,7 @@ CR_REG_METADATA(MapDimensions, (
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
+	CR_IGNORED(updateHeightBounds),
 	CR_IGNORED(initHeightBounds),
 	CR_IGNORED(tempHeightBounds),
 	CR_IGNORED(currHeightBounds),
@@ -262,6 +264,8 @@ void CReadMap::PostLoad()
 	}
 
 	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
+
+	updateHeightBounds = true;
 }
 #endif //USING_CREG
 
@@ -544,34 +548,70 @@ void CReadMap::UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initiali
 
 void CReadMap::UpdateHeightBounds(int syncFrame)
 {
-	SCOPED_TIMER("CReadMap::UpdateHeightBounds");
+	if (!updateHeightBounds)
+		return;
+
+	SCOPED_TIMER("ReadMap::UpdateHeightBounds");
 
 	constexpr int PACING_PERIOD = GAME_SPEED; //tune if needed
 	int dataChunk = syncFrame % PACING_PERIOD;
 
-	int idxBeg = (dataChunk + 0) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
-	int idxEnd = (dataChunk + 1) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
+	const int idxBeg = (dataChunk + 0) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
+	const int idxEnd = (dataChunk + 1) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
+	const int indCnt = idxEnd - idxBeg;
 
 	if (dataChunk == 0) {
-		if (syncFrame > 0)
+		if (syncFrame > 0) {
 			currHeightBounds = tempHeightBounds;
+			updateHeightBounds = false;
+		}
 
 		tempHeightBounds.x = std::numeric_limits<float>::max();
 		tempHeightBounds.y = std::numeric_limits<float>::lowest();
 	}
 
-#if 0
-	for (int idx = idxBeg; idx < idxEnd; ++idx) {
-		float h = (*heightMapSyncedPtr)[idx];
+#if 1
+	using SIMDVfloat = xsimd::simd_type<float>;
+
+	// size is adjusted based on SIMD extensions supported
+	// SIMD extensions are conditionally enabled based on compiler flags
+	constexpr std::size_t simdSize = SIMDVfloat::size;
+
+	// size for which the vectorization is possible
+	std::size_t vecSize = indCnt - indCnt % simdSize;
+
+	SIMDVfloat smin(tempHeightBounds.x);
+	SIMDVfloat smax(tempHeightBounds.y);
+
+	// SIMD vectorized loop
+	for (int idxRel = 0; idxRel < vecSize; idxRel += simdSize) {
+		SIMDVfloat simdVec = xsimd::load_unaligned(&(*heightMapSyncedPtr)[idxBeg + idxRel]);
+		smin = xsimd::min(simdVec, smin);
+		smax = xsimd::max(simdVec, smax);
+	}
+
+	// Scalar part
+	for (int i = 0; i < simdSize; ++i) {
+		tempHeightBounds.x = std::min(smin[i], tempHeightBounds.x);
+		tempHeightBounds.y = std::max(smax[i], tempHeightBounds.y);
+	}
+
+	// Remaining part that cannot be vectorized
+	for (int idxRel = vecSize; idxRel < indCnt; ++idxRel)
+	{
+		float h = (*heightMapSyncedPtr)[idxBeg + idxRel];
 
 		tempHeightBounds.x = std::min(h, tempHeightBounds.x);
 		tempHeightBounds.y = std::max(h, tempHeightBounds.y);
 	}
-#else
-	int elements = idxEnd - idxBeg;
+
+#elif 0
+	// Reference implementation for future uses of MT on small tasks
+	// By Tarnished Knight
+
 	static const int chunkSize = 16; // 64 / sizeof(float)
-	int minChunksForCacheLine = elements / chunkSize;
-	minChunksForCacheLine = elements % chunkSize ? minChunksForCacheLine + 1 : minChunksForCacheLine;
+	int minChunksForCacheLine = indCnt / chunkSize;
+	minChunksForCacheLine = indCnt % chunkSize ? minChunksForCacheLine + 1 : minChunksForCacheLine;
 
 	int maxThreads = ThreadPool::GetMaxThreads();
 	int chunksPerThread = 1;
@@ -579,16 +619,16 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 
 	if (minChunksForCacheLine > maxThreads) {
 		chunksPerThread = minChunksForCacheLine / maxThreads;
-		chunksPerThread = minChunksForCacheLine % maxThreads ? chunksPerThread + 1: chunksPerThread;
+		chunksPerThread = minChunksForCacheLine % maxThreads ? chunksPerThread + 1 : chunksPerThread;
 		usingThreads = maxThreads;
 	}
 
-	std::vector<float2> threadResults(usingThreads);
+	std::array<float2, ThreadPool::MAX_THREADS> threadResults;
 
-	for_mt (0, usingThreads, [this, chunksPerThread, &threadResults, idxBeg, idxEnd](const int jobId) {
+	for_mt(0, usingThreads, [this, chunksPerThread, &threadResults, idxBeg, idxEnd](const int jobId) {
 
-		int startIdx = idxBeg + jobId*chunksPerThread*chunkSize;
-		int endIdx = startIdx + chunksPerThread*chunkSize;
+		int startIdx = idxBeg + jobId * chunksPerThread * chunkSize;
+		int endIdx = startIdx + chunksPerThread * chunkSize;
 		endIdx = endIdx > idxEnd ? idxEnd : endIdx;
 
 		float2 result;
@@ -600,6 +640,87 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 
 			result.x = std::min(h, result.x);
 			result.y = std::max(h, result.y);
+		}
+
+		threadResults[jobId] = result;
+	});
+
+	for (int idx = 0; idx < usingThreads; ++idx) {
+		tempHeightBounds.x = std::min(threadResults[idx].x, tempHeightBounds.x);
+		tempHeightBounds.y = std::max(threadResults[idx].y, tempHeightBounds.y);
+	}
+#else
+	// Reference implementation for future uses of MT+SIMD on small tasks
+	// By Tarnished Knight
+
+	static const int chunkSize = 16; // 64 / sizeof(float)
+	int minChunksForCacheLine = indCnt / chunkSize;
+	minChunksForCacheLine = indCnt % chunkSize ? minChunksForCacheLine + 1 : minChunksForCacheLine;
+
+	int maxThreads = ThreadPool::GetMaxThreads();
+	int chunksPerThread = 1;
+	int usingThreads = minChunksForCacheLine;
+
+	if (minChunksForCacheLine > maxThreads) {
+		chunksPerThread = minChunksForCacheLine / maxThreads;
+		chunksPerThread = minChunksForCacheLine % maxThreads ? chunksPerThread + 1 : chunksPerThread;
+		usingThreads = maxThreads;
+	}
+
+	std::array<float2, ThreadPool::MAX_THREADS> threadResults;
+
+	for_mt(0, usingThreads, [this, chunksPerThread, &threadResults, idxBeg, idxEnd](const int jobId) {
+
+		int startSection = idxBeg + jobId * chunksPerThread * chunkSize;
+		int endSection = startSection + chunksPerThread * chunkSize;
+		endSection = endSection > idxEnd ? idxEnd : endSection;
+
+		float2 result;
+		result.x = std::numeric_limits<float>::max();
+		result.y = std::numeric_limits<float>::lowest();
+
+		__m128 bestMin = _mm_loadu_ps(&(*heightMapSyncedPtr)[startSection]);
+		__m128 bestMax = _mm_shuffle_ps(bestMin, bestMin, _MM_SHUFFLE(3, 2, 1, 0));
+
+		int startIdx = startSection + 4; // skip first four since they are already loaded.
+		int endIdx = endSection - 4; // done to ensure main loop cannot go past end of assigned data
+
+		for (int idx = startIdx; idx < endIdx; idx += 4) {
+			__m128 nextVals = _mm_loadu_ps(&(*heightMapSyncedPtr)[idx]);
+
+			bestMin = _mm_min_ps(bestMin, nextVals);
+			bestMax = _mm_max_ps(bestMax, nextVals);
+		}
+
+		// last round: load last four entries (may overlap with last iteration of the main loop)
+		{
+			__m128 nextVals = _mm_loadu_ps(&(*heightMapSyncedPtr)[endIdx]);
+
+			bestMin = _mm_min_ps(bestMin, nextVals);
+			bestMax = _mm_max_ps(bestMax, nextVals);
+		}
+
+		// resolve function horizontally for min
+		{
+			// split the four values into sets of two and compare
+			__m128 bestAlt = _mm_movehl_ps(bestMin, bestMin);
+			bestMin = _mm_min_ps(bestMin, bestAlt);
+
+			// split the two values and compare
+			bestAlt = _mm_shuffle_ps(bestMin, bestMin, _MM_SHUFFLE(0, 0, 0, 1));
+			bestMin = _mm_min_ss(bestMin, bestAlt);
+			_mm_store_ss(&result.x, bestMin);
+}
+		// resolve function horizontally for max
+		{
+			// split the four values into sets of two and compare
+			__m128 bestAlt = _mm_movehl_ps(bestMax, bestMax);
+			bestMax = _mm_max_ps(bestMax, bestAlt);
+
+			// split the two values and compare
+			bestAlt = _mm_shuffle_ps(bestMax, bestMax, _MM_SHUFFLE(0, 0, 0, 1));
+			bestMax = _mm_max_ss(bestMax, bestAlt);
+			_mm_store_ss(&result.y, bestMax);
 		}
 
 		threadResults[jobId] = result;
