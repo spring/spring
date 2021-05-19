@@ -234,6 +234,7 @@ Fixes:
  - fix #5803 (move goals cancelled when issued onto blocked terrain)
  - fix Spring.{G,S}etConfigFloat not being callable
  - fix Spring.GetPlayerRoster sometimes excluding active players
+ - fix seaplane water buildability requirements (previously: canSubmerge AND NOT floater; now: canSubmerge OR floater)
 
 
 
