@@ -31,6 +31,7 @@ Lua:
 	 UnitCommand(..., cmdTag            ) -->  UnitCommand(..., cmdTag, playerID, fromSynced, fromLua)
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
+ - add UnitDefs[i].moveDef.isSubmarine
  - LuaUI now has access to Spring.SetUnitNo{Draw,Select,Minimap} and SetFeatureNoDraw
  - let Spring.SelectUnitArray select enemy units with godmode enabled
  - let Unit*Collision callins skip engine collision handling if true is returned (from any synced gadget)
