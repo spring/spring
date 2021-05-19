@@ -3904,8 +3904,7 @@ int LuaOpenGL::CreateTextureAtlas(lua_State* L)
 	const int allocType = std::clamp(luaL_optint(L, 3, 0), (int)CTextureAtlas::ATLAS_ALLOC_LEGACY, (int)CTextureAtlas::ATLAS_ALLOC_QUADTREE);
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
-	const std::string atlasName = luaL_optstring(L, 4, std::to_string(atlasTexes.GetNextId()).c_str());
-	const string& texName = atlasTexes.Create(atlasName, xsize, ysize, allocType);
+	const string& texName = atlasTexes.Create(xsize, ysize, allocType);
 
 	lua_pushstring(L, texName.c_str());
 	return 1;

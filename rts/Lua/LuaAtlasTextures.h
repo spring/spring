@@ -4,17 +4,19 @@
 #define LUA_ATLAS_TEXTURES_H
 
 #include <string>
+//#include <unordered_map>
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "System/UnorderedMap.hpp"
 #include "System/SafeUtil.h"
 
-class CTextureAtlas;
 struct AtlasedTexture;
 
 class LuaAtlasTextures {
 public:
-	static const char prefix = '*';
+	static constexpr char prefix = '*';
+	static constexpr size_t invalidIndex = size_t(-1);
 
 	~LuaAtlasTextures() { Clear(); }
 	LuaAtlasTextures() {
@@ -23,20 +25,17 @@ public:
 
 	void Clear();
 
-	std::string Create(const std::string& name, const int xsize, const int ysize, const int allocatorType = 0);
+	std::string Create(const int xsize, const int ysize, const int allocatorType = 0);
 	bool Delete(const std::string& idStr);
 	CTextureAtlas* GetAtlasById(const std::string& idStr) const;
 	CTextureAtlas* GetAtlasByIndex(const size_t index) const;
 	size_t GetAtlasIndexById(const std::string& idStr) const;
-	size_t GetNextId() { return lastIndex; }
 private:
-	using TextureAtlasMap = spring::unsynced_map<size_t, CTextureAtlas*>;
+	using TextureAtlasMap = spring::unsynced_map<std::string, std::size_t>;
+	using TextureAtlasVec = std::vector<CTextureAtlas>;
 private:
-	bool GetIterator(const std::string& idStr, TextureAtlasMap::iterator& iter);
-	bool GetIterator(const std::string& idStr, TextureAtlasMap::const_iterator& iter) const;
-	// maps names to textureVec indices
 	TextureAtlasMap textureAtlasMap;
-	size_t lastIndex = 1;
+	TextureAtlasVec textureAtlasVec;
 };
 
 #endif /* LUA_ATLAS_TEXTURES_H */

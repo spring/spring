@@ -200,6 +200,22 @@ void CTextureAtlas::BindTexture()
 	glBindTexture(GL_TEXTURE_2D, atlasTexID);
 }
 
+void CTextureAtlas::MoveFields(CTextureAtlas&& ta) noexcept
+{
+	atlasAllocator = ta.atlasAllocator;
+	name = std::move(ta.name);
+	memTextures = std::move(ta.memTextures);
+	files = std::move(ta.files);
+	textures = std::move(ta.textures);
+	atlasTexID = ta.atlasTexID;
+	initialized = ta.initialized;
+	freeTexture = ta.freeTexture;
+
+	// Trick to not call destructor on atlasAllocator multiple times
+	ta.atlasAllocator = nullptr;
+	ta.atlasTexID = 0u;
+}
+
 bool CTextureAtlas::TextureExists(const std::string& name)
 {
 	return (textures.find(StringToLower(name)) != textures.end());

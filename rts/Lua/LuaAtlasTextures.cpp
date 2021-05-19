@@ -1,96 +1,62 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+#include <algorithm>
 
 #include "LuaTextures.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/TextureAtlas.h"
 #include "System/Log/ILog.h"
 #include "LuaAtlasTextures.h"
 
 void LuaAtlasTextures::Clear()
 {
-	for (auto& kv : textureAtlasMap)
-		spring::SafeDelete(kv.second);
-
+	textureAtlasVec.clear();
 	textureAtlasMap.clear();
 }
 
-std::string LuaAtlasTextures::Create(const std::string& name, const int xsize, const int ysize, const int allocatorType)
+std::string LuaAtlasTextures::Create(const int xsize, const int ysize, const int allocatorType)
 {
-	CTextureAtlas* atlas = new CTextureAtlas(allocatorType, xsize, ysize, name);
+	std::string idStr = prefix + std::to_string(textureAtlasVec.size());
 
-	textureAtlasMap[lastIndex] = atlas;
+	textureAtlasVec.emplace_back(CTextureAtlas(allocatorType, xsize, ysize, idStr));
+	textureAtlasMap[idStr] = textureAtlasVec.size() - 1;
 
-	return prefix + std::to_string(lastIndex++); // ++ is executed after to_string()
+	return idStr;
 }
 
 bool LuaAtlasTextures::Delete(const std::string& idStr)
 {
-	TextureAtlasMap::const_iterator iter;
-	if (GetIterator(idStr, iter))
-		return textureAtlasMap.erase(iter->first);
+	std::size_t index = GetAtlasIndexById(idStr);
+	if (index == invalidIndex)
+		return false;
 
-	return false;
+	if (index != textureAtlasVec.size() - 1) {
+		textureAtlasMap[textureAtlasVec.back().GetName()] = index;
+		std::swap(textureAtlasVec[index], textureAtlasVec.back());
+	}
+
+	textureAtlasVec.pop_back();
+	textureAtlasMap.erase(idStr);
+
+	return true;
 }
 
 CTextureAtlas* LuaAtlasTextures::GetAtlasById(const std::string& idStr) const
 {
-	TextureAtlasMap::const_iterator iter;
-	if (GetIterator(idStr, iter))
-		return iter->second;
-
-	return nullptr;
+	return GetAtlasByIndex(GetAtlasIndexById(idStr));
 }
 
 CTextureAtlas* LuaAtlasTextures::GetAtlasByIndex(const size_t index) const
 {
-	const auto iter = textureAtlasMap.find(index);
-	if (iter == textureAtlasMap.end())
+	if (index == invalidIndex)
 		return nullptr;
 
-	return iter->second;
+	return const_cast<CTextureAtlas*>(&textureAtlasVec[index]);
 }
 
 size_t LuaAtlasTextures::GetAtlasIndexById(const std::string& idStr) const
 {
-	TextureAtlasMap::const_iterator iter;
-	if (GetIterator(idStr, iter))
-		return iter->first;
+	auto it = textureAtlasMap.find(idStr);
+	if (it == textureAtlasMap.end())
+		return invalidIndex;
 
-	return size_t(-1);
-}
-
-bool LuaAtlasTextures::GetIterator(const std::string& idStr, TextureAtlasMap::iterator& iter)
-{
-	if (idStr[0] != prefix)
-		return false;
-
-	try {
-		int numID = std::stoi(idStr.substr(1));
-		iter = textureAtlasMap.find(numID);
-		if (iter == textureAtlasMap.end())
-			return false;
-
-		return true;
-	}
-	catch (const std::exception&) {
-		return false;
-	}
-}
-
-bool LuaAtlasTextures::GetIterator(const std::string& idStr, TextureAtlasMap::const_iterator& iter) const
-{
-	if (idStr[0] != prefix)
-		return false;
-
-	try {
-		int numID = std::stoi(idStr.substr(1));
-		iter = textureAtlasMap.find(numID);
-		if (iter == textureAtlasMap.cend())
-			return false;
-
-		return true;
-	}
-	catch (const std::exception&) {
-		return false;
-	}
+	return it->second;
 }
