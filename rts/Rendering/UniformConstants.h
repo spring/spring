@@ -52,6 +52,7 @@ struct UniformParamsBuffer {
 	float4 timeInfo;     //gameFrame, gameSeconds, drawFrame, frameTimeOffset
 	float4 viewGeometry; //vsx, vsy, vpx, vpy
 	float4 mapSize;      //xz, xzPO2
+	float4 mapHeight;    //height minCur, maxCur, minInit, maxInit
 
 	float4 fogColor;  //fog color
 	float4 fogParams; //fog {start, end, 0.0, scale}
