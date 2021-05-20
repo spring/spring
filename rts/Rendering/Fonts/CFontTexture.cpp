@@ -531,16 +531,16 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	do {
 		alreadyCheckedFonts.insert(f);
 
-		for (auto it = map.begin(); !map.empty() && it != map.end(); ) {
-			FT_UInt index = FT_Get_Char_Index(*f, *it);
+		for (std::size_t idx = 0; idx < map.size() && !map.empty(); /*nop*/) {
+			FT_UInt index = FT_Get_Char_Index(*f, map[idx]);
 
 			if (index != 0) {
-				LoadGlyph(f, *it, index);
+				LoadGlyph(f, map[idx], index);
 
-				*it = map.back();
+				map[idx] = map.back();
 				map.pop_back();
 			} else {
-				++it;
+				++idx;
 			}
 		}
 
