@@ -296,13 +296,8 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	// add=0 <--> x = x*0 + h =   h
 	// add=1 <--> x = x*1 + h = x+h
 	float newHeight = heightRef * add + h;
-	if (newHeight == heightRef)
-		return heightRef; //happens sometimes
-
-	heightRef = newHeight;
-	updateHeightBounds = true;
-
-	return heightRef;
+	updateHeightBounds |= (newHeight != heightRef);
+	return (heightRef = newHeight);
 }
 
 
