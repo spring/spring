@@ -102,9 +102,13 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, std::vector
 
 	// retrieve piece data
 	Piece* fp = reinterpret_cast<Piece*>(&buf[offset]); fp->swap();
-	Vertex* vertexList = reinterpret_cast<Vertex*>(&buf[fp->vertices]);
-	const int* indexList = reinterpret_cast<int*>(&buf[fp->vertexTable]);
-	const int* childList = reinterpret_cast<int*>(&buf[fp->children]);
+
+	// (fp->xxxCount > 0) check rationale: apparently widely used s3o tools have a bug when fp->xxx might point outside of buffer
+	// this bug only manifests itself when launching spring in debug build with bounds checking (MSVC does it by default)
+	// Since s3o assets with such bugs is uncountable, let's workaround it in the code.
+	Vertex* vertexList = fp->numVertices > 0 ? reinterpret_cast<Vertex*>(&buf[fp->vertices]) : nullptr;
+	const int* indexList = fp->vertexTableSize > 0 ? reinterpret_cast<int*>(&buf[fp->vertexTable]) : nullptr;
+	const int* childList = fp->numchildren > 0 ? reinterpret_cast<int*>(&buf[fp->children]) : nullptr;
 
 	// create piece
 	SS3OPiece* piece = AllocPiece();
