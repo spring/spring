@@ -531,7 +531,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	do {
 		alreadyCheckedFonts.insert(f);
 
-		for (std::size_t idx = 0; idx < map.size() && !map.empty(); /*nop*/) {
+		for (std::size_t idx = 0; idx < map.size(); /*nop*/) {
 			FT_UInt index = FT_Get_Char_Index(*f, map[idx]);
 
 			if (index != 0) {
