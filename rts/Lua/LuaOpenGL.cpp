@@ -3812,21 +3812,17 @@ int LuaOpenGL::BindImageTexture(lua_State* L)
 
 	++argNum;
 	//layer
-	GLint layer;
-	GLboolean layered;
-	if (lua_isnil(L, argNum)) {
-		layer = 0;
-		layered = GL_FALSE;
-	}
-	else {
-		layered = luaL_optnumber(L, argNum, 0);
+	GLint layer = 0;
+	GLboolean layered = GL_FALSE;
+	if (!lua_isnil(L, argNum)) {
+		layer = luaL_optnumber(L, argNum, 0);
 		layered = GL_TRUE;
 	}
 
 	++argNum;
 	//access
 	GLenum access = luaL_optnumber(L, argNum, 0);
-	if (access != GL_READ_ONLY || access != GL_WRITE_ONLY || access != GL_READ_WRITE)
+	if (access != GL_READ_ONLY && access != GL_WRITE_ONLY && access != GL_READ_WRITE)
 		luaL_error(L, "%s Invalid access specified %d. The access must be GL_READ_ONLY or GL_WRITE_ONLY or GL_READ_WRITE.", __func__, access);
 
 	++argNum;
