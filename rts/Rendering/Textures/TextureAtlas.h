@@ -39,12 +39,7 @@ public:
 
 public:
 	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0, std::string name_ = "");
-
-	CTextureAtlas(CTextureAtlas&& ta) noexcept
-	{
-		MoveFields(std::forward<CTextureAtlas>(ta));
-	};
-
+	CTextureAtlas(CTextureAtlas&& ta) noexcept { *this = std::move(ta); };
 	CTextureAtlas(const CTextureAtlas&) = delete;
 
 	~CTextureAtlas();
@@ -53,7 +48,18 @@ public:
 		if (this != &ta) {
 			delete atlasAllocator; // Free the existing atlasAllocator.
 
-			MoveFields(std::forward<CTextureAtlas>(ta));
+			atlasAllocator = ta.atlasAllocator;
+			name = std::move(ta.name);
+			memTextures = std::move(ta.memTextures);
+			files = std::move(ta.files);
+			textures = std::move(ta.textures);
+			atlasTexID = ta.atlasTexID;
+			initialized = ta.initialized;
+			freeTexture = ta.freeTexture;
+
+			// Trick to not call destructor on atlasAllocator multiple times
+			ta.atlasAllocator = nullptr;
+			ta.atlasTexID = 0u;
 		}
 		return *this;
 	};
@@ -116,8 +122,6 @@ public:
 	static void SetDebug(bool b) { debug = b; }
 	static bool GetDebug() { return debug; }
 
-protected:
-	void MoveFields(CTextureAtlas&& ta) noexcept;
 protected:
 	int GetBPP(TextureType texType) const {
 		switch (texType) {
