@@ -3894,10 +3894,10 @@ int LuaOpenGL::CreateTextureAtlas(lua_State* L)
 	const int ysize = luaL_checkint(L, 2);
 
 	if (std::min(xsize, ysize) < minSize)
-		luaL_error(L, "%s The specified atlas dimensions (%d, %d) are too small. The minimum side size is %d", __func__, xsize, ysize, minSize);
+		luaL_error(L, "gl.%s() The specified atlas dimensions (%d, %d) are too small. The minimum side size is %d", __func__, xsize, ysize, minSize);
 
 	if (xsize > maxSizeX || ysize > maxSizeY)
-		luaL_error(L, "%s The specified atlas dimensions (%d, %d) are too large. The maximum side sizes are (%d, %d)", __func__, xsize, ysize, maxSizeX, maxSizeY);
+		luaL_error(L, "gl.%s() The specified atlas dimensions (%d, %d) are too large. The maximum side sizes are (%d, %d)", __func__, xsize, ysize, maxSizeX, maxSizeY);
 
 	const int allocType = std::clamp(luaL_optint(L, 3, 0), (int)CTextureAtlas::ATLAS_ALLOC_LEGACY, (int)CTextureAtlas::ATLAS_ALLOC_QUADTREE);
 
@@ -3912,12 +3912,12 @@ int LuaOpenGL::FinalizeTextureAtlas(lua_State* L)
 {
 	const std::string idStr = luaL_checksstring(L, 1);
 	if (idStr[0] != LuaAtlasTextures::prefix)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
 	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
 	if (atlas == nullptr)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	lua_pushboolean(L, atlas->Finalize());
 	return 1;
@@ -3927,7 +3927,7 @@ int LuaOpenGL::DeleteTextureAtlas(lua_State* L)
 {
 	const std::string idStr = luaL_checksstring(L, 1);
 	if (idStr[0] != LuaAtlasTextures::prefix)
-		luaL_error(L, "%s Call is only suitable for destroying Texture Atlases. Use gl.DeleteTexture/gl.DeleteTextureFBO for other texture types", __func__);
+		luaL_error(L, "gl.%s() Call is only suitable for destroying Texture Atlases. Use gl.DeleteTexture/gl.DeleteTextureFBO for other texture types", __func__);
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
 	lua_pushboolean(L, atlasTexes.Delete(idStr));
@@ -3938,20 +3938,20 @@ int LuaOpenGL::AddAtlasTexture(lua_State* L)
 {
 	const std::string idStr = luaL_checksstring(L, 1);
 	if (idStr[0] != LuaAtlasTextures::prefix)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
 	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
 	if (atlas == nullptr)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	LuaMatTexture luaTex;
 	const std::string luaTexStr = luaL_checksstring(L, 2);
 	if (!LuaOpenGLUtils::ParseTextureImage(L, luaTex, luaTexStr))
-		luaL_error(L, "%s Failed to find a Lua texture %s", __func__, luaTexStr.c_str());
+		luaL_error(L, "gl.%s() Failed to find a Lua texture %s", __func__, luaTexStr.c_str());
 
 	if (luaTex.GetTextureTarget() != GL_TEXTURE_2D)
-		luaL_error(L, "%s Atlas can only be of type GL_TEXTURE_2D", __func__);
+		luaL_error(L, "gl.%s() Atlas can only be of type GL_TEXTURE_2D", __func__);
 
 	const auto texSize = luaTex.GetSize();
 
@@ -3979,18 +3979,18 @@ int LuaOpenGL::GetAtlasTexture(lua_State* L)
 {
 	const std::string idStr = luaL_checksstring(L, 1);
 	if (idStr[0] != LuaAtlasTextures::prefix)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
 	CTextureAtlas* atlas = atlasTexes.GetAtlasById(idStr);
 	if (atlas == nullptr)
-		luaL_error(L, "%s Invalid atlas id specified %s", __func__, idStr.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas id specified %s", __func__, idStr.c_str());
 
 	const std::string subAtlasTexName = luaL_checksstring(L, 2);
 
 	AtlasedTexture atlTex = atlas->GetTexture(subAtlasTexName);
 	if (atlTex == AtlasedTexture())
-		luaL_error(L, "%s Invalid atlas named texture specified %s", __func__, subAtlasTexName.c_str());
+		luaL_error(L, "gl.%s() Invalid atlas named texture specified %s", __func__, subAtlasTexName.c_str());
 
 	lua_pushnumber(L, atlTex.x1);
 	lua_pushnumber(L, atlTex.x2);
