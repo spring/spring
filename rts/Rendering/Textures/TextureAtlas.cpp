@@ -121,6 +121,11 @@ bool CTextureAtlas::Finalize()
 	return success;
 }
 
+const uint32_t CTextureAtlas::GetTexTarget() const
+{
+	return GL_TEXTURE_2D; // just constant for now
+}
+
 bool CTextureAtlas::CreateTexture()
 {
 	const int2 atlasSize = atlasAllocator->GetAtlasSize();

@@ -114,6 +114,7 @@ public:
 	std::string GetName() const { return name; }
 
 	unsigned int GetTexID() const { return atlasTexID; }
+	const uint32_t GetTexTarget() const;
 
 	void BindTexture();
 	void SetFreeTexture(bool b) { freeTexture = b; }

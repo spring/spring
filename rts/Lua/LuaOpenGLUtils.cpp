@@ -655,6 +655,14 @@ GLuint LuaMatTexture::GetTextureTarget() const
 
 			texType = luaTexture->target;
 		} break;
+		case LUATEX_LUATEXTUREATLAS: {
+			assert(state != nullptr);
+
+			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
+
+			texType = atlas->GetTexTarget();
+		} break;
 
 		case LUATEX_MAP_REFLECTION:
 		case LUATEX_SKY_REFLECTION:
