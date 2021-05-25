@@ -806,6 +806,15 @@ int2 LuaMatTexture::GetSize() const
 			return {luaTexture->xsize, luaTexture->ysize};
 		} break;
 
+		case LUATEX_LUATEXTUREATLAS: {
+			assert(state != nullptr);
+
+			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
+
+			return atlas->GetSize();
+		} break;
+
 
 		case LUATEX_UNITTEXTURE1: {
 			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
