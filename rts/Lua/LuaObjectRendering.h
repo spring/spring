@@ -11,10 +11,13 @@ struct lua_State;
 template<LuaObjType T> class LuaObjectRendering;
 
 class LuaObjectRenderingImpl {
+#if __GNUC__ == 11
+public:
+#else
 private:
 	friend class LuaObjectRendering<LUAOBJ_UNIT>;
 	friend class LuaObjectRendering<LUAOBJ_FEATURE>;
-
+#endif
 	static void CreateMatRefMetatable(lua_State* L);
 	static void PushFunction(lua_State* L, int (*fnPntr)(lua_State*), const char* fnName);
 
