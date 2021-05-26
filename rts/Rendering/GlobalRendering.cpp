@@ -117,6 +117,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
+	CR_IGNORED(forceDisablePersistentMapping),
 	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
