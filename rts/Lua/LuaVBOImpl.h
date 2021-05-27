@@ -96,9 +96,8 @@ private:
 		GLsizei strideSizeInBytes;
 	};
 private:
-	bool freqUpdated;
-
 	GLenum defTarget;
+	bool freqUpdated;
 
 	uint32_t attributesCount;
 

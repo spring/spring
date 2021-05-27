@@ -28,12 +28,20 @@
 LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt)
 	: defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}
 	, freqUpdated{freqUpdatedOpt.value_or(false)}
-	, elemSizeInBytes{ 0u }
-	, elementsCount{ 0u }
-	, bufferSizeInBytes{ 0u }
+
 	, attributesCount{ 0u }
-	, primitiveRestartIndex{ ~0u }
+
+	, elementsCount{ 0u }
+	, elemSizeInBytes{ 0u }
+	, bufferSizeInBytes{ 0u }
+
+	, vbo{ nullptr }
+	, vboOwner{ true }
 	, bufferData{ nullptr }
+
+	, primitiveRestartIndex{ ~0u }
+	, bufferAttribDefsVec{}
+	, bufferAttribDefs{}
 {
 
 }
