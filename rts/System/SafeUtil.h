@@ -54,12 +54,14 @@ namespace spring {
 
 		constexpr TOut minOut = std::numeric_limits<TOut>::lowest();
 		constexpr TOut maxOut = std::numeric_limits<TOut>::max();
+		constexpr TIn  minIn  = std::numeric_limits<TIn >::lowest();
+		constexpr TIn  maxIn  = std::numeric_limits<TIn >::max();
 
-		const TIn minIn = static_cast<TIn>(minOut);
-		const TIn maxIn = static_cast<TIn>(maxOut);
+		const TIn realMinIn = minOut <= minIn ? minIn : static_cast<TIn>(minOut);
+		const TIn realMaxIn = maxOut >= maxIn ? maxIn : static_cast<TIn>(maxOut);
 
-		if (input < minIn) return minOut; // underflow
-		if (input > maxIn) return maxOut; // overflow
+		if (input < realMinIn) return realMinIn; // underflow
+		if (input > realMaxIn) return realMaxIn; // overflow
 		return static_cast<TOut>(input);
 	}
 
