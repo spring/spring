@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <SDL2/SDL_keyboard.h>
+#include <SDL_keyboard.h>
 
 #include "GameControllerTextInput.h"
 #include "Action.h"
