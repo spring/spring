@@ -145,11 +145,11 @@ bool CAdvTreeGenerator::GenBarkTextures(const std::string& leafTexFile)
 
 void CAdvTreeGenerator::GenVertexBuffers()
 {
-	std::array<VA_TYPE_TN, MAX_TREE_VERTS * NUM_TREE_TYPES> bushVerts;
-	std::array<VA_TYPE_TN, MAX_TREE_VERTS * NUM_TREE_TYPES> pineVerts;
+	std::vector<VA_TYPE_TN> bushVerts;
+	std::vector<VA_TYPE_TN> pineVerts;
 
-	bushVerts.fill({ZeroVector, 0.0f, 0.0f, ZeroVector});
-	pineVerts.fill({ZeroVector, 0.0f, 0.0f, ZeroVector});
+	bushVerts.resize(MAX_TREE_VERTS * NUM_TREE_TYPES, {ZeroVector, 0.0f, 0.0f, ZeroVector});
+	pineVerts.resize(MAX_TREE_VERTS * NUM_TREE_TYPES, {ZeroVector, 0.0f, 0.0f, ZeroVector});
 
 	// randomized bush-tree subtypes, packed stem- and leaf-data
 	for (int a = 0; a < NUM_TREE_TYPES; ++a) {

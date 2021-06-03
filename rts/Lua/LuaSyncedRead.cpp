@@ -4464,7 +4464,7 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 			using P = decltype(UnitDef::buildOptions)::value_type;
 
-			const auto& buildOptCmp = [&](const P& e) { return (strcasecmp(e.second.c_str(), buildeeDef->name.c_str()) == 0); };
+			const auto& buildOptCmp = [&](const P& e) { return (STRCASECMP(e.second.c_str(), buildeeDef->name.c_str()) == 0); };
 			const auto& buildOpts = builderDef->buildOptions;
 			const auto  buildOptIt = std::find_if(buildOpts.cbegin(), buildOpts.cend(), buildOptCmp);
 
