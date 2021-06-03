@@ -297,6 +297,10 @@ extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
 extern DECLSPEC void SDLCALL SDL_StopTextInput(void) {
 }
 
+extern DECLSPEC int SDLCALL SDL_GL_SetSwapInterval(int interval) {
+	return 0;
+}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
