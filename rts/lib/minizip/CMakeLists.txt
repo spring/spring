@@ -22,6 +22,7 @@ else   (MINIZIP_FOUND)
 
 	add_library(minizip STATIC EXCLUDE_FROM_ALL ${miniZipSources})
 	target_link_libraries(minizip ${ZLIB_LIBRARY})
+	include_directories(${ZLIB_INCLUDE_DIR})
 	set_target_properties(minizip PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
 	set_global(SPRING_MINIZIP_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/rts/lib")
