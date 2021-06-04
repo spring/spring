@@ -29,6 +29,8 @@ Lua:
  ! change {Allow,Unit}Command callin parameters
 	AllowCommand(..., cmdTag, fromSynced) --> AllowCommand(..., cmdTag, playerID, fromSynced, fromLua)
 	 UnitCommand(..., cmdTag            ) -->  UnitCommand(..., cmdTag, playerID, fromSynced, fromLua)
+ - change ProjectileDestroyed callin parameters
+        (projectileID) --> (projectileID, projectileOwnerID, weaponDefID)
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
  - add UnitDefs[i].moveDef.isSubmarine
