@@ -267,6 +267,7 @@ public:
 	 */
 	bool haveARB;
 	bool haveGLSL;
+	bool haveGL4;
 
 	/**
 	 * Shader capabilities
