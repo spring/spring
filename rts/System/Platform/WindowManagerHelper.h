@@ -19,7 +19,7 @@ namespace WindowManagerHelper {
 	 * @see SDL_WM_SetIcon()
 	 * Note: Must be called before the first call to SDL_SetVideoMode.
 	 */
-	void SetIcon(CBitmap* bmp);
+	void SetIcon(CBitmap* bmp, bool forceResolution = false);
 	bool SetIconSurface(SDL_Window* win, CBitmap* bmp = nullptr);
 
 

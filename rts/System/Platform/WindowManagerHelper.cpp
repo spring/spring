@@ -22,7 +22,7 @@ struct WindowIcon {
 
 
 // LuaUnsyncedCtrl only
-void SetIcon(CBitmap* bmp) {
+void SetIcon(CBitmap* bmp, bool forceResolution) {
 	if (SpringVersion::IsHeadless())
 		return;
 
@@ -30,6 +30,8 @@ void SetIcon(CBitmap* bmp) {
 	if (((bmp->channels != 3) && (bmp->channels != 4))
 //#ifdef    _WIN32
 		// on windows, the icon has to be 32x32
+		// ^^ no longer true, allow override
+		|| (forceResolution)
 		|| (bmp->xsize != 32)
 		|| (bmp->ysize != 32)
 //#endif

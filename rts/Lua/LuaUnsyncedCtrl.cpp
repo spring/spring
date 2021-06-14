@@ -2248,11 +2248,12 @@ int LuaUnsyncedCtrl::Quit(lua_State* L)
 int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 {
 	const std::string iconFileName = luaL_checksstring(L, 1);
+	const bool forceResolution = luaL_optboolean(L, 2, false);
 
 	CBitmap iconTexture;
 
 	if (iconTexture.Load(iconFileName)) {
-		WindowManagerHelper::SetIcon(&iconTexture);
+		WindowManagerHelper::SetIcon(&iconTexture, forceResolution);
 	} else {
 		luaL_error(L, "Failed to load image from file \"%s\"", iconFileName.c_str());
 	}
