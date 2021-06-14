@@ -453,7 +453,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> LuaVBOImpl::GetBufferSize()
 	);
 }
 
-size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optional<int> attribIdxOpt, const sol::optional<int> elemOffsetOpt, const sol::optional<int> luaStartIndexOpt, const sol::optional<int> luaFinishIndexOpt)
+size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, sol::optional<int> attribIdxOpt, sol::optional<int> elemOffsetOpt, sol::optional<int> luaStartIndexOpt, sol::optional<int> luaFinishIndexOpt)
 {
 	if (!vbo) {
 		LuaError("[LuaVBOImpl::%s] Invalid VBO. Did you call :Define() or :ShapeFromUnitDefID/ShapeFromFeatureDefID()?", __func__);
@@ -496,7 +496,7 @@ size_t LuaVBOImpl::Upload(const sol::stack_table& luaTblData, const sol::optiona
 	return UploadImpl<lua_Number>(dataVec, elemOffset, attribIdx);
 }
 
-sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optional<int> attribIdxOpt, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt)
+sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(sol::optional<int> attribIdxOpt, sol::optional<int> elemOffsetOpt, sol::optional<int> elemCountOpt, sol::optional<bool> forceGPUReadOpt)
 {
 	std::vector<lua_Number> dataVec;
 
@@ -518,9 +518,17 @@ sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optiona
 
 	const uint32_t bufferOffsetInBytes = elemOffset * elemSizeInBytes;
 
-	vbo->Bind();
+	const bool forceGPURead = forceGPUReadOpt.value_or(false);
+	GLubyte* mappedBuf = nullptr;
+
 	const int mappedBufferSizeInBytes = bufferSizeInBytes - bufferOffsetInBytes;
-	auto mappedBuf = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_READ_BIT);
+	if (forceGPURead) {
+		vbo->Bind();
+		mappedBuf = vbo->MapBuffer(bufferOffsetInBytes, mappedBufferSizeInBytes, GL_MAP_READ_BIT);
+	}
+	else {
+		mappedBuf = reinterpret_cast<GLubyte*>(bufferData) + bufferOffsetInBytes;
+	}
 
 	int bytesRead = 0;
 
@@ -542,8 +550,10 @@ sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optiona
 
 			#define TRANSFORM_AND_READ(T) { \
 				if (!TransformAndRead<T>(bytesRead, mappedBuf, mappedBufferSizeInBytes, basicTypeSize, dataVec, copyData)) { \
-					vbo->UnmapBuffer(); \
-					vbo->Unbind(); \
+					if (forceGPURead) { \
+						vbo->UnmapBuffer(); \
+						vbo->Unbind(); \
+					} \
 					return sol::as_table(dataVec); \
 				} \
 			}
@@ -580,8 +590,10 @@ sol::as_table_t<std::vector<lua_Number>> LuaVBOImpl::Download(const sol::optiona
 		}
 	}
 
-	vbo->UnmapBuffer();
-	vbo->Unbind();
+	if (forceGPURead) {
+		vbo->UnmapBuffer();
+		vbo->Unbind();
+	}
 	return sol::as_table(dataVec);
 }
 
