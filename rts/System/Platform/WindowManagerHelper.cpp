@@ -31,9 +31,8 @@ void SetIcon(CBitmap* bmp, bool forceResolution) {
 //#ifdef    _WIN32
 		// on windows, the icon has to be 32x32
 		// ^^ no longer true, allow override
-		|| (forceResolution)
-		|| (bmp->xsize != 32)
-		|| (bmp->ysize != 32)
+		|| (!forceResolution && bmp->xsize != 32)
+		|| (!forceResolution && bmp->ysize != 32)
 //#endif
 	) {
 		LOG_L(L_WARNING, "[WindowManager::%s] icon-format has to be RGB or RGBA, and 32x32 pixels on Windows", __func__);
