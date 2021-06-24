@@ -548,27 +548,30 @@ void CReadMap::UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initiali
 
 void CReadMap::UpdateHeightBounds(int syncFrame)
 {
-	if (!updateHeightBounds)
-		return;
-
 	SCOPED_TIMER("ReadMap::UpdateHeightBounds");
 
 	constexpr int PACING_PERIOD = GAME_SPEED; //tune if needed
 	int dataChunk = syncFrame % PACING_PERIOD;
 
-	const int idxBeg = (dataChunk + 0) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
-	const int idxEnd = (dataChunk + 1) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
-	const int indCnt = idxEnd - idxBeg;
+	if (dataChunk == 0) {
+		processingHeightBounds = updateHeightBounds;
+		updateHeightBounds = false;
+	}
+
+	if (!processingHeightBounds)
+		return;
 
 	if (dataChunk == 0) {
-		if (syncFrame > 0) {
+		if (syncFrame > 0)
 			currHeightBounds = tempHeightBounds;
-			updateHeightBounds = false;
-		}
 
 		tempHeightBounds.x = std::numeric_limits<float>::max();
 		tempHeightBounds.y = std::numeric_limits<float>::lowest();
 	}
+
+	const int idxBeg = (dataChunk + 0) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
+	const int idxEnd = (dataChunk + 1) * mapDims.mapxp1 * mapDims.mapyp1 / PACING_PERIOD;
+	const int indCnt = idxEnd - idxBeg;
 
 #if 1
 	using SIMDVfloat = xsimd::simd_type<float>;
