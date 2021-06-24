@@ -554,6 +554,9 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 	int dataChunk = syncFrame % PACING_PERIOD;
 
 	if (dataChunk == 0) {
+		if (processingHeightBounds)
+			currHeightBounds = tempHeightBounds;
+
 		processingHeightBounds = updateHeightBounds;
 		updateHeightBounds = false;
 	}
@@ -562,9 +565,6 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 		return;
 
 	if (dataChunk == 0) {
-		if (syncFrame > 0)
-			currHeightBounds = tempHeightBounds;
-
 		tempHeightBounds.x = std::numeric_limits<float>::max();
 		tempHeightBounds.y = std::numeric_limits<float>::lowest();
 	}
