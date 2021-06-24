@@ -275,6 +275,7 @@ private:
 
 	unsigned int mapChecksum = 0;
 
+	bool processingHeightBounds = false;
 	bool updateHeightBounds = false;
 
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
