@@ -580,9 +580,9 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		}
 
 		#if 1
-		// snap build-position to multiples of SQUARE_SIZE plus a half-square offset (4, 12, 20, ...)
-		bi.pos.x = math::floor(c.GetParam(0) / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
-		bi.pos.z = math::floor(c.GetParam(2) / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		// snap build-position to multiples of SQUARE_SIZE
+		bi.pos.x = math::floor(c.GetParam(0) / SQUARE_SIZE) * SQUARE_SIZE;
+		bi.pos.z = math::floor(c.GetParam(2) / SQUARE_SIZE) * SQUARE_SIZE;
 		#endif
 
 		CFeature* f = nullptr;
