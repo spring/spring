@@ -27,6 +27,7 @@ class CKeyBindings : public CommandReceiver
 		bool Save(const std::string& filename) const;
 		void Print() const;
 
+		const ActionList& GetActionList(const std::string& matcher) const;
 		const ActionList& GetActionList(const CKeySet& ks) const;
 		const ActionList& GetActionList(const CKeyChain& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;

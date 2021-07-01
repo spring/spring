@@ -2,6 +2,12 @@ Spring changelog
 (since 85.0 a "!" prefix indicates backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 106.0 --------------------------------------------------------
+
+Lua:
+ - add Spring.GetAllKeyBindings with optional string argument to match command
+
+
 -- 105.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features
