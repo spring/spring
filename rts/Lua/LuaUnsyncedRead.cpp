@@ -207,7 +207,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
 	REGISTER_LUA_CFUNC(GetKeyBindings);
-	REGISTER_LUA_CFUNC(GetAllKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
 	REGISTER_LUA_CFUNC(GetLastMessagePositions);
@@ -2239,33 +2238,21 @@ int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 	return 2;
 }
 
-int LuaUnsyncedRead::GetAllKeyBindings(lua_State* L)
-{
-	const CKeyBindings::ActionList& actions = keyBindings.GetActionList(luaL_optstring(L, 1, ""));
-
-	int i = 1;
-	lua_newtable(L);
-	for (const Action& action: actions) {
-		lua_newtable(L);
-			lua_pushsstring(L, action.command);
-			lua_pushsstring(L, action.extra);
-			lua_rawset(L, -3);
-			LuaPushNamedString(L, "command",   action.command);
-			LuaPushNamedString(L, "extra",     action.extra);
-			LuaPushNamedString(L, "boundWith", action.boundWith);
-		lua_rawseti(L, -2, i++);
-	}
-	return 1;
-}
-
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	CKeySet ks;
+	CKeyBindings::ActionList actions;
+	const std::string& argument = luaL_optstring(L, 1, "");
 
-	if (!ks.Parse(luaL_checksstring(L, 1)))
-		return 0;
+	if (argument.empty()) {
+		actions = keyBindings.GetActionList();
+	} else {
+		CKeySet ks;
 
-	const CKeyBindings::ActionList& actions = keyBindings.GetActionList(ks);
+		if (!ks.Parse(luaL_checksstring(L, 1)))
+			return 0;
+
+		actions = keyBindings.GetActionList(ks);
+	}
 
 	int i = 1;
 	lua_newtable(L);

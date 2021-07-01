@@ -5,7 +5,7 @@ Spring changelog
 -- 106.0 --------------------------------------------------------
 
 Lua:
- - add Spring.GetAllKeyBindings with optional string argument to match command
+ - allow empty argument for Spring.GetKeyBindings to return all keybindings
 
 
 -- 105.0 --------------------------------------------------------
