@@ -305,6 +305,25 @@ void CKeyBindings::Kill()
 
 
 /******************************************************************************/
+const CKeyBindings::ActionList& CKeyBindings::GetActionList(const std::string& matcher) const
+{
+	static ActionList merged; //FIXME switch to thread_local (?)
+	const ActionList* alPtr;
+
+	for (const auto& p: bindings) {
+		const ActionList& al = p.second;
+
+		if (matcher.empty()) {
+			merged.insert(merged.end(), al.begin(), al.end());
+		} else {
+			std::copy_if(al.begin(), al.end(), std::back_inserter(merged), [matcher](Action a){ return a.command.rfind(matcher, 0) == 0; } );
+		}
+	}
+
+	alPtr = &merged;
+
+	return *alPtr;
+}
 
 const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
 {

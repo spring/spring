@@ -140,6 +140,7 @@ class LuaUnsyncedRead {
 		static int GetKeyCode(lua_State* L);
 		static int GetKeySymbol(lua_State* L);
 		static int GetKeyBindings(lua_State* L);
+		static int GetAllKeyBindings(lua_State* L);
 		static int GetActionHotKeys(lua_State* L);
 
 		static int GetGroupList(lua_State* L);
