@@ -124,11 +124,11 @@ public:
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max = -1);
 	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = -1);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, bool spherical = true, int unitIds_max = -1);
 	int GetFriendlyUnits(int* unitIds, int unitIds_max = -1);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, bool spherical = true, int unitIds_max = -1);
 	int GetNeutralUnits(int* unitIds, int unitIds_max = -1);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, bool spherical = true, int unitIds_max = -1);
 
 
 	int GetMapWidth();
@@ -209,7 +209,7 @@ public:
 	float GetEnergyStorage();
 
 	int GetFeatures(int* featureIds, int max);
-	int GetFeatures(int* featureIds, int max, const float3& pos, float radius);
+	int GetFeatures(int* featureIds, int max, const float3& pos, float radius, bool spherical = true);
 	const FeatureDef* GetFeatureDef(int featureId);
 private:
 	const FeatureDef* GetFeatureDefById(int featureDefId);
