@@ -1079,7 +1079,7 @@ struct SSkirmishAICallback {
 	 * If cheats are enabled, this will return all enemies
 	 * in the specified area.
 	 */
-	int               (CALLING_CONV *getEnemyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getEnemyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral
@@ -1098,7 +1098,7 @@ struct SSkirmishAICallback {
 	 * Returns all units that are in this teams ally-team, including this teams
 	 * units plus they have to be located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *getFriendlyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getFriendlyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are neutral and are in LOS.
@@ -1109,7 +1109,7 @@ struct SSkirmishAICallback {
 	 * Returns all units that are neutral and are in LOS plus they have to be
 	 * located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *getNeutralUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getNeutralUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are of the team controlled by this AI instance. This
@@ -1867,7 +1867,7 @@ struct SSkirmishAICallback {
 	 * Returns all features in a specified area that are currently in LOS,
 	 * or all features in this area if cheating is enabled.
 	 */
-	int               (CALLING_CONV *getFeaturesIn)(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIds_sizeMax); //$ REF:MULTI:featureIds->Feature
+	int               (CALLING_CONV *getFeaturesIn)(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* featureIds, int featureIds_sizeMax); //$ REF:MULTI:featureIds->Feature
 
 	int               (CALLING_CONV *Feature_getDef)(int skirmishAIId, int featureId); //$ REF:RETURN->FeatureDef
 

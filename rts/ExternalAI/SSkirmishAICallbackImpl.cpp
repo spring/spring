@@ -3914,11 +3914,11 @@ EXPORT(int) skirmishAiCallback_getEnemyUnits(int skirmishAIId, int* unitIds, int
 	return GetCallBack(skirmishAIId)->GetEnemyUnits(unitIds, unitIdsMaxSize);
 }
 
-EXPORT(int) skirmishAiCallback_getEnemyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIdsMaxSize) {
+EXPORT(int) skirmishAiCallback_getEnemyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
-		return GetCheatCallBack(skirmishAIId)->GetEnemyUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
+		return GetCheatCallBack(skirmishAIId)->GetEnemyUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 
-	return GetCallBack(skirmishAIId)->GetEnemyUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
+	return GetCallBack(skirmishAIId)->GetEnemyUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 }
 
 EXPORT(int) skirmishAiCallback_getEnemyUnitsInRadarAndLos(int skirmishAIId, int* unitIds, int unitIdsMaxSize) {
@@ -3933,8 +3933,8 @@ EXPORT(int) skirmishAiCallback_getFriendlyUnits(int skirmishAIId, int* unitIds, 
 	return GetCallBack(skirmishAIId)->GetFriendlyUnits(unitIds, unitIdsMaxSize);
 }
 
-EXPORT(int) skirmishAiCallback_getFriendlyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIdsMaxSize) {
-	return GetCallBack(skirmishAIId)->GetFriendlyUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
+EXPORT(int) skirmishAiCallback_getFriendlyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIdsMaxSize) {
+	return GetCallBack(skirmishAIId)->GetFriendlyUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 }
 
 EXPORT(int) skirmishAiCallback_getNeutralUnits(int skirmishAIId, int* unitIds, int unitIdsMaxSize) {
@@ -3944,9 +3944,9 @@ EXPORT(int) skirmishAiCallback_getNeutralUnits(int skirmishAIId, int* unitIds, i
 	return GetCallBack(skirmishAIId)->GetNeutralUnits(unitIds, unitIdsMaxSize);
 }
 
-EXPORT(int) skirmishAiCallback_getNeutralUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIdsMaxSize) {
+EXPORT(int) skirmishAiCallback_getNeutralUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
-		return GetCheatCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
+		return GetCheatCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 
 	return GetCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
 }
@@ -4209,11 +4209,11 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 	return GetCallBack(skirmishAIId)->GetFeatures(featureIds, featureIdsMaxSize);
 }
 
-EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIdsMaxSize) {
+EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
 		QuadFieldQuery qfQuery;
-		quadField.GetFeaturesExact(qfQuery, pos_posF3, radius);
+		quadField.GetFeaturesExact(qfQuery, pos_posF3, radius, spherical);
 		const int featureIdsRealSize = qfQuery.features->size();
 
 		int featureIdsSize = featureIdsRealSize;
@@ -4234,7 +4234,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 	}
 
 	// if (featureIds == NULL), this will only return the number of features
-	return GetCallBack(skirmishAIId)->GetFeatures(featureIds, featureIdsMaxSize, pos_posF3, radius);
+	return GetCallBack(skirmishAIId)->GetFeatures(featureIds, featureIdsMaxSize, pos_posF3, radius, spherical);
 }
 
 
