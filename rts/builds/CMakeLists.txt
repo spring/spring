@@ -65,6 +65,10 @@ macro    (create_engine_build_and_install_target targetName)
 		add_dependencies(spring spring-${targetName}) # This also works for custom targets
 		add_dependencies(install-spring install-spring-${targetName}) # This also works for custom targets
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring")
+		set_target_properties(engine-${targetName} PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON COMPILE_FLAGS "${WARNING_FLAGS}")
+		if(CLANG_TIDY_EXE)
+			set_target_properties(engine-${targetName} PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+		endif()
 	else()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
