@@ -108,19 +108,27 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	const int xmin = std::max(xSquare - moveDef.xsizeh,                0);
-	const int zmin = std::max(zSquare - moveDef.zsizeh,                0);
-	const int xmax = std::min(xSquare + moveDef.xsizeh, mapDims.mapx - 1);
-	const int zmax = std::min(zSquare + moveDef.zsizeh, mapDims.mapy - 1);
+	const int r = std::max(moveDef.xsizeh, moveDef.zsizeh);
+	const int r2 = Square(r);
+
+	const int xmin = std::max(xSquare - r,                0);
+	const int zmin = std::max(zSquare - r,                0);
+	const int xmax = std::min(xSquare + r, mapDims.mapx - 1);
+	const int zmax = std::min(zSquare + r, mapDims.mapy - 1);
 
 	BlockType ret = BLOCK_NONE;
 
 	// footprints are point-symmetric around <xSquare, zSquare>
 	// same as RangeIsBlocked but without anti-duplication test
 	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
+		const int z2 = Square(z - zSquare);
 		const int zOffset = z * mapDims.mapx;
 
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
+			const int x2 = Square(z - zSquare);
+			if (x2 + z2 > r2)
+				continue;
+
 			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
 			for (size_t i = 0, n = cell.size(); i < n; i++) {
