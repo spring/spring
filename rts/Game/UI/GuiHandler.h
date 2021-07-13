@@ -98,6 +98,10 @@ public:
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
 	bool GetDrawSelectionInfo() const { return drawSelectionInfo; }
 
+	void SetDrawBuild(bool grid, bool ghost) { drawBuildGrid = grid; drawBuildGhost = ghost; }
+	bool GetDrawBuildGrid() const { return drawBuildGrid; }
+	bool GetDrawBuildGhost() const { return drawBuildGhost; }
+
 	void SetBuildFacing(unsigned int facing) { buildFacing = facing % NUM_FACINGS; }
 	void SetBuildSpacing(int spacing) { buildSpacing = std::max(spacing, 0); }
 
@@ -182,7 +186,8 @@ public:
 	int inCommand = -1;
 	int buildFacing = FACING_SOUTH;
 	int buildSpacing = 0;
-
+	bool drawBuildGrid = true;
+	bool drawBuildGhost = true;
 private:
 	int maxPage = 0;
 	int activePage = 0;
