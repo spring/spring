@@ -51,6 +51,7 @@ SolidObjectDef::SolidObjectDef()
 	, health(0.0f)
 	, mass(0.0f)
 	, crushResistance(0.0f)
+	, pathRadiusMult(1.0f)
 
 	, collidable(false)
 	, selectable(true)

@@ -22,6 +22,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
+	CR_MEMBER(pathRadiusMult),
 
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
@@ -448,8 +449,8 @@ void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed)
 
 
 
-float CSolidObject::CalcFootPrintMinExteriorRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
-float CSolidObject::CalcFootPrintMaxInteriorRadius(float scale) const { return ((std::max(xsize, zsize) * 0.5f * SQUARE_SIZE) * scale); }
+float CSolidObject::CalcFootPrintMinExteriorRadius(float scale) const { return ((pathRadiusMult * math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
+float CSolidObject::CalcFootPrintMaxInteriorRadius(float scale) const { return ((pathRadiusMult * std::max(xsize, zsize) * 0.5f * SQUARE_SIZE) * scale); }
 float CSolidObject::CalcFootPrintAxisStretchFactor() const
 {
 	return (std::abs(xsize - zsize) * 1.0f / (xsize + zsize));

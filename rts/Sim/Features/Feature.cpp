@@ -167,6 +167,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	resources = {def->metal, def->energy};
 
 	crushResistance = def->crushResistance;
+	pathRadiusMult = def->pathRadiusMult;
 
 	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;

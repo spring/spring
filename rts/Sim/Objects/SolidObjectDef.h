@@ -61,6 +61,7 @@ public:
 	float health;
 	float mass;
 	float crushResistance;
+	float pathRadiusMult;
 
 	///< if false, object can NOT be collided with by SolidObject's
 	///< (but projectiles and raytraces will still interact with it)
