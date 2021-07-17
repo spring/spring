@@ -11,10 +11,9 @@
 
 #include "Rendering/GL/myGL.h"
 
-
-struct VAO;
-struct VBO;
-struct LuaVBOImpl;
+class VAO;
+class VBO;
+class LuaVBOImpl;
 
 class LuaVAOImpl {
 public:
@@ -28,9 +27,11 @@ public:
 public:
 	static bool Supported();
 public:
-	void AttachVertexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO);
-	void AttachInstanceBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO);
-	void AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO);
+	using LuaVBOImplSP = std::shared_ptr<LuaVBOImpl>; //my workaround to https://github.com/ThePhD/sol2/issues/1206
+public:
+	void AttachVertexBuffer(const LuaVBOImplSP& luaVBO);
+	void AttachInstanceBuffer(const LuaVBOImplSP& luaVBO);
+	void AttachIndexBuffer(const LuaVBOImplSP& luaVBO);
 
 	void DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> vertexFirstOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> instanceFirstOpt);
 	void DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);

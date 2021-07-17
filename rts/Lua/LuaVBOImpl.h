@@ -78,7 +78,7 @@ private:
 	static T MaybeFunc(const sol::table& tbl, const std::string& key, T defValue);
 
 	template<typename TIn, typename TOut, typename TIter>
-	bool TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int size, TIter& bdvIter, const bool copyData);
+	bool TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int size, TIter& bdvIter, const TIter& bdvIterEnd, const bool copyData);
 
 	template<typename TIn>
 	bool TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int size, std::vector<lua_Number>& vec, const bool copyData);

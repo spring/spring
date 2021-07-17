@@ -87,17 +87,17 @@ void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std
 	}
 }
 
-void LuaVAOImpl::AttachVertexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
+void LuaVAOImpl::AttachVertexBuffer(const LuaVBOImplSP& luaVBO)
 {
 	AttachBufferImpl(luaVBO, vertLuaVBO, GL_ARRAY_BUFFER);
 }
 
-void LuaVAOImpl::AttachInstanceBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
+void LuaVAOImpl::AttachInstanceBuffer(const LuaVBOImplSP& luaVBO)
 {
 	AttachBufferImpl(luaVBO, instLuaVBO, GL_ARRAY_BUFFER);
 }
 
-void LuaVAOImpl::AttachIndexBuffer(const std::shared_ptr<LuaVBOImpl>& luaVBO)
+void LuaVAOImpl::AttachIndexBuffer(const LuaVBOImplSP& luaVBO)
 {
 	AttachBufferImpl(luaVBO, indxLuaVBO, GL_ELEMENT_ARRAY_BUFFER);
 }

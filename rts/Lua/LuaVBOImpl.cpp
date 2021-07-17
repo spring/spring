@@ -821,7 +821,7 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, const uint32_t el
 			bool copyData = attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
 
 			#define TRANSFORM_AND_WRITE(T) { \
-				if (!TransformAndWrite<TIn, T>(bytesWritten, buffDataWithOffset, mappedBufferSizeInBytes, basicTypeSize, bdvIter, copyData)) { \
+				if (!TransformAndWrite<TIn, T>(bytesWritten, buffDataWithOffset, mappedBufferSizeInBytes, basicTypeSize, bdvIter, dataVec.cend(), copyData)) { \
 					return uploadToGPU(bytesWritten); \
 				} \
 			}
@@ -1032,7 +1032,7 @@ T LuaVBOImpl::MaybeFunc(const sol::table& tbl, const std::string& key, T defValu
 }
 
 template<typename TIn, typename TOut, typename TIter>
-bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int count, TIter& bdvIter, const bool copyData)
+bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int count, TIter& bdvIter, const TIter& bdvIterEnd, const bool copyData)
 {
 	constexpr int outValSize = sizeof(TOut);
 	const int outValSizeStride = count * outValSize;
@@ -1044,6 +1044,11 @@ bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const
 
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
+			if (bdvIter == bdvIterEnd) {
+				LOG_L(L_ERROR, "[LuaVBOImpl::%s] Upload array contains too few data to fill the attribute", __func__);
+				return false;
+			}
+
 			const auto outVal = spring::SafeCast<TIn, TOut>(*bdvIter);
 			memcpy(mappedBuf, &outVal, outValSize);
 			mappedBuf += outValSize;
