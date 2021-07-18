@@ -851,13 +851,15 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
-	if (!lua_istable(L, 1))
-		luaL_error(L, "[%s(stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ])] incorrect arguments", __func__);
+	const bool hasState = lua_istable(L, 1);
+
+	if (!(hasState || lua_isnil(L, 1)))
+		luaL_error(L, "[%s([ stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ] ])] incorrect arguments", __func__);
 
 	camHandler->SetTransitionParams(luaL_optfloat(L, 3, camHandler->GetTransitionTimeFactor()), luaL_optfloat(L, 4, camHandler->GetTransitionTimeExponent()));
 	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
-	const bool retval = camHandler->SetState(ParseCamStateMap(L, 1));
+	const bool retval = camHandler->SetState(hasState ? ParseCamStateMap(L, 1) : camHandler->GetState());
 	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	// always push false in synced
@@ -2246,11 +2248,12 @@ int LuaUnsyncedCtrl::Quit(lua_State* L)
 int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 {
 	const std::string iconFileName = luaL_checksstring(L, 1);
+	const bool forceResolution = luaL_optboolean(L, 2, false);
 
 	CBitmap iconTexture;
 
 	if (iconTexture.Load(iconFileName)) {
-		WindowManagerHelper::SetIcon(&iconTexture);
+		WindowManagerHelper::SetIcon(&iconTexture, forceResolution);
 	} else {
 		luaL_error(L, "Failed to load image from file \"%s\"", iconFileName.c_str());
 	}

@@ -4,6 +4,7 @@
 
 #include "MouseHandler.h"
 #include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
@@ -41,7 +42,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 }
 
 
-bool CEndGameBox::enabled = true;
+int CEndGameBox::enabledMode = 1;
 CEndGameBox* CEndGameBox::endGameBox = NULL;
 
 CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
@@ -96,7 +97,7 @@ CEndGameBox::~CEndGameBox()
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return false;
 
 	const float mx = MouseX(x);
@@ -125,7 +126,7 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return;
 
 	if (moveBox) {
@@ -138,7 +139,7 @@ void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return;
 
 	const float mx = MouseX(x);
@@ -146,7 +147,12 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 	if (InBox(mx, my, box + exitBox)) {
 		delete this;
-		gu->globalQuit = true;
+		if (enabledMode == 1)
+			gu->globalQuit = true;
+		else { //(enabledMode == 2)
+			gameSetup->reloadScript = "";
+			gu->globalReload = true;
+		}
 		return;
 	}
 
@@ -175,7 +181,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return false;
 
 	const float mx = MouseX(x);
@@ -185,7 +191,7 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return;
 
 	const float mx = MouseX(mouse->lastx);
@@ -432,7 +438,7 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (!enabled)
+	if (enabledMode == 0)
 		return "";
 
 	const float mx = MouseX(x);

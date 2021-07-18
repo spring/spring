@@ -10,9 +10,7 @@
 #include "System/float4.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
-
-
-class IAtlasAllocator;
+#include "Rendering/Textures/IAtlasAllocator.h"
 
 /** @brief texture coordinates of an atlas subimage. */
 //typedef float4 AtlasedTexture;
@@ -40,8 +38,32 @@ public:
 	};
 
 public:
-	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY);
+	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0, std::string name_ = "");
+	CTextureAtlas(CTextureAtlas&& ta) noexcept { *this = std::move(ta); };
+	CTextureAtlas(const CTextureAtlas&) = delete;
+
 	~CTextureAtlas();
+
+	CTextureAtlas& operator= (CTextureAtlas&& ta) noexcept {
+		if (this != &ta) {
+			delete atlasAllocator; // Free the existing atlasAllocator.
+
+			atlasAllocator = ta.atlasAllocator;
+			name = std::move(ta.name);
+			memTextures = std::move(ta.memTextures);
+			files = std::move(ta.files);
+			textures = std::move(ta.textures);
+			atlasTexID = ta.atlasTexID;
+			initialized = ta.initialized;
+			freeTexture = ta.freeTexture;
+
+			// Trick to not call destructor on atlasAllocator multiple times
+			ta.atlasAllocator = nullptr;
+			ta.atlasTexID = 0u;
+		}
+		return *this;
+	};
+	CTextureAtlas& operator= (const CTextureAtlas&) = delete;
 
 	// add a texture from a memory pointer
 	size_t AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);
@@ -92,6 +114,7 @@ public:
 	std::string GetName() const { return name; }
 
 	unsigned int GetTexID() const { return atlasTexID; }
+	const uint32_t GetTexTarget() const;
 
 	void BindTexture();
 	void SetFreeTexture(bool b) { freeTexture = b; }

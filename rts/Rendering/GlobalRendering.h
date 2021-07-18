@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
@@ -13,8 +14,6 @@
 struct SDL_version;
 struct SDL_Window;
 typedef void* SDL_GLContext;
-
-struct CMatrix44f;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -28,6 +27,8 @@ class CGlobalRendering {
 public:
 	CGlobalRendering();
 	~CGlobalRendering();
+
+	void PreKill();
 
 	static void InitStatic();
 	static void KillStatic();
@@ -61,6 +62,7 @@ public:
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+	bool GetWindowInputGrabbing();
 	bool SetWindowInputGrabbing(bool enable);
 	bool ToggleWindowInputGrabbing();
 
@@ -82,7 +84,9 @@ public:
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
-
+public:
+	//helper function
+	static int DepthBitsToFormat(int bits);
 public:
 	/**
 	 * @brief time offset
@@ -133,8 +137,8 @@ public:
 	int viewSizeY;
 
 	/// screen {View,Proj} matrices for rendering in pixel coordinates
-	std::unique_ptr<CMatrix44f> screenViewMatrix;
-	std::unique_ptr<CMatrix44f> screenProjMatrix;
+	CMatrix44f screenViewMatrix;
+	CMatrix44f screenProjMatrix;
 
 	/// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
 	float pixelX;
@@ -149,7 +153,7 @@ public:
 	 */
 	float aspectRatio;
 
-
+	int forceDisablePersistentMapping;
 	int forceDisableShaders;
 	int forceCoreContext;
 	int forceSwapBuffers;
@@ -221,7 +225,7 @@ public:
 	 * These can be used to enable workarounds for bugs in their drivers.
 	 * Note, you should always give the user the possiblity to override such workarounds via config-tags.
 	 */
-	bool haveATI;
+	bool haveAMD;
 	bool haveMesa;
 	bool haveIntel;
 	bool haveNvidia;
@@ -232,7 +236,14 @@ public:
 	 *
 	 * enables some ATI bugfixes
 	 */
-	bool atiHacks;
+	bool amdHacks;
+
+	/**
+	* @brief whether the GPU supports persistent buffer mapping
+	*
+	* ARB_buffer_storage or OpenGL 4.4
+	*/
+	bool supportPersistentMapping;
 
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
@@ -243,12 +254,8 @@ public:
 	bool supportTextureQueryLOD;
 
 	bool supportMSAAFrameBuffer;
-	/**
-	 * @brief support24bitDepthBuffer
-	 *
-	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
-	 */
-	bool support24bitDepthBuffer;
+
+	int supportDepthBufferBitDepth;
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
@@ -271,6 +278,8 @@ public:
 	int glslMaxRecommendedVertices;
 	int glslMaxUniformBufferBindings;
 	int glslMaxUniformBufferSize; ///< in bytes
+	int glslMaxStorageBufferBindings;
+	int glslMaxStorageBufferSize; ///< in bytes
 
 	/**
 	 * @brief dual screen mode
@@ -296,8 +305,11 @@ public:
 	// [0] := primary, [1] := secondary (hidden)
 	SDL_Window* sdlWindows[2];
 	SDL_GLContext glContexts[2];
-
 public:
+	/**
+	* @brief maximum texture unit number
+	*/
+	static constexpr int MAX_TEXTURE_UNITS = 32;
 	/**
 	* @brief max view range in elmos
 	*/

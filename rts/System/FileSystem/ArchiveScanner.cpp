@@ -1286,13 +1286,12 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 			break;
 
 		const std::string& resolvedName = ArchiveNameResolver::GetGame(archiveQueue.front());
-		const std::string& lowerCaseName = StringToLower(ArchiveFromName(resolvedName));
 
 		archiveQueue.pop_front();
 
 		const ArchiveInfo* archiveInfo = nullptr;
 
-		const auto CanAddSubDependencies = [&](const std::string& lwrCaseName) -> const ArchiveInfo* {
+		const auto CanAddSubDependencies = [&](const std::string& resolvedName) -> const ArchiveInfo* {
 			#ifdef UNITSYNC
 			// add unresolved deps for unitsync so it still shows this file
 			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { tmpArchives[0].emplace_back(archName, tmpArchives[0].size()); return true; };
@@ -1300,14 +1299,16 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { (void) archName; return false; };
 			#endif
 
-			auto aii = archiveInfosIndex.find(lwrCaseName);
+			const std::string& lowerCaseName = StringToLower(ArchiveFromName(resolvedName));
+
+			auto aii = archiveInfosIndex.find(lowerCaseName);
 			auto aij = aii;
 
 			const ArchiveInfo* ai = nullptr;
 
 			if (aii == archiveInfosIndex.end()) {
-				if (!HandleUnresolvedDep(lwrCaseName))
-					throw content_error("Dependent archive \"" + lwrCaseName + "\" not found");
+				if (!HandleUnresolvedDep(lowerCaseName))
+					throw content_error("Dependent archive \"" + lowerCaseName + "\" (resolved to \"" + resolvedName + "\") not found");
 
 				return nullptr;
 			}
@@ -1317,8 +1318,8 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 			// check if this archive has an unresolved replacement
 			while (!ai->replaced.empty()) {
 				if ((aii = archiveInfosIndex.find(ai->replaced)) == archiveInfosIndex.end()) {
-					if (!HandleUnresolvedDep(lwrCaseName))
-						throw content_error("Replacement \"" + ai->replaced + "\" for archive \"" + lwrCaseName + "\" not found");
+					if (!HandleUnresolvedDep(lowerCaseName))
+						throw content_error("Replacement \"" + ai->replaced + "\" for archive \"" + resolvedName + "\" not found");
 
 					return nullptr;
 				}
@@ -1331,7 +1332,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 		};
 
 
-		if ((archiveInfo = CanAddSubDependencies(lowerCaseName)) == nullptr)
+		if ((archiveInfo = CanAddSubDependencies(resolvedName)) == nullptr)
 			continue;
 
 		tmpArchives[0].emplace_back(archiveInfo->archiveData.GetNameVersioned(), tmpArchives[0].size());

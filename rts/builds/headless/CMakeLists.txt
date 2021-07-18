@@ -34,6 +34,7 @@ endif ()
 
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
+list(APPEND engineHeadlessLibraries meshoptimizer)
 list(APPEND engineHeadlessLibraries headlessStubs)
 list(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
 list(APPEND engineHeadlessLibraries engineSystemNet)

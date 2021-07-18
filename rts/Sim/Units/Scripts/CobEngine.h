@@ -14,6 +14,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/creg/STL_Queue.h"
 #include "System/creg/STL_Map.h"
+#include "System/Cpp11Compat.hpp"
 
 
 class CCobThread;
@@ -33,7 +34,7 @@ private:
 		int wt;
 	};
 
-	struct CCobThreadComp: public std::binary_function<const SleepingThread&, const SleepingThread&, bool> {
+	struct CCobThreadComp: public spring::binary_function<const SleepingThread&, const SleepingThread&, bool> {
 	public:
 		bool operator() (const SleepingThread& a, const SleepingThread& b) const {
 			return (a.wt > b.wt);

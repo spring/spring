@@ -162,10 +162,11 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemy);
 }
 
-int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
+int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, bool spherical,
+		int unitIds_max)
 {
 	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius, spherical);
 	myAllyTeamId = teamHandler.AllyTeam(ai->GetTeamId());
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemy);
 }
@@ -175,10 +176,11 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutral);
 }
 
-int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
+int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, bool spherical,
+		int unitIds_max)
 {
 	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius, spherical);
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
@@ -186,7 +188,7 @@ int CAICheats::GetFeatures(int* features, int max) const {
 	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
 	return 0;
 }
-int CAICheats::GetFeatures(int* features, int max, const float3& pos, float radius) const {
+int CAICheats::GetFeatures(int* features, int max, const float3& pos, float radius, bool spherical) const {
 	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
 	return 0;
 }

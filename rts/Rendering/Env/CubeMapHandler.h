@@ -45,11 +45,20 @@ private:
 
 	FBO reflectionCubeFBO;
 
+	/*
+	GL_TEXTURE_CUBE_MAP_POSITIVE_X
+	GL_TEXTURE_CUBE_MAP_NEGATIVE_X
+	GL_TEXTURE_CUBE_MAP_POSITIVE_Y
+	GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+	GL_TEXTURE_CUBE_MAP_POSITIVE_Z
+	GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+	*/
+
 	const float3 faceDirs[6][3] = {
 		{ RgtVector,  FwdVector,   UpVector}, // fwd = +x, right = +z, up = +y
 		{-RgtVector, -FwdVector,   UpVector}, // fwd = -x
-		{  UpVector,  RgtVector, -FwdVector}, // fwd = +y
-		{ -UpVector,  RgtVector,  FwdVector}, // fwd = -y
+		{  UpVector, -RgtVector, -FwdVector}, // fwd = +y
+		{ -UpVector, -RgtVector,  FwdVector}, // fwd = -y
 		{ FwdVector, -RgtVector,   UpVector}, // fwd = +z
 		{-FwdVector,  RgtVector,   UpVector}, // fwd = -z
 	};

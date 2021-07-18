@@ -40,12 +40,12 @@ public:
 	int CreateUnit(const char* name, const float3& pos);
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max = -1);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, bool spherical = true, int unitIds_max = -1);
 	int GetNeutralUnits(int* unitIds, int unitIds_max = -1);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, bool spherical = true, int unitIds_max = -1);
 
 	int GetFeatures(int* features, int max) const;
-	int GetFeatures(int* features, int max, const float3& pos, float radius) const;
+	int GetFeatures(int* features, int max, const float3& pos, float radius, bool spherical) const;
 
 	const UnitDef* GetUnitDef(int unitId) const;
 	float3 GetUnitPos(int unitId) const;

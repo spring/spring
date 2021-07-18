@@ -11,6 +11,8 @@
 #include "System/type2.h"
 #include <cinttypes>
 
+#include "System/Cpp11Compat.hpp"
+
 /// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
 	PathNode()
@@ -33,7 +35,7 @@ struct PathNode {
 
 
 /// functor to define node priority
-struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
+struct lessCost: public spring::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
 		return (x->fCost == y->fCost) ? (x->gCost < y->gCost) : (x->fCost > y->fCost);
 	}

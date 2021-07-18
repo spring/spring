@@ -37,6 +37,7 @@ public:
 	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
 
 protected:
+	void InitCommon();
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
 	int RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode);

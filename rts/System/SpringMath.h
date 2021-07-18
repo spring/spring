@@ -10,6 +10,7 @@
 
 #include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
+#include <limits>
 
 static constexpr int SPRING_MAX_HEADING = 32768;
 static constexpr int SPRING_CIRCLE_DIVS = (SPRING_MAX_HEADING << 1);
@@ -118,6 +119,20 @@ template<class T> constexpr T Square(const T x) { return x*x; }
 template<class T> constexpr T Clamp(const T v, const T vmin, const T vmax) { return std::min(vmax, std::max(vmin, v)); }
 // NOTE: '>' instead of '>=' s.t. Sign(int(true)) != Sign(int(false)) --> zero is negative!
 template<class T> constexpr T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
+
+template <typename T>
+constexpr T AlignUp(T value, size_t size)
+{
+	static_assert(std::is_unsigned<T>(), "T must be an unsigned value.");
+	return static_cast<T>(value + (size - value % size) % size);
+}
+
+template <typename T>
+constexpr T AlignDown(T value, size_t size)
+{
+	static_assert(std::is_unsigned<T>(), "T must be an unsigned value.");
+	return static_cast<T>(value - value % size);
+}
 
 /**
  * @brief does a division and returns additionally the remnant

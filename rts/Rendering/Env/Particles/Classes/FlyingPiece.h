@@ -65,7 +65,7 @@ private:
 	float3 pos;
 	float3 speed;
 
-	CMatrix44f pieceMatrix;
+	CMatrix44f bposeMatrix;
 
 	int team;
 	int texture;

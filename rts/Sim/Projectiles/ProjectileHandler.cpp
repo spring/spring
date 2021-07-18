@@ -28,6 +28,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
+#include "System/Cpp11Compat.hpp"
 #include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 
@@ -106,8 +107,8 @@ void CProjectileHandler::Init()
 			freeProjectileIDs[false].push_back(i);
 		}
 
-		std::random_shuffle(freeProjectileIDs[ true].begin(), freeProjectileIDs[ true].end(), gsRNG);
-		std::random_shuffle(freeProjectileIDs[false].begin(), freeProjectileIDs[false].end(), guRNG);
+		spring::random_shuffle(freeProjectileIDs[ true].begin(), freeProjectileIDs[ true].end(), gsRNG);
+		spring::random_shuffle(freeProjectileIDs[false].begin(), freeProjectileIDs[false].end(), guRNG);
 	}
 
 	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
@@ -395,7 +396,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 			// generate (newSize - oldSize) new id's starting from oldSize
 			std::for_each(freeIDs.begin(), freeIDs.end(), [k = oldSize](int& id) mutable { id = k++; });
-			std::random_shuffle(freeIDs.begin(), freeIDs.end(), rngFunc);
+			spring::random_shuffle(freeIDs.begin(), freeIDs.end(), rngFunc);
 		}
 
 

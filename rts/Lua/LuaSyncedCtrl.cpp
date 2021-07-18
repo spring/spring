@@ -769,7 +769,7 @@ int LuaSyncedCtrl::SetGlobalLos(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	losHandler->globalLOS[allyTeam] = luaL_checkboolean(L, 2);
+	losHandler->SetGlobalLOS(allyTeam, luaL_checkboolean(L, 2));
 	return 0;
 }
 
@@ -1424,8 +1424,8 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
  		}
 
 		ASSERT_SYNCED(unit->buildTime);
-		ASSERT_SYNCED(unit->metalCost);
-		ASSERT_SYNCED(unit->energyCost);
+		ASSERT_SYNCED(unit->cost.metal);
+		ASSERT_SYNCED(unit->cost.energy);
 	}
 
 	return 0;
@@ -2845,8 +2845,9 @@ int LuaSyncedCtrl::RemoveObjectDecal(lua_State* L)
 int LuaSyncedCtrl::AddGrass(lua_State* L)
 {
 	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	const uint8_t grassValue = static_cast<uint8_t>(luaL_optint(L, 3, 1));
 
-	grassDrawer->AddGrass(pos.cClampInBounds());
+	grassDrawer->AddGrass(pos.cClampInBounds(), grassValue);
 	return 0;
 }
 

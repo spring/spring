@@ -7,6 +7,8 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
@@ -20,7 +22,6 @@ struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
 class LuaTable;
-
 
 
 class CProjectileDrawer: public CEventClient {
@@ -43,7 +44,10 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
+		return
+			(eventName == "RenderProjectileCreated") ||
+			(eventName == "RenderProjectileDestroyed") ||
+			(eventName == "ViewResize");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -51,6 +55,7 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+	void ViewResize() override;
 
 	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
 
@@ -60,6 +65,18 @@ public:
 	bool EnableSorting(bool b) { return (drawSorted =           b); }
 	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
 
+	static bool CheckSoftenExt();
+	bool CanDrawSoften() {
+		return
+			CheckSoftenExt() &&
+			fxShader && fxShader->IsValid() &&
+			depthTexture != 0u &&
+			depthFBO && depthFBO->IsValid();
+	};
+
+	int EnableSoften(int b) { return CanDrawSoften() ? (wantSoften = std::clamp(b, 0, WANT_SOFTEN_COUNT - 1)) : 0; }
+	int ToggleSoften() { return EnableSoften((wantSoften + 1) % WANT_SOFTEN_COUNT); }
+	void CopyDepthBufferToTexture();
 
 	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
@@ -105,7 +122,6 @@ public:
 	AtlasedTexture* groundringtex = nullptr;
 
 	AtlasedTexture* seismictex = nullptr;
-
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
@@ -128,6 +144,11 @@ private:
 private:
 	static constexpr int perlinBlendTexSize = 16;
 	static constexpr int perlinTexSize = 128;
+
+	// start edge fading of regular CEGs if height difference is less than [0]
+	// fade out groundflashes to 0 as height difference reaches [1]
+	static constexpr float softenThreshold[2] = { 8.0f, 350.0f };
+	static constexpr float softenExponent[2]  = { 0.6f, 8.0f };
 
 	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
@@ -152,6 +173,13 @@ private:
 	std::vector<CProjectile*> sortedProjectiles[2];
 
 	bool drawSorted = true;
+
+	GLuint depthTexture = 0u;
+	FBO* depthFBO = nullptr;
+	Shader::IProgramObject* fxShader = nullptr;
+
+	constexpr static int WANT_SOFTEN_COUNT = 3;
+	int wantSoften = 0;
 };
 
 extern CProjectileDrawer* projectileDrawer;

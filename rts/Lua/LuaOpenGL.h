@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "Lua/LuaHandle.h"
 
@@ -145,6 +146,8 @@ class LuaOpenGL {
 		static unsigned int resetStateList;
 
 		static std::unordered_set<std::string> deprecatedGLWarned;
+		static std::unordered_map<GLenum, std::string> fixedStateEnumToString;
+		static std::string fixedStateEnumToStringUnk;
 
 		struct OcclusionQuery {
 			unsigned int index; // into LuaOpenGL::occlusionQueries
@@ -188,6 +191,7 @@ class LuaOpenGL {
 		static int LogicOp(lua_State* L);
 		static int Fog(lua_State* L);
 		static int AlphaTest(lua_State* L);
+		static int AlphaToCoverage(lua_State* L);
 		static int LineStipple(lua_State* L);
 		static int Blending(lua_State* L);
 		static int BlendEquation(lua_State* L);
@@ -228,6 +232,12 @@ class LuaOpenGL {
 		static int TexGen(lua_State* L);
 		static int MultiTexEnv(lua_State* L);
 		static int MultiTexGen(lua_State* L);
+		static int BindImageTexture(lua_State* L);
+		static int CreateTextureAtlas(lua_State* L);
+		static int FinalizeTextureAtlas(lua_State* L);
+		static int DeleteTextureAtlas(lua_State* L);
+		static int AddAtlasTexture(lua_State* L);
+		static int GetAtlasTexture(lua_State* L);
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
@@ -242,6 +252,9 @@ class LuaOpenGL {
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 
+		static int DispatchCompute(lua_State* L);
+		static int MemoryBarrier(lua_State* L);
+
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
 		static int EndText(lua_State* L);
@@ -253,9 +266,11 @@ class LuaOpenGL {
 		static int UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit);
 
 		static int Unit(lua_State* L);
+		static int UnitGL4(lua_State* L);
 		static int UnitRaw(lua_State* L);
 		static int UnitTextures(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitShapeGL4(lua_State* L);
 		static int UnitShapeTextures(lua_State* L);
 		static int UnitMultMatrix(lua_State* L);
 		static int UnitPiece(lua_State* L);
@@ -266,9 +281,11 @@ class LuaOpenGL {
 		static int FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature);
 
 		static int Feature(lua_State* L);
+		static int FeatureGL4(lua_State* L);
 		static int FeatureRaw(lua_State* L);
 		static int FeatureTextures(lua_State* L);
 		static int FeatureShape(lua_State* L);
+		static int FeatureShapeGL4(lua_State* L);
 		static int FeatureShapeTextures(lua_State* L);
 		static int FeatureMultMatrix(lua_State* L);
 		static int FeaturePiece(lua_State* L);
@@ -283,6 +300,7 @@ class LuaOpenGL {
 
 		static int Light(lua_State* L);
 		static int ClipPlane(lua_State* L);
+		static int ClipDistance(lua_State* L);
 
 		static int MatrixMode(lua_State* L);
 		static int LoadIdentity(lua_State* L);
@@ -302,6 +320,7 @@ class LuaOpenGL {
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);
+		static int GetFixedState(lua_State* L);
 
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);

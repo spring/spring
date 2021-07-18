@@ -41,7 +41,7 @@ static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int all
 	//   (thus UnitCreated will not produce EnemyCreated,
 	//   etc. without this, even when globalLOS is enabled
 	//   (for non-cheating AI's))
-	return (losHandler->globalLOS[allyTeamId] || (unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR)));
+	return (losHandler->GetGlobalLOS(allyTeamId) || (unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR)));
 }
 
 static CEngineOutHandler singleton;

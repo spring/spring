@@ -336,6 +336,7 @@ class CLuaHandle : public CEventClient
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 		static inline LuaShaders& GetActiveShaders(lua_State* L) { return GetLuaContextData(L)->shaders; }
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
+		static inline LuaAtlasTextures& GetActiveAtlasTextures(lua_State* L) { return GetLuaContextData(L)->atlasTextures; }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
 		static inline LuaRBOs& GetActiveRBOs(lua_State* L) { return GetLuaContextData(L)->rbos; }
 		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }

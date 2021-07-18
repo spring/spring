@@ -644,17 +644,17 @@ EXPORT(int              ) skirmishAiCallback_Unit_getMax(int skirmishAIId);
 
 EXPORT(int              ) skirmishAiCallback_getEnemyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_getEnemyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax);
+EXPORT(int              ) skirmishAiCallback_getEnemyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_getEnemyUnitsInRadarAndLos(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_getFriendlyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_getFriendlyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax);
+EXPORT(int              ) skirmishAiCallback_getFriendlyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_getNeutralUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_getNeutralUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax);
+EXPORT(int              ) skirmishAiCallback_getNeutralUnitsIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* unitIds, int unitIds_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 
@@ -1025,7 +1025,7 @@ EXPORT(int              ) skirmishAiCallback_FeatureDef_getCustomParams(int skir
 // BEGINN OBJECT Feature
 EXPORT(int              ) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, int featureIds_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIds_sizeMax);
+EXPORT(int              ) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, bool spherical, int* featureIds, int featureIds_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_Feature_getDef(int skirmishAIId, int featureId);
 
@@ -1038,6 +1038,10 @@ EXPORT(void             ) skirmishAiCallback_Feature_getPosition(int skirmishAII
 EXPORT(float            ) skirmishAiCallback_Feature_getRulesParamFloat(int skirmishAIId, int featureId, const char* rulesParamName, float defaultValue);
 
 EXPORT(const char*      ) skirmishAiCallback_Feature_getRulesParamString(int skirmishAIId, int featureId, const char* rulesParamName, const char* defaultValue);
+
+EXPORT(int              ) skirmishAiCallback_Feature_getResurrectDef(int skirmishAIId, int featureId);
+
+EXPORT(short            ) skirmishAiCallback_Feature_getBuildingFacing(int skirmishAIId, int featureId);
 
 // END OBJECT Feature
 

@@ -6,6 +6,7 @@
 
 #include "LuaHandle.h"
 #include "LuaTextures.h"
+#include "LuaAtlasTextures.h"
 #include "Game/Camera.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
@@ -21,6 +22,7 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/InfoTexture.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/FeatureDef.h"
@@ -371,6 +373,18 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			return ParseUnitTexture(texUnit, image);
 		} break;
 
+		case LuaAtlasTextures::prefix: {
+			// dynamic texture
+			const LuaAtlasTextures& atlasTextures = CLuaHandle::GetActiveAtlasTextures(L);
+			const size_t idx = atlasTextures.GetAtlasIndexById(image);
+
+			if (idx == size_t(-1))
+				return false;
+
+			texUnit.type = LuaMatTexture::LUATEX_LUATEXTUREATLAS;
+			texUnit.data = reinterpret_cast<const void*>(idx);
+		} break;
+
 		case '#': {
 			// unit build picture
 			char* endPtr;
@@ -486,6 +500,15 @@ GLuint LuaMatTexture::GetTextureID() const
 			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
 
 			texID = luaTexture->id;
+		} break;
+
+		case LUATEX_LUATEXTUREATLAS: {
+			assert(state != nullptr);
+
+			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
+
+			texID = atlas->GetTexID();
 		} break;
 
 		// object model-textures
@@ -631,6 +654,14 @@ GLuint LuaMatTexture::GetTextureTarget() const
 			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
 
 			texType = luaTexture->target;
+		} break;
+		case LUATEX_LUATEXTUREATLAS: {
+			assert(state != nullptr);
+
+			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
+
+			texType = atlas->GetTexTarget();
 		} break;
 
 		case LUATEX_MAP_REFLECTION:
@@ -781,6 +812,15 @@ int2 LuaMatTexture::GetSize() const
 			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
 
 			return {luaTexture->xsize, luaTexture->ysize};
+		} break;
+
+		case LUATEX_LUATEXTUREATLAS: {
+			assert(state != nullptr);
+
+			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
+			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
+
+			return atlas->GetSize();
 		} break;
 
 

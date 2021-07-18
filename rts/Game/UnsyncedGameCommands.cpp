@@ -340,8 +340,6 @@ public:
 	}
 };
 
-
-
 class WaterActionExecutor : public IUnsyncedActionExecutor {
 public:
 	WaterActionExecutor() : IUnsyncedActionExecutor(
@@ -2057,10 +2055,16 @@ public:
 		if (mouse->offscreen)
 			return false;
 
+		const bool prevState = globalRendering->GetWindowInputGrabbing();
 		if (args.empty()) {
 			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
-			LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
+			const bool preState = globalRendering->GetWindowInputGrabbing();
+			const bool reqState = static_cast<bool>(atoi(args.c_str()));
+			if (reqState != preState)
+				LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(reqState));
+			else
+				globalRendering->SetWindowInputGrabbing(reqState);
 		}
 
 		return true;
@@ -2332,7 +2336,18 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		InverseOrSetBool(CEndGameBox::enabled, action.GetArgs());
+		const auto& args = action.GetArgs();
+
+		const char* fmt = "EndGame Graph %s";
+		const char* strs[] = { "disabled", "enabled, causes quit", "enabled, causes reload" };
+
+		if (args.empty()) {
+			CEndGameBox::enabledMode = (CEndGameBox::enabledMode + 1) % 3;
+		} else {
+			CEndGameBox::enabledMode = std::clamp(atoi(args.c_str()), 0, 2);
+		}
+		LOG(fmt, strs[CEndGameBox::enabledMode]);
+
 		return true;
 	}
 };
@@ -2524,6 +2539,31 @@ public:
 	}
 };
 
+class ParticleSoftenActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ParticleSoftenActionExecutor() : IUnsyncedActionExecutor(
+		"SoftParticles",
+		"Enable/Disable particles softening: 0=disabled, 1=enabled"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const auto& args = action.GetArgs();
+
+		const char* fmt = "ProjectileDrawer particles-softening %s";
+		const char* strs[] = { "disabled", "enabled", "enabled with extra unsafe softness" };
+
+		if (!args.empty()) {
+			LOG(fmt, strs[projectileDrawer->EnableSoften(atoi(args.c_str()))]);
+		}
+		else {
+			LOG(fmt, strs[projectileDrawer->ToggleSoften()]);
+		}
+
+		return true;
+	}
+};
+
 class MaxParticlesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MaxParticlesActionExecutor() : IUnsyncedActionExecutor(
@@ -2696,6 +2736,94 @@ public:
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
 
+		return true;
+	}
+};
+
+class IconsAsUIActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconsAsUIActionExecutor() : IUnsyncedActionExecutor("IconsAsUI",
+			"Set whether unit icons are drawn as an UI element (true) or old LOD-like style (false, default).") {}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		InverseOrSetBool(unitDrawer->useScreenIcons, action.GetArgs());
+		configHandler->Set("UnitIconsAsUI", unitDrawer->useScreenIcons ? 1 : 0);
+		LogSystemStatus("Draw unit icons as UI: ", unitDrawer->useScreenIcons);
+		return true;
+	}
+};
+
+class IconScaleActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconScaleActionExecutor() : IUnsyncedActionExecutor("IconScaleUI",
+			"Set the multiplier for the size of the UI unit icons") {}
+
+	bool Execute(const UnsyncedAction& action) const final
+	{
+		if (!action.GetArgs().empty()) {
+			const float iconScale = (float) atof(action.GetArgs().c_str());
+			unitDrawer->SetUnitIconScaleUI(iconScale);
+			configHandler->Set("UnitIconScaleUI", iconScale);
+			LOG("Set UnitIconScaleUI to %f", iconScale);
+		}
+		else
+			LOG("UnitIconScaleUI is %f", unitDrawer->GetUnitIconScaleUI());
+
+		return true;
+	}
+};
+
+class IconFadeStartActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconFadeStartActionExecutor() : IUnsyncedActionExecutor("IconFadeStart",
+			"Set the distance where unit icons became completely opaque at") {}
+
+	bool Execute(const UnsyncedAction& action) const final
+	{
+		if (!action.GetArgs().empty())
+		{
+			const float iconFadeStart = (float) atof(action.GetArgs().c_str());
+			unitDrawer->SetUnitIconFadeStart(iconFadeStart);
+			configHandler->Set("UnitIconFadeStart", iconFadeStart);
+			LOG("Set UnitIconFadeStart to %f", iconFadeStart);
+		}
+		else
+			LOG("UnitIconFadeStart is %f", unitDrawer->GetUnitIconFadeStart());
+
+		return true;
+	}
+};
+
+class IconFadeVanishActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconFadeVanishActionExecutor() : IUnsyncedActionExecutor("IconFadeVanish",
+			"Set the distance where unit icons fade out at") {}
+
+	bool Execute(const UnsyncedAction& action) const final
+	{
+		if (!action.GetArgs().empty())
+		{
+			const float iconFadeVanish = (float) atof(action.GetArgs().c_str());
+			unitDrawer->SetUnitIconFadeVanish(iconFadeVanish);
+			configHandler->Set("UnitIconFadeVanish", iconFadeVanish);
+			LOG("Set UnitIconFadeVanish to %f", iconFadeVanish);
+		}
+		else
+			LOG("UnitIconFadeVanish is %f", unitDrawer->GetUnitIconFadeVanish());
+
+		return true;
+	}
+};
+
+class IconsHideWithUIActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IconsHideWithUIActionExecutor() : IUnsyncedActionExecutor("IconsHideWithUI",
+			"Set whether unit icons are hidden when UI is hidden.") {}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		InverseOrSetBool(unitDrawer->iconHideWithUI, action.GetArgs());
+		configHandler->Set("IconsHideWithUI", unitDrawer->iconHideWithUI ? 1 : 0);
+		LogSystemStatus("Hide unit icons with UI: ", unitDrawer->iconHideWithUI);
 		return true;
 	}
 };
@@ -3451,6 +3579,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<GroundDecalsActionExecutor>());
 
 	AddActionExecutor(AllocActionExecutor<DistSortProjectilesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ParticleSoftenActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxNanoParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MinViewRangeActionExecutor>());
@@ -3461,6 +3590,11 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<BufferTextActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<InputTextGeoActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DistIconActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconsAsUIActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconScaleActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconFadeStartActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconFadeVanishActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IconsHideWithUIActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DistDrawActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LODScaleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<AirMeshActionExecutor>());

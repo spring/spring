@@ -29,6 +29,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Cpp11Compat.hpp"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -338,7 +339,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	decals.resize(maxDecals);
 	freeIds.resize(maxDecals - 1); // idx = 0 is invalid, so -1
 	std::iota(freeIds.begin(), freeIds.end(), 1); // start with 1, 0 is illegal
-	std::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
+	spring::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
 	groups.reserve(maxDecalGroups);
 }
 
@@ -656,7 +657,8 @@ void CDecalsDrawerGL4::ViewResize()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	GLint depthFormat = static_cast<GLint>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
+	glTexImage2D(GL_TEXTURE_2D, 0, depthFormat, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 }
 
 

@@ -11,6 +11,7 @@ if     (MINIZIP_FOUND)
 	set_global(SPRING_MINIZIP_LIBRARY "${MINIZIP_LIBRARY}")
 else   (MINIZIP_FOUND)
 	# Build our own minizip library
+	
 	set(miniZipSources
 			"unzip"
 			"zip"

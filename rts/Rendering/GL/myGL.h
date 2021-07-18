@@ -11,7 +11,9 @@
 
 
 #if       defined(HEADLESS)
+	#define WINGDIAPI //working around https://github.com/beyond-all-reason/spring/issues/27
 	#include "lib/headlessStubs/glewstub.h"
+	#undef WINGDIAPI
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)

@@ -173,8 +173,7 @@ CBumpWater::CBumpWater()
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
 	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
-	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffer)
-		depthBits = 16;
+	depthBits    = std::min(depthBits, static_cast<char>(globalRendering->supportDepthBufferBitDepth));
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && waterRendering->shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && waterRendering->hasWaterPlane
@@ -291,9 +290,7 @@ CBumpWater::CBumpWater()
 	// CREATE TEXTURES
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
-		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
-			target = GL_TEXTURE_RECTANGLE_ARB;
-		} else if (!globalRendering->supportNonPowerOfTwoTex) {
+		if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
 			screenTextureY = next_power_of_2(screenTextureY);
 		}
@@ -337,8 +334,9 @@ CBumpWater::CBumpWater()
 		glBindTexture(target, depthTexture);
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		GLuint depthFormat = GL_DEPTH_COMPONENT32;
-		if (!globalRendering->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
+		//GLuint depthFormat = GL_DEPTH_COMPONENT32;
+		//if (!globalRendering->amdHacks) { depthFormat = GL_DEPTH_COMPONENT24; }
+		GLuint depthFormat = CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth);
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
@@ -364,12 +362,7 @@ CBumpWater::CBumpWater()
 
 	// CREATE FBOs
 	if (FBO::IsSupported()) {
-		GLuint depthRBOFormat = GL_DEPTH_COMPONENT;
-		switch (depthBits) {
-			case 16: depthRBOFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: depthRBOFormat = GL_DEPTH_COMPONENT24; break;
-			case 32: depthRBOFormat = GL_DEPTH_COMPONENT32; break;
-		}
+		GLuint depthRBOFormat = static_cast<GLuint>(CGlobalRendering::DepthBitsToFormat(depthBits));
 
 		if (reflection>0) {
 			reflectFBO.Bind();
@@ -414,7 +407,6 @@ CBumpWater::CBumpWater()
 	if (depthCopy)    definitions += "#define opt_depth\n";
 	if (blurRefl)     definitions += "#define opt_blurreflection\n";
 	if (endlessOcean) definitions += "#define opt_endlessocean\n";
-	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
 
 	GLSLDefineConstf3(definitions, "MapMid",                    float3(mapDims.mapx * SQUARE_SIZE * 0.5f, 0.0f, mapDims.mapy * SQUARE_SIZE * 0.5f));
 	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
@@ -1243,5 +1235,3 @@ void CBumpWater::OcclusionQuery()
 	}
 #endif
 }
-
-

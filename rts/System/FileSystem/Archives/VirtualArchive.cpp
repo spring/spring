@@ -6,6 +6,7 @@
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/Log/ILog.h"
 
+#include "zlib.h"
 #include "minizip/zip.h"
 #include <cassert>
 

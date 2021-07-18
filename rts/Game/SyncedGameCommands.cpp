@@ -135,14 +135,14 @@ public:
 
 		if (args.empty()) {
 			for (unsigned int n = 0; n < maxAllyTeam; n++) {
-				losHandler->globalLOS[n] = !losHandler->globalLOS[n];
+				losHandler->FlipGlobalLOS(n);
 			}
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for all allyteams");
 			return true;
 		}
 		if (argAllyTeam < maxAllyTeam) {
-			losHandler->globalLOS[argAllyTeam] = !losHandler->globalLOS[argAllyTeam];
+			losHandler->FlipGlobalLOS(argAllyTeam);
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for allyteam %u", argAllyTeam);
 			return true;

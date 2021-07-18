@@ -381,7 +381,7 @@ void main() {
 	{
 		// cameraDir does not need to be normalized for reflect()
 		vec3 reflectDir = reflect(cameraDir, normal);
-		vec3 reflectCol = textureCube(skyReflectTex, gl_NormalMatrix * reflectDir).rgb;
+		vec3 reflectCol = textureCube(skyReflectTex, reflectDir).rgb;
 		vec3 reflectMod = texture2D(skyReflectModTex, specTexCoords).rgb;
 
 		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);

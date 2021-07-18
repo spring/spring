@@ -128,8 +128,8 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 
 void CDemoRecorder::SetName(const std::string& mapName, const std::string& modName)
 {
-	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
-	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
+	// Returns the current UTC time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
+	const std::string curTime = CTimeUtil::GetCurrentTimeStr(true);
 	const std::string demoDir = isServerDemo? "demos-server/": "demos/";
 
 	// We want this folder to exist

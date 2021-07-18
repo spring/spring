@@ -35,11 +35,13 @@ CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(
 CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
-CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
-CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
+CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with AMD video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
@@ -57,8 +59,8 @@ CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).descri
 CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
 CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
-CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosX).minimumValue(0).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosY).minimumValue(0).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 
 
 /**
@@ -115,6 +117,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
+	CR_IGNORED(forceDisablePersistentMapping),
 	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
@@ -126,16 +129,17 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(active),
 	CR_IGNORED(compressTextures),
 
-	CR_IGNORED(haveATI),
+	CR_IGNORED(haveAMD),
 	CR_IGNORED(haveMesa),
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
 
-	CR_IGNORED(atiHacks),
+	CR_IGNORED(amdHacks),
+	CR_IGNORED(supportPersistentMapping),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(supportMSAAFrameBuffer),
-	CR_IGNORED(support24bitDepthBuffer),
+	CR_IGNORED(supportDepthBufferBitDepth),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(supportSeamlessCubeMaps),
@@ -149,6 +153,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(glslMaxRecommendedVertices),
 	CR_IGNORED(glslMaxUniformBufferBindings),
 	CR_IGNORED(glslMaxUniformBufferSize),
+	CR_IGNORED(glslMaxStorageBufferBindings),
+	CR_IGNORED(glslMaxStorageBufferSize),
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
 
@@ -161,7 +167,7 @@ CR_REG_METADATA(CGlobalRendering, (
 
 
 void CGlobalRendering::InitStatic() { globalRendering = new (globalRenderingMem) CGlobalRendering(); }
-void CGlobalRendering::KillStatic() { spring::SafeDestruct(globalRendering); }
+void CGlobalRendering::KillStatic() { globalRendering->PreKill();  spring::SafeDestruct(globalRendering); }
 
 
 CGlobalRendering::CGlobalRendering()
@@ -187,8 +193,8 @@ CGlobalRendering::CGlobalRendering()
 	, viewSizeX(1)
 	, viewSizeY(1)
 
-	, screenViewMatrix(nullptr)
-	, screenProjMatrix(nullptr)
+	, screenViewMatrix()
+	, screenProjMatrix()
 
 	// pixel geometry
 	, pixelX(0.01f)
@@ -225,16 +231,17 @@ CGlobalRendering::CGlobalRendering()
 	, active(true)
 	, compressTextures(false)
 
-	, haveATI(false)
+	, haveAMD(false)
 	, haveMesa(false)
 	, haveIntel(false)
 	, haveNvidia(false)
-	, atiHacks(false)
+	, amdHacks(false)
 
+	, supportPersistentMapping(false)
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, supportMSAAFrameBuffer(false)
-	, support24bitDepthBuffer(false)
+	, supportDepthBufferBitDepth(16)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
 	, supportSeamlessCubeMaps(false)
@@ -249,6 +256,8 @@ CGlobalRendering::CGlobalRendering()
 	, glslMaxRecommendedVertices(0)
 	, glslMaxUniformBufferBindings(0)
 	, glslMaxUniformBufferSize(0)
+	, glslMaxStorageBufferBindings(0)
+	, glslMaxStorageBufferSize(0)
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
@@ -257,9 +266,6 @@ CGlobalRendering::CGlobalRendering()
 	, sdlWindows{nullptr, nullptr}
 	, glContexts{nullptr, nullptr}
 {
-	screenViewMatrix = std::make_unique<CMatrix44f>();
-	screenProjMatrix = std::make_unique<CMatrix44f>();
-
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
 }
@@ -269,8 +275,6 @@ CGlobalRendering::~CGlobalRendering()
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
 
-	UniformConstants::GetInstance().Kill();
-
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
 	KillSDL();
@@ -279,6 +283,11 @@ CGlobalRendering::~CGlobalRendering()
 	sdlWindows[1] = nullptr;
 	glContexts[0] = nullptr;
 	glContexts[1] = nullptr;
+}
+
+void CGlobalRendering::PreKill()
+{
+	UniformConstants::GetInstance().Kill(); //unsafe to kill in ~CGlobalRendering()
 }
 
 
@@ -621,14 +630,15 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
-	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
+	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
+				 (glRenderer.find("radeon ") != std::string::npos) || (glRenderer.find("amd ") != std::string::npos); //it's amazing how inconsistent AMD detection can be
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
 	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
 	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
 
-	if (haveATI) {
+	if (haveAMD) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-		globalRenderingInfo.gpuVendor = "ATI";
+		globalRenderingInfo.gpuVendor = "AMD";
 	} else if (haveIntel) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
 		globalRenderingInfo.gpuVendor = "Intel";
@@ -643,8 +653,11 @@ void CGlobalRendering::SetGLSupportFlags()
 		globalRenderingInfo.gpuVendor = "Unknown";
 	}
 
+	supportPersistentMapping = GLEW_ARB_buffer_storage;
+	supportPersistentMapping &= (configHandler->GetInt("ForceDisablePersistentMapping") == 0);
+
 	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
 	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
@@ -665,10 +678,10 @@ void CGlobalRendering::SetGLSupportFlags()
 
 	{
 		// use some ATI bugfixes?
-		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI;
-		atiHacks &= (atiHacksCfg < 0); // runtime detect
-		atiHacks |= (atiHacksCfg > 0); // user override
+		const int amdHacksCfg = configHandler->GetInt("AtiHacks");
+		amdHacks = haveAMD;
+		amdHacks &= (amdHacksCfg < 0); // runtime detect
+		amdHacks |= (amdHacksCfg > 0); // user override
 	}
 
 	// runtime-compress textures? (also already required for SMF ground textures)
@@ -690,34 +703,40 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_EXT_framebuffer_multisample
 	supportMSAAFrameBuffer = GLEW_EXT_framebuffer_multisample;
 	#endif
-
 	// CC did not exist as an extension before GL4.5, too recent to enforce
-	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
+
+	//stick to the theory that reported = exist
+	//supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
-	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
-	supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
-
-	#if 0
-	{
-		// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
-		// they seem to support GL_DEPTH_COMPONENT24 for static textures
-		// but those can't be rendered to)
-		GLint state = 0;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
-		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffer = (state > 0);
-	}
-	#else
-	if (FBO::IsSupported() && !atiHacks) {
-		FBO fbo;
-		fbo.Bind();
-		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
-		fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-		support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
-		fbo.Unbind();
-	}
+	//supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
+	#ifdef GLEW_ARB_conservative_depth
+	supportFragDepthLayout = GLEW_ARB_conservative_depth; //stick to the theory that reported = exist
 	#endif
+
+	//stick to the theory that reported = exist
+	//supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
+
+	for (const int bits : {16, 24, 32}) {
+		bool supported = false;
+		if (FBO::IsSupported()) {
+			FBO fbo;
+			fbo.Bind();
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
+			const GLint format = DepthBitsToFormat(bits);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, format, 16, 16);
+			supported = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+			fbo.Unbind();
+		}
+
+		if (supported)
+			supportDepthBufferBitDepth = std::max(supportDepthBufferBitDepth, bits);
+	}
+
+	//TODO figure out if needed
+	if (globalRendering->amdHacks) {
+		supportDepthBufferBitDepth = 24;
+	}
 }
 
 void CGlobalRendering::QueryGLMaxVals()
@@ -729,13 +748,21 @@ void CGlobalRendering::QueryGLMaxVals()
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxTexAnisoLvl);
 
 	// some GLSL relevant information
-	glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
-	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
-	glGetIntegerv(GL_MAX_VARYING_FLOATS,          &glslMaxVaryings);
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,          &glslMaxAttributes);
-	glGetIntegerv(GL_MAX_DRAW_BUFFERS,            &glslMaxDrawBuffers);
-	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,        &glslMaxRecommendedIndices);
-	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,       &glslMaxRecommendedVertices);
+	if (GLEW_ARB_uniform_buffer_object) {
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
+	}
+
+	if (GLEW_ARB_shader_storage_buffer_object) {
+		glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &glslMaxStorageBufferBindings);
+		glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,      &glslMaxStorageBufferSize);
+	}
+
+	glGetIntegerv(GL_MAX_VARYING_FLOATS,                 &glslMaxVaryings);
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,                 &glslMaxAttributes);
+	glGetIntegerv(GL_MAX_DRAW_BUFFERS,                   &glslMaxDrawBuffers);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,               &glslMaxRecommendedIndices);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &glslMaxRecommendedVertices);
 
 	// GL_MAX_VARYING_FLOATS is the maximum number of floats, we count float4's
 	glslMaxVaryings /= 4;
@@ -792,6 +819,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
+	LOG("\tInitialized OpenGL Context: %i.%i (%s)", globalRenderingInfo.glContextVersion.x, globalRenderingInfo.glContextVersion.y, globalRenderingInfo.glContextIsCore ? "Core" : "Compat");
 	LOG("\tARB shader support        : %i", haveARB);
 	LOG("\tGLSL shader support       : %i", haveGLSL);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());
@@ -801,11 +829,13 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
 	LOG("\tMSAA frame-buffer support : %i (%i)", supportMSAAFrameBuffer, glewIsExtensionSupported("GL_EXT_framebuffer_multisample"));
-	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
+	LOG("\tZ-buffer depth            : %i (-)", supportDepthBufferBitDepth);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
-	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
+	LOG("\tfrag-depth layout support : %i (%i)", supportFragDepthLayout, glewIsExtensionSupported("GL_ARB_conservative_depth"));
+	LOG("\tpersistent maps support   : %i (%i)", supportPersistentMapping, glewIsExtensionSupported("GL_ARB_buffer_storage"));
+
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
@@ -815,8 +845,10 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tmax. rec. indices/vertices   : %i/%i", glslMaxRecommendedIndices, glslMaxRecommendedVertices);
 	LOG("\tmax. uniform buffer-bindings : %i", glslMaxUniformBufferBindings);
 	LOG("\tmax. uniform block-size      : %iKB", glslMaxUniformBufferSize / 1024);
+	LOG("\tmax. storage buffer-bindings : %i", glslMaxStorageBufferBindings);
+	LOG("\tmax. storage block-size      : %iMB", glslMaxStorageBufferSize / (1024 * 1024));
 	LOG("\t");
-	LOG("\tenable ATI-hacks : %i", atiHacks);
+	LOG("\tenable AMD-hacks : %i", amdHacks);
 	LOG("\tcompress MIP-maps: %i", compressTextures);
 }
 
@@ -898,6 +930,11 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 }
 
 
+bool CGlobalRendering::GetWindowInputGrabbing()
+{
+	return static_cast<bool>(SDL_GetWindowGrab(sdlWindows[0]));
+}
+
 bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 {
 	SDL_SetWindowGrab(sdlWindows[0], enable? SDL_TRUE: SDL_FALSE);
@@ -906,7 +943,7 @@ bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 
 bool CGlobalRendering::ToggleWindowInputGrabbing()
 {
-	if (SDL_GetWindowGrab(sdlWindows[0]))
+	if (GetWindowInputGrabbing())
 		return (SetWindowInputGrabbing(false));
 
 	return (SetWindowInputGrabbing(true));
@@ -1001,6 +1038,10 @@ void CGlobalRendering::ReadWindowPosAndSize()
 
 	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
 	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
+
+	//enforce >=0 https://github.com/beyond-all-reason/spring/issues/23
+	winPosX = std::max(winPosX, 0);
+	winPosY = std::max(winPosY, 0);
 #endif
 
 	// should be done by caller
@@ -1067,8 +1108,8 @@ void CGlobalRendering::UpdateScreenMatrices()
 	const float top = ((vpy + vsy) - hssy) * zfact;
 
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
-	*screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
-	*screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
+	screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
+	screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
 }
 
 void CGlobalRendering::UpdateGLGeometry()
@@ -1127,6 +1168,21 @@ void CGlobalRendering::InitGLState()
 	LogDisplayMode(sdlWindows[0]);
 }
 
+int CGlobalRendering::DepthBitsToFormat(int bits)
+{
+	switch (bits)
+	{
+	case 16:
+		return GL_DEPTH_COMPONENT16;
+	case 24:
+		return GL_DEPTH_COMPONENT24;
+	case 32:
+		return GL_DEPTH_COMPONENT32;
+	default:
+		return GL_DEPTH_COMPONENT; //should never hit this
+	}
+}
+
 /**
  * @brief multisample verify
  * @return whether verification passed
@@ -1158,6 +1214,14 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
+
+	GLint profile = 0;
+	glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profile);
+
+	if (profile != 0)
+		globalRenderingInfo.glContextIsCore = (profile == GL_CONTEXT_CORE_PROFILE_BIT);
+	else
+		globalRenderingInfo.glContextIsCore = !GLEW_ARB_compatibility;
 
 	// keep this for convenience
 	globalRenderingInfo.glContextVersion = tmpCtx;

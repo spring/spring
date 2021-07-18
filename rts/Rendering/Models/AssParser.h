@@ -16,9 +16,6 @@ struct aiNode;
 struct aiScene;
 class LuaTable;
 
-typedef SVertexData SAssVertex;
-
-
 struct SAssPiece: public S3DModelPiece
 {
 	SAssPiece() = default;
@@ -45,24 +42,13 @@ struct SAssPiece: public S3DModelPiece
 	}
 
 	void DrawForList() const override;
-	void UploadGeometryVBOs() override;
-	void BindVertexAttribVBOs() const override;
-	void UnbindVertexAttribVBOs() const override;
-
-	unsigned int GetVertexCount() const override { return vertices.size(); }
-	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
-	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
 	void SetNumTexCoorChannels(unsigned int n) { numTexCoorChannels = n; }
-
 public:
-	std::vector<SAssVertex> vertices;
-	std::vector<unsigned int> indices;
-
 	unsigned int numTexCoorChannels = 0;
 };
 
@@ -102,6 +88,7 @@ private:
 	);
 	static void LoadPieceGeometry(
 		SAssPiece* piece,
+		const S3DModel* model,
 		const aiNode* pieceNode,
 		const aiScene* scene
 	);

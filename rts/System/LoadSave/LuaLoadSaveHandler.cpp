@@ -5,6 +5,7 @@
 
 #include "LuaLoadSaveHandler.h"
 
+#include "zlib.h"
 #include "minizip/zip.h"
 
 #include "ExternalAI/SkirmishAIHandler.h"

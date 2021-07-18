@@ -696,7 +696,7 @@ int springLegacyAI::CAIAICallback::GetEnemyUnits(int* unitIds, int unitIds_max) 
 
 int springLegacyAI::CAIAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 	float3 cpyPos = pos;
-	return sAICallback->getEnemyUnitsIn(skirmishAIId, &cpyPos[0], radius, unitIds, unitIds_max);
+	return sAICallback->getEnemyUnitsIn(skirmishAIId, &cpyPos[0], radius, true, unitIds, unitIds_max);
 }
 
 
@@ -711,7 +711,7 @@ int springLegacyAI::CAIAICallback::GetFriendlyUnits(int* unitIds, int unitIds_ma
 
 int springLegacyAI::CAIAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 	float3 cpyPos = pos;
-	return sAICallback->getFriendlyUnitsIn(skirmishAIId, &cpyPos[0], radius, unitIds, unitIds_max);
+	return sAICallback->getFriendlyUnitsIn(skirmishAIId, &cpyPos[0], radius, true, unitIds, unitIds_max);
 }
 
 
@@ -721,7 +721,7 @@ int springLegacyAI::CAIAICallback::GetNeutralUnits(int* unitIds, int unitIds_max
 
 int springLegacyAI::CAIAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 	float3 cpyPos = pos;
-	return sAICallback->getNeutralUnitsIn(skirmishAIId, &cpyPos[0], radius, unitIds, unitIds_max);
+	return sAICallback->getNeutralUnitsIn(skirmishAIId, &cpyPos[0], radius, true, unitIds, unitIds_max);
 }
 
 
@@ -1101,7 +1101,7 @@ int springLegacyAI::CAIAICallback::GetFeatures(int* featureIds, int featureIds_m
 
 int springLegacyAI::CAIAICallback::GetFeatures(int *featureIds, int featureIds_max, const float3& pos, float radius) {
 	float3 cpyPos = pos;
-	return sAICallback->getFeaturesIn(skirmishAIId, &cpyPos[0], radius, featureIds, featureIds_max);
+	return sAICallback->getFeaturesIn(skirmishAIId, &cpyPos[0], radius, true, featureIds, featureIds_max);
 }
 
 const springLegacyAI::FeatureDef* springLegacyAI::CAIAICallback::GetFeatureDef(int featureId) {

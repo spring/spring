@@ -305,6 +305,21 @@ void CKeyBindings::Kill()
 
 
 /******************************************************************************/
+const CKeyBindings::ActionList& CKeyBindings::GetActionList() const
+{
+	static ActionList merged; //FIXME switch to thread_local (?)
+	const ActionList* alPtr;
+
+	for (const auto& p: bindings) {
+		const ActionList& al = p.second;
+
+		merged.insert(merged.end(), al.begin(), al.end());
+	}
+
+	alPtr = &merged;
+
+	return *alPtr;
+}
 
 const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
 {
@@ -471,7 +486,7 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 		// check if the command is already found to the given keyset
 		bool found = false;
 		for (const Action& act: al) {
-			if (act.command == action.command) {
+			if (act.command == action.command && act.extra == action.extra) {
 				found = true;
 				break;
 			}

@@ -387,9 +387,6 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::PostLoad()
 {
-	if (unitDef->windGenerator > 0.0f)
-		envResHandler.AddGenerator(this);
-
 	eventHandler.RenderUnitCreated(this, isCloaked);
 }
 

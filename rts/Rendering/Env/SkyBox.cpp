@@ -5,6 +5,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -63,7 +64,12 @@ void CSkyBox::Draw()
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
+
+		if (game->GetDrawMode() == CGame::GameDrawMode::gameReflectionDraw)
+			glScalef(globalRendering->aspectRatio, 1.0, 1.0);
+
 		gluOrtho2D(0, 1, 0, 1);
+
 
 	GLfloat verts[] = {
 		0.0f, 1.0f,

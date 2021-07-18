@@ -50,6 +50,8 @@ Modifications for spring:
 #include <cctype>
 #endif
 
+#include "System/Cpp11Compat.hpp"
+
 // TODO: make comparison with hexadecimal numbers. Extend the alphanum_comp() function by traits to choose between decimal and hexadecimal.
 
 namespace doj {
@@ -263,7 +265,7 @@ namespace doj {
 	implement "std::ostream operator<< (std::ostream&, const Ty&)".
 	*/
 	template<class Ty>
-	struct alphanum_less : public std::binary_function<Ty, Ty, bool> {
+	struct alphanum_less : public spring::binary_function<Ty, Ty, bool> {
 		bool operator()(const Ty& left, const Ty& right) const {
 			return alphanum_comp(left, right) < 0;
 		}

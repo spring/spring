@@ -210,17 +210,17 @@ bool LuaMatrixImpl::ObjectPieceMatImpl(const unsigned int objID, const unsigned 
 
 void LuaMatrixImpl::ScreenViewMatrix(const sol::optional<bool> mult)
 {
-	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, *globalRendering->screenViewMatrix);
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, globalRendering->screenViewMatrix);
 }
 
 void LuaMatrixImpl::ScreenProjMatrix(const sol::optional<bool> mult)
 {
-	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, *globalRendering->screenProjMatrix);
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, globalRendering->screenProjMatrix);
 }
 
 void LuaMatrixImpl::ScreenViewProjMatrix(const sol::optional<bool> mult)
 {
-	CMatrix44f screenViewProjMatrix = (*globalRendering->screenProjMatrix) * (*globalRendering->screenViewMatrix);
+	CMatrix44f screenViewProjMatrix = globalRendering->screenProjMatrix * globalRendering->screenViewMatrix;
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, screenViewProjMatrix);
 }
 

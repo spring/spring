@@ -2,6 +2,7 @@
 
 #include "System/Platform/Win/win32.h"
 
+#include "zlib.h"
 #include "minizip/zip.h"
 
 #include "PathEstimator.h"

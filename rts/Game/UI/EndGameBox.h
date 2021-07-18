@@ -22,7 +22,7 @@ public:
 	virtual bool IsAbove(int x, int y);
 	virtual std::string GetTooltip(int x, int y);
 
-	static bool enabled;
+	static int enabledMode;
 	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == NULL) new CEndGameBox(winningAllyTeams);}
 	static void Destroy() { if (endGameBox != NULL) { delete endGameBox; endGameBox = NULL; } }
 

@@ -191,18 +191,6 @@ CGrassDrawer::CGrassDrawer()
 
 	const int detail = configHandler->GetInt("GrassDetail");
 
-	// some ATI drivers crash with grass enabled, default to disabled
-	if ((detail == 0) || ((detail == 7) && globalRendering->haveATI)) {
-		grassOff = true;
-		return;
-	}
-
-	// needed to create the far tex
-	if (!GLEW_EXT_framebuffer_blit) {
-		grassOff = true;
-		return;
-	}
-
 	// load grass density from map
 	{
 		MapBitmapInfo grassbm;
@@ -222,6 +210,19 @@ CGrassDrawer::CGrassDrawer()
 		grassMap.resize(mapDims.mapx * mapDims.mapy / (grassSquareSize * grassSquareSize));
 		memcpy(grassMap.data(), grassdata, grassMap.size());
 		readMap->FreeInfoMap("grass", grassdata);
+
+		// some ATI drivers crash with grass enabled, default to disabled
+		if ((detail == 0) || ((detail == 7) && globalRendering->haveAMD)) {
+			grassOff = true;
+			return;
+		}
+
+		// needed to create the far tex
+		if (!GLEW_EXT_framebuffer_blit) {
+			grassOff = true;
+			return;
+		}
+
 	}
 
 	// create/load blade texture
@@ -520,7 +521,7 @@ void CGrassDrawer::Update()
 
 		// ATI crashes w/o an error when shadows are enabled!?
 		static const bool shaders = globalRendering->haveGLSL;
-		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
+		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->amdHacks);
 
 		if (shaders && !shadows) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
@@ -561,7 +562,7 @@ void CGrassDrawer::Draw()
 
 	// ATI crashes w/o an error when shadows are enabled!?
 	static const bool shaders = globalRendering->haveGLSL;
-	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
+	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->amdHacks);
 
 	if (shaders && !shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
 		SetupGlStateFar();
@@ -893,9 +894,11 @@ void CGrassDrawer::CreateFarTex()
 	fboTex.AttachTexture(farTex);
 	fboTex.CheckStatus("GRASSDRAWER1");
 
+	GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
+
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX * sizeMod, texSizeY * sizeMod);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthFormat, texSizeX * sizeMod, texSizeY * sizeMod);
 	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, texSizeX * sizeMod, texSizeY * sizeMod);
 	fbo.CheckStatus("GRASSDRAWER2");
 
@@ -1031,9 +1034,9 @@ void CGrassDrawer::ResetPos(const float3& pos)
 }
 
 
-void CGrassDrawer::AddGrass(const float3& pos)
+void CGrassDrawer::AddGrass(const float3& pos, const uint8_t grassValue)
 {
-	if (grassOff)
+	if (grassMap.empty())
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1041,13 +1044,13 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
-	grassMap[z * mapDims.mapx / grassSquareSize + x] = 1;
+	grassMap[z * mapDims.mapx / grassSquareSize + x] = grassValue;
 	ResetPos(pos);
 }
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassMap.empty())
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -1061,7 +1064,7 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 unsigned char CGrassDrawer::GetGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassMap.empty())
 		return -1;
 
 	const int x = int(pos.x) / GSSSQ;

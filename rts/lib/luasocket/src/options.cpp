@@ -6,6 +6,12 @@
 \*=========================================================================*/
 #include <string.h> 
 
+#ifdef __MINGW32__
+    #include <ws2tcpip.h> //MinGW GCC-11 requirement
+#else
+    // fix me when time comes
+#endif
+
 #include "lauxlib.h"
 
 #include "auxiliar.h"

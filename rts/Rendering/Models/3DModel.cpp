@@ -8,6 +8,9 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
+#include "lib/meshoptimizer/src/meshoptimizer.h"
+
+#include "System/Log/ILog.h"
 
 #include <algorithm>
 #include <cctype>
@@ -69,7 +72,7 @@ void S3DModelPiece::DrawStatic() const
 		return;
 
 	glPushMatrix();
-	glMultMatrixf(pieceMatrix);
+	glMultMatrixf(bposeMatrix);
 	glCallList(dispListID);
 	glPopMatrix();
 }
@@ -100,7 +103,7 @@ void S3DModelPiece::CreateShatterPieces()
 		return;
 
 	vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboShatterIndices.Resize(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
+	vboShatterIndices.Resize(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexDrawIndexCount() * sizeof(uint32_t));
 
 	for (int i = 0; i < S3DModelPiecePart::SHATTER_VARIATIONS; ++i) {
 		CreateShatterPiecesVariation(i);
@@ -112,7 +115,7 @@ void S3DModelPiece::CreateShatterPieces()
 
 void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 {
-	typedef  std::pair<S3DModelPiecePart::RenderData, std::vector<unsigned> >  ShatterPartDataPair;
+	typedef  std::pair<S3DModelPiecePart::RenderData, std::vector<uint32_t> >  ShatterPartDataPair;
 	typedef  std::array< ShatterPartDataPair, S3DModelPiecePart::SHATTER_MAX_PARTS>  ShatterPartsBuffer;
 
 	// operate on a buffer; indices are not needed once VBO has been created
@@ -123,7 +126,6 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 	}
 
 	// helper
-	const std::vector<unsigned>& indices = GetVertexIndices();
 	const auto GetPolygonDir = [&](const size_t idx) -> float3
 	{
 		float3 midPos;
@@ -154,17 +156,17 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 			mcp = &cp;
 		}
 
-		(mcp->second).push_back(indices[i + 0]);
-		(mcp->second).push_back(indices[i + 1]);
-		(mcp->second).push_back(indices[i + 2]);
+		(mcp->second).push_back(indices[i + 0] + vboVertStart);
+		(mcp->second).push_back(indices[i + 1] + vboVertStart);
+		(mcp->second).push_back(indices[i + 2] + vboVertStart);
 	}
 
 	{
 		// fill the vertex index vbo
-		const size_t mapSize = indices.size() * sizeof(unsigned int);
+		const size_t mapSize = indices.size() * sizeof(uint32_t);
 		size_t vboPos = 0;
 
-		for (auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY)); vboMem != nullptr; vboMem = nullptr) {
+		for (auto* vboMem = vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY); vboMem != nullptr; vboMem = nullptr) {
 			for (ShatterPartDataPair& cp: shatterPartsBuf) {
 				S3DModelPiecePart::RenderData& rd = cp.first;
 
@@ -172,8 +174,8 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 				rd.vboOffset  = num * mapSize + vboPos;
 
 				if (rd.indexCount > 0) {
-					memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
-					vboPos += (rd.indexCount * sizeof(unsigned int));
+					memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(uint32_t));
+					vboPos += (rd.indexCount * sizeof(uint32_t));
 				}
 			}
 		}
@@ -217,6 +219,122 @@ void S3DModelPiece::Shatter(float pieceChance, int modelType, int texType, int t
 }
 
 
+void S3DModelPiece::PostProcessGeometry()
+{
+	if (!HasGeometryData())
+		return;
+
+	vboVertStart = model->curVertStartIndx;
+	vboIndxStart = model->curIndxStartIndx;
+
+	MeshOptimize();
+
+	indicesVBO.resize(indices.size());
+	std::transform(indices.cbegin(), indices.cend(), indicesVBO.begin(), [this](uint32_t indx) { return indx + this->vboVertStart; });
+}
+
+void S3DModelPiece::UploadToVBO()
+{
+	if (!HasGeometryData())
+		return;
+
+	assert(model);
+	model->UploadToVBO(vertices, indicesVBO, vboVertStart, vboIndxStart);
+
+	indicesVBO.clear(); //no longer needed
+}
+
+void S3DModelPiece::MeshOptimize()
+{
+	if (!HasGeometryData())
+		return;
+
+	decltype(indices)  optIndices = indices;
+	decltype(vertices) optVertices = vertices;
+
+	{
+		// First, generate a remap table from your existing vertex (and, optionally, index) data:
+		std::vector<uint32_t> remap(vertices.size()); // allocate temporary memory for the remap table
+		size_t vertexCount = meshopt_generateVertexRemap(remap.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(SVertexData));
+
+		// After generating the remap table, you can allocate space for the target vertex buffer (vertex_count elements) and index buffer (index_count elements) and generate them:
+		optVertices.resize(vertexCount);
+
+		meshopt_remapIndexBuffer(optIndices.data(), indices.data(), indices.size(), remap.data());
+		meshopt_remapVertexBuffer(optVertices.data(), vertices.data(), vertices.size(), sizeof(SVertexData), remap.data());
+	}
+
+	// Vertex cache optimization
+	meshopt_optimizeVertexCache(optIndices.data(), optIndices.data(), optIndices.size(), optVertices.size());
+
+	// Vertex fetch optimization
+	optVertices.resize(meshopt_optimizeVertexFetch(optVertices.data(), optIndices.data(), optIndices.size(), optVertices.data(), optVertices.size(), sizeof(SVertexData)));
+
+#if 0 //uncomment when Lod system will need to be implemented
+	{
+		const float2 optTarget{ 0.7f, 0.05f };
+
+		size_t target_index_count = size_t(optIndices.size() * optTarget.x);
+		float result_error = 0.0f;
+
+		decltype(indices)  lodIndices  = optIndices;
+		decltype(vertices) lodVertices = optVertices;
+
+		lodIndices.resize(meshopt_simplify(lodIndices.data(), optIndices.data(), optIndices.size(), &optVertices[0].pos.x, optVertices.size(), sizeof(SVertexData), target_index_count, optTarget.y, &result_error));
+		lodVertices.resize(meshopt_optimizeVertexFetch(lodVertices.data(), lodIndices.data(), lodIndices.size(), lodVertices.data(), lodVertices.size(), sizeof(SVertexData)));
+
+		LOG("[%s] vertices.size() = %u, indices.size() = %u || optVertices.size() = %u, optIndices.size() = %u || lodIndices.size() = %u, lodVertices = %u || result_error = %f",
+			model->name.c_str(),
+			static_cast<uint32_t>(vertices.size()), static_cast<uint32_t>(indices.size()),
+			static_cast<uint32_t>(optVertices.size()), static_cast<uint32_t>(optIndices.size()),
+			static_cast<uint32_t>(lodVertices.size()), static_cast<uint32_t>(lodIndices.size()),
+			static_cast<double>(result_error)
+		);
+
+		if (lodIndices.size() < optIndices.size() || lodVertices.size() < optVertices.size()) {
+			optIndices  = lodIndices;
+			optVertices = lodVertices;
+		}
+	}
+#endif
+
+	if (optIndices.size() < indices.size() || optVertices.size() < vertices.size()) {
+		indices  = optIndices;
+		vertices = optVertices;
+	}
+}
+
+void S3DModelPiece::BindVertexAttribVBOs() const
+{
+	assert(model);
+	model->BindVertexAttribs();
+}
+
+void S3DModelPiece::UnbindVertexAttribVBOs() const
+{
+	assert(model);
+	model->UnbindVertexAttribs();
+}
+
+void S3DModelPiece::BindIndexVBO() const
+{
+	assert(model);
+	model->BindIndexVBO();
+}
+
+void S3DModelPiece::UnbindIndexVBO() const
+{
+	assert(model);
+	model->UnbindIndexVBO();
+}
+
+void S3DModelPiece::DrawElements(GLuint prim) const
+{
+	assert(model);
+	model->DrawElements(prim, vboIndxStart, vboIndxStart + indices.size());
+}
+
+
 
 /** ****************************************************************************************************
  * LocalModel
@@ -229,7 +347,7 @@ void LocalModel::DrawPieces() const
 	}
 }
 
-void LocalModel::DrawPiecesLOD(unsigned int lod) const
+void LocalModel::DrawPiecesLOD(uint32_t lod) const
 {
 	if (!luaMaterialData.ValidLOD(lod))
 		return;
@@ -239,7 +357,7 @@ void LocalModel::DrawPiecesLOD(unsigned int lod) const
 	}
 }
 
-void LocalModel::SetLODCount(unsigned int lodCount)
+void LocalModel::SetLODCount(uint32_t lodCount)
 {
 	assert(Initialized());
 
@@ -353,7 +471,116 @@ void LocalModel::UpdateBoundingVolume()
 	boundingVolume.InitBox(bbMaxs - bbMins, (bbMaxs + bbMins) * 0.5f);
 }
 
+void S3DModel::CreateVBOs()
+{
+	{
+		vertVBO = std::make_unique<VBO>(GL_ARRAY_BUFFER, false);
+		vertVBO->Bind();
+		vertVBO->New(curVertStartIndx * sizeof(SVertexData), GL_STATIC_DRAW, nullptr);
+		vertVBO->Unbind();
+	}
+	{
+		indxVBO = std::make_unique<VBO>(GL_ELEMENT_ARRAY_BUFFER, false);
+		indxVBO->Bind();
+		indxVBO->New(curIndxStartIndx * sizeof(uint32_t), GL_STATIC_DRAW, nullptr);
+		indxVBO->Unbind();
+	}
+}
 
+/** ****************************************************************************************************
+ * S3DModel
+ */
+void S3DModel::BindVertexAttribs() const
+{
+	BindVertexVBO();
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, pos)));
+
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, normal)));
+
+		glClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, texCoords[0])));
+
+		glClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, texCoords[1])));
+
+		glClientActiveTexture(GL_TEXTURE5);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, sTangent)));
+
+		glClientActiveTexture(GL_TEXTURE6);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SVertexData), vertVBO->GetPtr(offsetof(SVertexData, tTangent)));
+	UnbindVertexVBO();
+}
+
+
+void S3DModel::UnbindVertexAttribs() const
+{
+	glClientActiveTexture(GL_TEXTURE6);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE5);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE1);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE0);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void S3DModel::BindIndexVBO() const
+{
+	indxVBO->Bind(GL_ELEMENT_ARRAY_BUFFER);
+}
+
+void S3DModel::UnbindIndexVBO() const
+{
+	assert(indxVBO);
+	indxVBO->Unbind();
+}
+
+void S3DModel::BindVertexVBO() const
+{
+	vertVBO->Bind(GL_ARRAY_BUFFER);
+}
+
+void S3DModel::UnbindVertexVBO() const
+{
+	vertVBO->Unbind();
+}
+
+void S3DModel::DrawElements(GLenum prim, uint32_t vboIndxStart, uint32_t vboIndxEnd) const
+{
+	assert(vboIndxEnd - vboIndxStart > 0);
+	glDrawElements(prim, vboIndxEnd - vboIndxStart, GL_UNSIGNED_INT, indxVBO->GetPtr(vboIndxStart * sizeof(uint32_t)));
+}
+
+void S3DModel::UploadToVBO(const std::vector<SVertexData>& vertices, const std::vector<uint32_t>& indices, const uint32_t vertStart, const uint32_t indxStart) const
+{
+	{
+		vertVBO->Bind();
+		auto* map = vertVBO->MapBuffer(vertStart * sizeof(SVertexData), vertices.size() * sizeof(SVertexData), GL_WRITE_ONLY);
+		memcpy(map, vertices.data(), vertices.size() * sizeof(SVertexData));
+		vertVBO->UnmapBuffer();
+		vertVBO->Unbind();
+	}
+	{
+		indxVBO->Bind();
+		auto* map = indxVBO->MapBuffer(indxStart * sizeof(uint32_t), indices.size() * sizeof(uint32_t), GL_WRITE_ONLY);
+		memcpy(map, indices.data(), indices.size() * sizeof(uint32_t));
+		indxVBO->UnmapBuffer();
+		indxVBO->Unbind();
+	}
+
+}
 
 /** ****************************************************************************************************
  * LocalModelPiece
@@ -452,7 +679,7 @@ void LocalModelPiece::Draw() const
 	glPopMatrix();
 }
 
-void LocalModelPiece::DrawLOD(unsigned int lod) const
+void LocalModelPiece::DrawLOD(uint32_t lod) const
 {
 	if (!scriptSetVisible)
 		return;
@@ -465,12 +692,12 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 
 
 
-void LocalModelPiece::SetLODCount(unsigned int count)
+void LocalModelPiece::SetLODCount(uint32_t count)
 {
 	// any new LOD's get null-lists first
 	lodDispLists.resize(count, 0);
 
-	for (unsigned int i = 0; i < children.size(); i++) {
+	for (uint32_t i = 0; i < children.size(); i++) {
 		children[i]->SetLODCount(count);
 	}
 }

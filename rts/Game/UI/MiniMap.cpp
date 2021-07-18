@@ -393,6 +393,29 @@ void CMiniMap::UpdateGeometry()
 		curPos.x = Clamp(curPos.x, 0, globalRendering->viewSizeX - curDim.x);
 	}
 
+	{
+		// Draw{WorldStuff} transform
+		viewMats[0].LoadIdentity();
+		viewMats[0].Translate(UpVector);
+		viewMats[0].Scale({ +1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f });
+		viewMats[0].RotateX(90.0f * math::DEG_TO_RAD); // rotate to match real 'world' coordinates
+		viewMats[0].Scale(XZVector + UpVector * 0.0001f); // (invertibly) flatten; LuaOpenGL::DrawScreen uses persp-proj so z-values influence x&y
+
+		viewMats[1].LoadIdentity();
+		viewMats[1].Translate(UpVector);
+		// heightmap (squares) to minimap
+		viewMats[1].Scale({ 1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f });
+		// worldmap (elmos) to minimap
+		// viewMats[1].Scale({1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
+
+		viewMats[2].LoadIdentity();
+		viewMats[2].Scale({ 1.0f / curDim.x, 1.0f / curDim.y, 1.0f });
+
+		projMats[0] = CMatrix44f::ClipOrthoProj01();
+		projMats[1] = CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, globalRendering->supportClipSpaceControl * 1.0f);
+		projMats[2] = projMats[1];
+	}
+
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
 

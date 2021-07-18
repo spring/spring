@@ -13,7 +13,7 @@
 /******************************************************************************/
 
 std::string LuaTextures::Create(const Texture& tex)
-{	
+{
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 
@@ -88,7 +88,8 @@ std::string LuaTextures::Create(const Texture& tex)
 		if (tex.fboDepth != 0) {
 			glGenRenderbuffersEXT(1, &fboDepth);
 			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, fboDepth);
-			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, tex.xsize, tex.ysize);
+			GLenum depthFormat = static_cast<GLenum>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
+			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, depthFormat, tex.xsize, tex.ysize);
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fboDepth);
 		}
 
@@ -128,7 +129,7 @@ std::string LuaTextures::Create(const Texture& tex)
 
 
 bool LuaTextures::Bind(const std::string& name) const
-{	
+{
 	const auto it = textureMap.find(name);
 
 	if (it != textureMap.end()) {

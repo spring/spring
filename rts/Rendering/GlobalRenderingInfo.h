@@ -19,6 +19,7 @@ struct GlobalRenderingInfo {
 	char glVersionShort[256];
 	char glslVersionShort[256];
 
+	bool glContextIsCore;
 	int2 glContextVersion;
 	int2 gpuMemorySize;
 

@@ -149,7 +149,7 @@ Macro    (fetch_spring_version dir prefix)
 		EndIf  (NOT GIT_FOUND)
 
 		# Fetch git version info
-		git_util_describe(${prefix}_Describe ${dir} "*")
+		git_util_describe(${prefix}_Describe ${dir} "[0-9]*")
 		If     (NOT ${prefix}_Describe)
 			Message(FATAL_ERROR "Failed to fetch git-describe for ${prefix}.")
 		EndIf  (NOT ${prefix}_Describe)
@@ -161,7 +161,7 @@ Macro    (fetch_spring_version dir prefix)
 		If     (NOT ${prefix}_IsRelease)
 			# We always want the long git-describe output on non-releases
 			# for example: 83.0.1-0-g1234567
-			git_util_describe(${prefix}_Describe ${dir} "*" --long)
+			git_util_describe(${prefix}_Describe ${dir} "[0-9]*" --long)
 		EndIf  (NOT ${prefix}_IsRelease)
 
 		Git_Util_Branch(${prefix}_Branch ${dir})

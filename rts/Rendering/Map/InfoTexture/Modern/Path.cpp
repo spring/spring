@@ -220,7 +220,7 @@ void CPathTexture::Update()
 	SColor* infoTexMem = reinterpret_cast<SColor*>(infoTexPBO.MapBuffer(offset * sizeof(SColor), (updateProcess - start) * texSize.x * sizeof(SColor)));
 
 	//FIXME make global func
-	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || losHandler->globalLOS[gu->myAllyTeam]);
+	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || losHandler->GetGlobalLOS(gu->myAllyTeam));
 
 	if (ud != nullptr) {
 		// CGameHelper::TestUnitBuildSquare accesses QuadField which is not re-entrant

@@ -250,7 +250,7 @@ std::vector<std::uint8_t> zlib::deflate(const std::vector<std::uint8_t>& inflDat
 std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned long inflSize) {
 	std::vector<std::uint8_t> deflData(compressBound(inflSize));
 
-	unsigned long bufSize = deflData.size();
+	uLongf bufSize = deflData.size();
 
 	if (compress(deflData.data(), &bufSize,  inflData, inflSize) == Z_OK) {
 		deflData.resize(bufSize);
@@ -271,8 +271,8 @@ std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, unsigned l
 	// blobs) for each new decompression attempt
 	std::vector<std::uint8_t> inflData(256 * 1024);
 
-	unsigned long bufSize = inflData.size();
-	unsigned long rawSize = bufSize;
+	uLongf bufSize = inflData.size();
+	uLongf rawSize = bufSize;
 
 	int ret;
 	while ((ret = uncompress(inflData.data(), &rawSize,  deflData, deflSize)) == Z_BUF_ERROR) {

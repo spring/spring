@@ -101,7 +101,7 @@ public:
 
 	virtual ~CReadMap();
 
-	virtual void Update() {}
+	virtual void Update() { UpdateHeightBounds(gs->frameNum); }
 	virtual void UpdateShadingTexture() {}
 
 	virtual void InitGroundDrawer() = 0;
@@ -207,6 +207,8 @@ public:
 	unsigned int CalcTypemapChecksum();
 
 private:
+	void UpdateHeightBounds(int syncFrame);
+
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);
 	void UpdateMipHeightmaps(const SRectangle& rect, bool initialize);
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
@@ -273,7 +275,11 @@ private:
 
 	unsigned int mapChecksum = 0;
 
+	bool processingHeightBounds = false;
+	bool updateHeightBounds = false;
+
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
+	float2 tempHeightBounds; //< temporary minimum- and maximum-height
 	float2 currHeightBounds; //< current minimum- and maximum-height
 
 	float boundingRadius = 0.0f;
@@ -286,16 +292,13 @@ extern MapDimensions mapDims;
 
 inline float CReadMap::AddHeight(const int idx, const float a) { return SetHeight(idx, a, 1); }
 inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
-	float& x = (*heightMapSyncedPtr)[idx];
+	float& heightRef = (*heightMapSyncedPtr)[idx];
 
 	// add=0 <--> x = x*0 + h =   h
 	// add=1 <--> x = x*1 + h = x+h
-	x = x * add + h;
-
-	currHeightBounds.x = std::min(x, currHeightBounds.x);
-	currHeightBounds.y = std::max(x, currHeightBounds.y);
-
-	return x;
+	float newHeight = heightRef * add + h;
+	updateHeightBounds |= (newHeight != heightRef);
+	return (heightRef = newHeight);
 }
 
 

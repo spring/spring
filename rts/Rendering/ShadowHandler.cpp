@@ -149,6 +149,17 @@ void CShadowHandler::Kill()
 	shadowGenProgs.fill(nullptr);
 }
 
+
+void CShadowHandler::Update()
+{
+	CCamera* playCam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* shadCam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
+
+	SetShadowMapSizeFactors();
+	SetShadowMatrix(playCam, shadCam);
+	SetShadowCamera(shadCam);
+}
+
 void CShadowHandler::FreeTextures() {
 	if (shadowMapFBO.IsValid()) {
 		shadowMapFBO.Bind();
@@ -294,8 +305,10 @@ bool CShadowHandler::InitDepthTarget()
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	} else {
+		GLint depthFormat = static_cast<GLint>(CGlobalRendering::DepthBitsToFormat(globalRendering->supportDepthBufferBitDepth));
+
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, depthFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 		// Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
 		shadowMapFBO.Bind();
@@ -331,7 +344,10 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		const GLint texFormat = globalRendering->support24bitDepthBuffer? GL_DEPTH_COMPONENT24: GL_DEPTH_COMPONENT16;
+
+		const int depthBits = std::min(globalRendering->supportDepthBufferBitDepth, 24);
+		const GLint texFormat = CGlobalRendering::DepthBitsToFormat(depthBits);
+
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
@@ -604,13 +620,10 @@ void CShadowHandler::CreateShadows()
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
+	//flickers without it. Why?
+	SetShadowCamera(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW));
+
 	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
-	CCamera* curCam = CCameraHandler::GetActiveCamera();
-
-
-	SetShadowMapSizeFactors();
-	SetShadowMatrix(prvCam, curCam);
-	SetShadowCamera(curCam);
 
 	if (globalRendering->haveARB) {
 		// set the shadow-parameter registers

@@ -29,7 +29,7 @@ FlyingPiece::FlyingPiece(
 	const int2 _renderParams // (.x=texType, .y=team)
 )
 : pos0(pos)
-, pieceMatrix(_pieceMatrix)
+, bposeMatrix(_pieceMatrix)
 , age(0)
 , piece(_piece)
 {
@@ -167,7 +167,7 @@ CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFac
 	const float3 interPos = cp.speed * dragFactors.x + UpVector * mapInfo->map.gravity * dragFactors.y;
 	const float4& rot = cp.rotationAxisAndSpeed;
 
-	CMatrix44f m = pieceMatrix;
+	CMatrix44f m = bposeMatrix;
 	m.GetPos() += interPos; //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
 	m.Rotate(rot.w * dragFactors.z, rot.xyz);
 

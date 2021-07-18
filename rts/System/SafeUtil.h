@@ -3,6 +3,8 @@
 #ifndef SAFE_UTIL_H
 #define SAFE_UTIL_H
 
+#include <limits>
+
 namespace spring {
 	template<class T> inline void SafeDestruct(T*& p)
 	{
@@ -42,6 +44,25 @@ namespace spring {
 
 		return (a / b);
 	}
+
+
+	template<typename TIn, typename TOut>
+	TOut SafeCast(const TIn input)
+	{
+		if constexpr (std::is_same_v<TIn, TOut>)
+			return input;
+
+		constexpr TOut minOut = std::numeric_limits<TOut>::lowest();
+		constexpr TOut maxOut = std::numeric_limits<TOut>::max();
+
+		const TIn minIn = static_cast<TIn>(minOut);
+		const TIn maxIn = static_cast<TIn>(maxOut);
+
+		if (input < minIn) return minOut; // underflow
+		if (input > maxIn) return maxOut; // overflow
+		return static_cast<TOut>(input);
+	}
+
 };
 
 #endif

@@ -23,6 +23,8 @@ set(FILES
 	shaders/GLSL/GrassVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
+	shaders/GLSL/ProjFXVertProg.glsl
+	shaders/GLSL/ProjFXFragProg.glsl	
 	shaders/ARB/waterDynWave2.vp
 	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp

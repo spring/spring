@@ -447,6 +447,12 @@ void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 	camControllers[currCamCtrlNum]->GetState(sm);
 }
 
+CCameraController::StateMap CCameraHandler::GetState() const
+{
+	CCameraController::StateMap sm;
+	GetState(sm);
+	return sm;
+}
 
 bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {

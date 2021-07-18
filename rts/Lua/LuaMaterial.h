@@ -6,6 +6,9 @@
 #include <cstring> // strcmp
 #include <string>
 #include <vector>
+#include <array>
+
+#include "Rendering/GlobalRendering.h"
 
 /*
 LuaMaterial
@@ -329,8 +332,6 @@ public:
 	bool HasDrawCall() const { return (uuid >= 0); }
 
 public:
-	static constexpr int MAX_TEX_UNITS = 16;
-
 	// default invalid
 	LuaMatType type = LuaMatType(-1);
 
@@ -341,7 +342,7 @@ public:
 	// [0] := standard, [1] := deferred
 	LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
 	LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
-	LuaMatTexture  textures[MAX_TEX_UNITS];
+	LuaMatTexture  textures[CGlobalRendering::MAX_TEXTURE_UNITS];
 
 	GLenum cullingMode = 0;
 

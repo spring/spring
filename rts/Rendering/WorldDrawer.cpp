@@ -393,7 +393,8 @@ void CWorldDrawer::DrawMiscObjects() const
 	// either draw from here, or make {Dyn,Bump}Water use blending
 	// pro: icons are drawn only once per frame, not every pass
 	// con: looks somewhat worse for underwater / obscured icons
-	unitDrawer->DrawUnitIcons();
+	if (!unitDrawer->useScreenIcons)
+		unitDrawer->DrawUnitIcons();
 
 	lineDrawer.DrawAll();
 	cursorIcons.Draw();

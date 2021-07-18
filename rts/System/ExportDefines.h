@@ -13,9 +13,13 @@
 #ifndef EXTERNALIZER
 	#if defined(__cplusplus)
 		#define EXTERNALIZER extern "C"
+		#define EXTERNALIZER_B EXTERNALIZER {
+		#define EXTERNALIZER_E }
 	#else // __cplusplus
 		// we dont have to export if we are in C already
 		#define EXTERNALIZER
+		#define EXTERNALIZER_B
+		#define EXTERNALIZER_E
 	#endif // __cplusplus
 #endif // EXTERNALIZER
 
@@ -23,17 +27,18 @@
 // different platforms and compilers
 #ifndef SHARED_EXPORT
 	#if defined _WIN32 || defined __CYGWIN__
-		#define SHARED_EXPORT EXTERNALIZER __declspec(dllexport)
+		#define EXPORT_CLAUSE __declspec(dllexport)
 		#define SPRING_API
 	#elif __GNUC__ >= 4
 		// Support for '-fvisibility=hidden'.
-		#define SHARED_EXPORT EXTERNALIZER __attribute__ ((visibility("default")))
-		#define SPRING_API __attribute__ ((visibility("default")))
+		#define EXPORT_CLAUSE __attribute__ ((visibility("default")))
+		#define SPRING_API EXPORT_CLAUSE
 	#else // _WIN32 || defined __CYGWIN__
 		// Older versions of gcc have everything visible; no need for fancy stuff.
-		#define SHARED_EXPORT EXTERNALIZER
+		#define EXPORT_CLAUSE
 		#define SPRING_API
 	#endif // _WIN32 || defined __CYGWIN__
+	#define SHARED_EXPORT EXTERNALIZER EXPORT_CLAUSE
 #endif // SHARED_EXPORT
 
 // calling convention declaration that will work across
@@ -48,8 +53,8 @@
 		#define SPRING_CALLING_CONVENTION stdcall
 		#define SPRING_CALLING_CONVENTION_2 __stdcall
 	#elif defined __POWERPC__
-		#define SPRING_CALLING_CONVENTION 
-		#define SPRING_CALLING_CONVENTION_2 
+		#define SPRING_CALLING_CONVENTION
+		#define SPRING_CALLING_CONVENTION_2
 	#else
 		#define SPRING_CALLING_CONVENTION cdecl
 		#define SPRING_CALLING_CONVENTION_2 __cdecl

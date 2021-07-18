@@ -2238,15 +2238,21 @@ int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 	return 2;
 }
 
-
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	CKeySet ks;
+	CKeyBindings::ActionList actions;
+	const std::string& argument = luaL_optstring(L, 1, "");
 
-	if (!ks.Parse(luaL_checksstring(L, 1)))
-		return 0;
+	if (argument.empty()) {
+		actions = keyBindings.GetActionList();
+	} else {
+		CKeySet ks;
 
-	const CKeyBindings::ActionList& actions = keyBindings.GetActionList(ks);
+		if (!ks.Parse(luaL_checksstring(L, 1)))
+			return 0;
+
+		actions = keyBindings.GetActionList(ks);
+	}
 
 	int i = 1;
 	lua_newtable(L);

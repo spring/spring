@@ -112,6 +112,7 @@ void COverheadController::MouseWheelMove(float move)
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
 		angle = Clamp(angle, 0.01f, math::HALFPI);
+		camHandler->CameraTransition(0.125f);
 	} else {
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen

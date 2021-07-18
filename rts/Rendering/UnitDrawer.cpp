@@ -5,6 +5,7 @@
 
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
+#include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -52,7 +53,12 @@
 
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
 CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
+CONFIG(float, UnitIconScaleUI).defaultValue(1.0f).minimumValue(0.5f).maximumValue(2.0f);
+CONFIG(float, UnitIconFadeStart).defaultValue(3000.0f).minimumValue(1.0f).maximumValue(10000.0f);
+CONFIG(float, UnitIconFadeVanish).defaultValue(1000.0f).minimumValue(1.0f).maximumValue(10000.0f);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
+CONFIG(bool, UnitIconsAsUI).defaultValue(false).description("Draw unit icons like it is an UI element and not like unit's LOD.");
+CONFIG(bool, UnitIconsHideWithUI).defaultValue(false).description("Hide unit icons when UI is hidden.");
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
@@ -64,6 +70,11 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 CUnitDrawer* unitDrawer = nullptr;
+float CUnitDrawer::iconSizeBase = 32;
+float CUnitDrawer::iconScale = 1;
+float CUnitDrawer::iconFadeStart = 3000;
+float CUnitDrawer::iconFadeVanish = 1000;
+float CUnitDrawer::iconZoomDist;
 
 // can not be a CUnitDrawer; destruction in global
 // scope might happen after ~EventHandler which is
@@ -271,6 +282,11 @@ void CUnitDrawer::Init() {
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
+	iconScale = configHandler->GetFloat("UnitIconScaleUI");
+	iconFadeStart = configHandler->GetFloat("UnitIconFadeStart");
+	iconFadeVanish = configHandler->GetFloat("UnitIconFadeVanish");
+	useScreenIcons = configHandler->GetBool("UnitIconsAsUI");
+	iconHideWithUI = configHandler->GetBool("UnitIconsHideWithUI");
 
 	alphaValues.x = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
@@ -319,6 +335,7 @@ void CUnitDrawer::Init() {
 	// note: state must be pre-selected before the first drawn frame
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
+	iconSizeBase = std::max(16.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
 }
 
 void CUnitDrawer::Kill()
@@ -385,13 +402,21 @@ void CUnitDrawer::Update()
 		UpdateTempDrawUnits(tempAlphaUnits[modelType]);
 	}
 
-	{
-		iconUnits.clear();
+	iconUnits.clear();
 
-		for (CUnit* unit: unsortedUnits) {
+	const float3 camPos = (camHandler->GetCurrentController()).GetPos();
+	const float3 camDir = (camHandler->GetCurrentController()).GetDir();
+	float dist = CGround::LineGroundCol(camPos, camDir * 150000.0f, false);
+	if (dist < 0)
+		dist = std::max(0.0f, CGround::LinePlaneCol(camPos, camDir, 150000.0f, readMap->GetCurrAvgHeight()));
+	iconZoomDist = dist;
+
+	for (CUnit* unit: unsortedUnits) {
+		if (useScreenIcons)
+			UpdateUnitIconStateScreen(unit);
+		else
 			UpdateUnitIconState(unit);
-			UpdateUnitDrawPos(unit);
-		}
+		UpdateUnitDrawPos(unit);
 	}
 
 	if ((useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons())) {
@@ -516,7 +541,6 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 }
 
 
-
 void CUnitDrawer::DrawUnitIcons()
 {
 	// draw unit icons and radar blips
@@ -541,6 +565,57 @@ void CUnitDrawer::DrawUnitIcons()
 	glPopAttrib();
 }
 
+void CUnitDrawer::DrawUnitIconsScreen()
+{
+	if (game->hideInterface && iconHideWithUI)
+		return;
+	
+	// draw unit icons and radar blips
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.05f);
+
+	CVertexArray* va = GetVertexArray();
+	iconSizeBase = std::max(12.0f, std::max(globalRendering->viewSizeX, globalRendering->viewSizeY) * iconSizeMult * iconScale);
+
+	for (auto iconIt = unitsByIcon.cbegin(); iconIt != unitsByIcon.cend(); ++iconIt)
+	{
+		const icon::CIconData* icon = iconIt->first;
+		const std::vector<const CUnit*>& units = iconIt->second;
+
+		if (icon == nullptr)
+			continue;
+		if (units.empty())
+			continue;
+
+		va->Initialize();
+		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
+		icon->BindTexture();
+
+		for (const CUnit* unit: units)
+		{
+			if (unit->noDraw)
+				continue;
+			if (unit->IsInVoid())
+				continue;
+			if (unit->health <= 0 || unit->beingBuilt)
+				continue;
+			
+			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));
+			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+
+			assert(unit->myIcon == icon);
+			DrawIconScreenArray(unit, icon, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), iconZoomDist, va);
+		}
+
+		va->DrawArray2dTC(GL_QUADS);
+	}
+	glPopAttrib();
+}
 
 
 /******************************************************************************/
@@ -671,7 +746,51 @@ void CUnitDrawer::DrawShadowPass()
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
+void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, const icon::CIconData* icon, bool useDefaultIcon, const float dist, CVertexArray* va)
+{
+	// iconUnits should not never contain void-space units, see UpdateUnitIconState
+	assert(!unit->IsInVoid());
 
+	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+	float3 pos = (!gu->spectatingFullView) ?
+		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+		unit->GetObjDrawMidPos();
+	
+	pos = camera->CalcWindowCoordinates(pos);
+	if (pos.z < 0)
+		return;
+
+	// use white for selected units
+	const uint8_t* srcColor = unit->isSelected? color4::white: teamHandler.Team(unit->team)->color;
+	uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
+
+	float unitRadiusMult = icon->GetSize();
+	if (icon->GetRadiusAdjust() && !useDefaultIcon)
+		unitRadiusMult *= (unit->radius / icon->GetRadiusScale());
+	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
+
+	// fade icons away in high zoom in levels
+	if (!unit->isIcon)
+		if (dist / unitRadiusMult < iconFadeVanish)
+			return;
+		else if (iconFadeVanish < iconFadeStart && dist / unitRadiusMult < iconFadeStart)
+			// alpha range [64, 255], since icons is unrecognisable with alpha < 64
+			color[3] = 64 + 191.0f * (dist / unitRadiusMult - iconFadeVanish) / (iconFadeStart - iconFadeVanish);
+
+	// calculate the vertices
+	const float offset = iconSizeBase / 2.0f * unitRadiusMult;
+
+	const float x0 = (pos.x - offset) / globalRendering->viewSizeX;
+	const float y0 = (pos.y + offset) / globalRendering->viewSizeY;
+	const float x1 = (pos.x + offset) / globalRendering->viewSizeX;
+	const float y1 = (pos.y - offset) / globalRendering->viewSizeY;
+
+	if (x1 < 0 || x0 > 1 || y0 < 0 || y1 > 1)
+		return; // don't try to draw outside the screen
+
+	// Draw the icon.
+	icon->DrawArray(va, x0, y0, x1, y1, color);
+}
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
@@ -1426,12 +1545,12 @@ static const void DrawModelFillBuildStageShadow(
 
 
 static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[4 + 4] = {
-	// atiHacks=0
+	// amdHacks=0
 	DrawModelNoopBuildStageOpaque,
 	DrawModelWireBuildStageOpaque,
 	DrawModelFlatBuildStageOpaque,
 	DrawModelFillBuildStageOpaque,
-	// atiHacks=1
+	// amdHacks=1
 	DrawModelNoopBuildStageOpaque,
 	DrawModelWireBuildStageOpaqueATI,
 	DrawModelFlatBuildStageOpaque,
@@ -1439,12 +1558,12 @@ static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[4 + 4] =
 };
 
 static constexpr DrawModelBuildStageFunc drawModelBuildStageShadowFuncs[4 + 4] = {
-	// atiHacks=0
+	// amdHacks=0
 	DrawModelNoopBuildStageShadow,
 	DrawModelWireBuildStageShadow,
 	DrawModelFlatBuildStageShadow,
 	DrawModelFillBuildStageShadow,
-	// atiHacks=1
+	// amdHacks=1
 	DrawModelNoopBuildStageShadow,
 	DrawModelWireBuildStageShadowATI,
 	DrawModelFlatBuildStageShadow,
@@ -1494,12 +1613,12 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// wireframe, unconditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
 	{
 		// flat-colored, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 	}
 
@@ -1508,7 +1627,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// fully-shaded, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 	}
 
@@ -1558,19 +1677,19 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	// wireframe, unconditional
 	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 
 	// flat-colored, conditional
 	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
 	// fully-shaded, conditional
 	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
-	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->amdHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
@@ -1652,6 +1771,54 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	iconUnits.push_back(unit);
 }
 
+inline void CUnitDrawer::UpdateUnitIconStateScreen(CUnit* unit)
+{
+	if (game->hideInterface && iconHideWithUI) // icons are hidden with UI
+	{
+		unit->isIcon = false; // draw unit model always
+		return;
+	}
+
+	if (unit->health <= 0 || unit->beingBuilt)
+	{
+		unit->isIcon = false;
+		return;
+	}
+
+	// If the icon is to be drawn as a radar blip, we want to get the default icon.
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	const unsigned short plosBits = (losStatus & (LOS_PREVLOS | LOS_CONTRADAR));
+	bool useDefaultIcon = !gu->spectatingFullView && !(losStatus & (LOS_INLOS)) && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
+
+	const icon::CIconData* iconData = useDefaultIcon ? icon::iconHandler.GetDefaultIconData() : unit->unitDef->iconType.GetIconData();
+
+	float iconSizeMult = iconData->GetSize();
+	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
+		iconSizeMult *= (unit->radius / iconData->GetRadiusScale());
+	iconSizeMult = (iconSizeMult - 1) * 0.75 + 1;
+
+	float limit = iconSizeBase/2 * iconSizeMult;
+
+	// calculate unit's radius in screen space and compare with the size of the icon
+	float3 pos = unit->pos;
+	float3 radiusPos = pos + camera->right * unit->radius;
+
+	pos = camera->CalcWindowCoordinates(pos);
+	radiusPos = camera->CalcWindowCoordinates(radiusPos);
+
+	unit->iconRadius = unit->radius * ( (limit * 0.9) / std::abs(pos.x-radiusPos.x) ); // used for clicking on iconified units (world space!!!)
+
+	if (!(losStatus & LOS_INLOS) && !gu->spectatingFullView) // no LOS on unit
+	{
+		unit->isIcon = losStatus & LOS_INRADAR; // draw icon if unit is on radar
+		return;
+	}
+
+	// don't render unit's model if it is smaller than icon by 10% in screen space
+	// render it anyway in case icon isn't completely opaque (below FadeStart distance)
+	unit->isIcon = iconZoomDist/iconSizeMult > iconFadeStart && std::abs(pos.x-radiusPos.x) < limit * 0.9;
+}
+
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CUnit* t = u->GetTransporter();
 
@@ -1671,18 +1838,11 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 	const float sqIconDistMult = unit->unitDef->iconType->GetDistanceSqr();
 	const float realIconLength = iconLength * sqIconDistMult;
 
-	bool asIcon = false;
-
-	if (useDistToGroundForIcons) {
-		asIcon = (sqCamDistToGroundForIcons > realIconLength);
-	} else {
-		asIcon = (sqUnitCamDist > realIconLength);
-	}
-
-	return asIcon;
+	if (useDistToGroundForIcons)
+		return (sqCamDistToGroundForIcons > realIconLength);
+	else
+		return (sqUnitCamDist > realIconLength);
 }
-
-
 
 
 // visualize if a unit can be built at specified position
@@ -1811,7 +1971,8 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 
 	// use the unit's custom icon if we can currently see it,
 	// or have seen it before and did not lose contact since
-	const bool unitVisible = ((losStatus & (LOS_INLOS | LOS_INRADAR)) && ((losStatus & prevMask) == prevMask));
+	bool unitVisible = ((losStatus & (LOS_INLOS | LOS_INRADAR)) && ((losStatus & prevMask) == prevMask));
+	unitVisible |= gameSetup->ghostedBuildings && unit->unitDef->IsBuildingUnit() && (losStatus & LOS_PREVLOS);
 	const bool customIcon = (minimap->UseUnitIcons() && (unitVisible || gu->spectatingFullView));
 
 	if (customIcon)
@@ -1884,10 +2045,6 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	unit->myIcon->DrawArray(va, x0, y0, x1, y1, color);
 }
 
-// TODO:
-//   UnitDrawer::DrawIcon was half-duplicate of MiniMap::DrawUnit&co
-//   the latter has been replaced by this, do the same for the former
-//   (mini-map icons and real-map radar icons are the same anyway)
 void CUnitDrawer::DrawUnitMiniMapIcons() const {
 	CVertexArray* va = GetVertexArray();
 
