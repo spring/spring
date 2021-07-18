@@ -16,5 +16,4 @@
 	branch = barbarian
 [submodule "AI/Skirmish/CircuitAI"]
 	path = AI/Skirmish/CircuitAI
-	url = https://github.com/rlcevg/CircuitAI.git
-	branch = zk
+	url = git://github.com/spring/CircuitAI.git
