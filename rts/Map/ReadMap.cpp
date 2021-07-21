@@ -59,6 +59,7 @@ CR_REG_METADATA(MapDimensions, (
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(updateHeightBounds),
+	CR_IGNORED(processingHeightBounds),
 	CR_IGNORED(initHeightBounds),
 	CR_IGNORED(tempHeightBounds),
 	CR_IGNORED(currHeightBounds),
