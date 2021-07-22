@@ -522,8 +522,48 @@ int LuaParser::Random(lua_State* L)
 {
 	// both US and DS depend on LuaParser via MapParser, etc
 	#if (!defined(UNITSYNC) && !defined(DEDICATED))
-	lua_pushnumber(L, gsRNG.NextFloat());
-	return 1;
+
+	switch (lua_gettop(L)) {
+		case 0: {
+			lua_pushnumber(L, gsRNG.NextFloat());
+			return 1;
+		} break;
+
+		case 1: {
+			if (lua_isnumber(L, 1)) {
+				const int u = lua_toint(L, 1);
+
+				if (u < 1)
+					luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {LuaParser}", u);
+
+				lua_pushnumber(L, 1 + gsRNG.NextInt(u));
+				return 1;
+			}
+		} break;
+
+		case 2: {
+			if (lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
+				const int lower = lua_toint(L, 1);
+				const int upper = lua_toint(L, 2);
+
+				if (lower > upper)
+					luaL_error(L, "Empty interval in math.random() {LuaParser}");
+
+				const float diff = (upper - lower);
+				const float r = gsRNG.NextFloat(); // [0,1], not [0,1) ?
+
+				lua_pushnumber(L, std::clamp(lower + int(r * (diff + 1)), lower, upper));
+				return 1;
+			}
+		} break;
+
+		default: {
+		} break;
+	}
+
+	luaL_error(L, "Incorrect arguments to math.random() {LuaParser}");
+	return 0;
+
 	#else
 	return (DummyRandom(L));
 	#endif
