@@ -66,6 +66,8 @@ struct UniformParamsBuffer {
 	float4 sunSpecularModel;
 	float4 sunSpecularMap;
 
+	float4 shadowDensity; // {ground, units, 0.0, 0.0}
+
 	float4 windInfo; // windx, windy, windz, windStrength
 	float2 mouseScreenPos; //x, y. Screen space.
 	uint32_t mouseStatus; // bits 0th to 32th: LMB, MMB, RMB, offscreen, mmbScroll, locked

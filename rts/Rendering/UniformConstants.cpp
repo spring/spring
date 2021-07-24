@@ -144,6 +144,8 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	updateBuffer->sunSpecularModel = sunLighting->modelSpecularColor;
 	updateBuffer->sunSpecularMap = sunLighting->groundSpecularColor;
 
+	updateBuffer->shadowDensity = float4{ sunLighting->groundShadowDensity, sunLighting->modelShadowDensity, 0.0, 0.0 };
+
 	updateBuffer->windInfo = float4{ envResHandler.GetCurrentWindVec(), envResHandler.GetCurrentWindStrength() };
 
 	updateBuffer->mouseScreenPos = float2{
