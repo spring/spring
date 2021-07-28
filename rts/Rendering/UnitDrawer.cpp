@@ -569,7 +569,7 @@ void CUnitDrawer::DrawUnitIconsScreen()
 {
 	if (game->hideInterface && iconHideWithUI)
 		return;
-	
+
 	// draw unit icons and radar blips
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -604,7 +604,7 @@ void CUnitDrawer::DrawUnitIconsScreen()
 				continue;
 			if (unit->health <= 0 || unit->beingBuilt)
 				continue;
-			
+
 			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));
 			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
 
@@ -755,7 +755,7 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, const icon::CIconData* 
 	float3 pos = (!gu->spectatingFullView) ?
 		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
 		unit->GetObjDrawMidPos();
-	
+
 	pos = camera->CalcWindowCoordinates(pos);
 	if (pos.z < 0)
 		return;
@@ -1582,7 +1582,7 @@ enum {
 
 void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall)
 {
-	const float3 stageBounds = {0.0f, unit->model->CalcDrawHeight(), unit->buildProgress};
+	const float3 stageBounds = {0.0f, unit->model->GetDrawHeight(), unit->buildProgress};
 
 	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
 	// the default value derives from the model vertices and makes more sense to use here
@@ -1645,7 +1645,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
 	const float3 stageColors[2] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray]};
-	const float3 stageBounds    = {0.0f, model->CalcDrawHeight(), unit->buildProgress};
+	const float3 stageBounds    = {0.0f, model->GetDrawHeight(), unit->buildProgress};
 
 	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
 	// the default value derives from the model vertices and makes more sense to use here
