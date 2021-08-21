@@ -10,6 +10,7 @@
 #include <string.h>
 
 //SPRING
+#include <algorithm>
 #include "streflop_cond.h"
 
 #define lvm_c
@@ -227,8 +228,14 @@ static int l_strcmp (const TString *ls, const TString *rs) {
   size_t ll = ls->tsv.len;
   const char *r = getstr(rs);
   size_t lr = rs->tsv.len;
+  //SPRING
+  const size_t n = std::min(ll, lr) + 1;
+  //SPRING
   for (;;) {
-    int temp = strcoll(l, r);
+    //SPRING
+    //int temp = strcoll(l, r);
+    int temp = strncmp(l, r, n);
+    //SPRING
     if (temp != 0) return temp;
     else {  /* strings are equal up to a `\0' */
       size_t len = strlen(l);  /* index of first `\0' in both strings */
