@@ -11,6 +11,7 @@ namespace creg {
 	void SerializeLuaThread(creg::ISerializer* s, lua_State** L);
 	void RegisterCFunction(const char* name, lua_CFunction f);
 	void AutoRegisterCFunctions(const std::string& handle, lua_State* L);
+	void UnregisterAllCFunctions();
 	void CopyLuaContext(lua_State* L);
 }
 

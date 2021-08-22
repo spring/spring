@@ -874,16 +874,18 @@ void creg_CClosure::Serialize(creg::ISerializer* s)
 
 	creg::StringType sType;
 	if (s->IsWriting()) {
-		//assert(funcToName.find(f) != funcToName.end());
 		if (funcToName.find(f) == funcToName.end()) {
-			LOG_L(L_ERROR, "Function 0x%p not found", f);
-			return;
+			LOG_L(L_ERROR, "Function with address 0x%p not found during serialization", f);
 		}
+		assert(funcToName.find(f) != funcToName.end());
 		std::string name = funcToName[f];
 		sType.Serialize(s, &name);
 	} else {
 		std::string name;
 		sType.Serialize(s, &name);
+		if (nameToFunc.find(name) != nameToFunc.end()) {
+			LOG_L(L_ERROR, "Function with name %s was not found during deserialization", name.c_str());
+		}
 		assert(nameToFunc.find(name) != nameToFunc.end());
 		f = nameToFunc[name];
 	}
@@ -1184,6 +1186,11 @@ void AutoRegisterCFunctions(const std::string& handle, lua_State* L)
 	lua_getregistry(L);
 	RecursiveAutoRegisterTable(handle, L, 0);
 	lua_pop(L, 1);
+}
+
+void UnregisterAllCFunctions() {
+	funcToName.clear();
+	nameToFunc.clear();
 }
 
 void CopyLuaContext(lua_State* L)

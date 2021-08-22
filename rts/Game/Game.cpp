@@ -105,6 +105,7 @@
 #include "UI/ProfileDrawer.h"
 #include "UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/creg/SerializeLuaState.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
@@ -831,14 +832,14 @@ void CGame::KillLua(bool dtor)
 	CLoadScreen::DeleteInstance();
 
 	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
-	LOG("[Game::%s][3] dtor=%d luaUI=%p", __func__, dtor, luaUI);
+	LOG("[Game::%s][1] dtor=%d luaUI=%p", __func__, dtor, luaUI);
 	CLuaUI::FreeHandler();
 
 	ENTER_SYNCED_CODE();
-	LOG("[Game::%s][1] dtor=%d luaGaia=%p", __func__, dtor, luaGaia);
+	LOG("[Game::%s][2] dtor=%d luaGaia=%p", __func__, dtor, luaGaia);
 	CLuaGaia::FreeHandler();
 
-	LOG("[Game::%s][2] dtor=%d luaRules=%p", __func__, dtor, luaRules);
+	LOG("[Game::%s][3] dtor=%d luaRules=%p", __func__, dtor, luaRules);
 	CLuaRules::FreeHandler();
 
 	CSplitLuaHandle::ClearGameParams();
@@ -847,6 +848,9 @@ void CGame::KillLua(bool dtor)
 
 	LOG("[Game::%s][4] dtor=%d", __func__, dtor);
 	LuaOpenGL::Free();
+
+	LOG("[Game::%s][5] dtor=%d", __func__, dtor);
+	creg::UnregisterAllCFunctions();
 }
 
 void CGame::KillMisc()
