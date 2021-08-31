@@ -48,6 +48,7 @@
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
+#include "Rendering/Env/Particles/Classes/NanoProjectile.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -219,6 +220,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
 	REGISTER_LUA_CFUNC(SetLosViewColors);
+
+	REGISTER_LUA_CFUNC(SetNanoProjectileParams);
 
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
@@ -1996,7 +1999,6 @@ int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 	return 0;
 }
 
-
 int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 {
 	if (guihandler == nullptr)
@@ -2087,6 +2089,16 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	gd->radarColor2[1]  = (int)(scale * radarColor2[1]);
 	gd->radarColor2[2]  = (int)(scale * radarColor2[2]);
 	infoTextureHandler->SetMode(infoTextureHandler->GetMode());
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetNanoProjectileParams(lua_State* L)
+{
+	CNanoProjectile::rotVal0 = luaL_optfloat(L, 1, 0.0f);
+	CNanoProjectile::rotVel0 = luaL_optfloat(L, 2, 0.0f);
+	CNanoProjectile::rotAcc0 = luaL_optfloat(L, 3, 0.0f);
+
 	return 0;
 }
 

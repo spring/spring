@@ -116,6 +116,8 @@ class LuaUnsyncedCtrl {
 
 		static int SetLosViewColors(lua_State* L);
 
+		static int SetNanoProjectileParams(lua_State* L);
+
 		static int WarpMouse(lua_State* L);
 
 		static int SetMouseCursor(lua_State* L);

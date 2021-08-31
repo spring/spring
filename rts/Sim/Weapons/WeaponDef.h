@@ -242,6 +242,11 @@ public:
 		int lodDistance = 0;
 		int stages = 0;
 
+		int smokePeriod = 8;
+		int smokeTime = -1; //inherit the default
+		float smokeSize = -1.0f; //inherit the default
+		float smokeColor = -1.0f;  //inherit the default
+
 		float tilelength = 0.0f;
 		float scrollspeed = 0.0f;
 		float pulseSpeed = 0.0f;
@@ -256,7 +261,9 @@ public:
 		/// TODO: make the scar-type configurable
 		bool explosionScar = true;
 		bool smokeTrail = false;
+		bool smokeTrailCastShadow = true;
 
+		bool castShadow = true;
 		bool noGap = true;
 		bool alwaysVisible = true;
 	};

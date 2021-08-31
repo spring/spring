@@ -45,7 +45,8 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	float size,
 	int time,
 	float color,
-	AtlasedTexture* texture
+	AtlasedTexture* texture,
+	bool castShadowIn
 ):
 	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false),
 
@@ -63,7 +64,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	texture((texture == nullptr)? projectileDrawer->smoketrailtex : texture)
 {
 	checkCol = false;
-	castShadow = true;
+	castShadow = castShadowIn;
 
 	UpdateEndPos(pos1, dir1);
 	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);

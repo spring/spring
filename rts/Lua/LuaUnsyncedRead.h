@@ -86,6 +86,8 @@ class LuaUnsyncedRead {
 
 		static int GetLosViewColors(lua_State* L);
 
+		static int GetNanoProjectileParams(lua_State* L);
+
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);
 		static int GetCameraPosition(lua_State* L);

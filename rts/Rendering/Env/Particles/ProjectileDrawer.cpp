@@ -25,7 +25,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Rendering/Env/Particles/Classes/FlyingPiece.h"
@@ -39,6 +38,8 @@
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+
+#define INPLACE_SORTING //todo benchmark
 
 CONFIG(int, SoftParticles).defaultValue(1).safemodeValue(0).description("Soften up CEG particles on clipping edges");
 
@@ -592,7 +593,15 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	DrawProjectileModel(pro);
 
 	pro->SetSortDist(cam->ProjectedDistance(pro->pos));
-	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
+
+	if (drawSorted && pro->drawSorted)
+#ifdef INPLACE_SORTING
+		spring::VectorPushBackSorted(sortedProjectiles[1], pro, sortingPredicate);
+#else
+		sortedProjectiles[1].push_back(pro);
+#endif
+	else
+		sortedProjectiles[0].push_back(pro);
 }
 
 
@@ -623,12 +632,12 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 		if (!cam->InView(p->drawPos, p->GetDrawRadius()))
 			return;
 
+		if (!p->castShadow)
+			return;
+
 		// if this returns false, then projectile is
 		// neither weapon nor piece, or has no model
 		if (DrawProjectileModel(p))
-			return;
-
-		if (!p->castShadow)
 			return;
 
 		// don't need to z-sort in the shadow pass
@@ -745,8 +754,9 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
 		// empty if !drawSorted
-		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), zSortCmp);
-
+#ifndef INPLACE_SORTING
+		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), sortingPredicate);
+#endif
 
 		fxVA = GetVertexArray();
 		fxVA->Initialize();

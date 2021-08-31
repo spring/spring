@@ -4,6 +4,7 @@
 #define CONTAINER_UTIL_H
 
 #include <algorithm>
+#include <functional>
 #include <cassert>
 #include <vector>
 
@@ -102,7 +103,16 @@ namespace spring {
 		return true;
 	}
 
+	//do sort according to predicate p after every emplace_back of t to v
+	template<typename T, typename P = std::less<>>
+	static void VectorPushBackSorted(std::vector<T>& v, const T& t, P&& p = P()) {
+		v.emplace_back(t);
 
+		const std::size_t n = v.size() - 1;
+
+		//std::sort(std::begin(v) + n, std::end(v), p);
+		std::inplace_merge(std::begin(v), std::begin(v) + n, std::end(v), p);
+	}
 
 	// emulate C++17's emplace_back
 	template<typename T, typename... A>

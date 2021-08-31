@@ -2544,8 +2544,7 @@ public:
 	ParticleSoftenActionExecutor() : IUnsyncedActionExecutor(
 		"SoftParticles",
 		"Enable/Disable particles softening: 0=disabled, 1=enabled"
-	) {
-	}
+	) { }
 
 	bool Execute(const UnsyncedAction& action) const final {
 		const auto& args = action.GetArgs();
@@ -2558,6 +2557,30 @@ public:
 		}
 		else {
 			LOG(fmt, strs[projectileDrawer->ToggleSoften()]);
+		}
+
+		return true;
+	}
+};
+
+class ParticleDrawOrderActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ParticleDrawOrderActionExecutor() : IUnsyncedActionExecutor(
+		"DrawOrderParticles",
+		"Enable/Disable particles draw order: 0=disabled, 1=enabled"
+	) { }
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const auto& args = action.GetArgs();
+
+		const char* fmt = "ProjectileDrawer draw order %s";
+		const char* strs[] = { "disabled", "enabled" };
+
+		if (!args.empty()) {
+			LOG(fmt, strs[projectileDrawer->EnableDrawOrder(atoi(args.c_str()))]);
+		}
+		else {
+			LOG(fmt, strs[projectileDrawer->ToggleDrawOrder()]);
 		}
 
 		return true;
@@ -3580,6 +3603,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 
 	AddActionExecutor(AllocActionExecutor<DistSortProjectilesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ParticleSoftenActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ParticleDrawOrderActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxNanoParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MinViewRangeActionExecutor>());

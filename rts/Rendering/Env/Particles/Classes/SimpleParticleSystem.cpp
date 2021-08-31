@@ -48,8 +48,10 @@ CR_BIND(CSimpleParticleSystem::Particle, )
 CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 (
 	CR_MEMBER(pos),
-	CR_MEMBER(life),
 	CR_MEMBER(speed),
+	CR_MEMBER(life),
+	CR_MEMBER(rotVal),
+	CR_MEMBER(rotVel),
 	CR_MEMBER(decayrate),
 	CR_MEMBER(size),
 	CR_MEMBER(sizeGrowth),
@@ -85,53 +87,96 @@ void CSimpleParticleSystem::Draw(CVertexArray* va)
 {
 	va->EnlargeArrays(numParticles * 4, 0, VA_SIZE_TC);
 
+	std::array<float3, 4> bounds;
+
 	if (directional) {
 		for (int i = 0; i < numParticles; i++) {
 			const Particle* p = &particles[i];
 
-			if (p->life < 1.0f) {
-				const float3 zdir = (p->pos - camera->GetPos()).SafeANormalize();
-				const float3 ydir = (zdir.cross(p->speed)).SafeANormalize();
-				const float3 xdir = (zdir.cross(ydir));
+			if (p->life >= 1.0f)
+				continue;
 
-				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
-				const float size = p->size;
+			const float3 zdir = (p->pos - camera->GetPos()).SafeANormalize();
+			      float3 ydir = zdir.cross(p->speed); float yDirLen2 = ydir.SqLength(); ydir.SafeANormalize();
+			const float3 xdir = ydir.cross(zdir);
 
-				unsigned char color[4];
-				colorMap->GetColor(color, p->life);
+			const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
+			const float size = p->size;
 
-				if (p->speed.SqLength() > 0.001f) {
-					va->AddVertexQTC(interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color);
-					va->AddVertexQTC(interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color);
-					va->AddVertexQTC(interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color);
-					va->AddVertexQTC(interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color);
-				} else {
-					// in this case the particle's coor-system is degenerate
-					va->AddVertexQTC(interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color);
-					va->AddVertexQTC(interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color);
-					va->AddVertexQTC(interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color);
-					va->AddVertexQTC(interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color);
-				}
-			}
-		}
-	} else {
-		for (int i = 0; i < numParticles; i++) {
-			const Particle* p = &particles[i];
+			unsigned char color[4];
+			colorMap->GetColor(color, p->life);
 
-			if (p->life < 1.0f) {
-				unsigned char color[4];
-				colorMap->GetColor(color, p->life);
+			const float3* fwdDir = &zdir;
 
-				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
+			if (yDirLen2 > 0.001f) {
+				bounds = {
+					-ydir * size - xdir * size,
+					-ydir * size + xdir * size,
+					 ydir * size + xdir * size,
+					 ydir * size - xdir * size
+				};
+			} else {
+				// in this case the particle's coor-system is degenerate
 				const float3 cameraRight = camera->GetRight() * p->size;
-				const float3 cameraUp    = camera->GetUp() * p->size;
+				const float3 cameraUp    = camera->GetUp()    * p->size;
+				fwdDir = &camera->GetForward();
 
-				va->AddVertexQTC(interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color);
-				va->AddVertexQTC(interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color);
-				va->AddVertexQTC(interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color);
-				va->AddVertexQTC(interPos - cameraRight + cameraUp, texture->xstart, texture->yend,   color);
+				bounds = {
+					-cameraRight - cameraUp,
+					 cameraRight - cameraUp,
+					 cameraRight + cameraUp,
+					-cameraRight + cameraUp
+				};
 			}
+
+
+			if (math::fabs(p->rotVal) > 0.01f) {
+				CMatrix44f rotMat;
+				rotMat.Rotate(p->rotVal, *fwdDir);
+				for (auto& b : bounds)
+					b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
+			}
+
+			va->AddVertexQTC(interPos + bounds[0], texture->xstart, texture->ystart, color);
+			va->AddVertexQTC(interPos + bounds[1], texture->xend,   texture->ystart, color);
+			va->AddVertexQTC(interPos + bounds[2], texture->xend,   texture->yend,   color);
+			va->AddVertexQTC(interPos + bounds[3], texture->xstart, texture->yend,   color);
 		}
+		return;
+	}
+
+	// !directional
+	for (int i = 0; i < numParticles; i++) {
+		const Particle* p = &particles[i];
+
+		if (p->life >= 1.0f)
+			continue;
+
+		unsigned char color[4];
+		colorMap->GetColor(color, p->life);
+
+		const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
+		const float3 cameraRight = camera->GetRight() * p->size;
+		const float3 cameraUp    = camera->GetUp()    * p->size;
+
+		bounds = {
+			-cameraRight - cameraUp,
+			 cameraRight - cameraUp,
+			 cameraRight + cameraUp,
+			-cameraRight + cameraUp
+		};
+
+		if (math::fabs(p->rotVal) > 0.01f) {
+			CMatrix44f rotMat;
+			rotMat.Rotate(p->rotVal, camera->GetForward());
+			for (auto& b : bounds)
+				b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
+		}
+
+		va->AddVertexQTC(interPos + bounds[0], texture->xstart, texture->ystart, color);
+		va->AddVertexQTC(interPos + bounds[1], texture->xend,   texture->ystart, color);
+		va->AddVertexQTC(interPos + bounds[2], texture->xend,   texture->yend,   color);
+		va->AddVertexQTC(interPos + bounds[3], texture->xstart, texture->yend,   color);
 	}
 }
 
@@ -141,11 +186,13 @@ void CSimpleParticleSystem::Update()
 
 	for (auto& p: particles) {
 		if (p.life < 1.0f) {
-			p.pos   += p.speed;
-			p.speed += gravity;
-			p.speed *= airdrag;
-			p.life  += p.decayrate;
-			p.size   = p.size * sizeMod + sizeGrowth;
+			p.pos    += p.speed;
+			p.speed  += gravity;
+			p.speed  *= airdrag;
+			p.rotVal += p.rotVel;
+			p.rotVel += rotParams.y; //rot accel
+			p.life   += p.decayrate;
+			p.size    = p.size * sizeMod + sizeGrowth;
 
 			deleteMe = false;
 		}
@@ -177,7 +224,9 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 		p.pos = offset;
 		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
-		p.life = 0;
+		p.rotVal = rotParams.z; //initial rotation value
+		p.rotVel = rotParams.x; //initial rotation velocity
+		p.life = 0.0f;
 		p.decayrate = 1.0f / (particleLife + (guRNG.NextFloat() * particleLifeSpread));
 		p.size = particleSize + guRNG.NextFloat()*particleSizeSpread;
 	}

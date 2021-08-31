@@ -75,7 +75,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/PieceProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Projectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ProjectileHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ProjectileFunctors.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/BeamLaserProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/EmgProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/ExplosiveProjectile.cpp"

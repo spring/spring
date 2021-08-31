@@ -16,6 +16,9 @@ CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 
 CR_REG_METADATA(CNanoProjectile,
 (
+	CR_MEMBER(rotVal),
+	CR_MEMBER(rotVel),
+
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(deathFrame),
 		CR_MEMBER(color),
@@ -49,20 +52,44 @@ CNanoProjectile::~CNanoProjectile()
 	projectileHandler.currentNanoParticles -= 1;
 }
 
+void CNanoProjectile::Init(const CUnit* owner, const float3& offset)
+{
+	rotVal = rotVal0;
+	rotVel = rotVel0;
+}
 
 void CNanoProjectile::Update()
 {
 	pos += speed;
+
+	rotVal += rotVel;
+	rotVel += rotAcc0;
+
 	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
 void CNanoProjectile::Draw(CVertexArray* va)
 {
+	const float3 ri = camera->GetRight() * drawRadius;
+	const float3 up = camera->GetUp() * drawRadius;
+	std::array<float3, 4> bounds = {
+		-ri - up,
+		 ri - up,
+		 ri + up,
+		-ri + up
+	};
+
+	if (math::fabs(rotVal) > 0.01f) {
+		CMatrix44f rotMat; rotMat.Rotate(rotVal, camera->GetForward());
+		for (auto& v : bounds)
+			v = (rotMat * float4(v, 1.0f)).xyz;
+	}
+
 	const auto* gfxt = projectileDrawer->gfxtex;
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
+	va->AddVertexTC(drawPos + bounds[0], gfxt->xstart, gfxt->ystart, color);
+	va->AddVertexTC(drawPos + bounds[1], gfxt->xend, gfxt->ystart, color);
+	va->AddVertexTC(drawPos + bounds[2], gfxt->xend, gfxt->yend, color);
+	va->AddVertexTC(drawPos + bounds[3], gfxt->xstart, gfxt->yend, color);
 }
 
 void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

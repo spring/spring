@@ -61,8 +61,18 @@ private:
 
 	static constexpr unsigned int NUM_TRACER_PARTS = 3;
 	static constexpr unsigned int MAX_NUM_AGEMODS = 20;
-	static constexpr unsigned int SMOKE_INTERVAL = 8;
 
+	static constexpr float SMOKE_SIZE = 7.0f;
+	static constexpr float SMOKE_COLOR = 0.7f;
+	static constexpr int SMOKE_TIME = 70; // the smokes life-time in frames
+	static constexpr float TRACER_PARTS_STEP = 2.0f;
+
+private:
+	inline float GetSmokeSize() const;
+	inline float GetSmokeColor() const;
+	inline int GetSmokeTime() const;
+
+private:
 	struct TracerPart {
 		CR_DECLARE_STRUCT(TracerPart)
 

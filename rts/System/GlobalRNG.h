@@ -128,8 +128,8 @@ public:
 	rng_res_type NextInt(rng_res_type N = max()) { return ((*this)(N)); }
 
 	float NextFloat() { return (NextFloat01(1 << ndig())); }
-	float NextFloat01(rng_res_type N) { return ((NextInt(N) * 1.0f) / N); } // [0,1) rounded to multiple of 1/N
-	float NextFloat24() { return (math::ldexp(NextInt(1 << ndig()), -ndig())); } // [0,1) rounded to multiple of 1/(2^#digits)
+	float NextFloat01(rng_res_type N) { return static_cast<float>(NextInt(N)) / N; } // [0,1) rounded to multiple of 1/N
+	float NextFloat24() { return math::ldexp(static_cast<float>(NextInt(1 << ndig())), -ndig()); } // [0,1) rounded to multiple of 1/(2^#digits)
 
 	float3 NextVector2D() { return (NextVector(0.0f)); }
 	float3 NextVector(float y = 1.0f) {

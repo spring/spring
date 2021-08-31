@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "Rendering/Models/3DModel.h"
-#include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
 
 // bypass id and event handling for unsynced projectiles (faster)

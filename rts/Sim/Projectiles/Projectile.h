@@ -112,12 +112,15 @@ public:
 	float3 dir;                    // set via Init()
 	float3 drawPos;
 
+	float3 rotParams = {0.0f, 0.0f, 0.0f}; // speed, accel, startRot |deg/s, deg/s2, deg|
+
 	float myrange = 0.0f;          // used by WeaponProjectile::TraveledRange
 	float mygravity = 0.0f;
 
 	float sortDist = 0.0f;         // distance used for z-sorting when rendering
 	float sortDistOffset = 0.0f;   // an offset used for z-sorting
 
+	int drawOrder = 0;
 protected:
 	unsigned int ownerID = -1u;
 	unsigned int teamID = -1u;

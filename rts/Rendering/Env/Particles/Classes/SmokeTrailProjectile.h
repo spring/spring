@@ -23,7 +23,8 @@ public:
 		float size,
 		int time,
 		float color,
-		AtlasedTexture* texture
+		AtlasedTexture* texture,
+		bool castShadow = true
 	);
 
 	void Update() override;
