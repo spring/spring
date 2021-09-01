@@ -161,24 +161,28 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 		for (int x = xStart; x <= xEnd; ++x) {
 			DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
 
-			for (auto pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
+			//for (auto pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
+			for (size_t pii = 0; pii < dq->points.size(); /* none */) {
+				auto pi = &dq->points[pii];
 				if (pi->GetPos().SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
 					*pi = dq->points.back();
 					dq->points.pop_back();
 					numPoints--;
 				} else {
-					++pi;
+					++pii;
 				}
 			}
 
-			for (auto li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
+			//for (auto li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
+			for (size_t lii = 0; lii < dq->lines.size(); /* none */) {
+				auto li = &dq->lines[lii];
 				// TODO maybe erase on pos2 too?
 				if (li->GetPos1().SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
 					*li = dq->lines.back();
 					dq->lines.pop_back();
 					numLines--;
 				} else {
-					++li;
+					++lii;
 				}
 			}
 		}
