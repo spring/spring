@@ -207,9 +207,9 @@ WEAPONTAG(float, cameraShake).fallbackName("damage.default").defaultValue(0.0f).
 WEAPONTAG(bool, smokeTrail, visuals.smokeTrail).defaultValue(false);
 WEAPONTAG(bool, smokeTrailCastShadow, visuals.smokeTrailCastShadow).defaultValue(true);
 WEAPONTAG(int, smokePeriod, visuals.smokePeriod).defaultValue(8);
-WEAPONTAG(int, smokeTime, visuals.smokeTime).defaultValue(-1);
-WEAPONTAG(float, smokeSize, visuals.smokeSize).defaultValue(-1.0f);
-WEAPONTAG(float, smokeColor, visuals.smokeColor).defaultValue(-1.0f);
+WEAPONTAG(int, smokeTime, visuals.smokeTime).defaultValue(2 * GAME_SPEED);
+WEAPONTAG(float, smokeSize, visuals.smokeSize).defaultValue(7.0f);
+WEAPONTAG(float, smokeColor, visuals.smokeColor).defaultValue(0.65f);
 WEAPONTAG(bool, castShadow, visuals.castShadow).defaultValue(true); //TODO move out of missle block?
 
 // Cannon

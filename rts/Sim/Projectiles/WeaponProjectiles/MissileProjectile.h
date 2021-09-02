@@ -63,10 +63,6 @@ private:
 	float3 oldDir;
 	CSmokeTrailProjectile* smokeTrail;
 private:
-	static constexpr float SMOKE_SIZE = 7.0f;
-	static constexpr float SMOKE_COLOR = 0.6f;
-	static constexpr int SMOKE_TIME = 60; 	/// the smokes life-time in frames
-private:
 	inline float GetSmokeSize() const;
 	inline float GetSmokeColor() const;
 	inline int GetSmokeTime() const;

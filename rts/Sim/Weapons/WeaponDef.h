@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 #include "System/float4.h"
 #include "System/UnorderedMap.hpp"
+#include "Sim/Misc/GlobalConstants.h"
 
 struct AtlasedTexture;
 class CColorMap;
@@ -243,9 +244,9 @@ public:
 		int stages = 0;
 
 		int smokePeriod = 8;
-		int smokeTime = -1; //inherit the default
-		float smokeSize = -1.0f; //inherit the default
-		float smokeColor = -1.0f;  //inherit the default
+		int smokeTime = 2 * GAME_SPEED;
+		float smokeSize = 7.0f;
+		float smokeColor = 0.65f;
 
 		float tilelength = 0.0f;
 		float scrollspeed = 0.0f;

@@ -300,17 +300,17 @@ void CMissileProjectile::UpdateDance() {
 
 inline float CMissileProjectile::GetSmokeSize() const
 {
-	return weaponDef->visuals.smokeSize >= 0.0f ? weaponDef->visuals.smokeSize : SMOKE_SIZE;
+	return weaponDef->visuals.smokeSize;
 }
 
 inline float CMissileProjectile::GetSmokeColor() const
 {
-	return weaponDef->visuals.smokeColor >= 0.0f ? weaponDef->visuals.smokeColor : SMOKE_COLOR;
+	return weaponDef->visuals.smokeColor;
 }
 
 inline int CMissileProjectile::GetSmokeTime() const
 {
-	return weaponDef->visuals.smokeTime >= 0 ? weaponDef->visuals.smokeTime : SMOKE_TIME;
+	return weaponDef->visuals.smokeTime;
 }
 
 void CMissileProjectile::UpdateGroundBounce() {
