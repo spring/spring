@@ -434,7 +434,7 @@ void CGame::Load(const std::string& mapFileName)
 		{
 			char msgBuf[512];
 
-			SNPRINTF(msgBuf, sizeof(msgBuf), "[Game::%s][lua{Rules,Gaia}={%p,%p}]", __func__, luaRules, luaGaia);
+			SNPRINTF(msgBuf, sizeof(msgBuf), "[Game::%s][lua{Rules,Gaia}={%p,%p}][locale=\"%s\"]", __func__, luaRules, luaGaia, setlocale(LC_ALL, nullptr));
 			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
 		}
 	} catch (const content_error& e) {

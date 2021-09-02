@@ -34,7 +34,7 @@ int Run(int argc, char* argv[])
 #endif
 
 	// already the default, but be explicit for locale-dependent functions (atof,strtof,...)
-	setlocale(LC_NUMERIC, "C");
+	setlocale(LC_ALL, "C");
 
 	Threading::DetectCores();
 	Threading::SetMainThread();
