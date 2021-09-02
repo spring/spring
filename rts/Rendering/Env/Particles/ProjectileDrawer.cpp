@@ -39,8 +39,6 @@
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
-#define INPLACE_SORTING //todo benchmark
-
 CONFIG(int, SoftParticles).defaultValue(1).safemodeValue(0).description("Soften up CEG particles on clipping edges");
 
 CProjectileDrawer* projectileDrawer = nullptr;
@@ -594,14 +592,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 	pro->SetSortDist(cam->ProjectedDistance(pro->pos));
 
-	if (drawSorted && pro->drawSorted)
-#ifdef INPLACE_SORTING
-		spring::VectorPushBackSorted(sortedProjectiles[1], pro, sortingPredicate);
-#else
-		sortedProjectiles[1].push_back(pro);
-#endif
-	else
-		sortedProjectiles[0].push_back(pro);
+	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
 }
 
 
@@ -754,9 +745,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
 		// empty if !drawSorted
-#ifndef INPLACE_SORTING
 		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), sortingPredicate);
-#endif
 
 		fxVA = GetVertexArray();
 		fxVA->Initialize();
