@@ -171,6 +171,7 @@ jobs:
             git pull --rebase origin $UBUNTU_VER
             cd $MYPWD
           fi
+          git fetch --tags --all
         working-directory: ${{ github.workspace }}/spring
         shell: bash
 
@@ -181,6 +182,7 @@ jobs:
           git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
+          git fetch --tags --all
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/mingwlibs64.git mingwlibs64
 
       - name: Clone Repository and Dependencies (windows-32)
@@ -190,6 +192,7 @@ jobs:
           git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
+          git fetch --tags --all
           git clone https://github.com/spring/mingwlibs.git mingwlibs
 
       - name: Clone Repository and Dependencies (linux-64)
@@ -199,6 +202,7 @@ jobs:
           git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
+          git fetch --tags --all
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
 
