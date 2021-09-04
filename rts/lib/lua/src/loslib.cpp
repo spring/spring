@@ -229,6 +229,8 @@ static int os_difftime (lua_State *L) {
 
 
 static int os_setlocale (lua_State *L) {
+  /* Locale can affect sync. For example, strings can be sorted differently.
+   * In some locales, the upper/lower case order is ABab and in others AaBb. */
   return 0;
 }
 
