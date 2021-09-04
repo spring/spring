@@ -476,10 +476,10 @@ bool CWeapon::UpdateStockpile()
 
 void CWeapon::UpdateSalvo()
 {
-	if (!salvoLeft || nextSalvo > gs->frameNum)
+	if (salvoLeft == 0 || nextSalvo > gs->frameNum)
 		return;
 
-	salvoLeft--;
+	salvoLeft -= 1;
 	nextSalvo = gs->frameNum + salvoDelay;
 
 	// Decloak
@@ -499,8 +499,8 @@ void CWeapon::UpdateSalvo()
 	if (owner->script->HasRockUnit())
 		owner->script->WorldRockUnit((-wantedDir).SafeNormalize2D());
 
-	const bool searchForNewTarget = (salvoLeft == 0) && (currentTarget == owner->curTarget);
-	owner->commandAI->WeaponFired(this, searchForNewTarget);
+	// tell CAI it can (potentially) finish its attack command if current salvo ended this shot
+	owner->commandAI->WeaponFired(this, (salvoLeft == 0) && (currentTarget == owner->curTarget));
 
 	if (salvoLeft == 0)
 		owner->script->EndBurst(weaponNum);
@@ -1180,6 +1180,7 @@ bool CWeapon::StopAttackingTargetIf(const std::function<bool(const SWeaponTarget
 		return false;
 
 	DropCurrentTarget();
+	EndSalvo();
 	return true;
 }
 
