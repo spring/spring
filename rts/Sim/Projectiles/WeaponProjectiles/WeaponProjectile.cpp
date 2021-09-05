@@ -301,8 +301,12 @@ void CWeaponProjectile::UpdateGroundBounce()
 		return;
 	if (luaMoveCtrl)
 		return;
-	if (ttl <= 0)
+	if (ttl <= 0) {
+		// //drop scheduled bounce, so HasScheduledBounce() check inside
+		// CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) is false
+		bounced = false;
 		return;
+	}
 	#endif
 
 	if (!bounced) {
