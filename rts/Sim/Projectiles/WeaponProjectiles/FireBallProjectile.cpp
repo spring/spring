@@ -131,7 +131,7 @@ void CFireBallProjectile::TickSparks()
 		i++;
 	}
 
-	explGenHandler.GenExplosion(cegID, pos, speed, ttl, (numSparks > 0)? sparks[0].size: 0.0f, 0.0f, nullptr, nullptr);
+	explGenHandler.GenExplosion(cegID, pos, speed, ttl, (numSparks > 0)? sparks[0].size: 0.0f, 0.0f, owner(), nullptr);
 }
 
 

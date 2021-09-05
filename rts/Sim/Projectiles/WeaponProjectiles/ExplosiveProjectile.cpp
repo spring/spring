@@ -49,7 +49,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0)
-			explGenHandler.GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
+			explGenHandler.GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, owner(), nullptr);
 	}
 
 	curTime += invttl;

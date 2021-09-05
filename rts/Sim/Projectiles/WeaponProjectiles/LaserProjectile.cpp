@@ -76,7 +76,7 @@ void CLaserProjectile::Update()
 
 void CLaserProjectile::UpdateIntensity() {
 	if (ttl > 0) {
-		explGenHandler.GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, owner(), nullptr);
 		return;
 	}
 
