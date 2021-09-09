@@ -22,12 +22,6 @@ CONFIG(int, MaxTextureAtlasSizeY).defaultValue(2048).minimumValue(512).maximumVa
 CR_BIND(AtlasedTexture, )
 CR_REG_METADATA(AtlasedTexture, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
 
-
-static AtlasedTexture dummy;
-
-bool CTextureAtlas::debug = false;
-
-
 CTextureAtlas::CTextureAtlas(unsigned int allocType, const int atlasSizeX_, const int atlasSizeY_, std::string name_)
 	: name{ name_ }
 {
@@ -216,7 +210,7 @@ AtlasedTexture& CTextureAtlas::GetTexture(const std::string& name)
 	if (TextureExists(name))
 		return textures[StringToLower(name)];
 
-	return dummy;
+	return CTextureAtlas::dummy;
 }
 
 
@@ -228,7 +222,7 @@ AtlasedTexture& CTextureAtlas::GetTextureWithBackup(const std::string& name, con
 	if (TextureExists(backupName))
 		return textures[StringToLower(backupName)];
 
-	return dummy;
+	return CTextureAtlas::dummy;
 }
 
 int2 CTextureAtlas::GetSize() const {

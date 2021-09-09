@@ -3,6 +3,7 @@
 #include "Projectile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -183,5 +184,10 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 	CHECK_MEMBER_INFO_INT(CProjectile, drawOrder)
 
 	return false;
+}
+
+bool CProjectile::IsValidtexture(const AtlasedTexture* tex)
+{
+	return tex && tex != &CTextureAtlas::dummy;
 }
 

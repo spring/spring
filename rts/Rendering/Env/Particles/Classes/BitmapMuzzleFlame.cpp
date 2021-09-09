@@ -94,20 +94,24 @@ void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 			b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
 	}
 
-	va->AddVertexTC(pos + bounds[ 0], sideTexture->xstart, sideTexture->ystart, col);
-	va->AddVertexTC(pos + bounds[ 1], sideTexture->xend,   sideTexture->ystart, col);
-	va->AddVertexTC(pos + bounds[ 2], sideTexture->xend,   sideTexture->yend,   col);
-	va->AddVertexTC(pos + bounds[ 3], sideTexture->xstart, sideTexture->yend,   col);
+	if (IsValidtexture(sideTexture)) {
+		va->AddVertexTC(pos + bounds[0], sideTexture->xstart, sideTexture->ystart, col);
+		va->AddVertexTC(pos + bounds[1], sideTexture->xend, sideTexture->ystart, col);
+		va->AddVertexTC(pos + bounds[2], sideTexture->xend, sideTexture->yend, col);
+		va->AddVertexTC(pos + bounds[3], sideTexture->xstart, sideTexture->yend, col);
 
-	va->AddVertexTC(pos + bounds[ 4], sideTexture->xstart, sideTexture->ystart, col);
-	va->AddVertexTC(pos + bounds[ 5], sideTexture->xend,   sideTexture->ystart, col);
-	va->AddVertexTC(pos + bounds[ 6], sideTexture->xend,   sideTexture->yend,   col);
-	va->AddVertexTC(pos + bounds[ 7], sideTexture->xstart, sideTexture->yend,   col);
+		va->AddVertexTC(pos + bounds[4], sideTexture->xstart, sideTexture->ystart, col);
+		va->AddVertexTC(pos + bounds[5], sideTexture->xend, sideTexture->ystart, col);
+		va->AddVertexTC(pos + bounds[6], sideTexture->xend, sideTexture->yend, col);
+		va->AddVertexTC(pos + bounds[7], sideTexture->xstart, sideTexture->yend, col);
+	}
 
-	va->AddVertexTC(fpos + bounds[ 8], frontTexture->xstart, frontTexture->ystart, col);
-	va->AddVertexTC(fpos + bounds[ 9], frontTexture->xend,   frontTexture->ystart, col);
-	va->AddVertexTC(fpos + bounds[10], frontTexture->xend,   frontTexture->yend,   col);
-	va->AddVertexTC(fpos + bounds[11], frontTexture->xstart, frontTexture->yend,   col);
+	if (IsValidtexture(frontTexture)) {
+		va->AddVertexTC(fpos + bounds[8], frontTexture->xstart, frontTexture->ystart, col);
+		va->AddVertexTC(fpos + bounds[9], frontTexture->xend, frontTexture->ystart, col);
+		va->AddVertexTC(fpos + bounds[10], frontTexture->xend, frontTexture->yend, col);
+		va->AddVertexTC(fpos + bounds[11], frontTexture->xstart, frontTexture->yend, col);
+	}
 }
 
 void CBitmapMuzzleFlame::Update()
@@ -132,7 +136,7 @@ void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 
 int CBitmapMuzzleFlame::GetProjectilesCount() const
 {
-	return 3;
+	return 2 * IsValidtexture(sideTexture) + 1 * IsValidtexture(frontTexture);
 }
 
 

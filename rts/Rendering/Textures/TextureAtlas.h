@@ -176,7 +176,9 @@ protected:
 	bool freeTexture = true; // free texture on atlas destruction?
 
 	// set to true to write finalized texture atlas to disk
-	static bool debug;
+	static inline bool debug = false;
+public:
+	static inline AtlasedTexture dummy = {};
 };
 
 #endif // TEXTURE_ATLAS_H

@@ -17,6 +17,7 @@ class CUnit;
 class CFeature;
 class CVertexArray;
 class CMatrix44f;
+struct AtlasedTexture;
 
 class CProjectile: public CExpGenSpawnable
 {
@@ -132,7 +133,7 @@ protected:
 	unsigned int renderIndex = -1u;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
-
+	static bool IsValidtexture(const AtlasedTexture* tex);
 public:
 	std::vector<int> quads;
 };
