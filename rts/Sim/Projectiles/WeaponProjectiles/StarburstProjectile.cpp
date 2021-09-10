@@ -323,6 +323,9 @@ inline int CStarburstProjectile::GetSmokeTime() const
 
 void CStarburstProjectile::Draw(CVertexArray* va)
 {
+	if (!validTextures[0])
+		return;
+
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;
 
@@ -331,6 +334,7 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 
 	unsigned int partNum = curTracerPart;
 
+	if (validTextures[3])
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[partNum];
 		const float3& opos = tracerPart->pos;
@@ -363,10 +367,12 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 	// draw the engine flare
 	constexpr float fsize = 25.0f;
 
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed);
+	if (validTextures[1]) {
+		va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
+		va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
+		va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
+		va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed);
+	}
 }
 
 int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -392,5 +398,7 @@ int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldFor
 
 int CStarburstProjectile::GetProjectilesCount() const
 {
-	return numParts + 1;
+	return
+		numParts * validTextures[3] +
+		       1 * validTextures[1];
 }

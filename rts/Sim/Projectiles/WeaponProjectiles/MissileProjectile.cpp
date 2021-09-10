@@ -331,6 +331,9 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 void CMissileProjectile::Draw(CVertexArray* va)
 {
+	if (!validTextures[0])
+		return;
+
 	// rocket flare
 	const SColor lightYellow(255, 210, 180, 1);
 	const float fsize = radius * 0.4f;
@@ -368,5 +371,5 @@ int CMissileProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce
 
 int CMissileProjectile::GetProjectilesCount() const
 {
-	return 1;
+	return 1 * validTextures[0];
 }

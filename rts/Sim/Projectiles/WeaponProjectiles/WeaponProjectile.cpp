@@ -99,6 +99,16 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 		ignoreWater = weaponDef->waterweapon;
+
+		validTextures = {
+			false,
+			IsValidTexture(weaponDef->visuals.texture1),
+			IsValidTexture(weaponDef->visuals.texture2),
+			IsValidTexture(weaponDef->visuals.texture3),
+			IsValidTexture(weaponDef->visuals.texture4)
+		};
+		//whether to skip the draw call
+		validTextures[0] = validTextures[1] || validTextures[2] || validTextures[3] || validTextures[4];
 	}
 
 	{

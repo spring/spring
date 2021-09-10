@@ -70,6 +70,9 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 	if (model != nullptr)
 		return;
 
+	if (!validTextures[0])
+		return;
+
 	unsigned char col[4] = {0};
 
 	const WeaponDef::Visuals& wdVisuals = weaponDef->visuals;
@@ -93,7 +96,7 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 
 	const float3 ndir = dir * separation * 0.6f;
 
-	va->EnlargeArrays(stages * 4,0, VA_SIZE_TC);
+	va->EnlargeArrays(stages * 4, 0, VA_SIZE_TC);
 
 	for (int stage = 0; stage < stages; ++stage) { //! CAUTION: loop count must match EnlargeArrays above
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
@@ -133,5 +136,5 @@ int CExplosiveProjectile::ShieldRepulse(const float3& shieldPos, float shieldFor
 
 int CExplosiveProjectile::GetProjectilesCount() const
 {
-	return weaponDef->visuals.stages;
+	return weaponDef->visuals.stages * validTextures[0];
 }

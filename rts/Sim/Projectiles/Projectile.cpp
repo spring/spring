@@ -46,6 +46,8 @@ CR_REG_METADATA(CProjectile,
 	CR_IGNORED(sortDist),
 	CR_MEMBER(sortDistOffset),
 
+	CR_MEMBER(validTextures),
+
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
 	CR_MEMBER(allyteamID),
@@ -186,7 +188,7 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 	return false;
 }
 
-bool CProjectile::IsValidtexture(const AtlasedTexture* tex)
+bool CProjectile::IsValidTexture(const AtlasedTexture* tex)
 {
 	return tex && tex != &CTextureAtlas::dummy;
 }

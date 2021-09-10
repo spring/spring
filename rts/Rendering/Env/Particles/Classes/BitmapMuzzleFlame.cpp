@@ -94,7 +94,7 @@ void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 			b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
 	}
 
-	if (IsValidtexture(sideTexture)) {
+	if (IsValidTexture(sideTexture)) {
 		va->AddVertexTC(pos + bounds[0], sideTexture->xstart, sideTexture->ystart, col);
 		va->AddVertexTC(pos + bounds[1], sideTexture->xend, sideTexture->ystart, col);
 		va->AddVertexTC(pos + bounds[2], sideTexture->xend, sideTexture->yend, col);
@@ -106,7 +106,7 @@ void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 		va->AddVertexTC(pos + bounds[7], sideTexture->xstart, sideTexture->yend, col);
 	}
 
-	if (IsValidtexture(frontTexture)) {
+	if (IsValidTexture(frontTexture)) {
 		va->AddVertexTC(fpos + bounds[8], frontTexture->xstart, frontTexture->ystart, col);
 		va->AddVertexTC(fpos + bounds[9], frontTexture->xend, frontTexture->ystart, col);
 		va->AddVertexTC(fpos + bounds[10], frontTexture->xend, frontTexture->yend, col);
@@ -136,7 +136,7 @@ void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 
 int CBitmapMuzzleFlame::GetProjectilesCount() const
 {
-	return 2 * IsValidtexture(sideTexture) + 1 * IsValidtexture(frontTexture);
+	return 2 * IsValidTexture(sideTexture) + 1 * IsValidTexture(frontTexture);
 }
 
 

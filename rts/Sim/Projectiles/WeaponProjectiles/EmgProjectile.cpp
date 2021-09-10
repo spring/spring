@@ -60,6 +60,9 @@ void CEmgProjectile::Update()
 
 void CEmgProjectile::Draw(CVertexArray* va)
 {
+	if (!validTextures[0])
+		return;
+
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * intensity * 255);
 	col[1] = (unsigned char) (color.y * intensity * 255);
@@ -88,5 +91,5 @@ int CEmgProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, fl
 
 int CEmgProjectile::GetProjectilesCount() const
 {
-	return 1;
+	return 1 * validTextures[0];
 }

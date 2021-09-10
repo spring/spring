@@ -57,6 +57,9 @@ void CLightningProjectile::Update()
 
 void CLightningProjectile::Draw(CVertexArray* va)
 {
+	if (!validTextures[0])
+		return;
+
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * 255);
 	col[1] = (unsigned char) (color.y * 255);
@@ -68,8 +71,8 @@ void CLightningProjectile::Draw(CVertexArray* va)
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	float3 tempPos = startPos;
 
-	va->EnlargeArrays(18 * 4, 0, VA_SIZE_TC);
-	for (size_t d = 1; d < displacements_size-1; ++d) {
+	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
+	for (size_t d = 1; d < displacements_size - 1; ++d) {
 		float f = (d + 1) * 0.111f;
 
 		#define WDV (&weaponDef->visuals)
@@ -82,7 +85,7 @@ void CLightningProjectile::Draw(CVertexArray* va)
 	}
 
 	tempPos = startPos;
-	for (size_t d = 1; d < displacements_size-1; ++d) {
+	for (size_t d = 1; d < displacements_size - 1; ++d) {
 		float f = (d + 1) * 0.111f;
 
 		#define WDV (&weaponDef->visuals)
@@ -109,6 +112,6 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 
 int CLightningProjectile::GetProjectilesCount() const
 {
-	return displacements_size * 2;
+	return 2 * displacements_size * validTextures[0];
 }
 

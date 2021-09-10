@@ -1,3 +1,4 @@
+#include "FireBallProjectile.h"
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
@@ -37,10 +38,17 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
+
+	validTextures[1] = IsValidTexture(projectileDrawer->explotex);
+	validTextures[2] = IsValidTexture(projectileDrawer->dguntex);
+	validTextures[0] = validTextures[1] || validTextures[2];
 }
 
 void CFireBallProjectile::Draw(CVertexArray* va)
 {
+	if (!validTextures[0])
+		return;
+
 	unsigned char col[4] = {255, 150, 100, 1};
 
 	const float3 interPos = mix(pos, drawPos, checkCol);
@@ -49,8 +57,9 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 	const unsigned int numFire = std::min(10u, numSparks);
 	const unsigned int maxCol = mix(numFire, 10u, checkCol);
 
-	va->EnlargeArrays((numSparks + numFire) * 4, 0, VA_SIZE_TC);
+	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
 
+	if (validTextures[1])
 	for (unsigned int i = 0; i < numSparks; i++) {
 		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (numSparks - i) * 12;
@@ -65,6 +74,7 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 		#undef ept
 	}
 
+	if (validTextures[2])
 	for (unsigned int i = 0; i < numFire; i++) {
 		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (maxCol - i) * 25;
@@ -139,5 +149,12 @@ void CFireBallProjectile::Collision()
 {
 	CWeaponProjectile::Collision();
 	deleteMe = false;
+}
+
+int CFireBallProjectile::GetProjectilesCount() const
+{
+	return
+		validTextures[1] * numSparks +
+		validTextures[2] * std::min(10u, numSparks);
 }
 

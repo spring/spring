@@ -20,9 +20,7 @@ public:
 	void Update() override;
 	void Collision() override;
 
-	int GetProjectilesCount() const override {
-		return (numSparks + std::min(10u, numSparks));
-	}
+	int GetProjectilesCount() const override;
 
 private:
 	void EmitSpark();

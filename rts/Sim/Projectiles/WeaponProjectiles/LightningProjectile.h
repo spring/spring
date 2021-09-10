@@ -25,8 +25,8 @@ public:
 private:
 	float3 color;
 
-	#define displacements_size 10
-	float displacements[displacements_size];
+	static constexpr int displacements_size = 10;
+	float displacements [displacements_size];
 	float displacements2[displacements_size];
 };
 
