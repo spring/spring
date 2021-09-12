@@ -77,6 +77,9 @@ void CDirtProjectile::Update()
 
 void CDirtProjectile::Draw(CVertexArray* va)
 {
+	if (!IsValidTexture(texture))
+		return;
+
 	float partAbove = (pos.y / (size * camera->GetUp().y));
 
 	if (partAbove < -1.0f)
@@ -101,7 +104,7 @@ void CDirtProjectile::Draw(CVertexArray* va)
 
 int CDirtProjectile::GetProjectilesCount() const
 {
-	return 1;
+	return 1 * IsValidTexture(texture);
 }
 
 

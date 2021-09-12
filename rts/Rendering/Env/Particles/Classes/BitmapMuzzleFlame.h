@@ -37,7 +37,6 @@ private:
 	int ttl;
 
 	float invttl;
-	float life;
 	int createTime;
 
 	float rotVal;

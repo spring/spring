@@ -18,7 +18,6 @@ CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (
 	CR_MEMBER(invttl),
-	CR_MEMBER(life),
 	CR_MEMBER(createTime),
 	CR_MEMBER(rotVal),
 	CR_MEMBER(rotVel),
@@ -44,7 +43,6 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	, frontOffset(0.0f)
 	, ttl(0)
 	, invttl(0.0f)
-	, life(0.0f)
 	, createTime(0)
 {
 	// set fields from super-classes
@@ -55,7 +53,7 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 
 void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 {
-	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
+	const float life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
 
 	unsigned char col[4];
 	colorMap->GetColor(col, life);
@@ -126,7 +124,6 @@ void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 
-	life = 0.0f;
 	invttl = 1.0f / ttl;
 	createTime = gs->frameNum;
 
