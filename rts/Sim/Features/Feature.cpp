@@ -553,7 +553,9 @@ bool CFeature::UpdatePosition()
 
 	if (moveCtrl.enabled) {
 		// raw movement; not masked or clamped
-		UpdateQuadFieldPosition(speed = (moveCtrl.velVector += moveCtrl.accVector));
+		speed = (moveCtrl.velVector += moveCtrl.accVector);
+		if (speed.SqLength() != 0.0f)
+			UpdateQuadFieldPosition(speed);
 	} else {
 		const float3 dragAccel = GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
 		const float3 gravAccel = UpVector * mapInfo->map.gravity;
