@@ -35,6 +35,14 @@ public:
 
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
+	// Why is this here? Here is why:
+	// ProjectileCreated(id) issues Spring.SpawnExplosion(), but the projectile(id) construction
+	// is not complete yet (only CWeaponProjectile constructor has managed to complete its task)
+	// "if (projectileHandler.GetParticleSaturation() < 1.0f)" is getting called as part of
+	// SpawnExplosion() flow and it cannot reach GetProjectilesCount() of derived classes, because
+	// their constructor is not done yet, thus this workaround
+	virtual int GetProjectilesCount() const override { 	return 1; }
+
 	void DependentDied(CObject* o) override;
 	void PostLoad();
 

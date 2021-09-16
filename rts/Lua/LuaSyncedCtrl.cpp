@@ -4458,7 +4458,7 @@ static int SetExplosionParam(lua_State* L, CExplosionParams& params, DamageArray
 		case hashString("damages"): {
 			if (lua_istable(L, index + 1)) {
 				// {key1 = value1, ...}
-				for (lua_pushnil(L); lua_next(L, index + 1) != 0; lua_pop(L, 1)) {
+				for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
 					if ((lua_isnumber(L, -2) || lua_israwstring(L, -2)) && lua_isnumber(L, -1)) {
 						SetSingleDamagesKey(L, damages, -2);
 					}
