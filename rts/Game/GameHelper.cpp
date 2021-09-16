@@ -1260,7 +1260,9 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			assert(u);
 			if ((allyteam < 0) || (u->losStatus[allyteam] & LOS_INLOS)) {
 				if (so->immobile) {
-					ret = BUILDSQUARE_BLOCKED;
+					const int ymIdx = (yardxpos - xrange.x) + (xrange.y - xrange.x) * (yardypos - zrange.x);
+					// if tested square is covered by an open yardmap cell, consider it acceptable for construction
+					ret = (unitDef->yardmap[ymIdx] == YardmapStates::YARDMAP_OPEN) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED;
 				} else {
 					ret = BUILDSQUARE_OCCUPIED;
 				}
