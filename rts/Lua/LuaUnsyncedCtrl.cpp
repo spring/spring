@@ -2095,9 +2095,13 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 
 int LuaUnsyncedCtrl::SetNanoProjectileParams(lua_State* L)
 {
-	CNanoProjectile::rotVal0 = luaL_optfloat(L, 1, 0.0f) * (math::DEG_TO_RAD / GAME_SPEED               );
-	CNanoProjectile::rotVel0 = luaL_optfloat(L, 2, 0.0f) * (math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED));
-	CNanoProjectile::rotAcc0 = luaL_optfloat(L, 3, 0.0f) * (math::DEG_TO_RAD                            );
+	CNanoProjectile::rotVal0 = luaL_optfloat(L, 1, 0.0f) * (math::DEG_TO_RAD                            );
+	CNanoProjectile::rotVel0 = luaL_optfloat(L, 2, 0.0f) * (math::DEG_TO_RAD / GAME_SPEED               );
+	CNanoProjectile::rotAcc0 = luaL_optfloat(L, 3, 0.0f) * (math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED));
+
+	CNanoProjectile::rotValRng0 = luaL_optfloat(L, 4, 0.0f) * (math::DEG_TO_RAD                            );
+	CNanoProjectile::rotVelRng0 = luaL_optfloat(L, 5, 0.0f) * (math::DEG_TO_RAD / GAME_SPEED               );
+	CNanoProjectile::rotAccRng0 = luaL_optfloat(L, 6, 0.0f) * (math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED));
 
 	return 0;
 }

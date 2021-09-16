@@ -1372,11 +1372,15 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 
 int LuaUnsyncedRead::GetNanoProjectileParams(lua_State* L)
 {
-	lua_pushnumber(L, CNanoProjectile::rotVal0 * (math::RAD_TO_DEG * GAME_SPEED               ));
-	lua_pushnumber(L, CNanoProjectile::rotVel0 * (math::RAD_TO_DEG * (GAME_SPEED * GAME_SPEED)));
-	lua_pushnumber(L, CNanoProjectile::rotAcc0 * (math::RAD_TO_DEG                            ));
+	lua_pushnumber(L, CNanoProjectile::rotVal0 * (math::RAD_TO_DEG                            ));
+	lua_pushnumber(L, CNanoProjectile::rotVel0 * (math::RAD_TO_DEG * GAME_SPEED               ));
+	lua_pushnumber(L, CNanoProjectile::rotAcc0 * (math::RAD_TO_DEG * (GAME_SPEED * GAME_SPEED)));
 
-	return 3;
+	lua_pushnumber(L, CNanoProjectile::rotValRng0 * (math::RAD_TO_DEG                            ));
+	lua_pushnumber(L, CNanoProjectile::rotVelRng0 * (math::RAD_TO_DEG * GAME_SPEED               ));
+	lua_pushnumber(L, CNanoProjectile::rotAccRng0 * (math::RAD_TO_DEG * (GAME_SPEED * GAME_SPEED)));
+
+	return 6;
 }
 
 

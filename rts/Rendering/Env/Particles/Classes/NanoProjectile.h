@@ -27,10 +27,14 @@ public:
 private:
 	float rotVal = 0.0f;
 	float rotVel = 0.0f;
+	float rotAcc = 0.0f;
 public:
 	static inline float rotVal0 = 0.0f;
 	static inline float rotVel0 = 0.0f;
 	static inline float rotAcc0 = 0.0f;
+	static inline float rotValRng0 = 0.0f;
+	static inline float rotVelRng0 = 0.0f;
+	static inline float rotAccRng0 = 0.0f;
 
 	int deathFrame;
 	SColor color;

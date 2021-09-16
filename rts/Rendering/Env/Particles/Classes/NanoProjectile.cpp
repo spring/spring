@@ -8,6 +8,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
+#include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -18,6 +19,7 @@ CR_REG_METADATA(CNanoProjectile,
 (
 	CR_MEMBER(rotVal),
 	CR_MEMBER(rotVel),
+	CR_MEMBER(rotAcc),
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(deathFrame),
@@ -54,8 +56,9 @@ CNanoProjectile::~CNanoProjectile()
 
 void CNanoProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	rotVal = rotVal0;
-	rotVel = rotVel0;
+	rotVal = rotVal0 + rotValRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
+	rotVel = rotVel0 + rotVelRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
+	rotAcc = rotAcc0 + rotAccRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
 }
 
 void CNanoProjectile::Update()
@@ -63,7 +66,7 @@ void CNanoProjectile::Update()
 	pos += speed;
 
 	rotVal += rotVel;
-	rotVel += rotAcc0;
+	rotVel += rotAcc;
 
 	deleteMe |= (gs->frameNum >= deathFrame);
 }
