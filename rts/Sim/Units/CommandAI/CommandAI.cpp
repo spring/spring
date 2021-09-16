@@ -1649,9 +1649,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	if (!inCommand)
 		return;
 
-	//assert(!commandQue.empty());
-	if (commandQue.empty())
-		throw std::runtime_error("commandQue.empty()");
+	assert(!commandQue.empty());
 
 	const Command& c = commandQue.front();
 
