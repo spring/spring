@@ -63,15 +63,15 @@ bool LuaVAOImpl::Supported()
 void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std::shared_ptr<LuaVBOImpl>& thisLuaVBO, GLenum reqTarget)
 {
 	if (thisLuaVBO) {
-		LuaError("[LuaVAOImpl::%s] LuaVBO already attached", __func__);
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s] LuaVBO already attached", __func__);
 	}
 
 	if (luaVBO->defTarget != reqTarget) {
-		LuaError("[LuaVAOImpl::%s] LuaVBO should have been created with [%u] target, got [%u] target instead", __func__, reqTarget, luaVBO->defTarget);
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s] LuaVBO should have been created with [%u] target, got [%u] target instead", __func__, reqTarget, luaVBO->defTarget);
 	}
 
 	if (!luaVBO->vbo) {
-		LuaError("[LuaVAOImpl::%s] LuaVBO is invalid. Did you sucessfully call vbo:Define()?", __func__);
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s] LuaVBO is invalid. Did you sucessfully call vbo:Define()?", __func__);
 	}
 
 	thisLuaVBO = luaVBO;
@@ -80,7 +80,7 @@ void LuaVAOImpl::AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std
 		for (const auto& v : vertLuaVBO->bufferAttribDefs) {
 			for (const auto& i : instLuaVBO->bufferAttribDefs) {
 				if (v.first == i.first) {
-					LuaError("[LuaVAOImpl::%s] Vertex and Instance LuaVBO have defined a duplicate attribute [%d]", __func__, v.first);
+					LuaUtils::SolLuaError("[LuaVAOImpl::%s] Vertex and Instance LuaVBO have defined a duplicate attribute [%d]", __func__, v.first);
 				}
 			}
 		}
@@ -102,13 +102,6 @@ void LuaVAOImpl::AttachIndexBuffer(const LuaVBOImplSP& luaVBO)
 	AttachBufferImpl(luaVBO, indxLuaVBO, GL_ELEMENT_ARRAY_BUFFER);
 }
 
-template<typename ...Args>
-void LuaVAOImpl::LuaError(std::string format, Args ...args)
-{
-	std::string what = fmt::sprintf(format, args...);
-	throw std::runtime_error(what.c_str());
-}
-
 void LuaVAOImpl::CheckDrawPrimitiveType(GLenum mode)
 {
 	switch (mode) {
@@ -126,7 +119,7 @@ void LuaVAOImpl::CheckDrawPrimitiveType(GLenum mode)
 	case GL_PATCHES:
 		break;
 	default:
-		LuaError("[LuaVAOImpl::%s]: Using deprecated or incorrect primitive type (%d)", __func__, mode);
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s]: Using deprecated or incorrect primitive type (%d)", __func__, mode);
 	}
 }
 
@@ -208,7 +201,7 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 
 	if (indexed) {
 		if (!indxLuaVBO)
-			LuaError("[LuaVAOImpl::%s]: No index buffer is attached. Did you succesfully call vao:AttachIndexBuffer()?", __func__);
+			LuaUtils::SolLuaError("[LuaVAOImpl::%s]: No index buffer is attached. Did you succesfully call vao:AttachIndexBuffer()?", __func__);
 
 		drawCount = drawCountOpt.value_or(indxLuaVBO->elementsCount);
 		if (drawCount <= 0)
@@ -217,7 +210,7 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 		const GLsizei drawCountDef = vertLuaVBO ? vertLuaVBO->elementsCount : 1;
 
 		if (!vertLuaVBO && !drawCountOpt.has_value())
-			LuaError("[LuaVAOImpl::%s]: In case vertex buffer is not attached, the drawCount param should be set explicitly", __func__);
+			LuaUtils::SolLuaError("[LuaVAOImpl::%s]: In case vertex buffer is not attached, the drawCount param should be set explicitly", __func__);
 
 		drawCount = drawCountOpt.value_or(drawCountDef);
 		if (drawCount <= 0)
@@ -226,7 +219,7 @@ std::pair<GLsizei, GLsizei> LuaVAOImpl::DrawCheck(const GLenum mode, const sol::
 
 	const auto instanceCount = std::max(instanceCountOpt.value_or(0), 0); // 0 - forces ordinary version, while 1 - calls *Instanced()
 	if (instanceCount > 0 && !instLuaVBO)
-		LuaError("[LuaVAOImpl::%s]: Requested rendering of [%d] instances, but no instance buffer is attached. Did you succesfully call vao:AttachInstanceBuffer()?", __func__, instanceCount);
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s]: Requested rendering of [%d] instances, but no instance buffer is attached. Did you succesfully call vao:AttachInstanceBuffer()?", __func__, instanceCount);
 
 	CheckDrawPrimitiveType(mode);
 	CondInitVAO();

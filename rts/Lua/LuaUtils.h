@@ -142,6 +142,13 @@ class LuaUtils {
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
 
 		static void PushCommandDesc(lua_State* L, const SCommandDescription& cd);
+
+		template<typename ...Args>
+		static void SolLuaError(const std::string& format, Args ...args)
+		{
+			std::string what = fmt::sprintf(format, args...);
+			throw std::runtime_error(what.c_str());
+		}
 };
 
 

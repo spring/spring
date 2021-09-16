@@ -13,8 +13,8 @@
 
 #include "Rendering/GL/myGL.h"
 
-struct VBO;
-struct LuaVAOImpl;
+class VBO;
+class LuaVAOImpl;
 
 class LuaVBOImpl {
 public:
@@ -62,9 +62,6 @@ private:
 	bool FillAttribsNumberImpl(const int numVec4Attribs);
 	bool DefineElementArray(const sol::optional<sol::object> attribDefArgOpt);
 private:
-	template<typename... Args>
-	void LuaError(const std::string& format, Args... args);
-
 	template<typename TObj>
 	size_t ShapeFromDefIDImpl(const int defID);
 

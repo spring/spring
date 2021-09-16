@@ -41,9 +41,6 @@ private:
 	void CheckDrawPrimitiveType(GLenum mode);
 	void AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std::shared_ptr<LuaVBOImpl>& thisLuaVBO, GLenum reqTarget);
 private:
-	template <typename... Args>
-	void LuaError(std::string format, Args... args);
-private:
 	VAO* vao = nullptr;
 
 	std::shared_ptr<LuaVBOImpl> vertLuaVBO;
