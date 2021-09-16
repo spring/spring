@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "lib/fmt/printf.h"
+
 #include "LuaHashString.h"
 #include "LuaInclude.h"
 #include "LuaHandle.h"
