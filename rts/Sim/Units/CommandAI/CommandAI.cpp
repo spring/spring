@@ -1657,9 +1657,9 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	bool orderFinished = false;
 
 	if (searchForNewTarget) {
-		// manual fire or attack commands with meta will only fire a single salvo;
-		// noAutoTarget weapons finish an attack command after a salvo if they have
-		// more orders queued
+		// manual fire or attack commands with meta will only fire a single salvo
+		// noAutoTarget weapons finish an attack commands after a
+		// salvo if they have more orders queued
 		if (weapon->weaponDef->manualfire && !(c.GetOpts() & META_KEY))
 			orderFinished = true;
 
@@ -1667,8 +1667,8 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 			orderFinished = true;
 
 		// if we have an area-attack command and this was the
-		// last salvo of our main weapon, assume we completed
-		// an attack(run) on one position and move to the next
+		// last salvo of our main weapon, assume we completed an attack
+		// (run) on one position and move to the next
 		//
 		// if we have >= 2 consecutive CMD_ATTACK's, then
 		//   SelectNAATP --> FinishCommand (inCommand=false) -->

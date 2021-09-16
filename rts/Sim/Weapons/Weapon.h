@@ -113,10 +113,6 @@ private:
 	void UpdateFire();
 	bool UpdateStockpile();
 	void UpdateSalvo();
-	void EndSalvo() {
-		salvoLeft = 0;
-		nextSalvo = 0;
-	}
 
 	void UpdateInterceptTarget();
 	bool AllowWeaponAutoTarget() const;
