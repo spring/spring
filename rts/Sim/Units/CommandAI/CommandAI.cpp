@@ -1646,10 +1646,8 @@ void CCommandAI::UpdateStockpileIcon()
 
 void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 {
-	if (!inCommand)
+	if (!inCommand || commandQue.empty())
 		return;
-
-	assert(!commandQue.empty());
 
 	const Command& c = commandQue.front();
 
