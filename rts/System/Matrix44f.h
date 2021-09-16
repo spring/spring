@@ -109,6 +109,15 @@ public:
 	};
 
 
+	static const CMatrix44f& Zero() {
+		static CMatrix44f z = CMatrix44f(
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f
+		);
+		return z;
+	}
 	static CMatrix44f Identity() { return {}; }
 	static CMatrix44f PerspProj(float aspect, float thfov, float zn, float zf);
 	static CMatrix44f PerspProj(float l, float r, float b, float t, float zn, float zf);
