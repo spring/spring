@@ -3334,6 +3334,10 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 						tex.wrap_r = (GLenum)lua_tonumber(L, -1);
 					} break;
 
+					case hashString("compareFunc"): {
+						tex.cmpFunc = lua_tonumber(L, -1);
+					}
+
 					case hashString("aniso"): {
 						tex.aniso = (GLfloat)lua_tonumber(L, -1);
 					} break;
@@ -3415,6 +3419,9 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 			case hashString("wrap_r"): {
 				tex->wrap_r = (GLenum)lua_tonumber(L, -1);
 			} break;
+			case hashString("compareFunc"): {
+				tex->cmpFunc = lua_tonumber(L, -1);
+			}
 			case hashString("aniso"): {
 				tex->aniso = (GLfloat)lua_tonumber(L, -1);
 			} break;

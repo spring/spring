@@ -210,7 +210,13 @@ void LuaTextures::ApplyParams(const Texture& tex) const
 	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
 	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
 	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	if (tex.cmpFunc != GL_NONE) {
+		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, tex.cmpFunc);
+	}
+	else {
+		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	}
 
 	if (tex.aniso != 0.0f && GLEW_EXT_texture_filter_anisotropic)
 		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
