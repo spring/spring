@@ -258,7 +258,6 @@ inline static void BlurHorizontal(
 	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
-	const float n = 2.0f * blurSize + 1.0f;
 	const int lineSize = maxx;
 
 	for_mt(0, maxy, [&](const int y)
@@ -288,7 +287,6 @@ inline static void BlurVertical(
 	const std::vector<float>& mesh,
 	      std::vector<float>& smoothed
 ) {
-	const float n = 2.0f * blurSize + 1.0f;
 	const int lineSize = maxx;
 
 	for_mt(0, maxx, [&](const int x)

@@ -2055,7 +2055,6 @@ public:
 		if (mouse->offscreen)
 			return false;
 
-		const bool prevState = globalRendering->GetWindowInputGrabbing();
 		if (args.empty()) {
 			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
