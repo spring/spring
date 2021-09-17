@@ -2,6 +2,8 @@
 
 #include "ISound.h"
 
+#include <cstring> //memset
+
 #ifndef   NO_SOUND
 #include "OpenAL/Sound.h"
 #endif // NO_SOUND
