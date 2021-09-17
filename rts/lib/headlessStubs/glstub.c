@@ -344,6 +344,8 @@ GLAPI void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, cons
 GLAPI void APIENTRY glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex) {}
 GLAPI void APIENTRY glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount) {}
 GLAPI void APIENTRY glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount, GLint basevertex) {}
+GLAPI void APIENTRY glDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect) {};
+GLAPI void APIENTRY glMultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei primcount, GLsizei stride) {};
 GLAPI void APIENTRY glEdgeFlag(GLboolean flag) {}
 GLAPI void APIENTRY glEvalCoord1f(GLfloat u) {}
 GLAPI void APIENTRY glEvalCoord2f(GLfloat u, GLfloat v) {}
