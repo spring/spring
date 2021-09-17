@@ -786,7 +786,6 @@ size_t LuaVBOImpl::OffsetFromImpl(const int id, const int attrID)
 	elemOffsets.resize(elementsCount);
 	std::fill(elemOffsets.begin(), elemOffsets.end(), ssboElemOffset);
 
-	size_t bytesWritten = 0u;
 	return UploadImpl<uint32_t>(elemOffsets, 0u, attrID);
 }
 
