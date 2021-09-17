@@ -219,7 +219,6 @@ public:
 private:
 	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
 	void glOrthoScaledSpring(const float sx, const float sy, const float zn, const float zf);
-	void gluLookAtSpring(const float3&, const float3&, const float3&);
 
 	void UpdateDirsFromRot(const float3& r);
 

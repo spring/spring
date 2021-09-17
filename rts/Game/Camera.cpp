@@ -203,7 +203,7 @@ void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
 	const float3 center = camPos + fShake;
 
 	// recalculate the view transform
-	gluLookAtSpring(camPos, center, up);
+	viewMatrix = CMatrix44f::LookAtView(camPos, center, up);
 
 
 	// create extra matrices (useful for shaders)
@@ -540,33 +540,6 @@ inline void CCamera::glOrthoScaledSpring(
 
 	projectionMatrix = clipControlMatrix * CMatrix44f::OrthoProj(l, r,  b, t,  zn, zf);
 }
-
-inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)
-{
-	const float3 f = (center - eye).ANormalize();
-	const float3 s = f.cross(up);
-	const float3 u = s.cross(f);
-
-	viewMatrix[ 0] =  s.x;
-	viewMatrix[ 1] =  u.x;
-	viewMatrix[ 2] = -f.x;
-
-	viewMatrix[ 4] =  s.y;
-	viewMatrix[ 5] =  u.y;
-	viewMatrix[ 6] = -f.y;
-
-	viewMatrix[ 8] =  s.z;
-	viewMatrix[ 9] =  u.z;
-	viewMatrix[10] = -f.z;
-
-	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
-	viewMatrix[12] = s.dot(-eye);
-	viewMatrix[13] = u.dot(-eye);
-	viewMatrix[14] = f.dot( eye);
-}
-
-
-
 
 void CCamera::CalcFrustumLines(float miny, float maxy, float scale, bool neg) {
 	const float3 isectParams = {miny, maxy, 1.0f / scale};

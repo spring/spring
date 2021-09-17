@@ -746,21 +746,22 @@ CMatrix44f CMatrix44f::ClipOrthoProj01()
 
 CMatrix44f CMatrix44f::LookAtView(const float3& eye, const float3& center, const float3& up)
 {
-	//TODO: figure out non-standard sign of viewMatrix[2], viewMatrix[6], viewMatrix[10], viewMatrix[14]
+	CMatrix44f viewMatrix = {};
+
 	const float3 f = (center - eye).ANormalize();
 	const float3 s = f.cross(up);
 	const float3 u = s.cross(f);
-	CMatrix44f viewMatrix = {};
-	viewMatrix[0] =  s.x;
-	viewMatrix[1] =  u.x;
-	viewMatrix[2] = -f.x;
 
-	viewMatrix[4] =  s.y;
-	viewMatrix[5] =  u.y;
-	viewMatrix[6] = -f.y;
+	viewMatrix[ 0] =  s.x;
+	viewMatrix[ 1] =  u.x;
+	viewMatrix[ 2] = -f.x;
 
-	viewMatrix[8] =  s.z;
-	viewMatrix[9] =  u.z;
+	viewMatrix[ 4] =  s.y;
+	viewMatrix[ 5] =  u.y;
+	viewMatrix[ 6] = -f.y;
+
+	viewMatrix[ 8] =  s.z;
+	viewMatrix[ 9] =  u.z;
 	viewMatrix[10] = -f.z;
 
 	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
