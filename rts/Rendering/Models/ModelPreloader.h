@@ -6,6 +6,9 @@
 class ModelPreloader {
 public:
 	static void Load() {
+		if (!enabled)
+			return;
+
 		// map features are loaded earlier in featureHandler.LoadFeaturesFromMap(); - not a big deal
 		// Functions below cannot be multithreaded because modelLoader.LoadModel() deal with OpenGL functions
 		LoadUnitDefs();
@@ -15,6 +18,8 @@ public:
 		// after that point we should've loaded all models, it's time to dispatch VBO/EBO/VAO creation
 		S3DModelVAO::GetInstance().Init();
 	}
+private:
+	static constexpr bool enabled = false;
 private:
 	static void LoadUnitDefs();
 	static void LoadFeatureDefs();
