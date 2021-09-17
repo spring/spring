@@ -757,7 +757,7 @@ void CUnitDrawer::DrawIconScreenArray(const CUnit* unit, const icon::CIconData* 
 		unit->GetObjDrawMidPos();
 
 	pos = camera->CalcWindowCoordinates(pos);
-	if (pos.z < 0)
+	if (pos.z > 1.0f || pos.z < 0.0f)
 		return;
 
 	// use white for selected units
