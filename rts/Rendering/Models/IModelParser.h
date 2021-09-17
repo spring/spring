@@ -34,10 +34,12 @@ public:
 	void PreloadModel(const std::string& name);
 	void LogErrors();
 
+	const std::vector<S3DModel>& GetModelsVec() const { return models; }
+	      std::vector<S3DModel>& GetModelsVec()       { return models; }
 public:
 	typedef spring::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
 	typedef spring::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
-	typedef std::array<IModelParser*, MODELTYPE_OTHER> ParserMap; // MODELTYPE_3DO --> parser
+	typedef std::array<IModelParser*, MODELTYPE_CNT> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
 	S3DModel ParseModel(const std::string& name, const std::string& path);

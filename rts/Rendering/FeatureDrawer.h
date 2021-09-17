@@ -116,7 +116,7 @@ private:
 		void SetLastDrawFrame(unsigned int f) { lastDrawFrame = f; }
 
 	private:
-		std::array<ModelRenderContainer<CFeature>, MODELTYPE_OTHER> rendererTypes;
+		std::array<ModelRenderContainer<CFeature>, MODELTYPE_CNT> rendererTypes;
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)

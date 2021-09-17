@@ -318,7 +318,7 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 {
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		unitDrawer->PushModelRenderState(modelType);
 		DrawOpaqueFeatures(modelType);
 		unitDrawer->PopModelRenderState(modelType);
@@ -485,7 +485,7 @@ void CFeatureDrawer::DrawAlphaPass()
 		// needed for now; not always called directly after Draw()
 		GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, true);
 
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			unitDrawer->PushModelRenderState(modelType);
 			DrawAlphaFeatures(modelType);
 			unitDrawer->PopModelRenderState(modelType);
@@ -583,7 +583,7 @@ void CFeatureDrawer::DrawShadowPass()
 		DrawOpaqueFeatures(MODELTYPE_3DO);
 		glEnable(GL_CULL_FACE);
 
-		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_CNT; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
@@ -645,7 +645,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 	for (int quad: quads) {
 		auto& mdlRenderProxy = featureDrawer->modelRenderers[quad];
 
-		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
+		for (int i = 0; i < MODELTYPE_CNT; ++i) {
 			const auto& mdlRenderer = mdlRenderProxy.GetRenderer(i);
 			// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 

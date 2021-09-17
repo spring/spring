@@ -301,21 +301,21 @@ private:
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
-	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> opaqueModelRenderers;
-	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> alphaModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_CNT> opaqueModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_CNT> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::vector<CUnit*> unsortedUnits;
 
 	/// AI unit ghosts
-	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempOpaqueUnits;
-	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempAlphaUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_CNT> tempOpaqueUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_CNT> tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::array<std::vector<GhostSolidObject*>, MODELTYPE_OTHER>> deadGhostBuildings;
+	std::vector<std::array<std::vector<GhostSolidObject*>, MODELTYPE_CNT>> deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::vector<std::array<std::vector<CUnit*>, MODELTYPE_OTHER>> liveGhostBuildings;
+	std::vector<std::array<std::vector<CUnit*>, MODELTYPE_CNT>> liveGhostBuildings;
 
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;

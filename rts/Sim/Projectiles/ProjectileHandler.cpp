@@ -111,7 +111,7 @@ void CProjectileHandler::Init()
 		spring::random_shuffle(freeProjectileIDs[false].begin(), freeProjectileIDs[false].end(), guRNG);
 	}
 
-	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+	for (int modelType = 0; modelType < MODELTYPE_CNT; ++modelType) {
 		flyingPieces[modelType].clear();
 		flyingPieces[modelType].reserve(1000);
 	}
@@ -341,7 +341,7 @@ void CProjectileHandler::Update()
 		UPDATE_PTR_CONTAINER(groundFlashes);
 
 		// flying pieces; sort these every now and then
-		for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+		for (int modelType = 0; modelType < MODELTYPE_CNT; ++modelType) {
 			auto& fpc = flyingPieces[modelType];
 
 			UPDATE_REF_CONTAINER(fpc);

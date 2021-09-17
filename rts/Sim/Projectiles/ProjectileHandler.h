@@ -90,8 +90,8 @@ public:
 	int lastProjectileCounts[2] = {0, 0};
 
 	// flying pieces (unsynced) are sorted from time to time to reduce GL state changes
-	std::array<                bool, MODELTYPE_OTHER> resortFlyingPieces;
-	std::array<FlyingPieceContainer, MODELTYPE_OTHER> flyingPieces;
+	std::array<                bool, MODELTYPE_CNT> resortFlyingPieces;
+	std::array<FlyingPieceContainer, MODELTYPE_CNT> flyingPieces;
 
 	// [0] contains only projectiles that can not change simulation state
 	// [1] contains only projectiles that can     change simulation state

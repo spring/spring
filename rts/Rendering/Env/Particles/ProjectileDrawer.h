@@ -167,7 +167,7 @@ private:
 	/// projectiles without a model, e.g. nano-particles
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
+	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_CNT> modelRenderers;
 
 	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
 	/// used to render particle effects in back-to-front order

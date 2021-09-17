@@ -188,13 +188,13 @@ typedef const void (*PopRenderStateFunc)();
 
 typedef const void (*SetTeamColorFunc)(const IUnitDrawerState*, int team, const float2 alpha);
 
-static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_CNT] = {
 	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
 	BindOpaqueTex,      // S3O
 	BindOpaqueTex,      // ASS
 };
 
-static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc shadowTexBindFuncs[MODELTYPE_CNT] = {
 	BindShadowTexAtlas, // 3DO
 	BindShadowTex,      // S3O
 	BindShadowTex,      // ASS
@@ -205,20 +205,20 @@ static const BindTexFunc* bindModelTexFuncs[] = {
 	&shadowTexBindFuncs[0], // shadow
 };
 
-static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
+static const KillTexFunc shadowTexKillFuncs[MODELTYPE_CNT] = {
 	KillShadowTexAtlas, // 3DO
 	KillShadowTex,      // S3O
 	KillShadowTex,      // ASS
 };
 
 
-static const PushRenderStateFunc renderStatePushFuncs[MODELTYPE_OTHER] = {
+static const PushRenderStateFunc renderStatePushFuncs[MODELTYPE_CNT] = {
 	PushRenderState3DO,
 	PushRenderStateS3O,
 	PushRenderStateASS,
 };
 
-static const PopRenderStateFunc renderStatePopFuncs[MODELTYPE_OTHER] = {
+static const PopRenderStateFunc renderStatePopFuncs[MODELTYPE_CNT] = {
 	PopRenderState3DO,
 	PopRenderStateS3O,
 	PopRenderStateASS,
@@ -295,7 +295,7 @@ void CUnitDrawer::Init() {
 
 	LoadUnitExplosionGenerators();
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		opaqueModelRenderers[modelType].Init();
 		alphaModelRenderers[modelType].Init();
 	}
@@ -357,7 +357,7 @@ void CUnitDrawer::Kill()
 	}
 
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			auto& lgb = liveGhostBuildings[allyTeam][modelType];
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
@@ -382,7 +382,7 @@ void CUnitDrawer::Kill()
 	// liveGhostBuildings.clear();
 
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		opaqueModelRenderers[modelType].Kill();
 		alphaModelRenderers[modelType].Kill();
 	}
@@ -397,7 +397,7 @@ void CUnitDrawer::Kill()
 
 void CUnitDrawer::Update()
 {
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		UpdateTempDrawUnits(tempOpaqueUnits[modelType]);
 		UpdateTempDrawUnits(tempAlphaUnits[modelType]);
 	}
@@ -460,7 +460,7 @@ void CUnitDrawer::DrawOpaquePass(bool deferredPass, bool drawReflection, bool dr
 {
 	SetupOpaqueDrawing(deferredPass);
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		PushModelRenderState(modelType);
 		DrawOpaqueUnits(modelType, drawReflection, drawRefraction);
 		DrawOpaqueAIUnits(modelType);
@@ -726,7 +726,7 @@ void CUnitDrawer::DrawShadowPass()
 		DrawOpaqueUnitsShadow(MODELTYPE_3DO);
 		glEnable(GL_CULL_FACE);
 
-		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_CNT; modelType++) {
 			// note: just use DrawOpaqueUnits()? would
 			// save texture switches needed anyway for
 			// UNIT_SHADOW_ALPHA_MASKING
@@ -888,7 +888,7 @@ void CUnitDrawer::DrawAlphaPass()
 		if (UseAdvShading())
 			glDisable(GL_ALPHA_TEST);
 
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			PushModelRenderState(modelType);
 			DrawAlphaUnits(modelType);
 			DrawAlphaAIUnits(modelType);
@@ -1046,7 +1046,7 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 void CUnitDrawer::UpdateGhostedBuildings()
 {
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
 			for (int i = 0; i < dgb.size(); /*no-op*/) {

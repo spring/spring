@@ -120,4 +120,35 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
 class CVertexArray;
 CVertexArray* GetVertexArray();
 
+struct SDrawElementsIndirectCommand {
+	SDrawElementsIndirectCommand(uint32_t indexCount_, uint32_t instanceCount_, uint32_t firstIndex_, uint32_t baseVertex_, uint32_t baseInstance_)
+		: indexCount{ indexCount_ }
+		, instanceCount{ instanceCount_ }
+		, firstIndex{ firstIndex_ }
+		, baseVertex{ baseVertex_ }
+		, baseInstance{ baseInstance_ }
+	{};
+
+	uint32_t indexCount;
+	uint32_t instanceCount;
+	uint32_t firstIndex;
+	uint32_t baseVertex;
+	uint32_t baseInstance;
+};
+
+struct SInstanceData {
+	SInstanceData() = default;
+	SInstanceData(uint32_t ssboOffset_, uint32_t teamIndex_, uint32_t drawID_ = 0u, uint32_t aux_ = 0u)
+		: ssboOffset{ ssboOffset_ }
+		, teamIndex{ teamIndex_ }
+		, drawID{ drawID_ }
+		, aux{ aux_ }
+	{}
+
+	uint32_t ssboOffset;
+	uint32_t teamIndex;
+	uint32_t drawID;
+	uint32_t aux;
+};
+
 #endif // _MY_GL_H

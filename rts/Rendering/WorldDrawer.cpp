@@ -25,6 +25,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/IModelParser.h"
+#include "Rendering/Models/ModelPreloader.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -71,6 +72,10 @@ void CWorldDrawer::InitPost() const
 {
 	char buf[512] = {0};
 
+	{
+		loadscreen->SetLoadMessage("Loading Models and Textures");
+		ModelPreloader::Load();
+	}
 	{
 		loadscreen->SetLoadMessage("Creating ShadowHandler");
 		shadowHandler.Init();

@@ -125,7 +125,7 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 	static_assert(int(LUASHADER_3DO) == int(MODELTYPE_3DO  ), "");
 	static_assert(int(LUASHADER_S3O) == int(MODELTYPE_S3O  ), "");
 	static_assert(int(LUASHADER_ASS) == int(MODELTYPE_ASS  ), "");
-	static_assert(int(LUASHADER_GL ) == int(MODELTYPE_OTHER), "");
+	static_assert(int(LUASHADER_GL ) == int(MODELTYPE_CNT), "");
 
 	if (type != prev.type) {
 		switch (prev.type) {
