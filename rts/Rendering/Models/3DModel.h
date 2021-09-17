@@ -253,15 +253,6 @@ struct S3DModel
 		, numPieces(0)
 		, textureType(-1)
 
-		, type(MODELTYPE_CNT)
-
-		, radius(0.0f)
-		, height(0.0f)
-
-		, mins(DEF_MIN_SIZE)
-		, maxs(DEF_MAX_SIZE)
-		, relMidPos(ZeroVector)
-
 		, vertVBO(nullptr)
 		, indxVBO(nullptr)
 
@@ -270,6 +261,15 @@ struct S3DModel
 
 		, curVertStartIndx(0u)
 		, curIndxStartIndx(0u)
+
+		, type(MODELTYPE_CNT)
+
+		, radius(0.0f)
+		, height(0.0f)
+
+		, mins(DEF_MIN_SIZE)
+		, maxs(DEF_MAX_SIZE)
+		, relMidPos(ZeroVector)
 	{
 
 	}
