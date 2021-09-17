@@ -4,10 +4,10 @@
 #define TIME_PROFILER_H
 
 #include <atomic>
-#include <cstring> // memset
 #include <string>
 #include <deque>
 #include <vector>
+#include <array>
 
 #include "System/Misc/SpringTime.h"
 #include "System/Misc/NonCopyable.h"
@@ -106,14 +106,14 @@ public:
 
 	struct TimeRecord {
 		TimeRecord() {
-			memset(frames, 0, sizeof(frames));
+			frames.fill(spring_time(0));
 		}
 
 		static constexpr unsigned numFrames = 128;
 
 		spring_time total = spring_notime;
 		spring_time current = spring_notime;
-		spring_time frames[numFrames];
+		std::array<spring_time, numFrames> frames;
 
 		// .x := maximum dt, .y := time-percentage, .z := peak-percentage
 		float3 stats;
