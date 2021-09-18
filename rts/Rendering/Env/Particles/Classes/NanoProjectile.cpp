@@ -47,18 +47,15 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawRadius = 3;
 
 	projectileHandler.currentNanoParticles += 1;
+
+	rotVal = rotVal0 + rotValRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
+	rotVel = rotVel0 + rotVelRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
+	rotAcc = rotAcc0 + rotAccRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
 	projectileHandler.currentNanoParticles -= 1;
-}
-
-void CNanoProjectile::Init(const CUnit* owner, const float3& offset)
-{
-	rotVal = rotVal0 + rotValRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
-	rotVel = rotVel0 + rotVelRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
-	rotAcc = rotAcc0 + rotAccRng0 * (guRNG.NextFloat() * 2.0 - 1.0);
 }
 
 void CNanoProjectile::Update()

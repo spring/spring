@@ -15,7 +15,6 @@ public:
 	CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor color);
 	~CNanoProjectile();
 
-	void Init(const CUnit* owner, const float3& offset) override;
 	void Update() override;
 	void Draw(CVertexArray* va) override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
