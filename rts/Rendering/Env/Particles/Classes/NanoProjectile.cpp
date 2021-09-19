@@ -80,9 +80,8 @@ void CNanoProjectile::Draw(CVertexArray* va)
 	};
 
 	if (math::fabs(rotVal) > 0.01f) {
-		CMatrix44f rotMat; rotMat.Rotate(rotVal, camera->GetForward());
-		for (auto& v : bounds)
-			v = (rotMat * float4(v, 1.0f)).xyz;
+		for (auto& b : bounds)
+			b = b.rotate(rotVal, camera->GetForward());
 	}
 
 	const auto* gfxt = projectileDrawer->gfxtex;

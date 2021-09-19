@@ -374,6 +374,14 @@ public:
 				(x * f.y) - (y * f.x));
 	}
 
+	float3 rotate(float angle, const float3& axis) {
+		const float ca = math::cos(angle);
+		const float sa = math::sin(angle);
+
+		//Rodrigues' rotation formula
+		// https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+		return (*this) * ca + axis.cross(*this) * sa + axis * axis.dot(*this) * (1.0f - ca);
+	}
 
 	/**
 	 * @brief distance between float3s
@@ -707,6 +715,10 @@ public:
 		struct { float xyz[3]; };
 	};
 };
+
+inline float3 operator*(float f, const float3& v) {
+	return v * f;
+}
 
 /**
  * @brief upwards vector

@@ -131,10 +131,8 @@ void CSimpleParticleSystem::Draw(CVertexArray* va)
 
 
 			if (math::fabs(p->rotVal) > 0.01f) {
-				CMatrix44f rotMat;
-				rotMat.Rotate(p->rotVal, *fwdDir);
 				for (auto& b : bounds)
-					b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
+					b = b.rotate(p->rotVal, *fwdDir);
 			}
 
 			va->AddVertexQTC(interPos + bounds[0], texture->xstart, texture->ystart, color);
@@ -167,10 +165,8 @@ void CSimpleParticleSystem::Draw(CVertexArray* va)
 		};
 
 		if (math::fabs(p->rotVal) > 0.01f) {
-			CMatrix44f rotMat;
-			rotMat.Rotate(p->rotVal, camera->GetForward());
 			for (auto& b : bounds)
-				b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
+				b = b.rotate(p->rotVal, camera->GetForward());
 		}
 
 		va->AddVertexQTC(interPos + bounds[0], texture->xstart, texture->ystart, color);

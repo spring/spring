@@ -86,10 +86,8 @@ void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 	};
 
 	if (math::fabs(rotVal) > 0.01f) {
-		CMatrix44f rotMat;
-		rotMat.Rotate(rotVal, dir);
 		for (auto& b : bounds)
-			b = (rotMat * float4(b, 1.0f)).xyz; //TODO float3:Rotate instead
+			b = b.rotate(rotVal, dir);
 	}
 
 	if (IsValidTexture(sideTexture)) {
