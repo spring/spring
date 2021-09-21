@@ -63,6 +63,7 @@ class SelectionWidget : public agui::GuiElement
 {
 public:
 	static const std::string NoDemoSelect;
+	static const std::string NoSaveSelect;
 	static const std::string NoModSelect;
 	static const std::string NoMapSelect;
 	static const std::string NoScriptSelect;
@@ -72,16 +73,19 @@ public:
 	~SelectionWidget();
 
 	void ShowDemoList(const std::function<void(const std::string&)>& demoSelectedCB);
+	void ShowSavegameList(const std::function<void(const std::string&)>& loadSelectCB);
 	void ShowModList();
 	void ShowMapList();
 	void ShowScriptList();
 
 	void SelectDemo(const std::string&);
+	void SelectSavegame(const std::string&);
 	void SelectMod(const std::string&);
 	void SelectScript(const std::string&);
 	void SelectMap(const std::string&);
 
 	std::string userDemo;
+	std::string userLoad;
 	std::string userScript;
 	std::string userMap;
 	std::string userMod;
@@ -103,6 +107,7 @@ private:
 	ListSelectWnd* curSelect;
 
 	std::function<void(const std::string&)> demoSelectedCB;
+	std::function<void(const std::string&)> loadSelectedCB;
 
 	std::vector<std::string> availableScripts;
 };

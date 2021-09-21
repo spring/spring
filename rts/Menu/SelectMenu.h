@@ -31,6 +31,7 @@ public:
 
 private:
 	void Demo();
+	void Load();
 	void Single();
 	void Settings();
 	void Multi();

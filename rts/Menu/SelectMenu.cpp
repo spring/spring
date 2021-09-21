@@ -156,6 +156,9 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		Button* playDemo = new Button("Play Demo", menu);
 		playDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
 
+		Button* loadGame = new Button("Load Game", menu);
+		loadGame->Clicked.connect(std::bind(&SelectMenu::Load, this));
+
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit Settings", menu);
 		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
@@ -190,7 +193,7 @@ bool SelectMenu::Draw()
 
 void SelectMenu::Demo()
 {
-	const std::function<void(const std::string&)> demoSelectedCB = [&](const std::string& userDemo) {
+	const auto demoSelectedCB = [&](const std::string& userDemo) {
 		if (pregame != nullptr)
 			return;
 
@@ -200,11 +203,33 @@ void SelectMenu::Demo()
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemoFile(clientSetup->demoFile);
+
 		return (agui::gui->RmElement(this));
 	};
 
 	if (selw->userDemo == SelectionWidget::NoDemoSelect) {
 		selw->ShowDemoList(demoSelectedCB);
+		return;
+	}
+}
+
+void SelectMenu::Load()
+{
+	const auto loadSelectedCB = [&](const std::string& userSave) {
+		if (pregame != nullptr)
+			return;
+
+		clientSetup->isHost = true;
+		clientSetup->saveFile = userSave;
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSaveFile(clientSetup->saveFile);
+
+		return (agui::gui->RmElement(this));
+	};
+
+	if (selw->userLoad == SelectionWidget::NoSaveSelect) {
+		selw->ShowSavegameList(loadSelectedCB);
 		return;
 	}
 }

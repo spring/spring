@@ -4,6 +4,7 @@
 
 ///[maint]#ifndef HEADLESS
 #include <functional>
+#include <algorithm>
 
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -18,6 +19,7 @@
 #include "alphanum.hpp"
 
 const std::string SelectionWidget::NoDemoSelect = "No demo selected";
+const std::string SelectionWidget::NoSaveSelect = "No savagame selected";
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
@@ -55,8 +57,8 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod->Clicked.connect(std::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 
-
 	userDemo = NoDemoSelect;
+	userLoad = NoSaveSelect;
 	userMod = configHandler->GetString("LastSelectedMod");
 	userMap = configHandler->GetString("LastSelectedMap");
 	userScript = configHandler->GetString("LastSelectedScript");
@@ -107,6 +109,40 @@ void SelectionWidget::ShowDemoList(const std::function<void(const std::string&)>
 	}
 
 	demoSelectedCB = demoSelectCB;
+}
+
+void SelectionWidget::ShowSavegameList(const std::function<void(const std::string&)>& loadSelectCB)
+{
+	if (curSelect != nullptr)
+		return;
+
+	curSelect = new ListSelectWnd("Select savegame");
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectSavegame, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
+
+	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
+	const std::string dir = std::move(FileSystem::EnsurePathSepAtEnd("Saves"));
+
+	// FIXME: names overflow the box
+	/*
+	std::set_union(v1.begin(), v1.end(),
+		v2.begin(), v2.end(),
+		std::back_inserter(dest1));
+	*/
+	std::vector<std::string> files;
+	{
+		auto ssf  = dataDirsAccess.FindFiles(cwd + dir, "*.ssf" , 0);
+		auto sslf = dataDirsAccess.FindFiles(cwd + dir, "*.sslf", 0);
+		files.insert(files.end(),  ssf.begin(),  ssf.end());
+		files.insert(files.end(), sslf.begin(), sslf.end());
+		std::sort(files.begin(), files.end());
+	}
+
+	for (const std::string& save : files) {
+		curSelect->list->AddItem(save.substr(save.find(dir) + 6), "");
+	}
+
+	loadSelectedCB = loadSelectCB;
 }
 
 void SelectionWidget::ShowModList()
@@ -224,6 +260,12 @@ void SelectionWidget::SelectDemo(const std::string& demo)
 {
 	CleanWindow();
 	demoSelectedCB("demos/" + demo);
+}
+
+void SelectionWidget::SelectSavegame(const std::string& saveGame)
+{
+	CleanWindow();
+	loadSelectedCB("Saves/" + saveGame);
 }
 
 void SelectionWidget::SelectMod(const std::string& mod)
