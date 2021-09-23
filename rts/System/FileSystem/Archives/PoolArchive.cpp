@@ -147,22 +147,48 @@ int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 	const spring_time startTime = spring_now();
 
 
-	gzFile in = gzopen(path.c_str(), "rb");
-
-	if (in == nullptr)
-		return -1;
-
 	buffer.clear();
 	buffer.resize(f->size);
 
-	const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), buffer.size());
-	gzclose(in);
+	const auto GzRead = [&f, &path, &buffer]() -> int {
+		gzFile in = gzopen(path.c_str(), "rb");
+
+		if (in == nullptr)
+			return -1;
+
+		const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), buffer.size());
+
+		if (bytesRead < 0) {
+			int errnum;
+			const char* errgz = gzerror(in, &errnum);
+			const char* errsys = std::strerror(errnum);
+
+			LOG_L(L_ERROR, "[PoolArchive::%s] could not read file GZIP reason: \"%s\", SYSTEM reason: \"%s\" (bytesRead=%d fileSize=%u)", __func__, errgz, errsys, bytesRead, f->size);
+		}
+
+		gzclose(in);
+
+		return bytesRead;
+	};
+
+	int bytesRead = Z_ERRNO;
+	static constexpr int readRetries = 10;
+
+	//Try to workaround occasional crashes
+	// (bytesRead=-1 fileSize=XXXX)
+	for (int readTry = 0; readTry < readRetries; ++readTry) {
+		bytesRead = GzRead();
+		if (bytesRead == buffer.size())
+			break;
+
+		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
+	}
 
 	s->readTime = (spring_now() - startTime).toNanoSecsi();
 
-
 	if (bytesRead != buffer.size()) {
-		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\" (bytesRead=%d fileSize=%u)", __func__, path.c_str(), bytesRead, f->size);
+		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\" after %d tries", __func__, path.c_str(), readRetries);
 		buffer.clear();
 		return 0;
 	}
