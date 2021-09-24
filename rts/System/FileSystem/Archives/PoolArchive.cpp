@@ -150,7 +150,7 @@ int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 	buffer.clear();
 	buffer.resize(f->size);
 
-	const auto GzRead = [&f, &path, &buffer]() -> int {
+	const auto GzRead = [&f, &path, &buffer](bool report) -> int {
 		gzFile in = gzopen(path.c_str(), "rb");
 
 		if (in == nullptr)
@@ -158,7 +158,7 @@ int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 
 		const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
-		if (bytesRead < 0) {
+		if (bytesRead < 0 && report) {
 			int errnum;
 			const char* errgz = gzerror(in, &errnum);
 			const char* errsys = std::strerror(errnum);
@@ -172,25 +172,29 @@ int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 	};
 
 	int bytesRead = Z_ERRNO;
-	static constexpr int readRetries = 10;
+	static constexpr int readRetries = 1000;
 
 	//Try to workaround occasional crashes
 	// (bytesRead=-1 fileSize=XXXX)
-	for (int readTry = 0; readTry < readRetries; ++readTry) {
-		bytesRead = GzRead();
+	int readTry;
+	for (readTry = 0; readTry < readRetries; ++readTry) {
+		bytesRead = GzRead(readTry == 0);
 		if (bytesRead == buffer.size())
 			break;
 
 		std::this_thread::yield();
-		std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
 	}
 
 	s->readTime = (spring_now() - startTime).toNanoSecsi();
 
 	if (bytesRead != buffer.size()) {
-		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\" after %d tries", __func__, path.c_str(), readRetries);
+		LOG_L(L_ERROR, "[PoolArchive::%s] failed to read file \"%s\" after %d tries", __func__, path.c_str(), readRetries);
 		buffer.clear();
 		return 0;
+	}
+	if (readTry > 0) {
+		LOG_L(L_WARNING, "[PoolArchive::%s] could read file \"%s\" only after %d tries", __func__, path.c_str(), readTry);
 	}
 
 	sha512::calc_digest(buffer.data(), buffer.size(), f->shasum.data());
