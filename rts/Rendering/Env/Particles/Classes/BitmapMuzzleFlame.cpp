@@ -19,6 +19,9 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 (
 	CR_MEMBER(invttl),
 	CR_MEMBER(createTime),
+	CR_IGNORED(life),
+	CR_IGNORED(isize),
+	CR_IGNORED(ilength),
 	CR_MEMBER(rotVal),
 	CR_MEMBER(rotVel),
 	CR_MEMBER_BEGINFLAG(CM_Config),
@@ -53,14 +56,8 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 
 void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 {
-	const float life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
-
 	unsigned char col[4];
 	colorMap->GetColor(col, life);
-
-	const float igrowth = sizeGrowth * (1.0f - (1.0f - life) * (1.0f - life));
-	const float isize = size * (igrowth + 1.0f);
-	const float ilength = length * (igrowth + 1.0f);
 
 	float3 fpos = pos + dir * frontOffset * ilength;
 
@@ -116,6 +113,14 @@ void CBitmapMuzzleFlame::Update()
 
 	rotVal += rotVel;
 	rotVel += rotParams.y; //rot accel
+
+	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
+	const float igrowth = sizeGrowth * (1.0f - (1.0f - life) * (1.0f - life));
+
+	isize = size * (igrowth + 1.0f);
+	ilength = length * (igrowth + 1.0f);
+
+	SetDrawRadius(std::max(isize, ilength));
 }
 
 void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
@@ -124,6 +129,10 @@ void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 
 	invttl = 1.0f / ttl;
 	createTime = gs->frameNum;
+
+	isize = size;
+	ilength = length;
+	SetDrawRadius(std::max(isize, ilength));
 
 	rotVal = rotParams.z; //initial rotation value
 	rotVel = rotParams.x; //initial rotation velocity

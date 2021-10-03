@@ -24,6 +24,7 @@ public:
 
 	// NOTE: used only by projectiles, SolidObject's override this!
 	virtual float GetDrawRadius() const { return drawRadius; }
+	virtual void  SetDrawRadius(float r) { drawRadius = r; }
 
 	virtual void SetPosition(const float3& p) {   pos = p; }
 	virtual void SetVelocity(const float3& v) { speed = v; }
@@ -61,12 +62,13 @@ public:
 	float radius = 0.0f;        ///< used for collisions
 	float height = 0.0f;        ///< The height of this object
 	float sqRadius = 0.0f;
-	float drawRadius = 0.0f;    ///< unsynced, used for projectile visibility culling
 
 	bool useAirLos = false;     ///< if true, the object's visibility is checked against airLosMap[allyteam]
 	bool alwaysVisible = false; ///< if true, object is drawn even if not in LOS
 
 	S3DModel* model = nullptr;
+protected:
+	float drawRadius = 0.0f;    ///< unsynced, used for projectile visibility culling
 };
 
 #endif /* WORLD_OBJECT_H */
