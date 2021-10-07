@@ -79,6 +79,8 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Textures/NamedTextures.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -3242,6 +3244,19 @@ public:
 	}
 };
 
+class ReloadTexturesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadTexturesActionExecutor() : IUnsyncedActionExecutor("ReloadTextures", "Reloads some textures") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		LOG("Reloading some textures");
+		CNamedTextures::Reload();
+		textureHandlerS3O.Reload();
+
+		return true;
+	}
+};
 
 
 class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
@@ -3638,6 +3653,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));
 	AddActionExecutor(AllocActionExecutor<ReloadGameActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ReloadShadersActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ReloadTexturesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugInfoActionExecutor>());
 
 	// XXX are these redirects really required?

@@ -815,10 +815,10 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 
 #ifndef BITMAP_NO_OPENGL
-unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const
+unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps, uint32_t texID) const
 {
 	if (compressed)
-		return CreateDDSTexture(0, aniso, lodBias, mipmaps);
+		return CreateDDSTexture(texID, aniso, lodBias, mipmaps);
 
 	if (GetMemSize() == 0)
 		return 0;
@@ -835,10 +835,10 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 	constexpr unsigned int intFormats[] = {0, GL_R8 , GL_RG8, GL_RGB8, GL_RGBA8};
 	constexpr unsigned int extFormats[] = {0, GL_RED, GL_RG , GL_RGB , GL_RGBA }; // GL_R is not accepted for [1]
 
-	unsigned int texture = 0;
+	if (texID == 0)
+		glGenTextures(1, &texID);
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, texID);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -857,7 +857,7 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 		glTexImage2D(GL_TEXTURE_2D, 0, intFormats[channels], xsize, ysize, 0, extFormats[channels], GL_UNSIGNED_BYTE, GetRawMem());
 	}
 
-	return texture;
+	return texID;
 }
 
 

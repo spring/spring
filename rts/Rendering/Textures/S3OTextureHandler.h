@@ -33,10 +33,13 @@ public:
 		unsigned int texID;
 		unsigned int xsize;
 		unsigned int ysize;
+		bool invertAxis;
+		bool invertAlpha;
 	};
 
 	void Init();
 	void Kill();
+	void Reload();
 
 	void LoadTexture(S3DModel* model);
 	void PreloadTexture(S3DModel* model, bool invertAxis = false, bool invertAlpha = false);

@@ -62,6 +62,20 @@ void CS3OTextureHandler::Kill()
 	bitmapCache.clear();
 }
 
+void CS3OTextureHandler::Reload()
+{
+	for (auto& [texName, texData] : textureCache) {
+		if (texData.texID == 0)
+			continue;
+
+		CBitmap bitmap;
+		if (!bitmap.Load(texName) && !bitmap.Load("unittextures/" + texName))
+			continue;
+
+		assert(bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID) == texData.texID);
+	}
+}
+
 
 void CS3OTextureHandler::PreloadTexture(S3DModel* model, bool invertAxis, bool invertAlpha)
 {
@@ -148,7 +162,9 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 	textureCache[textureName] = {
 		texID,
 		static_cast<unsigned int>(bitmap->xsize),
-		static_cast<unsigned int>(bitmap->ysize)
+		static_cast<unsigned int>(bitmap->ysize),
+		invertAxis,
+		invertAlpha
 	};
 
 	bitmapCache.erase(textureName);

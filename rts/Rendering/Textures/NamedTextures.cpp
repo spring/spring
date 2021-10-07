@@ -46,8 +46,7 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		for (const auto& item: texInfoMap) {
-			const size_t texIdx = item.second;
+		for (const auto& [texName, texIdx]: texInfoMap) {
 			const GLuint texID = texInfoVec[texIdx].id;
 
 			if (shutdown || !texInfoVec[texIdx].persist) {
@@ -55,12 +54,25 @@ namespace CNamedTextures {
 				// always recycle non-persistent textures
 				freeIndices.push_back(texIdx);
 			} else {
-				tempMap[item.first] = item.second;
+				tempMap[texName] = texIdx;
 			}
 		}
 
 		std::swap(texInfoMap, tempMap);
 		waitingTextures.clear();
+	}
+
+	void Reload()
+	{
+		const std::lock_guard<spring::recursive_mutex> lck(mutex); //needed?
+
+		for (const auto& [texName, texIdx] : texInfoMap) {
+			const GLuint texID = texInfoVec[texIdx].id;
+			if (texID == 0)
+				continue;
+
+			Load(texName, texID, false);
+		}
 	}
 
 
@@ -131,7 +143,7 @@ namespace CNamedTextures {
 
 
 
-	static bool Load(const std::string& texName, unsigned int texID)
+	static bool Load(const std::string& texName, unsigned int texID, bool genInsert)
 	{
 		// strip off the qualifiers
 		std::string filename = texName;
@@ -270,7 +282,9 @@ namespace CNamedTextures {
 		texInfo.xsize = bitmap.xsize;
 		texInfo.ysize = bitmap.ysize;
 
-		GenInsertTex(texName, texInfo, false, false, true, false);
+		if (genInsert)
+			GenInsertTex(texName, texInfo, false, false, true, false);
+
 		return true;
 	}
 

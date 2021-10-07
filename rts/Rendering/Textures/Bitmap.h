@@ -46,7 +46,7 @@ public:
 
 	bool Empty() const { return (memIdx == size_t(-1)); } // implies size=0
 
-	unsigned int CreateTexture(float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateTexture(float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false, uint32_t texID = 0) const;
 	unsigned int CreateMipMapTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, true)); }
 	unsigned int CreateAnisoTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, false)); }
 	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;

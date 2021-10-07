@@ -8,6 +8,9 @@
 namespace CNamedTextures {
 	void Init();
 	void Kill(bool shutdown = false);
+	void Reload();
+
+	static bool Load(const std::string& texName, unsigned int texID, bool genInsert = true);
 
 	/**
 	 * Reload textures we could not load because Bind() was called
