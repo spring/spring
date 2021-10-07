@@ -101,6 +101,8 @@ public:
 
 	virtual ~CReadMap();
 
+	virtual void ReloadTextures() = 0;
+
 	virtual void Update() { UpdateHeightBounds(gs->frameNum); }
 	virtual void UpdateShadingTexture() {}
 

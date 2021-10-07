@@ -3,6 +3,8 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
+#include <array>
+
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
 #include "System/EventClient.h"
@@ -27,6 +29,8 @@ public:
 	CSMFReadMap(const std::string& mapName);
 	// note: textures are auto-deleted
 	~CSMFReadMap() { mapFile.Close(); }
+
+	void ReloadTextures() override;
 
 	void UpdateShadingTexture() override;
 	void UpdateHeightMapUnsynced(const SRectangle&) override;
@@ -214,7 +218,7 @@ private:
 	// contains RGBA texture with RGB channels containing normals;
 	// alpha contains greyscale diffuse for splat detail normals
 	// if haveDetailNormalDiffuseAlpha (overrides detailTex)
-	MapTexture splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
+	std::array<MapTexture, NUM_SPLAT_DETAIL_NORMALS> splatNormalTextures;
 
 	MapTexture skyReflectModTex;      // modulates sky-reflection RGB intensities (must be the same size as specularTex)
 	MapTexture lightEmissionTex;

@@ -3254,6 +3254,8 @@ public:
 		CNamedTextures::Reload();
 		LOG("Reloading S3O textures");
 		textureHandlerS3O.Reload();
+		LOG("Reloading SMF textures");
+		readMap->ReloadTextures();
 
 		return true;
 	}
