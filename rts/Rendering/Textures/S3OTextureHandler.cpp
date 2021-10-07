@@ -64,6 +64,7 @@ void CS3OTextureHandler::Kill()
 
 void CS3OTextureHandler::Reload()
 {
+	cacheMutex.lock(); //needed?
 	for (auto& [texName, texData] : textureCache) {
 		if (texData.texID == 0)
 			continue;
@@ -72,8 +73,12 @@ void CS3OTextureHandler::Reload()
 		if (!bitmap.Load(texName) && !bitmap.Load("unittextures/" + texName))
 			continue;
 
-		assert(bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID) == texData.texID);
+		{
+			uint32_t newTexId = bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID);
+			assert(newTexId == texData.texID);
+		}
 	}
+	cacheMutex.unlock();
 }
 
 

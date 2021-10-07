@@ -3250,8 +3250,9 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		LOG("Reloading some textures");
+		LOG("Reloading Lua textures");
 		CNamedTextures::Reload();
+		LOG("Reloading S3O textures");
 		textureHandlerS3O.Reload();
 
 		return true;
