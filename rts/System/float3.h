@@ -631,6 +631,26 @@ public:
 		y = 0.0f; return SafeANormalize();
 	}
 
+	// Un must be Normalized()
+	float3& PickNonParallel(const float3 Un) {
+		float d2 = Un.SqLength2D();
+		float d3 = d2 + Un.y * Un.y;
+
+		if (d3 < cmp_eps()) {
+			// 0 vector
+			*this = float3(1.0f, 0.0f, 0.0f);
+			return *this;
+		}
+
+		if (d2 < cmp_eps()) {
+			// Un.y == +-1, make {Un.y, 0, 0}
+			*this = float3(Un.y, 0.0f, 0.0f);
+			return *this;
+		}
+
+		*this = float3(Un.z, Un.y, -Un.x); //y component of Un X (*this) is x1^2 + z1^2, which is non-zero
+		return (*this);
+	}
 
 	static bool CheckNaN(float c) { return (!math::isnan(c) && !math::isinf(c)); }
 
