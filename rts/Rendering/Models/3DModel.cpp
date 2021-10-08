@@ -227,7 +227,7 @@ void S3DModelPiece::PostProcessGeometry()
 	vboVertStart = model->curVertStartIndx;
 	vboIndxStart = model->curIndxStartIndx;
 
-	MeshOptimize();
+	//MeshOptimize();
 
 	indicesVBO.resize(indices.size());
 	std::transform(indices.cbegin(), indices.cend(), indicesVBO.begin(), [this](uint32_t indx) { return indx + this->vboVertStart; });
