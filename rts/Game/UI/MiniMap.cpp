@@ -1,5 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <array>
+#include <tuple>
+
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
@@ -1179,6 +1182,9 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
+		//this one is bugged, probably because CalcFrustumLines is bugged as well
+		// TODO: Investigate
+#if 0
 		cam->CalcFrustumLines(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
 		cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
 
@@ -1187,6 +1193,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
+
 
 		for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
 			const CCamera::FrustumLine& fl = negLines[idx];
@@ -1197,6 +1204,41 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 			va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
 			va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
 		}
+#else
+		const auto& pos = cam->GetPos();
+
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
+
+		const float Y = readMap->GetCurrAvgHeight();
+		constexpr float3 plane = UpVector;
+
+		std::array<std::pair<float, float>, 4> pts;
+
+		for (int i = 0; i < 4; ++i) {
+			const auto& fv = cam->GetFrustumVert(4 + i);
+			const float3 ray = (fv - pos);
+
+			float denom = plane.dot(ray);
+			if (denom == 0.0f)
+				continue;
+
+			float t = (Y - plane.dot(pos)) / denom;
+			if (t < 0.0f) //if intersection happens "behind" the "pos", hack "t" to still point in front of the camera
+				t = (1.0f - t);
+
+
+			float3 xpos = pos + ray * t;
+			pts[i] = std::make_pair(xpos.x, xpos.z);
+		}
+
+		for (int i = 0; i < pts.size(); ++i) {
+			const int ii = (i + 1) % (pts.size());
+			va->AddVertexQ2d0(pts[ i].first, pts[ i].second);
+			va->AddVertexQ2d0(pts[ii].first, pts[ii].second);
+		}
+#endif
 
 		glLineWidth(2.5f);
 		glColor4f(0, 0, 0, 0.5f);
