@@ -18,6 +18,7 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
+#include "Game/TraceRay.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
@@ -1206,16 +1207,27 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		}
 #else
 		const auto& pos = cam->GetPos();
+		const auto& dir = cam->GetForward();
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
 
-		const float Y = readMap->GetCurrAvgHeight();
+		const float rawRange = cam->GetFarPlaneDist() * 1.4f;
+		const float badRange = rawRange - 300.0f;
+
+		const float traceDist = TraceRay::GuiTraceRay(pos, dir, rawRange, nullptr, unit, feature, true, true, true);
+		const float3 tracePos = pos + (dir * traceDist);
+
+		float Y = tracePos.y;
+
+		if (traceDist < 0.0f || traceDist > badRange)
+			Y = readMap->GetCurrAvgHeight();
+
 		constexpr float3 plane = UpVector;
 
 		std::array<std::pair<float, float>, 4> pts;
 
+		uint8_t negCount = 0;
 		for (int i = 0; i < 4; ++i) {
 			const auto& fv = cam->GetFrustumVert(4 + i);
 			const float3 ray = (fv - pos);
@@ -1225,20 +1237,34 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 				continue;
 
 			float t = (Y - plane.dot(pos)) / denom;
-			if (t < 0.0f) //if intersection happens "behind" the "pos", hack "t" to still point in front of the camera
-				t = (1.0f - t);
-
+			if (t < 0.0f) { //if intersection happens "behind" the "pos", hack "t" to still point in front of the camera
+				t = 1.0f - t;
+				++negCount;
+			}
 
 			float3 xpos = pos + ray * t;
 			pts[i] = std::make_pair(xpos.x, xpos.z);
 		}
 
+		//if negCount == 4, then all intersections happen behind the "pos", doesn't make sense to draw anything but a small box
+		if (negCount == 4) {
+			constexpr float bias = 16.0f;
+			pts[0] = std::make_pair(pos.x - bias, pos.z + bias); //TL
+			pts[1] = std::make_pair(pos.x + bias, pos.z + bias); //TR
+			pts[2] = std::make_pair(pos.x + bias, pos.z - bias); //BR
+			pts[3] = std::make_pair(pos.x - bias, pos.z - bias); //BL
+		}
+
+
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
+
 		for (int i = 0; i < pts.size(); ++i) {
 			const int ii = (i + 1) % (pts.size());
-			va->AddVertexQ2d0(pts[ i].first, pts[ i].second);
+			va->AddVertexQ2d0(pts[i ].first, pts[i ].second);
 			va->AddVertexQ2d0(pts[ii].first, pts[ii].second);
 		}
-#endif
 
 		glLineWidth(2.5f);
 		glColor4f(0, 0, 0, 0.5f);
@@ -1247,7 +1273,9 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		glLineWidth(1.5f);
 		glColor4f(1, 1, 1, 0.75f);
 		va->DrawArray2d0(GL_LINES);
+
 		glLineWidth(1.0f);
+#endif
 	}
 
 
