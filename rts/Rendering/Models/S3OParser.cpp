@@ -332,20 +332,20 @@ void SS3OPiece::SetVertexTangents()
 
 		// if d is 0, texcoors are degenerate
 		const float d = (tc10.x * tc20.y - tc20.x * tc10.y);
-		const float r = (abs(d) < 1e-3f) ? 1.0f : 1.0f / d;
+		const float r = (abs(d) < 1e-9f) ? 1.0f : 1.0f / d;
 
 		// note: not necessarily orthogonal to each other
 		// or to vertex normal, only to the triangle plane
-		const float3 sdir =  p10 * tc20.y - p20 * tc10.y;
-		const float3 tdir = -p10 * tc20.x + p20 * tc10.x;
+		const float3 sdir = ( p10 * tc20.y - p20 * tc10.y) * r;
+		const float3 tdir = (-p10 * tc20.x + p20 * tc10.x) * r;
 
-		v0.sTangent += (sdir * r);
-		v1.sTangent += (sdir * r);
-		v2.sTangent += (sdir * r);
+		v0.sTangent += sdir;
+		v1.sTangent += sdir;
+		v2.sTangent += sdir;
 
-		v0.tTangent += (tdir * r);
-		v1.tTangent += (tdir * r);
-		v2.tTangent += (tdir * r);
+		v0.tTangent += tdir;
+		v1.tTangent += tdir;
+		v2.tTangent += tdir;
 	}
 
 	// set the smoothed per-vertex tangents
@@ -358,14 +358,14 @@ void SS3OPiece::SetVertexTangents()
 		T.AssertNaNs();
 		B.AssertNaNs();
 
-		const float bitangentAngle = B.dot(N.cross(T)); // dot(B,B')
-		const float handednessSign = Sign(bitangentAngle);
+		//const float bitangentAngle = B.dot(N.cross(T)); // dot(B,B')
+		//const float handednessSign = Sign(bitangentAngle);
 
-		T = (T - N * N.dot(T)) * handednessSign;
+		T = (T - N * N.dot(T));// *handednessSign;
 		T.SafeANormalize();
 
-		//B = (B - N * N.dot(B));
-		B = N.cross(T); //probably better
+		B = (B - N * N.dot(B) - T * T.dot(N));
+		//B = N.cross(T); //probably better
 		B.SafeANormalize();
 	}
 }
