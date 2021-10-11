@@ -37,11 +37,6 @@ static int gFramePeriod =  1;
 
 void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 {
-	#ifdef NDEBUG
-	// must be in debug-mode for this
-	return;
-	#endif
-
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
 
