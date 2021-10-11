@@ -3287,6 +3287,45 @@ int LuaOpenGL::Texture(lua_State* L)
 	return 1;
 }
 
+namespace Impl {
+	static void ParseCommonLuaTexParams(lua_State* L, LuaTextures::Texture* tex, uint32_t strHash) {
+		switch (strHash) {
+		case hashString("target"): {
+			tex->target = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("format"): {
+			tex->format = (GLint)lua_tonumber(L, -1);
+		} break;
+		case hashString("min_filter"): {
+			tex->min_filter = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("mag_filter"): {
+			tex->mag_filter = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("wrap_s"): {
+			tex->wrap_s = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("wrap_t"): {
+			tex->wrap_t = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("wrap_r"): {
+			tex->wrap_r = (GLenum)lua_tonumber(L, -1);
+		} break;
+		case hashString("compareFunc"): {
+			tex->cmpFunc = lua_tonumber(L, -1);
+		} break;
+		case hashString("lodBias"): {
+			tex->lodBias = lua_tonumber(L, -1);
+		} break;
+		case hashString("aniso"): {
+			tex->aniso = (GLfloat)lua_tonumber(L, -1);
+		} break;
+		default: {
+		} break;
+
+		}
+	}
+}
 
 int LuaOpenGL::CreateTexture(lua_State* L)
 {
@@ -3303,46 +3342,15 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 				continue;
 
 			if (lua_israwnumber(L, -1)) {
-				switch (hashString(lua_tostring(L, -2))) {
-					case hashString("target"): {
-						tex.target = (GLenum)lua_tonumber(L, -1);
-					} break;
-					case hashString("format"): {
-						tex.format = (GLint)lua_tonumber(L, -1);
-					} break;
-
+				uint32_t strHash = hashString(lua_tostring(L, -2));
+				switch (strHash) {
 					case hashString("samples"): {
 						// not Clamp(lua_tonumber(L, -1), 2, globalRendering->msaaLevel);
 						// AA sample count has to equal the default FB or blitting breaks
 						tex.samples = globalRendering->msaaLevel;
 					} break;
-
-					case hashString("min_filter"): {
-						tex.min_filter = (GLenum)lua_tonumber(L, -1);
-					} break;
-					case hashString("mag_filter"): {
-						tex.mag_filter = (GLenum)lua_tonumber(L, -1);
-					} break;
-
-					case hashString("wrap_s"): {
-						tex.wrap_s = (GLenum)lua_tonumber(L, -1);
-					} break;
-					case hashString("wrap_t"): {
-						tex.wrap_t = (GLenum)lua_tonumber(L, -1);
-					} break;
-					case hashString("wrap_r"): {
-						tex.wrap_r = (GLenum)lua_tonumber(L, -1);
-					} break;
-
-					case hashString("compareFunc"): {
-						tex.cmpFunc = lua_tonumber(L, -1);
-					}
-
-					case hashString("aniso"): {
-						tex.aniso = (GLfloat)lua_tonumber(L, -1);
-					} break;
-
 					default: {
+						Impl::ParseCommonLuaTexParams(L, &tex, strHash);
 					} break;
 				}
 
@@ -3397,37 +3405,7 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 		if (!lua_israwstring(L, -2) || !lua_israwnumber(L, -1))
 			continue;
 
-		switch (hashString(lua_tostring(L, -2))) {
-			case hashString("target"): {
-				tex->target = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("format"): {
-				tex->format = (GLint)lua_tonumber(L, -1);
-			} break;
-			case hashString("min_filter"): {
-				tex->min_filter = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("mag_filter"): {
-				tex->mag_filter = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("wrap_s"): {
-				tex->wrap_s = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("wrap_t"): {
-				tex->wrap_t = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("wrap_r"): {
-				tex->wrap_r = (GLenum)lua_tonumber(L, -1);
-			} break;
-			case hashString("compareFunc"): {
-				tex->cmpFunc = lua_tonumber(L, -1);
-			}
-			case hashString("aniso"): {
-				tex->aniso = (GLfloat)lua_tonumber(L, -1);
-			} break;
-			default: {
-			} break;
-		}
+		Impl::ParseCommonLuaTexParams(L, tex, hashString(lua_tostring(L, -2)));
 	}
 
 	textures.ChangeParams(*tex);

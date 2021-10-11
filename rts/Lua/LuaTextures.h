@@ -52,6 +52,8 @@ public:
 
 		GLenum cmpFunc = GL_NONE;
 
+		GLfloat lodBias = 0.0f;
+
 		GLfloat aniso = 0.0f;
 	};
 
