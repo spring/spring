@@ -953,7 +953,7 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 }
 #else  // !BITMAP_NO_OPENGL
 
-unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const {
+unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps, uint32_t texID) const {
 	return 0;
 }
 
