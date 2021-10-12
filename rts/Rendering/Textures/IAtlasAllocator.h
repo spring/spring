@@ -77,7 +77,7 @@ protected:
 	{
 		SAtlasEntry() : data(nullptr) {}
 		SAtlasEntry(const int2 _size, void* _data = nullptr) : size(_size), data(_data) {}
-		
+
 		int2 size;
 		float4 texCoords;
 		void* data;

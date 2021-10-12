@@ -1,4 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+#include <array>
+
 #include "UnsyncedGameCommands.h"
 
 #include "UnsyncedActionExecutor.h"
@@ -3246,16 +3248,53 @@ public:
 
 class ReloadTexturesActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ReloadTexturesActionExecutor() : IUnsyncedActionExecutor("ReloadTextures", "Reloads some textures") {
+	ReloadTexturesActionExecutor() : IUnsyncedActionExecutor("ReloadTextures", "Reloads textures") {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		LOG("Reloading Lua textures");
-		CNamedTextures::Reload();
-		LOG("Reloading S3O textures");
-		textureHandlerS3O.Reload();
-		LOG("Reloading SMF textures");
-		readMap->ReloadTextures();
+		std::array<bool, 4> en = { false }; //lua, s3o, smf, ceg
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs(), 1);
+
+		for (auto& arg : args) {
+			StringToLowerInPlace(arg);
+
+			switch (hashString(arg.c_str())) {
+			case hashString("lua"): {
+				en[0] = true;
+			} break;
+			case hashString("s3o"): {
+				en[1] = true;
+			} break;
+			case hashString("ssmf"):
+			case hashString("smf"): {
+				en[2] = true;
+			} break;
+			case hashString("cegs"):
+			case hashString("ceg"): {
+				en[3] = true;
+			} break;
+			}
+		}
+		if (args.empty())
+			en = { true };
+
+		if (en[0]) {
+			LOG("Reloading Lua textures");
+			CNamedTextures::Reload();
+		}
+		if (en[1]) {
+			LOG("Reloading S3O textures");
+			textureHandlerS3O.Reload();
+		}
+		if (en[2]) {
+			LOG("Reloading SMF textures");
+			readMap->ReloadTextures();
+		}
+		if (en[3]) {
+			LOG("Reloading CEG textures");
+			projectileDrawer->textureAtlas->ReloadTextures();
+			projectileDrawer->groundFXAtlas->ReloadTextures();
+		}
 
 		return true;
 	}

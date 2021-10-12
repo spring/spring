@@ -18,8 +18,14 @@
 struct AtlasedTexture : public float4
 {
 	AtlasedTexture() : float4() {}
-	AtlasedTexture(const float4& f) : float4(f) {}
+	AtlasedTexture(const float4& f) : float4(f) {};
+/*
+	AtlasedTexture(AtlasedTexture&& f) noexcept { *this = std::move(f); }
+	AtlasedTexture& operator= (AtlasedTexture&& f) = default;
 
+	AtlasedTexture(const AtlasedTexture& f) { *this = f; }
+	AtlasedTexture& operator= (const AtlasedTexture& f) = default;
+*/
 	CR_DECLARE_STRUCT(AtlasedTexture)
 };
 
@@ -38,11 +44,13 @@ public:
 	};
 
 public:
-	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY, const int atlasSizeX_ = 0, const int atlasSizeY_ = 0, std::string name_ = "");
+	CTextureAtlas(uint32_t allocType = ATLAS_ALLOC_LEGACY, int32_t atlasSizeX_ = 0, int32_t atlasSizeY_ = 0, const std::string& name_ = "", bool reloadable_ = false);
 	CTextureAtlas(CTextureAtlas&& ta) noexcept { *this = std::move(ta); };
 	CTextureAtlas(const CTextureAtlas&) = delete;
 
 	~CTextureAtlas();
+
+	void ReinitAllocator();
 
 	CTextureAtlas& operator= (CTextureAtlas&& ta) noexcept {
 		if (this != &ta) {
@@ -56,6 +64,12 @@ public:
 			atlasTexID = ta.atlasTexID;
 			initialized = ta.initialized;
 			freeTexture = ta.freeTexture;
+
+			allocType = ta.allocType;
+			atlasSizeX = ta.atlasSizeX;
+			atlasSizeY = ta.atlasSizeY;
+
+			reloadable = ta.reloadable;
 
 			// Trick to not call destructor on atlasAllocator multiple times
 			ta.atlasAllocator = nullptr;
@@ -93,6 +107,8 @@ public:
 	 *         the "textures" map and false if it does not.
 	 */
 	bool TextureExists(const std::string& name);
+
+	void ReloadTextures();
 
 
 	//! @return reference to the Texture struct of the specified texture
@@ -133,6 +149,12 @@ protected:
 	bool CreateTexture();
 
 protected:
+	uint32_t allocType;
+	int32_t atlasSizeX;
+	int32_t atlasSizeY;
+
+	bool reloadable;
+
 	IAtlasAllocator* atlasAllocator = nullptr;
 
 	struct MemTex {
@@ -170,7 +192,7 @@ protected:
 	spring::unordered_map<std::string, size_t> files;
 	spring::unordered_map<std::string, AtlasedTexture> textures;
 
-	unsigned int atlasTexID = 0;
+	uint32_t atlasTexID = 0;
 
 	bool initialized = false;
 	bool freeTexture = true; // free texture on atlas destruction?
