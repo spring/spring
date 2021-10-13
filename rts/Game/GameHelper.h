@@ -78,12 +78,18 @@ public:
 	static void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	static float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
 
+	static int GetYardMapIndex(int buildFacing,
+		const int2& yardPos,
+		const int2& xrange,
+		const int2& zrange
+	);
+
 	///< test a single mapsquare for build possibility
 	static BuildSquareStatus TestBuildSquare(
 		const float3& pos,
 		const int2& xrange,
 		const int2& zrange,
-		const UnitDef* unitDef,
+		const BuildInfo& buildInfo,
 		const MoveDef* moveDef,
 		CFeature*& feature,
 		int allyteam,

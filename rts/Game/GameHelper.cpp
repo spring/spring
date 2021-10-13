@@ -879,6 +879,39 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 	return pos;
 }
 
+int CGameHelper::GetYardMapIndex(int buildFacing, const int2& yardPos, const int2& xrange, const int2& zrange)
+{
+	int yardX = yardPos.x - xrange.x;
+	int yardZ = yardPos.y - zrange.x;
+	int yardXR = xrange.y - xrange.x;
+	int yardZR = zrange.y - zrange.x;
+
+	switch (buildFacing) {
+		default: {
+			// FACING_SOUTH don't need to do any remapping
+		} break;
+
+		case FacingMap::FACING_NORTH: {
+			yardX = yardXR - yardX - 1; //mirror yardX
+			yardZ = yardZR - yardZ - 1; //mirror yardZ
+		} break;
+
+		case FacingMap::FACING_EAST: {
+			yardZ = yardZR - yardZ - 1; //mirror yardZ
+			std::swap(yardX , yardZ );  //swap yard{X,Z}
+			std::swap(yardXR, yardZR);  //swap yard{XR,ZR}
+		} break;
+
+		case FacingMap::FACING_WEST: {
+			yardX = yardXR - yardX - 1; //mirror yardX
+			std::swap(yardX , yardZ );  //swap yard{X,Z}
+			std::swap(yardXR, yardZR);  //swap yard{XR,ZR}
+		} break;
+	}
+
+	return yardX + yardXR * yardZ;
+}
+
 
 struct SearchOffset {
 	int dx, dy;
@@ -1150,7 +1183,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 				BuildSquareStatus sqrStatus = BUILDSQUARE_BLOCKED;
 
 				if (sqrPos.IsInBounds())
-					sqrStatus = TestBuildSquare(sqrPos, xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
+					sqrStatus = TestBuildSquare(sqrPos, xrange, zrange, buildInfo, moveDef, feature, gu->myAllyTeam, synced);
 
 				if (sqrStatus != BUILDSQUARE_BLOCKED) {
 					// test if build-position overlaps a queued command
@@ -1199,7 +1232,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 				sqrPos.x = x * SQUARE_SIZE;
 				sqrPos.z = z * SQUARE_SIZE;
 
-				const BuildSquareStatus sqrStatus = TestBuildSquare(sqrPos, xrange, zrange, buildInfo.def, moveDef, feature, allyteam, synced);
+				const BuildSquareStatus sqrStatus = TestBuildSquare(sqrPos, xrange, zrange, buildInfo, moveDef, feature, allyteam, synced);
 
 				if ((testStatus = std::min(testStatus, sqrStatus)) == BUILDSQUARE_BLOCKED)
 					return BUILDSQUARE_BLOCKED;
@@ -1214,7 +1247,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const float3& pos,
 	const int2& xrange,
 	const int2& zrange,
-	const UnitDef* unitDef,
+	const BuildInfo& buildInfo,
 	const MoveDef* moveDef,
 	CFeature*& feature,
 	int allyteam,
@@ -1225,6 +1258,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const int sqx = unsigned(pos.x) / SQUARE_SIZE;
 	const int sqz = unsigned(pos.z) / SQUARE_SIZE;
 	const float groundHeight = CGround::GetApproximateHeightUnsafe(sqx, sqz, synced);
+	const UnitDef* unitDef = buildInfo.def;
 
 	if (!CheckTerrainConstraints(unitDef, moveDef, pos.y, groundHeight, CGround::GetSlope(pos.x, pos.z, synced)))
 		return BUILDSQUARE_BLOCKED;
@@ -1260,7 +1294,9 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			assert(u);
 			if ((allyteam < 0) || (u->losStatus[allyteam] & LOS_INLOS)) {
 				if (so->immobile) {
-					const int ymIdx = (yardxpos - xrange.x) + (xrange.y - xrange.x) * (yardypos - zrange.x);
+
+					const int ymIdx = GetYardMapIndex(buildInfo.buildFacing, int2{ yardxpos, yardypos }, xrange, zrange);
+
 					// if tested square is covered by an open yardmap cell, consider it acceptable for construction
 					ret = (!unitDef->yardmap.empty() && unitDef->yardmap[ymIdx] == YardmapStates::YARDMAP_OPEN) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED;
 				} else {
