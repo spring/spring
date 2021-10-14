@@ -26,6 +26,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
 
+#include <limits>
+
 static std::array<uint8_t, 2048> udWeaponCounts;
 
 WeaponMemPool weaponMemPool;
