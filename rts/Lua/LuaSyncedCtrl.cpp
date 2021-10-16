@@ -84,15 +84,6 @@ using std::min;
 /******************************************************************************/
 /******************************************************************************/
 
-bool LuaSyncedCtrl::inCreateUnit = false;
-bool LuaSyncedCtrl::inDestroyUnit = false;
-bool LuaSyncedCtrl::inTransferUnit = false;
-bool LuaSyncedCtrl::inCreateFeature = false;
-bool LuaSyncedCtrl::inDestroyFeature = false;
-bool LuaSyncedCtrl::inGiveOrder = false;
-bool LuaSyncedCtrl::inHeightMap = false;
-bool LuaSyncedCtrl::inSmoothMesh = false;
-
 static int heightMapx1 = 0;
 static int heightMapx2 = 0;
 static int heightMapz1 = 0;
@@ -119,12 +110,12 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 {
 	{
 		// these need to be re-initialized here since we might have reloaded
-		inCreateUnit = false;
-		inDestroyUnit = false;
+		inCreateUnit = 0;
+		inDestroyUnit = 0;
+		inCreateFeature = 0;
+		inDestroyFeature = 0;
+		inGiveOrder = 0;
 		inTransferUnit = false;
-		inCreateFeature = false;
-		inDestroyFeature = false;
-		inGiveOrder = false;
 		inHeightMap = false;
 		inSmoothMesh = false;
 
@@ -1243,8 +1234,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
-	if (inCreateUnit) {
-		luaL_error(L, "[%s()]: recursion is not permitted", __func__);
+	if (inCreateUnit >= MAX_CMD_RECURSION_DEPTH) {
+		luaL_error(L, "[%s()]: recursion is not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 		return 0;
 	}
 
@@ -1295,7 +1286,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(facing);
 
-	inCreateUnit = true;
+	inCreateUnit++;
 
 	CUnit* builder = unitHandler.GetUnit(luaL_optint(L, 10, -1));
 
@@ -1311,7 +1302,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	params.flattenGround = flattenGround;
 
 	CUnit* unit = unitLoader->LoadUnit(params);
-	inCreateUnit = false;
+	inCreateUnit--;
 
 	if (unit == nullptr)
 		return 0;
@@ -1341,10 +1332,10 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	if (args >= 4)
 		attacker = ParseUnit(L, __func__, 4);
 
-	if (inDestroyUnit)
-		luaL_error(L, "DestroyUnit() recursion is not permitted");
+	if (inDestroyUnit >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "DestroyUnit() recursion is not permitted, max depth: %d", MAX_CMD_RECURSION_DEPTH);
 
-	inDestroyUnit = true;
+	inDestroyUnit++;
 
 	ASSERT_SYNCED(unit->id);
 	unit->ForcedKillUnit(attacker, selfDestr, reclaimed);
@@ -1352,7 +1343,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	if (recycleID)
 		unitHandler.GarbageCollectUnit(unit->id);
 
-	inDestroyUnit = false;
+	inDestroyUnit--;
 
 	return 0;
 }
@@ -2907,11 +2898,11 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	if (!CanControlFeatureAllyTeam(L, allyTeam))
 		luaL_error(L, "CreateFeature() bad team permission %d", team);
 
-	if (inCreateFeature)
-		luaL_error(L, "CreateFeature() recursion is not permitted");
+	if (inCreateFeature >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "CreateFeature() recursion is not permitted, max depth: %d", MAX_CMD_RECURSION_DEPTH);
 
 	// use SetFeatureResurrect() to fill in the missing bits
-	inCreateFeature =  true;
+	inCreateFeature++;
 
 	FeatureLoadParams  params;
 	params.parentObj   = nullptr;
@@ -2928,7 +2919,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	params.smokeTime   = 0;
 
 	CFeature* feature = featureHandler.LoadFeature(params);
-	inCreateFeature = false;
+	inCreateFeature--;
 
 	if (feature != nullptr) {
 		lua_pushnumber(L, feature->id);
@@ -2946,12 +2937,12 @@ int LuaSyncedCtrl::DestroyFeature(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	if (inDestroyFeature)
-		luaL_error(L, "DestroyFeature() recursion is not permitted");
+	if (inDestroyFeature >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "DestroyFeature() recursion is not permitted, max depth: %d", MAX_CMD_RECURSION_DEPTH);
 
-	inDestroyFeature = true;
+	inDestroyFeature++;
 	featureHandler.DeleteFeature(feature);
-	inDestroyFeature = false;
+	inDestroyFeature--;
 
 	return 0;
 }
@@ -3566,12 +3557,12 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 		return 1;
 	}
 
-	if (inGiveOrder)
-		luaL_error(L, "[%s] recursion not permitted", __func__);
+	if (inGiveOrder >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "[%s] recursion not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 
-	inGiveOrder = true;
+	inGiveOrder++;
 	unit->commandAI->GiveCommand(cmd, -1, true, true);
-	inGiveOrder = false;
+	inGiveOrder--;
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -3594,10 +3585,10 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder)
-		luaL_error(L, "[%s] recursion not permitted", __func__);
+	if (inGiveOrder >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "[%s] recursion not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 
-	inGiveOrder = true;
+	inGiveOrder++;
 	int count = 0;
 	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
@@ -3605,7 +3596,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 			count++;
 		}
 	}
-	inGiveOrder = false;
+	inGiveOrder--;
 
 	lua_pushnumber(L, count);
 	return 1;
@@ -3628,10 +3619,10 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder)
-		luaL_error(L, "[%s] recursion not permitted", __func__);
+	if (inGiveOrder >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "[%s] recursion not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 
-	inGiveOrder = true;
+	inGiveOrder++;
 
 	int count = 0;
 	for (CUnit* unit: units) {
@@ -3641,7 +3632,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		}
 	}
 
-	inGiveOrder = false;
+	inGiveOrder--;
 
 	lua_pushnumber(L, count);
 	return 1;
@@ -3663,10 +3654,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	if (inGiveOrder)
-		luaL_error(L, "[%s] recursion not permitted", __func__);
+	if (inGiveOrder >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "[%s] recursion not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 
-	inGiveOrder = true;
+	inGiveOrder++;
 
 	int count = 0;
 	for (CUnit* unit: units) {
@@ -3677,7 +3668,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 			count++;
 		}
 	}
-	inGiveOrder = false;
+	inGiveOrder--;
 
 	lua_pushnumber(L, count);
 	return 1;
@@ -3700,10 +3691,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	if (inGiveOrder)
-		luaL_error(L, "[%s] recursion not permitted", __func__);
+	if (inGiveOrder >= MAX_CMD_RECURSION_DEPTH)
+		luaL_error(L, "[%s] recursion not permitted, max depth: %d", __func__, MAX_CMD_RECURSION_DEPTH);
 
-	inGiveOrder = true;
+	inGiveOrder++;
 
 	int count = 0;
 
@@ -3726,7 +3717,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 			}
 		}
 	}
-	inGiveOrder = false;
+	inGiveOrder--;
 
 	lua_pushnumber(L, count);
 	return 1;
