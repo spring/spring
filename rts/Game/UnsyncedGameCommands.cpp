@@ -2553,7 +2553,7 @@ public:
 		const auto& args = action.GetArgs();
 
 		const char* fmt = "ProjectileDrawer particles-softening %s";
-		const char* strs[] = { "disabled", "enabled", "enabled with extra unsafe softness" };
+		const char* strs[] = { "disabled", "enabled" };
 
 		if (!args.empty()) {
 			LOG(fmt, strs[projectileDrawer->EnableSoften(atoi(args.c_str()))]);

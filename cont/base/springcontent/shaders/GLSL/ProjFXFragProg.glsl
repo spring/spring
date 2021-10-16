@@ -34,13 +34,6 @@ void main() {
 		edgeSmoothness = smoothstep(0.0, softenThreshold, vsPos.z - depthVS); // soften edges
 		gl_FragColor  = color * vertColor;
 		gl_FragColor *= pow(edgeSmoothness, softenExponent.x);
-		#ifdef EXTRA_UNSAFE_SOFTNESS
-			//extra edge softness
-			//makes some grey ghosts more visible
-			if (edgeSmoothness < 1.0)
-				gl_FragColor.a = mix(gl_FragColor.a, 0.005, smoothstep(0.01, 0.0, gl_FragColor.a));
-		#endif
-
 	} else {
 		edgeSmoothness = smoothstep(softenThreshold, 0.0, vsPos.z - depthVS); // follow the surface up
 		gl_FragColor  = color * vertColor;

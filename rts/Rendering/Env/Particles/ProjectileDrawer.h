@@ -190,7 +190,7 @@ private:
 	FBO* depthFBO = nullptr;
 	Shader::IProgramObject* fxShader = nullptr;
 
-	constexpr static int WANT_SOFTEN_COUNT = 3;
+	constexpr static int WANT_SOFTEN_COUNT = 2;
 	int wantSoften = 0;
 
 	bool wantDrawOrder = true;

@@ -783,7 +783,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			CopyDepthBufferToTexture();
 			glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
 
-			fxShader->SetFlag("EXTRA_UNSAFE_SOFTNESS", wantSoften == 2);
 			fxShader->Enable();
 			fxShader->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
