@@ -46,6 +46,8 @@ public:
 	typedef uint32_t res_type;
 	typedef uint64_t val_type;
 
+	using result_type = res_type;
+
 	PCG32(const val_type _val = def_val, const val_type _seq = def_seq) { seed(_val, _seq); }
 	PCG32(const PCG32& rng) { *this = rng; }
 

@@ -44,7 +44,7 @@ if    (UNIX AND NOT MINGW)
 	endif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 endif (UNIX AND NOT MINGW)
 
-if    (MINGW OR APPLE)
+if    (WIN32 OR APPLE)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with SDL.
@@ -54,14 +54,17 @@ if    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
+	if (MSVC)
+		include_directories(${CMAKE_SOURCE_DIR}/include)
+	endif ()
 	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
 		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
 	endif()
-else  (MINGW OR APPLE)
+else  (WIN32 OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR APPLE)
+endif (WIN32 OR APPLE)
 
 
 ### Assemble the incude dirs
@@ -176,7 +179,7 @@ if    (MINGW)
 	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${IPHLPAPI_LIBRARY} ${WINMM_LIBRARY})
 endif (MINGW)
 if    (MSVC)
-	target_link_libraries(engine-dedicated ${DBGHELP_LIBRARY})
+	target_link_libraries(engine-dedicated ${DBGHELP_LIBRARY} ${IPHLPAPI_LIBRARY})
 endif (MSVC)
 add_dependencies(engine-dedicated generateVersionFiles)
 

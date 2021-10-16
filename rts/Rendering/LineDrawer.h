@@ -3,6 +3,7 @@
 #ifndef _LINE_DRAWER_H
 #define _LINE_DRAWER_H
 
+#include <array>
 #include <vector>
 #include <array>
 
