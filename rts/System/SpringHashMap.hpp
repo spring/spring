@@ -7,8 +7,10 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstdint>
 #include <iterator>
 #include <utility>
+#include <algorithm>
 
 #define DCHECK_EQ_F(a, b)
 #define DCHECK_LT_F(a, b)
