@@ -401,11 +401,8 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
@@ -447,11 +444,8 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ./AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
