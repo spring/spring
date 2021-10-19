@@ -12,6 +12,7 @@ struct S3DModelPiece;
 struct SInstanceData;
 
 class CUnit;
+class CFeature;
 struct UnitDef;
 
 struct SDrawElementsIndirectCommand;
@@ -33,27 +34,28 @@ struct SIndexAndCount {
 // singleton
 class S3DModelVAO {
 public:
-	static S3DModelVAO& GetInstance() {
-		static S3DModelVAO instance;
-		return instance;
-	};
+	static void Init();
+	static void Kill();
+	static S3DModelVAO& GetInstance() { return *instance; }
 public:
 	static constexpr size_t INSTANCE_BUFFER_NUM_ELEMS = 2 << 15;
 public:
-	S3DModelVAO() = default;
-
-	void Init();
+	S3DModelVAO();
 
 	void Bind() const;
 	void Unbind() const;
 
 	bool AddToSubmission(const S3DModel* model, int teamID, uint32_t aux = ~0u);
+
 	bool AddToSubmission(const CUnit* unit, uint32_t aux = ~0u);
+	bool AddToSubmission(const CFeature* feature, uint32_t aux = ~0u);
+
 	bool AddToSubmission(const UnitDef* unitDef, int teamID, uint32_t aux = ~0u);
 	void Submit(GLenum mode = GL_TRIANGLES, bool bindUnbind = false);
 
 	bool SubmitImmediately(const S3DModel* model, int teamID, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
 	bool SubmitImmediately(const CUnit* unit, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
+	bool SubmitImmediately(const CFeature* feature, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
 	bool SubmitImmediately(const UnitDef* unitDef, int teamID, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
 
 	const VBO* GetVertVBO() const { return &vertVBO; }
@@ -83,6 +85,8 @@ private:
 	);
 	void EnableAttribs(bool inst) const;
 	void DisableAttribs() const;
+private:
+	inline static S3DModelVAO* instance = nullptr;
 private:
 	uint32_t baseInstance = 0u;
 

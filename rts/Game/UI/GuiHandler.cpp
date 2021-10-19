@@ -24,7 +24,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -2638,7 +2638,7 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
-	glBindTexture(GL_TEXTURE_2D, unitDrawer->GetUnitDefImage(ud));
+	glBindTexture(GL_TEXTURE_2D, CUnitDrawer::GetUnitDefImage(ud));
 	glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
 		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
@@ -2703,7 +2703,7 @@ static inline bool BindUnitTexByString(const std::string& str)
 	if (ud == nullptr)
 		return false;
 
-	glBindTexture(GL_TEXTURE_2D, unitDrawer->GetUnitDefImage(ud));
+	glBindTexture(GL_TEXTURE_2D, CUnitDrawer::GetUnitDefImage(ud));
 	return true;
 }
 
@@ -3791,7 +3791,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						glTranslatef3(buildPos);
 						glRotatef(bi.buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
 
-						CUnitDrawer::DrawIndividualDefAlpha(bi.def, gu->myTeam, false);
+						unitDrawer->DrawIndividualDefAlpha(bi.def, gu->myTeam, false);
 
 						glPopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());

@@ -8,7 +8,7 @@
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"

@@ -12,7 +12,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
@@ -1032,7 +1032,7 @@ void CDynWater::AddShipWakes()
 	va2->Initialize();
 
 	{
-		const auto& units = unitDrawer->GetUnsortedUnits();
+		const auto& units = CUnitDrawer::GetUnsortedUnits();
 		const int nadd = units.size() * 4;
 
 		va->EnlargeArrays(nadd, 0, VA_SIZE_TN);

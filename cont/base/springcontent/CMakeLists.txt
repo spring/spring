@@ -9,11 +9,12 @@ set(FILES
 	shaders/GLSL/infoPath.lua
 	shaders/GLSL/ShadowGenVertProg.glsl
 	shaders/GLSL/ShadowGenFragProg.glsl
+	shaders/GLSL/ShadowGenVertProgGL4.glsl
+	shaders/GLSL/ShadowGenFragProgGL4.glsl
 	shaders/GLSL/TreeFragProg.glsl
 	shaders/GLSL/SMFFragProg.glsl
 	shaders/GLSL/GrassFragProg.glsl
 	shaders/GLSL/GroundDecalsFragProg.glsl
-	shaders/GLSL/ModelVertProg.glsl
 	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg.glsl
@@ -21,10 +22,13 @@ set(FILES
 	shaders/GLSL/bumpWaterVS.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
 	shaders/GLSL/GrassVertProg.glsl
+	shaders/GLSL/ModelVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
+	shaders/GLSL/ModelVertProgGL4.glsl
+	shaders/GLSL/ModelFragProgGL4.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
 	shaders/GLSL/ProjFXVertProg.glsl
-	shaders/GLSL/ProjFXFragProg.glsl	
+	shaders/GLSL/ProjFXFragProg.glsl
 	shaders/ARB/waterDynWave2.vp
 	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp

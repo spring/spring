@@ -11,7 +11,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -163,7 +163,7 @@ void CCursorIcons::DrawBuilds()
 		glTranslatef3(it->pos);
 		glRotatef(it->facing * 90.0f, 0.0f, 1.0f, 0.0f);
 
-		CUnitDrawer::DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
+		unitDrawer->DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
 
 		glPopMatrix();
 	}

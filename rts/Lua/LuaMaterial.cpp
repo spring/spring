@@ -10,7 +10,7 @@
 #include "Game/GlobalUnsynced.h" // randVector
 #include "Rendering/GlobalRendering.h" // drawFrame
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawerState.hpp"
+#include "Rendering/Common/ModelDrawerState.hpp"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/GlobalSynced.h" // simFrame

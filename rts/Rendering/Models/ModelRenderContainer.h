@@ -19,14 +19,13 @@ private:
 	std::array< int, MAX_MODEL_OBJECTS > keys;
 	std::vector< std::vector<TObject*> > bins;
 
-	typedef  typename decltype(bins)::value_type  ObjectBin;
-
 	size_t numObjs = 0;
 	size_t numBins = 0;
 
 private:
 	int CalcObjectBinIdx(const TObject* o) const { return (TEX_TYPE(o)); }
-
+public:
+	typedef  typename decltype(bins)::value_type  ObjectBin;
 public:
 	void Kill() {}
 	void Init() {
@@ -90,7 +89,7 @@ public:
 		std::swap(*ki, *(ke - 1));
 	}
 
-
+	bool empty() const { return numObjs == 0; }
 	unsigned int GetNumObjects() const { return numObjs; }
 	unsigned int GetNumObjectBins() const { return numBins; }
 	unsigned int GetObjectBinKey(unsigned int idx) const { return keys[idx]; }

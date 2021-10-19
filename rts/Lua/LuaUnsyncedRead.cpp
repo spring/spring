@@ -36,7 +36,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
@@ -1007,7 +1007,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			if (f->noDraw)
 				continue;
 
-			if (noIcons && f->drawFlag == CFeature::FD_FARTEX_FLAG)
+			if (noIcons && f->drawFlag == DrawFlags::SO_FARTEX_FLAG)
 				continue;
 
 			if (noGeos && f->def->geoThermal)

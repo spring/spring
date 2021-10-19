@@ -7,7 +7,7 @@
 #include "3DOTextureHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/TextureAtlas.h"

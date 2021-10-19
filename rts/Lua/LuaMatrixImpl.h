@@ -14,9 +14,9 @@
 #include "System/MathConstants.h"
 #include "System/float4.h"
 
-struct CSolidObject;
+class CSolidObject;
 struct LocalModelPiece;
-struct CCamera;
+class CCamera;
 
 class CMatrix44fProxy : public CMatrix44f {
 public:

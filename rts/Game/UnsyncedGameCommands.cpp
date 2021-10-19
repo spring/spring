@@ -62,14 +62,14 @@
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/IPathDrawer.h"
-#include "Rendering/FeatureDrawer.h"
+#include "Rendering/Features/FeatureDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/TeamHighlight.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
@@ -406,6 +406,51 @@ public:
 	}
 };
 
+class UnitDrawerTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	UnitDrawerTypeActionExecutor() : IUnsyncedActionExecutor("UnitDrawer",
+		"Forces particular Unit drawer type") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		int prefModelDrawer = -1;
+		int mtModelDrawer = -1;
+		sscanf((action.GetArgs()).c_str(), "%i %i", &prefModelDrawer, &mtModelDrawer);
+
+		if (prefModelDrawer == -1)
+			return false;
+
+		if (mtModelDrawer != -1)
+			CUnitDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+
+		CUnitDrawer::PreferedDrawerTypeRef() = prefModelDrawer;
+
+		return true;
+	}
+};
+
+class FeatureDrawerTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FeatureDrawerTypeActionExecutor() : IUnsyncedActionExecutor("FeatureDrawer",
+		"Forces particular Feature drawer type") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		int prefModelDrawer = -1;
+		int mtModelDrawer = -1;
+		sscanf((action.GetArgs()).c_str(), "%i %i", &prefModelDrawer, &mtModelDrawer);
+
+		if (prefModelDrawer == -1)
+			return false;
+
+		if (mtModelDrawer != -1)
+			CFeatureDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+
+		CFeatureDrawer::PreferedDrawerTypeRef() = prefModelDrawer;
+
+		return true;
+	}
+};
 
 
 class SayActionExecutor : public IUnsyncedActionExecutor {
@@ -2755,7 +2800,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const final {
 		if (!action.GetArgs().empty()) {
 			const int iconDist = atoi(action.GetArgs().c_str());
-			unitDrawer->SetUnitIconDist((float)iconDist);
+			CUnitDrawer::SetUnitIconDist((float)iconDist);
 			configHandler->Set("UnitIconDist", iconDist);
 			LOG("Set UnitIconDist to %i", iconDist);
 		} else {
@@ -2772,9 +2817,9 @@ public:
 			"Set whether unit icons are drawn as an UI element (true) or old LOD-like style (false, default).") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		InverseOrSetBool(unitDrawer->useScreenIcons, action.GetArgs());
-		configHandler->Set("UnitIconsAsUI", unitDrawer->useScreenIcons ? 1 : 0);
-		LogSystemStatus("Draw unit icons as UI: ", unitDrawer->useScreenIcons);
+		InverseOrSetBool(CUnitDrawer::UseScreenIcons(), action.GetArgs());
+		configHandler->Set("UnitIconsAsUI", CUnitDrawer::UseScreenIcons() ? 1 : 0);
+		LogSystemStatus("Draw unit icons as UI: ", CUnitDrawer::UseScreenIcons());
 		return true;
 	}
 };
@@ -2830,12 +2875,12 @@ public:
 		if (!action.GetArgs().empty())
 		{
 			const float iconFadeVanish = (float) atof(action.GetArgs().c_str());
-			unitDrawer->SetUnitIconFadeVanish(iconFadeVanish);
+			CUnitDrawer::SetUnitIconFadeVanish(iconFadeVanish);
 			configHandler->Set("UnitIconFadeVanish", iconFadeVanish);
 			LOG("Set UnitIconFadeVanish to %f", iconFadeVanish);
 		}
 		else
-			LOG("UnitIconFadeVanish is %f", unitDrawer->GetUnitIconFadeVanish());
+			LOG("UnitIconFadeVanish is %f", CUnitDrawer::GetUnitIconFadeVanish());
 
 		return true;
 	}
@@ -2847,9 +2892,9 @@ public:
 			"Set whether unit icons are hidden when UI is hidden.") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		InverseOrSetBool(unitDrawer->iconHideWithUI, action.GetArgs());
-		configHandler->Set("IconsHideWithUI", unitDrawer->iconHideWithUI ? 1 : 0);
-		LogSystemStatus("Hide unit icons with UI: ", unitDrawer->iconHideWithUI);
+		InverseOrSetBool(CUnitDrawer::IconHideWithUI(), action.GetArgs());
+		configHandler->Set("IconsHideWithUI", CUnitDrawer::IconHideWithUI() ? 1 : 0);
+		LogSystemStatus("Hide unit icons with UI: ", CUnitDrawer::IconHideWithUI());
 		return true;
 	}
 };
@@ -2863,7 +2908,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const final {
 		if (!action.GetArgs().empty()) {
 			const int drawDist = atoi(action.GetArgs().c_str());
-			unitDrawer->SetUnitDrawDist((float)drawDist);
+			CModelDrawerDataConcept::SetModelDrawDist(static_cast<float>(drawDist));
 			configHandler->Set("UnitLodDist", drawDist);
 			LOG("Set UnitLodDist to %i", drawDist);
 		} else {
@@ -3524,6 +3569,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<WaterActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<AdvModelShadingActionExecutor>()); // [maint]
 	AddActionExecutor(AllocActionExecutor<AdvMapShadingActionExecutor>()); // [maint]
+	AddActionExecutor(AllocActionExecutor<UnitDrawerTypeActionExecutor>()); // [maint]
+	AddActionExecutor(AllocActionExecutor<FeatureDrawerTypeActionExecutor>()); // [maint]
 	AddActionExecutor(AllocActionExecutor<SayActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SayPrivateActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SayPrivateByPlayerIDActionExecutor>());

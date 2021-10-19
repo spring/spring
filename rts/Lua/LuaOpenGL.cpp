@@ -48,9 +48,10 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/LuaObjectDrawer.h"
-#include "Rendering/FeatureDrawer.h"
+#include "Rendering/Features/FeatureDrawer.h"
 #include "Rendering/UnitDefImage.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Common/ModelDrawerHelpers.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
@@ -1432,9 +1433,9 @@ static void GLObjectShape(lua_State* L, const SolidObjectDef* def)
 
 	// does not set the full state by default
 	if (luaL_optboolean(L, 5, true)) {
-		CUnitDrawer::DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);
+		unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);
 	} else {
-		CUnitDrawer::DrawIndividualDefAlpha(def, luaL_checkint(L, 2), rawState, toScreen);
+		unitDrawer->DrawIndividualDefAlpha(def, luaL_checkint(L, 2), rawState, toScreen);
 	}
 }
 
@@ -1447,9 +1448,9 @@ static void GLObjectTextures(lua_State* L, const CSolidObject* obj)
 		return;
 
 	if (luaL_checkboolean(L, 2)) {
-		CUnitDrawer::PushModelRenderState(obj->model);
+		CModelDrawerHelper::PushModelRenderState(obj->model);
 	} else {
-		CUnitDrawer::PopModelRenderState(obj->model);
+		CModelDrawerHelper::PopModelRenderState(obj->model);
 	}
 }
 
@@ -1464,9 +1465,9 @@ static void GLObjectShapeTextures(lua_State* L, const SolidObjectDef* def)
 	// set textures and per-model(type) attributes, not shaders
 	// or other drawpass state
 	if (luaL_checkboolean(L, 2)) {
-		CUnitDrawer::PushModelRenderState(def->model);
+		CModelDrawerHelper::PushModelRenderState(def->model);
 	} else {
-		CUnitDrawer::PopModelRenderState(def->model);
+		CModelDrawerHelper::PopModelRenderState(def->model);
 	}
 }
 
@@ -1492,11 +1493,11 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	typedef void(CUnitDrawer::*RawDrawMemFunc)(const CUnit*, unsigned int, unsigned int, bool, bool);
-	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool);
+	typedef void(CUnitDrawer::*RawDrawMemFunc)(const CUnit*, unsigned int, unsigned int, bool, bool) const;
+	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool) const;
 
-	const RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnitTrans};
-	const MatDrawMemFunc matDrawFuncs[2] = {&CUnitDrawer::DrawIndividualNoTrans, &CUnitDrawer::DrawIndividual};
+	const RawDrawMemFunc rawDrawFuncs[2] = { &CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnitTrans };
+	const MatDrawMemFunc matDrawFuncs[2] = { &CUnitDrawer::DrawIndividualNoTrans, &CUnitDrawer::DrawIndividual };
 
 	if (!useLuaMat) {
 		// "scoped" draw; this prevents any Lua-assigned
@@ -1608,8 +1609,8 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	typedef void(CFeatureDrawer::*RawDrawMemFunc)(const CFeature*, unsigned int, unsigned int, bool, bool);
-	typedef void(CFeatureDrawer::*MatDrawMemFunc)(const CFeature*, bool);
+	typedef void(CFeatureDrawer::*RawDrawMemFunc)(const CFeature*, unsigned int, unsigned int, bool, bool) const;
+	typedef void(CFeatureDrawer::*MatDrawMemFunc)(const CFeature*, bool) const;
 
 	const RawDrawMemFunc rawDrawFuncs[2] = {&CFeatureDrawer::DrawFeatureNoTrans, &CFeatureDrawer::DrawFeatureTrans};
 	const MatDrawMemFunc matDrawFuncs[2] = {&CFeatureDrawer::DrawIndividualNoTrans, &CFeatureDrawer::DrawIndividual};

@@ -16,9 +16,9 @@
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/LuaObjectDrawer.h"
-#include "Rendering/FeatureDrawer.h"
+#include "Rendering/Features/FeatureDrawer.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/InMapDrawView.h"
@@ -61,11 +61,12 @@ void CWorldDrawer::InitPre() const
 	textureHandler3DO.Init();
 	textureHandlerS3O.Init();
 
-	CFeatureDrawer::InitStatic();
 	loadscreen->SetLoadMessage("Creating Sky");
 
 	sky = ISky::GetSky();
 	sunLighting->Init();
+
+	CFeatureDrawer::InitStatic();
 }
 
 void CWorldDrawer::InitPost() const
@@ -148,6 +149,7 @@ void CWorldDrawer::Kill()
 	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
 	CProjectileDrawer::KillStatic(gu->globalReload);
 
+	ModelPreloader::Clean();
 	modelLoader.Kill();
 
 	spring::SafeDelete(farTextureHandler);
@@ -180,8 +182,9 @@ void CWorldDrawer::Update(bool newSimFrame)
 	// (it updates unitdrawpos which is used for maximized minimap too)
 	// unitDrawer->Update();
 	// lineDrawer.UpdateLineStipple();
+	CUnitDrawer::UpdateStatic();
 	treeDrawer->Update();
-	featureDrawer->Update();
+	CFeatureDrawer::UpdateStatic();
 	IWater::ApplyPushedChanges(game);
 
 	if (newSimFrame) {
@@ -327,7 +330,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	{
 		SCOPED_TIMER("Draw::World::Models::Opaque");
 		unitDrawer->Draw(false);
-		featureDrawer->Draw();
+		featureDrawer->Draw(false);
 
 		DebugColVolDrawer::Draw();
 		pathDrawer->DrawAll();
@@ -398,7 +401,7 @@ void CWorldDrawer::DrawMiscObjects() const
 	// either draw from here, or make {Dyn,Bump}Water use blending
 	// pro: icons are drawn only once per frame, not every pass
 	// con: looks somewhat worse for underwater / obscured icons
-	if (!unitDrawer->useScreenIcons)
+	if (!CUnitDrawer::UseScreenIcons())
 		unitDrawer->DrawUnitIcons();
 
 	lineDrawer.DrawAll();

@@ -16,7 +16,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDefImage.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -529,7 +529,7 @@ GLuint LuaMatTexture::GetTextureID() const
 		// object icon-textures
 		case LUATEX_UNITBUILDPIC: {
 			if (unitDefHandler != nullptr)
-				texID = unitDrawer->GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
+				texID = CUnitDrawer::GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
 		} break;
 		case LUATEX_UNITRADARICON: {
 			texID = (reinterpret_cast<const UnitDef*>(data))->iconType->GetTextureID();
@@ -840,7 +840,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_UNITBUILDPIC: {
 			if (unitDefHandler != nullptr) {
 				const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
-				unitDrawer->GetUnitDefImage(ud); // forced existance
+				CUnitDrawer::GetUnitDefImage(ud); // forced existance
 				const UnitDefImage* bp = ud->buildPic;
 				return {bp->imageSizeX, bp->imageSizeY};
 			}

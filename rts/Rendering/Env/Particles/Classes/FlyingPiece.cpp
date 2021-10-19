@@ -6,7 +6,8 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Common/ModelDrawerHelpers.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/SpringMath.h"
@@ -177,11 +178,13 @@ CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFac
 
 void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 {
+	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
+
 	if (prev == nullptr) {
-		unitDrawer->SetTeamColour(team);
+		CUnitDrawer::SetTeamColor(team);
 
 		if (texture != -1)
-			CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
+			CModelDrawerHelper::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 		piece->BindVertexAttribVBOs();
 		piece->BindShatterIndexVBO();
@@ -189,10 +192,10 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 	}
 
 	if (team != prev->team)
-		unitDrawer->SetTeamColour(team);
+		CUnitDrawer::SetTeamColor(team);
 
 	if (texture != prev->texture && texture != -1)
-		CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
+		CModelDrawerHelper::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 	if (piece != prev->piece) {
 		prev->piece->UnbindShatterIndexVBO();

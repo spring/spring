@@ -30,22 +30,24 @@ namespace ThreadPool {
 	static constexpr int MAX_THREADS = 1;
 }
 
-
-static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
+template <typename F>
+static inline void for_mt(int start, int end, int step, F&& f)
 {
 	for (int i = start; i < end; i += step) {
 		f(i);
 	}
 }
 
-static inline void for_mt(int start, int end, const std::function<void(const int i)>&& f)
+template <typename F>
+static inline void for_mt(int start, int end, F&& f)
 {
 	for_mt(start, end, 1, std::move(f));
 }
 
-static inline void for_mt2(int start, int end, unsigned worksize, const std::function<void(const int i)>&& f)
+template <int chunkSize, typename F>
+static inline void for_mt_chunk(int b, int e, F&& f)
 {
-	for_mt(start, end, 1, std::move(f));
+	for_mt(b, e, f);
 }
 
 
@@ -718,6 +720,33 @@ template <typename F>
 static inline void for_mt(int start, int end, F&& f)
 {
 	for_mt(start, end, 1, f);
+}
+
+template <int chunkSize, typename F>
+static inline void for_mt_chunk(int b, int e, F&& f)
+{
+	static const int maxThreads = ThreadPool::GetMaxThreads();
+
+	const int numElems  = e - b;
+	const int numChunks = numElems / chunkSize + (numElems % chunkSize != 0);
+
+	if (numChunks <= 1) {
+		for (int i = b; i < e; ++i)
+			f(i);
+
+		return;
+	}
+
+	const int chunksPerThread = numChunks / maxThreads + (numChunks % maxThreads != 0);
+	const int numThreads = std::min(numChunks, maxThreads);
+
+	for_mt(0, numThreads, 1, [&f, b, e, chunksPerThread](const int jobId) {
+		const int bb = b + jobId * chunksPerThread * chunkSize;
+		const int ee = std::min(bb + chunksPerThread * chunkSize, e);
+
+		for (int i = bb; i < ee; ++i)
+			std::forward<F>(f)(i);
+	});
 }
 
 

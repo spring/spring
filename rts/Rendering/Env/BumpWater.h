@@ -38,6 +38,8 @@ public:
 	int GetID() const { return WATER_RENDERER_BUMPMAPPED; }
 	const char* GetName() const { return "bumpmapped"; }
 
+	bool CanDrawReflectionPass() const override { return true; }
+	bool CanDrawRefractionPass() const override { return true; }
 private:
 	void SetUniforms(); ///< @see #useUniforms
 	void SetupUniforms( std::string& definitions );

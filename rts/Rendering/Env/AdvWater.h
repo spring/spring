@@ -19,6 +19,8 @@ public:
 	void Draw(bool useBlending);
 	void UpdateWater(CGame* game);
 
+	bool CanDrawReflectionPass() const override { return true; }
+	bool CanDrawRefractionPass() const override { return false; }
 protected:
 	FBO reflectFBO;
 	FBO bumpFBO;

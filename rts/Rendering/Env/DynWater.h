@@ -23,6 +23,8 @@ public:
 	int GetID() const { return WATER_RENDERER_DYNAMIC; }
 	const char* GetName() const { return "dynamic"; }
 
+	bool CanDrawReflectionPass() const override { return true; }
+	bool CanDrawRefractionPass() const override { return true; }
 private:
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);

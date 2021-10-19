@@ -45,7 +45,7 @@
 #include "Rendering/MatrixUploader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/UniformConstants.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -632,7 +632,7 @@ void CGame::PreLoadRendering()
 	geometricObjects = new CGeometricObjects();
 
 	// load components that need to exist before PostLoadSimulation
-	MatrixUploader::GetInstance().Init();
+	matrixUploader.Init();
 	worldDrawer.InitPre();
 }
 
@@ -879,7 +879,7 @@ void CGame::KillRendering()
 	icon::iconHandler.Kill();
 	spring::SafeDelete(geometricObjects);
 	worldDrawer.Kill();
-	MatrixUploader::GetInstance().Kill();
+	matrixUploader.Kill();
 }
 
 void CGame::KillInterface()
@@ -1197,12 +1197,10 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	// set camera
 	camHandler->UpdateController(playerHandler.Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
-	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
-
-
 	{
 		worldDrawer.Update(newSimFrame);
+		matrixUploader.Update();
 
 		CNamedTextures::Update();
 		CFontTexture::Update();
@@ -1216,10 +1214,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		infoTextureHandler->Update();
 		// TODO call only when camera changed
 		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
-	}
-	{
-		SCOPED_TIMER("Update::MatrixUploader");
-		MatrixUploader::GetInstance().Update();
 	}
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
@@ -1344,7 +1338,7 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Draw::Screen");
-		if (unitDrawer->useScreenIcons)
+		if (CUnitDrawer::UseScreenIcons())
 			unitDrawer->DrawUnitIconsScreen();
 
 		eventHandler.DrawScreenEffects();
@@ -1559,7 +1553,7 @@ void CGame::SimFrame() {
 		// dead ghosts have to be updated in sim, after los,
 		// to make sure they represent the current knowledge correctly.
 		// should probably be split from drawer
-		unitDrawer->UpdateGhostedBuildings();
+		CUnitDrawer::UpdateGhostedBuildings();
 		interceptHandler.Update(false);
 
 		teamHandler.GameFrame(gs->frameNum);

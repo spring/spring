@@ -381,6 +381,10 @@ namespace Shader {
 			if (reloadFromDisk) so->ReloadFromDisk();
 			so->Compile();
 		}
+
+		// make HashSet() true
+		shaderFlags.UpdateHash();
+
 		if (validate) Validate();
 	}
 

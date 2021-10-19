@@ -16,6 +16,8 @@ public:
 	int GetID() const { return WATER_RENDERER_BASIC; }
 	const char* GetName() const { return "basic"; }
 
+	bool CanDrawReflectionPass() const override { return false; }
+	bool CanDrawRefractionPass() const override { return false; }
 private:
 	unsigned int GenWaterQuadsList(unsigned int textureWidth, unsigned int textureHeight) const;
 

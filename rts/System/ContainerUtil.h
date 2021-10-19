@@ -67,7 +67,13 @@ namespace spring {
 		return true;
 	}
 
-
+	template<typename T>
+	static void VectorSortUnique(std::vector<T>& v)
+	{
+		std::sort(v.begin(), v.end());
+		auto last = std::unique(v.begin(), v.end());
+		v.erase(last, v.end());
+	}
 
 	template<typename T>
 	static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)

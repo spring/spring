@@ -57,15 +57,6 @@ public:
 		float3 accVector;
 	};
 
-	enum {
-		FD_NODRAW_FLAG = 0, // must be 0
-		FD_OPAQUE_FLAG = 1,
-		FD_ALPHAF_FLAG = 2,
-		FD_SHADOW_FLAG = 3,
-		FD_FARTEX_FLAG = 4,
-	};
-
-
 	/**
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
@@ -101,8 +92,6 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	void SetDrawFlag(int f) { drawFlag = f; }
-
 	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
@@ -137,9 +126,6 @@ public:
 	int lastReclaimFrame = 0;
 	int fireTime = 0;
 	int smokeTime = 0;
-
-	int drawQuad = -1; /// which drawQuad we are part of (unsynced)
-	int drawFlag = -2; /// one of FD_*_FLAG (unsynced)
 
 	SResourcePack defResources = {0.0f, 1.0f};
 	SResourcePack resources = {0.0f, 1.0f};

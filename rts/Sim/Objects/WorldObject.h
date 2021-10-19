@@ -49,7 +49,7 @@ public:
 	void SetRadiusAndHeight(const S3DModel* model);
 
 	// extrapolated base-positions; used in unsynced code
-	float3 GetDrawPos(                float t) const { return (pos + speed * t); }
+	float3 GetDrawPos(                float t) const { return (speed.w != 0.0f) ? (pos + speed * t) : pos; }
 	float3 GetDrawPos(const float3 v, float t) const { return (pos +     v * t); }
 
 public:

@@ -88,6 +88,7 @@ static S3DModel CreateDummyModel(unsigned int id)
 	model.numPieces = 1;
 	// give it one empty piece
 	model.AddPiece(g3DOParser.AllocPiece());
+	model.FlattenPieceTree(model.GetRootPiece()); //useless except for setting up matAlloc
 	model.GetRootPiece()->SetCollisionVolume(CollisionVolume('b', 'z', -UpVector, ZeroVector));
 	return model;
 }
@@ -159,6 +160,7 @@ void CModelLoader::KillModels()
 	for (unsigned int i = 0; i < numModels; i++) {
 		models[i].DeletePieces();
 	}
+	models.clear();
 }
 
 void CModelLoader::KillParsers()

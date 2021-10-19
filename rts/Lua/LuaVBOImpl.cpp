@@ -763,19 +763,19 @@ size_t LuaVBOImpl::OffsetFromImpl(const int id, const int attrID)
 
 	uint32_t ssboElemOffset;
 	if constexpr (std::is_same<TObj, CUnit>::value) {
-		ssboElemOffset = MatrixUploader::GetInstance().GetUnitElemOffset(id);
+		ssboElemOffset = matrixUploader.GetUnitElemOffset(id);
 	}
 
 	if constexpr (std::is_same<TObj, CFeature>::value) {
-		ssboElemOffset = MatrixUploader::GetInstance().GetFeatureElemOffset(id);
+		ssboElemOffset = matrixUploader.GetFeatureElemOffset(id);
 	}
 
 	if constexpr (std::is_same<TObj, UnitDef>::value) {
-		ssboElemOffset = MatrixUploader::GetInstance().GetUnitDefElemOffset(id);
+		ssboElemOffset = matrixUploader.GetUnitDefElemOffset(id);
 	}
 
 	if constexpr (std::is_same<TObj, FeatureDef>::value) {
-		ssboElemOffset = MatrixUploader::GetInstance().GetFeatureDefElemOffset(id);
+		ssboElemOffset = matrixUploader.GetFeatureDefElemOffset(id);
 	}
 
 	if (ssboElemOffset == ~0u) {

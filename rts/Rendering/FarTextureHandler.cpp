@@ -4,7 +4,8 @@
 #include "FarTextureHandler.h"
 
 #include "Game/Camera.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/Common/ModelDrawerHelpers.h"
+#include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
@@ -160,9 +161,12 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	//   the icons are RTT'ed using a snapshot of the
 	//   current state (advModelShading, sunDir, etc)
 	//   and will not track later state-changes
+	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
+
 	unitDrawer->SetupOpaqueDrawing(false);
-	unitDrawer->PushModelRenderState(model);
-	unitDrawer->SetTeamColour(obj->team);
+	CModelDrawerHelper::PushModelRenderState(model);
+
+	CUnitDrawer::SetTeamColor(obj->team);
 
 	// can pick any perspective-type
 	CCamera iconCam(CCamera::CAMTYPE_PLAYER);
@@ -198,7 +202,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		glRotatef(-360.0f / NUM_ICON_ORIENTATIONS, 0.0f, 1.0f, 0.0f);
 	}
 
-	unitDrawer->PopModelRenderState(model);
+	CModelDrawerHelper::PopModelRenderState(model);
 	unitDrawer->ResetOpaqueDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
@@ -216,6 +220,13 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va)
 {
+	if (obj == nullptr)
+		return;
+
+	//crashing or dying objects apparently lose most of their properties, model included
+	if (obj->model == nullptr)
+		return;
+
 	const CachedIcon& icon = iconCache[obj->team][obj->model->id];
 
 	// not found in the atlas
@@ -249,6 +260,8 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 
 void CFarTextureHandler::Queue(const CSolidObject* obj)
 {
+	assert(obj->model);
+
 	if (!fbo.IsValid())
 		return;
 

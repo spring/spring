@@ -272,6 +272,13 @@ inline static void BlurHorizontal(
 
 			smoothed[x + y * lineSize] = std::max(ghaw, avg);
 
+			#pragma message ("FIX ME")
+			smoothed[x + y * lineSize] = std::clamp(
+				smoothed[x + y * lineSize],
+				readMap->GetCurrMinHeight(),
+				std::max(readMap->GetCurrMaxHeight(), 0.0f)
+			);
+
 			assert(smoothed[x + y * lineSize] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
 			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()       );
 		}
@@ -300,6 +307,13 @@ inline static void BlurVertical(
 			const float ghaw = CGround::GetHeightAboveWater(x * resolution, y * resolution);
 
 			smoothed[x + y * lineSize] = std::max(ghaw, avg);
+
+			#pragma message ("FIX ME")
+			smoothed[x + y * lineSize] = std::clamp(
+				smoothed[x + y * lineSize],
+				readMap->GetCurrMinHeight(),
+				std::max(readMap->GetCurrMaxHeight(), 0.0f)
+			);
 
 			assert(smoothed[x + y * lineSize] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
 			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()       );

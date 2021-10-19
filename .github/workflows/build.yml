@@ -113,7 +113,6 @@ jobs:
         shell: bash
 
       - name: Download Cache Data
-        if: github.event.inputs.skip-cache != 'true'
         id: cache-dl
         uses: actions/cache@v2
         with:
@@ -127,6 +126,10 @@ jobs:
         id: cache
         #steps.cache-dl.outputs.cache-hit is not good because it reports false for partial cache key hit
         run: |
+          if [[ ${{ github.event.inputs.skip-cache }} == 'true' ]]; then
+            echo "Deleting cache file (if exists)"
+            rm -rf /tmp/cache/${{ matrix.config.os }}/cache.tgz || true
+          fi
           if [ -f /tmp/cache/${{ matrix.config.os }}/cache.tgz ]; then
             echo "Found build cache"
             echo "::set-output name=cache-hit::true"

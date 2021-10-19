@@ -49,6 +49,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Models/MatricesMemStorage.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -714,6 +715,7 @@ void SpringApp::Reload(const std::string script)
 
 	LOG("[SpringApp::%s][10]", __func__);
 
+	matricesMemStorage.Reset();
 	gu->ResetState();
 	gs->ResetState();
 	// will be reconstructed from given script

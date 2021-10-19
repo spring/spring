@@ -5,16 +5,19 @@
 
 #include <cassert>
 #include <cstring> // memset
-
+#include <cmath>
 #include <array>
 #include <deque>
 #include <vector>
-
+#include <map>
 #include <memory>
 
 #include "System/UnorderedMap.hpp"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
+#include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
+#include "System/Log/ILog.h"
 
 template<size_t S> struct DynMemPool {
 public:
@@ -301,6 +304,192 @@ private:
 	size_t free_page_count = 0; // indcs[fpc-1] is the last recycled page
 	size_t curr_page_index = 0;
 };
+
+
+// dynamic memory allocator operating with stable index positions
+// has gaps management
+template <typename T>
+class StablePosAllocator {
+public:
+	static constexpr bool reportWork = false;
+	template<typename ...Args>
+	static void myLog(Args&&... args) {
+		if (!reportWork)
+			return;
+		LOG(std::forward<Args>(args)...);
+	}
+public:
+	StablePosAllocator() = default;
+	StablePosAllocator(size_t initialSize) :StablePosAllocator() {
+		data.reserve(initialSize);
+	}
+	void Reset() {
+		CompactGaps();
+		//upon compaction all allocations should go away
+		assert(data.empty());
+		assert(sizeToPositions.empty());
+		assert(positionToSize.empty());
+	}
+
+	size_t Allocate(size_t numElems, bool withMutex = false);
+	void Free(size_t firstElem, size_t numElems);
+	const size_t GetSize() const { return data.size(); }
+	const std::vector<T>& GetData() const { return data; }
+	      std::vector<T>& GetData()       { return data; }
+
+	const T& operator[](std::size_t idx) const { return data[idx]; }
+	      T& operator[](std::size_t idx)       { return data[idx]; }
+private:
+	void CompactGaps();
+	size_t AllocateImpl(size_t numElems);
+private:
+	spring::mutex mut;
+	std::vector<T> data;
+	std::multimap<size_t, size_t> sizeToPositions;
+	std::map<size_t, size_t> positionToSize;
+};
+
+
+template<typename T>
+inline size_t StablePosAllocator<T>::Allocate(size_t numElems, bool withMutex)
+{
+	if (withMutex) {
+		std::lock_guard<spring::mutex> lck(mut);
+		return AllocateImpl(numElems);
+	}
+	else {
+		assert(Threading::IsMainThread());
+		return AllocateImpl(numElems);
+	}
+}
+
+template<typename T>
+inline size_t StablePosAllocator<T>::AllocateImpl(size_t numElems)
+{
+	if (numElems == 0)
+		return ~0u;
+
+	//no gaps
+	if (positionToSize.empty()) {
+		size_t returnPos = data.size();
+		data.resize(data.size() + numElems);
+		myLog("StablePosAllocator<T>::AllocateImpl(%u) = %u [thread_id = %u]", uint32_t(numElems), uint32_t(returnPos), static_cast<uint32_t>(Threading::GetCurrentThreadId()));
+		return returnPos;
+	}
+
+	//try to find gaps >= in size than requested
+	for (auto it = sizeToPositions.lower_bound(numElems); it != sizeToPositions.end(); ++it) {
+		if (it->first < numElems)
+			continue;
+
+		size_t returnPos = it->second;
+		positionToSize.erase(it->second);
+
+		if (it->first > numElems) {
+			size_t gapSize = it->first - numElems;
+			size_t gapPos = it->second + numElems;
+			sizeToPositions.emplace(gapSize, gapPos);
+			positionToSize.emplace(gapPos, gapSize);
+		}
+
+		sizeToPositions.erase(it);
+		myLog("StablePosAllocator<T>::AllocateImpl(%u) = %u", uint32_t(numElems), uint32_t(returnPos));
+		return returnPos;
+	}
+
+	//all gaps are too small
+	size_t returnPos = data.size();
+	data.resize(data.size() + numElems);
+	myLog("StablePosAllocator<T>::AllocateImpl(%u) = %u", uint32_t(numElems), uint32_t(returnPos));
+	return returnPos;
+}
+
+//merge adjacent gaps and trim data vec
+template<typename T>
+inline void StablePosAllocator<T>::CompactGaps()
+{
+	//helper to erase {size, pos} pair from sizeToPositions multimap
+	const auto eraseSizeToPositionsKVFunc = [this](size_t size, size_t pos) {
+		auto [beg, end] = sizeToPositions.equal_range(size);
+		for (auto it = beg; it != end; /*noop*/)
+			if (it->second == pos) {
+				it = sizeToPositions.erase(it);
+				break;
+			}
+			else {
+				++it;
+			}
+	};
+
+	bool found;
+	std::size_t posStartFrom = 0u;
+	do {
+		found = false;
+
+		std::map<size_t, size_t>::iterator posSizeBeg = positionToSize.lower_bound(posStartFrom);
+		std::map<size_t, size_t>::iterator posSizeFin = positionToSize.end(); std::advance(posSizeFin, -1);
+
+		for (auto posSizeThis = posSizeBeg; posSizeThis != posSizeFin; ++posSizeThis) {
+			posStartFrom = posSizeThis->first;
+			auto posSizeNext = posSizeThis; std::advance(posSizeNext, 1);
+
+			if (posSizeThis->first + posSizeThis->second == posSizeNext->first) {
+				std::size_t newPos = posSizeThis->first;
+				std::size_t newSize = posSizeThis->second + posSizeNext->second;
+
+				eraseSizeToPositionsKVFunc(posSizeThis->second, posSizeThis->first);
+				eraseSizeToPositionsKVFunc(posSizeNext->second, posSizeNext->first);
+
+				positionToSize.erase(posSizeThis);
+				positionToSize.erase(posSizeNext); //this iterator is guaranteed to stay valid after 1st erase
+
+				positionToSize.emplace(newPos, newSize);
+				sizeToPositions.emplace(newSize, newPos);
+
+				found = true;
+
+				break;
+			}
+		}
+	} while (found);
+
+	std::map<size_t, size_t>::iterator posSizeFin = positionToSize.end(); std::advance(posSizeFin, -1);
+	if (posSizeFin->first + posSizeFin->second == data.size()) {
+		//trim data vector
+		data.resize(posSizeFin->first);
+		//erase old sizeToPositions
+		eraseSizeToPositionsKVFunc(posSizeFin->second, posSizeFin->first);
+		//erase old positionToSize
+		positionToSize.erase(posSizeFin);
+	}
+}
+
+template<typename T>
+inline void StablePosAllocator<T>::Free(size_t firstElem, size_t numElems)
+{
+	assert(firstElem + numElems <= data.size());
+
+	if (numElems == 0) {
+		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
+		return;
+	}
+	memset(&data[firstElem], 0, numElems * sizeof(T)); //nullify matrix just in case
+	//lucky us, just remove trim the vector size
+	if (firstElem + numElems == data.size()) {
+		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
+		data.resize(firstElem);
+		return;
+	}
+
+	positionToSize.emplace(firstElem, numElems);
+	sizeToPositions.emplace(numElems, firstElem);
+
+	static constexpr float compactionTriggerFraction = 0.025f;
+	if (positionToSize.size() >= std::ceil(compactionTriggerFraction * data.size()))
+		CompactGaps();
+
+	myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
+}
 
 #endif
 
