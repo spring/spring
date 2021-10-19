@@ -175,6 +175,13 @@ void CModelDrawerHelper3DO::PushRenderState() const
 void CModelDrawerHelper3DO::PopRenderState() const
 {
 	glEnable(GL_CULL_FACE);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glDisable(GL_TEXTURE_2D);
 }
 
 void CModelDrawerHelper3DO::BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) const

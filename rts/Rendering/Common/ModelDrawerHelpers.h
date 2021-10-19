@@ -55,6 +55,7 @@ public:
 };
 
 class CModelDrawerHelper3DO : public CModelDrawerHelper {
+public:
 	// Inherited via CModelDrawerHelper
 	void PushRenderState() const override;
 	void PopRenderState() const override;
@@ -65,6 +66,7 @@ class CModelDrawerHelper3DO : public CModelDrawerHelper {
 };
 
 class CModelDrawerHelperS3O : public CModelDrawerHelper {
+public:
 	// Inherited via CModelDrawerHelper
 	void PushRenderState() const override {/* no need for primitve restart*/ };
 	void PopRenderState() const override {/* no need for primitve restart*/ };
@@ -75,6 +77,7 @@ class CModelDrawerHelperS3O : public CModelDrawerHelper {
 };
 
 class CModelDrawerHelperASS : public CModelDrawerHelper {
+public:
 	// Inherited via CModelDrawerHelper
 	void PushRenderState() const override { /*no-op*/ };
 	void PopRenderState() const override { /*no-op*/ };

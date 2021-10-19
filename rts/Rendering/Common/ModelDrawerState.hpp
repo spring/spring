@@ -66,7 +66,7 @@ public:
 	void SetColorMultiplier(float a = 1.0f) const { SetColorMultiplier(1.0f, 1.0f, 1.0f, a); };
 	virtual void SetColorMultiplier(float r, float g, float b, float a) const {};
 
-	virtual void SetDrawingMode(ShaderDrawingModes sdm) const {
+	virtual void SetDrawingMode(ShaderDrawingModes sdm = ShaderDrawingModes::NORMAL_MODEL) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
 	};
 	virtual void SetStaticModelMatrix(const CMatrix44f& mat) const {

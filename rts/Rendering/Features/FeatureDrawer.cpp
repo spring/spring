@@ -172,6 +172,9 @@ void CFeatureDrawerLegacy::DrawObjectsShadow(int modelType) const
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		// only need to bind the atlas once for 3DO's, but KISS
 		assert((modelType != MODELTYPE_3DO) || (mdlRenderer.GetObjectBinKey(i) == 0));
 
@@ -192,6 +195,9 @@ void CFeatureDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection,
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
@@ -205,6 +211,9 @@ void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType) const
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
@@ -254,6 +263,9 @@ void CFeatureDrawerGL4::DrawObjectsShadow(int modelType) const
 	smv.Bind();
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		const auto* texMat = textureHandlerS3O.GetTexture(mdlRenderer.GetObjectBinKey(i));
 		CModelDrawerHelper::modelDrawerHelpers[modelType]->BindShadowTex(texMat);
 
@@ -300,6 +312,9 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 	smv.Bind();
 
 	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		if (!mtModelDrawer || true) {
@@ -326,7 +341,6 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 		}
 		smv.Submit(GL_TRIANGLES, false);
 	}
-
 	smv.Unbind();
 }
 
@@ -340,6 +354,9 @@ void CFeatureDrawerGL4::DrawAlphaObjects(int modelType) const
 	modelDrawerState->SetColorMultiplier(IModelDrawerState::alphaValues.x);
 	//main cloaked alpha pass
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);

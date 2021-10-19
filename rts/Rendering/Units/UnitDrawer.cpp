@@ -371,6 +371,9 @@ void CUnitDrawerLegacy::DrawObjectsShadow(int modelType) const
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		// only need to bind the atlas once for 3DO's, but KISS
 		assert((modelType != MODELTYPE_3DO) || (mdlRenderer.GetObjectBinKey(i) == 0));
 
@@ -391,6 +394,9 @@ void CUnitDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
@@ -404,6 +410,9 @@ void CUnitDrawerLegacy::DrawAlphaObjects(int modelType) const
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
@@ -1193,6 +1202,9 @@ void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 	smv.Bind();
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		const auto* texMat = textureHandlerS3O.GetTexture(mdlRenderer.GetObjectBinKey(i));
 		CModelDrawerHelper::modelDrawerHelpers[modelType]->BindShadowTex(texMat);
 
@@ -1239,6 +1251,9 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 	smv.Bind();
 
 	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		if (!mtModelDrawer || true) {
@@ -1279,6 +1294,9 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 	modelDrawerState->SetColorMultiplier(IModelDrawerState::alphaValues.x);
 	//main cloaked alpha pass
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		if (mdlRenderer.GetObjectBin(i).empty())
+			continue;
+
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
@@ -1317,10 +1335,10 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 
 	const auto& deadGhostBuildings = modelDrawerData->GetDeadGhostBuildings(gu->myAllyTeam, modelType);
 
+	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
 	// deadGhostedBuildings
 	{
 		modelDrawerState->SetColorMultiplier(0.6f, 0.6f, 0.6f, IModelDrawerState::alphaValues.y);
-		modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL); //reset in Enable()
 
 		int prevModelType = -1;
 		int prevTexType = -1;
@@ -1395,6 +1413,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 		}
 	}
 
+	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
 	smv.Unbind();
 }
 
@@ -1404,7 +1423,7 @@ void CUnitDrawerGL4::DrawAlphaObjectsAux(int modelType) const
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL); //reset in Enable()
+	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
 
 	// NOTE: not type-sorted
 	for (const auto& unit : tmpAlphaUnits) {
@@ -1415,6 +1434,7 @@ void CUnitDrawerGL4::DrawAlphaObjectsAux(int modelType) const
 		DrawAlphaAIUnitBorder(unit);
 	}
 
+	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
 	smv.Unbind();
 }
 
@@ -1446,9 +1466,8 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 {
 	const std::vector<CUnitDrawerData::TempDrawUnit>& tmpOpaqueUnits = modelDrawerData->GetTempOpaqueDrawUnits(modelType);
 	auto& smv = S3DModelVAO::GetInstance();
-	smv.Bind();
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL); //reset in Enable()
+	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
 
 	// NOTE: not type-sorted
 	for (const auto& unit : tmpOpaqueUnits) {
@@ -1457,7 +1476,8 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 
 		DrawOpaqueAIUnit(unit);
 	}
-	smv.Unbind();
+
+	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
 }
 
 void CUnitDrawerGL4::DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const
