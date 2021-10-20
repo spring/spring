@@ -156,7 +156,7 @@ jobs:
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }} || true #it may fail first time if a submodule URL was replaced
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }}
           git submodule sync
-          git submodule update --init --recursive --remote
+          git submodule update --init --recursive
           MYPWD=$(pwd)
           if [ -d ./mingwlibs64 ]; then
             cd ./mingwlibs64
