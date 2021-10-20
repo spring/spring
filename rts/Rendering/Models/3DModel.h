@@ -43,8 +43,8 @@ struct SVertexData {
 	SVertexData() {
 		pos = float3{};
 		normal = UpVector;
-		sTangent = RgtVector;
-		tTangent = FwdVector;
+		sTangent = float3{};
+		tTangent = float3{};
 		texCoords[0] = float2{};
 		texCoords[1] = float2{};
 		pieceIndex = uint32_t(-1);
