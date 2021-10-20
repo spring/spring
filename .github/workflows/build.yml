@@ -106,7 +106,7 @@ jobs:
       - name: Get Workflow Cache Data
         id: get-cache-id
         run: |
-          version=v6
+          version=v7
           echo "::set-output name=version::$version"
           session=$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')
           echo "::set-output name=session::$session"
