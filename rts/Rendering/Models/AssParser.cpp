@@ -500,7 +500,6 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, cons
 
 			// vertex coordinates
 			vertex.pos = aiVectorToFloat3(aiVertex);
-			vertex.pieceIndex = model->numPieces - 1;
 
 			// update piece min/max extents
 			piece->mins = float3::min(piece->mins, vertex.pos);

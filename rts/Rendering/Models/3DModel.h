@@ -17,7 +17,7 @@
 #include "System/SafeUtil.h"
 #include "System/creg/creg_cond.h"
 
-constexpr int MAX_MODEL_OBJECTS = 2048;
+constexpr int MAX_MODEL_OBJECTS = 2560;
 constexpr int AVG_MODEL_PIECES = 16; // as it used to be
 constexpr int NUM_MODEL_TEXTURES = 2;
 constexpr int NUM_MODEL_UVCHANNS = 2;
@@ -40,19 +40,29 @@ struct LocalModelPiece;
 
 
 struct SVertexData {
-	SVertexData() = default;
-	SVertexData(const float3& p, const float3& n, const float3& s, const float3& t, const float2& uv0, const float2& uv1, uint32_t i) {
+	SVertexData() {
+		pos = float3{};
+		normal = UpVector;
+		sTangent = RgtVector;
+		tTangent = FwdVector;
+		texCoords[0] = float2{};
+		texCoords[1] = float2{};
+		pieceIndex = uint32_t(-1);
+	}
+	SVertexData(const float3& p, const float3& n, const float3& s, const float3& t, const float2& uv0, const float2& uv1)
+	{
 		pos = p;
 		normal = n;
 		sTangent = s;
 		tTangent = t;
 		texCoords[0] = uv0;
 		texCoords[1] = uv1;
-		pieceIndex = i;
+		// pieceIndex is initialized afterwards
+		pieceIndex = uint32_t(-1);
 	}
 
 	float3 pos;
-	float3 normal = UpVector;
+	float3 normal;
 	float3 sTangent;
 	float3 tTangent;
 
@@ -61,7 +71,7 @@ struct SVertexData {
 	//   support an arbitrary number of channels, would be easy but overkill (for now)
 	float2 texCoords[NUM_MODEL_UVCHANNS];
 
-	uint32_t pieceIndex = 0;
+	uint32_t pieceIndex;
 };
 
 

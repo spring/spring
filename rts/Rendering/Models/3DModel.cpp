@@ -227,6 +227,9 @@ void S3DModelPiece::PostProcessGeometry(uint32_t pieceIndex)
 	vboVertStart = model->curVertStartIndx;
 	vboIndxStart = model->curIndxStartIndx;
 
+	for (auto& v : vertices)
+		v.pieceIndex = pieceIndex;
+
 	//MeshOptimize();
 
 	indicesVBO.resize(indices.size());

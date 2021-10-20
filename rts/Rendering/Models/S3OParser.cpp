@@ -139,7 +139,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, std::vector
 
 		sv.texCoords[0] = float2(v->texu, v->texv);
 		sv.texCoords[1] = float2(v->texu, v->texv);
-		sv.pieceIndex = model->numPieces - 1;
 
 		piece->SetVertex(a, sv);
 	}
