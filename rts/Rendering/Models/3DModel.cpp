@@ -219,7 +219,7 @@ void S3DModelPiece::Shatter(float pieceChance, int modelType, int texType, int t
 }
 
 
-void S3DModelPiece::PostProcessGeometry()
+void S3DModelPiece::PostProcessGeometry(uint32_t pieceIndex)
 {
 	if (!HasGeometryData())
 		return;
@@ -342,7 +342,7 @@ void S3DModelPiece::DrawElements(GLuint prim) const
 
 void LocalModel::DrawPieces() const
 {
-	for (const auto& p: pieces) {
+	for (const auto& p : pieces) {
 		p.Draw();
 	}
 }

@@ -17,7 +17,7 @@
 
 
 
-#define SCALE_FACTOR_3DO (1.0f / 65536.0f)
+static constexpr float SCALE_FACTOR_3DO = 1.0f / 65536.0f;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -299,8 +299,6 @@ void S3DOPiece::GetPrimitives(
 		const float3 v0v2 = (verts[sp.indices[2]] - verts[sp.indices[0]]);
 		sp.primNormal = (-v0v1.cross(v0v2)).SafeANormalize();
 
-		sp.pieceIndex = model->numPieces - 1;
-
 		// some 3DO's have multiple baseplates (selection primitives)
 		// which are not meant to be rendered, so hide them
 		if (IsBasePlate(&sp))
@@ -398,7 +396,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, const std::
 }
 
 
-void S3DOPiece::PostProcessGeometry()
+void S3DOPiece::PostProcessGeometry(uint32_t pieceIndex)
 {
 	// cannot use HasGeometryData because vboIndices is still empty
 	if (prims.empty())
@@ -420,18 +418,18 @@ void S3DOPiece::PostProcessGeometry()
 			indices.push_back(vertices.size() + 0);
 			indices.push_back(vertices.size() + 2);
 			indices.push_back(vertices.size() + 3);
-			vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
-			vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, ps.pieceIndex);
-			vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend),   float2{}, ps.pieceIndex);
-			vertices.emplace_back(verts[ps.indices[3]], ps.vnormals[3], float3{}, float3{}, float2(tex->xstart, tex->yend),   float2{}, ps.pieceIndex);
+			vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, pieceIndex);
+			vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, pieceIndex);
+			vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend),   float2{}, pieceIndex);
+			vertices.emplace_back(verts[ps.indices[3]], ps.vnormals[3], float3{}, float3{}, float2(tex->xstart, tex->yend),   float2{}, pieceIndex);
 		} else if (ps.indices.size() == 3) {
 			// triangle
 			indices.push_back(vertices.size() + 0);
 			indices.push_back(vertices.size() + 1);
 			indices.push_back(vertices.size() + 2);
-			vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
-			vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, ps.pieceIndex);
-			vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend),   float2{}, ps.pieceIndex);
+			vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, pieceIndex);
+			vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, pieceIndex);
+			vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend),   float2{}, pieceIndex);
 		} else if (ps.indices.size() >= 3) {
 			// fan
 			for (int i = 2; i < ps.indices.size(); ++i) {
@@ -440,12 +438,12 @@ void S3DOPiece::PostProcessGeometry()
 				indices.push_back(vertices.size() + i - 0);
 			}
 			for (int i = 0; i < ps.indices.size(); ++i) {
-				vertices.emplace_back(verts[ps.indices[i]], ps.vnormals[i], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[i]], ps.vnormals[i], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, pieceIndex);
 			}
 		}
 	}
 
-	S3DModelPiece::PostProcessGeometry();
+	S3DModelPiece::PostProcessGeometry(pieceIndex);
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();

@@ -55,9 +55,6 @@ struct S3DOPrimitive
 	float3 primNormal;
 
 	C3DOTextureHandler::UnitTexture* texture = nullptr;
-
-	// which piece this primitive belongs to
-	unsigned int pieceIndex = 0;
 };
 
 
@@ -96,7 +93,7 @@ struct S3DOPiece: public S3DModelPiece
 		emitDir = ZeroVector;
 	}
 
-	void PostProcessGeometry() override;
+	void PostProcessGeometry(uint32_t pieceIndex) override;
 	void DrawForList() const override;
 
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }

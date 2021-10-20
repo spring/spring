@@ -166,9 +166,13 @@ inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 
 	for (int i = 0; i < o->localModel.pieces.size(); ++i) {
 		auto& lmp = o->localModel.pieces[i];
-		smma[i + 1] = lmp.GetModelSpaceMatrix();
-		if (unlikely(!lmp.scriptSetVisible))
+
+		if (unlikely(!lmp.scriptSetVisible)) {
 			smma[i + 1] = CMatrix44f::Zero();
+			continue;
+		}
+
+		smma[i + 1] = lmp.GetModelSpaceMatrix();
 	}
 }
 
