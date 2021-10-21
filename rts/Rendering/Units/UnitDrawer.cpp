@@ -1081,7 +1081,6 @@ void CUnitDrawerLegacy::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, 
 	}
 }
 
-
 bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands) const
 {
 	//TODO: make this a lua callin!
@@ -1196,16 +1195,10 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 
 void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 {
-	DrawObjectsShadowComplete(modelType);
-	//DrawObjectsShadowUnderCon(modelType);
-}
-
-void CUnitDrawerGL4::DrawObjectsShadowComplete(int modelType) const
-{
-	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
-
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
+
+	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		if (mdlRenderer.GetObjectBin(i).empty())
@@ -1216,29 +1209,16 @@ void CUnitDrawerGL4::DrawObjectsShadowComplete(int modelType) const
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : bin) {
-				if (!ShouldDrawUnitShadow(o))
-					continue;
+		for (auto* o : bin) {
+			if (!ShouldDrawUnitShadow(o))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
+			if (o->beingBuilt && o->unitDef->showNanoFrame)
+				continue;
+
+			smv.AddToSubmission(o);
 		}
-		else {
-			static std::vector<const ObjType*> renderList;
-			renderList.resize(bin.size());
 
-			for_mt(0, bin.size(), [&bin, this](const int i) {
-				renderList[i] = ShouldDrawUnitShadow(bin[i]) ? bin[i] : nullptr;
-			});
-
-			for (auto* o : renderList) {
-				if (!o)
-					continue;
-
-				smv.AddToSubmission(o);
-			}
-		}
 		smv.Submit(GL_TRIANGLES, false);
 
 		CModelDrawerHelper::modelDrawerHelpers[modelType]->UnbindShadowTex();
@@ -1246,12 +1226,6 @@ void CUnitDrawerGL4::DrawObjectsShadowComplete(int modelType) const
 
 	smv.Unbind();
 }
-
-void CUnitDrawerGL4::DrawObjectsShadowUnderCon(int modelType) const
-{
-
-}
-
 
 void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
@@ -1268,28 +1242,13 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : mdlRenderer.GetObjectBin(i)) {
-				if (!ShouldDrawOpaqueUnit(o, drawReflection, drawRefraction))
-					continue;
+		for (auto* o : mdlRenderer.GetObjectBin(i)) {
+			if (!ShouldDrawOpaqueUnit(o, drawReflection, drawRefraction))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
+			smv.AddToSubmission(o);
 		}
-		else {
-			const auto& bin = mdlRenderer.GetObjectBin(i);
-			static std::vector<const ObjType*> renderList;
-			renderList.resize(bin.size());
-			for_mt(0, renderList.size(), [this, &bin, drawReflection, drawRefraction](int k) {
-				auto* o = bin[k];
-				renderList[k] = ShouldDrawOpaqueUnit(o, drawReflection, drawRefraction) ? o : nullptr;
-				});
 
-			for (const auto* o : renderList)
-				if (o)
-					smv.AddToSubmission(o);
-
-		}
 		smv.Submit(GL_TRIANGLES, false);
 	}
 
@@ -1313,29 +1272,11 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : bin) {
-				if (!ShouldDrawAlphaUnit(o))
-					continue;
+		for (auto* o : bin) {
+			if (!ShouldDrawAlphaUnit(o))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
-		}
-		else {
-			static vector<const ObjType*> renderList;
-
-			renderList.resize(bin.size());
-
-			for_mt(0, bin.size(), [&bin, this](const int i) {
-				renderList[i] = ShouldDrawAlphaUnit(bin[i]) ? bin[i] : nullptr;
-				});
-
-			for (auto* o : renderList) {
-				if (!o)
-					continue;
-
-				smv.AddToSubmission(o);
-			}
+			smv.AddToSubmission(o);
 		}
 
 		smv.Submit(GL_TRIANGLES, false);

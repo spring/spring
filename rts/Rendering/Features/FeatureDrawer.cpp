@@ -271,29 +271,13 @@ void CFeatureDrawerGL4::DrawObjectsShadow(int modelType) const
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : bin) {
-				if (!ShouldDrawFeatureShadow(o))
-					continue;
+		for (auto* o : bin) {
+			if (!ShouldDrawFeatureShadow(o))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
+			smv.AddToSubmission(o);
 		}
-		else {
-			static std::vector<const ObjType*> renderList;
-			renderList.resize(bin.size());
 
-			for_mt(0, bin.size(), [&bin, this](const int i) {
-				renderList[i] = ShouldDrawFeatureShadow(bin[i]) ? bin[i] : nullptr;
-				});
-
-			for (auto* o : renderList) {
-				if (!o)
-					continue;
-
-				smv.AddToSubmission(o);
-			}
-		}
 		smv.Submit(GL_TRIANGLES, false);
 
 		CModelDrawerHelper::modelDrawerHelpers[modelType]->UnbindShadowTex();
@@ -317,28 +301,13 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : mdlRenderer.GetObjectBin(i)) {
-				if (!ShouldDrawOpaqueFeature(o, drawReflection, drawRefraction))
-					continue;
+		for (auto* o : mdlRenderer.GetObjectBin(i)) {
+			if (!ShouldDrawOpaqueFeature(o, drawReflection, drawRefraction))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
+			smv.AddToSubmission(o);
 		}
-		else {
-			const auto& bin = mdlRenderer.GetObjectBin(i);
-			static std::vector<const ObjType*> renderList;
-			renderList.resize(bin.size());
-			for_mt(0, renderList.size(), [this, &bin, drawReflection, drawRefraction](int k) {
-				auto* o = bin[k];
-				renderList[k] = ShouldDrawOpaqueFeature(o, drawReflection, drawRefraction) ? o : nullptr;
-				});
 
-			for (const auto* o : renderList)
-				if (o)
-					smv.AddToSubmission(o);
-
-		}
 		smv.Submit(GL_TRIANGLES, false);
 	}
 	smv.Unbind();
@@ -361,29 +330,11 @@ void CFeatureDrawerGL4::DrawAlphaObjects(int modelType) const
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
-		if (!mtModelDrawer || true) {
-			for (auto* o : bin) {
-				if (!ShouldDrawAlphaFeature(o))
-					continue;
+		for (auto* o : bin) {
+			if (!ShouldDrawAlphaFeature(o))
+				continue;
 
-				smv.AddToSubmission(o);
-			}
-		}
-		else {
-			static vector<const ObjType*> renderList;
-
-			renderList.resize(bin.size());
-
-			for_mt(0, bin.size(), [&bin, this](const int i) {
-				renderList[i] = ShouldDrawAlphaFeature(bin[i]) ? bin[i] : nullptr;
-				});
-
-			for (auto* o : renderList) {
-				if (!o)
-					continue;
-
-				smv.AddToSubmission(o);
-			}
+			smv.AddToSubmission(o);
 		}
 
 		smv.Submit(GL_TRIANGLES, false);
