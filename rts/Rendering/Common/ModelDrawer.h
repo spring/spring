@@ -218,8 +218,13 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::InitStatic()
 	CModelDrawerConcept::InitStatic();
 	//CModelDrawerBase<TDrawerData, TDrawer>::InitInstance is done in TDrawer::InitStatic()
 
+	mtModelDrawer = true;
+	reselectionRequested = true;
 	forceLegacyPath = false;
 	drawForward = true;
+	drawDeferred = true;
+
+	while (!implStack.empty()) { implStack.pop(); } //clear just in case
 
 	modelDrawerData = new TDrawerData{ mtModelDrawer };
 }
@@ -231,7 +236,10 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::KillStatic(bool reload)
 		CModelDrawerBase<TDrawerData, TDrawer>::KillInstance(t);
 	}
 
+	CModelDrawerConcept::KillStatic(reload);
+
 	spring::SafeDelete(modelDrawerData);
+
 	modelDrawer = nullptr;
 	modelDrawerState = nullptr;
 }

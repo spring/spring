@@ -32,6 +32,7 @@ public:
 	virtual ~CModelDrawerDataConcept() {
 		eventHandler.RemoveClient(this);
 		autoLinkedEvents.clear();
+		modelDrawDist = 0.0f; //force re-read of UnitLodDist
 	};
 public:
 	bool GetFullRead() const override { return true; }
@@ -39,12 +40,10 @@ public:
 public:
 	static void SetModelDrawDist(float dist) {
 		modelDrawDist    = dist;
-		modelDrawDistSqr = modelDrawDist * modelDrawDist;
 	}
 public:
 	// lenghts & distances
 	static float inline modelDrawDist    = 0.0f;
-	static float inline modelDrawDistSqr = 0.0f;
 };
 
 

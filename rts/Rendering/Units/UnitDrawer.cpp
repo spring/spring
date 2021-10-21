@@ -807,7 +807,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool no
 
 	if (stageBounds.z > 0.0f / 3.0f) {
 		// wireframe, unconditional
-		DrawModelWireBuildStageShadow(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall, globalRendering->amdHacks);
+		DrawModelWireBuildStageShadow(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
 
 	if (stageBounds.z > 1.0f / 3.0f) {
@@ -826,9 +826,9 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool no
 	glPopAttrib();
 }
 
-void CUnitDrawerLegacy::DrawModelWireBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const
+void CUnitDrawerLegacy::DrawModelWireBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const
 {
-	if (amdHack) {
+	if (globalRendering->amdHacks) {
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 	} else {
@@ -843,7 +843,7 @@ void CUnitDrawerLegacy::DrawModelWireBuildStageShadow(const CUnit* unit, const d
 	DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (amdHack) {
+	if (globalRendering->amdHacks) {
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
@@ -905,7 +905,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool no
 	if (stageBounds.z > 0.0f / 3.0f) {
 		// wireframe, unconditional
 		SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-		DrawModelWireBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall, globalRendering->amdHacks);
+		DrawModelWireBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
 
 	if (stageBounds.z > 1.0f / 3.0f) {
@@ -919,16 +919,16 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool no
 	if (stageBounds.z > 2.0f / 3.0f) {
 		// fully-shaded, conditional
 		SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
-		DrawModelFillBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall, globalRendering->amdHacks);
+		DrawModelFillBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 	}
 
 	glDisable(GL_CLIP_PLANE0);
 	glPopAttrib();
 }
 
-void CUnitDrawerLegacy::DrawModelWireBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const
+void CUnitDrawerLegacy::DrawModelWireBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const
 {
-	if (amdHack) {
+	if (globalRendering->amdHacks) {
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 	} else {
@@ -940,7 +940,7 @@ void CUnitDrawerLegacy::DrawModelWireBuildStageOpaque(const CUnit* unit, const d
 	DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (amdHack) {
+	if (globalRendering->amdHacks) {
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
@@ -954,9 +954,9 @@ void CUnitDrawerLegacy::DrawModelFlatBuildStageOpaque(const CUnit* unit, const d
 	DrawUnitModel(unit, noLuaCall);
 }
 
-void CUnitDrawerLegacy::DrawModelFillBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const
+void CUnitDrawerLegacy::DrawModelFillBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const
 {
-	if (amdHack)
+	if (globalRendering->amdHacks)
 		glDisable(GL_CLIP_PLANE0);
 	else
 		glClipPlane(GL_CLIP_PLANE0, upperPlane);
@@ -1196,6 +1196,12 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 
 void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 {
+	DrawObjectsShadowComplete(modelType);
+	//DrawObjectsShadowUnderCon(modelType);
+}
+
+void CUnitDrawerGL4::DrawObjectsShadowComplete(int modelType) const
+{
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	auto& smv = S3DModelVAO::GetInstance();
@@ -1224,7 +1230,7 @@ void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 
 			for_mt(0, bin.size(), [&bin, this](const int i) {
 				renderList[i] = ShouldDrawUnitShadow(bin[i]) ? bin[i] : nullptr;
-				});
+			});
 
 			for (auto* o : renderList) {
 				if (!o)
@@ -1240,6 +1246,12 @@ void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 
 	smv.Unbind();
 }
+
+void CUnitDrawerGL4::DrawObjectsShadowUnderCon(int modelType) const
+{
+
+}
+
 
 void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
@@ -1503,3 +1515,4 @@ void CUnitDrawerGL4::DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit)
 
 	smv.SubmitImmediately(mdl, unit.team);
 }
+

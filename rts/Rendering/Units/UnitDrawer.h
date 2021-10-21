@@ -56,9 +56,6 @@ public:
 	static const std::vector<CUnit*>& GetUnsortedUnits() { return modelDrawerData->GetUnsortedObjects(); }
 public:
 	// DrawUnit*
-	virtual void DrawUnitModel(const CUnit* unit, bool noLuaCall) const = 0;
-	virtual void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const = 0;
-	virtual void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall) const = 0;
 	virtual void DrawUnitNoTrans(const CUnit* unit, uint32_t preList, uint32_t postList, bool lodCall, bool noLuaCall) const = 0;
 	virtual void DrawUnitTrans(const CUnit* unit, uint32_t preList, uint32_t postList, bool lodCall, bool noLuaCall) const = 0;
 	virtual void DrawIndividual(const CUnit* unit, bool noLuaCall) const = 0;
@@ -125,7 +122,8 @@ public:
 		DrawShadowPassImpl<true, LuaObjType::LUAOBJ_UNIT>();
 	}
 
-	void DrawUnitModel(const CUnit* unit, bool noLuaCall) const override;
+	void DrawUnitModel(const CUnit* unit, bool noLuaCall) const;
+
 	void DrawUnitNoTrans(const CUnit* unit, uint32_t preList, uint32_t postList, bool lodCall, bool noLuaCall) const override;
 	void DrawUnitTrans(const CUnit* unit, uint32_t preList, uint32_t postList, bool lodCall, bool noLuaCall) const override;
 	void DrawIndividual(const CUnit* unit, bool noLuaCall) const override;
@@ -157,15 +155,15 @@ protected:
 	void DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;
 	void DrawAlphaAIUnitBorder(const CUnitDrawerData::TempDrawUnit& unit) const;
 
-	void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const override;
-	void DrawModelWireBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const;
+	void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const;
+	void DrawModelWireBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
 	void DrawModelFlatBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
 	void DrawModelFillBuildStageShadow(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
 
-	void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall) const override;
-	void DrawModelWireBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const;
+	void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall) const;
+	void DrawModelWireBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
 	void DrawModelFlatBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
-	void DrawModelFillBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall, bool amdHack) const;
+	void DrawModelFillBuildStageOpaque(const CUnit* unit, const double* upperPlane, const double* lowerPlane, bool noLuaCall) const;
 
 	void PushIndividualOpaqueState(const CUnit* unit, bool deferredPass) const;
 	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)  const;
@@ -225,7 +223,10 @@ protected:
 	void DrawOpaqueObjectsAux(int modelType) const override;
 	void DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;
 
-	void DrawGhostedBuildings(int modelType) const override {} //implemented in line
+	void DrawGhostedBuildings(int modelType) const override {} //implemented in-line
+private:
+	void DrawObjectsShadowComplete(int modelType) const;
+	void DrawObjectsShadowUnderCon(int modelType) const;
 };
 
 #define unitDrawer (CUnitDrawer::modelDrawer)

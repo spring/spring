@@ -85,7 +85,7 @@ public:
 	void SetupAlphaDrawing(bool deferredPass) const;
 	void ResetAlphaDrawing(bool deferredPass) const;
 public:
-	inline static std::array<IModelDrawerState*, 4> modelDrawerStates = {};
+	inline static std::array<IModelDrawerState*, MODEL_SHADER_COUNT> modelDrawerStates = {};
 public:
 	/// <summary>
 	/// .x := regular unit alpha

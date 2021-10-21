@@ -408,6 +408,9 @@ inline size_t StablePosAllocator<T>::AllocateImpl(size_t numElems)
 template<typename T>
 inline void StablePosAllocator<T>::CompactGaps()
 {
+	if (positionToSize.empty())
+		return;
+
 	//helper to erase {size, pos} pair from sizeToPositions multimap
 	const auto eraseSizeToPositionsKVFunc = [this](size_t size, size_t pos) {
 		auto [beg, end] = sizeToPositions.equal_range(size);
