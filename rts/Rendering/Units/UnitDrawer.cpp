@@ -788,7 +788,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool no
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
 	const double upperPlanes[BuildStages::BUILDSTAGE_CNT][4] = {
-		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
 		{0.0f,  0.0f, 0.0f,                                                          0.0f },
@@ -796,7 +796,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool no
 	const double lowerPlanes[BuildStages::BUILDSTAGE_CNT][4] = {
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 3.0f  - 2.0f)},
-		{0.0f,  1.0f, 0.0f,                                  (0.0f)},
+		{0.0f,  1.0f, 0.0f,                                                           0.0f },
 		{0.0f,  0.0f, 0.0f,                                                           0.0f },
 	};
 
@@ -805,7 +805,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool no
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	if (stageBounds.z > 0.0f / 3.0f) {
+	{
 		// wireframe, unconditional
 		DrawModelWireBuildStageShadow(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
@@ -886,15 +886,15 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool no
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
 	const double upperPlanes[4][4] = {
-		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
 		{0.0f,  0.0f, 0.0f,                                                          0.0f },
 	};
 	const double lowerPlanes[4][4] = {
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
-		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
-		{0.0f,  1.0f, 0.0f,                                  (0.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                                           0.0f },
 		{0.0f,  0.0f, 0.0f,                                                           0.0f },
 	};
 
@@ -902,7 +902,7 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool no
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	if (stageBounds.z > 0.0f / 3.0f) {
+	{
 		// wireframe, unconditional
 		SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
 		DrawModelWireBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
@@ -918,10 +918,11 @@ void CUnitDrawerLegacy::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool no
 
 	if (stageBounds.z > 2.0f / 3.0f) {
 		// fully-shaded, conditional
-		SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
+		SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f));
 		DrawModelFillBuildStageOpaque(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 	}
 
+	SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off in any case
 	glDisable(GL_CLIP_PLANE0);
 	glPopAttrib();
 }
@@ -1195,10 +1196,10 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 
 void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 {
+	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
+
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
-
-	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		if (mdlRenderer.GetObjectBin(i).empty())
@@ -1209,17 +1210,26 @@ void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
+		static vector<const ObjType*> beingBuilt;
+		beingBuilt.clear();
+
 		for (auto* o : bin) {
 			if (!ShouldDrawUnitShadow(o))
 				continue;
 
-			if (o->beingBuilt && o->unitDef->showNanoFrame)
+			if (o->beingBuilt && o->unitDef->showNanoFrame) {
+				beingBuilt.emplace_back(o);
 				continue;
+			}
 
 			smv.AddToSubmission(o);
 		}
 
 		smv.Submit(GL_TRIANGLES, false);
+
+		for (auto* o : beingBuilt) {
+			DrawUnitModelBeingBuiltShadow(o, false);
+		}
 
 		CModelDrawerHelper::modelDrawerHelpers[modelType]->UnbindShadowTex();
 	}
@@ -1242,14 +1252,26 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
+		static vector<const ObjType*> beingBuilt;
+		beingBuilt.clear();
+
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
 			if (!ShouldDrawOpaqueUnit(o, drawReflection, drawRefraction))
 				continue;
+
+			if (o->beingBuilt && o->unitDef->showNanoFrame) {
+				beingBuilt.emplace_back(o);
+				continue;
+			}
 
 			smv.AddToSubmission(o);
 		}
 
 		smv.Submit(GL_TRIANGLES, false);
+
+		for (auto* o : beingBuilt) {
+			DrawUnitModelBeingBuiltOpaque(o, false);
+		}
 	}
 
 	smv.Unbind();
@@ -1455,5 +1477,163 @@ void CUnitDrawerGL4::DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit)
 	modelDrawerState->SetStaticModelMatrix(staticWorldMat);
 
 	smv.SubmitImmediately(mdl, unit.team);
+}
+
+void CUnitDrawerGL4::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const
+{
+	auto& smv = S3DModelVAO::GetInstance();
+
+	const float3 stageBounds = { 0.0f, unit->model->CalcDrawHeight(), unit->buildProgress };
+
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
+	};
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 3.0f  - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                                           0.0f },
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
+	};
+
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL_GL4);
+	assert(po);
+	assert(po->IsBound());
+
+	glPushAttrib(GL_POLYGON_BIT);
+
+	glEnable(GL_CLIP_DISTANCE0);
+	glEnable(GL_CLIP_DISTANCE1);
+
+	const auto SetClipPlane = [po](uint8_t idx, const float4& cp = float4{ 0.0f, 0.0f, 0.0f, 1.0f }) {
+		switch (idx)
+		{
+		case 0: //upper construction clip plane
+			po->SetUniform("clipPlane0", cp.x, cp.y, cp.z, cp.w);
+			break;
+		case 1: //lower construction clip plane
+			po->SetUniform("clipPlane1", cp.x, cp.y, cp.z, cp.w);
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	};
+
+	{
+		// wireframe, unconditional
+		SetClipPlane(0, upperPlanes[BUILDSTAGE_WIRE]);
+		SetClipPlane(1, lowerPlanes[BUILDSTAGE_WIRE]);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (stageBounds.z > 1.0f / 3.0f) {
+		// flat-colored, conditional
+		SetClipPlane(0, upperPlanes[BUILDSTAGE_FLAT]);
+		SetClipPlane(1, lowerPlanes[BUILDSTAGE_FLAT]);
+
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+	}
+
+	SetClipPlane(0); //default
+	SetClipPlane(1); //default;
+
+	glDisable(GL_CLIP_DISTANCE1);
+	glDisable(GL_CLIP_DISTANCE0);
+
+	if (stageBounds.z > 2.0f / 3.0f) {
+		// fully-shaded, conditional
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+	}
+
+	glPopAttrib();
+}
+
+void CUnitDrawerGL4::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall) const
+{
+	auto& smv = S3DModelVAO::GetInstance();
+
+	const    CTeam* team = teamHandler.Team(unit->team);
+	const   SColor  color = team->color;
+
+	const float wireColorMult = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float flatColorMult = 1.5f - wireColorMult;
+
+	const float3 frameColors[2] = { unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f} };
+	const float3 stageColors[2] = { frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray] };
+
+
+	const float3 stageBounds = { 0.0f, unit->model->CalcDrawHeight(), unit->buildProgress };
+
+	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
+	// the default value derives from the model vertices and makes more sense to use here
+	//
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color later on.
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
+	};
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
+	};
+
+	glPushAttrib(GL_POLYGON_BIT);
+
+	glEnable(GL_CLIP_DISTANCE0);
+	glEnable(GL_CLIP_DISTANCE1);
+
+	{
+		// wireframe, unconditional
+		SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
+		modelDrawerState->SetClipPlane(0, upperPlanes[BUILDSTAGE_WIRE]);
+		modelDrawerState->SetClipPlane(1, lowerPlanes[BUILDSTAGE_WIRE]);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (stageBounds.z > 1.0f / 3.0f) {
+		// flat-colored, conditional
+		SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+		modelDrawerState->SetClipPlane(0, upperPlanes[BUILDSTAGE_FLAT]);
+		modelDrawerState->SetClipPlane(1, lowerPlanes[BUILDSTAGE_FLAT]);
+
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+	}
+
+	modelDrawerState->SetClipPlane(1); //default;
+	glDisable(GL_CLIP_DISTANCE1);
+
+	if (stageBounds.z > 2.0f / 3.0f) {
+		// fully-shaded, conditional
+		glPolygonOffset(1.0f, 1.0f);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f));
+		modelDrawerState->SetClipPlane(0, upperPlanes[BUILDSTAGE_FLAT]);
+
+		smv.SubmitImmediately(unit, GL_TRIANGLES);
+
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off in any case
+	modelDrawerState->SetClipPlane(0); //default
+	glDisable(GL_CLIP_DISTANCE0);
+
+	glPopAttrib();
 }
 

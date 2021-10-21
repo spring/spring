@@ -85,7 +85,11 @@ layout(std140, binding=0) readonly buffer MatrixBuffer {
 
 uniform int drawMode = 0;
 uniform mat4 staticModelMatrix = mat4(1.0);
-uniform vec4 waterClipPlane = vec4(0.0, 0.0, 0.0, 1.0);
+
+uniform vec4 clipPlane0 = vec4(0.0, 0.0, 0.0, 1.0); //upper construction clip plane
+uniform vec4 clipPlane1 = vec4(0.0, 0.0, 0.0, 1.0); //lower construction clip plane
+uniform vec4 clipPlane2 = vec4(0.0, 0.0, 0.0, 1.0); //water clip plane
+
 uniform float teamColorAlpha = 1.0;
 
 out Data {
@@ -102,6 +106,7 @@ out Data {
 	// Auxilary
 	float fogFactor;
 };
+out float gl_ClipDistance[3];
 
 mat4 mat4mix(mat4 a, mat4 b, float alpha) {
 	return (a * (1.0 - alpha) + b * alpha);
@@ -119,41 +124,34 @@ void TransformPlayerCamStaticMat(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
 }
 
-
-//unit, feature, projectile
-mat4 GetWorldMatrixLocalModel() {
-	uint baseIndex = instData.x; //ssbo offset
-	mat4 modelMatrix = mat[baseIndex];
-
-	mat4 pieceMatrix = mat4mix(mat4(1.0), mat[baseIndex + pieceIndex + 1u], modelMatrix[3][3]); //TODO: figure out why mat4mix() is needed
-	return modelMatrix * pieceMatrix;
+mat4 GetPieceMatrix(bool staticModel) {
+	return mat[instData.x + pieceIndex + uint(!staticModel)];
 }
 
-//static model
-mat4 GetWorldMatrixModel() {
-	uint baseIndex = instData.x; //ssbo offset
-
-	mat4 pieceMatrix = mat[baseIndex + pieceIndex];
-	return staticModelMatrix * pieceMatrix;
-}
-
-#line 1086
+#line 1131
 
 void main(void)
 {
-	mat4 worldMatrix = (drawMode >= 0) ? GetWorldMatrixLocalModel() : GetWorldMatrixModel();
+	mat4 pieceMatrix = GetPieceMatrix(drawMode < 0);
+	mat4 worldMatrix = (drawMode >= 0) ? mat[instData.x] : staticModelMatrix;
+	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
 	#if 0
-		mat3 normalMatrix = mat3(transpose(inverse(worldMatrix)));
+		mat3 normalMatrix = mat3(transpose(inverse(worldPieceMatrix)));
 	#else
-		mat3 normalMatrix = mat3(worldMatrix);
+		mat3 normalMatrix = mat3(worldPieceMatrix);
 	#endif
 
 
-	worldPos = worldMatrix * vec4(pos, 1.0);
+	vec4 piecePos = vec4(pos, 1.0);
+	vec4 modelPos = pieceMatrix * piecePos;
+	vec4 worldPos = worldPieceMatrix * piecePos;
+
 	worldNormal = normalMatrix * normal;
-	
-	gl_ClipDistance[2] = dot(worldPos, waterClipPlane);
+
+	gl_ClipDistance[0] = dot(modelPos, clipPlane0); //upper construction clip plane
+	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
+	gl_ClipDistance[2] = dot(worldPos, clipPlane2); //water clip plane
 
 	teamCol = teamColor[instData.y]; // team index
 	teamCol.a = teamColorAlpha;
@@ -181,7 +179,7 @@ void main(void)
 			TransformPlayerCam(worldPos);
 			break;
 		default: // player, (-1) static model, (0) normal rendering
-			TransformPlayerCam(worldPos);			
+			TransformPlayerCam(worldPos);
 			break;
 	};
 }

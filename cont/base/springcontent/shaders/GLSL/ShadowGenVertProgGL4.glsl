@@ -58,7 +58,7 @@ layout(std140, binding = 1) uniform UniformParamsBuffer {
 
 	vec4 fogColor;  //fog color
 	vec4 fogParams; //fog {start, end, 0.0, scale}
-	
+
 	vec4 sunDir;
 
 	vec4 sunAmbientModel;
@@ -67,7 +67,7 @@ layout(std140, binding = 1) uniform UniformParamsBuffer {
 	vec4 sunDiffuseMap;
 	vec4 sunSpecularModel;
 	vec4 sunSpecularMap;
-	
+
 	vec4 shadowDensity; // {ground, units, 0.0, 0.0}
 
 	vec4 windInfo; // windx, windy, windz, windStrength
@@ -83,9 +83,13 @@ layout(std140, binding=0) readonly buffer MatrixBuffer {
 	mat4 mat[];
 };
 
+uniform vec4 clipPlane0 = vec4(0.0, 0.0, 0.0, 1.0); //upper construction clip plane
+uniform vec4 clipPlane1 = vec4(0.0, 0.0, 0.0, 1.0); //lower construction clip plane
+
 out Data {
 	vec4 uvCoord;
 };
+out float gl_ClipDistance[2];
 
 mat4 mat4mix(mat4 a, mat4 b, float alpha) {
 	return (a * (1.0 - alpha) + b * alpha);
@@ -109,29 +113,27 @@ void TransformShadowCam(vec4 worldPos, vec3 worldNormal) {
 }
 
 
-//unit, feature, projectile
-mat4 GetWorldMatrixLocalModel() {
-	uint baseIndex = instData.x; //ssbo offset
-	mat4 modelMatrix = mat[baseIndex];
-
-	mat4 pieceMatrix = mat4mix(mat4(1.0), mat[baseIndex + pieceIndex + 1u], modelMatrix[3][3]); //TODO: figure out why mat4mix() is needed
-	return modelMatrix * pieceMatrix;
-}
-
 #line 1086
 
 void main(void)
 {
-	mat4 worldMatrix = GetWorldMatrixLocalModel();
+	mat4 pieceMatrix = mat[instData.x + pieceIndex + 1u];
+	mat4 worldMatrix = mat[instData.x];
+	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
 	#if 0
-		mat3 normalMatrix = mat3(transpose(inverse(worldMatrix)));
+		mat3 normalMatrix = mat3(transpose(inverse(worldPieceMatrix)));
 	#else
-		mat3 normalMatrix = mat3(worldMatrix);
+		mat3 normalMatrix = mat3(worldPieceMatrix);
 	#endif
 
+	vec4 piecePos = vec4(pos, 1.0);
+	vec4 modelPos = pieceMatrix * piecePos;
+	vec4 worldPos = worldPieceMatrix * piecePos;
 
-	vec4 worldPos = worldMatrix * vec4(pos, 1.0);
+	gl_ClipDistance[0] = dot(modelPos, clipPlane0); //upper construction clip plane
+	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
+
 	vec3 worldNormal = normalMatrix * normal;
 
 	uvCoord = uv;

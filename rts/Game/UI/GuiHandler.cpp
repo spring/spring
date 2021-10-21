@@ -3786,6 +3786,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					}
 
 					if (!onMiniMap) {
+						ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
+
 						glPushMatrix();
 						glLoadIdentity();
 						glTranslatef3(buildPos);

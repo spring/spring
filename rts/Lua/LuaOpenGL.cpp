@@ -1431,6 +1431,8 @@ static void GLObjectShape(lua_State* L, const SolidObjectDef* def)
 	const bool rawState = luaL_optboolean(L, 3,  true);
 	const bool toScreen = luaL_optboolean(L, 4, false);
 
+	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
+
 	// does not set the full state by default
 	if (luaL_optboolean(L, 5, true)) {
 		unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);

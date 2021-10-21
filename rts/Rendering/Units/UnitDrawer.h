@@ -224,6 +224,9 @@ protected:
 	void DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;
 
 	void DrawGhostedBuildings(int modelType) const override {} //implemented in-line
+
+	void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const;
+	void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall) const;
 };
 
 #define unitDrawer (CUnitDrawer::modelDrawer)

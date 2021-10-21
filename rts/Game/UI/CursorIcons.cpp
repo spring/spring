@@ -152,6 +152,8 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
+	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
+
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glEnable(GL_DEPTH_TEST);

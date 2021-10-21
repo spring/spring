@@ -648,13 +648,13 @@ void CModelDrawerStateGL4::SetDrawingMode(ShaderDrawingModes sdm) const
 	switch (sdm)
 	{
 	case ShaderDrawingModes::REFLCT_MODEL:
-		modelShader->SetUniform("waterClipPlane", 0.0f,  1.0f, 0.0f, 0.0f);
+		SetClipPlane(2, { 0.0f,  1.0f, 0.0f, 0.0f });
 		break;
 	case ShaderDrawingModes::REFRAC_MODEL:
-		modelShader->SetUniform("waterClipPlane", 0.0f, -1.0f, 0.0f, 0.0f);
+		SetClipPlane(2, { 0.0f, -1.0f, 0.0f, 0.0f });
 		break;
 	default:
-		modelShader->SetUniform("waterClipPlane", 0.0f,  0.0f, 0.0f, 1.0f);
+		SetClipPlane(2  /* default, no clipping  */);
 		break;
 	}
 }
@@ -665,6 +665,25 @@ void CModelDrawerStateGL4::SetStaticModelMatrix(const CMatrix44f& mat) const
 	assert(modelShader->IsBound());
 
 	modelShader->SetUniformMatrix4x4("staticModelMatrix", false, &mat.m[0]);
+}
+
+void CModelDrawerStateGL4::SetClipPlane(uint8_t idx, const float4& cp) const
+{
+	switch (idx)
+	{
+	case 0: //upper construction clip plane
+		modelShader->SetUniform("clipPlane0", cp.x, cp.y, cp.z, cp.w);
+		break;
+	case 1: //lower construction clip plane
+		modelShader->SetUniform("clipPlane1", cp.x, cp.y, cp.z, cp.w);
+		break;
+	case 2: //water clip plane
+		modelShader->SetUniform("clipPlane2", cp.x, cp.y, cp.z, cp.w);
+		break;
+	default:
+		assert(false);
+		break;
+	}
 }
 
 IModelDrawerState::IModelDrawerState()
