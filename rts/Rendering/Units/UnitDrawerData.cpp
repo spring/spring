@@ -104,7 +104,7 @@ void CUnitDrawerData::Update()
 
 	iconZoomDist = dist;
 
-	const static auto updateBody = [this](CUnit* u) {
+	const auto updateBody = [this](CUnit* u) {
 		UpdateDrawPos(u);
 
 		if (useScreenIcons)
@@ -114,7 +114,7 @@ void CUnitDrawerData::Update()
 	};
 
 	if (mtModelDrawer) {
-		for_mt(0, unsortedObjects.size(), [this](const int k) {
+		for_mt(0, unsortedObjects.size(), [this, &updateBody](const int k) {
 			CUnit* unit = unsortedObjects[k];
 			updateBody(unit);
 		});
