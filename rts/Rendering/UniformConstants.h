@@ -29,6 +29,10 @@ struct UniformMatricesBuffer {
 	CMatrix44f shadowProj;
 	CMatrix44f shadowViewProj;
 
+	CMatrix44f reflectionView;
+	CMatrix44f reflectionProj;
+	CMatrix44f reflectionViewProj;
+
 	CMatrix44f orthoProj01;
 
 	// transforms for [0] := Draw, [1] := DrawInMiniMap, [2] := Lua DrawInMiniMap

@@ -79,7 +79,7 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 	updateBuffer->screenProj = globalRendering->screenProjMatrix;
 	updateBuffer->screenViewProj = updateBuffer->screenProj * updateBuffer->screenView;
 
-	const auto camPlayer = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+	const auto* camPlayer = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	updateBuffer->cameraView = camPlayer->GetViewMatrix();
 	updateBuffer->cameraProj = camPlayer->GetProjectionMatrix();
@@ -96,6 +96,19 @@ void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 	updateBuffer->shadowView = shadowHandler.GetShadowViewMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
 	updateBuffer->shadowProj = shadowHandler.GetShadowProjMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
 	updateBuffer->shadowViewProj = updateBuffer->shadowProj * updateBuffer->shadowView;
+
+	{
+		const auto* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+
+		auto* reflCam = CCameraHandler::GetActiveCamera();
+		reflCam->CopyStateReflect(prvCam);
+
+		updateBuffer->reflectionView = reflCam->GetViewMatrix();
+		updateBuffer->reflectionProj = reflCam->GetProjectionMatrix();
+		updateBuffer->reflectionViewProj = reflCam->GetViewProjectionMatrix();
+
+		CCameraHandler::SetActiveCamera(CCamera::CAMTYPE_PLAYER);
+	}
 
 	updateBuffer->orthoProj01 = CMatrix44f::ClipOrthoProj01();
 
