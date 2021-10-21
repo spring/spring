@@ -5451,6 +5451,10 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 			lua_pushnumber(L, waterRendering->perlinAmplitude);
 			return 1;
 		} break;
+		case hashString("windSpeed"): {
+			lua_pushnumber(L, waterRendering->windSpeed);
+			return 1;
+		} break;
 		case hashString("numTiles"): {
 			lua_pushnumber(L, waterRendering->numTiles);
 			return 1;

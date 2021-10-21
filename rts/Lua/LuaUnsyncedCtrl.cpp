@@ -1204,6 +1204,10 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 						waterRendering->perlinAmplitude = value;
 					} break;
 
+					case hashString("windSpeed"): {
+						waterRendering->windSpeed = value;
+					} break;
+
 					case hashString("numTiles"): {
 						waterRendering->numTiles = (unsigned char)value;
 					} break;
