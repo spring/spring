@@ -7,6 +7,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/GL/VBO.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
@@ -24,14 +25,11 @@
 #include "System/SafeUtil.h"
 #include "SDL2/SDL_mouse.h"
 
-void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
+bool UniformConstants::Supported()
 {
-	vbo = new VBO{GL_UNIFORM_BUFFER, WantPersistentMapping()};
-	vbo->Bind(GL_UNIFORM_BUFFER);
-	vbo->New(BUFFERING * vboSingleSize, GL_STREAM_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
-	vbo->Unbind();
+	static bool supported = VBO::IsSupported(GL_UNIFORM_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
+	return supported;
 }
-
 
 void UniformConstants::Init()
 {
@@ -43,11 +41,8 @@ void UniformConstants::Init()
 		return;
 	}
 
-	umbBufferSize = VBO::GetAlignedSize(GL_UNIFORM_BUFFER, sizeof(UniformMatricesBuffer));
-	upbBufferSize = VBO::GetAlignedSize(GL_UNIFORM_BUFFER, sizeof(UniformParamsBuffer  ));
-
-	InitVBO(umbVBO, umbBufferSize);
-	InitVBO(upbVBO, upbBufferSize);
+	umbSBT = IStreamBuffer<UniformMatricesBuffer>::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformMatricesBuffer", IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
+	upbSBT = IStreamBuffer<UniformParamsBuffer  >::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformParamsBuffer"  , IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
 
 	initialized = true;
 }
@@ -58,19 +53,13 @@ void UniformConstants::Kill()
 		return;
 
 	//unbind the whole ring buffer range
-	umbVBO->UnbindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, BUFFERING * umbBufferSize);
-	upbVBO->UnbindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, BUFFERING * upbBufferSize);
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, 0, umbSBT->GetByteSize());
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, 0, upbSBT->GetByteSize());
 
-	spring::SafeDelete(umbVBO);
-	spring::SafeDelete(upbVBO);
+	umbSBT = {};
+	upbSBT = {};
 
 	initialized = false;
-}
-
-intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)
-{
-	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
-	return (intptr_t)(buffCurIdx * vboSingleSize);
 }
 
 void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
@@ -215,56 +204,14 @@ void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 	}
 }
 
-template<typename TBuffType, typename TUpdateFunc>
-void UniformConstants::UpdateMapStandard(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
-{
-	vbo->Bind(GL_UNIFORM_BUFFER);
-	buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
-	assert(buffMap != nullptr);
-
-	updateFunc(buffMap);
-
-	vbo->UnmapBuffer();
-	vbo->Unbind();
-}
-
-template<typename TBuffType, typename TUpdateFunc>
-void UniformConstants::UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
-{
-	TBuffType* thisFrameBuffMap = nullptr;
-
-	if (buffMap == nullptr) { //
-		vbo->Bind(GL_UNIFORM_BUFFER); //bind only first time
-		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
-		assert(buffMap != nullptr);
-	}
-
-	thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
-
-	updateFunc(thisFrameBuffMap);
-
-	//no need to unmap
-
-	if (vbo->bound) //unbind only first time
-		vbo->Unbind();
-}
-
-
-template<typename TBuffType, typename TUpdateFunc>
-void UniformConstants::UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
-{
-	if (WantPersistentMapping())
-		UpdateMapPersistent(vbo, buffMap, updateFunc, vboSingleSize);
-	else
-		UpdateMapStandard  (vbo, buffMap, updateFunc, vboSingleSize);
-}
-
 void UniformConstants::UpdateMatrices()
 {
 	if (!Supported())
 		return;
 
-	UpdateMap(umbVBO, umbBufferMap, UniformConstants::UpdateMatricesImpl, umbBufferSize);
+	umbMap = umbSBT->Map();
+	UniformConstants::UpdateMatricesImpl(umbMap.first);
+	umbSBT->Unmap(1);
 }
 
 void UniformConstants::UpdateParams()
@@ -272,23 +219,18 @@ void UniformConstants::UpdateParams()
 	if (!Supported())
 		return;
 
-	UpdateMap(upbVBO, upbBufferMap, UniformConstants::UpdateParamsImpl, upbBufferSize);
+	upbMap = upbSBT->Map();
+	UniformConstants::UpdateParamsImpl(upbMap.first);
+	upbSBT->Unmap(1);
 }
 
-//lazy / implicit unbinding included
 void UniformConstants::Bind()
 {
 	if (!Supported())
 		return;
 
-	assert(umbVBO != nullptr && upbVBO != nullptr);
+	assert(umbSBT->GetID() && upbSBT->GetID());
 
-	umbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, GetBufferOffset(umbBufferSize), umbBufferSize);
-	upbVBO->BindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, GetBufferOffset(upbBufferSize), upbBufferSize);
-}
-
-bool UniformConstants::WantPersistentMapping()
-{
-	static bool wantPersistentMapping = globalRendering->supportPersistentMapping & false; //persistent mapping needs fences, tripple buffering alone is not enough :(
-	return wantPersistentMapping;
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbSBT->GetID(), umbMap.second, umbSBT->GetByteSize());
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbSBT->GetID(), upbMap.second, upbSBT->GetByteSize());
 }
