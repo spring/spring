@@ -8,10 +8,10 @@
 #include <string>
 
 #include "lib/lua/include/lua.h" //for lua_Number
-//#include "lib/sol2/forward.hpp"
 #include "lib/sol2/forward.hpp"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Models/3DModelVAO.h"
 
 class VBO;
 class LuaVAOImpl;
@@ -32,15 +32,16 @@ public:
 	size_t Upload(const sol::stack_table& luaTblData, sol::optional<int> attribIdxOpt, sol::optional<int> elemOffsetOpt, sol::optional<int> luaStartIndexOpt, sol::optional<int> luaFinishIndexOpt);
 	sol::as_table_t<std::vector<lua_Number>> Download(sol::optional<int> attribIdxOpt, sol::optional<int> elemOffsetOpt, sol::optional<int> elemCountOpt, sol::optional<bool> forceGPUReadOpt);
 
-	size_t ShapeFromUnitDefID(const int id);
-	size_t ShapeFromFeatureDefID(const int id);
-	size_t ShapeFromUnitID(const int id);
-	size_t ShapeFromFeatureID(const int id);
+	size_t ModelsVBO();
 
-	size_t OffsetFromUnitDefID(const int id, const int attrID);
-	size_t OffsetFromFeatureDefID(const int id, const int attrID);
-	size_t OffsetFromUnitID(const int id, const int attrID);
-	size_t OffsetFromFeatureID(const int id, const int attrID);
+	size_t InstanceDataFromUnitDefIDs(int id, int attrID, sol::optional<int> teamIdOpt, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromUnitDefIDs(const sol::stack_table& ids, int attrID, sol::optional<int> teamIdOpt, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromFeatureDefIDs(int id, int attrID, sol::optional<int> teamIdOpt, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromFeatureDefIDs(const sol::stack_table& ids, int attrID, sol::optional<int> teamIdOpt, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromUnitIDs(int id, int attrID, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromUnitIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromFeatureIDs(int id, int attrID, sol::optional<int> elemOffsetOpt);
+	size_t InstanceDataFromFeatureIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt);
 
 	int BindBufferRange  (const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
 	int UnbindBufferRange(const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
@@ -62,14 +63,21 @@ private:
 	bool FillAttribsNumberImpl(const int numVec4Attribs);
 	bool DefineElementArray(const sol::optional<sol::object> attribDefArgOpt);
 private:
-	template<typename TObj>
-	size_t ShapeFromDefIDImpl(const int defID);
+	size_t ModelsVBOImpl();
+
+	void InstanceDataFromDataCheck(int attrID, const char* func);
 
 	template<typename TObj>
-	size_t OffsetFromImpl(const int id, const int attrID);
+	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint32_t defTeamID, uint32_t drawID = 0u);
+
+	template<typename TObj>
+	size_t InstanceDataFromImpl(int id, int attrID, uint32_t defTeamID, const sol::optional<int>& elemOffsetOpt);
+
+	template<typename TObj>
+	size_t InstanceDataFromImpl(const sol::stack_table& ids, int attrID, uint32_t defTeamID, const sol::optional<int>& elemOffsetOpt);
 
 	template<typename TIn>
-	size_t UploadImpl(const std::vector<TIn>& dataVec, const uint32_t elemOffset, const int attribIdx);
+	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, int attribIdx);
 
 	template<typename T>
 	static T MaybeFunc(const sol::table& tbl, const std::string& key, T defValue);

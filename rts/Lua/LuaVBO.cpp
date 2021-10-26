@@ -26,15 +26,24 @@ bool LuaVBO::PushEntries(lua_State* L)
 		"Upload", &LuaVBOImpl::Upload,
 		"Download", &LuaVBOImpl::Download,
 
-		"ShapeFromUnitDefID", &LuaVBOImpl::ShapeFromUnitDefID,
-		"ShapeFromFeatureDefID", &LuaVBOImpl::ShapeFromFeatureDefID,
-		"ShapeFromUnitID", &LuaVBOImpl::ShapeFromUnitID,
-		"ShapeFromFeatureID", &LuaVBOImpl::ShapeFromFeatureID,
+		"ModelsVBO", &LuaVBOImpl::ModelsVBO,
 
-		"OffsetFromUnitDefID", &LuaVBOImpl::OffsetFromUnitDefID,
-		"OffsetFromFeatureDefID", &LuaVBOImpl::OffsetFromFeatureDefID,
-		"OffsetFromUnitID", &LuaVBOImpl::OffsetFromUnitID,
-		"OffsetFromFeatureID", &LuaVBOImpl::OffsetFromFeatureID,
+		"InstanceDataFromUnitDefIDs", sol::overload(
+			sol::resolve<size_t(int, int, sol::optional<int>, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromUnitDefIDs),
+			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromUnitDefIDs)
+		),
+		"InstanceDataFromFeatureDefIDs", sol::overload(
+			sol::resolve<size_t(int, int, sol::optional<int>, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureDefIDs),
+			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureDefIDs)
+		),
+		"InstanceDataFromUnitIDs", sol::overload(
+			sol::resolve<size_t(int, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromUnitIDs),
+			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromUnitIDs)
+		),
+		"InstanceDataFromFeatureIDs", sol::overload(
+			sol::resolve<size_t(int, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureIDs),
+			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureIDs)
+		),
 
 		"BindBufferRange", &LuaVBOImpl::BindBufferRange,
 		"UnbindBufferRange", &LuaVBOImpl::UnbindBufferRange,

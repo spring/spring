@@ -13,11 +13,19 @@
 #include "LuaHandle.h"
 #include "LuaDefs.h"
 // FIXME: use fwd-decls
+#include "System/EventClient.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Objects/SolidObject.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "System/EventClient.h"
+#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 // is defined as macro on FreeBSD (wtf)
 #ifdef isnumber
@@ -151,6 +159,11 @@ class LuaUtils {
 			std::string what = fmt::sprintf(format, args...);
 			throw std::runtime_error(what.c_str());
 		}
+
+		template<typename TObj>
+		static const TObj* IdToObject(int id, const char* func = nullptr);
+		template<typename TObj>
+		static const TObj* SolIdToObject(int id, const char* func = nullptr);
 };
 
 
@@ -387,6 +400,50 @@ static inline const LocalModelPiece* ParseObjectConstLocalModelPiece(lua_State* 
 static inline LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, CSolidObject* obj, int pieceArg)
 {
 	return (const_cast<LocalModelPiece*>(ParseObjectConstLocalModelPiece(L, obj, pieceArg)));
+}
+
+template<typename TObj>
+const inline TObj* LuaUtils::IdToObject(int id, const char* func)
+{
+	if      constexpr (std::is_same<TObj, CUnit>::value) {
+		return unitHandler.GetUnit(id);;
+	}
+	else if constexpr (std::is_same<TObj, CFeature>::value) {
+		return featureHandler.GetFeature(id);
+	}
+	else if constexpr (std::is_same<TObj, UnitDef>::value) {
+		return unitDefHandler->GetUnitDefByID(id);
+	}
+	else if constexpr (std::is_same<TObj, FeatureDef>::value) {
+		return featureDefHandler->GetFeatureDefByID(id);
+	}
+
+	assert(false);
+}
+
+template<typename TObj>
+const inline TObj* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const TObj* obj = IdToObject<TObj>(id, func);
+
+	if (obj == nullptr) {
+		if      constexpr (std::is_same<TObj, CUnit>::value) {
+			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitID", id);
+		}
+		else if constexpr (std::is_same<TObj, CFeature>::value) {
+			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureID", id);
+		}
+		else if constexpr (std::is_same<TObj, UnitDef>::value) {
+			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitDefID", id);
+		}
+		else if constexpr (std::is_same<TObj, FeatureDef>::value) {
+			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureDefID", id);
+		}
+	}
+
+	return obj;
+
+	assert(false);
 }
 
 #endif // LUA_UTILS_H
