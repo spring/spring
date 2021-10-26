@@ -78,6 +78,7 @@ public:
 		Unbind();
 	}
 
+	// uploads vector of data from 0 to size() - 1 at elemOffset
 	template<typename TData>
 	void SetBufferSubData(const std::vector<TData>& data, GLintptr elemOffset = 0) { SetBufferSubData(sizeof(TData) * elemOffset, sizeof(TData) * data.size(), data.data()); }
 	void SetBufferSubData(GLintptr offset, GLsizeiptr size, const void* data);
@@ -91,6 +92,10 @@ public:
 	GLuint GetIdRaw() const {
 		return vboId;
 	};
+
+	GLenum GetCurrTarget() const {
+		return curBoundTarget;
+	}
 
 	size_t GetSize() const { return bufSize; }
 	size_t GetAlignedSize(size_t sz) const { return VBO::GetAlignedSize(curBoundTarget, sz); };;
