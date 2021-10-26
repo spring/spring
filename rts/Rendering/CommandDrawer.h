@@ -38,6 +38,7 @@ private:
 
 private:
 	spring::unordered_set<int> luaQueuedUnitSet;
+	static constexpr uint32_t cmdCircleResolution = 100;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())

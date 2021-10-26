@@ -192,7 +192,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 				lineDrawer.Break(endPos, cmdColors.attack);
 
 				glColor4fv(cmdColors.attack);
-				glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+				glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 				lineDrawer.RestartWithColor(cmdColors.attack);
 			} break;
@@ -283,7 +283,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				lineDrawer.Break(endPos, cmdColors.restore);
 
 				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+				glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
 
 				lineDrawer.RestartWithColor(cmdColors.restore);
 			} break;
@@ -318,7 +318,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 					lineDrawer.Break(endPos, color);
 
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+					glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(color);
 				} else {
@@ -353,7 +353,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 					lineDrawer.Break(endPos, color);
 
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.GetParam(3), 20.0f);
+					glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(color);
 				} else {
@@ -545,7 +545,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 					lineDrawer.Break(endPos, cmdColors.load);
 
 					glColor4fv(cmdColors.load);
-					glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+					glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
@@ -565,7 +565,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 					lineDrawer.Break(endPos, cmdColors.unload);
 
 					glColor4fv(cmdColors.unload);
-					glSurfaceCircle(endPos, ci->GetParam(3), 20.0f);
+					glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
@@ -616,7 +616,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 			} else {
 				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 				lineDrawer.Break(endPos, dd->color);
-				glSurfaceCircle(endPos, c.GetParam(3), 20.0f);
+				glSurfaceCircle(endPos, c.GetParam(3), cmdCircleResolution);
 				lineDrawer.RestartWithColor(dd->color);
 			}
 
