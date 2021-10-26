@@ -7,14 +7,6 @@
 
 #include "lib/sol2/sol.hpp"
 
-#if 0
-#include "System/Log/ILog.h"
-//			LOG("%s, %f, %p, %d, %d", attr.name.c_str(), *iter, mappedBuf, outValSize, bytesWritten);
-#endif
-#if 0
-#include "System/TimeProfiler.h"
-//			SCOPED_TIMER("LuaVAOImpl::UploadImpl::Resize");
-#endif
 #include "System/SafeUtil.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/VAO.h"

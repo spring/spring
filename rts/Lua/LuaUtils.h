@@ -402,48 +402,73 @@ static inline LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, CSolidOb
 	return (const_cast<LocalModelPiece*>(ParseObjectConstLocalModelPiece(L, obj, pieceArg)));
 }
 
-template<typename TObj>
-const inline TObj* LuaUtils::IdToObject(int id, const char* func)
-{
-	if      constexpr (std::is_same<TObj, CUnit>::value) {
-		return unitHandler.GetUnit(id);;
-	}
-	else if constexpr (std::is_same<TObj, CFeature>::value) {
-		return featureHandler.GetFeature(id);
-	}
-	else if constexpr (std::is_same<TObj, UnitDef>::value) {
-		return unitDefHandler->GetUnitDefByID(id);
-	}
-	else if constexpr (std::is_same<TObj, FeatureDef>::value) {
-		return featureDefHandler->GetFeatureDefByID(id);
-	}
 
-	assert(false);
+template<>
+const inline CUnit* LuaUtils::IdToObject(int id, const char* func)
+{
+	return unitHandler.GetUnit(id);
 }
 
-template<typename TObj>
-const inline TObj* LuaUtils::SolIdToObject(int id, const char* func)
+template<>
+const inline CFeature* LuaUtils::IdToObject(int id, const char* func)
 {
-	const TObj* obj = IdToObject<TObj>(id, func);
+	return featureHandler.GetFeature(id);
+}
 
-	if (obj == nullptr) {
-		if      constexpr (std::is_same<TObj, CUnit>::value) {
-			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitID", id);
-		}
-		else if constexpr (std::is_same<TObj, CFeature>::value) {
-			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureID", id);
-		}
-		else if constexpr (std::is_same<TObj, UnitDef>::value) {
-			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitDefID", id);
-		}
-		else if constexpr (std::is_same<TObj, FeatureDef>::value) {
-			SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureDefID", id);
-		}
-	}
+template<>
+const inline UnitDef* LuaUtils::IdToObject(int id, const char* func)
+{
+	return unitDefHandler->GetUnitDefByID(id);
+}
+
+template<>
+const inline FeatureDef* LuaUtils::IdToObject(int id, const char* func)
+{
+	return featureDefHandler->GetFeatureDefByID(id);
+}
+
+template<>
+const inline CUnit* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const CUnit* obj = IdToObject<CUnit>(id, func);
+
+	if (obj == nullptr)
+		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitID", id);
 
 	return obj;
+}
 
-	assert(false);
+template<>
+const inline CFeature* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const CFeature* obj = IdToObject<CFeature>(id, func);
+
+	if (obj == nullptr)
+		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureID", id);
+
+	return obj;
+}
+
+template<>
+const inline UnitDef* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const UnitDef* obj = IdToObject<UnitDef>(id, func);
+
+	if (obj == nullptr)
+		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "UnitDefID", id);
+
+	return obj;
+}
+
+template<>
+const inline FeatureDef* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const FeatureDef* obj = IdToObject<FeatureDef>(id, func);
+
+	if (obj == nullptr)
+		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureDefID", id);
+
+	return obj;
 }
 
 #endif // LUA_UTILS_H
