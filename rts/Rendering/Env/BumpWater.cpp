@@ -435,6 +435,12 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", waterRendering->perlinLacunarity);
 		GLSLDefineConstf1(definitions, "PerlinAmp",        waterRendering->perlinAmplitude);
 		GLSLDefineConstf1(definitions, "WindSpeed",        waterRendering->windSpeed);
+		GLSLDefineConstf1(definitions, "WaveOffsetFactor",   waterRendering->waveOffsetFactor);
+		GLSLDefineConstf1(definitions, "WaveLength",         waterRendering->waveLength);
+		GLSLDefineConstf1(definitions, "WaveFoamDistortion", waterRendering->waveFoamDistortion);
+		GLSLDefineConstf1(definitions, "WaveFoamIntensity",  waterRendering->waveFoamIntensity);
+		GLSLDefineConstf1(definitions, "CausticsResolution", waterRendering->causticsResolution);
+		GLSLDefineConstf1(definitions, "CausticsStrength",   waterRendering->causticsStrength);
 		GLSLDefineConstf1(definitions, "shadowDensity",  sunLighting->groundShadowDensity);
 	}
 
@@ -628,6 +634,12 @@ void CBumpWater::SetupUniforms(string& definitions)
 	definitions += "uniform float PerlinLacunarity;\n";
 	definitions += "uniform float PerlinAmp;\n";
 	definitions += "uniform float WindSpeed;\n";
+	definitions += "uniform float WaveOffsetFactor;\n";
+	definitions += "uniform float WaveLength;\n";
+	definitions += "uniform float WaveFoamDistortion;\n";
+	definitions += "uniform float WaveFoamIntensity;\n";
+	definitions += "uniform float CausticsResolution;\n";
+	definitions += "uniform float CausticsStrength;\n";
 	definitions += "uniform float shadowDensity;\n";
 }
 
@@ -652,7 +664,13 @@ void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
 	uniforms[16] = glGetUniformLocation( shader->GetObjID(), "PerlinLacunarity" );
 	uniforms[17] = glGetUniformLocation( shader->GetObjID(), "PerlinAmp" );
 	uniforms[18] = glGetUniformLocation( shader->GetObjID(), "WindSpeed" );
-	uniforms[19] = glGetUniformLocation( shader->GetObjID(), "shadowDensity" );
+	uniforms[19] = glGetUniformLocation( shader->GetObjID(), "waveOffsetFactor" );
+	uniforms[20] = glGetUniformLocation( shader->GetObjID(), "WaveLength" );
+	uniforms[21] = glGetUniformLocation( shader->GetObjID(), "WaveFoamDistortion" );
+	uniforms[22] = glGetUniformLocation( shader->GetObjID(), "WaveFoamIntensity" );
+	uniforms[23] = glGetUniformLocation( shader->GetObjID(), "CausticsResolution" );
+	uniforms[24] = glGetUniformLocation( shader->GetObjID(), "CausticsStrength" );
+	uniforms[25] = glGetUniformLocation( shader->GetObjID(), "shadowDensity" );
 }
 
 
@@ -1047,7 +1065,13 @@ void CBumpWater::SetUniforms()
 	glUniform1f( uniforms[16], waterRendering->perlinLacunarity);
 	glUniform1f( uniforms[17], waterRendering->perlinAmplitude);
 	glUniform1f( uniforms[18], waterRendering->windSpeed);
-	glUniform1f( uniforms[19], sunLighting->groundShadowDensity);
+	glUniform1f( uniforms[19], waterRendering->waveOffsetFactor);
+	glUniform1f( uniforms[20], waterRendering->waveLength);
+	glUniform1f( uniforms[21], waterRendering->waveFoamDistortion);
+	glUniform1f( uniforms[22], waterRendering->waveFoamIntensity);
+	glUniform1f( uniforms[23], waterRendering->causticsResolution);
+	glUniform1f( uniforms[24], waterRendering->causticsStrength);
+	glUniform1f( uniforms[25], sunLighting->groundShadowDensity);
 }
 
 

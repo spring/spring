@@ -10,7 +10,6 @@
 
 #define CausticDepth 0.5
 #define CausticRange 0.45
-#define WavesLength  0.15
 
 //////////////////////////////////////////////////
 // Uniforms + Varyings
@@ -57,7 +56,7 @@ vec2 reftexcoord = screenPos * ScreenInverse;
 //////////////////////////////////////////////////
 // shorewaves functions
 #ifdef opt_shorewaves
-const float InvWavesLength = 1.0 / WavesLength;
+const float InvWavesLength = 1.0 / WaveLength;
 
 float smoothlimit(const float x, const float edge) {
 	float limitcurv = edge - (mod(x,edge) * edge) / (1.0 - edge);
@@ -186,15 +185,15 @@ vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdep
 		// no shorewaves/foam under terrain (is 0.0 underground, 1.0 else)
 		float underground = 1.0 - step(1.0, invwaterdepth);
 
-		vec3 wavefoam = texture2D(foam, gl_TexCoord[3].st).rgb;
-		wavefoam += texture2D(foam, gl_TexCoord[3].pq).rgb;
-		wavefoam *= 0.5;
+		vec3 wavefoam = texture2D(foam, gl_TexCoord[3].st + octave.xy * WaveFoamDistortion).rgb;
+		wavefoam += texture2D(foam, gl_TexCoord[3].pq + octave.xy * WaveFoamDistortion).rgb;
+		wavefoam *= WaveFoamIntensity;
 
 		// shorewaves
 		vec4 waverands = texture2D(waverand, gl_TexCoord[4].pq);
 
 		vec4 fi = vec4(0.25, 0.50, 0.75, 1.00);
-		vec4 f = fract(fi + frame * 50.0);
+		vec4 f = fract(fi + frame * 50.0 + (gl_TexCoord[1].x + gl_TexCoord[1].y) * WaveOffsetFactor);
 		f = f * 1.4 - vec4(coastdist);
 		f = vec4(1.0) - f * InvWavesLength;
 		f = clamp(f, 0.0, 1.0);
@@ -300,13 +299,13 @@ void main()
 
   // CAUSTICS
     if (waterdepth > 0.0) {
-      vec3 caust = texture2D(caustic, gl_TexCoord[0].pq * 75.0).rgb;
+      vec3 caust = texture2D(caustic, gl_TexCoord[0].pq * CausticsResolution).rgb;
   #ifdef opt_refraction
       float caustBlend = smoothstep(CausticRange, 0.0, abs(waterdepth - CausticDepth));
-      gl_FragColor.rgb += caust * caustBlend * 0.08;
+      gl_FragColor.rgb += caust * caustBlend * CausticsStrength;
   #else
       gl_FragColor.a *= min(waterdepth * 4.0, 1.0);
-      gl_FragColor.rgb += caust * (1.0 - waterdepth) * 0.6;
+      gl_FragColor.rgb += caust * (1.0 - waterdepth) * 7.5 * CausticsStrength;
   #endif
     }
 

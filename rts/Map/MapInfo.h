@@ -157,6 +157,12 @@ public:
 		float  perlinLacunarity;
 		float  perlinAmplitude;
 		float  windSpeed;
+		float  waveOffsetFactor;
+		float  waveLength;
+		float  waveFoamDistortion;
+		float  waveFoamIntensity;
+		float  causticsResolution;
+		float  causticsStrength;
 		bool   shoreWaves;
 		bool   forceRendering;    ///< if false the renderers will render it only if currentMinMapHeight<0
 		bool   hasWaterPlane;     ///< true if "MAP\WATER\WaterPlaneColor" is set

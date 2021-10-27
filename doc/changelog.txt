@@ -6,7 +6,14 @@ Spring changelog
 
 Lua:
  - allow empty argument for Spring.GetKeyBindings to return all keybindings
-
+Maps:
+ - New bumpwater params, most of these were just hard-coded values:
+    - waveOffsetFactor    (0.0)
+		- waveLength          (0.15)
+		- waveFoamDistortion  (0.05)
+		- waveFoamIntensity   (0.5)
+		- causticsResolution  (75.0)
+		- causticsStrength    (0.08)
 
 -- 105.0 --------------------------------------------------------
 Sim:

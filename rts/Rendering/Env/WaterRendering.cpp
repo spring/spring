@@ -44,6 +44,12 @@ void CWaterRendering::Init() {
 	perlinLacunarity = water.perlinLacunarity;
 	perlinAmplitude = water.perlinAmplitude;
 	windSpeed = water.windSpeed;
+	waveOffsetFactor = water.waveOffsetFactor;
+	waveLength = water.waveLength;
+	waveFoamDistortion = water.waveFoamDistortion;
+	waveFoamIntensity = water.waveFoamIntensity;
+	causticsResolution = water.causticsResolution;
+	causticsStrength = water.causticsStrength;
 	shoreWaves = water.shoreWaves;
 	forceRendering = water.forceRendering;
 	hasWaterPlane = water.hasWaterPlane;

@@ -237,6 +237,13 @@ void CMapInfo::ReadWater()
 	water.perlinAmplitude  = wt.GetFloat("perlinAmplitude",  0.9f);
 	water.windSpeed        = wt.GetFloat("windSpeed", 1.0f);
 
+	water.waveOffsetFactor   = wt.GetFloat("waveOffsetFactor", 0.0f);
+	water.waveLength         = wt.GetFloat("waveLength", 0.15f);
+	water.waveFoamDistortion = wt.GetFloat("waveFoamDistortion", 0.05f);
+	water.waveFoamIntensity  = wt.GetFloat("waveFoamIntensity", 0.5f);
+	water.causticsResolution = wt.GetFloat("causticsResolution", 75.0f);
+	water.causticsStrength   = wt.GetFloat("causticsStrength", 0.08f);
+
 	water.texture       = wt.GetString("texture",       "");
 	water.foamTexture   = wt.GetString("foamTexture",   "");
 	water.normalTexture = wt.GetString("normalTexture", "");

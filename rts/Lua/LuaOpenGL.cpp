@@ -5457,6 +5457,30 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 			lua_pushnumber(L, waterRendering->windSpeed);
 			return 1;
 		} break;
+		case hashString("waveOffsetFactor"): {
+			lua_pushnumber(L, waterRendering->waveOffsetFactor);
+			return 1;
+		} break;
+		case hashString("waveLength"): {
+			lua_pushnumber(L, waterRendering->waveLength);
+			return 1;
+		} break;
+		case hashString("waveFoamDistortion"): {
+			lua_pushnumber(L, waterRendering->waveFoamDistortion);
+			return 1;
+		} break;
+		case hashString("waveFoamIntensity"): {
+			lua_pushnumber(L, waterRendering->waveFoamIntensity);
+			return 1;
+		} break;
+		case hashString("causticsResolution"): {
+			lua_pushnumber(L, waterRendering->causticsResolution);
+			return 1;
+		} break;
+		case hashString("causticsStrength"): {
+			lua_pushnumber(L, waterRendering->causticsStrength);
+			return 1;
+		} break;
 		case hashString("numTiles"): {
 			lua_pushnumber(L, waterRendering->numTiles);
 			return 1;

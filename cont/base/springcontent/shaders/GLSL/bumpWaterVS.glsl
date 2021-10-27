@@ -10,32 +10,39 @@
 
 //////////////////////////////////////////////////
 // runtime defined constants are:
-// #define SurfaceColor     vec4
-// #define DiffuseColor     vec3
-// #define PlaneColor       vec4  (unused)
-// #define AmbientFactor    float
-// #define DiffuseFactor    float   (note: it is the map defined value multipled with 15x!)
-// #define SpecularColor    vec3
-// #define SpecularPower    float
-// #define SpecularFactor   float
-// #define PerlinStartFreq  float
-// #define PerlinFreq       float
-// #define PerlinAmp        float
-// #define Speed            float
-// #define FresnelMin       float
-// #define FresnelMax       float
-// #define FresnelPower     float
-// #define ScreenInverse    vec2
-// #define ViewPos          vec2
-// #define MapMid           vec3
-// #define SunDir           vec3
-// #define ReflDistortion   float
-// #define BlurBase         vec2
-// #define BlurExponent     float
-// #define PerlinStartFreq  float
-// #define PerlinLacunarity float
-// #define PerlinAmp        float
-// #define WindSpeed        float
+// #define SurfaceColor       vec4
+// #define DiffuseColor       vec3
+// #define PlaneColor         vec4  (unused)
+// #define AmbientFactor      float
+// #define DiffuseFactor      float   (note: it is the map defined value multipled with 15x!)
+// #define SpecularColor      vec3
+// #define SpecularPower      float
+// #define SpecularFactor     float
+// #define PerlinStartFreq    float
+// #define PerlinFreq         float
+// #define PerlinAmp          float
+// #define Speed              float
+// #define FresnelMin         float
+// #define FresnelMax         float
+// #define FresnelPower       float
+// #define ScreenInverse      vec2
+// #define ViewPos            vec2
+// #define MapMid             vec3
+// #define SunDir             vec3
+// #define ReflDistortion     float
+// #define BlurBase           vec2
+// #define BlurExponent       float
+// #define PerlinStartFreq    float
+// #define PerlinLacunarity   float
+// #define PerlinAmp          float
+// #define WindSpeed          float
+// #define WaveOffsetFactor   float
+// #define WaveLength         float
+// #define WaveFoamDistortion float
+// #define WaveFoamIntensity  float
+// #define CausticsResolution float
+// #define CausticsStrength   float
+
 // #define TexGenPlane      vec4
 // #define ShadingPlane     vec4
 

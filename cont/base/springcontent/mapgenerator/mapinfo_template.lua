@@ -190,7 +190,15 @@ local mapinfo = {
 		perlinStartFreq  =  8.0,
 		perlinLacunarity = 3.0,
 		perlinAmplitude  =  0.9,
-		windSpeed = 1.0, --// does nothing yet
+		windSpeed = 1.0,
+
+		waveOffsetFactor = 0.0;
+		waveLength = 0.15;
+		waveFoamDistortion = 0.05;
+		waveFoamIntensity = 0.5;
+
+		causticsResolution = 75.0;
+		causticsStrength = 0.08;
 
 		shoreWaves = true,
 		forceRendering = false,

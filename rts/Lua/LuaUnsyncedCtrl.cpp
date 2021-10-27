@@ -1208,6 +1208,30 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 						waterRendering->windSpeed = value;
 					} break;
 
+					case hashString("waveOffsetFactor"): {
+						waterRendering->waveOffsetFactor = value;
+					} break;
+
+					case hashString("waveLength"): {
+						waterRendering->waveLength = value;
+					} break;
+
+					case hashString("waveFoamDistortion"): {
+						waterRendering->waveFoamDistortion = value;
+					} break;
+
+					case hashString("waveFoamIntensity"): {
+						waterRendering->waveFoamIntensity = value;
+					} break;
+
+					case hashString("causticsResolution"): {
+						waterRendering->causticsResolution = value;
+					} break;
+
+					case hashString("causticsStrength"): {
+						waterRendering->causticsStrength = value;
+					} break;
+
 					case hashString("numTiles"): {
 						waterRendering->numTiles = (unsigned char)value;
 					} break;
