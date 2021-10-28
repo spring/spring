@@ -41,7 +41,7 @@ void UniformConstants::Init()
 		return;
 	}
 
-	umbSBT = IStreamBuffer<UniformMatricesBuffer>::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformMatricesBuffer", IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
+	umbSBT = IStreamBuffer<UniformMatricesBuffer>::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformMatricesBuffer");
 	upbSBT = IStreamBuffer<UniformParamsBuffer  >::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformParamsBuffer"  , IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
 
 	initialized = true;
@@ -52,9 +52,8 @@ void UniformConstants::Kill()
 	if (!Supported() || !initialized)
 		return;
 
-	//unbind the whole ring buffer range
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, 0, umbSBT->GetByteSize());
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, 0, upbSBT->GetByteSize());
+	umbSBT->UnbindBufferRange(UBO_MATRIX_IDX);
+	upbSBT->UnbindBufferRange(UBO_PARAMS_IDX);
 
 	umbSBT = {};
 	upbSBT = {};
@@ -209,9 +208,9 @@ void UniformConstants::UpdateMatrices()
 	if (!Supported())
 		return;
 
-	umbMap = umbSBT->Map();
-	UniformConstants::UpdateMatricesImpl(umbMap.first);
-	umbSBT->Unmap(1);
+	auto umbMap = umbSBT->Map();
+	UniformConstants::UpdateMatricesImpl(umbMap);
+	umbSBT->Unmap();
 }
 
 void UniformConstants::UpdateParams()
@@ -219,9 +218,9 @@ void UniformConstants::UpdateParams()
 	if (!Supported())
 		return;
 
-	upbMap = upbSBT->Map();
-	UniformConstants::UpdateParamsImpl(upbMap.first);
-	upbSBT->Unmap(1);
+	auto upbMap = upbSBT->Map();
+	UniformConstants::UpdateParamsImpl(upbMap);
+	upbSBT->Unmap();
 }
 
 void UniformConstants::Bind()
@@ -231,6 +230,6 @@ void UniformConstants::Bind()
 
 	assert(umbSBT->GetID() && upbSBT->GetID());
 
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbSBT->GetID(), umbMap.second, umbSBT->GetByteSize());
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbSBT->GetID(), upbMap.second, upbSBT->GetByteSize());
+	umbSBT->BindBufferRange(UBO_MATRIX_IDX);
+	upbSBT->BindBufferRange(UBO_PARAMS_IDX);
 }

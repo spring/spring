@@ -108,9 +108,6 @@ private:
 	static constexpr int UBO_MATRIX_IDX = 0;
 	static constexpr int UBO_PARAMS_IDX = 1;
 
-	std::pair<UniformMatricesBuffer*, uint32_t> umbMap;
-	std::pair<UniformParamsBuffer*  , uint32_t> upbMap;
-
 	std::unique_ptr<IStreamBuffer<UniformMatricesBuffer>> umbSBT;
 	std::unique_ptr<IStreamBuffer<UniformParamsBuffer  >> upbSBT;
 

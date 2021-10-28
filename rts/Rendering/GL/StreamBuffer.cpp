@@ -31,9 +31,8 @@ void IStreamBufferConcept::PutBufferLocks()
 	lockList.clear();
 }
 
-void IStreamBufferConcept::LockBuffer(GLsync& syncObj)
+void IStreamBufferConcept::QueueLockBuffer(GLsync& syncObj) const
 {
-
 	lockList.emplace_back(&syncObj);
 }
 
@@ -97,10 +96,21 @@ void  IStreamBufferConcept::Unbind(uint32_t bindTarget) const
 	glBindBuffer(bindTarget > 0 ? bindTarget : target, 0);
 }
 
+void IStreamBufferConcept::BindBufferRange(GLuint index, uint32_t bindTarget) const
+{
+	glBindBufferRange(bindTarget > 0 ? bindTarget : this->target, index, id, allocIdx * this->byteSize, this->byteSize);
+}
+
+void IStreamBufferConcept::UnbindBufferRange(GLuint index, uint32_t bindTarget) const
+{
+	glBindBufferRange(bindTarget > 0 ? bindTarget : this->target, index, 0u, allocIdx * this->byteSize, this->byteSize);
+}
+
 IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, uint32_t byteSizeRaw, const std::string& name_)
-	: target{ target_ }
-	, name{ name_ }
+	: name{ name_ }
+	, target{ target_ }
 	, id{ 0 }
+	, allocIdx{ 0 }
 {
 	byteSize = VBO::GetAlignedSize(target, byteSizeRaw);
 }
