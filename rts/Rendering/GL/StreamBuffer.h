@@ -10,7 +10,8 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <tuple>
+#include <stdexcept>
+
 
 #include "System/SpringMem.h"
 #include "System/SpringMath.h"
@@ -25,7 +26,7 @@ public:
 		SB_MAPANDSYNC    = 3,
 		SB_PERSISTENTMAP = 4,
 		SB_PINNEDMEMAMD  = 5,
-		SB_COUNT         = 6,
+		SB_AUTODETECT    = 6,
 	};
 
 	static void PutBufferLocks();
@@ -34,6 +35,8 @@ public:
 	virtual ~IStreamBufferConcept() {
 		DeleteBuffer();
 	}
+
+	uint32_t GetAlignedByteSize(uint32_t byteSizeRaw);
 
 	void Bind(uint32_t bindTarget = 0) const;
 	void Unbind(uint32_t bindTarget = 0) const;
@@ -64,7 +67,7 @@ protected:
 template<typename T>
 class IStreamBuffer : public IStreamBufferConcept {
 public:
-	static std::unique_ptr<IStreamBuffer<T>> CreateInstance(uint32_t target, uint32_t numElems, const std::string& name = "", Types type = SB_COUNT, bool resizeAble = false, bool coherent = false, uint32_t numBuffers = DEFAULT_NUM_BUFFERS);
+	static std::unique_ptr<IStreamBuffer<T>> CreateInstance(uint32_t target, uint32_t numElems, const std::string& name = "", Types type = SB_AUTODETECT, bool resizeAble = false, bool coherent = false, uint32_t numBuffers = DEFAULT_NUM_BUFFERS);
 public:
 	IStreamBuffer(uint32_t target_, uint32_t numElems, const std::string& name_)
 		: IStreamBufferConcept(target_, numElems * sizeof(T), name_)
@@ -72,6 +75,7 @@ public:
 
 	virtual T* Map(const T* clientPtr = nullptr) = 0;
 	virtual void Unmap(uint32_t updatedElems = 1) = 0;
+	virtual void Resize(uint32_t numElems) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -88,7 +92,7 @@ public:
 		this->CreateBuffer(this->byteSize, GL_STREAM_DRAW);
 	}
 	~BufferDataImpl() override {
-		if (!clientMem)
+		if (!clientMem && buffer)
 			spring::FreeAlignedMemory(buffer);
 	}
 
@@ -113,6 +117,15 @@ public:
 		glBufferData(this->target, updatedElems * sizeof(T), buffer, GL_STREAM_DRAW);
 		this->Unbind();
 	}
+
+	void Resize(uint32_t numElems) override {
+		this->byteSize = this->GetAlignedByteSize(numElems * sizeof(T));;
+		this->CreateBuffer(this->byteSize, GL_STREAM_DRAW);
+		if (!clientMem && buffer != nullptr) {
+			spring::FreeAlignedMemory(buffer);
+			buffer = nullptr;
+		}
+	}
 private:
 	bool clientMem;
 	T* buffer;
@@ -127,12 +140,10 @@ public:
 		, clientMem{ false }
 		, buffer{ nullptr }
 	{
-		static_cast<T*>(spring::AllocateAlignedMemory(this->byteSize, 256));
-
 		this->CreateBuffer(this->byteSize, GL_STREAM_DRAW);
 	}
 	~BufferSubDataImpl() override {
-		if (!clientMem)
+		if (!clientMem && buffer)
 			spring::FreeAlignedMemory(buffer);
 	}
 
@@ -156,6 +167,15 @@ public:
 		this->Bind();
 		glBufferSubData(this->target, 0, updatedElems * sizeof(T), buffer);
 		this->Unbind();
+	}
+
+	void Resize(uint32_t numElems) override {
+		this->byteSize = this->GetAlignedByteSize(numElems * sizeof(T));;
+		this->CreateBuffer(this->byteSize, GL_STREAM_DRAW);
+		if (!clientMem && buffer != nullptr) {
+			spring::FreeAlignedMemory(buffer);
+			buffer = nullptr;
+		}
 	}
 private:
 	bool clientMem;
@@ -186,6 +206,11 @@ public:
 		glFlushMappedBufferRange(this->target, 0, updatedElems * sizeof(T));
 		glUnmapBuffer(this->target);
 		this->Unbind();
+	}
+
+	void Resize(uint32_t numElems) override {
+		this->byteSize = this->GetAlignedByteSize(numElems * sizeof(T));;
+		this->CreateBuffer(this->byteSize, GL_STREAM_DRAW);
 	}
 private:
 	uint32_t mapUnsyncedBit;
@@ -232,6 +257,10 @@ public:
 		this->Unbind();
 
 		this->QueueLockBuffer(fences[this->allocIdx]);
+	}
+
+	void Resize(uint32_t numElems) override {
+		throw std::runtime_error("Immutable GL buffers cannot be resized");
 	}
 private:
 	std::vector<GLsync> fences;
@@ -289,6 +318,10 @@ public:
 
 		this->QueueLockBuffer(fences[this->allocIdx]);
 	}
+
+	void Resize(uint32_t numElems) override {
+		throw std::runtime_error("Immutable GL buffers cannot be resized");
+	}
 private:
 	const bool coherent;
 	T* ptrBase;
@@ -342,6 +375,10 @@ public:
 		assert(updatedElems * sizeof(T) <= this->byteSize);
 
 		this->QueueLockBuffer(fences[this->allocIdx]);
+	}
+
+	void Resize(uint32_t numElems) override {
+		throw std::runtime_error("Immutable GL buffers cannot be resized");
 	}
 private:
 	T* ptrBase;

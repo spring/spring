@@ -4,11 +4,12 @@
 #include <cstdint>
 #include <vector>
 #include <functional>
+#include <memory>
 
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VBO.h"
+#include "Rendering/GL/StreamBuffer.h"
 
 
 class CUnit;
@@ -25,10 +26,7 @@ public:
 		static MatrixUploader instance;
 		return instance;
 	};
-	static bool Supported() {
-		static bool supported = enabled && VBO::IsSupported(GL_SHADER_STORAGE_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
-		return supported;
-	}
+	static bool Supported();
 public:
 	void Init();
 	void Kill();
@@ -57,14 +55,14 @@ private:
 	std::size_t GetElemOffsetImpl(const CProjectile* p) const;
 private:
 	void KillVBO();
-	void InitVBO(const uint32_t newElemCount);
+	void InitVBO();
 	uint32_t GetMatrixElemCount() const;
 private:
 	static constexpr uint32_t MATRIX_SSBO_BINDING_IDX = 0;
 	static constexpr uint32_t elemCount0 = 1u << 13;
 	static constexpr uint32_t elemIncreaseBy = 1u << 12;
 private:
-	VBO matrixSSBO;
+	std::unique_ptr<IStreamBuffer<CMatrix44f>> matrixSSBO;
 };
 
 #define matrixUploader MatrixUploader::GetInstance()

@@ -58,7 +58,8 @@ void IStreamBufferConcept::WaitBuffer(GLsync& syncObj) const
 
 void IStreamBufferConcept::CreateBuffer(uint32_t byteBufferSize, uint32_t newUsage)
 {
-	glGenBuffers(1, &id);
+	if (id == 0)
+		glGenBuffers(1, &id);
 
 	Bind();
 	glBufferData(target, byteBufferSize, nullptr, newUsage);
@@ -84,6 +85,11 @@ void IStreamBufferConcept::DeleteBuffer()
 		glDeleteBuffers(1, &id);
 
 	id = 0;
+}
+
+uint32_t IStreamBufferConcept::GetAlignedByteSize(uint32_t byteSizeRaw)
+{
+	return VBO::GetAlignedSize(target, byteSizeRaw);
 }
 
 void IStreamBufferConcept::Bind(uint32_t bindTarget) const
@@ -112,5 +118,5 @@ IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, uint32_t byteSizeRa
 	, id{ 0 }
 	, allocIdx{ 0 }
 {
-	byteSize = VBO::GetAlignedSize(target, byteSizeRaw);
+	byteSize = GetAlignedByteSize(byteSizeRaw);
 }

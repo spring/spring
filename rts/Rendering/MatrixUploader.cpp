@@ -20,6 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Rendering/GL/VBO.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/MatricesMemStorage.h"
 #include "Rendering/Units/UnitDrawer.h"
@@ -27,14 +28,16 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GlobalUnsynced.h"
 
-void MatrixUploader::InitVBO(const uint32_t newElemCount)
+void MatrixUploader::InitVBO()
 {
-	matrixSSBO = VBO(GL_SHADER_STORAGE_BUFFER, false, false);
-	matrixSSBO.Bind(GL_SHADER_STORAGE_BUFFER);
-	matrixSSBO.New(newElemCount * sizeof(CMatrix44f), GL_STREAM_DRAW);
-	matrixSSBO.Unbind();
+	matrixSSBO = IStreamBuffer<CMatrix44f>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, "MatricesSSBO", IStreamBufferConcept::Types::SB_AUTODETECT, true);
+	matrixSSBO->BindBufferRange(MATRIX_SSBO_BINDING_IDX);
+}
 
-	matrixSSBO.BindBufferRange(GL_SHADER_STORAGE_BUFFER, MATRIX_SSBO_BINDING_IDX, 0, matrixSSBO.GetSize());
+bool MatrixUploader::Supported()
+{
+	static bool supported = enabled && VBO::IsSupported(GL_SHADER_STORAGE_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
+	return supported;
 }
 
 void MatrixUploader::Init()
@@ -42,19 +45,13 @@ void MatrixUploader::Init()
 	if (!MatrixUploader::Supported())
 		return;
 
-	InitVBO(elemCount0);
+	InitVBO();
 }
 
 void MatrixUploader::KillVBO()
 {
-	if (matrixSSBO.GetIdRaw() > 0u) {
-		if (matrixSSBO.bound)
-			matrixSSBO.Unbind();
-
-		matrixSSBO.UnbindBufferRange(GL_SHADER_STORAGE_BUFFER, MATRIX_SSBO_BINDING_IDX, 0, matrixSSBO.GetSize());
-	}
-
-	matrixSSBO = {};
+	matrixSSBO->UnbindBufferRange(MATRIX_SSBO_BINDING_IDX);
+	matrixSSBO = nullptr;
 }
 
 void MatrixUploader::Kill()
@@ -67,7 +64,7 @@ void MatrixUploader::Kill()
 
 uint32_t MatrixUploader::GetMatrixElemCount() const
 {
-	return matrixSSBO.GetSize() / sizeof(CMatrix44f);
+	return matrixSSBO->GetByteSize() / sizeof(CMatrix44f);
 }
 
 void MatrixUploader::Update()
@@ -77,29 +74,26 @@ void MatrixUploader::Update()
 
 	SCOPED_TIMER("MatrixUploader::Update");
 
+	matrixSSBO->UnbindBufferRange(MATRIX_SSBO_BINDING_IDX);
+
 	//resize
 	const uint32_t matrixElemCount = GetMatrixElemCount();
 	const uint32_t matricesMemStorageCount = matricesMemStorage.GetSize();
 	if (matricesMemStorageCount > matrixElemCount) {
 		const uint32_t newElemCount = AlignUp(matricesMemStorageCount, elemIncreaseBy);
 		LOG_L(L_INFO, "MatrixUploader::%s sizing matrixSSBO %s. New elements count = %u, matrixElemCount = %u, matricesMemStorageCount = %u", __func__, "up", newElemCount, matrixElemCount, matricesMemStorageCount);
-		matrixSSBO.UnbindBufferRange(MATRIX_SSBO_BINDING_IDX);
-		matrixSSBO.Bind();
-		matrixSSBO.Resize(newElemCount * sizeof(CMatrix44f), GL_STREAM_DRAW);
-		matrixSSBO.Unbind();
-		matrixSSBO.BindBufferRange(MATRIX_SSBO_BINDING_IDX);
+		matrixSSBO->Resize(newElemCount);
 	}
 
 	//update on the GPU
-	matrixSSBO.Bind();
-#if 0 //unexpectedly expensive on idle run (NVidia & Windows). Needs triple buffering to perform
-	auto* buff = matrixSSBO.MapBuffer(matricesMemStorage.GetData(), 0, GL_WRITE_ONLY); //matrices.size() always has the correct size no matter neededElemByteOffset
-	memcpy(buff, matricesMemStorage.GetData().data(), matricesMemStorage.GetSize() * sizeof(CMatrix44f));
-	matrixSSBO.UnmapBuffer();
-#else
-	matrixSSBO.SetBufferSubData(matricesMemStorage.GetData());
-#endif
-	matrixSSBO.Unbind();
+	auto* clientPtr = matricesMemStorage.GetData().data();
+	auto* mappedPtr = matrixSSBO->Map(clientPtr);
+
+	if (clientPtr != mappedPtr)
+		memcpy(mappedPtr, clientPtr, matricesMemStorage.GetSize() * sizeof(CMatrix44f));
+
+	matrixSSBO->Unmap(matricesMemStorage.GetSize());
+	matrixSSBO->BindBufferRange(MATRIX_SSBO_BINDING_IDX);
 }
 
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const S3DModel* model) const

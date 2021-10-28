@@ -55,8 +55,8 @@ void UniformConstants::Kill()
 	umbSBT->UnbindBufferRange(UBO_MATRIX_IDX);
 	upbSBT->UnbindBufferRange(UBO_PARAMS_IDX);
 
-	umbSBT = {};
-	upbSBT = {};
+	umbSBT = nullptr;
+	upbSBT = nullptr;
 
 	initialized = false;
 }
