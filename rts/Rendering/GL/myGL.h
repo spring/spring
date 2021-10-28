@@ -8,7 +8,7 @@
 #define NOMINMAX
 #endif
 
-
+#include <array>
 
 #if       defined(HEADLESS)
 	#define WINGDIAPI //working around https://github.com/beyond-all-reason/spring/issues/27
@@ -138,17 +138,17 @@ struct SDrawElementsIndirectCommand {
 
 struct SInstanceData {
 	SInstanceData() = default;
-	SInstanceData(uint32_t ssboOffset_, uint32_t teamIndex_, uint32_t drawID_ = 0u, uint32_t aux_ = 0u)
+	SInstanceData(uint32_t ssboOffset_, uint8_t teamIndex_, uint8_t drawFlags, uint32_t aux0_, uint32_t aux1_)
 		: ssboOffset{ ssboOffset_ }
-		, teamIndex{ teamIndex_ }
-		, drawID{ drawID_ }
-		, aux{ aux_ }
+		, info { teamIndex_, drawFlags, 0, 0 }
+		, aux0 { aux0_ }
+		, aux1 { aux1_ }
 	{}
 
 	uint32_t ssboOffset;
-	uint32_t teamIndex;
-	uint32_t drawID;
-	uint32_t aux;
+	std::array<uint8_t, 4> info;
+	uint32_t aux0;
+	uint32_t aux1;
 };
 
 #endif // _MY_GL_H

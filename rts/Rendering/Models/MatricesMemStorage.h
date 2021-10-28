@@ -66,7 +66,12 @@ public:
 	}
 
 	bool Valid() const { return firstElem != MatricesMemStorage::INVALID_INDEX;	}
-	std::size_t GetOffset() const { assert(Valid()); return firstElem; }
+	std::size_t GetOffset(bool assertInvalid = true) const {
+		if (assertInvalid)
+			assert(Valid());
+
+		return firstElem;
+	}
 
 	ScopedMatricesMemAlloc& operator= (const ScopedMatricesMemAlloc&) = delete;
 	ScopedMatricesMemAlloc& operator= (ScopedMatricesMemAlloc&& smma) noexcept {

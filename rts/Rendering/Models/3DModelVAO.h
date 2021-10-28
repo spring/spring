@@ -45,18 +45,18 @@ public:
 	void Bind() const;
 	void Unbind() const;
 
-	bool AddToSubmission(const S3DModel* model, int teamID, uint32_t aux = ~0u);
+	bool AddToSubmission(const S3DModel* model, uint8_t teamID, uint8_t drawFlags, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
 
-	bool AddToSubmission(const CUnit* unit, uint32_t aux = ~0u);
-	bool AddToSubmission(const CFeature* feature, uint32_t aux = ~0u);
+	bool AddToSubmission(const CUnit* unit, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
+	bool AddToSubmission(const CFeature* feature, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
 
-	bool AddToSubmission(const UnitDef* unitDef, int teamID, uint32_t aux = ~0u);
+	bool AddToSubmission(const UnitDef* unitDef, uint8_t teamID, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
 	void Submit(GLenum mode = GL_TRIANGLES, bool bindUnbind = false);
 
-	bool SubmitImmediately(const S3DModel* model, int teamID, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
-	bool SubmitImmediately(const CUnit* unit, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
-	bool SubmitImmediately(const CFeature* feature, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
-	bool SubmitImmediately(const UnitDef* unitDef, int teamID, GLenum mode = GL_TRIANGLES, uint32_t aux = ~0u, bool bindUnbind = false);
+	bool SubmitImmediately(const S3DModel* model, uint8_t teamID, uint8_t drawFlags, GLenum mode = GL_TRIANGLES, uint32_t aux0 = 0u, uint32_t aux1 = 0u, bool bindUnbind = false);
+	bool SubmitImmediately(const CUnit* unit, GLenum mode = GL_TRIANGLES, uint32_t aux0 = 0u, uint32_t aux1 = 0u, bool bindUnbind = false);
+	bool SubmitImmediately(const CFeature* feature, GLenum mode = GL_TRIANGLES, uint32_t aux0 = 0u, uint32_t aux1 = 0u, bool bindUnbind = false);
+	bool SubmitImmediately(const UnitDef* unitDef, int teamID, GLenum mode = GL_TRIANGLES, uint32_t aux0 = 0u, uint32_t aux1 = 0u, bool bindUnbind = false);
 
 	const VBO* GetVertVBO() const { return &vertVBO; }
 	      VBO* GetVertVBO()       { return &vertVBO; }
@@ -68,9 +68,10 @@ private:
 		const TObj* obj,
 		uint32_t indexStart,
 		uint32_t indexCount,
-		uint32_t teamID,
-		uint32_t drawID,
-		uint32_t aux,
+		uint8_t teamID,
+		uint8_t drawFlags,
+		uint32_t aux0,
+		uint32_t aux1,
 		GLenum mode = GL_TRIANGLES,
 		bool bindUnbind = false
 	);
@@ -79,9 +80,10 @@ private:
 		const TObj* obj,
 		uint32_t indexStart,
 		uint32_t indexCount,
-		uint32_t teamID,
-		uint32_t drawID,
-		uint32_t aux
+		uint8_t teamID,
+		uint8_t drawFlags,
+		uint32_t aux0,
+		uint32_t aux1
 	);
 	void EnableAttribs(bool inst) const;
 	void DisableAttribs() const;

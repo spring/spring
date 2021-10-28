@@ -1334,7 +1334,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 			}
 
 			modelDrawerState->SetStaticModelMatrix(staticWorldMat);
-			smv.SubmitImmediately(dgb->model, dgb->team); //need to submit immediately every model because of static per-model matrix
+			smv.SubmitImmediately(dgb->model, dgb->team, DrawFlags::SO_ALPHAF_FLAG); //need to submit immediately every model because of static per-model matrix
 		}
 	}
 
@@ -1384,7 +1384,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 			}
 
 			modelDrawerState->SetStaticModelMatrix(staticWorldMat);
-			smv.SubmitImmediately(model, lgb->team); //need to submit immediately every model because of static per-model matrix
+			smv.SubmitImmediately(model, lgb->team, DrawFlags::SO_ALPHAF_FLAG); //need to submit immediately every model because of static per-model matrix
 		}
 	}
 
@@ -1434,7 +1434,7 @@ void CUnitDrawerGL4::DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& unit) 
 	SetTeamColor(unit.team, float2(IModelDrawerState::alphaValues.x, 1.0f));
 	modelDrawerState->SetStaticModelMatrix(staticWorldMat);
 
-	smv.SubmitImmediately(mdl, unit.team);
+	smv.SubmitImmediately(mdl, unit.team, DrawFlags::SO_ALPHAF_FLAG);
 }
 
 void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
@@ -1476,7 +1476,7 @@ void CUnitDrawerGL4::DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit)
 	SetTeamColor(unit.team);
 	modelDrawerState->SetStaticModelMatrix(staticWorldMat);
 
-	smv.SubmitImmediately(mdl, unit.team);
+	smv.SubmitImmediately(mdl, unit.team, DrawFlags::SO_OPAQUE_FLAG);
 }
 
 void CUnitDrawerGL4::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const

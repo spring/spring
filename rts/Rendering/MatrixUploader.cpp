@@ -109,7 +109,7 @@ std::size_t MatrixUploader::GetDefElemOffsetImpl(const S3DModel* model) const
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
-	return model->GetMatAlloc().GetOffset();
+	return model->GetMatAlloc().GetOffset(false);
 }
 
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const UnitDef* def)  const
@@ -149,7 +149,7 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CUnit* unit)  const
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
-	if (std::size_t offset = CUnitDrawer::GetMatricesMemAlloc(unit).GetOffset(); offset != MatricesMemStorage::INVALID_INDEX) {
+	if (std::size_t offset = CUnitDrawer::GetMatricesMemAlloc(unit).GetOffset(false); offset != MatricesMemStorage::INVALID_INDEX) {
 		return offset;
 	}
 
@@ -164,7 +164,7 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CFeature* feature)  const
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
-	if (std::size_t offset = CFeatureDrawer::GetMatricesMemAlloc(feature).GetOffset(); offset != MatricesMemStorage::INVALID_INDEX) {
+	if (std::size_t offset = CFeatureDrawer::GetMatricesMemAlloc(feature).GetOffset(false); offset != MatricesMemStorage::INVALID_INDEX) {
 		return offset;
 	}
 
@@ -189,7 +189,7 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CProjectile* p) const
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 	/*
-	if (std::size_t offset = p->GetMatAlloc().GetOffset(); offset != MatricesMemStorage::INVALID_INDEX) {
+	if (std::size_t offset = p->GetMatAlloc().GetOffset(false); offset != MatricesMemStorage::INVALID_INDEX) {
 		return offset;
 	}
 	*/

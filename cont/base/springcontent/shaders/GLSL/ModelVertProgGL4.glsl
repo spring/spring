@@ -8,6 +8,13 @@ layout (location = 4) in vec4 uv;
 layout (location = 5) in uint pieceIndex;
 
 layout (location = 6) in uvec4 instData;
+// u32 ssboOffset
+// u8  teamIdx
+// u8  drawFlag
+// u8  unused
+// u8  unused
+// u32 unused
+// u32 unused
 
 layout(std140, binding = 0) uniform UniformMatrixBuffer {
 	mat4 screenView;
@@ -153,7 +160,8 @@ void main(void)
 	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
 	gl_ClipDistance[2] = dot(worldPos, clipPlane2); //water clip plane
 
-	teamCol = teamColor[instData.y]; // team index
+	uint teamIndex = (instData.y & 0xff000000u) >> 24u; //M.S. Byte has teamIndex
+	teamCol = teamColor[teamIndex];
 	teamCol.a = teamColorAlpha;
 
 	uvCoord = uv;

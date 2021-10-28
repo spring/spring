@@ -30,7 +30,7 @@ public:
 	float3 dir;
 
 	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
-	int team;
+	uint8_t team;
 	int refCount;
 	int lastDrawFrame;
 };

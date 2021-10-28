@@ -68,13 +68,13 @@ private:
 	void InstanceDataFromDataCheck(int attrID, const char* func);
 
 	template<typename TObj>
-	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint32_t defTeamID, uint32_t drawID = 0u);
+	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
 
 	template<typename TObj>
-	size_t InstanceDataFromImpl(int id, int attrID, uint32_t defTeamID, const sol::optional<int>& elemOffsetOpt);
+	size_t InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt);
 
 	template<typename TObj>
-	size_t InstanceDataFromImpl(const sol::stack_table& ids, int attrID, uint32_t defTeamID, const sol::optional<int>& elemOffsetOpt);
+	size_t InstanceDataFromImpl(const sol::stack_table& ids, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt);
 
 	template<typename TIn>
 	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, int attribIdx);
