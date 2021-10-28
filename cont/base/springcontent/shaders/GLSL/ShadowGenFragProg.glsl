@@ -10,9 +10,9 @@ uniform sampler2D alphaMaskTex;
 uniform vec4 shadowParams;
 uniform vec2 alphaParams;
 
-varying mat4 shadowViewMat;
-varying mat4 shadowProjMat;
-varying vec4 vertexModelPos;
+in mat4 shadowViewMat;
+in mat4 shadowProjMat;
+in vec4 vertexModelPos;
 
 #if (SUPPORT_DEPTH_LAYOUT == 1)
 // preserve early-z performance if possible
