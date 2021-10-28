@@ -11,11 +11,13 @@ public:
 	// CEventClient interface
 	bool WantsEvent(const std::string & eventName) {
 		return
-			eventName == "RenderFeatureCreated"   ||
+			eventName == "RenderFeaturePreCreated" ||
+			eventName == "RenderFeatureCreated"    ||
 			eventName == "RenderFeatureDestroyed";
 	}
-	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureDestroyed(const CFeature* feature);
+	void RenderFeaturePreCreated(const CFeature* feature) override;
+	void RenderFeatureCreated(const CFeature* feature) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
 public:
 	CFeatureDrawerData(bool& mtModelDrawer_);
 	virtual ~CFeatureDrawerData();

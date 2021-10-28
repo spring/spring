@@ -22,12 +22,18 @@ CONFIG(float, FeatureFadeDistance)
 .description("Distance at which features will begin to fade from view.");
 
 
-void CFeatureDrawerData::RenderFeatureCreated(const CFeature* feature)
+void CFeatureDrawerData::RenderFeaturePreCreated(const CFeature* feature)
 {
 	if (feature->def->drawType != DRAWTYPE_MODEL)
 		return;
 
 	UpdateObject(feature, true);
+}
+
+//TODO remove
+void CFeatureDrawerData::RenderFeatureCreated(const CFeature* feature)
+{
+	assert(std::find(unsortedObjects.begin(), unsortedObjects.end(), feature) != unsortedObjects.end());
 }
 
 void CFeatureDrawerData::RenderFeatureDestroyed(const CFeature* feature)

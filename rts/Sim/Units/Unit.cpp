@@ -369,6 +369,8 @@ void CUnit::PostInit(const CUnit* builder)
 		commandAI->GiveCommand(Command(CMD_FIRE_STATE, 0, fireState));
 	}
 
+	eventHandler.RenderUnitPreCreated(this);
+
 	// Lua might call SetUnitHealth within UnitCreated
 	// and trigger FinishedBuilding before we get to it
 	const bool preBeingBuilt = beingBuilt;
@@ -387,6 +389,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::PostLoad()
 {
+	eventHandler.RenderUnitPreCreated(this);
 	eventHandler.RenderUnitCreated(this, isCloaked);
 }
 

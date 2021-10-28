@@ -162,6 +162,7 @@ class CEventClient
 		virtual void UnitCloaked(const CUnit* unit) {}
 		virtual void UnitDecloaked(const CUnit* unit) {}
 
+		virtual void RenderUnitPreCreated(const CUnit* unit) {}
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
 
@@ -180,6 +181,7 @@ class CEventClient
 			int projectileID) {}
 		virtual void FeatureMoved(const CFeature* feature, const float3& oldpos) {}
 
+		virtual void RenderFeaturePreCreated(const CFeature* feature) {}
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
 

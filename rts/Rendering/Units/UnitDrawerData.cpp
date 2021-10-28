@@ -480,9 +480,14 @@ void CUnitDrawerData::UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUni
 	}
 }
 
-void CUnitDrawerData::RenderUnitCreated(const CUnit* unit, int cloaked)
+void CUnitDrawerData::RenderUnitPreCreated(const CUnit* unit)
 {
 	UpdateObject(unit, true);
+}
+
+void CUnitDrawerData::RenderUnitCreated(const CUnit* unit, int cloaked)
+{
+	assert(std::find(unsortedObjects.begin(), unsortedObjects.end(), unit) != unsortedObjects.end());
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 

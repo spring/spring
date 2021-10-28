@@ -40,12 +40,14 @@ public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) override {
 		return
+			eventName == "RenderUnitPreCreated" ||
 			eventName == "RenderUnitCreated" || eventName == "RenderUnitDestroyed" ||
 			eventName == "UnitEnteredRadar"  || eventName == "UnitEnteredLos"      ||
 			eventName == "UnitLeftRadar"     || eventName == "UnitLeftLos"         ||
 			eventName == "PlayerChanged";
 	}
 
+	void RenderUnitPreCreated(const CUnit* unit) override;
 	void RenderUnitCreated(const CUnit* unit, int cloaked) override;
 	void RenderUnitDestroyed(const CUnit* unit) override;
 

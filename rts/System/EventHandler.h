@@ -71,8 +71,10 @@ class CEventHandler
 
 
 		//FIXME no events
+		void RenderUnitPreCreated(const CUnit* unit);
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
+		void RenderFeaturePreCreated(const CFeature* feature);
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
 		void RenderProjectileCreated(const CProjectile* proj);
@@ -711,6 +713,7 @@ inline void CEventHandler::DefaultCommand(const CUnit* unit, const CFeature* fea
 }
 
 
+UNIT_CALLIN_NO_PARAM(RenderUnitPreCreated)
 
 inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 {
@@ -718,6 +721,11 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 }
 
 UNIT_CALLIN_NO_PARAM(RenderUnitDestroyed)
+
+inline void CEventHandler::RenderFeaturePreCreated(const CFeature* feature)
+{
+	ITERATE_EVENTCLIENTLIST(RenderFeaturePreCreated, feature)
+}
 
 inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 {
