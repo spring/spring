@@ -33,7 +33,10 @@ void CFeatureDrawerData::RenderFeaturePreCreated(const CFeature* feature)
 //TODO remove
 void CFeatureDrawerData::RenderFeatureCreated(const CFeature* feature)
 {
-	assert(std::find(unsortedObjects.begin(), unsortedObjects.end(), feature) != unsortedObjects.end());
+	assert(
+		feature->def->drawType != DRAWTYPE_MODEL ||
+		std::find(unsortedObjects.begin(), unsortedObjects.end(), feature) != unsortedObjects.end()
+	);
 }
 
 void CFeatureDrawerData::RenderFeatureDestroyed(const CFeature* feature)
