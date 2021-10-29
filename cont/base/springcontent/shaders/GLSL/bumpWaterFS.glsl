@@ -8,6 +8,8 @@
  * GNU GPL, v2 or later.
  */
 
+#line 10011
+
 #define CausticDepth 0.5
 #define CausticRange 0.45
 
@@ -56,7 +58,7 @@ vec2 reftexcoord = screenPos * ScreenInverse;
 //////////////////////////////////////////////////
 // shorewaves functions
 #ifdef opt_shorewaves
-const float InvWavesLength = 1.0 / WaveLength;
+float InvWavesLength = 1.0 / WaveLength;
 
 float smoothlimit(const float x, const float edge) {
 	float limitcurv = edge - (mod(x,edge) * edge) / (1.0 - edge);

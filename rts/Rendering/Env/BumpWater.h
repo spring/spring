@@ -113,7 +113,7 @@ private:
 	Shader::IProgramObject* waterShader;
 	Shader::IProgramObject* blurShader;
 
-	GLuint uniforms[20]; ///< see useUniforms
+	std::array<GLuint, 26> uniforms; ///< see useUniforms
 
 	bool wasVisibleLastFrame;
 	GLuint occlusionQuery;
