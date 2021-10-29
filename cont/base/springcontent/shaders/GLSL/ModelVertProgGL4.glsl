@@ -9,10 +9,7 @@ layout (location = 5) in uint pieceIndex;
 
 layout (location = 6) in uvec4 instData;
 // u32 ssboOffset
-// u8  teamIdx
-// u8  drawFlag
-// u8  unused
-// u8  unused
+// u32 {teamIdx, drawFlag, unused, unused}
 // u32 unused
 // u32 unused
 
@@ -160,7 +157,7 @@ void main(void)
 	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
 	gl_ClipDistance[2] = dot(worldPos, clipPlane2); //water clip plane
 
-	uint teamIndex = (instData.y & 0xff000000u) >> 24u; //M.S. Byte has teamIndex
+	uint teamIndex = (instData.y & 0x000000FFu); //leftmost ubyte is teamIndex
 	teamCol = teamColor[teamIndex];
 	teamCol.a = teamColorAlpha;
 
