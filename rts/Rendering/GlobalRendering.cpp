@@ -667,7 +667,7 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportPersistentMapping &= (configHandler->GetInt("ForceDisablePersistentMapping") == 0);
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two /* && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos))*/;
 	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
