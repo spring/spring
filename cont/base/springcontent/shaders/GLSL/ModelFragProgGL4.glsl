@@ -95,7 +95,8 @@ void main(void)
 	vec4 texColor1 = texture(tex1, uvCoord.xy);
 	vec4 texColor2 = texture(tex2, uvCoord.xy);
 
-	if (AlphaDiscard(texColor2.a))
+	float alpha = teamCol.a * texColor2.a;
+	if (AlphaDiscard(alpha))
 		discard;
 
 	texColor1.rgb = mix(texColor1.rgb, teamCol.rgb, texColor1.a);
@@ -114,9 +115,9 @@ void main(void)
 	float shadowMult = mix(1.0, GetShadowMult(shadowVertexPos.xyz / shadowVertexPos.w, NdotL), shadowDensity.y);
 
 	vec3 light = sunAmbientModel.rgb + (NdotL * sunDiffuseModel.rgb);
-	
+
 	// A general rule of thumb is to set Blinn-Phong exponent between 2 and 4 times the Phong shininess exponent.
-	vec3 specular = sunSpecularModel.rgb * min(pow(HdotN, 3.0 * sunSpecularModel.a) + 0.25 * pow(HdotN, 3.0 * 3.0), 1.0);
+	vec3 specular = sunSpecularModel.rgb * min(pow(HdotN, 2.5 * sunSpecularModel.a) + 0.3 * pow(HdotN, 2.0 * 3.0), 1.0);
 	specular *= (texColor2.g * 4.0);
 
 	// no highlights if in shadow; decrease light to ambient level
@@ -128,15 +129,18 @@ void main(void)
 
 	vec3 finalColor = texColor1.rgb * light + specular;
 
+
 	#if (DEFERRED_MODE == 1)
+		vec4 diffColor = colorMult * vec4(mix(texColor1.rgb, nanoColor.rgb, nanoColor.a), alpha);
 		fragColor[GBUFFER_NORMTEX_IDX] = vec4(SNORM2NORM(worldNormal), 1.0);
-		fragColor[GBUFFER_DIFFTEX_IDX] = vec4(texColor1.rgb, 1.0);
-		fragColor[GBUFFER_SPECTEX_IDX] = vec4(texColor2.rgb, texColor2.a);
+		fragColor[GBUFFER_DIFFTEX_IDX] = diffColor;
+		fragColor[GBUFFER_SPECTEX_IDX] = vec4(texColor2.rgb, alpha);
 		fragColor[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 		fragColor[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
-		fragColor = colorMult * vec4(finalColor, texColor2.a);
-		fragColor.rgb = mix( fogColor.rgb, fragColor.rgb, fogFactor  );
-		fragColor.rgb = mix(fragColor.rgb, nanoColor.rgb, nanoColor.a);
+		fragColor.rgb = mix( fogColor.rgb, finalColor.rgb, fogFactor  );
+		fragColor.rgb = mix(fragColor.rgb,  nanoColor.rgb, nanoColor.a);
+		fragColor.a   = alpha;
+		fragColor *= colorMult;
 	#endif
 }
