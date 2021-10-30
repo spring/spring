@@ -47,6 +47,8 @@ namespace spring {
 
 	// Updated version of https://stackoverflow.com/questions/49658182/does-c-have-an-equivalent-boostnumeric-castdesttypesourcetype
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
     template<typename TIn, typename TOut>
     inline TOut SafeCast(TIn value)
     {
@@ -91,6 +93,7 @@ namespace spring {
         // limits have been checked, therefore safe to cast
         return static_cast<TOut>(value);
     }
+#pragma GCC diagnostic pop
 
 };
 

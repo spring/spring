@@ -111,7 +111,7 @@ public:
 	}
 
 	void Unmap(uint32_t updatedElems) override {
-		assert(updatedElems * sizeof(T) <= byteSize);
+		assert(updatedElems * sizeof(T) <= this->byteSize);
 
 		this->Bind();
 		glBufferData(this->target, updatedElems * sizeof(T), buffer, GL_STREAM_DRAW);
@@ -162,7 +162,7 @@ public:
 	}
 
 	void Unmap(uint32_t updatedElems) override {
-		assert(updatedElems * sizeof(T) <= byteSize);
+		assert(updatedElems * sizeof(T) <= this->byteSize);
 
 		this->Bind();
 		glBufferSubData(this->target, 0, updatedElems * sizeof(T), buffer);
@@ -201,7 +201,7 @@ public:
 	}
 
 	void Unmap(uint32_t updatedElems) override {
-		assert(updatedElems * sizeof(T) <= byteSize);
+		assert(updatedElems * sizeof(T) <= this->byteSize);
 
 		glFlushMappedBufferRange(this->target, 0, updatedElems * sizeof(T));
 		glUnmapBuffer(this->target);
@@ -250,7 +250,7 @@ public:
 	}
 
 	void Unmap(uint32_t updatedElems) override {
-		assert(updatedElems * sizeof(T) <= byteSize);
+		assert(updatedElems * sizeof(T) <= this->byteSize);
 
 		glFlushMappedBufferRange(this->target, 0, updatedElems * sizeof(T));
 		glUnmapBuffer(this->target);

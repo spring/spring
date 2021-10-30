@@ -476,7 +476,10 @@ inline void StablePosAllocator<T>::Free(size_t firstElem, size_t numElems)
 		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
 		return;
 	}
-	memset(&data[firstElem], 0, numElems * sizeof(T)); //nullify matrix just in case
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+	memset(&data[firstElem], 0, numElems * sizeof(T)); //nullify elements just in case
+#pragma GCC diagnostic pop
 	//lucky us, just remove trim the vector size
 	if (firstElem + numElems == data.size()) {
 		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
