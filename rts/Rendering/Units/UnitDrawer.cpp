@@ -753,12 +753,13 @@ void CUnitDrawerLegacy::DrawIconScreenArray(const CUnit* unit, const icon::CIcon
 	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
 	// fade icons away in high zoom in levels
-	if (!unit->isIcon)
+	if (!unit->isIcon) {
 		if (dist / unitRadiusMult < modelDrawerData->iconFadeVanish)
 			return;
 		else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && dist / unitRadiusMult < modelDrawerData->iconFadeStart)
 			// alpha range [64, 255], since icons is unrecognisable with alpha < 64
 			color[3] = 64 + 191.0f * (dist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
+	}
 
 	// calculate the vertices
 	const float offset = modelDrawerData->iconSizeBase / 2.0f * unitRadiusMult;
@@ -1450,6 +1451,7 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 {
 	const std::vector<CUnitDrawerData::TempDrawUnit>& tmpOpaqueUnits = modelDrawerData->GetTempOpaqueDrawUnits(modelType);
 	auto& smv = S3DModelVAO::GetInstance();
+	smv.Bind();
 
 	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
 
@@ -1462,6 +1464,8 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 	}
 
 	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
+
+	smv.Unbind();
 }
 
 void CUnitDrawerGL4::DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const
