@@ -32,7 +32,7 @@ bool CConsoleHistory::AddLine(const std::string& msg)
 	return AddLineRaw(message);
 }
 
-	
+
 bool CConsoleHistory::AddLineRaw(const std::string& msg)
 {
 	// do not save blank lines
@@ -42,7 +42,7 @@ bool CConsoleHistory::AddLineRaw(const std::string& msg)
 	// do not save duplicates
 	if (lines.back() == msg)
 		return false;
-	  
+
 	if (lines.size() >= MAX_LINES) {
 		if (pos != lines.begin()) {
 			lines.pop_front();
@@ -68,7 +68,7 @@ std::string CConsoleHistory::NextLine(const std::string& current)
 	} else {
 		message = current;
 	}
-	
+
 	if (pos == lines.end()) {
 		AddLineRaw(message);
 		pos = lines.end();
@@ -104,7 +104,7 @@ std::string CConsoleHistory::PrevLine(const std::string& current)
 	} else {
 		message = current;
 	}
-	
+
 	if (pos == lines.begin()) {
 		if (*pos != message) {
 			AddLineRaw(message);
