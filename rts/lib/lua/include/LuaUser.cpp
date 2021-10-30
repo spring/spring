@@ -347,10 +347,14 @@ void spring_lua_alloc_update_stats(int clearStatsFrame)
 //////////////////////////////////////////////////////////
 
 #ifdef _WIN32
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
+#endif
 static inline int sprintf64(char* dst, std::int64_t x) { return sprintf(dst, "%I64d", x); }
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
+#endif
 #else
 static inline int sprintf64(char* dst, long int x)      { return sprintf(dst, "%ld", x); }
 static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%lld", x); }
