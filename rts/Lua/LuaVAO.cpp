@@ -32,9 +32,17 @@ bool LuaVAO::PushEntries(lua_State* L)
 			sol::resolve<void(int)>(&LuaVAOImpl::AddUnitsToSubmission),
 			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddUnitsToSubmission)
 		),
+		"AddFeaturesToSubmission", sol::overload(
+			sol::resolve<void(int)>(&LuaVAOImpl::AddFeaturesToSubmission),
+			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddFeaturesToSubmission)
+		),
 		"AddUnitDefsToSubmission", sol::overload(
 			sol::resolve<void(int)>(&LuaVAOImpl::AddUnitDefsToSubmission),
 			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddUnitDefsToSubmission)
+		),
+		"AddFeatureDefsToSubmission", sol::overload(
+			sol::resolve<void(int)>(&LuaVAOImpl::AddFeatureDefsToSubmission),
+			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddFeatureDefsToSubmission)
 		),
 		"Submit", &LuaVAOImpl::Submit
 	);

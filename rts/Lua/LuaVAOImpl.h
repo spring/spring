@@ -39,15 +39,23 @@ public:
 	void ClearSubmission();
 	void AddUnitsToSubmission(int id);
 	void AddUnitsToSubmission(const sol::stack_table& ids);
+	void AddFeaturesToSubmission(int id);
+	void AddFeaturesToSubmission(const sol::stack_table& ids);
 	void AddUnitDefsToSubmission(int id);
 	void AddUnitDefsToSubmission(const sol::stack_table& ids);
+	void AddFeatureDefsToSubmission(int id);
+	void AddFeatureDefsToSubmission(const sol::stack_table& ids);
 	void Submit();
 private:
 	std::pair<GLsizei, GLsizei> DrawCheck(GLenum mode, sol::optional<GLsizei> drawCountOpt, sol::optional<int> instanceCountOpt, bool indexed);
 	void CondInitVAO();
-	void CheckDrawPrimitiveType(GLenum mode);
+	void CheckDrawPrimitiveType(GLenum mode) const;
 	void AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std::shared_ptr<LuaVBOImpl>& thisLuaVBO, GLenum reqTarget);
 private:
+	template <typename TObj>
+	void AddObjectsToSubmissionImpl(int id);
+	template <typename TObj>
+	void AddObjectsToSubmissionImpl(const sol::stack_table& ids);
 	template <typename TObj>
 	SDrawElementsIndirectCommand DrawObjectGetCmdImpl(int id);
 	template <typename TObj>

@@ -1,6 +1,7 @@
 #include "LuaVAOImpl.h"
 
 #include <algorithm>
+#include <type_traits>
 
 #include "lib/fmt/format.h"
 #include "lib/fmt/printf.h"
@@ -108,23 +109,33 @@ const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(int id)
 template<typename TObj>
 const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(const TObj* obj)
 {
-	assert(false);
-}
+	static_assert(std::is_base_of_v<CSolidObject, TObj> || std::is_base_of_v<SolidObjectDef, TObj>);
 
-template<>
-const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl<CUnit>(const CUnit* obj)
-{
-	S3DModel* model = obj->model;
+	S3DModel * model = obj->model;
 	assert(model);
 	return SIndexAndCount(model->indxStart, model->indxCount);
 }
 
-template<>
-const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl<UnitDef>(const UnitDef* obj)
+template<typename TObj>
+void LuaVAOImpl::AddObjectsToSubmissionImpl(int id)
 {
-	S3DModel* model = obj->model;
-	assert(model);
-	return SIndexAndCount(model->indxStart, model->indxCount);
+	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + 1, true); //pair<indxCount,instCount>
+	submitCmds.emplace_back(DrawObjectGetCmdImpl<TObj>(id));
+}
+
+template<typename TObj>
+void LuaVAOImpl::AddObjectsToSubmissionImpl(const sol::stack_table& ids)
+{
+	const std::size_t idsSize = ids.size(); //size() is very costly to do in the loop
+	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + idsSize, true); //pair<indxCount,instCount>
+
+	constexpr auto defaultValue = static_cast<lua_Number>(0);
+	for (std::size_t i = 0u; i < idsSize; ++i) {
+		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
+		int id = spring::SafeCast<lua_Number, int>(idLua);
+
+		submitCmds.emplace_back(DrawObjectGetCmdImpl<TObj>(id));
+	}
 }
 
 template<typename TObj>
@@ -141,7 +152,7 @@ SDrawElementsIndirectCommand LuaVAOImpl::DrawObjectGetCmdImpl(int id)
 	});
 }
 
-void LuaVAOImpl::CheckDrawPrimitiveType(GLenum mode)
+void LuaVAOImpl::CheckDrawPrimitiveType(GLenum mode) const
 {
 	switch (mode) {
 	case GL_POINTS:
@@ -329,42 +340,42 @@ void LuaVAOImpl::ClearSubmission()
 
 void LuaVAOImpl::AddUnitsToSubmission(int id)
 {
-	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() +       1, true); //pair<indxCount,instCount>
-	submitCmds.emplace_back(DrawObjectGetCmdImpl<CUnit>(id));
+	AddObjectsToSubmissionImpl<CUnit>(id);
 }
 
 void LuaVAOImpl::AddUnitsToSubmission(const sol::stack_table& ids)
 {
-	const std::size_t idsSize = ids.size(); //size() is very costly to do in the loop
-	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + idsSize, true); //pair<indxCount,instCount>
+	AddObjectsToSubmissionImpl<CUnit>(ids);
+}
 
-	constexpr auto defaultValue = static_cast<lua_Number>(0);
-	for (std::size_t i = 0u; i < idsSize; ++i) {
-		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
-		int id = spring::SafeCast<lua_Number, int>(idLua);
+void LuaVAOImpl::AddFeaturesToSubmission(int id)
+{
+	AddObjectsToSubmissionImpl<CFeature>(id);
+}
 
-		submitCmds.emplace_back(DrawObjectGetCmdImpl<CUnit>(id));
-	}
+void LuaVAOImpl::AddFeaturesToSubmission(const sol::stack_table& ids)
+{
+	AddObjectsToSubmissionImpl<CFeature>(ids);
 }
 
 void LuaVAOImpl::AddUnitDefsToSubmission(int id)
 {
-	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + 1, true); //pair<indxCount,instCount>
-	submitCmds.emplace_back(DrawObjectGetCmdImpl<UnitDef>(id));
+	AddObjectsToSubmissionImpl<UnitDef>(id);
 }
 
 void LuaVAOImpl::AddUnitDefsToSubmission(const sol::stack_table& ids)
 {
-	const std::size_t idsSize = ids.size(); //size() is very costly to do in the loop
-	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + idsSize, true); //pair<indxCount,instCount>
+	AddObjectsToSubmissionImpl<UnitDef>(ids);
+}
 
-	constexpr auto defaultValue = static_cast<lua_Number>(0);
-	for (std::size_t i = 0u; i < idsSize; ++i) {
-		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
-		int id = spring::SafeCast<lua_Number, int>(idLua);
+void LuaVAOImpl::AddFeatureDefsToSubmission(int id)
+{
+	AddObjectsToSubmissionImpl<FeatureDef>(id);
+}
 
-		submitCmds.emplace_back(DrawObjectGetCmdImpl<UnitDef>(id));
-	}
+void LuaVAOImpl::AddFeatureDefsToSubmission(const sol::stack_table& ids)
+{
+	AddObjectsToSubmissionImpl<FeatureDef>(ids);
 }
 
 void LuaVAOImpl::Submit()
