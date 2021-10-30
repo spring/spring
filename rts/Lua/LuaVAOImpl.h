@@ -37,14 +37,17 @@ public:
 	void DrawElements(GLenum mode, sol::optional<GLsizei> indCountOpt, sol::optional<int> indElemOffsetOpt, sol::optional<int> instanceCountOpt, sol::optional<int> baseVertexOpt);
 
 	void ClearSubmission();
-	void AddUnitsToSubmission(int id);
-	void AddUnitsToSubmission(const sol::stack_table& ids);
-	void AddFeaturesToSubmission(int id);
-	void AddFeaturesToSubmission(const sol::stack_table& ids);
-	void AddUnitDefsToSubmission(int id);
-	void AddUnitDefsToSubmission(const sol::stack_table& ids);
-	void AddFeatureDefsToSubmission(int id);
-	void AddFeatureDefsToSubmission(const sol::stack_table& ids);
+	int AddUnitsToSubmission(int id);
+	int AddUnitsToSubmission(const sol::stack_table& ids);
+	int AddFeaturesToSubmission(int id);
+	int AddFeaturesToSubmission(const sol::stack_table& ids);
+	int AddUnitDefsToSubmission(int id);
+	int AddUnitDefsToSubmission(const sol::stack_table& ids);
+	int AddFeatureDefsToSubmission(int id);
+	int AddFeatureDefsToSubmission(const sol::stack_table& ids);
+
+	void RemoveFromSubmission(int idx);
+
 	void Submit();
 private:
 	std::pair<GLsizei, GLsizei> DrawCheck(GLenum mode, sol::optional<GLsizei> drawCountOpt, sol::optional<int> instanceCountOpt, bool indexed);
@@ -53,9 +56,9 @@ private:
 	void AttachBufferImpl(const std::shared_ptr<LuaVBOImpl>& luaVBO, std::shared_ptr<LuaVBOImpl>& thisLuaVBO, GLenum reqTarget);
 private:
 	template <typename TObj>
-	void AddObjectsToSubmissionImpl(int id);
+	int AddObjectsToSubmissionImpl(int id);
 	template <typename TObj>
-	void AddObjectsToSubmissionImpl(const sol::stack_table& ids);
+	int AddObjectsToSubmissionImpl(const sol::stack_table& ids);
 	template <typename TObj>
 	SDrawElementsIndirectCommand DrawObjectGetCmdImpl(int id);
 	template <typename TObj>

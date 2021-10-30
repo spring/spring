@@ -102,7 +102,7 @@ void LuaVAOImpl::AttachIndexBuffer(const LuaVBOImplSP& luaVBO)
 template<typename TObj>
 const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(int id)
 {
-	const TObj* obj = LuaUtils::SolIdToObject<TObj>(id, __func__);
+	const TObj* obj = LuaUtils::SolIdToObject<TObj>(id, __func__); //wrong ids are handles in LuaUtils::SolIdToObject<>()
 	return GetDrawIndicesImpl<TObj>(obj);
 }
 
@@ -111,20 +111,22 @@ const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(const TObj* obj)
 {
 	static_assert(std::is_base_of_v<CSolidObject, TObj> || std::is_base_of_v<SolidObjectDef, TObj>);
 
-	S3DModel * model = obj->model;
+	S3DModel* model = obj->model;
 	assert(model);
 	return SIndexAndCount(model->indxStart, model->indxCount);
 }
 
 template<typename TObj>
-void LuaVAOImpl::AddObjectsToSubmissionImpl(int id)
+int LuaVAOImpl::AddObjectsToSubmissionImpl(int id)
 {
 	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + 1, true); //pair<indxCount,instCount>
 	submitCmds.emplace_back(DrawObjectGetCmdImpl<TObj>(id));
+
+	return submitCmds.size() - 1;
 }
 
 template<typename TObj>
-void LuaVAOImpl::AddObjectsToSubmissionImpl(const sol::stack_table& ids)
+int LuaVAOImpl::AddObjectsToSubmissionImpl(const sol::stack_table& ids)
 {
 	const std::size_t idsSize = ids.size(); //size() is very costly to do in the loop
 	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + idsSize, true); //pair<indxCount,instCount>
@@ -136,6 +138,8 @@ void LuaVAOImpl::AddObjectsToSubmissionImpl(const sol::stack_table& ids)
 
 		submitCmds.emplace_back(DrawObjectGetCmdImpl<TObj>(id));
 	}
+
+	return submitCmds.size() - idsSize;
 }
 
 template<typename TObj>
@@ -338,44 +342,32 @@ void LuaVAOImpl::ClearSubmission()
 	submitCmds.clear();
 }
 
-void LuaVAOImpl::AddUnitsToSubmission(int id)
-{
-	AddObjectsToSubmissionImpl<CUnit>(id);
-}
+int LuaVAOImpl::AddUnitsToSubmission(int id) { return AddObjectsToSubmissionImpl<CUnit>(id); }
+int LuaVAOImpl::AddUnitsToSubmission(const sol::stack_table& ids) { return  AddObjectsToSubmissionImpl<CUnit>(ids); }
 
-void LuaVAOImpl::AddUnitsToSubmission(const sol::stack_table& ids)
-{
-	AddObjectsToSubmissionImpl<CUnit>(ids);
-}
+int LuaVAOImpl::AddFeaturesToSubmission(int id) { return AddObjectsToSubmissionImpl<CFeature>(id); }
+int LuaVAOImpl::AddFeaturesToSubmission(const sol::stack_table& ids) { return AddObjectsToSubmissionImpl<CFeature>(ids); }
 
-void LuaVAOImpl::AddFeaturesToSubmission(int id)
-{
-	AddObjectsToSubmissionImpl<CFeature>(id);
-}
+int LuaVAOImpl::AddUnitDefsToSubmission(int id) { return AddObjectsToSubmissionImpl<UnitDef>(id); }
+int LuaVAOImpl::AddUnitDefsToSubmission(const sol::stack_table& ids) { return AddObjectsToSubmissionImpl<UnitDef>(ids); }
 
-void LuaVAOImpl::AddFeaturesToSubmission(const sol::stack_table& ids)
-{
-	AddObjectsToSubmissionImpl<CFeature>(ids);
-}
+int LuaVAOImpl::AddFeatureDefsToSubmission(int id) { return AddObjectsToSubmissionImpl<FeatureDef>(id); }
+int LuaVAOImpl::AddFeatureDefsToSubmission(const sol::stack_table& ids) { return AddObjectsToSubmissionImpl<FeatureDef>(ids); }
 
-void LuaVAOImpl::AddUnitDefsToSubmission(int id)
+void LuaVAOImpl::RemoveFromSubmission(int idx)
 {
-	AddObjectsToSubmissionImpl<UnitDef>(id);
-}
+	if (idx < 0 || idx >= submitCmds.size()) {
+		LuaUtils::SolLuaError("[LuaVAOImpl::%s] wrong submitCmds index [%d]", __func__, idx);
+		return;
+	}
 
-void LuaVAOImpl::AddUnitDefsToSubmission(const sol::stack_table& ids)
-{
-	AddObjectsToSubmissionImpl<UnitDef>(ids);
-}
+	if (idx != submitCmds.size() - 1)
+		submitCmds[idx] = submitCmds.back();
 
-void LuaVAOImpl::AddFeatureDefsToSubmission(int id)
-{
-	AddObjectsToSubmissionImpl<FeatureDef>(id);
-}
-
-void LuaVAOImpl::AddFeatureDefsToSubmission(const sol::stack_table& ids)
-{
-	AddObjectsToSubmissionImpl<FeatureDef>(ids);
+	submitCmds.pop_back();
+	for (baseInstance = 0; baseInstance < submitCmds.size(); ++baseInstance) {
+		submitCmds[baseInstance].baseInstance = baseInstance;
+	}
 }
 
 void LuaVAOImpl::Submit()

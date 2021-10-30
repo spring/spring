@@ -29,21 +29,22 @@ bool LuaVAO::PushEntries(lua_State* L)
 
 		"ClearSubmission", &LuaVAOImpl::ClearSubmission,
 		"AddUnitsToSubmission", sol::overload(
-			sol::resolve<void(int)>(&LuaVAOImpl::AddUnitsToSubmission),
-			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddUnitsToSubmission)
+			sol::resolve<int(int)>(&LuaVAOImpl::AddUnitsToSubmission),
+			sol::resolve<int(const sol::stack_table&)>(&LuaVAOImpl::AddUnitsToSubmission)
 		),
 		"AddFeaturesToSubmission", sol::overload(
-			sol::resolve<void(int)>(&LuaVAOImpl::AddFeaturesToSubmission),
-			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddFeaturesToSubmission)
+			sol::resolve<int(int)>(&LuaVAOImpl::AddFeaturesToSubmission),
+			sol::resolve<int(const sol::stack_table&)>(&LuaVAOImpl::AddFeaturesToSubmission)
 		),
 		"AddUnitDefsToSubmission", sol::overload(
-			sol::resolve<void(int)>(&LuaVAOImpl::AddUnitDefsToSubmission),
-			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddUnitDefsToSubmission)
+			sol::resolve<int(int)>(&LuaVAOImpl::AddUnitDefsToSubmission),
+			sol::resolve<int(const sol::stack_table&)>(&LuaVAOImpl::AddUnitDefsToSubmission)
 		),
 		"AddFeatureDefsToSubmission", sol::overload(
-			sol::resolve<void(int)>(&LuaVAOImpl::AddFeatureDefsToSubmission),
-			sol::resolve<void(const sol::stack_table&)>(&LuaVAOImpl::AddFeatureDefsToSubmission)
+			sol::resolve<int(int)>(&LuaVAOImpl::AddFeatureDefsToSubmission),
+			sol::resolve<int(const sol::stack_table&)>(&LuaVAOImpl::AddFeatureDefsToSubmission)
 		),
+		"RemoveFromSubmission", & LuaVAOImpl::RemoveFromSubmission,
 		"Submit", &LuaVAOImpl::Submit
 	);
 
