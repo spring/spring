@@ -177,6 +177,9 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 			} break;
 
 			case CCamera::CAMTYPE_UWREFL: {
+				if (!f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG) && !f->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
+					continue;
+
 				if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
 					continue;
 
@@ -185,10 +188,10 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 			} break;
 
 			case CCamera::CAMTYPE_SHADOW: {
-				if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
+				if (!f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
 					continue;
 
-				if (f->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
+				if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
 					continue;
 
 				f->AddDrawFlag(DrawFlags::SO_SHADOW_FLAG);
