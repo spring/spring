@@ -467,7 +467,7 @@ void CUnitDrawerLegacy::DrawGhostedBuildings(int modelType) const
 			glRotatef(dgb->facing * 90.0f, 0, 1, 0);
 
 			CModelDrawerHelper::BindModelTypeTexture(modelType, dgb->model->textureType);
-			SetTeamColor(dgb->team, float2(IModelDrawerState::alphaValues.y, 1.0f));
+			SetTeamColor(dgb->team, IModelDrawerState::alphaValues.y);
 
 			dgb->model->DrawStatic();
 			glPopMatrix();
@@ -543,7 +543,7 @@ void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhost
 		// not actually cloaked
 		CModelDrawerHelper::BindModelTypeTexture(modelType, model->textureType);
 
-		SetTeamColor(unit->team, float2((losStatus & LOS_CONTRADAR) ? IModelDrawerState::alphaValues.z : IModelDrawerState::alphaValues.y, 1.0f));
+		SetTeamColor(unit->team, (losStatus & LOS_CONTRADAR) ? IModelDrawerState::alphaValues.z : IModelDrawerState::alphaValues.y);
 		model->DrawStatic();
 		glPopMatrix();
 
@@ -558,7 +558,7 @@ void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhost
 		return;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-		SetTeamColor(unit->team, float2(IModelDrawerState::alphaValues.x, 1.0f));
+		SetTeamColor(unit->team, IModelDrawerState::alphaValues.x);
 		DrawUnitTrans(unit, 0, 0, false, false);
 	}
 }
@@ -593,7 +593,7 @@ void CUnitDrawerLegacy::DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& uni
 	assert(mdl != nullptr);
 
 	CModelDrawerHelper::BindModelTypeTexture(mdl->type, mdl->textureType);
-	SetTeamColor(unit.team, float2(IModelDrawerState::alphaValues.x, 1.0f));
+	SetTeamColor(unit.team, IModelDrawerState::alphaValues.x);
 	mdl->DrawStatic();
 
 	glPopMatrix();
@@ -604,7 +604,7 @@ void CUnitDrawerLegacy::DrawAlphaAIUnitBorder(const CUnitDrawerData::TempDrawUni
 	if (!unit.drawBorder)
 		return;
 
-	SetTeamColor(unit.team, float2(IModelDrawerState::alphaValues.w, 1.0f));
+	SetTeamColor(unit.team, IModelDrawerState::alphaValues.w);
 
 	const BuildInfo buildInfo(unit.unitDef, unit.pos, unit.facing);
 	const float3 buildPos = CGameHelper::Pos2BuildPos(buildInfo, false);
@@ -987,7 +987,7 @@ void CUnitDrawerLegacy::PushIndividualAlphaState(const S3DModel* model, int team
 {
 	SetupAlphaDrawing(deferredPass);
 	CModelDrawerHelper::PushModelRenderState(model);
-	SetTeamColor(teamID, float2(IModelDrawerState::alphaValues.x, 1.0f));
+	SetTeamColor(teamID, IModelDrawerState::alphaValues.x);
 }
 
 void CUnitDrawerLegacy::PopIndividualOpaqueState(const CUnit* unit, bool deferredPass) const { PopIndividualOpaqueState(unit->model, unit->team, deferredPass); }
@@ -1241,6 +1241,7 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
+	SetTeamColor(0, 1.0f);
 	modelDrawerState->SetColorMultiplier();
 
 	auto& smv = S3DModelVAO::GetInstance();
@@ -1284,7 +1285,9 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
 
-	modelDrawerState->SetColorMultiplier(IModelDrawerState::alphaValues.x);
+	//some magical constant that equalizes alpha with GLSL drawer, the origin of this difference is unknown
+	modelDrawerState->SetColorMultiplier(0.6f);
+	modelDrawerState->SetTeamColor(0, IModelDrawerState::alphaValues.x); //teamID doesn't matter here
 	//main cloaked alpha pass
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		if (mdlRenderer.GetObjectBin(i).empty())
@@ -1314,6 +1317,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 	// deadGhostedBuildings
 	{
 		modelDrawerState->SetColorMultiplier(0.6f, 0.6f, 0.6f, IModelDrawerState::alphaValues.y);
+		modelDrawerState->SetTeamColor(0, IModelDrawerState::alphaValues.y); //teamID doesn't matter here
 
 		int prevModelType = -1;
 		int prevTexType = -1;
@@ -1373,10 +1377,14 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 			const unsigned short losStatus = lgb->losStatus[gu->myAllyTeam];
 
 			// ghosted enemy units
-			if (losStatus & LOS_CONTRADAR)
+			if (losStatus & LOS_CONTRADAR) {
 				modelDrawerState->SetColorMultiplier(0.9f, 0.9f, 0.9f, IModelDrawerState::alphaValues.z);
-			else
+				modelDrawerState->SetTeamColor(lgb->team, IModelDrawerState::alphaValues.z);
+			}
+			else {
 				modelDrawerState->SetColorMultiplier(0.6f, 0.6f, 0.6f, IModelDrawerState::alphaValues.y);
+				modelDrawerState->SetTeamColor(lgb->team, IModelDrawerState::alphaValues.y);
+			}
 
 			if (prevModelType != modelType || prevTexType != model->textureType) {
 				prevModelType = modelType; prevTexType = model->textureType;
@@ -1388,6 +1396,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 		}
 	}
 
+	modelDrawerState->SetColorMultiplier(IModelDrawerState::alphaValues.x);
 	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
 	smv.Unbind();
 }
@@ -1431,7 +1440,7 @@ void CUnitDrawerGL4::DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& unit) 
 
 	CModelDrawerHelper::BindModelTypeTexture(mdl->type, mdl->textureType);
 
-	SetTeamColor(unit.team, float2(IModelDrawerState::alphaValues.x, 1.0f));
+	SetTeamColor(unit.team, IModelDrawerState::alphaValues.x);
 	modelDrawerState->SetStaticModelMatrix(staticWorldMat);
 
 	smv.SubmitImmediately(mdl, unit.team, DrawFlags::SO_ALPHAF_FLAG);

@@ -25,7 +25,7 @@
 
 
 
-bool IModelDrawerState::SetTeamColor(int team, const float2 alpha) const
+bool IModelDrawerState::SetTeamColor(int team, float alpha) const
 {
 	// need this because we can be called by no-team projectiles
 	if (!teamHandler.IsValidTeam(team))
@@ -169,16 +169,16 @@ void CModelDrawerStateFFP::CleanupBasicS3OTexture0()
 CModelDrawerStateFFP::CModelDrawerStateFFP() {}
 CModelDrawerStateFFP::~CModelDrawerStateFFP() {}
 
-bool CModelDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const
+bool CModelDrawerStateFFP::SetTeamColor(int team, float alpha) const
 {
 	if (!IModelDrawerState::SetTeamColor(team, alpha))
 		return false;
 
 	// non-shader case via texture combiners
-	const float4 m = { 1.0f, 1.0f, 1.0f, alpha.x };
+	const float4 m = { 1.0f, 1.0f, 1.0f, alpha };
 
 	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(CModelDrawerHelper::GetTeamColor(team, alpha.x)));
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(CModelDrawerHelper::GetTeamColor(team, alpha)));
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
 
 	return true;
@@ -289,7 +289,7 @@ CModelDrawerStateARB::~CModelDrawerStateARB()
 
 bool CModelDrawerStateARB::CanEnable() const { return globalRendering->haveARB && CModelDrawerConcept::UseAdvShading(); }
 
-bool CModelDrawerStateARB::SetTeamColor(int team, const float2 alpha) const
+bool CModelDrawerStateARB::SetTeamColor(int team, float alpha) const
 {
 	if (!IModelDrawerState::SetTeamColor(team, alpha))
 		return false;
@@ -302,7 +302,7 @@ bool CModelDrawerStateARB::SetTeamColor(int team, const float2 alpha) const
 	assert(modelShader->IsBound());
 
 	modelShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShader->SetUniform4fv(14, std::move(CModelDrawerHelper::GetTeamColor(team, alpha.x)));
+	modelShader->SetUniform4fv(14, std::move(CModelDrawerHelper::GetTeamColor(team, alpha)));
 
 	return true;
 }
@@ -447,7 +447,7 @@ CModelDrawerStateGLSL::~CModelDrawerStateGLSL()
 bool CModelDrawerStateGLSL::CanEnable() const { return globalRendering->haveGLSL && CModelDrawerConcept::UseAdvShading(); }
 bool CModelDrawerStateGLSL::CanDrawDeferred() const { return CModelDrawerConcept::DeferredAllowed(); }
 
-bool CModelDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const
+bool CModelDrawerStateGLSL::SetTeamColor(int team, float alpha) const
 {
 	if (!IModelDrawerState::SetTeamColor(team, alpha))
 		return false;
@@ -455,7 +455,7 @@ bool CModelDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const
 	assert(modelShader != nullptr);
 	assert(modelShader->IsBound());
 
-	modelShader->SetUniform4fv(9, std::move(CModelDrawerHelper::GetTeamColor(team, alpha.x)));
+	modelShader->SetUniform4fv(9, std::move(CModelDrawerHelper::GetTeamColor(team, alpha)));
 
 	return true;
 }
@@ -557,7 +557,7 @@ CModelDrawerStateGL4::~CModelDrawerStateGL4()
 bool CModelDrawerStateGL4::CanEnable() const { return globalRendering->haveGL4 && CModelDrawerConcept::UseAdvShading(); }
 bool CModelDrawerStateGL4::CanDrawDeferred() const { return CModelDrawerConcept::DeferredAllowed(); }
 
-bool CModelDrawerStateGL4::SetTeamColor(int team, const float2 alpha) const
+bool CModelDrawerStateGL4::SetTeamColor(int team, float alpha) const
 {
 	if (!IModelDrawerState::SetTeamColor(team, alpha))
 		return false;
@@ -565,7 +565,7 @@ bool CModelDrawerStateGL4::SetTeamColor(int team, const float2 alpha) const
 	assert(modelShader != nullptr);
 	assert(modelShader->IsBound());
 
-	modelShader->SetUniform("teamColorAlpha", alpha.x);
+	modelShader->SetUniform("teamColorAlpha", alpha);
 
 	return true;
 }

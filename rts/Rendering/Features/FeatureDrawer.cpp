@@ -237,7 +237,7 @@ void CFeatureDrawerLegacy::DrawAlphaFeature(CFeature* f) const
 	if (!ShouldDrawAlphaFeature(f))
 		return;
 
-	SetTeamColor(f->team, float2(IModelDrawerState::alphaValues.x, 1.0f));
+	SetTeamColor(f->team, IModelDrawerState::alphaValues.x);
 	DrawFeatureTrans(f, 0, 0, false, false);
 }
 

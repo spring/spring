@@ -60,7 +60,7 @@ public:
 
 	// alpha.x := alpha-value
 	// alpha.y := alpha-pass (true or false)
-	virtual bool SetTeamColor(int team, const float2 alpha = float2{1.0f, 0.0f}) const;
+	virtual bool SetTeamColor(int team, float alpha = 1.0f) const;
 	virtual void SetNanoColor(const float4& color) const = 0;
 
 	void SetColorMultiplier(float a = 1.0f) const { SetColorMultiplier(1.0f, 1.0f, 1.0f, a); };
@@ -120,7 +120,7 @@ public:
 	bool CanEnable() const override { return true; }
 	bool CanDrawDeferred() const override { return false; }
 
-	bool SetTeamColor(int team, const float2 alpha) const override;
+	bool SetTeamColor(int team, float alpha) const override;
 
 	void Enable(bool deferredPass, bool alphaPass) const override;
 	void Disable(bool deferredPass) const override;
@@ -145,7 +145,7 @@ public:
 	bool CanEnable() const override;
 	bool CanDrawDeferred() const override { return false; }
 
-	bool SetTeamColor(int team, const float2 alpha) const override;
+	bool SetTeamColor(int team, float alpha) const override;
 
 	void Enable(bool deferredPass, bool alphaPass) const override;
 	void Disable(bool deferredPass) const override;
@@ -165,7 +165,7 @@ public:
 	bool CanEnable() const override;
 	bool CanDrawDeferred() const override;
 
-	bool SetTeamColor(int team, const float2 alpha) const override;
+	bool SetTeamColor(int team, float alpha) const override;
 
 	void Enable(bool deferredPass, bool alphaPass) const override;
 	void Disable(bool deferredPass) const override;
@@ -188,7 +188,7 @@ public:
 	bool CanEnable() const override;
 	bool CanDrawDeferred() const override;
 
-	bool SetTeamColor(int team, const float2 alpha) const override;
+	bool SetTeamColor(int team, float alpha) const override;
 
 	void Enable(bool deferredPass, bool alphaPass) const override;
 	void Disable(bool deferredPass) const override;

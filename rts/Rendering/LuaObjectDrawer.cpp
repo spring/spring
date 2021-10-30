@@ -184,14 +184,14 @@ static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
-static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, const float2, bool) {}
-static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
+static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, float, bool) {}
+static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, float a, bool deferredPass)
 {
 	assert(m->shaders[deferredPass].IsCustomType());
-	m->ExecuteInstanceTeamColor(CModelDrawerHelper::GetTeamColor(o->team, a.x), deferredPass);
+	m->ExecuteInstanceTeamColor(CModelDrawerHelper::GetTeamColor(o->team, a), deferredPass);
 }
 
-static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
+static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial* m, float a, bool deferredPass)
 {
 	// only useful to set this if the object has a standard
 	// (engine) shader attached, otherwise requires testing
@@ -452,7 +452,7 @@ void LuaObjectDrawer::DrawBinObject(
 
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			tcFunc(unit, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
+			tcFunc(unit, luaMat, 1.0f, deferredPass);
 			soFunc(unit, luaMat, objType, deferredPass);
 			CALL_FUNC_VA(unitDrawer, udFunc, unit, preList, postList, true, noLuaCall);
 		} break;
@@ -463,7 +463,7 @@ void LuaObjectDrawer::DrawBinObject(
 
 			const CFeature* feat = static_cast<const CFeature*>(obj);
 
-			tcFunc(feat, luaMat, {feat->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
+			tcFunc(feat, luaMat, feat->drawAlpha, deferredPass);
 			soFunc(feat, luaMat, objType, deferredPass);
 			CALL_FUNC_VA(featureDrawer, fdFunc, feat, preList, postList, true, noLuaCall);
 		} break;
