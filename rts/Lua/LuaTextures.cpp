@@ -212,10 +212,11 @@ void LuaTextures::ApplyParams(const Texture& tex) const
 	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
 	if (tex.cmpFunc != GL_NONE) {
 		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, tex.cmpFunc);
+		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_FUNC, tex.cmpFunc);
 	}
 	else {
 		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glTexParameteri(tex.target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL); //sensible default
 	}
 
 	if (tex.lodBias != 0.0f)
