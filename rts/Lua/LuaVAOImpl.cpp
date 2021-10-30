@@ -108,13 +108,23 @@ const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(int id)
 template<typename TObj>
 const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl(const TObj* obj)
 {
-	if constexpr (std::is_same<TObj, CUnit>::value) {
-		S3DModel* model = obj->model;
-		assert(model);
-		return SIndexAndCount(model->indxStart, model->indxCount);
-	}
-
 	assert(false);
+}
+
+template<>
+const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl<CUnit>(const CUnit* obj)
+{
+	S3DModel* model = obj->model;
+	assert(model);
+	return SIndexAndCount(model->indxStart, model->indxCount);
+}
+
+template<>
+const SIndexAndCount LuaVAOImpl::GetDrawIndicesImpl<UnitDef>(const UnitDef* obj)
+{
+	S3DModel* model = obj->model;
+	assert(model);
+	return SIndexAndCount(model->indxStart, model->indxCount);
 }
 
 template<typename TObj>
@@ -334,6 +344,26 @@ void LuaVAOImpl::AddUnitsToSubmission(const sol::stack_table& ids)
 		int id = spring::SafeCast<lua_Number, int>(idLua);
 
 		submitCmds.emplace_back(DrawObjectGetCmdImpl<CUnit>(id));
+	}
+}
+
+void LuaVAOImpl::AddUnitDefsToSubmission(int id)
+{
+	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + 1, true); //pair<indxCount,instCount>
+	submitCmds.emplace_back(DrawObjectGetCmdImpl<UnitDef>(id));
+}
+
+void LuaVAOImpl::AddUnitDefsToSubmission(const sol::stack_table& ids)
+{
+	const std::size_t idsSize = ids.size(); //size() is very costly to do in the loop
+	DrawCheck(GL_TRIANGLES, 0, submitCmds.size() + idsSize, true); //pair<indxCount,instCount>
+
+	constexpr auto defaultValue = static_cast<lua_Number>(0);
+	for (std::size_t i = 0u; i < idsSize; ++i) {
+		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
+		int id = spring::SafeCast<lua_Number, int>(idLua);
+
+		submitCmds.emplace_back(DrawObjectGetCmdImpl<UnitDef>(id));
 	}
 }
 

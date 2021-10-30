@@ -39,6 +39,8 @@ public:
 	void ClearSubmission();
 	void AddUnitsToSubmission(int id);
 	void AddUnitsToSubmission(const sol::stack_table& ids);
+	void AddUnitDefsToSubmission(int id);
+	void AddUnitDefsToSubmission(const sol::stack_table& ids);
 	void Submit();
 private:
 	std::pair<GLsizei, GLsizei> DrawCheck(GLenum mode, sol::optional<GLsizei> drawCountOpt, sol::optional<int> instanceCountOpt, bool indexed);
