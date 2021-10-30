@@ -780,7 +780,6 @@ size_t LuaVBOImpl::InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, c
 
 	memcpy(instanceDataVec.data(), &instanceData, sizeof(SInstanceData));
 
-	size_t bytesWritten = 0u;
 	return UploadImpl<uint32_t>(instanceDataVec, elemOffset, attrID);
 }
 
@@ -810,7 +809,6 @@ size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID,
 		memcpy(&instanceDataVec[4 * i], &instanceData, sizeof(SInstanceData));
 	}
 
-	size_t bytesWritten = 0u;
 	return UploadImpl<uint32_t>(instanceDataVec, elemOffset, attrID);
 }
 
