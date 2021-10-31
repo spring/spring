@@ -713,31 +713,37 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 		case CGameHelper::BUILDSQUARE_BLOCKED:
 		case CGameHelper::BUILDSQUARE_OCCUPIED: {
-			// the ground is blocked at the position we want
-			// to build at; check if the blocking object is
-			// of the same type as our buildee (which means
-			// another builder has already started it)
-			// note: even if construction has already started,
-			// the buildee is *not* guaranteed to be the unit
-			// closest to us
-			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(buildInfo.pos);
-
 			const CUnit* u = nullptr;
 
-			// look for any blocking assistable buildee at build.pos
-			for (size_t i = 0, n = cell.size(); i < n; i++) {
-				const CUnit* cu = dynamic_cast<const CUnit*>(cell[i]);
+			const int2 mins = CSolidObject::GetMapPosStatic(buildInfo.pos, buildInfo.GetXSize(), buildInfo.GetZSize());
+			const int2 maxs = mins + int2(buildInfo.GetXSize(), buildInfo.GetZSize());
 
-				if (cu == nullptr)
-					continue;
-				if (allyteam != cu->allyteam)
-					return false; // Enemy units that block always block the cell
-				if (!CanAssistUnit(cu, buildInfo.def))
-					continue;
+			for (int z = mins.y; z < maxs.y; ++z) {
+				for (int x = mins.x; x < maxs.x; ++x) {
+					const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(float3{
+						static_cast<float>(x * SQUARE_SIZE),
+						0.0f,
+						static_cast<float>(z * SQUARE_SIZE) }
+					);
 
-				u = cu;
+					// look for any blocking assistable buildee at build.pos
+					for (size_t i = 0, n = cell.size(); i < n; i++) {
+						const CUnit* cu = dynamic_cast<const CUnit*>(cell[i]);
+
+						if (cu == nullptr)
+							continue;
+						if (allyteam != cu->allyteam)
+							return false; // Enemy units that block always block the cell
+						if (!CanAssistUnit(cu, buildInfo.def))
+							continue;
+
+						u = cu;
+						goto out; //lol
+					}
+				}
 			}
 
+			out:
 			// <pos> might map to a non-blocking portion
 			// of the buildee's yardmap, fallback check
 			if (u == nullptr)

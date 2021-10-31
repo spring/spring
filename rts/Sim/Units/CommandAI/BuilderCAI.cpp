@@ -331,35 +331,51 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame
 	if (status != CGameHelper::BUILDSQUARE_BLOCKED)
 		return false;
 
-	// status is blocked, check if there is a foreign object in the way
-	const CSolidObject* s = groundBlockingObjectMap.GroundBlocked(bi.pos);
+	const CSolidObject* s = nullptr;
+	const CUnit* u = nullptr;
 
-	// just ourselves, does not count
-	if (s == owner)
-		return false;
+	const int2 mins = CSolidObject::GetMapPosStatic(bi.pos, bi.GetXSize(), bi.GetZSize());
+	const int2 maxs = mins + int2(bi.GetXSize(), bi.GetZSize());
+	for (int z = mins.y; z < maxs.y; ++z) {
+		for (int x = mins.x; x < maxs.x; ++x) {
+			s = groundBlockingObjectMap.GroundBlocked(float3{
+				static_cast<float>(x * SQUARE_SIZE),
+				0.0f,
+				static_cast<float>(z * SQUARE_SIZE) }
+			);
 
-	const CUnit* u = dynamic_cast<const CUnit*>(s);
+			if (s == nullptr)
+				continue;
+
+			// just ourselves, does not count
+			if (s == owner)
+				continue;
+
+			if (u = dynamic_cast<const CUnit*>(s), u == nullptr)
+				continue;
+
+			// figure out if object is soft- or hard-blocking
+			if (u->beingBuilt) {
+				// we can't or don't want assist finishing the nanoframe
+				// if a mobile unit blocks the position, wait until it is
+				// finished & moved
+				if (!ownerBuilder->CanAssistUnit(u, bi.def))
+					continue;
+
+				// unfinished nanoframe, assist it
+				if (nanoFrame != nullptr && teamHandler.Ally(owner->allyteam, u->allyteam))
+					*nanoFrame = u;
+
+				return false; //be greedy here
+			}
+		}
+	}
 
 	// if a *unit* object is not present, then either
 	// there is a feature or the terrain is unsuitable
 	// (in the former case feature must be reclaimable)
 	if (u == nullptr)
 		return (feature == nullptr || !feature->def->reclaimable);
-
-	// figure out if object is soft- or hard-blocking
-	if (u->beingBuilt) {
-		// we can't or don't want assist finishing the nanoframe
-		// if a mobile unit blocks the position, wait until it is
-		// finished & moved
-		if (!ownerBuilder->CanAssistUnit(u, bi.def))
-			return u->immobile;
-
-		// unfinished nanoframe, assist it
-		if (nanoFrame != nullptr && teamHandler.Ally(owner->allyteam, u->allyteam))
-			*nanoFrame = u;
-
-		return false;
-	}
 
 	// unit blocks the pos, can it move away?
 	return (u->immobile);

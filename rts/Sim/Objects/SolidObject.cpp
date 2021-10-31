@@ -327,9 +327,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 	return blockMap[int(bx) + int(by) * footprint.x];
 }
 
-
-// FIXME move somewhere else?
-int2 CSolidObject::GetMapPos(const float3& position) const
+int2 CSolidObject::GetMapPosStatic(const float3& position, int xsize, int zsize)
 {
 	int2 mp;
 

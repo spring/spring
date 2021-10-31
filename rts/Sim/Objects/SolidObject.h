@@ -233,7 +233,8 @@ public:
 
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
-	int2 GetMapPos(const float3& position) const;
+	int2 GetMapPos(const float3& position) const { return GetMapPosStatic(pos, xsize, zsize); }
+	static int2 GetMapPosStatic(const float3& position, int xsize, int zsize);
 
 	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
 
