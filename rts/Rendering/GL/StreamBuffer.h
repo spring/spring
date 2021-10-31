@@ -224,7 +224,7 @@ public:
 		: IStreamBuffer<T>(target, numElems, name_)
 	{
 		this->CreateBufferStorage(numBuffers * this->byteSize,
-			GL_MAP_WRITE_BIT | GL_DYNAMIC_STORAGE_BIT);
+			GL_MAP_WRITE_BIT);
 
 		fences.resize(numBuffers);
 		for (auto& fence : fences)
@@ -277,7 +277,7 @@ public:
 	{
 
 		this->CreateBufferStorage(numBuffers* this->byteSize,
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_DYNAMIC_STORAGE_BIT | (coherent * GL_MAP_COHERENT_BIT));
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | (coherent * GL_MAP_COHERENT_BIT));
 
 		this->Bind();
 		ptrBase = reinterpret_cast<T*>(glMapBufferRange(this->target, this->allocIdx * this->byteSize, this->byteSize,
