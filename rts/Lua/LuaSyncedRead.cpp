@@ -219,6 +219,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
 	REGISTER_LUA_CFUNC(GetUnitCurrentBuildPower);
 	REGISTER_LUA_CFUNC(GetUnitHarvestStorage);
+	REGISTER_LUA_CFUNC(GetUnitBuildParams);
 	REGISTER_LUA_CFUNC(GetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
@@ -3243,6 +3244,34 @@ int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 	return 2 * SResourcePack::MAX_RESOURCES;
 }
 
+int LuaSyncedRead::GetUnitBuildParams(lua_State* L)
+{
+	const CUnit * unit = ParseAllyUnit(L, __func__, 1);
+	(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+
+	if (builder == nullptr)
+		return 0;
+
+	switch (hashString(luaL_checkstring(L, 2))) {
+	case hashString("buildRange"):
+	case hashString("buildDistance"): {
+		lua_pushnumber(L, builder->buildDistance);
+		return 1;
+	} break;
+	case hashString("buildRange3D"): {
+		lua_pushboolean(L, builder->range3D);
+		return 1;
+	} break;
+	default: {} break;
+	};
+
+	return 0;
+}
 
 int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
 {

@@ -176,6 +176,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
+	REGISTER_LUA_CFUNC(SetUnitBuildParams);
 	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
 
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
@@ -2073,6 +2074,31 @@ int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
 	return 0;
 }
 
+int LuaSyncedCtrl::SetUnitBuildParams(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	CBuilder* builder = dynamic_cast<CBuilder*>(unit);
+
+	if (builder == nullptr)
+		return 0;
+
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString("buildRange"):
+		case hashString("buildDistance"): {
+			builder->buildDistance = luaL_optfloat(L, 3, builder->buildDistance);
+		} break;
+		case hashString("buildRange3D"): {
+			builder->range3D = luaL_optboolean(L, 3, builder->range3D);
+		} break;
+		default: {} break;
+	};
+
+	return 0;
+}
 int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
