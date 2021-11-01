@@ -111,12 +111,3 @@ void IStreamBufferConcept::UnbindBufferRange(GLuint index, uint32_t bindTarget) 
 {
 	glBindBufferRange(bindTarget > 0 ? bindTarget : this->target, index, 0u, allocIdx * this->byteSize, this->byteSize);
 }
-
-IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, uint32_t byteSizeRaw, const std::string& name_)
-	: name{ name_ }
-	, target{ target_ }
-	, id{ 0 }
-	, allocIdx{ 0 }
-{
-	byteSize = GetAlignedByteSize(byteSizeRaw);
-}
