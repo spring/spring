@@ -3948,7 +3948,7 @@ EXPORT(int) skirmishAiCallback_getNeutralUnitsIn(int skirmishAIId, float* pos_po
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
 		return GetCheatCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 
-	return GetCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, unitIdsMaxSize);
+	return GetCallBack(skirmishAIId)->GetNeutralUnits(unitIds, pos_posF3, radius, spherical, unitIdsMaxSize);
 }
 
 EXPORT(int) skirmishAiCallback_getSelectedUnits(int skirmishAIId, int* unitIds, int unitIdsMaxSize) {
