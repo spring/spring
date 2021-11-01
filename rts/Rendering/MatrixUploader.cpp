@@ -30,7 +30,7 @@
 
 void MatrixUploader::InitVBO()
 {
-	matrixSSBO = IStreamBuffer<CMatrix44f>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, "MatricesSSBO", IStreamBufferConcept::Types::SB_AUTODETECT, true);
+	matrixSSBO = IStreamBuffer<CMatrix44f>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, "MatricesSSBO", IStreamBufferConcept::Types::SB_AUTODETECT);
 	matrixSSBO->BindBufferRange(MATRIX_SSBO_BINDING_IDX);
 }
 
@@ -81,12 +81,12 @@ void MatrixUploader::Update()
 	const uint32_t matricesMemStorageCount = matricesMemStorage.GetSize();
 	if (matricesMemStorageCount > matrixElemCount) {
 		const uint32_t newElemCount = AlignUp(matricesMemStorageCount, elemIncreaseBy);
-		LOG_L(L_INFO, "MatrixUploader::%s sizing matrixSSBO %s. New elements count = %u, matrixElemCount = %u, matricesMemStorageCount = %u", __func__, "up", newElemCount, matrixElemCount, matricesMemStorageCount);
+		LOG_L(L_DEBUG, "MatrixUploader::%s sizing matrixSSBO %s. New elements count = %u, matrixElemCount = %u, matricesMemStorageCount = %u", __func__, "up", newElemCount, matrixElemCount, matricesMemStorageCount);
 		matrixSSBO->Resize(newElemCount);
 	}
 
 	//update on the GPU
-	auto* clientPtr = matricesMemStorage.GetData().data();
+	const auto* clientPtr = matricesMemStorage.GetData().data();
 	auto* mappedPtr = matrixSSBO->Map(clientPtr);
 
 	if (clientPtr != mappedPtr)
