@@ -3247,7 +3247,6 @@ int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 int LuaSyncedRead::GetUnitBuildParams(lua_State* L)
 {
 	const CUnit * unit = ParseAllyUnit(L, __func__, 1);
-	(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
