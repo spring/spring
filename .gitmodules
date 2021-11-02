@@ -6,7 +6,7 @@
 	url = https://github.com/spring/pyunitsync.git
 [submodule "tools/pr-downloader"]
 	path = tools/pr-downloader
-	url = https://github.com/spring/pr-downloader
+	url = https://github.com/beyond-all-reason/pr-downloader
 [submodule "tools/SpringMapConvNG"]
 	path = tools/mapcompile
 	url = https://github.com/spring/SpringMapConvNG.git
