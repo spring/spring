@@ -35,6 +35,10 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/HsiehHash.h"
 
+// TODO: Remove (only needed for debug)
+// #include <sim/Path/TKPFS/PathGlobal.h>
+// #include "System/Threading/ThreadPool.h"
+
 #if 1
 #include "Rendering/IPathDrawer.h"
 #define DEBUG_DRAWING_ENABLED ((gs->cheatEnabled || gu->spectatingFullView) && pathDrawer->IsEnabled())
@@ -76,8 +80,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 #define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 #define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-
-
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CGroundMoveType, (
@@ -421,7 +423,9 @@ void CGroundMoveType::PostLoad()
 	if (pathID == 0)
 		return;
 
-	pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true);
+	ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
+	//ReRequestPath(true);
+	//pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true);
 }
 
 bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, const float3& cmpEps) {
@@ -551,7 +555,8 @@ void CGroundMoveType::SlowUpdate()
 					LOG_L(L_DEBUG, "[%s] unit %i has pathID %i but %i ETA failures", __func__, owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						ReRequestPath(true);
+						//ReRequestPath(true);
+						ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 					} else {
 						// unit probably ended up on a non-traversable
 						// square, or got stuck in a non-moving crowd
@@ -561,11 +566,9 @@ void CGroundMoveType::SlowUpdate()
 			} else {
 				// case B: we want to be moving but don't have a path
 				LOG_L(L_DEBUG, "[%s] unit %i has no path", __func__, owner->id);
-				ReRequestPath(true);
+				//ReRequestPath(true);
+				ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 			}
-
-			if (wantRepath)
-				ReRequestPath(true);
 		}
 
 		// move us into the map, and update <oldPos>
@@ -638,7 +641,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	ReRequestPath(true);
+	//ReRequestPath(true);
+	ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 
 	if (owner->team == gu->myTeam)
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
@@ -667,6 +671,7 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw)
 
 bool CGroundMoveType::FollowPath()
 {
+	//LOG("%s activated (%d)", __func__, owner->team);
 	bool wantReverse = false;
 
 	if (WantToStop()) {
@@ -675,10 +680,30 @@ bool CGroundMoveType::FollowPath()
 
 		SetMainHeading();
 		ChangeSpeed(0.0f, false);
+		//LOG("%s stop", __func__);
 	} else {
 		ASSERT_SYNCED(currWayPoint);
 		ASSERT_SYNCED(nextWayPoint);
 		ASSERT_SYNCED(owner->pos);
+
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// LOG("%s unit origin (%f,%f,%f)", __func__
+		// 	, static_cast<float>(owner->pos.x)
+		// 	, static_cast<float>(owner->pos.y)
+		// 	, static_cast<float>(owner->pos.z));
+
+		// LOG("%s currWayPoint (%f,%f,%f)", __func__
+		// 	, static_cast<float>(currWayPoint.x)
+		// 	, static_cast<float>(currWayPoint.y)
+		// 	, static_cast<float>(currWayPoint.z));
+
+		// LOG("%s nextWayPoint (%f,%f,%f)", __func__
+		// 	, static_cast<float>(nextWayPoint.x)
+		// 	, static_cast<float>(nextWayPoint.y)
+		// 	, static_cast<float>(nextWayPoint.z));
+		// 	}
+		// }
 
 		const float3& opos = owner->pos;
 		const float3& ovel = owner->speed;
@@ -708,6 +733,24 @@ bool CGroundMoveType::FollowPath()
 			atGoal |= (curGoalDistSq <= minGoalDistSq);
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) && !reversing && (ffd.dot(goalPos - opos) > 0.0f && ffd.dot(goalPos - (opos + ovel)) <= 0.0f));
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) &&  reversing && (ffd.dot(goalPos - opos) < 0.0f && ffd.dot(goalPos - (opos + ovel)) >= 0.0f));
+		
+			// if (DEBUG_DRAWING_ENABLED) {
+			// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+			// 		LOG("%s unit origin (%f,%f,%f)", __func__
+			// 			, static_cast<float>(opos.x)
+			// 			, static_cast<float>(opos.y)
+			// 			, static_cast<float>(opos.z));
+
+			// 		LOG("%s unit origin (%f,%f,%f)", __func__
+			// 			, static_cast<float>(goalPos.x)
+			// 			, static_cast<float>(goalPos.y)
+			// 			, static_cast<float>(goalPos.z));
+
+			// 		LOG("%s curGoalDistSq(%f) <= minGoalDistSq(%f)", __func__, curGoalDistSq, minGoalDistSq);
+			// 		LOG("%s (ffd.dot(goalPos - opos)(%f) ffd.dot(goalPos - (opos + ovel))(%f)", __func__, ffd.dot(goalPos - opos), ffd.dot(goalPos - (opos + ovel)));
+			// 		LOG("%s atGoal(%d?) reversing(%d?)", __func__, (int)atGoal, (int)reversing);
+			// 	}
+			// }
 		}
 
 		if (!atGoal) {
@@ -717,14 +760,27 @@ bool CGroundMoveType::FollowPath()
 
 		// atEndOfPath never becomes true when useRawMovement, except via StopMoving
 		if (!atEndOfPath && !useRawMovement) {
-			SetNextWayPoint();
+			//move to end of function because next waypoint assigned/calculated in pathing system call.
+			//SetNextWayPoint();
+			//ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_EXISTING);
 		} else {
-			if (atGoal)
+			if (atGoal){
+				// if (DEBUG_DRAWING_ENABLED) {
+				// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+				// 		LOG("%s arrival signaled", __func__);
+				// 	}
+				// }
 				Arrived(false);
-			else
-				ReRequestPath(false);
+			} else {
+				// if (DEBUG_DRAWING_ENABLED) {
+				// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+				// 		LOG("%s request new path since not at goal", __func__);
+				// 	}
+				// }
+				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
+				//ReRequestPath(false);
+			}
 		}
-
 
 		// set direction to waypoint AFTER requesting it; should not be a null-vector
 		// do not compare y-components since these usually differ and only x&z matter
@@ -749,6 +805,17 @@ bool CGroundMoveType::FollowPath()
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
+
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s change heading (%f, %f)", __func__, modWantedDir.x, modWantedDir.z);
+		// 		LOG("%s change speed (%f, %d?)", __func__, maxWantedSpeed, (int)wantReverse);
+		// 	}
+		// }
+
+		if (!atEndOfPath && !useRawMovement) {
+			SetNextWayPoint();
+		}
 	}
 
 	pathManager->UpdatePath(owner, pathID);
@@ -1469,37 +1536,68 @@ unsigned int CGroundMoveType::GetNewPath()
 	if ((owner->pos - goalPos).SqLength2D() <= Square(goalRadius + extraRadius))
 		return newPathID;
 
+	// if (gs->frameNum == 459 && this->owner->id == 9744)
+	// 	TKPFS::debugLoggingActive = ThreadPool::GetThreadNum();
+
 	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true)) != 0) {
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
-		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+		earlyCurrWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,        owner->pos, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+		earlyNextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, earlyCurrWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 
 		pathController.SetRealGoalPosition(newPathID, goalPos);
-		pathController.SetTempGoalPosition(newPathID, currWayPoint);
+		pathController.SetTempGoalPosition(newPathID, earlyCurrWayPoint);
 	} else {
 		Fail(false);
 	}
 
+	// if (gs->frameNum == 459 && this->owner->id == 9744)
+	// 	TKPFS::debugLoggingActive = -1;
+
 	return newPathID;
 }
 
-void CGroundMoveType::ReRequestPath(bool forceRequest) {
-	if (forceRequest) {
-		StopEngine(false);
-		StartEngine(false);
-		wantRepath = false;
+void CGroundMoveType::ReRequestPath(PathRequestType requestType) {
+	// if (DEBUG_DRAWING_ENABLED) {
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+	// 		LOG("%s want <- request (%d <- %d)", __func__, wantRepath, requestType);
+	// 	}
+	// }
+
+	if (wantRepath == PATH_REQUEST_NONE){
+		wantRepath = requestType;
 		return;
 	}
 
-	wantRepath = true;
+	int requestPriority = (requestType & PATH_REQUEST_TIMING_BITMASK);
+	int currentPriority = (wantRepath & PATH_REQUEST_TIMING_BITMASK);
+
+	if (requestPriority > currentPriority){
+		wantRepath = requestType;
+		return;
+	}
+	if (requestPriority < currentPriority)
+		return;
+
+	int requestScope = (requestType & PATH_REQUEST_UPDATE_BITMASK);
+	int currentScope = (wantRepath & PATH_REQUEST_UPDATE_BITMASK);
+
+	if (requestScope > currentScope)
+		wantRepath = requestType;
 }
 
+void CGroundMoveType::DoReRequestPath() {
+	//LOG("%s activated", __func__);
+	StopEngine(false);
+	StartEngine(false);
+}
 
 
 bool CGroundMoveType::CanSetNextWayPoint() {
 	assert(!useRawMovement);
+
+	//LOG("%s activated", __func__);
 
 	if (pathID == 0)
 		return false;
@@ -1507,11 +1605,19 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		return false;
 
 
+	// if (DEBUG_DRAWING_ENABLED) {
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+	// 		LOG("%s currWayPoint.y = %f, nextWayPoint.y = %f", __func__
+	// 			, static_cast<float>(currWayPoint.y), static_cast<float>(nextWayPoint.y));
+	// 	}
+	// }
+
 	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
 		const float3& pos = owner->pos;
 		      float3& cwp = (float3&) currWayPoint;
 		      float3& nwp = (float3&) nextWayPoint;
 
+		// QTPFS ONLY PATH
 		if (pathManager->PathUpdated(pathID)) {
 			// path changed while we were following it (eg. due
 			// to terrain deformation) in between two waypoints
@@ -1553,9 +1659,30 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
+
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s turnSpeed %f", __func__, turnSpeed);
+		// 		LOG("%s turnradius %f = max(%f*%f*%f=%f, %f)", __func__
+		// 				, turnRadius, currentSpeed, framesToTurn, math::INVPI2
+		// 				, (currentSpeed * framesToTurn) * math::INVPI2
+		// 				, currentSpeed * 1.05f);
+		// 		LOG("%s currWayPointDist %f, turn radius*2 = %f", __func__, currWayPointDist, (turnRadius * 2.0f));
+		// 	}
+		// }
 		// wp outside turning circle
 		if (currWayPointDist > (turnRadius * 2.0f))
 			return false;
+
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s currWayPointDist %f, max=%f, wayDot=%f", __func__
+		// 				, currWayPointDist
+		// 				, std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f)
+		// 				, waypointDot);
+		// 	}
+		// }
+
 		// wp inside but ~straight ahead and not reached within one tick
 		if (currWayPointDist > std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f) && waypointDot >= 0.995f)
 			return false;
@@ -1580,6 +1707,14 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true);
 			const bool allowSkip = ((cwp - pos).SqLength() <= Square(SQUARE_SIZE));
 
+			// if (DEBUG_DRAWING_ENABLED) {
+			// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+			// 		LOG("%s allowSkip %d, rangeTest=%d", __func__
+			// 				, (int)allowSkip
+			// 				, (int)rangeTest);
+			// 	}
+			// }
+
 			// CanSetNextWayPoint may return true if (allowSkip || rangeTest)
 			if (!allowSkip && !rangeTest)
 				return false;
@@ -1602,6 +1737,12 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			atEndOfPath |= (curGoalDistSq <= minGoalDistSq);
 		}
 
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s atEndOfPath %d", __func__, (int)atEndOfPath);
+		// 	}
+		// }
+
 		if (atEndOfPath) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
@@ -1609,40 +1750,102 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		}
 	}
 
+	// if (DEBUG_DRAWING_ENABLED) {
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+	// 		LOG("%s result is true", __func__);
+	// 	}
+	// }
+
 	return true;
 }
 
 void CGroundMoveType::SetNextWayPoint()
 {
 	assert(!useRawMovement);
+	//LOG("%s activated", __func__);
 
 	if (CanSetNextWayPoint()) {
-		pathController.SetTempGoalPosition(pathID, nextWayPoint);
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s setting next waypoint", __func__);
+		// 	}
+		// }
+		ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_EXISTING);
+		return;
+		//DoSetNextWaypoint();
 
-		// NOTE:
-		//   pathfinder implementation should ensure waypoints are not equal
-		//   waypoint consumption radius has to at least equal current speed
-		currWayPoint = nextWayPoint;
-		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+		// --------- in new function --------
+		// pathController.SetTempGoalPosition(pathID, nextWayPoint);
+
+		// // NOTE:
+		// //   pathfinder implementation should ensure waypoints are not equal
+		// //   waypoint consumption radius has to at least equal current speed
+		// currWayPoint = nextWayPoint;
+		// nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+		// -----------------------------------
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 		Fail(false);
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s path failed", __func__);
+		// 	}
+		// }
 		return;
 	}
 
 	const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner);
 	const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
 
-	if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0 && (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0)
+	if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0 && (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0){
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+		// 		LOG("%s path is clear", __func__);
+		// 	}
+		// }
 		return;
+	}
 
 	// this can happen if we crushed a non-blocking feature
 	// and it spawned another feature which we cannot crush
 	// (eg.) --> repath
-	ReRequestPath(false);
+	//ReRequestPath(false);
+	ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
+	// if (DEBUG_DRAWING_ENABLED) {
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+	// 		LOG("%s requesting new path", __func__);
+	// 	}
+	// }
+	//LOG("%s requesting new path", __func__);
 }
 
+
+void CGroundMoveType::DoSetNextWaypoint() {
+	pathController.SetTempGoalPosition(pathID, nextWayPoint);
+
+	// NOTE:
+	//   pathfinder implementation should ensure waypoints are not equal
+	//   waypoint consumption radius has to at least equal current speed
+	//currWayPoint = nextWayPoint;
+	//nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+	earlyCurrWayPoint = nextWayPoint;
+	earlyNextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+
+	// if (DEBUG_DRAWING_ENABLED) {
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
+	// 		LOG("%s currWayPoint (%f,%f,%f)", __func__
+	// 			, static_cast<float>(earlyCurrWayPoint.x)
+	// 			, static_cast<float>(earlyCurrWayPoint.y)
+	// 			, static_cast<float>(earlyCurrWayPoint.z));
+
+	// 		LOG("%s nextWayPoint (%f,%f,%f)", __func__
+	// 			, static_cast<float>(earlyNextWayPoint.x)
+	// 			, static_cast<float>(earlyNextWayPoint.y)
+	// 			, static_cast<float>(earlyNextWayPoint.z));
+	// 	}
+	// }
+}
 
 
 
@@ -1671,7 +1874,8 @@ void CGroundMoveType::StartEngine(bool callScript) {
 		pathID = GetNewPath();
 
 	if (pathID != 0) {
-		pathManager->UpdatePath(owner, pathID);
+		// This is now handled by UnitHandler
+		//pathManager->UpdatePath(owner, pathID);
 
 		if (callScript) {
 			// makes no sense to call this unless we have a new path
@@ -1695,6 +1899,9 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 
 	currentSpeed *= (1 - hardStop);
 	wantedSpeed = 0.0f;
+
+	// Just in case a pathing request is pending.
+	wantRepath = PATH_REQUEST_NONE;
 }
 
 
@@ -1780,7 +1987,8 @@ void CGroundMoveType::HandleObjectCollisions()
 		if (!HandleStaticObjectCollision(owner, owner, owner->moveDef,  colliderFootPrintRadius, 0.0f,  ZeroVector, true, false, true))
 			return;
 
-		ReRequestPath(false);
+		//ReRequestPath(false);
+		ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
 	}
 }
 
@@ -2102,7 +2310,8 @@ void CGroundMoveType::HandleUnitCollisions(
 			const bool checkYardMap = ((pushCollider || pushCollidee) || collideeUD->IsFactoryUnit());
 
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, allowNewPath, checkYardMap, false))
-				ReRequestPath(false);
+				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
+				//ReRequestPath(false);
 
 			continue;
 		}
@@ -2208,7 +2417,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		if (!collidee->IsMoving()) {
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), true, false))
-				ReRequestPath(false);
+				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
+				//ReRequestPath(false);
 
 			continue;
 		}

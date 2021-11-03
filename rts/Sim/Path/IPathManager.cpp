@@ -3,6 +3,7 @@
 #include "IPathManager.h"
 #include "Default/PathManager.h"
 #include "QTPFS/PathManager.hpp"
+#include "TKPFS/PathManager.h"
 #include "System/Log/ILog.h"
 
 IPathManager nullPathManager;
@@ -17,6 +18,7 @@ IPathManager* IPathManager::GetInstance(int type) {
 			case NOPFS_TYPE: { typeStr = "NO";                                         } break;
 			case HAPFS_TYPE: { typeStr = "HA"; pathManager = new       CPathManager(); } break;
 			case QTPFS_TYPE: { typeStr = "QT"; pathManager = new QTPFS::PathManager(); } break;
+			case TKPFS_TYPE: { typeStr = "TK"; pathManager = new TKPFS::CPathManager(); } break;
 		}
 
 		LOG(fmtStr, __func__, typeStr);

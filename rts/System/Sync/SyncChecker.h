@@ -11,6 +11,9 @@
 
 #include <assert.h>
 
+//#include "System/Log/ILog.h"
+
+
 /**
  * @brief sync checker class
  *
@@ -33,7 +36,13 @@ class CSyncChecker {
 		static unsigned GetChecksum() { return g_checksum; }
 		static void NewFrame() { g_checksum = 0xfade1eaf; }
 
+		static void debugSyncCheckThreading();
+
 		static void Sync(const void* p, unsigned size) {
+#ifdef DEBUG_SYNC_MT_CHECK
+			// Sync calls should not be occuring in multi-threaded sections
+			debugSyncCheckThreading();
+#endif
 			// most common cases first, make it easy for compiler to optimize for it
 			// simple xor is not enough to detect multiple zeroes, e.g.
 #ifdef TRACE_SYNC_HEAVY
@@ -80,6 +89,7 @@ class CSyncChecker {
 			}
 			}
 #endif
+			//LOG("[Sync::Checker] chksum=%u\n", g_checksum);
 		}
 
 	private:

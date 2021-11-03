@@ -53,6 +53,7 @@ public:
 	static inline BlockType IsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider);
 	static inline BlockType IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static BlockType IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static BlockType IsBlockedNoSpeedModCheckDiff(const MoveDef& moveDef, int2 prevSqr, int2 newSqr, const CSolidObject* collider);
 	static BlockType IsBlockedNoSpeedModCheckThreadUnsafe(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static inline BlockType IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 
