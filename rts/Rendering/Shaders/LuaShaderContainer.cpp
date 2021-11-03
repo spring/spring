@@ -164,6 +164,7 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 	p.AddFunc("GetConfigFloat",   LuaUnsyncedRead::GetConfigFloat);
 	p.AddFunc("GetConfigString",  LuaUnsyncedRead::GetConfigString);
 	p.AddFunc("GetLosViewColors", LuaUnsyncedRead::GetLosViewColors);
+	p.AddFunc("GetSelectedUnitsCount", LuaUnsyncedRead::GetSelectedUnitsCount);
 	p.EndTable();
 
 	if (!p.Execute()) {
