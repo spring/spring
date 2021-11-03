@@ -53,7 +53,7 @@ void IStreamBufferConcept::WaitBuffer(GLsync& syncObj) const
 	syncObj = {};
 
 	if (gWaitCount > 0)
-		LOG_L(L_NOTICE, "[IStreamBuffer::WaitBuffer] Detected non-zero (%u) wait spins on stream buffer (%u, %s). Consider increasing numBuffers", gWaitCount, id, name.c_str());
+		LOG_L(L_DEBUG, "[IStreamBuffer::WaitBuffer] Detected non-zero (%u) wait spins on stream buffer (%u, %s). Consider increasing numBuffers", gWaitCount, id, name.c_str());
 }
 
 void IStreamBufferConcept::CreateBuffer(uint32_t byteBufferSize, uint32_t newUsage)
