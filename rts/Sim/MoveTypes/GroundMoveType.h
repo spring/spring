@@ -93,6 +93,9 @@ public:
 	float GetGroundHeight(const float3&) const;
 
 	void DelayedReRequestPath() {
+		earlyCurrWayPoint = currWayPoint;
+		earlyNextWayPoint = nextWayPoint;
+
 		PathRequestType curRepath = wantRepath;
 		wantRepath = PATH_REQUEST_NONE;
 
