@@ -3,8 +3,8 @@
 #ifndef STRING_HASH_H
 #define STRING_HASH_H
 
-[[nodiscard]] unsigned HashString(const char* s, size_t n);
-[[nodiscard]] static inline unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
+[[nodiscard]] uint32_t HashString(const char* s, size_t n);
+[[nodiscard]] static inline uint32_t HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
 
 
 
@@ -26,7 +26,7 @@
 template<uint32_t length, uint32_t step = (length >> 5) + 1, uint32_t idx = length, uint32_t stop = length % step>
 struct compileTimeHasher {
 	[[nodiscard]] static constexpr uint32_t hash(const char* str, uint32_t prev_hash = length) {
-		return compileTimeHasher<length, step, idx - step, stop>::hash(str, prev_hash ^ ((prev_hash << 5) + (prev_hash >> 2) + ((unsigned char)str[idx - 1])));
+		return compileTimeHasher<length, step, idx - step, stop>::hash(str, prev_hash ^ ((prev_hash << 5) + (prev_hash >> 2) + ((uint8_t)str[idx - 1])));
 	}
 };
 
