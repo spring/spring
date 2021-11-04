@@ -31,6 +31,13 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedBool(L, "glSupportTextureQueryLOD" , globalRendering->supportTextureQueryLOD);
 	LuaPushNamedBool(L, "glSupportMSAAFrameBuffer" , globalRendering->supportMSAAFrameBuffer);
 
+	LuaPushNamedBool(L, "glHaveAMD", globalRendering->haveAMD);
+	LuaPushNamedBool(L, "glHaveNVidia", globalRendering->haveNvidia);
+	LuaPushNamedBool(L, "glHaveIntel", globalRendering->haveIntel);
+
+	LuaPushNamedBool(L, "glHaveGLSL", globalRendering->haveGLSL);
+	LuaPushNamedBool(L, "glHaveGL4", globalRendering->haveGL4);
+
 	LuaPushNamedNumber(L, "glSupportDepthBufferBitDepth", globalRendering->supportDepthBufferBitDepth);
 
 	LuaPushNamedBool(L, "glSupportRestartPrimitive", globalRendering->supportRestartPrimitive);
