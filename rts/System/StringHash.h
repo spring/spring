@@ -3,32 +3,37 @@
 #ifndef STRING_HASH_H
 #define STRING_HASH_H
 
-unsigned HashString(const char* s, size_t n);
-static inline unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
+[[nodiscard]] unsigned HashString(const char* s, size_t n);
+[[nodiscard]] static inline unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
 
 
 
-constexpr unsigned int hashString(const char* str, unsigned int length = -1u, unsigned int hash = 5381u)
+[[nodiscard]] constexpr uint32_t hashString(const char* str, uint32_t length = -1u, uint32_t hash = 5381u)
 {
 	return ((*str) != 0 && length > 0) ? hashString(str + 1, length - 1, hash + (hash << 5) + *str) : hash;
 }
 
-constexpr unsigned int hashStringLower(const char* str, unsigned int length = -1u, unsigned int hash = 5381u)
+[[nodiscard]] constexpr uint32_t hashStringLower(const char* str, uint32_t length = -1u, uint32_t hash = 5381u)
 {
 	return ((*str) != 0 && length > 0) ? hashStringLower(str + 1, length - 1, hash + (hash << 5) + (*str + ('a' - 'A') * (*str >= 'A' && *str <= 'Z'))) : hash;
 }
 
-template<unsigned int length, unsigned int step = (length >> 5) + 1, unsigned int idx = length, unsigned int stop = length % step>
+[[nodiscard]] constexpr uint32_t operator"" _hs(const char* str, std::size_t) noexcept {
+	return hashString(str);
+}
+
+
+template<uint32_t length, uint32_t step = (length >> 5) + 1, uint32_t idx = length, uint32_t stop = length % step>
 struct compileTimeHasher {
-	static constexpr unsigned int hash(const char* str, unsigned int prev_hash = length) {
+	[[nodiscard]] static constexpr uint32_t hash(const char* str, uint32_t prev_hash = length) {
 		return compileTimeHasher<length, step, idx - step, stop>::hash(str, prev_hash ^ ((prev_hash << 5) + (prev_hash >> 2) + ((unsigned char)str[idx - 1])));
 	}
 };
 
 // stopping condition
-template<unsigned int length, unsigned int step, unsigned int idx>
+template<uint32_t length, uint32_t step, uint32_t idx>
 struct compileTimeHasher<length, step, idx, idx> {
-	static constexpr unsigned int hash(const char* str, unsigned int prev_hash = length) {
+	[[nodiscard]] static constexpr uint32_t hash(const char* str, uint32_t prev_hash = length) {
 		return prev_hash;
 	}
 };
