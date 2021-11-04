@@ -31,6 +31,16 @@ void IStreamBufferConcept::PutBufferLocks()
 	lockList.clear();
 }
 
+IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, const std::string& name_, const std::string_view& bufferTypeName)
+	: name{ name_ }
+	, target{ target_ }
+	, id{ 0 }
+	, byteSize{ 0 }
+	, allocIdx{ 0 }
+{
+	LOG_L(L_NOTICE, "[StreamBuffer::%s] Created StreamBuffer name %s type %s", __func__, name.c_str(), bufferTypeName.data());
+}
+
 void IStreamBufferConcept::QueueLockBuffer(GLsync& syncObj) const
 {
 	lockList.emplace_back(&syncObj);

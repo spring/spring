@@ -10,11 +10,13 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 
 
 #include "System/SpringMem.h"
 #include "System/SpringMath.h"
+#include "System/TypeToStr.h"
 #include "Rendering/GlobalRendering.h"
 
 class IStreamBufferConcept {
@@ -31,13 +33,7 @@ public:
 
 	static void PutBufferLocks();
 
-	IStreamBufferConcept(uint32_t target_, const std::string& name_)
-		: name{ name_ }
-		, target{ target_ }
-		, id{ 0 }
-		, byteSize{ 0 }
-		, allocIdx{ 0 }
-	{}
+	IStreamBufferConcept(uint32_t target_, const std::string& name_, const std::string_view& bufferTypeName);
 	virtual ~IStreamBufferConcept() {}
 
 	uint32_t GetAlignedByteSize(uint32_t byteSizeRaw);
@@ -73,8 +69,8 @@ class IStreamBuffer : public IStreamBufferConcept {
 public:
 	static std::unique_ptr<IStreamBuffer<T>> CreateInstance(uint32_t target, uint32_t numElems, const std::string& name = "", Types type = SB_AUTODETECT, bool resizeAble = false, bool coherent = false, uint32_t numBuffers = DEFAULT_NUM_BUFFERS);
 public:
-	IStreamBuffer(uint32_t target_, uint32_t numElems, const std::string& name_)
-		: IStreamBufferConcept(target_, name_)
+	IStreamBuffer(uint32_t target_, uint32_t numElems, const std::string& name_, const std::string_view& bufferTypeName_)
+		: IStreamBufferConcept(target_, name_, bufferTypeName_)
 	{}
 
 	virtual T* Map(const T* clientPtr = nullptr) = 0;
@@ -94,7 +90,7 @@ template<typename T>
 class BufferDataImpl : public IStreamBuffer<T> {
 public:
 	BufferDataImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 		, clientMem { false }
 		, buffer{ nullptr }
 	{
@@ -149,7 +145,7 @@ template<typename T>
 class BufferSubDataImpl : public IStreamBuffer<T> {
 public:
 	BufferSubDataImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 		, clientMem{ false }
 		, buffer{ nullptr }
 	{
@@ -204,7 +200,7 @@ template<typename T>
 class MapAndOrphanImpl : public IStreamBuffer<T> {
 public:
 	MapAndOrphanImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 	{
 		Init(numElems);
 		mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveAMD);
@@ -245,7 +241,7 @@ template<typename T>
 class MapAndSyncImpl : public IStreamBuffer<T> {
 public:
 	MapAndSyncImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_, bool coherent_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 		, coherent{ coherent_ }
 	{
@@ -308,7 +304,7 @@ template<typename T>
 class PersistentMapImpl : public IStreamBuffer<T> {
 public:
 	PersistentMapImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_, bool coherent_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 		, ptrBase{ nullptr }
 		, coherent{ coherent_ }
@@ -381,7 +377,7 @@ template<typename T>
 class PinnedMemoryAMDImpl : public IStreamBuffer<T> {
 public:
 	PinnedMemoryAMDImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_)
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 	{
 		Init(numElems);
