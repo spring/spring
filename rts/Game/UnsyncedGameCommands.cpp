@@ -1776,14 +1776,14 @@ class SetGamespeedActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SetGamespeedActionExecutor() : IUnsyncedActionExecutor(
 		"SetSpeed",
-		"Set the simulation speed to any positive value, bounded my minimum and maximum game speed settings."
+		"Set the simulation speed to any positive value, bounded by the minimum and maximum game speed settings."
 	) {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		if ((action.GetArgs()).empty())
 			return false;
 
-		float speed = atof((action.GetArgs()).c_str());
+		const float speed = atof((action.GetArgs()).c_str());
 
 		// atof converts non-float strings to 0.0, can be ignored
 		if (speed <= 0.0)
