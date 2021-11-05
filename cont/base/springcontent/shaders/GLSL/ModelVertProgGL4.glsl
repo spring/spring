@@ -112,9 +112,7 @@ out Data {
 };
 out float gl_ClipDistance[3];
 
-mat4 mat4mix(mat4 a, mat4 b, float alpha) {
-	return (a * (1.0 - alpha) + b * alpha);
-}
+#line 1115
 
 void TransformPlayerCam(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
@@ -128,15 +126,11 @@ void TransformPlayerCamStaticMat(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
 }
 
-mat4 GetPieceMatrix(bool staticModel) {
-	return mat[instData.x + pieceIndex + uint(!staticModel)];
-}
-
-#line 1131
+#define GetPieceMatrix(staticModel) (mat[instData.x + pieceIndex + uint(!staticModel)])
 
 void main(void)
 {
-	mat4 pieceMatrix = GetPieceMatrix(drawMode < 0);
+	mat4 pieceMatrix = GetPieceMatrix(bool(drawMode < 0));
 	mat4 worldMatrix = (drawMode >= 0) ? mat[instData.x] : staticModelMatrix;
 	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
