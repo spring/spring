@@ -146,10 +146,7 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (u->drawFlag == 0)
 		return false;
 
-	if (u->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return false;
-
-	if (u->isIcon) //TODO remove isIcon
+	if (u->GetIsIcon())
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
@@ -174,10 +171,7 @@ bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u)
 	if (u->drawFlag == 0)
 		return false;
 
-	if (u->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return false;
-
-	if (u->isIcon) //TODO remove isIcon
+	if (u->GetIsIcon())
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
@@ -305,7 +299,7 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 
 	for (CUnit* u : modelDrawerData->GetUnsortedObjects()) {
-		if (!u->isIcon)
+		if (!u->GetIsIcon())
 			continue;
 
 		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS));
@@ -551,10 +545,7 @@ void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhost
 		return;
 	}
 
-	if (unit->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return;
-
-	if (unit->isIcon)
+	if (unit->GetIsIcon())
 		return;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
@@ -753,7 +744,7 @@ void CUnitDrawerLegacy::DrawIconScreenArray(const CUnit* unit, const icon::CIcon
 	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
 	// fade icons away in high zoom in levels
-	if (!unit->isIcon) {
+	if (!unit->GetIsIcon()) {
 		if (dist / unitRadiusMult < modelDrawerData->iconFadeVanish)
 			return;
 		else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && dist / unitRadiusMult < modelDrawerData->iconFadeStart)

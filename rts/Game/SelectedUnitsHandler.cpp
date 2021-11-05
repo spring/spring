@@ -603,7 +603,7 @@ void CSelectedUnitsHandler::Draw()
 			const CUnit* unit = unitHandler.GetUnit(unitID);
 			const MoveDef* moveDef = unit->moveDef;
 
-			if (unit->isIcon)
+			if (unit->GetIsIcon())
 				continue;
 			if (!IsUnitSelected(unit))
 				continue;

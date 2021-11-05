@@ -170,11 +170,13 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSkyBoxTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
+	REGISTER_LUA_CFUNC(SetUnitAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
 	REGISTER_LUA_CFUNC(SetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(SetFeatureAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(SetFeatureFade);
 	REGISTER_LUA_CFUNC(SetFeatureSelectionVolumeData);
 
@@ -1711,6 +1713,16 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 	return 0;
 }
 
+int LuaUnsyncedCtrl::SetUnitAlwaysUpdateMatrix(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->alwaysUpdateMat = luaL_checkboolean(L, 2);
+	return 0;
+}
 
 int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 {
@@ -1779,6 +1791,16 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 	return 0;
 }
 
+int LuaUnsyncedCtrl::SetFeatureAlwaysUpdateMatrix(lua_State* L)
+{
+	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	feature->alwaysUpdateMat = luaL_checkboolean(L, 2);
+	return 0;
+}
 
 int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 {

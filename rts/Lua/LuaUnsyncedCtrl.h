@@ -73,11 +73,13 @@ class LuaUnsyncedCtrl {
 		static int SetSkyBoxTexture(lua_State* L);
 
 		static int SetUnitNoDraw(lua_State* L);
+		static int SetUnitAlwaysUpdateMatrix(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
 		static int SetUnitLeaveTracks(lua_State* L);
 		static int SetUnitSelectionVolumeData(lua_State* L);
 		static int SetFeatureNoDraw(lua_State* L);
+		static int SetFeatureAlwaysUpdateMatrix(lua_State* L);
 		static int SetFeatureFade(lua_State* L);
 		static int SetFeatureSelectionVolumeData(lua_State* L);
 

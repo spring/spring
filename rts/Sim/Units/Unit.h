@@ -246,6 +246,13 @@ public: // unsynced methods
 	const CGroup* GetGroup() const;
 	      CGroup* GetGroup();
 
+	bool GetIsIcon() const { return HasDrawFlag(DrawFlags::SO_DRICON_FLAG); }
+	void SetIsIcon(bool b) {
+		if (b)
+			AddDrawFlag(DrawFlags::SO_DRICON_FLAG);
+		else
+			DelDrawFlag(DrawFlags::SO_DRICON_FLAG);
+	}
 public:
 	static void  SetEmpDeclineRate(float value) { empDeclineRate = value; }
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
@@ -536,7 +543,6 @@ public:
 	bool leaveTracks = false;
 
 	bool isSelected = false;
-	bool isIcon = false;
 
 	float iconRadius = 0.0f;
 

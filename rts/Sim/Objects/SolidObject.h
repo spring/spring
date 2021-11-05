@@ -300,8 +300,9 @@ public:
 	virtual void SetMass(float newMass);
 
 	void ResetDrawFlag() { drawFlag = DrawFlags::SO_NODRAW_FLAG; }
-	void SetDrawFlag(DrawFlags f) { drawFlag  = f; }
-	void AddDrawFlag(DrawFlags f) { drawFlag |= f; }
+	void SetDrawFlag(DrawFlags f) { drawFlag  =  f; }
+	void AddDrawFlag(DrawFlags f) { drawFlag |=  f; }
+	void DelDrawFlag(DrawFlags f) { drawFlag &= ~f; }
 	bool HasDrawFlag(DrawFlags f) const { return (drawFlag & f) == f; }
 private:
 	void SetMidPos(const float3& mp, bool relative) {

@@ -122,9 +122,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
+	REGISTER_LUA_CFUNC(GetUnitAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(GetFeatureAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
@@ -650,7 +652,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !unit->isIcon) &&
+				(!checkIcon || !unit->GetIsIcon()) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -659,7 +661,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !unit->isIcon) &&
+				(!checkIcon || !unit->GetIsIcon()) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -674,7 +676,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	lua_pushboolean(L, unit->isIcon);
+	lua_pushboolean(L, unit->GetIsIcon());
 	return 1;
 }
 
@@ -701,6 +703,16 @@ int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
+int LuaUnsyncedRead::GetUnitAlwaysUpdateMatrix(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	lua_pushboolean(L, unit->alwaysUpdateMat);
+	return 1;
+}
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
@@ -737,6 +749,17 @@ int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 {
 	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
+}
+
+int LuaUnsyncedRead::GetFeatureAlwaysUpdateMatrix(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	lua_pushboolean(L, feature->alwaysUpdateMat);
+	return 1;
 }
 
 int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
@@ -931,7 +954,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			if (allyTeamID >= 0 && !(u->losStatus[allyTeamID] & LOS_INLOS))
 				continue;
 
-			if (noIcons && u->isIcon)
+			if (noIcons && u->GetIsIcon())
 				continue;
 
 			if ((teamID == AllyUnits)  && (allyTeamID != u->allyteam))
