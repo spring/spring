@@ -65,14 +65,15 @@ private:
 
 CInMapDraw::CInMapDraw()
 {
-	static_assert(sizeof(CNotificationPeeper) < sizeof(notificationPeeperMem), "");
-	eventHandler.AddClient(new (notificationPeeperMem) CNotificationPeeper());
+	notificationPeeper = std::make_unique<CNotificationPeeper>();
+	eventHandler.AddClient(notificationPeeper.get());
 }
 
 CInMapDraw::~CInMapDraw()
 {
 	// EC destructor calls RemoveClient
-	reinterpret_cast<CNotificationPeeper*>(notificationPeeperMem)->~CNotificationPeeper();
+	eventHandler.RemoveClient(notificationPeeper.get());
+	notificationPeeper = nullptr;
 }
 
 

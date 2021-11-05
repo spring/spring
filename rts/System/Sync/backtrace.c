@@ -117,11 +117,12 @@ int backtrace (void **array, int size)
 // This part is for MSVC and is (obviously) not from GNU libc
 // Might actually work on mingw as well, feel free to test and replace.
 #if defined _MSC_VER
+#include <Windows.h>
 int backtrace(void **array, int framesToCapture)
 {
 	int frames = 0;
 #ifdef _M_X64
-	frames = CaptureStackBackTrace(framesToSkip, framesToCapture, backTrace, nullptr);
+	frames = CaptureStackBackTrace(0, framesToCapture, array, 0);
 #else
 	__try {
 		void **frame = 0;
