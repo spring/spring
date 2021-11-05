@@ -13,6 +13,25 @@
 
 class CUnit;
 
+typedef int PathRequestType;
+
+const int PATH_REQUEST_NONE = 0;
+const int PATH_REQUEST_TIMING_DELAYED   = (1<<0);
+const int PATH_REQUEST_TIMING_IMMEDIATE = (1<<1);
+const int PATH_REQUEST_TIMING_BITMASK   = (PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_TIMING_IMMEDIATE);
+
+const int PATH_REQUEST_UPDATE_EXISTING  = (1<<2);
+const int PATH_REQUEST_UPDATE_FULLPATH  = (1<<3);
+const int PATH_REQUEST_UPDATE_BITMASK   = (PATH_REQUEST_UPDATE_EXISTING|PATH_REQUEST_UPDATE_FULLPATH);
+
+// enum PathRequestType {
+// 	PATH_REQUEST_NONE = 0,
+// 	PATH_REQUEST_TIMING_DELAYED = 1,
+// 	PATH_REQUEST_TIMING_IMMEDIATE = 2,
+// 	PATH_REQUEST_UPDATE_EXISTING = 3,
+// 	PATH_REQUEST_UPDATE_FULLPATH = 4,
+// };
+
 class AMoveType : public CObject
 {
 	CR_DECLARE(AMoveType)
@@ -81,6 +100,11 @@ public:
 	float CalcScriptMoveRate(float speed, float nsteps) const { return Clamp(math::floor((speed / maxSpeed) * nsteps), 0.0f, nsteps - 1.0f); }
 	float CalcStaticTurnRadius() const;
 
+	virtual PathRequestType WantsReRequestPath() const { return wantRepath; }
+	virtual void DelayedReRequestPath() {}
+	virtual void SyncWaypoints() {}
+	virtual unsigned int GetPathId() { return 0; }
+
 public:
 	CUnit* owner;
 
@@ -105,6 +129,8 @@ protected:
 
 	bool useHeading = true;
 	bool useWantedSpeed[2] = {true, true};  // if false, SelUnitsAI will not (re)set wanted-speed for {[0] := individual, [1] := formation} orders
+
+	PathRequestType wantRepath = PATH_REQUEST_NONE;
 };
 
 #endif // MOVETYPE_H

@@ -14,14 +14,17 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/SpringMath.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Set.h"
 
+#include "Sim/Path/TKPFS/PathGlobal.h"
 
 CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
@@ -340,17 +343,104 @@ void CUnitHandler::SlowUpdateUnits()
 	if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0)
 		activeSlowUpdateUnit = 0;
 
+	const size_t idxBeg = activeSlowUpdateUnit;
+	const size_t maximumCnt = activeUnits.size() - idxBeg;
+	const size_t logicalCnt = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+	const size_t indCnt = logicalCnt > maximumCnt ? maximumCnt : logicalCnt;
+	const size_t idxEnd = idxBeg + indCnt;
+
+	activeSlowUpdateUnit = idxEnd;
+
 	// stagger the SlowUpdate's
-	for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
-		CUnit* unit = activeUnits[activeSlowUpdateUnit];
+	for (size_t i = idxBeg; i<idxEnd; ++i) {
+		CUnit* unit = activeUnits[i];
 
 		unit->SanityCheck();
 		unit->SlowUpdate();
 		unit->SlowUpdateWeapons();
 		unit->localModel.UpdateBoundingVolume();
 		unit->SanityCheck();
+	}
 
-		n--;
+	std::vector<CUnit*> unitsToMove(activeUnits.size());
+	size_t unitsToMoveCount = 0;
+
+	for (size_t i = 0; i<idxBeg; ++i)
+	{
+		CUnit* unit = activeUnits[i];
+		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_IMMEDIATE))
+			unitsToMove[unitsToMoveCount++] = unit;
+	}
+	for (size_t i = idxBeg; i<idxEnd; ++i)
+	{
+		CUnit* unit = activeUnits[i];
+		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_TIMING_IMMEDIATE))
+			unitsToMove[unitsToMoveCount++] = unit;
+	}
+	for (size_t i = idxEnd; i<activeUnits.size(); ++i)
+	{
+		CUnit* unit = activeUnits[i];
+		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_IMMEDIATE))
+			unitsToMove[unitsToMoveCount++] = unit;
+	}
+
+	if (pathManager->SupportsMultiThreadedRequests()) {
+		SCOPED_TIMER("Sim::Unit::RequestPath");
+
+		TKPFS::PathingSystemActive = true;
+
+		//LOG("----- Unit Path Requests for Frame Started -----");
+		// Carry out the pathing requests without heatmap updates.
+		for_mt(0, unitsToMoveCount, [&unitsToMove](const int i){
+			CUnit* unit = unitsToMove[i];
+			unit->moveType->DelayedReRequestPath();
+		});
+		// for (size_t i = 0; i<unitsToMoveCount; ++i){
+		// 	CUnit* unit = unitsToMove[i];
+		// 	unit->moveType->DelayedReRequestPath();
+		// }
+
+		// update cache
+		for (size_t i = 0; i<unitsToMoveCount; ++i){
+			CUnit* unit = unitsToMove[i];
+			auto pathId = unit->moveType->GetPathId();
+			if (pathId > 0)
+				pathManager->SavePathCacheForPathId(pathId);
+		}
+
+		// Update Heatmaps for moved units.
+		for (size_t i = 0; i<unitsToMoveCount; ++i){
+			CUnit* unit = unitsToMove[i];
+			auto pathId = unit->moveType->GetPathId();
+			if (pathId > 0)
+				pathManager->UpdatePath(unit, pathId);
+		}
+
+		for (size_t i = 0; i<unitsToMoveCount; ++i){
+			CUnit* unit = unitsToMove[i];
+			unit->moveType->SyncWaypoints();
+		}
+
+		TKPFS::PathingSystemActive = false;
+		//LOG("----- Unit Path Requests for Frame Ended -----");
+	}
+	else
+	{
+		SCOPED_TIMER("Sim::Unit::RequestPath");
+		for (size_t i = 0; i<unitsToMoveCount; ++i){
+			CUnit* unit = unitsToMove[i];
+			unit->moveType->DelayedReRequestPath();
+
+			// Update heatmap inline with request to keep as close as possible to the original
+			// behaviour.
+			auto pathId = unit->moveType->GetPathId();
+			if (pathId > 0)
+				pathManager->UpdatePath(unit, pathId);
+
+			unit->moveType->SyncWaypoints();
+
+			// update cache is still done inside the ST pathing
+		}
 	}
 }
 

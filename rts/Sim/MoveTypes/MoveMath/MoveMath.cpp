@@ -137,6 +137,49 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	return ret;
 }
 
+/* Check if a given square-position is accessable by the MoveDef footprint. */
+CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckDiff(const MoveDef& moveDef, int2 prevSqr, int2 newSqr, const CSolidObject* collider)
+{
+	// prev allows {-1, -1} so that the first check is always treated as a full test
+	const int prev_xmin = std::max(prevSqr.x - moveDef.xsizeh,               -1);
+	const int prev_zmin = std::max(prevSqr.y - moveDef.zsizeh,               -1);
+	const int prev_xmax = std::min(prevSqr.x + moveDef.xsizeh, mapDims.mapx - 1);
+	const int prev_zmax = std::min(prevSqr.y + moveDef.zsizeh, mapDims.mapy - 1);
+
+	const int xmin = std::max(newSqr.x - moveDef.xsizeh,                0);
+	const int zmin = std::max(newSqr.y - moveDef.zsizeh,                0);
+	const int xmax = std::min(newSqr.x + moveDef.xsizeh, mapDims.mapx - 1);
+	const int zmax = std::min(newSqr.y + moveDef.zsizeh, mapDims.mapy - 1);
+
+	BlockType ret = BLOCK_NONE;
+
+	// footprints are point-symmetric around <xSquare, zSquare>
+	// same as RangeIsBlocked but without anti-duplication test
+	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
+		const int zOffset = z * mapDims.mapx;
+
+		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
+
+			if (		z <= prev_zmax && z >= prev_zmin
+			 		&& 	x <= prev_xmax && x >= prev_xmin)
+				continue;
+
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
+
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CSolidObject* collidee = cell[i];
+
+				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
+					continue;
+
+				return ret;
+			}
+		}
+	}
+
+	return ret;
+}
+
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
