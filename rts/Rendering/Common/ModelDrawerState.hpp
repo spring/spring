@@ -50,7 +50,7 @@ public:
 	virtual bool CanDrawDeferred() const { return false; }
 	virtual bool IsLegacy() const = 0;
 
-	bool IsValid() const { return valid; }
+	bool IsValid() const;
 
 	virtual void Enable(bool deferredPass, bool alphaPass) const = 0;
 	virtual void Disable(bool deferredPass) const = 0;
@@ -102,7 +102,6 @@ public:
 protected:
 	std::array<Shader::IProgramObject*, MODEL_SHADER_COUNT> modelShaders;
 	mutable Shader::IProgramObject* modelShader = nullptr;
-	bool valid = true;
 };
 
 

@@ -266,13 +266,11 @@ CModelDrawerStateARB::CModelDrawerStateARB()
 	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[0                      ], "", GL_FRAGMENT_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->Link();
-	valid &= modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->IsValid();
 
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD] = sh->CreateProgramObject(PO_CLASS, "S3OShaderAdvARB", true);
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[1                      ], "", GL_FRAGMENT_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
-	valid &= modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->IsValid();
 
 	modelShaders[MODEL_SHADER_NOSHADOW_DEFERRED] = nullptr; //cannot draw deferred
 	modelShaders[MODEL_SHADER_SHADOWED_DEFERRED] = nullptr;
@@ -431,8 +429,6 @@ CModelDrawerStateGLSL::CModelDrawerStateGLSL()
 		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
-
-		valid &= modelShaders[n]->IsValid();
 	}
 
 	// make the active shader non-NULL
@@ -543,8 +539,6 @@ CModelDrawerStateGL4::CModelDrawerStateGL4()
 		modelShaders[n]->Enable();
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
-
-		valid &= modelShaders[n]->IsValid();
 	}
 
 	// make the active shader non-NULL
@@ -701,4 +695,17 @@ IModelDrawerState::IModelDrawerState()
 	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
 	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);
 	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
+}
+
+bool IModelDrawerState::IsValid() const
+{
+	bool valid = true;
+	for (auto ms : modelShaders) {
+		if (!ms)
+			continue;
+
+		valid &= ms->IsValid();
+	}
+
+	return valid;
 }
