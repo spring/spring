@@ -279,6 +279,9 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::SelectImplementation(bool fo
 		if (!s->CanEnable())
 			return false;
 
+		if (!s->IsValid())
+			return false;
+
 		return true;
 	};
 
