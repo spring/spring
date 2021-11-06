@@ -30,7 +30,7 @@
 
 void MatrixUploader::InitVBO()
 {
-	matrixSSBO = IStreamBuffer<CMatrix44f>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, "MatricesSSBO", IStreamBufferConcept::Types::SB_AUTODETECT);
+	matrixSSBO = IStreamBuffer<CMatrix44f>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, "MatricesSSBO", IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
 	matrixSSBO->BindBufferRange(MATRIX_SSBO_BINDING_IDX);
 }
 
