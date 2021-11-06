@@ -396,15 +396,11 @@ void CGame::Load(const std::string& mapFileName)
 		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
 	}
-
-	// skip Lua handlers in case of forced exit
-	// makes the specific error(s) more obvious
 	if (!forcedQuit) {
 		try {
 			LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 			LoadInterface();
-			LoadLua(saveFileHandler != nullptr, false);
 		} catch (const content_error& e) {
 			LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
 			forcedQuit = true;
@@ -423,8 +419,19 @@ void CGame::Load(const std::string& mapFileName)
 		}
 	}
 
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+
+			LoadLua(saveFileHandler != nullptr, false);
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
+	}
+
 	try {
-		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+		LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		if (!globalQuit && saveFileHandler != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
@@ -439,7 +446,7 @@ void CGame::Load(const std::string& mapFileName)
 			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
 		}
 	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
+		LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
 	}
 
@@ -728,15 +735,15 @@ void CGame::LoadInterface()
 	}
 }
 
-void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
+void CGame::LoadLua(bool dryRun, bool onlyUnsynced)
 {
-	assert(!(onlySynced && onlyUnsynced));
+	assert(!(dryRun && onlyUnsynced));
 	// Lua components
 	ENTER_SYNCED_CODE();
 	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
 	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
 
-	const std::string prefix = (onlySynced ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
+	const std::string prefix = (dryRun ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
 	const std::string names[] = {"LuaRules", "LuaGaia"};
 
 	CSplitLuaHandle* handles[] = {luaRules, luaGaia};
@@ -748,13 +755,13 @@ void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
 		if (onlyUnsynced && handles[i] != nullptr) {
 			handles[i]->InitUnsynced();
 		} else {
-			loaders[i](onlySynced);
+			loaders[i](dryRun);
 		}
 	}
 
 	LEAVE_SYNCED_CODE();
 
-	if (!onlySynced) {
+	if (!dryRun) {
 		loadscreen->SetLoadMessage("Loading LuaUI");
 		CLuaUI::LoadFreeHandler();
 	}

@@ -217,8 +217,8 @@ class CSplitLuaHandle
 		virtual ~CSplitLuaHandle();
 
 		std::string LoadFile(const std::string& filename, const std::string& modes) const;
-		bool InitSynced();
-		bool Init(bool onlySynced);
+		bool InitSynced(bool dryRun);
+		bool Init(bool dryRun);
 		bool FreeUnsynced();
 		bool LoadUnsynced();
 

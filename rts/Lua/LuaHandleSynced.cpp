@@ -1664,17 +1664,20 @@ CSplitLuaHandle::~CSplitLuaHandle()
 }
 
 
-bool CSplitLuaHandle::InitSynced()
+bool CSplitLuaHandle::InitSynced(bool dryRun)
 {
 	if (!IsValid()) {
 		KillLua();
 		return false;
 	}
 
-	const std::string syncedCode = LoadFile(GetSyncedFileName(), GetInitFileModes());
-	if (syncedCode.empty()) {
-		KillLua();
-		return false;
+	std::string syncedCode;
+	if (!dryRun) {
+		syncedCode = LoadFile(GetSyncedFileName(), GetInitFileModes());
+		if (syncedCode.empty()) {
+			KillLua();
+			return false;
+		}
 	}
 
 	const bool haveSynced = syncedLuaHandle.Init(syncedCode, GetUnsyncedFileName());
@@ -1714,7 +1717,7 @@ bool CSplitLuaHandle::InitUnsynced()
 }
 
 
-bool CSplitLuaHandle::Init(bool onlySynced)
+bool CSplitLuaHandle::Init(bool dryRun)
 {
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -1723,7 +1726,7 @@ bool CSplitLuaHandle::Init(bool onlySynced)
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
 	SetSelectTeam(GetInitSelectTeam());
 
-	return InitSynced() && (onlySynced || InitUnsynced());
+	return InitSynced(dryRun) && (dryRun || InitUnsynced());
 }
 
 

@@ -883,7 +883,7 @@ void creg_CClosure::Serialize(creg::ISerializer* s)
 	} else {
 		std::string name;
 		sType.Serialize(s, &name);
-		if (nameToFunc.find(name) != nameToFunc.end()) {
+		if (nameToFunc.find(name) == nameToFunc.end()) {
 			LOG_L(L_ERROR, "Function with name %s was not found during deserialization", name.c_str());
 		}
 		assert(nameToFunc.find(name) != nameToFunc.end());
