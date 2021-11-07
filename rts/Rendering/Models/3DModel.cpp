@@ -594,7 +594,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 	, dirty(true)
 
-	, scriptSetVisible(piece->HasGeometryData())
+	, scriptSetVisible(true)
 	, blockScriptAnims(false)
 
 	, lmodelPieceIndex(-1)
