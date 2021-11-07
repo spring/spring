@@ -386,9 +386,6 @@ unsigned int CPathManager::RequestPath(
 	float goalRadius,
 	bool synced
 ) {
-	if (!PathingSystemActive && synced)
-		LOG("!!!!! WARNING !!! Request Outside of Pathing System Detected !!!!!");
-
 	if (!IsFinalized())
 		return 0;
 
