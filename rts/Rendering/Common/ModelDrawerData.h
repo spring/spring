@@ -197,10 +197,10 @@ inline void CModelDrawerDataBase<T>::UpdateCommon()
 		T* o = unsortedObjects[k];
 		UpdateObjectDrawFlags(o);
 
-		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG)) {
+		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG))
 			this->UpdateObjectSMMA(o);
-			this->UpdateObjectUniforms(o);
-		}
+
+		this->UpdateObjectUniforms(o);
 	};
 
 	if (mtModelDrawer) {
