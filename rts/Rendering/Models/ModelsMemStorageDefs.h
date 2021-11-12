@@ -7,7 +7,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 constexpr static int MAX_MODEL_UD_UNIFORMS = 20;
-using ModelUniformData = struct alignas(4) {
+struct alignas(4) ModelUniformData {
 	union {
 		uint32_t composite;
 		struct {
