@@ -19,6 +19,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/CameraHandler.h"
 
 class CModelDrawerDataConcept : public CEventClient {
@@ -185,9 +186,12 @@ inline void CModelDrawerDataBase<T>::UpdateObjectUniforms(const T* o)
 {
 	auto& uni = modelsUniformsStorage.GetObjUniformsArray(o);
 	uni.drawFlag = o->drawFlag;
-	uni.speed = o->speed;
-	uni.maxHealth = o->maxHealth;
-	uni.health = o->health;
+
+	if (gu->spectatingFullView || o->IsInLosForAllyTeam(gu->myAllyTeam)) {
+		uni.speed = o->speed;
+		uni.maxHealth = o->maxHealth;
+		uni.health = o->health;
+	}
 }
 
 template<typename T>
