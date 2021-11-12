@@ -42,7 +42,7 @@
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/MatrixUploader.h"
+#include "Rendering/ModelsDataUploader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/Units/UnitDrawer.h"
@@ -640,6 +640,7 @@ void CGame::PreLoadRendering()
 
 	// load components that need to exist before PostLoadSimulation
 	matrixUploader.Init();
+	modelsUniformsUploader.Init();
 	worldDrawer.InitPre();
 }
 
@@ -887,6 +888,7 @@ void CGame::KillRendering()
 	spring::SafeDelete(geometricObjects);
 	worldDrawer.Kill();
 	matrixUploader.Kill();
+	modelsUniformsUploader.Kill();
 }
 
 void CGame::KillInterface()
@@ -1208,6 +1210,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	{
 		worldDrawer.Update(newSimFrame);
 		matrixUploader.Update();
+		modelsUniformsUploader.Update();
 
 		CNamedTextures::Update();
 		CFontTexture::Update();

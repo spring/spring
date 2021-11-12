@@ -359,7 +359,7 @@ static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 				workerThreads[false].push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i, false)));
 				workerThreads[ true].push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i,  true)));
 			}
-		} catch (const opengl_error& gle) {
+		} catch (const opengl_error&) {
 			// shared gl context creation failed
 			ThreadPool::SetThreadCount(0);
 

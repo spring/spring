@@ -138,16 +138,16 @@ struct SDrawElementsIndirectCommand {
 
 struct SInstanceData {
 	SInstanceData() = default;
-	SInstanceData(uint32_t ssboOffset_, uint8_t teamIndex_, uint8_t drawFlags, uint32_t aux0_, uint32_t aux1_)
-		: ssboOffset{ ssboOffset_ }
-		, info { teamIndex_, drawFlags, 0, 0 }
-		, aux0 { aux0_ }
-		, aux1 { aux1_ }
+	SInstanceData(uint32_t matOffset_, uint8_t teamIndex, uint8_t drawFlags, uint32_t uniOffset_)
+		: matOffset{ matOffset_ }			 // updated during the following draw frames
+		, uniOffset{ uniOffset_ }			 // updated during the following draw frames
+		, info{ teamIndex, drawFlags, 0, 0 } // not updated during the following draw frames
+		, aux1 { 0u }
 	{}
 
-	uint32_t ssboOffset;
+	uint32_t matOffset;
+	uint32_t uniOffset;
 	std::array<uint8_t, 4> info;
-	uint32_t aux0;
 	uint32_t aux1;
 };
 

@@ -8,9 +8,9 @@ layout (location = 4) in vec4 uv;
 layout (location = 5) in uint pieceIndex;
 
 layout (location = 6) in uvec4 instData;
-// u32 ssboOffset
+// u32 matOffset
+// u32 uniOffset
 // u32 {teamIdx, drawFlag, unused, unused}
-// u32 unused
 // u32 unused
 
 layout(std140, binding = 0) uniform UniformMatrixBuffer {
@@ -83,7 +83,7 @@ layout(std140, binding = 1) uniform UniformParamsBuffer {
 	vec4 teamColor[255]; //all team colors
 };
 
-layout(std140, binding=0) readonly buffer MatrixBuffer {
+layout(std140, binding = 0) readonly buffer MatrixBuffer {
 	mat4 mat[];
 };
 
@@ -132,6 +132,7 @@ void main(void)
 {
 	mat4 pieceMatrix = GetPieceMatrix(bool(drawMode < 0));
 	mat4 worldMatrix = (drawMode >= 0) ? mat[instData.x] : staticModelMatrix;
+
 	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
 	#if 0
@@ -151,7 +152,7 @@ void main(void)
 	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
 	gl_ClipDistance[2] = dot(worldPos, clipPlane2); //water clip plane
 
-	uint teamIndex = (instData.y & 0x000000FFu); //leftmost ubyte is teamIndex
+	uint teamIndex = (instData.z & 0x000000FFu); //leftmost ubyte is teamIndex
 	teamCol = teamColor[teamIndex];
 	teamCol.a = teamColorAlpha;
 

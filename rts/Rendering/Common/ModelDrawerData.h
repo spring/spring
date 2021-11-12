@@ -13,7 +13,7 @@
 #include "System/Threading/ThreadPool.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Models/MatricesMemStorage.h"
+#include "Rendering/Models/ModelsMemStorage.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Env/IWater.h"
@@ -69,6 +69,7 @@ protected:
 	virtual void UpdateObjectDrawFlags(CSolidObject* o) const = 0;
 private:
 	void UpdateObjectSMMA(const T* o);
+	void UpdateObjectUniforms(const T* o);
 public:
 	const std::vector<T*>& GetUnsortedObjects() const { return unsortedObjects; }
 	const ModelRenderContainer<T>& GetModelRenderer(int modelType) const { return modelRenderers[modelType]; }
@@ -134,6 +135,8 @@ inline void CModelDrawerDataBase<T>::AddObject(const T* co, bool add)
 
 	const uint32_t numMatrices = (o->model ? o->model->numPieces : 0) + 1u;
 	matricesMemAllocs.emplace(o, ScopedMatricesMemAlloc(numMatrices));
+
+	modelsUniformsStorage.GetObjOffset(co);
 }
 
 template<typename T>
@@ -145,8 +148,10 @@ inline void CModelDrawerDataBase<T>::DelObject(const T* co, bool del)
 		modelRenderers[MDL_TYPE(o)].DelObject(o);
 	}
 
-	if (del && spring::VectorErase(unsortedObjects, o))
+	if (del && spring::VectorErase(unsortedObjects, o)) {
 		matricesMemAllocs.erase(o);
+		modelsUniformsStorage.GetObjOffset(co);
+	}
 }
 
 template<typename T>
@@ -176,23 +181,35 @@ inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 }
 
 template<typename T>
+inline void CModelDrawerDataBase<T>::UpdateObjectUniforms(const T* o)
+{
+	auto& uni = modelsUniformsStorage.GetObjUniformsArray(o);
+	uni.drawFlag = o->drawFlag;
+	uni.speed = o->speed;
+	uni.maxHealth = o->maxHealth;
+	uni.health = o->health;
+}
+
+template<typename T>
 inline void CModelDrawerDataBase<T>::UpdateCommon()
 {
-	if (mtModelDrawer) {
-		for_mt(0, unsortedObjects.size(), [this](const int k) {
-			T* o = unsortedObjects[k];
-			UpdateObjectDrawFlags(o);
+	const auto updateBody = [this](int k) {
+		T* o = unsortedObjects[k];
+		UpdateObjectDrawFlags(o);
 
-			if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG))
-				this->UpdateObjectSMMA(o);
+		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG)) {
+			this->UpdateObjectSMMA(o);
+			this->UpdateObjectUniforms(o);
+		}
+	};
+
+	if (mtModelDrawer) {
+		for_mt(0, unsortedObjects.size(), [&updateBody](int k) {
+			updateBody(k);
 		});
 	}
 	else {
-		for (T* o : unsortedObjects) {
-			UpdateObjectDrawFlags(o);
-
-			if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG))
-				UpdateObjectSMMA(o);
-		}
+		for (int k = 0; k < unsortedObjects.size(); ++k)
+			updateBody(k);
 	}
 }

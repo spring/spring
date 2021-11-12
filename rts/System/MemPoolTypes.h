@@ -339,6 +339,8 @@ public:
 
 	const T& operator[](std::size_t idx) const { return data[idx]; }
 	      T& operator[](std::size_t idx)       { return data[idx]; }
+
+	static constexpr std::size_t INVALID_INDEX = ~0u;
 private:
 	void CompactGaps();
 	size_t AllocateImpl(size_t numElems);

@@ -24,7 +24,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Models/3DModelVAO.h"
-#include "Rendering/Models/MatricesMemStorage.h"
+#include "Rendering/Models/ModelsMemStorage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"

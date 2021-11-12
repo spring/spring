@@ -11,7 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/SpringMem.h"
 #include "System/SafeUtil.h"
-#include "Rendering/MatrixUploader.h"
+#include "Rendering/ModelsDataUploader.h"
 #include "Rendering/GL/VBO.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Features/Feature.h"
@@ -745,13 +745,13 @@ void LuaVBOImpl::InstanceDataFromDataCheck(int attrID, const char* func)
 }
 
 template<typename TObj>
-SInstanceData LuaVBOImpl::InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID, uint32_t aux0, uint32_t aux1)
+SInstanceData LuaVBOImpl::InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID)
 {
-	uint32_t ssboOffset;
 	uint32_t teamID = defTeamID;
 
 	const TObj* obj = LuaUtils::SolIdToObject<TObj>(id, __func__);
-	ssboOffset = MatrixUploader::GetInstance().GetElemOffset(obj);
+	const uint32_t matOffset = MatrixUploader::GetInstance().GetElemOffset(obj);
+	const uint32_t uniIndex = modelsUniformsStorage.GetObjOffset(obj); //doesn't need to exist for defs and model. Don't check for validity
 
 	uint8_t drawFlags = 0u;
 	if   constexpr (std::is_same_v<TObj, CUnit> || std::is_same_v<TObj, CFeature>) {
@@ -759,10 +759,10 @@ SInstanceData LuaVBOImpl::InstanceDataFromGetData(int id, int attrID, uint8_t de
 		drawFlags = obj->drawFlag;
 	}
 
-	if (ssboOffset == ~0u) {
+	if (matOffset == ~0u) {
 		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid data supplied. See infolog for details", __func__);
 	}
-	return SInstanceData(ssboOffset, teamID, drawFlags, aux0, aux1);
+	return SInstanceData(matOffset, teamID, drawFlags, uniIndex);
 }
 
 template<typename TObj>
@@ -771,10 +771,10 @@ size_t LuaVBOImpl::InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, c
 	InstanceDataFromDataCheck(attrID, __func__);
 
 	const uint32_t elemOffset = elemOffsetOpt.value_or(0u);
-	const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID, elemOffset);
+	const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID);
 
-	if (elemOffset + 1 > elementsCount)
-		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Element offset is too big", __func__);
+	if (elemOffset + 1 > elementsCount || elemOffset < 0)
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Element offset (%u) is too big or negative", __func__, elemOffset);
 
 	static std::vector<uint32_t> instanceDataVec(4);
 
@@ -805,7 +805,7 @@ size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID,
 	for (std::size_t i = 0u; i < idsSize; ++i) {
 		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
 		int id = spring::SafeCast<lua_Number, int>(idLua);
-		const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID, elemOffset + static_cast<uint32_t>(i));
+		const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID);
 		memcpy(&instanceDataVec[4 * i], &instanceData, sizeof(SInstanceData));
 	}
 

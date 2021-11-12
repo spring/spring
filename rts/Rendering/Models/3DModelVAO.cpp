@@ -8,7 +8,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Models/ModelPreloader.h"
-#include "Rendering/MatrixUploader.h"
+#include "Rendering/ModelsDataUploader.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Features/Feature.h"
@@ -36,7 +36,7 @@ void S3DModelVAO::EnableAttribs(bool inst) const
 		}
 
 		// covers all 4 uints of SInstanceData
-		glVertexAttribIPointer(6, 4, GL_UNSIGNED_INT, sizeof(SInstanceData), (const void*)offsetof(SInstanceData, ssboOffset));
+		glVertexAttribIPointer(6, 4, GL_UNSIGNED_INT, sizeof(SInstanceData), (const void*)offsetof(SInstanceData, matOffset));
 	}
 }
 
@@ -156,52 +156,54 @@ void S3DModelVAO::Unbind() const
 
 
 template<typename TObj>
-bool S3DModelVAO::AddToSubmissionImpl(const TObj* obj, uint32_t indexStart, uint32_t indexCount, uint8_t teamID, uint8_t drawFlags, uint32_t aux0, uint32_t aux1)
+bool S3DModelVAO::AddToSubmissionImpl(const TObj* obj, uint32_t indexStart, uint32_t indexCount, uint8_t teamID, uint8_t drawFlags)
 {
-	const auto ssboIndex = matrixUploader.GetElemOffset(obj);
-	if (ssboIndex == MatricesMemStorage::INVALID_INDEX)
+	const auto matIndex = matrixUploader.GetElemOffset(obj);
+	if (matIndex == MatricesMemStorage::INVALID_INDEX)
 		return false;
 
+	const auto uniIndex = modelsUniformsStorage.GetObjOffset(obj); //doesn't need to exist for defs amd model. Don't check for validity
+
 	auto& modelInstanceData = modelDataToInstance[SIndexAndCount{ indexStart, indexCount }];
-	modelInstanceData.emplace_back(SInstanceData(ssboIndex, teamID, drawFlags, aux0, aux1));
+	modelInstanceData.emplace_back(SInstanceData(matIndex, teamID, drawFlags, uniIndex));
 	return true;
 }
 
-bool S3DModelVAO::AddToSubmission(const S3DModel* model, uint8_t teamID, uint8_t drawFlags, uint32_t aux0, uint32_t aux1)
+bool S3DModelVAO::AddToSubmission(const S3DModel* model, uint8_t teamID, uint8_t drawFlags)
 {
 	assert(model);
 
-	return AddToSubmissionImpl(model, model->indxStart, model->indxCount, teamID, drawFlags, aux0, aux1);
+	return AddToSubmissionImpl(model, model->indxStart, model->indxCount, teamID, drawFlags);
 }
 
-bool S3DModelVAO::AddToSubmission(const CUnit* unit, uint32_t aux0, uint32_t aux1)
+bool S3DModelVAO::AddToSubmission(const CUnit* unit)
 {
 	assert(unit);
 
 	const S3DModel* model = unit->model;
 	assert(model);
 
-	return AddToSubmissionImpl(unit, model->indxStart, model->indxCount, unit->team, unit->drawFlag, aux0, aux1);
+	return AddToSubmissionImpl(unit, model->indxStart, model->indxCount, unit->team, unit->drawFlag);
 }
 
-bool S3DModelVAO::AddToSubmission(const CFeature* feature, uint32_t aux0, uint32_t aux1)
+bool S3DModelVAO::AddToSubmission(const CFeature* feature)
 {
 	assert(feature);
 
 	const S3DModel* model = feature->model;
 	assert(model);
 
-	return AddToSubmissionImpl(feature, model->indxStart, model->indxCount, feature->team, feature->drawFlag, aux0, aux1);
+	return AddToSubmissionImpl(feature, model->indxStart, model->indxCount, feature->team, feature->drawFlag);
 }
 
-bool S3DModelVAO::AddToSubmission(const UnitDef* unitDef, uint8_t teamID, uint32_t aux0, uint32_t aux1)
+bool S3DModelVAO::AddToSubmission(const UnitDef* unitDef, uint8_t teamID)
 {
 	assert(unitDef);
 
 	const S3DModel* model = unitDef->model;
 	assert(model);
 
-	return AddToSubmissionImpl(unitDef, model->indxStart, model->indxCount, teamID, 0, aux0, aux1);
+	return AddToSubmissionImpl(unitDef, model->indxStart, model->indxCount, teamID, 0);
 }
 
 
@@ -253,15 +255,17 @@ void S3DModelVAO::Submit(GLenum mode, bool bindUnbind)
 }
 
 template<typename TObj>
-bool S3DModelVAO::SubmitImmediatelyImpl(const TObj* obj, uint32_t indexStart, uint32_t indexCount, uint8_t teamID, uint8_t drawFlags, uint32_t aux0, uint32_t aux1, GLenum mode, bool bindUnbind)
+bool S3DModelVAO::SubmitImmediatelyImpl(const TObj* obj, uint32_t indexStart, uint32_t indexCount, uint8_t teamID, uint8_t drawFlags, GLenum mode, bool bindUnbind)
 {
-	std::size_t ssboIndex = matrixUploader.GetElemOffset(obj);
-	if (ssboIndex == MatricesMemStorage::INVALID_INDEX)
+	std::size_t matIndex = matrixUploader.GetElemOffset(obj);
+	if (matIndex == MatricesMemStorage::INVALID_INDEX)
 		return false;
+
+	const auto uniIndex = modelsUniformsStorage.GetObjOffset(obj); //doesn't need to exist for defs. Don't check for validity
 
 	// do not increment base instance for now.
 	// TODO: dedicate some circular space (~1024 items) for immediate submissions closer to the end of instVBO
-	SInstanceData instanceData{ static_cast<uint32_t>(ssboIndex), teamID, drawFlags, aux0, aux1 };
+	SInstanceData instanceData(static_cast<uint32_t>(matIndex), teamID, drawFlags, uniIndex);
 	SDrawElementsIndirectCommand scmd{
 		indexCount,
 		1,
@@ -286,38 +290,38 @@ bool S3DModelVAO::SubmitImmediatelyImpl(const TObj* obj, uint32_t indexStart, ui
 	return true;
 }
 
-bool S3DModelVAO::SubmitImmediately(const S3DModel* model, uint8_t teamID, uint8_t drawFlags, GLenum mode, uint32_t aux0, uint32_t aux1, bool bindUnbind)
+bool S3DModelVAO::SubmitImmediately(const S3DModel* model, uint8_t teamID, uint8_t drawFlags, GLenum mode, bool bindUnbind)
 {
 	assert(model);
-	return SubmitImmediatelyImpl(model, model->indxStart, model->indxCount, teamID, drawFlags, aux0, aux1, mode, bindUnbind);
+	return SubmitImmediatelyImpl(model, model->indxStart, model->indxCount, teamID, drawFlags, mode, bindUnbind);
 }
 
-bool S3DModelVAO::SubmitImmediately(const CUnit* unit, const GLenum mode, uint32_t aux0, uint32_t aux1, bool bindUnbind)
+bool S3DModelVAO::SubmitImmediately(const CUnit* unit, const GLenum mode, bool bindUnbind)
 {
 	assert(unit);
 
 	const S3DModel* model = unit->model;
 	assert(model);
 
-	return SubmitImmediatelyImpl(unit, model->indxStart, model->indxCount, unit->team, unit->drawFlag, aux0, aux1, mode, bindUnbind);
+	return SubmitImmediatelyImpl(unit, model->indxStart, model->indxCount, unit->team, unit->drawFlag, mode, bindUnbind);
 }
 
-bool S3DModelVAO::SubmitImmediately(const CFeature* feature, GLenum mode, uint32_t aux0, uint32_t aux1, bool bindUnbind)
+bool S3DModelVAO::SubmitImmediately(const CFeature* feature, GLenum mode, bool bindUnbind)
 {
 	assert(feature);
 
 	const S3DModel* model = feature->model;
 	assert(model);
 
-	return SubmitImmediatelyImpl(feature, model->indxStart, model->indxCount, feature->team, feature->drawFlag, aux0, aux1, mode, bindUnbind);
+	return SubmitImmediatelyImpl(feature, model->indxStart, model->indxCount, feature->team, feature->drawFlag, mode, bindUnbind);
 }
 
-bool S3DModelVAO::SubmitImmediately(const UnitDef* unitDef, int teamID, GLenum mode, uint32_t aux0, uint32_t aux1, bool bindUnbind)
+bool S3DModelVAO::SubmitImmediately(const UnitDef* unitDef, int teamID, GLenum mode, bool bindUnbind)
 {
 	assert(unitDef);
 
 	const S3DModel* model = unitDef->model;
 	assert(model);
 
-	return SubmitImmediatelyImpl(unitDef, model->indxStart, model->indxCount, teamID, 0, aux0, aux1, mode, bindUnbind);
+	return SubmitImmediatelyImpl(unitDef, model->indxStart, model->indxCount, teamID, 0, mode, bindUnbind);
 }

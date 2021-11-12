@@ -1,47 +1,23 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
+#include "ModelsMemStorageDefs.h"
 #include "System/Matrix44f.h"
 #include "System/MemPoolTypes.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Objects/SolidObjectDef.h"
 
-class MatricesMemStorage {
-/*
+class MatricesMemStorage : public StablePosAllocator<CMatrix44f> {
 public:
-	static MatricesMemStorage& GetInstance() {
-		static MatricesMemStorage instance;
-		return instance;
-	};
-*/
-public:
-	MatricesMemStorage();
-public:
-	void Reset() {
-		//DeallocateDummy();
-		spa->Reset();
-		//AllocateDummy();
-	};
-	std::size_t Allocate(std::size_t numElems, bool withMutex = false) { return spa->Allocate(numElems, withMutex); };
-	void Free(std::size_t firstElem, size_t numElems) { spa->Free(firstElem, numElems); };
-    const std::size_t GetSize() const { return spa->GetSize(); }
-    const std::vector<CMatrix44f>& GetData() const { return spa->GetData(); }
-	      std::vector<CMatrix44f>& GetData()       { return spa->GetData(); }
-
-	const CMatrix44f& operator[](std::size_t idx) const { return spa->operator[](idx); }
-	      CMatrix44f& operator[](std::size_t idx)       { return spa->operator[](idx); }
-public:
+	MatricesMemStorage()
+		: StablePosAllocator<CMatrix44f>(INIT_NUM_ELEMS)
+	{}
+private:
 	static constexpr int INIT_NUM_ELEMS = 1 << 16u;
-	static constexpr std::size_t INVALID_INDEX = ~0u;
-private:
-	void AllocateDummy();
-	void DeallocateDummy();
-private:
-	std::unique_ptr<StablePosAllocator<CMatrix44f>> spa;
-
-	static constexpr size_t DUMMY_ELEMS = 1u;
 };
 
-//#define matricesMemStorage MatricesMemStorage::GetInstance()  //benchmark shows it's costly
 extern MatricesMemStorage matricesMemStorage;
 
 
@@ -101,3 +77,39 @@ private:
 	std::size_t firstElem = MatricesMemStorage::INVALID_INDEX;
 	std::size_t numElems  = 0u;
 };
+
+////////////////////////////////////////////////////////////////////
+
+class CWorldObject;
+class ModelsUniformsStorage {
+public:
+	ModelsUniformsStorage();
+public:
+	size_t AddObjects(const CWorldObject* o);
+	void   DelObjects(const CWorldObject* o);
+	size_t GetObjOffset(const CWorldObject* o);
+	ModelUniformData& GetObjUniformsArray(const CWorldObject* o);
+
+	size_t AddObjects(const SolidObjectDef* o) { return INVALID_INDEX; }
+	void   DelObjects(const SolidObjectDef* o) {}
+	size_t GetObjOffset(const SolidObjectDef* o) { return INVALID_INDEX; }
+	ModelUniformData& GetObjUniformsArray(const SolidObjectDef* o) { return dummy; }
+
+	size_t AddObjects(const S3DModel* o) { return INVALID_INDEX; }
+	void   DelObjects(const S3DModel* o) {}
+	size_t GetObjOffset(const S3DModel* o) { return INVALID_INDEX; }
+	ModelUniformData& GetObjUniformsArray(const S3DModel* o) { return dummy; }
+
+	size_t Size() const { return storage.size(); }
+	const std::vector<ModelUniformData>& GetData() const { return storage; }
+public:
+	static constexpr size_t INVALID_INDEX = 0;
+private:
+	inline static ModelUniformData dummy = {0};
+
+	std::unordered_map<CWorldObject*, size_t> objectsMap;
+	std::vector<ModelUniformData> storage;
+	std::vector<size_t> emptyIndices;
+};
+
+extern ModelsUniformsStorage modelsUniformsStorage;
