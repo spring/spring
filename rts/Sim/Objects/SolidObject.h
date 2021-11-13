@@ -44,9 +44,10 @@ enum DrawFlags : uint8_t {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-//	YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
-	YARDMAP_YARD        = 1,    // walkable when yard is open
-	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
+	YARDMAP_STACKABLE   = 1,    // can be built on top of YARDMAP_BLOCKED
+	YARDMAP_YARD        = 2,    // walkable when yard is open
+	YARDMAP_YARDINV     = 4,    // walkable when yard is closed
+//	YARDMAP_WALKABLE    = 8,    // open for walk    (    walkable, not buildable)
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
 
 	// helpers

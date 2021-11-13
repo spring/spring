@@ -14,7 +14,7 @@
 #include "Sim/Path/TKPFS/PathEstimator.h"
 #include "Sim/Path/TKPFS/PathManager.h"
 
-class TKPFSPathDrawer;
+struct TKPFSPathDrawer;
 
 namespace TKPFS {
 
@@ -121,7 +121,7 @@ public:
 
 private:
 	friend class TKPFS::CPathManager;
-	friend class ::TKPFSPathDrawer;
+	friend struct ::TKPFSPathDrawer;
 
     void InitEstimator(const std::string& peFileName, const std::string& mapFileName);
     void InitBlocks();

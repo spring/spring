@@ -757,9 +757,10 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 		switch (c) {
 			case 'g': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEO; needGeo = true; } break;
 			case 'y': { defYardMap[ymCopyIdx - 1] = YARDMAP_OPEN;                } break;
+			case 's': { defYardMap[ymCopyIdx - 1] = YARDMAP_STACKABLE;           } break;
 			case 'c': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARD;                } break;
 			case 'i': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARDINV;             } break;
-		//	case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
+//			case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
 			case 'w':
 			case 'x':
 			case 'f':
