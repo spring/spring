@@ -1,0 +1,122 @@
+name: Build Engine (Docker)
+on:
+  workflow_dispatch:
+    inputs:
+      strip-symbols:
+        description: Strip Debug Symbols
+        required: true
+        default: "true"
+      use-cache:
+        description: Use Cache
+        required: true
+        default: "true"
+      archtune-flags:
+        description: Arch/Tune Flags
+        required: false
+        default: ""
+      relwithdeb-flags:
+        description: RELWITHDEBINFO Compilation flags
+        required: true
+        default: "-O3 -g -DNDEBUG"
+      compilation-flags:
+        description: Extra Compilation Flags
+        required: false
+        default: ""
+jobs:
+  build_engine:
+    name: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.runs-on }}
+    strategy:
+      fail-fast: true
+      matrix:
+        config:
+        - {
+            os: 'windows-64',
+            runs-on: 'ubuntu-20.04'
+          }
+#        - {
+#            os: 'windows-32',
+#            runs-on: 'ubuntu-20.04'
+#          }
+        - {
+            os: 'linux-64',
+            runs-on: 'ubuntu-18.04'
+          }
+    steps:    
+      - name: Extract Branch Name
+        #https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions/58034787
+        id: extract-branch
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Build Info
+        run: |
+          echo "Build info:"
+          echo "Git commit hash: ${{ github.sha }}"
+          echo "Repository: ${{ github.repository }}"
+        shell: bash
+        
+      - name: Checkout engine repository
+        uses: actions/checkout@v2
+
+      - name: Download Cache Data
+        if: github.event.inputs.use-cache == 'true'
+        id: cache-dl
+        uses: actions/cache@v2
+        with:
+          path: /tmp/ccache_archive
+          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.config.os }}-
+
+      - name: Check and Unpack Cache Data
+        id: cache
+        run: |
+          CACHE_FILENAME="/tmp/ccache_archive/${{ matrix.config.os }}.tgz"
+          echo "::set-output name=cache-filename::${CACHE_FILENAME}"
+
+          if [ -f "${CACHE_FILENAME}" ]; then
+            echo "Found build cache: ${CACHE_FILENAME}"
+            echo "::set-output name=cache-hit::true"
+            echo "Extracting..."
+            mkdir -p /tmp/ccache
+            tar -I pigz -xf "${CACHE_FILENAME}" -C /tmp/ccache
+          else
+            echo "Not found ccache data"
+            echo "::set-output name=cache-hit::false"
+          fi
+        shell: bash
+
+      - name: Build engine via docker
+        uses: ./docker-build
+        id: run-docker-build
+        with:
+          archtune-flags: ${{ github.event.inputs.archtune-flags }}
+          relwithdeb-flags: ${{ github.event.inputs.relwithdeb-flags }}
+          compilation-flags: ${{ github.event.inputs.compilation-flags }}
+          use-cache: ${{ github.event.inputs.use-cache }}
+          platform: ${{ matrix.config.os }}
+          branch: ${{ env.BRANCH_NAME }}
+          repository-url: https://github.com/${{ github.repository }}
+
+      - name: Upload Bin as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.run-docker-build.outputs.bin_name }}
+          path: ${{ github.workspace }}/artifacts/${{ steps.run-docker-build.outputs.bin_name }}
+
+      - name: Upload Dbg Artifacts
+        if: github.event.inputs.strip-symbols == 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.run-docker-build.outputs.dbg_name }}
+          path: ${{ github.workspace }}/artifacts/${{ steps.run-docker-build.outputs.dbg_name }}
+
+      - name: Pack Cache Data
+        if: github.event.inputs.use-cache == 'true'
+        run: |
+          CACHE_FILENAME="${{ steps.cache.outputs.cache-filename }}"
+          echo "Creating cache file: ${CACHE_FILENAME}"
+          mkdir -p /tmp/ccache_archive
+          rm -rf /tmp/ccache_archive/*
+          tar cvf - -C /tmp/ccache . 2> /dev/null | pigz -1 > "${CACHE_FILENAME}"
