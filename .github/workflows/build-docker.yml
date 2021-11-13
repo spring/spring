@@ -111,6 +111,12 @@ jobs:
         with:
           name: ${{ steps.run-docker-build.outputs.dbg_name }}
           path: ${{ github.workspace }}/artifacts/${{ steps.run-docker-build.outputs.dbg_name }}
+      
+      - name: Upload Build Options Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: buildoptions_${{ matrix.config.os }}.txt
+          path: ${{ github.workspace }}/artifacts/buildoptions_${{ matrix.config.os }}.txt
 
       - name: Pack Cache Data
         if: github.event.inputs.use-cache == 'true'
