@@ -125,7 +125,7 @@ void MatrixUploader::UpdateDerived()
 	const uint32_t storageElemCount = matricesMemStorage.GetSize();
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
-		LOG_L(L_DEBUG, "MatrixUploader::%s sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", __func__, "up", newElemCount, elemCount, storageElemCount);
+		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className.data(), __func__, "up", newElemCount, elemCount, storageElemCount);
 		ssbo->Resize(newElemCount);
 	}
 
@@ -143,7 +143,7 @@ void MatrixUploader::UpdateDerived()
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const S3DModel* model) const
 {
 	if (model == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr S3DModel", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr S3DModel", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
@@ -153,7 +153,7 @@ std::size_t MatrixUploader::GetDefElemOffsetImpl(const S3DModel* model) const
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const UnitDef* def) const
 {
 	if (def == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr UnitDef", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr UnitDef", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
@@ -163,7 +163,7 @@ std::size_t MatrixUploader::GetDefElemOffsetImpl(const UnitDef* def) const
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const FeatureDef* def) const
 {
 	if (def == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr FeatureDef", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr FeatureDef", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
@@ -173,7 +173,7 @@ std::size_t MatrixUploader::GetDefElemOffsetImpl(const FeatureDef* def) const
 std::size_t MatrixUploader::GetElemOffsetImpl(const CUnit* unit) const
 {
 	if (unit == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr CUnit", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CUnit", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
@@ -181,14 +181,14 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CUnit* unit) const
 		return offset;
 	}
 
-	LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied invalid CUnit (id:%d)", __func__, unit->id);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CUnit (id:%d)", className.data(), __func__, unit->id);
 	return MatricesMemStorage::INVALID_INDEX;
 }
 
 std::size_t MatrixUploader::GetElemOffsetImpl(const CFeature* feature) const
 {
 	if (feature == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr CFeature", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CFeature", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
@@ -196,24 +196,24 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CFeature* feature) const
 		return offset;
 	}
 
-	LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied invalid CFeature (id:%d)", __func__, feature->id);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CFeature (id:%d)", className.data(), __func__, feature->id);
 	return MatricesMemStorage::INVALID_INDEX;
 }
 
 std::size_t MatrixUploader::GetElemOffsetImpl(const CProjectile* p) const
 {
 	if (p == nullptr) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied nullptr CProjectile", __func__);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CProjectile", className.data(), __func__);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
 	if (!p->synced) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied non-synced CProjectile (id:%d)", __func__, p->id);
+		LOG_L(L_ERROR, "[%s::%s] Supplied non-synced CProjectile (id:%d)", className.data(), __func__, p->id);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 
 	if (!p->weapon || !p->piece) {
-		LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied non-weapon or non-piece CProjectile (id:%d)", __func__, p->id);
+		LOG_L(L_ERROR, "[%s::%s] Supplied non-weapon or non-piece CProjectile (id:%d)", className.data(), __func__, p->id);
 		return MatricesMemStorage::INVALID_INDEX;
 	}
 	/*
@@ -222,7 +222,7 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CProjectile* p) const
 	}
 	*/
 
-	LOG_L(L_ERROR, "[MatrixUploader::%s] Supplied invalid CProjectile (id:%d)", __func__, p->id);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CProjectile (id:%d)", className.data(), __func__, p->id);
 	return MatricesMemStorage::INVALID_INDEX;
 }
 
@@ -250,7 +250,7 @@ void ModelsUniformsUploader::UpdateDerived()
 	const uint32_t storageElemCount = modelsUniformsStorage.Size();
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
-		LOG_L(L_DEBUG, "ModelsUniformsUploader::%s sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", __func__, "up", newElemCount, elemCount, storageElemCount);
+		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className.data(), __func__, "up", newElemCount, elemCount, storageElemCount);
 		ssbo->Resize(newElemCount);
 	}
 
@@ -268,66 +268,66 @@ void ModelsUniformsUploader::UpdateDerived()
 std::size_t ModelsUniformsUploader::GetDefElemOffsetImpl(const S3DModel* model) const
 {
 	assert(false);
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Invalid call", __func__);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Invalid call", className.data(), __func__);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }
 
 std::size_t ModelsUniformsUploader::GetDefElemOffsetImpl(const UnitDef* def) const
 {
 	assert(false);
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Invalid call", __func__);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Invalid call", className.data(), __func__);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }
 
 std::size_t ModelsUniformsUploader::GetDefElemOffsetImpl(const FeatureDef* def) const
 {
 	assert(false);
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Invalid call", __func__);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Invalid call", className.data(), __func__);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }
 
 
 std::size_t ModelsUniformsUploader::GetElemOffsetImpl(const CUnit* unit) const
 {
 	if (unit == nullptr) {
-		LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied nullptr CUnit", __func__);
-		return std::size_t(-1);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CUnit", className.data(), __func__);
+		return ModelsUniformsStorage::INVALID_INDEX;
 	}
 
 	if (std::size_t offset = modelsUniformsStorage.GetObjOffset(unit); offset != std::size_t(-1)) {
 		return offset;
 	}
 
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied invalid CUnit (id:%d)", __func__, unit->id);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CUnit (id:%d)", className.data(), __func__, unit->id);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }
 
 std::size_t ModelsUniformsUploader::GetElemOffsetImpl(const CFeature* feature) const
 {
 	if (feature == nullptr) {
-		LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied nullptr CFeature", __func__);
-		return std::size_t(-1);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CFeature", className.data(), __func__);
+		return ModelsUniformsStorage::INVALID_INDEX;
 	}
 
 	if (std::size_t offset = modelsUniformsStorage.GetObjOffset(feature); offset != std::size_t(-1)) {
 		return offset;
 	}
 
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied invalid CFeature (id:%d)", __func__, feature->id);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CFeature (id:%d)", className.data(), __func__, feature->id);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }
 
 std::size_t ModelsUniformsUploader::GetElemOffsetImpl(const CProjectile* p) const
 {
 	if (p == nullptr) {
-		LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied nullptr CProjectile", __func__);
-		return std::size_t(-1);
+		LOG_L(L_ERROR, "[%s::%s] Supplied nullptr CProjectile", className.data(), __func__);
+		return ModelsUniformsStorage::INVALID_INDEX;
 	}
 
 	if (std::size_t offset = modelsUniformsStorage.GetObjOffset(p); offset != std::size_t(-1)) {
 		return offset;
 	}
 
-	LOG_L(L_ERROR, "[ModelsUniformsUploader::%s] Supplied invalid CProjectile (id:%d)", __func__, p->id);
-	return std::size_t(-1);
+	LOG_L(L_ERROR, "[%s::%s] Supplied invalid CProjectile (id:%d)", className.data(), __func__, p->id);
+	return ModelsUniformsStorage::INVALID_INDEX;
 }

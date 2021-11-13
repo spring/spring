@@ -6,8 +6,8 @@ ModelsUniformsStorage modelsUniformsStorage;
 
 ModelsUniformsStorage::ModelsUniformsStorage()
 {
-	//storage.emplace_back(dummy);
-	//objectsMap.emplace(nullptr, 0);
+	storage.emplace_back(dummy);
+	objectsMap.emplace(nullptr, 0);
 }
 
 size_t ModelsUniformsStorage::AddObjects(const CWorldObject* o)
