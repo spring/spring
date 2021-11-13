@@ -8,15 +8,11 @@
 #else
 
 #include <string>
-	
+#include "System/SpringMacros.h"
 #include "Rendering/GL/myGL.h"
 // GL_STATE_CHECKER(name) verifies the GL state has default values when entering/exiting its scope.
 // If something isn't set correctly, it logs an error with a mention of when the value was last set (TODO: deal with lists)
 #define GL_STATE_CHECKER(name) CGLStateChecker __gl_state_checker(name)
-
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-#define FILEPOS __FILE__ ":" TOSTRING(__LINE__)
 
 
 #ifndef NO_GL_WRAP
@@ -31,19 +27,19 @@
 	#ifdef glBlendFuncSeparate
 		#undef glBlendFuncSeparate
 	#endif
-	
+
 	#ifdef glColor4f
 		#undef glColor4f
 	#endif
-	
+
 	#ifdef glColor3f
 		#undef glColor3f
 	#endif
-	
+
 	#ifdef glColor4fv
 		#undef glColor4fv
 	#endif
-	
+
 	#ifdef glDepthMask
 		#undef glDepthMask
 	#endif

@@ -6,6 +6,7 @@
 namespace spring {
 	template<typename TVal>
 	class FreeListMap {
+		CR_DECLARE_STRUCT(FreeListMap<TVal>)
 	public:
 		const TVal& operator[](std::size_t id) const {
 			assert(id < values.size());
@@ -48,9 +49,5 @@ namespace spring {
 	template<typename TVal>
 	class FreeListMapSaved : public FreeListMap<TVal> {
 		CR_DECLARE_STRUCT(FreeListMapSaved<TVal>)
-	};
-	template<typename TVal>
-	class FreeListMapUnsaved : public FreeListMap<TVal> {
-		CR_DECLARE_STRUCT(FreeListMapUnsaved<TVal>)
 	};
 }
