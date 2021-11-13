@@ -62,7 +62,7 @@ runs:
       if: steps.cache-dl-docker.outputs.cache-hit == 'true'
       run: |
           pigz -dc /tmp/docker/local.tgz > /tmp/docker/local.tar
-          docker load -i /tmp/docker/local.tarhttps://github.com/beyond-all-reason/spring.git
+          docker load -i /tmp/docker/local.tar
       shell: bash      
     - run: |
         ARGS=(run --rm -v /tmp/ccache:/ccache -v "${{ github.workspace }}/artifacts:/publish" local build)
