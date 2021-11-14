@@ -1,6 +1,6 @@
 cd "${BUILD_DIR}"
 
-if [ -z "${ENABLE_CCACHE}" ]; then
+if [ "${ENABLE_CCACHE}" != "1" ]; then
     echo "Disabling ccache"
     export CCACHE_DISABLE=1
 else

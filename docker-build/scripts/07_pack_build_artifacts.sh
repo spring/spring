@@ -11,7 +11,7 @@ cd ./bin-dir
 echo "::set-output name=bin_name::${bin_name}"
 
 
-if [ ! -z "${STRIP_SYMBOLS}" ]; then
+if [ "${STRIP_SYMBOLS}" == "1" ]; then
     cd "${BUILD_DIR}"
     touch empty.dbg
     DEBUGFILES=$(find ./ -name '*.dbg')
