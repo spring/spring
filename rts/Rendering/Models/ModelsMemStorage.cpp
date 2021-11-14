@@ -6,24 +6,13 @@ ModelsUniformsStorage modelsUniformsStorage;
 
 ModelsUniformsStorage::ModelsUniformsStorage()
 {
-	storage.emplace_back(dummy);
+	storage[0] = dummy;
 	objectsMap.emplace(nullptr, 0);
 }
 
 size_t ModelsUniformsStorage::AddObjects(const CWorldObject* o)
 {
-	if (!emptyIndices.empty()) {
-		size_t idx = emptyIndices.back();
-		emptyIndices.pop_back();
-
-		//storage[idx] = ModelUniformData(); done in DelObjects
-		objectsMap[const_cast<CWorldObject*>(o)] = idx;
-		return idx;
-	}
-
-	storage.emplace_back(ModelUniformData());
-	size_t idx = storage.size() - 1;
-
+	const size_t idx = storage.Add(ModelUniformData());
 	objectsMap[const_cast<CWorldObject*>(o)] = idx;
 	return idx;
 }
@@ -33,8 +22,7 @@ void ModelsUniformsStorage::DelObjects(const CWorldObject* o)
 	const auto it = objectsMap.find(const_cast<CWorldObject*>(o));
 	assert(it != objectsMap.end());
 
-	storage[it->second] = ModelUniformData(); //nullify
-	emptyIndices.emplace_back(it->second);
+	storage.Del(it->second);
 	objectsMap.erase(it);
 }
 

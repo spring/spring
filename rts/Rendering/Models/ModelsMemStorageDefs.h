@@ -6,8 +6,9 @@
 #include "System/float4.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-constexpr static int MAX_MODEL_UD_UNIFORMS = 20;
 struct alignas(4) ModelUniformData {
+	constexpr static int MAX_MODEL_UD_UNIFORMS = 20;
+
 	union {
 		uint32_t composite;
 		struct {

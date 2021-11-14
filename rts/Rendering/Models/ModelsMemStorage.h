@@ -6,6 +6,7 @@
 #include "ModelsMemStorageDefs.h"
 #include "System/Matrix44f.h"
 #include "System/MemPoolTypes.h"
+#include "System/FreeListMap.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Objects/SolidObjectDef.h"
 
@@ -100,16 +101,15 @@ public:
 	size_t GetObjOffset(const S3DModel* o) { return INVALID_INDEX; }
 	ModelUniformData& GetObjUniformsArray(const S3DModel* o) { return dummy; }
 
-	size_t Size() const { return storage.size(); }
-	const std::vector<ModelUniformData>& GetData() const { return storage; }
+	size_t Size() const { return storage.GetData().size(); }
+	const std::vector<ModelUniformData>& GetData() const { return storage.GetData(); }
 public:
 	static constexpr size_t INVALID_INDEX = 0;
 private:
 	inline static ModelUniformData dummy = {0};
 
 	std::unordered_map<CWorldObject*, size_t> objectsMap;
-	std::vector<ModelUniformData> storage;
-	std::vector<size_t> emptyIndices;
+	spring::FreeListMap<ModelUniformData> storage;
 };
 
 extern ModelsUniformsStorage modelsUniformsStorage;
