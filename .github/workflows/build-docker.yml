@@ -126,3 +126,5 @@ jobs:
           mkdir -p /tmp/ccache_archive
           rm -rf /tmp/ccache_archive/*
           tar cvf - -C /tmp/ccache . 2> /dev/null | pigz -1 > "${CACHE_FILENAME}"
+          echo "Raw ccache size: $(du -sch /tmp/ccache | tail -n1 | cut -f1)"
+          echo "Archived ccache size: $(du -h "${CACHE_FILENAME}" | cut -f1)"

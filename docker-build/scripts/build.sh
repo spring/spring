@@ -19,8 +19,9 @@ if [ "${DUMMY}" == "1" ]; then
     exit 0
 fi
 
-echo "ccache Statistics:"
+echo "ccache pre Statistics:"
 ccache -s
+ccache -z # zero statistics
 
 . /scripts/01_clone.sh
 . "/scripts/02_configure_${PLATFORM}.sh"
@@ -33,3 +34,6 @@ fi
 . /scripts/06_fill_build_options_file.sh
 . /scripts/07_pack_build_artifacts.sh
 . /scripts/08_copy_to_publish_dir.sh
+
+echo "ccache post Statistics:"
+ccache -s
