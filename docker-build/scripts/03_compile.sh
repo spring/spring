@@ -5,8 +5,6 @@ if [ -z "${ENABLE_CCACHE}" ]; then
     export CCACHE_DISABLE=1
 else
     echo "Using ccache in directory: ${CCACHE_DIR}"
-    echo "Content:"
-    ls -la "${CCACHE_DIR}"
 fi
 
 CLEANLIST_LIN=$(find -maxdepth 1 -name '*.so')" "$(find -maxdepth 1 -name 'spring*' -executable)" "$(find -maxdepth 1 -name 'pr-downloader')" "$(find AI/Skirmish -name libSkirmishAI.so)" "$(find AI/Interfaces -name libAIInterface.so)

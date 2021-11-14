@@ -32,18 +32,17 @@ RUN  apt-get install --fix-missing -y \
         libfreetype6-dev \
         libfontconfig1-dev
 
-# Setup ccmake
+# Setup ccache
+ENV CCACHE_DIR=/ccache
+ENV PATH="/usr/lib/ccache:${PATH}"
+
+COPY config/ccache.conf /etc/ccache.conf
 RUN /usr/sbin/update-ccache-symlinks; \
-        ccache -M 10G; \
         ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32-g++-posix; \
         ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32-gcc-posix
 
 COPY scripts /scripts
-COPY config/ccache.conf /etc/ccache.conf
-
 ENV PATH="/scripts:${PATH}"
-ENV PATH="/usr/lib/ccache:${PATH}"
-ENV CCACHE_DIR=/ccache
 
 VOLUME /publish
 

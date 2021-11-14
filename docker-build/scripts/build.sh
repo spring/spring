@@ -19,6 +19,9 @@ if [ "${DUMMY}" == "1" ]; then
     exit 0
 fi
 
+echo "ccache Statistics:"
+ccache -s
+
 . /scripts/01_clone.sh
 . "/scripts/02_configure_${PLATFORM}.sh"
 . /scripts/03_compile.sh
