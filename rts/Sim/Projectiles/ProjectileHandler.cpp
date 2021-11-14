@@ -52,8 +52,8 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
 	CR_MEMBER(currentNanoParticles),
-	CR_MEMBER_UN(lastCurrentParticles),
-	CR_MEMBER_UN(lastProjectileCounts),
+	CR_MEMBER_UN(frameCurrentParticles),
+	CR_MEMBER_UN(frameProjectileCounts),
 
 	CR_MEMBER(freeProjectileIDs),
 	CR_MEMBER(projectileMaps)
@@ -71,9 +71,9 @@ CProjectileHandler projectileHandler;
 void CProjectileHandler::Init()
 {
 	currentNanoParticles = 0;
-	lastCurrentParticles = 0;
-	lastProjectileCounts[false] = 0;
-	lastProjectileCounts[ true] = 0;
+	frameCurrentParticles = 0;
+	frameProjectileCounts[false] = 0;
+	frameProjectileCounts[ true] = 0;
 
 	resortFlyingPieces.fill(false);
 
@@ -353,17 +353,17 @@ void CProjectileHandler::Update()
 	}
 
 	// precache part of particles count calculation that else becomes very heavy
-	lastCurrentParticles = 0;
+	frameCurrentParticles = 0;
 
-	for (const CProjectile* p: projectileContainers[true]) {
-		lastCurrentParticles += p->GetProjectilesCount();
+	for (const CProjectile* p: projectileContainers[ true]) {
+		frameCurrentParticles += p->GetProjectilesCount();
 	}
 	for (const CProjectile* p: projectileContainers[false]) {
-		lastCurrentParticles += p->GetProjectilesCount();
+		frameCurrentParticles += p->GetProjectilesCount();
 	}
 
-	lastProjectileCounts[ true] = projectileContainers[true].size();
-	lastProjectileCounts[false] = projectileContainers[false].size();
+	frameProjectileCounts[ true] = projectileContainers[ true].size();
+	frameProjectileCounts[false] = projectileContainers[false].size();
 }
 
 
@@ -811,13 +811,17 @@ int CProjectileHandler::GetCurrentParticles() const
 {
 	// use precached part of particles count calculation that else becomes very heavy
 	// example where it matters: (in ZK) /cheat /give 20 armraven -> shoot ground
-	int partCount = lastCurrentParticles;
-	for (size_t i = lastProjectileCounts[true], e = projectileContainers[true].size(); i < e; ++i) {
-		partCount += projectileContainers[true][i]->GetProjectilesCount();
+	for (size_t i = frameProjectileCounts[true], e = projectileContainers[true].size(); i < e; ++i) {
+		frameCurrentParticles += projectileContainers[true][i]->GetProjectilesCount();
 	}
-	for (size_t i = lastProjectileCounts[false], e = projectileContainers[false].size(); i < e; ++i) {
-		partCount += projectileContainers[false][i]->GetProjectilesCount();
+	frameProjectileCounts[true ] = projectileContainers[true ].size();
+
+	for (size_t i = frameProjectileCounts[false], e = projectileContainers[false].size(); i < e; ++i) {
+		frameCurrentParticles += projectileContainers[false][i]->GetProjectilesCount();
 	}
+	frameProjectileCounts[false] = projectileContainers[false].size();
+
+	int partCount = frameCurrentParticles;
 	for (const auto& c: flyingPieces) {
 		for (const auto& fp: c) {
 			partCount += fp.GetDrawCallCount();
