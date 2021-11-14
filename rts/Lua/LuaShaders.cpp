@@ -16,11 +16,13 @@
 #include "Game/Camera.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
+#include "System/TypeToStr.h"
 #include "Rendering/Models/ModelsMemStorage.h"
 #include "Rendering/Models/ModelsMemStorageDefs.h"
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 struct ActiveUniform {
 	GLint size = 0;
@@ -830,12 +832,12 @@ int LuaShaders::GetSubroutineIndex(lua_State* L)
 }
 
 namespace {
-	template<typename T> int SetObjectBufferUniforms(lua_State* L)
+	template<typename T> int SetObjectBufferUniforms(lua_State* L, const char* func)
 	{
 		const int id = luaL_checkint(L, 1);
-		const T* o = LuaUtils::IdToObject<T>(id, __func__);
+		const T* o = LuaUtils::IdToObject<T>(id, func);
 		if (o == nullptr)
-			return 0;
+			luaL_error(L, "gl.%s() Invalid %s id (%d)", func, &spring::TypeToStr<T>()[1], id);
 
 		ModelUniformData& uni = modelsUniformsStorage.GetObjUniformsArray(o);
 
@@ -845,17 +847,15 @@ namespace {
 		const int offset = luaL_optint(L, 3, 0);
 		size = std::min(size, ModelUniformData::MAX_MODEL_UD_UNIFORMS) - offset;
 
-		for (int i = 0; i < size; ++i) {
-			uni.userDefined[i + offset] = floatArray[i];
-		}
+		std::copy(floatArray.cbegin(), floatArray.cbegin() + size, uni.userDefined.begin() + offset);
 
 		lua_pushnumber(L, size);
 		return 1;
 	}
 }
 
-int LuaShaders::SetUnitBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CUnit>(L); }
-int LuaShaders::SetFeatureBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CFeature>(L); }
+int LuaShaders::SetUnitBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CUnit>(L, __func__); }
+int LuaShaders::SetFeatureBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CFeature>(L, __func__); }
 
 
 
