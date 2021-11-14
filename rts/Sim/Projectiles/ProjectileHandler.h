@@ -105,10 +105,11 @@ private:
 	void CreateProjectile(CProjectile*);
 	void DestroyProjectile(CProjectile*);
 
-	void UpdateProjectiles(bool);
+	template<bool synced>
+	void UpdateProjectilesImpl();
 	void UpdateProjectiles() {
-		UpdateProjectiles( true);
-		UpdateProjectiles(false);
+		UpdateProjectilesImpl< true>();
+		UpdateProjectilesImpl<false>();
 	}
 
 private:

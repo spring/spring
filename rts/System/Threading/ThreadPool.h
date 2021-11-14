@@ -44,8 +44,8 @@ static inline void for_mt(int start, int end, F&& f)
 	for_mt(start, end, 1, std::move(f));
 }
 
-template <int chunkSize, typename F>
-static inline void for_mt_chunk(int b, int e, F&& f)
+template <typename F>
+static inline void for_mt_chunk(int b, int e, F&& f, int chunkSize = 0)
 {
 	for_mt(b, e, f);
 }
@@ -109,7 +109,7 @@ namespace ThreadPool {
 	int GetNumThreads();
 	void NotifyWorkerThreads(bool force, bool async);
 
-	static constexpr int MAX_THREADS = 16;
+	static constexpr int MAX_THREADS = 32;
 }
 
 
@@ -722,15 +722,21 @@ static inline void for_mt(int start, int end, F&& f)
 	for_mt(start, end, 1, f);
 }
 
-template <int chunkSize, typename F>
-static inline void for_mt_chunk(int b, int e, F&& f)
+template <typename F>
+static inline void for_mt_chunk(int b, int e, F&& f, int chunkSize = 0)
 {
-	static const int maxThreads = ThreadPool::GetMaxThreads();
+	static const int maxThreads = ThreadPool::GetNumThreads();
 
 	const int numElems  = e - b;
+
+	if (chunkSize <= 0) {
+		chunkSize = numElems / maxThreads + (numElems % maxThreads != 0); //split the work evenly. Does for_mt() do the same?
+		chunkSize = std::max(chunkSize, 1);
+	}
+
 	const int numChunks = numElems / chunkSize + (numElems % chunkSize != 0);
 
-	if (numChunks <= 1) {
+	if (numChunks == 1) {
 		for (int i = b; i < e; ++i)
 			f(i);
 
@@ -740,7 +746,7 @@ static inline void for_mt_chunk(int b, int e, F&& f)
 	const int chunksPerThread = numChunks / maxThreads + (numChunks % maxThreads != 0);
 	const int numThreads = std::min(numChunks, maxThreads);
 
-	for_mt(0, numThreads, 1, [&f, b, e, chunksPerThread](const int jobId) {
+	for_mt(0, numThreads, 1, [&f, b, e, chunkSize, chunksPerThread](const int jobId) {
 		const int bb = b + jobId * chunksPerThread * chunkSize;
 		const int ee = std::min(bb + chunksPerThread * chunkSize, e);
 
