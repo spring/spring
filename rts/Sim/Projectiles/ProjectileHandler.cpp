@@ -241,7 +241,7 @@ void CProjectileHandler::UpdateProjectilesImpl()
 			MAPPOS_SANITY_CHECK(p->pos);
 			p->Update();
 			MAPPOS_SANITY_CHECK(p->pos);
-		}, 0);
+		});
 	}
 }
 

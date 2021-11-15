@@ -350,14 +350,15 @@ bool CExplosionGeneratorHandler::GenExplosion(
 	float radius,
 	float gfxMod,
 	CUnit* owner,
-	CUnit* hit
+	CUnit* hit,
+	bool withMutex
 ) {
 	IExplosionGenerator* expGen = GetGenerator(expGenID);
 
 	if (expGen == nullptr)
 		return false;
 
-	return (expGen->Explosion(pos, dir, damage, radius, gfxMod, owner, hit));
+	return (expGen->Explosion(pos, dir, damage, radius, gfxMod, owner, hit, withMutex));
 }
 
 
@@ -369,7 +370,8 @@ bool CStdExplosionGenerator::Explosion(
 	float radius,
 	float gfxMod,
 	CUnit* owner,
-	CUnit* hit
+	CUnit* hit,
+	bool withMutex
 ) {
 	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
@@ -394,6 +396,13 @@ bool CStdExplosionGenerator::Explosion(
 		moveLength = camLength - 2.0f;
 
 	const float3 npos = pos + camVect * moveLength;
+
+	if (withMutex) {
+		mut.lock();
+	}
+	else {
+		assert(Threading::IsMainThread());
+	}
 
 	projMemPool.alloc<CHeatCloudProjectile>(owner, npos, UpVector * 0.3f, 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
@@ -571,6 +580,9 @@ bool CStdExplosionGenerator::Explosion(
 			pos
 		);
 	}
+
+	if (withMutex)
+		mut.unlock();
 
 	return true;
 }
@@ -938,7 +950,8 @@ bool CCustomExplosionGenerator::Explosion(
 	float radius,
 	float gfxMod,
 	CUnit* owner,
-	CUnit* hit
+	CUnit* hit,
+	bool withMutex
 ) {
 	unsigned int flags = GetFlagsFromHeight(pos.y, CGround::GetHeightReal(pos.x, pos.z));
 
@@ -950,6 +963,13 @@ bool CCustomExplosionGenerator::Explosion(
 
 	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectiles;
 	const GroundFlashInfo& groundFlash = expGenParams.groundFlash;
+
+	if (withMutex) {
+		mut.lock();
+	}
+	else {
+		assert(Threading::IsMainThread());
+	}
 
 	for (int a = 0; a < spawnInfo.size(); a++) {
 		const ProjectileSpawnInfo& psi = spawnInfo[a];
@@ -974,6 +994,9 @@ bool CCustomExplosionGenerator::Explosion(
 
 	if (expGenParams.useDefaultExplosions)
 		return (explGenHandler.GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, pos, dir, damage, radius, gfxMod, owner, hit));
+
+	if (withMutex)
+		mut.unlock();
 
 	return true;
 }

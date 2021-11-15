@@ -8,6 +8,7 @@
 
 #include "Rendering/GroundFlashInfo.h"
 #include "System/UnorderedMap.hpp"
+#include "System/Threading/SpringThreading.h"
 
 #define CEG_PREFIX_STRING "custom:"
 
@@ -65,7 +66,8 @@ public:
 		float radius,
 		float gfxMod,
 		CUnit* owner,
-		CUnit* hit
+		CUnit* hit,
+		bool withMutex = false
 	);
 
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
@@ -103,7 +105,8 @@ public:
 		float radius,
 		float gfxMod,
 		CUnit* owner,
-		CUnit* hit
+		CUnit* hit,
+		bool withMutex = false
 	) { return false; }
 
 	unsigned int GetGeneratorID() const { return generatorID; }
@@ -111,6 +114,7 @@ public:
 
 protected:
 	unsigned int generatorID;
+	inline static spring::mutex mut = {};
 };
 
 
@@ -129,7 +133,8 @@ public:
 		float radius,
 		float gfxMod,
 		CUnit* owner,
-		CUnit* hit
+		CUnit* hit,
+		bool withMutex
 	) override;
 };
 
@@ -168,7 +173,16 @@ public:
 	/// @throws content_error/runtime_error on errors
 	bool Load(CExplosionGeneratorHandler* handler, const char* tag) override;
 	bool Reload(CExplosionGeneratorHandler* handler, const char* tag) override;
-	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
+	bool Explosion(
+		const float3& pos,
+		const float3& dir,
+		float damage,
+		float radius,
+		float gfxMod,
+		CUnit* owner,
+		CUnit* hit,
+		bool withMutex
+	) override;
 
 	// spawn-flags
 	enum {
