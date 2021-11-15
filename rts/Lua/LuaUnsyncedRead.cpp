@@ -1116,10 +1116,10 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 {
-	float l = std::clamp(luaL_checkfloat(L, 1), 0.0f, static_cast<float>(globalRendering->screenSizeX));
-	float t = std::clamp(luaL_checkfloat(L, 2), 0.0f, static_cast<float>(globalRendering->screenSizeY));
-	float r = std::clamp(luaL_checkfloat(L, 3), 0.0f, static_cast<float>(globalRendering->screenSizeX));
-	float b = std::clamp(luaL_checkfloat(L, 4), 0.0f, static_cast<float>(globalRendering->screenSizeY));
+	float l = std::clamp(luaL_checkfloat(L, 1), static_cast<float>(globalRendering->viewPosX), static_cast<float>(globalRendering->viewSizeX));
+	float t = std::clamp(luaL_checkfloat(L, 2), static_cast<float>(globalRendering->viewPosY), static_cast<float>(globalRendering->viewSizeY));
+	float r = std::clamp(luaL_checkfloat(L, 3), static_cast<float>(globalRendering->viewPosX), static_cast<float>(globalRendering->viewSizeX));
+	float b = std::clamp(luaL_checkfloat(L, 4), static_cast<float>(globalRendering->viewPosY), static_cast<float>(globalRendering->viewSizeY));
 
 	if (l > r) std::swap(l, r);
 	if (t > b) std::swap(t, b);
@@ -1131,16 +1131,16 @@ int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 		float2{l, b}
 	};
 
-	if (r - l > 500.0f)
-		LOG("BLAH");
-
 	float3 mins = std::numeric_limits<float>::max();
 	float3 maxs = std::numeric_limits<float>::lowest();
 
 	const float3 cameraPos = camera->GetPos();
 
 	for (const auto& corner : corners) {
-		const float3 dir = camera->CalcPixelDir(corner.x, corner.y);
+		const float wx = corner.x                                  + globalRendering->viewPosX;
+		const float wy = globalRendering->viewSizeY - 1 - corner.y - globalRendering->viewPosY;
+
+		const float3 dir = camera->CalcPixelDir(wx, wy);
 		const float3 dirVec = dir * camera->GetFarPlaneDist() * 1.4f;
 
 		float dist = CGround::LineGroundCol(cameraPos, cameraPos + dirVec, false);
