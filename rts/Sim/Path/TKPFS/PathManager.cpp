@@ -68,7 +68,8 @@ CPathManager::CPathManager()
 	InitStatic();
 
 	pathFlowMap = PathFlowMap::GetInstance();
-	pathHeatMap = PathHeatMap::GetInstance();
+	gPathHeatMap.Init(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
+	pathHeatMap = &gPathHeatMap;
 
 	pathMap.reserve(1024);
 
