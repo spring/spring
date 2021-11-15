@@ -9,10 +9,14 @@
 
 #include "Game/GameVersion.h"
 #include "Rendering/Models/IModelParser.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
+#include "Sim/Misc/LosHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
@@ -1455,5 +1459,105 @@ void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 
 	// CmdDesc["params"] = {[1] = "string1", [2] = "string2", ...}
 	lua_settable(L, -3);
+}
+
+int LuaUtils::ParseAllegiance(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index))
+		return AllUnits;
+
+	const int teamID = lua_toint(L, index);
+
+	// MyUnits, AllyUnits, and EnemyUnits do not apply to fullRead
+	if (CLuaHandle::GetHandleFullRead(L) && (teamID < 0))
+		return AllUnits;
+
+	if (teamID < EnemyUnits) {
+		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
+	}
+	else if (teamID >= teamHandler.ActiveTeams()) {
+		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
+	}
+
+	return teamID;
+}
+
+bool LuaUtils::IsAlliedTeam(lua_State* L, int team)
+{
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return CLuaHandle::GetHandleFullRead(L);
+
+	return (teamHandler.AllyTeam(team) == CLuaHandle::GetHandleReadAllyTeam(L));
+}
+
+bool LuaUtils::IsAlliedAllyTeam(lua_State* L, int allyTeam)
+{
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return CLuaHandle::GetHandleFullRead(L);
+
+	return (allyTeam == CLuaHandle::GetHandleReadAllyTeam(L));
+}
+
+bool LuaUtils::IsAllyUnit(lua_State* L, const CUnit* unit) { return (IsAlliedAllyTeam(L, unit->allyteam)); }
+bool LuaUtils::IsEnemyUnit(lua_State* L, const CUnit* unit) { return (!IsAllyUnit(L, unit)); }
+
+bool LuaUtils::IsUnitVisible(lua_State* L, const CUnit* unit)
+{
+	if (IsAllyUnit(L, unit))
+		return true;
+
+	return (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & (LOS_INLOS | LOS_INRADAR));
+}
+
+bool LuaUtils::IsUnitInLos(lua_State* L, const CUnit* unit)
+{
+	if (IsAllyUnit(L, unit))
+		return true;
+
+	return (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & LOS_INLOS);
+}
+
+bool LuaUtils::IsUnitTyped(lua_State* L, const CUnit* unit)
+{
+	if (IsAllyUnit(L, unit))
+		return true;
+
+	const unsigned short losStatus = unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)];
+	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+
+	// currently in LOS or not lost from radar since being visible means unit's type can be accessed
+	return ((losStatus & LOS_INLOS) || ((losStatus & prevMask) == prevMask));
+}
+
+const UnitDef* LuaUtils::EffectiveUnitDef(lua_State* L, const CUnit* unit)
+{
+	const UnitDef* ud = unit->unitDef;
+
+	if (IsAllyUnit(L, unit))
+		return ud;
+
+	if (ud->decoyDef)
+		return ud->decoyDef;
+
+	return ud;
+}
+
+bool LuaUtils::IsFeatureVisible(lua_State* L, const CFeature* feature)
+{
+	if (CLuaHandle::GetHandleFullRead(L))
+		return true;
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return false;
+
+	return feature->IsInLosForAllyTeam(CLuaHandle::GetHandleReadAllyTeam(L));
+}
+
+bool LuaUtils::IsProjectileVisible(lua_State* L, const CProjectile* pro)
+{
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return CLuaHandle::GetHandleFullRead(L);
+
+	return !((CLuaHandle::GetHandleReadAllyTeam(L) != pro->GetAllyteamID()) &&
+		(!losHandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L))));
 }
 

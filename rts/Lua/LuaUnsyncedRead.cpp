@@ -73,6 +73,7 @@
 #endif
 
 #include <cctype>
+#include <algorithm>
 
 #include <SDL_clipboard.h>
 #include <SDL_keycode.h>
@@ -137,6 +138,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 	REGISTER_LUA_CFUNC(GetVisibleProjectiles);
+
+	REGISTER_LUA_CFUNC(GetUnitsInScreenRectangle);
 
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
@@ -813,15 +816,6 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-// FIXME -- copied from LuaSyncedRead.cpp, commonize
-enum UnitAllegiance {
-	AllUnits   = -1,
-	MyUnits    = -2,
-	AllyUnits  = -3,
-	EnemyUnits = -4
-};
-
-
 // never instantiated directly
 template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
 public:
@@ -896,13 +890,13 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	int teamID = luaL_optint(L, 1, -1);
 	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 
-	if (teamID == MyUnits) {
+	if (teamID == LuaUtils::MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
 
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
-			teamID = AllUnits;
+			teamID = LuaUtils::AllUnits;
 		}
 	}
 
@@ -957,10 +951,10 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			if (noIcons && u->GetIsIcon())
 				continue;
 
-			if ((teamID == AllyUnits)  && (allyTeamID != u->allyteam))
+			if ((teamID == LuaUtils::AllyUnits)  && (allyTeamID != u->allyteam))
 				continue;
 
-			if ((teamID == EnemyUnits) && (allyTeamID == u->allyteam))
+			if ((teamID == LuaUtils::EnemyUnits) && (allyTeamID == u->allyteam))
 				continue;
 
 			if ((teamID >= 0) && (teamID != u->team))
@@ -1115,6 +1109,116 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 			lua_pushnumber(L, p->id);
 			lua_rawseti(L, -2, ++count);
 		}
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
+{
+	float l = std::clamp(luaL_checkfloat(L, 1), 0.0f, static_cast<float>(globalRendering->screenSizeX));
+	float t = std::clamp(luaL_checkfloat(L, 2), 0.0f, static_cast<float>(globalRendering->screenSizeY));
+	float r = std::clamp(luaL_checkfloat(L, 3), 0.0f, static_cast<float>(globalRendering->screenSizeX));
+	float b = std::clamp(luaL_checkfloat(L, 4), 0.0f, static_cast<float>(globalRendering->screenSizeY));
+
+	if (l > r) std::swap(l, r);
+	if (t > b) std::swap(t, b);
+
+	const std::array<float2, 4> corners = {
+		float2{l, t},
+		float2{r, t},
+		float2{r, b},
+		float2{l, b}
+	};
+
+	if (r - l > 500.0f)
+		LOG("BLAH");
+
+	float3 mins = std::numeric_limits<float>::max();
+	float3 maxs = std::numeric_limits<float>::lowest();
+
+	const float3 cameraPos = camera->GetPos();
+
+	for (const auto& corner : corners) {
+		const float3 dir = camera->CalcPixelDir(corner.x, corner.y);
+		const float3 dirVec = dir * camera->GetFarPlaneDist() * 1.4f;
+
+		float dist = CGround::LineGroundCol(cameraPos, cameraPos + dirVec, false);
+
+		if (dist < 0.0f) {
+			//no map is behind this screen position, artificially extend distance so cClampInBounds below does the trick
+			dist = camera->GetFarPlaneDist() * 1.4f;
+		}
+
+		const float3 groundPos = (cameraPos + dir * dist).cClampInBounds();
+
+		mins.x = std::min(mins.x, groundPos.x); mins.y = std::min(mins.y, groundPos.y); mins.z = std::min(mins.z, groundPos.z);
+		maxs.x = std::max(maxs.x, groundPos.x); maxs.y = std::max(maxs.y, groundPos.y); maxs.z = std::max(maxs.z, groundPos.z);
+	}
+
+	QuadFieldQuery qfQuery;
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
+	const auto& units = (*qfQuery.units);
+
+	const int readTeam = CLuaHandle::GetHandleReadTeam(L);
+	const int readATeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	const int allegiance = LuaUtils::ParseAllegiance(L, __func__, 5);
+
+	std::function<bool(const CUnit*)> disqualifierFunc;
+
+	switch (allegiance)
+	{
+	case LuaUtils::AllUnits:
+		disqualifierFunc = [L](const CUnit* unit) -> bool { return !LuaUtils::IsUnitVisible(L, unit); };
+		break;
+	case LuaUtils::MyUnits:
+		disqualifierFunc = [readTeam](const CUnit* unit) -> bool { return unit->team != readTeam; };
+		break;
+	case LuaUtils::AllyUnits:
+		disqualifierFunc = [readATeam](const CUnit* unit) -> bool { return unit->allyteam != readATeam; };
+		break;
+	case LuaUtils::EnemyUnits:
+		disqualifierFunc = [readATeam](const CUnit* unit) -> bool { return unit->allyteam == readATeam; };
+		break;
+	default: {
+		if (LuaUtils::IsAlliedTeam(L, allegiance)) {
+			disqualifierFunc = [readTeam, allegiance](const CUnit* unit) -> bool { return unit->team != allegiance; };
+		}
+		else {
+			disqualifierFunc = [readTeam, allegiance, L](const CUnit* unit) -> bool {
+				if (unit->team != allegiance)
+					return true;
+
+				if (!LuaUtils::IsUnitVisible(L, unit))
+					return true;
+
+				return false;
+			};
+		}
+	} break;
+	}
+
+	lua_createtable(L, units.size(), 0);
+
+	uint32_t count = 0;
+	for (const auto* unit : units) {
+		const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
+
+		if (disqualifierFunc(unit))
+			continue;
+
+		if (winPos.x > r || winPos.x < l)
+			continue;
+
+		if (winPos.y > b || winPos.y < t)
+			continue;
+
+		if (winPos.z > 1.0f || winPos.z < 0.0f)
+			continue;
+
+		lua_pushnumber(L, unit->id);
+		lua_rawseti(L, -2, ++count);
 	}
 
 	return 1;

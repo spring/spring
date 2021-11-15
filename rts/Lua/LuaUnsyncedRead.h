@@ -66,6 +66,8 @@ class LuaUnsyncedRead {
 		static int GetVisibleFeatures(lua_State* L);
 		static int GetVisibleProjectiles(lua_State* L);
 
+		static int GetUnitsInScreenRectangle(lua_State* L);
+
 		static int GetTeamColor(lua_State* L);
 		static int GetTeamOrigColor(lua_State* L);
 
