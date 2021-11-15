@@ -1,6 +1,10 @@
 set -e
 
+# make all setup variables available on the shell later
+set -a 
 . /scripts/00_setup.sh
+set +a
+
 . /scripts/01_clone.sh
 . "/scripts/02_configure_${PLATFORM}.sh"
 
