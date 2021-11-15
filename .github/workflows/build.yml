@@ -187,8 +187,6 @@ jobs:
           cd spring
           git fetch --tags --all
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/mingwlibs64.git mingwlibs64
-          cd AI/Skirmish/BARb
-          git clone -b profile --single-branch https://github.com/${GITHUB_REPOSITORY_OWNER}/BARbarIAn.git profile
 
       - name: Clone Repository and Dependencies (windows-32)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
@@ -199,8 +197,6 @@ jobs:
           cd spring
           git fetch --tags --all
           git clone https://github.com/spring/mingwlibs.git mingwlibs
-          cd AI/Skirmish/BARb
-          git clone -b profile --single-branch https://github.com/${GITHUB_REPOSITORY_OWNER}/BARbarIAn.git profile
 
       - name: Clone Repository and Dependencies (linux-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
@@ -212,8 +208,6 @@ jobs:
           git fetch --tags --all
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
-          cd AI/Skirmish/BARb
-          git clone -b profile --single-branch https://github.com/${GITHUB_REPOSITORY_OWNER}/BARbarIAn.git profile
 
       - name: Create Build Folders
         run: |
@@ -404,9 +398,6 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
@@ -447,9 +438,6 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
           cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/AIOptions.lua ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/config/ ./bin-dir/AI/Skirmish/BARb/stable/
-          cp -R ../AI/Skirmish/BARb/profile/script/ ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
