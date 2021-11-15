@@ -397,8 +397,9 @@ bool CStdExplosionGenerator::Explosion(
 
 	const float3 npos = pos + camVect * moveLength;
 
+	std::unique_lock<spring::mutex> lock(mut, std::defer_lock);
 	if (withMutex) {
-		mut.lock();
+		lock.lock();
 	}
 	else {
 		assert(Threading::IsMainThread());
@@ -580,9 +581,6 @@ bool CStdExplosionGenerator::Explosion(
 			pos
 		);
 	}
-
-	if (withMutex)
-		mut.unlock();
 
 	return true;
 }
@@ -964,8 +962,9 @@ bool CCustomExplosionGenerator::Explosion(
 	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectiles;
 	const GroundFlashInfo& groundFlash = expGenParams.groundFlash;
 
+	std::unique_lock<spring::mutex> lock(mut, std::defer_lock);
 	if (withMutex) {
-		mut.lock();
+		lock.lock();
 	}
 	else {
 		assert(Threading::IsMainThread());
@@ -994,9 +993,6 @@ bool CCustomExplosionGenerator::Explosion(
 
 	if (expGenParams.useDefaultExplosions)
 		return (explGenHandler.GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, pos, dir, damage, radius, gfxMod, owner, hit));
-
-	if (withMutex)
-		mut.unlock();
 
 	return true;
 }

@@ -356,7 +356,7 @@ template<typename T>
 inline size_t StablePosAllocator<T>::Allocate(size_t numElems, bool withMutex)
 {
 	if (withMutex) {
-		std::lock_guard<spring::mutex> lck(mut);
+		std::scoped_lock<spring::mutex> lck(mut);
 		return AllocateImpl(numElems);
 	}
 	else {
