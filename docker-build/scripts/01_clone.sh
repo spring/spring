@@ -28,6 +28,3 @@ else
     echo "Unsupported platform: '${PLATFORM}'"
     exit 1
 fi
-
-cd AI/Skirmish/BARb
-git clone -b profile "${SPRINGRTS_AUX_URL_PREFIX}/BARbarIAn.git" profile
