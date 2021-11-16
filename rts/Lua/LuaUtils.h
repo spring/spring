@@ -159,7 +159,7 @@ class LuaUtils {
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
 
 		static void PushCommandDesc(lua_State* L, const SCommandDescription& cd);
-
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 		static int ParseAllegiance(lua_State* L, const char* caller, int index);
 
 		//  Access helpers
@@ -173,7 +173,7 @@ class LuaUtils {
 		static const UnitDef* EffectiveUnitDef(lua_State* L, const CUnit* unit);
 		static bool IsFeatureVisible(lua_State* L, const CFeature* feature);
 		static bool IsProjectileVisible(lua_State* L, const CProjectile* pro);
-
+#endif
 
 		template<typename ...Args>
 		static void SolLuaError(const std::string& format, Args ...args)

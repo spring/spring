@@ -1461,6 +1461,7 @@ void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 	lua_settable(L, -3);
 }
 
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 int LuaUtils::ParseAllegiance(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index))
@@ -1481,6 +1482,7 @@ int LuaUtils::ParseAllegiance(lua_State* L, const char* caller, int index)
 
 	return teamID;
 }
+
 
 bool LuaUtils::IsAlliedTeam(lua_State* L, int team)
 {
@@ -1560,4 +1562,4 @@ bool LuaUtils::IsProjectileVisible(lua_State* L, const CProjectile* pro)
 	return !((CLuaHandle::GetHandleReadAllyTeam(L) != pro->GetAllyteamID()) &&
 		(!losHandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L))));
 }
-
+#endif
