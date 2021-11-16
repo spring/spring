@@ -1116,49 +1116,18 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 {
-	float l = std::clamp(luaL_checkfloat(L, 1), static_cast<float>(globalRendering->viewPosX), static_cast<float>(globalRendering->viewSizeX));
-	float t = std::clamp(luaL_checkfloat(L, 2), static_cast<float>(globalRendering->viewPosY), static_cast<float>(globalRendering->viewSizeY));
-	float r = std::clamp(luaL_checkfloat(L, 3), static_cast<float>(globalRendering->viewPosX), static_cast<float>(globalRendering->viewSizeX));
-	float b = std::clamp(luaL_checkfloat(L, 4), static_cast<float>(globalRendering->viewPosY), static_cast<float>(globalRendering->viewSizeY));
+	float l = luaL_checkfloat(L, 1);
+	float t = luaL_checkfloat(L, 2);
+	float r = luaL_checkfloat(L, 3);
+	float b = luaL_checkfloat(L, 4);
 
 	if (l > r) std::swap(l, r);
 	if (t > b) std::swap(t, b);
 
-	const std::array<float2, 4> corners = {
-		float2{l, t},
-		float2{r, t},
-		float2{r, b},
-		float2{l, b}
-	};
+	static CVisUnitQuadDrawer unitQuadIter;
 
-	float3 mins = std::numeric_limits<float>::max();
-	float3 maxs = std::numeric_limits<float>::lowest();
-
-	const float3 cameraPos = camera->GetPos();
-
-	for (const auto& corner : corners) {
-		const float wx = corner.x                                  + globalRendering->viewPosX;
-		const float wy = globalRendering->viewSizeY - 1 - corner.y - globalRendering->viewPosY;
-
-		const float3 dir = camera->CalcPixelDir(wx, wy);
-		const float3 dirVec = dir * camera->GetFarPlaneDist() * 1.4f;
-
-		float dist = CGround::LineGroundCol(cameraPos, cameraPos + dirVec, false);
-
-		if (dist < 0.0f) {
-			//no map is behind this screen position, artificially extend distance so cClampInBounds below does the trick
-			dist = camera->GetFarPlaneDist() * 1.4f;
-		}
-
-		const float3 groundPos = (cameraPos + dir * dist).cClampInBounds();
-
-		mins.x = std::min(mins.x, groundPos.x); mins.y = std::min(mins.y, groundPos.y); mins.z = std::min(mins.z, groundPos.z);
-		maxs.x = std::max(maxs.x, groundPos.x); maxs.y = std::max(maxs.y, groundPos.y); maxs.z = std::max(maxs.z, groundPos.z);
-	}
-
-	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, mins, maxs);
-	const auto& units = (*qfQuery.units);
+	unitQuadIter.ResetState();
+	readMap->GridVisibility(nullptr, &unitQuadIter, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 	const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 	const int readATeam = CLuaHandle::GetHandleReadAllyTeam(L);
@@ -1199,26 +1168,31 @@ int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 	} break;
 	}
 
-	lua_createtable(L, units.size(), 0);
+	// Even though we're in unsynced it's ok to use gs->tempNum since its exact value
+// doesn't matter
+	const int tempNum = gs->GetTempNum();
+	lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
 	uint32_t count = 0;
-	for (const auto* unit : units) {
-		const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
+	for (auto visUnitList : unitQuadIter.GetObjectLists()) {
+		for (CUnit* unit : *visUnitList) {
+			if (disqualifierFunc(unit))
+				continue;
 
-		if (disqualifierFunc(unit))
-			continue;
+			const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
 
-		if (winPos.x > r || winPos.x < l)
-			continue;
+			if (winPos.x > r || winPos.x < l)
+				continue;
 
-		if (winPos.y > b || winPos.y < t)
-			continue;
+			if (winPos.y > b || winPos.y < t)
+				continue;
 
-		if (winPos.z > 1.0f || winPos.z < 0.0f)
-			continue;
+			if (winPos.z > 1.0f || winPos.z < 0.0f)
+				continue;
 
-		lua_pushnumber(L, unit->id);
-		lua_rawseti(L, -2, ++count);
+			lua_pushnumber(L, unit->id);
+			lua_rawseti(L, -2, ++count);
+		}
 	}
 
 	return 1;
