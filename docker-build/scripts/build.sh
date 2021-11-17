@@ -29,7 +29,7 @@ echo "---------------------------------"
 . /scripts/01_clone.sh
 . "/scripts/02_configure_${PLATFORM}.sh"
 . /scripts/03_compile.sh
-. /scripts/04_fill_portable_dir.sh
+. "/scripts/04_fill_portable_dir_${PLATFORM}.sh"
 
 if [ "${STRIP_SYMBOLS}" == "1" ]; then
     . /scripts/05_fill_debugsymbol_dir.sh

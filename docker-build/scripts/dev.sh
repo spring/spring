@@ -14,4 +14,6 @@ echo "Source code directory: ${SPRING_DIR}"
 echo "Build directory: ${BUILD_DIR}"
 echo "----------------------------------------------"
 
+cd "${BUILD_DIR}"
+
 /bin/bash
