@@ -21,14 +21,17 @@ fi
 
 echo "ccache pre Statistics:"
 ccache -s
-ccache -z # zero statistics
+echo "---------------------------------"
+echo "Zeroing ccache statistics..."
+ccache -z
+echo "---------------------------------"
 
 . /scripts/01_clone.sh
 . "/scripts/02_configure_${PLATFORM}.sh"
 . /scripts/03_compile.sh
 . /scripts/04_fill_portable_dir.sh
 
-if [ ! -z "${STRIP_SYMBOLS}" ]; then
+if [ "${STRIP_SYMBOLS}" == "1" ]; then
     . /scripts/05_fill_debugsymbol_dir.sh
 fi
 . /scripts/06_fill_build_options_file.sh
