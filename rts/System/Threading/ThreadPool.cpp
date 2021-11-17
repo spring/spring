@@ -105,23 +105,15 @@ static int GetConfigNumWorkers() {
 }
 
 static int GetDefaultNumWorkers() {
-	const int maxNumThreads = GetMaxThreads(); // min(MAX_THREADS, cpuCores)
+	const int maxNumThreads = GetMaxThreads(); // min(MAX_THREADS, logicalCpus)
 	const int cfgNumWorkers = GetConfigNumWorkers();
 
-	// for latency reasons our worker threads yield rarely (busy-looping)
-	// so we always leave 1 core free for our other threads, drivers & OS
-	// if the user has not set WorkerThreadCount
 	if (cfgNumWorkers < 0) {
-		if (maxNumThreads == 2)
-			return maxNumThreads;
-		if (maxNumThreads < 6)
-			return (maxNumThreads - 1);
-
-		return (maxNumThreads / 2);
+		return Threading::GetPhysicalCpuCores();
 	}
 
 	if (cfgNumWorkers > maxNumThreads) {
-		LOG_L(L_WARNING, "[ThreadPool::%s] workers set to %i, but there are just %i cores!", __func__, cfgNumWorkers, maxNumThreads);
+		LOG_L(L_WARNING, "[ThreadPool::%s] workers set to %i, but there are just %i hardware threads!", __func__, cfgNumWorkers, maxNumThreads);
 		return maxNumThreads;
 	}
 
