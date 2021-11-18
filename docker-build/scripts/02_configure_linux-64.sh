@@ -1,5 +1,6 @@
 cd "${SPRING_DIR}"
 
+rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"/bin-dir
 

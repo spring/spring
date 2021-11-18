@@ -1,9 +1,11 @@
+set -e
+
 UBUNTU_VER=20.04
 
 # Do not use git depth parameter cause git describe later will not work as expected
 
 git config --global user.name  "Docker SpringRTS Build"
-git config --global user.email "springbuild@springrts.de"
+git config --global user.email "dockerbuild@beyondallreason.info"
 
 rm -rf "${SPRING_DIR}"
 

@@ -1,5 +1,3 @@
-set -e
-
 COMMAND=$1
 shift
 
