@@ -837,7 +837,7 @@ namespace {
 		const int id = luaL_checkint(L, 1);
 		const T* o = LuaUtils::IdToObject<T>(id, func);
 		if (o == nullptr)
-			luaL_error(L, "gl.%s() Invalid %s id (%d)", func, &spring::TypeToStr<T>()[1], id);
+			luaL_error(L, "gl.%s() Invalid %s id (%d)", func, &spring::TypeToCStr<T>()[1], id);
 
 		ModelUniformData& uni = modelsUniformsStorage.GetObjUniformsArray(o);
 

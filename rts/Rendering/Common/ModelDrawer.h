@@ -32,7 +32,7 @@ enum ModelDrawerTypes {
 	MODEL_DRAWER_CNT =  4
 };
 
-static constexpr std::string_view ModelDrawerNames[ModelDrawerTypes::MODEL_DRAWER_CNT] = {
+static constexpr const char* ModelDrawerNames[ModelDrawerTypes::MODEL_DRAWER_CNT] = {
 	"FFP : fixed-function path",
 	"ARB : legacy standard shader path",
 	"GLSL: legacy standard shader path",
@@ -191,7 +191,7 @@ protected:
 
 	inline static std::stack<std::tuple<TDrawer*, IModelDrawerState*, bool>> implStack;
 protected:
-	static constexpr std::string_view className = spring::TypeToStr<TDrawer>();
+	static constexpr const char* className = spring::TypeToCStr<TDrawer>();
 };
 
 template<typename T>
@@ -249,7 +249,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::ForceLegacyPath()
 {
 	reselectionRequested = true;
 	forceLegacyPath = true;
-	LOG_L(L_WARNING, "[%s::%s] Using legacy (slow) %s renderer! This is caused by insufficient GPU/driver capabilities or by using of old Lua rendering API", className.data(), __func__, className.data());
+	LOG_L(L_WARNING, "[%s::%s] Using legacy (slow) %s renderer! This is caused by insufficient GPU/driver capabilities or by using of old Lua rendering API", className, __func__, className);
 }
 
 template<typename TDrawerData, typename TDrawer>
@@ -289,11 +289,11 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::SelectImplementation(bool fo
 		auto d = modelDrawers[preferedDrawerType];
 		auto s = IModelDrawerState::modelDrawerStates[preferedDrawerType];
 		if (qualifyDrawerFunc(d, s)) {
-			LOG_L(L_INFO, "[%s::%s] Force-switching to %s(%s)", className.data(), __func__, ModelDrawerNames[preferedDrawerType].data(), mtModelDrawer ? "MT" : "ST");
+			LOG_L(L_INFO, "[%s::%s] Force-switching to %s(%s)", className, __func__, ModelDrawerNames[preferedDrawerType], mtModelDrawer ? "MT" : "ST");
 			SelectImplementation(preferedDrawerType);
 		}
 		else {
-			LOG_L(L_ERROR, "[%s::%s] Couldn't force-switch to %s(%s)", className.data(), __func__, ModelDrawerNames[preferedDrawerType].data(), mtModelDrawer ? "MT" : "ST");
+			LOG_L(L_ERROR, "[%s::%s] Couldn't force-switch to %s(%s)", className, __func__, ModelDrawerNames[preferedDrawerType], mtModelDrawer ? "MT" : "ST");
 		}
 		preferedDrawerType = ModelDrawerTypes::MODEL_DRAWER_CNT; //reset;
 		return;

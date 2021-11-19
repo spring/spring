@@ -90,7 +90,7 @@ template<typename T>
 class BufferDataImpl : public IStreamBuffer<T> {
 public:
 	BufferDataImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 		, clientMem { false }
 		, buffer{ nullptr }
 	{
@@ -145,7 +145,7 @@ template<typename T>
 class BufferSubDataImpl : public IStreamBuffer<T> {
 public:
 	BufferSubDataImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 		, clientMem{ false }
 		, buffer{ nullptr }
 	{
@@ -200,7 +200,7 @@ template<typename T>
 class MapAndOrphanImpl : public IStreamBuffer<T> {
 public:
 	MapAndOrphanImpl(GLenum target, uint32_t numElems, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 	{
 		Init(numElems);
 		mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveAMD);
@@ -241,7 +241,7 @@ template<typename T>
 class MapAndSyncImpl : public IStreamBuffer<T> {
 public:
 	MapAndSyncImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_, bool coherent_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 		, coherent{ coherent_ }
 	{
@@ -304,7 +304,7 @@ template<typename T>
 class PersistentMapImpl : public IStreamBuffer<T> {
 public:
 	PersistentMapImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_, bool coherent_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 		, ptrBase{ nullptr }
 		, coherent{ coherent_ }
@@ -377,7 +377,7 @@ template<typename T>
 class PinnedMemoryAMDImpl : public IStreamBuffer<T> {
 public:
 	PinnedMemoryAMDImpl(GLenum target, uint32_t numElems, uint32_t numBuffers_, const std::string& name_)
-		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToStr<decltype(*this)>())
+		: IStreamBuffer<T>(target, numElems, name_, spring::TypeToCStr<decltype(*this)>())
 		, numBuffers{ numBuffers_ }
 	{
 		Init(numElems);
