@@ -78,7 +78,7 @@ public:
 	virtual bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands) const = 0;
 protected:
 	static bool ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawRefraction);
-	static bool ShouldDrawAlphaUnit(CUnit* u);
+	static bool ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRefraction);
 	static bool ShouldDrawUnitShadow(CUnit* u);
 
 	virtual void DrawGhostedBuildings(int modelType) const = 0;
@@ -106,8 +106,8 @@ public:
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction) const override {
 		DrawOpaquePassImpl<LuaObjType::LUAOBJ_UNIT>(deferredPass, drawReflection, drawRefraction);
 	};
-	void DrawAlphaPass() const override {
-		DrawAlphaPassImpl<LuaObjType::LUAOBJ_UNIT>();
+	void DrawAlphaPass(bool drawReflection, bool drawRefraction = false) const override {
+		DrawAlphaPassImpl<LuaObjType::LUAOBJ_UNIT>(drawReflection, drawRefraction);
 	};
 protected:
 	void Update() const override;
@@ -142,7 +142,7 @@ protected:
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const;
 	void DrawOpaqueObjectsAux(int modelType) const override; //AI units
 
-	void DrawAlphaObjects(int modelType) const override;
+	void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
 	void DrawAlphaObjectsAux(int modelType) const override;
 
 	void DrawGhostedBuildings(int modelType) const override;
@@ -214,7 +214,7 @@ public:
 protected:
 	void DrawObjectsShadow(int modelType) const override;
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
-	void DrawAlphaObjects(int modelType) const override;
+	void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
 
 	void DrawAlphaObjectsAux(int modelType) const override;
 	void DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;

@@ -356,8 +356,8 @@ void CWorldDrawer::DrawAlphaObjects() const
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw alpha-objects below water surface (farthest)
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(false);
+		featureDrawer->DrawAlphaPass(false);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
@@ -379,8 +379,8 @@ void CWorldDrawer::DrawAlphaObjects() const
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw alpha-objects above water surface (closest)
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(false);
+		featureDrawer->DrawAlphaPass(false);
 
 		glDisable(GL_CLIP_PLANE3);
 	}

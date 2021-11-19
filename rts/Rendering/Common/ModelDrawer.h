@@ -128,12 +128,12 @@ public:
 
 	virtual void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawShadowPass() const = 0;
-	virtual void DrawAlphaPass() const = 0;
+	virtual void DrawAlphaPass(bool drawReflection, bool drawRefraction = false) const = 0;
 protected:
 	virtual void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawOpaqueObjectsAux(int modelType) const = 0;
 
-	virtual void DrawAlphaObjects(int modelType) const = 0;
+	virtual void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawAlphaObjectsAux(int modelType) const = 0;
 
 	virtual void DrawObjectsShadow(int modelType) const = 0;
@@ -152,7 +152,7 @@ protected:
 	void DrawOpaquePassImpl(bool deferredPass, bool drawReflection, bool drawRefraction) const;
 
 	template<LuaObjType lot>
-	void DrawAlphaPassImpl() const;
+	void DrawAlphaPassImpl(bool drawReflection, bool drawRefraction) const;
 
 	template<bool legacy, LuaObjType lot>
 	void DrawShadowPassImpl() const;
@@ -384,7 +384,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawOpaquePassImpl(bool defe
 
 template<typename TDrawerData, typename TDrawer>
 template<LuaObjType lot>
-inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl() const
+inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl(bool drawReflection, bool drawRefraction) const
 {
 	static const std::string methodName = std::string(className) + "::DrawAlphaPass";
 	SCOPED_TIMER(methodName.c_str());
@@ -396,7 +396,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl() const
 			continue;
 
 		CModelDrawerHelper::PushModelRenderState(modelType);
-		DrawAlphaObjects(modelType);
+		DrawAlphaObjects(modelType, drawReflection, drawRefraction);
 		DrawAlphaObjectsAux(modelType);
 		CModelDrawerHelper::PopModelRenderState(modelType);
 	}
