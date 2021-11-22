@@ -13,7 +13,7 @@ echo "::set-output name=bin_name::${bin_name}"
 
 if [ "${STRIP_SYMBOLS}" == "1" ]; then
     cd "${BUILD_DIR}"
-    touch empty.dbg
+    # touch empty.dbg - was is it good for??
     DEBUGFILES=$(find ./ -name '*.dbg')
     tar cvfz $dbg_name ${DEBUGFILES}
     echo "::set-output name=dbg_name::${dbg_name}"

@@ -152,6 +152,12 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 		return false;
 
+	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+		return false;
+
 	if (u->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
 		farTextureHandler->Queue(u);
 		return false;
@@ -163,7 +169,7 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	return true;
 }
 
-bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u)
+bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRefraction)
 {
 	assert(u);
 	assert(u->model);
@@ -175,6 +181,12 @@ bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u)
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
+		return false;
+
+	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddAlphaMaterialObject(u, LUAOBJ_UNIT))
@@ -399,7 +411,7 @@ void CUnitDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 	}
 }
 
-void CUnitDrawerLegacy::DrawAlphaObjects(int modelType) const
+void CUnitDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -1270,7 +1282,7 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 	smv.Unbind();
 }
 
-void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
+void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -1290,7 +1302,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
 		for (auto* o : bin) {
-			if (!ShouldDrawAlphaUnit(o))
+			if (!ShouldDrawAlphaUnit(o, drawReflection, drawRefraction))
 				continue;
 
 			smv.AddToSubmission(o);

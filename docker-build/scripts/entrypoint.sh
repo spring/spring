@@ -1,5 +1,3 @@
-set -e
-
 COMMAND=$1
 shift
 
@@ -14,7 +12,7 @@ case "${COMMAND}" in
     ;;
 
   *)
-    echo "Invalid operation mode: $1" >&2
+    echo "Invalid operation mode: $COMMAND" >&2
     exit 1
     ;;
 esac

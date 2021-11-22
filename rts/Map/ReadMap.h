@@ -209,6 +209,7 @@ public:
 	unsigned int CalcTypemapChecksum();
 
 private:
+	void InitHeightBounds();
 	void UpdateHeightBounds(int syncFrame);
 
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);

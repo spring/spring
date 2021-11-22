@@ -1179,6 +1179,11 @@ int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 			if (disqualifierFunc(unit))
 				continue;
 
+			if (unit->tempNum == tempNum)
+				continue;
+
+			unit->tempNum = tempNum;
+
 			const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
 
 			if (winPos.x > r || winPos.x < l)

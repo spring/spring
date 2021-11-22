@@ -63,13 +63,21 @@ jobs:
       - name: Checkout engine repository
         uses: actions/checkout@v2
 
+      - name: Get Random Number
+        id: get-random-number
+        run: |
+          number=$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')
+          echo "Generated random number: $number"
+          echo "::set-output name=number::$number"
+        shell: bash
+
       - name: Download Cache Data
         if: github.event.inputs.use-cache == 'true'
         id: cache-dl
         uses: actions/cache@v2
         with:
           path: /tmp/ccache_archive
-          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
+          key: ccache-${{ matrix.config.os }}-${{ steps.get-random-number.outputs.number }}
           restore-keys: |
             ccache-${{ matrix.config.os }}-
 

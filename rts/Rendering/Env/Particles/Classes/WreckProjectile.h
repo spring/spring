@@ -4,6 +4,7 @@
 #define WRECK_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
+#include "System/Threading/SpringThreading.h"
 
 class CWreckProjectile : public CProjectile
 {
@@ -17,6 +18,8 @@ public:
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
 	int GetProjectilesCount() const override;
+private:
+	inline static spring::mutex mut = {};
 };
 
 #endif /* WRECK_PROJECTILE_H */

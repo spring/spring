@@ -65,7 +65,7 @@ protected:
 	uint32_t bindingIdx = -1u;
 	uint32_t elemCount0 = 0;
 	uint32_t elemCountIncr = 0;
-	static constexpr std::string_view className = spring::TypeToStr<Derived>();
+	static constexpr const char* className = spring::TypeToCStr<Derived>();
 
 	std::unique_ptr<IStreamBuffer<T>> ssbo;
 };

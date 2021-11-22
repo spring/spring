@@ -1,5 +1,6 @@
 cd "${SPRING_DIR}"
 
+rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"/bin-dir
 
@@ -7,6 +8,7 @@ WORKDIR=$(pwd)/spring-static-libs
 LIBDIR=$WORKDIR/lib
 INCLUDEDIR=$WORKDIR/include
 
+cd "${BUILD_DIR}"
 cmake \
     -DCMAKE_TOOLCHAIN_FILE="/scripts/${PLATFORM}.cmake" \
     -DMARCH_FLAG="${MYARCHTUNE}" \
@@ -38,5 +40,4 @@ cmake \
     -DOPENSSL_INCLUDE_DIR:PATH=${INCLUDEDIR} -DOPENSSL_SSL_LIBRARY:PATH=${LIBDIR}/libssl.a -DOPENSSL_CRYPTO_LIBRARY:PATH=${LIBDIR}/libcrypto.a \
     -DVORBIS_INCLUDE_DIR:PATH=${INCLUDEDIR} \
     -DVORBISENC_LIBRARY:PATH=${LIBDIR}/libvorbisenc.a -DVORBISFILE_LIBRARY:PATH=${LIBDIR}/libvorbisfile.a -DVORBIS_LIBRARY:PATH=${LIBDIR}/libvorbis.a \
-    -B "${BUILD_DIR}" \
-    .
+    "${SPRING_DIR}"

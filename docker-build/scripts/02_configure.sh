@@ -1,0 +1,1 @@
+"/scripts/02_configure_${PLATFORM}.sh"
