@@ -37,24 +37,6 @@ public:
 		int pathType
 	);
 
-	void AddPathForCurrentFrame(
-		const IPath::Path* path,
-		const IPath::SearchResult result,
-		const int2 strtBlock,
-		const int2 goalBlock,
-		float goalRadius,
-		int pathType
-	);
-
-	void PromoteCachedPathToCoreCache(
-		const IPath::Path* path,
-		const IPath::SearchResult result,
-		const int2 strtBlock,
-		const int2 goalBlock,
-		float goalRadius,
-		int pathType
-	);
-
 	const CacheItem& GetCachedPath(
 		const int2 strtBlock,
 		const int2 goalBlock,
@@ -63,20 +45,6 @@ public:
 	);
 
 private:
-	const CacheItem& GetCachedPathMain(
-		const int2 strtBlock,
-		const int2 goalBlock,
-		float goalRadius,
-		int pathType
-	);
-
-	const CacheItem& GetCachedPathTemp(
-		const int2 strtBlock,
-		const int2 goalBlock,
-		float goalRadius,
-		int pathType
-	);
-
 	void RemoveFrontQueItem();
 
 	std::uint64_t GetHash(
@@ -112,7 +80,6 @@ private:
 
 	std::deque<CacheQueItem> cacheQue;
 	spring::unordered_map<std::uint64_t, CacheItem> cachedPaths; // ints are sync-safe keys
-	spring::unordered_map<std::uint64_t, CacheItem> currentFrameCachedPaths;
 
 	std::uint32_t numBlocksX;
 	std::uint32_t numBlocksZ;

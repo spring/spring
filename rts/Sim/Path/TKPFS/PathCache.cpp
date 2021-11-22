@@ -28,7 +28,6 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 	dummyCacheItem = {IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
 
 	cachedPaths.reserve(4096);
-	currentFrameCachedPaths.reserve(4096);
 }
 
 CPathCache::~CPathCache()
@@ -82,93 +81,6 @@ bool CPathCache::AddPath(
 	return false;
 }
 
-void CPathCache::AddPathForCurrentFrame(
-	const IPath::Path* path,
-	const IPath::SearchResult result,
-	const int2 strtBlock,
-	const int2 goalBlock,
-	float goalRadius,
-	int pathType
-) {
-	const std::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
-	const auto iter = currentFrameCachedPaths.find(hash);
-
-	// LOG("%llu Cache L2 entry (%d): (%d, %d) -> (%d, %d) ~ %f for [%d] (%llu) : %llu (available? %d)"
-	// 		, numBlocks
-	// 		, result
-	// 		, strtBlock.x, strtBlock.y
-	// 		, goalBlock.x, goalBlock.y
-	// 		, goalRadius, pathType
-	// 		, currentFrameCachedPaths.size()
-	// 		, hash
-	// 		, (iter == currentFrameCachedPaths.end()));
-
-	// LOG("Path Details Cost %f (%f, %f, %f))", path->pathCost, path->pathGoal.x, path->pathGoal.y, path->pathGoal.z);
-	// for (int j = 0; j<path->path.size(); j++){
-	// 	LOG("%llu Path Step %d (%f, %f, %f)", numBlocks, j, path->path[j].x, path->path[j].y, path->path[j].z);
-	// }
-
-	// collisions are expected due to multiple threads sometimes working on identical queries
-	if (iter != currentFrameCachedPaths.end()){
-		//LOG("%llu Cache L2 entry already present", numBlocks);
-		return;
-	}
-
-	//LOG("%llu Cache L2 entry added", numBlocks);
-
-	currentFrameCachedPaths[hash] = CacheItem{result, *path, strtBlock, goalBlock, goalRadius, pathType};
-}
-
-void CPathCache::PromoteCachedPathToCoreCache(
-	const IPath::Path* path,
-	const IPath::SearchResult result,
-	const int2 strtBlock,
-	const int2 goalBlock,
-	float goalRadius,
-	int pathType
-) {
-	const std::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
-	{
-		const auto iter = cachedPaths.find(hash);
-
-		// nothing to do if the entry is already in the main cache.
-		// this isn't really a collision in this case.
-		if (iter != cachedPaths.end())
-			return;
-	}
-
-	//LOG("Cache promotion L1 cache open");
-
-	auto cfIter = currentFrameCachedPaths.find(hash);
-
-	// LOG("%llu Cache promotion attempt (%d): (%d, %d) -> (%d, %d) ~ %f for [%d] (%llu) : %llu (available? %d)"
-	// 		, numBlocks
-	// 		, result
-	// 		, strtBlock.x, strtBlock.y
-	// 		, goalBlock.x, goalBlock.y
-	// 		, goalRadius, pathType
-	// 		, currentFrameCachedPaths.size()
-	// 		, hash
-	// 		, (cfIter == currentFrameCachedPaths.end()));
-
-	// Nothing to do if the entry is not avialable.
-	assert(cfIter != currentFrameCachedPaths.end());
-	if (cfIter == currentFrameCachedPaths.end())
-		return;
-
-	if (cacheQue.size() > MAX_CACHE_QUEUE_SIZE)
-		RemoveFrontQueItem();
-	
-	cachedPaths[hash] = std::move(cfIter->second);
-
-	//LOG("Cache Promotion %d", cachedPaths[hash].path.path.size());
-
-	const int lifeTime = (result == IPath::Ok) ? GAME_SPEED * MAX_PATH_LIFETIME_SECS : GAME_SPEED * (MAX_PATH_LIFETIME_SECS / 2);
-
-	cacheQue.push_back({gs->frameNum + lifeTime, hash});
-	maxCacheSize = std::max<std::uint64_t>(maxCacheSize, cacheQue.size());
-}
-
 const CPathCache::CacheItem& CPathCache::GetCachedPath(
 	const int2 strtBlock,
 	const int2 goalBlock,
@@ -186,7 +98,6 @@ const CPathCache::CacheItem& CPathCache::GetCachedPath(
 	// 		, hash
 	// 		);
 
-	// Check the primary cache
 	{
 		auto iter = cachedPaths.find(hash);
 		if (iter != cachedPaths.end()
@@ -194,7 +105,7 @@ const CPathCache::CacheItem& CPathCache::GetCachedPath(
 				&& (iter->second).goalBlock == goalBlock
 				&& (iter->second).pathType == pathType
 			) {
-			// LOG("Primary Cache Hit %d", iter->second.path.path.size());
+			// LOG("Cache Hit %d", iter->second.path.path.size());
 			++numCacheHits;
 			return (iter->second);
 		}
@@ -204,38 +115,10 @@ const CPathCache::CacheItem& CPathCache::GetCachedPath(
 	return dummyCacheItem;
 }
 
-// const CPathCache::CacheItem& CPathCache::GetCachedPath(
-// 	const int2 strtBlock,
-// 	const int2 goalBlock,
-// 	float goalRadius,
-// 	int pathType
-// ) {
-// 	const std::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
-// 	auto iter = cachedPaths.find(hash);
-
-// 	if (iter == cachedPaths.end()) {
-// 		++numCacheMisses; return dummyCacheItem;
-// 	}
-// 	if ((iter->second).strtBlock != strtBlock) {
-// 		++numCacheMisses; return dummyCacheItem;
-// 	}
-// 	if ((iter->second).goalBlock != goalBlock) {
-// 		++numCacheMisses; return dummyCacheItem;
-// 	}
-// 	if ((iter->second).pathType != pathType) {
-// 		++numCacheMisses; return dummyCacheItem;
-// 	}
-
-// 	++numCacheHits;
-// 	return (iter->second);
-// }
-
 void CPathCache::Update()
 {
 	while (!cacheQue.empty() && (cacheQue.front().timeout) < gs->frameNum)
 		RemoveFrontQueItem();
-	
-	currentFrameCachedPaths.clear();
 }
 
 void CPathCache::RemoveFrontQueItem()
