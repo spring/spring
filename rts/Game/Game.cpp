@@ -447,6 +447,11 @@ void CGame::Load(const std::string& mapFileName)
 			loadscreen->SetLoadMessage("Loading Saved Game");
 			saveFileHandler->LoadGame();
 			LoadLua(false, true);
+		} else {
+			ENTER_SYNCED_CODE();
+			eventHandler.GamePreload();
+			eventHandler.CollectGarbage(true);
+			LEAVE_SYNCED_CODE();
 		}
 
 		{
@@ -804,13 +809,6 @@ void CGame::LoadSkirmishAIs()
 
 void CGame::LoadFinalize()
 {
-	if (saveFileHandler == nullptr) {
-		ENTER_SYNCED_CODE();
-		eventHandler.GamePreload();
-		eventHandler.CollectGarbage(true);
-		LEAVE_SYNCED_CODE();
-	}
-
 	{
 		loadscreen->SetLoadMessage("[" + std::string(__func__) + "] finalizing PFS");
 

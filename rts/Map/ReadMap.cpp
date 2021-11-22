@@ -373,7 +373,7 @@ void CReadMap::Initialize()
 		sharedSlopeMaps[1] = &slopeMap[0];
 	}
 
-	mapChecksum = CalcHeightmapChecksum();
+	InitHeightBounds();
 
 	syncedHeightMapDigests.clear();
 	unsyncedHeightMapDigests.clear();
@@ -386,8 +386,7 @@ void CReadMap::Initialize()
 	// UpdateDraw(true);
 }
 
-
-unsigned int CReadMap::CalcHeightmapChecksum()
+void CReadMap::InitHeightBounds()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
@@ -407,12 +406,24 @@ unsigned int CReadMap::CalcHeightmapChecksum()
 		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
 	}
 
-	checksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
+	mapChecksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 
 	currHeightBounds.x = initHeightBounds.x;
 	currHeightBounds.y = initHeightBounds.y;
+}
 
-	return checksum;
+
+unsigned int CReadMap::CalcHeightmapChecksum()
+{
+	const float* heightmap = GetCornerHeightMapSynced();
+
+	unsigned int checksum = 0;
+
+	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
+		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
+	}
+
+	return HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 }
 
 
