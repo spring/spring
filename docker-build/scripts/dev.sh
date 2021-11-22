@@ -1,3 +1,8 @@
+if [ $$ -gt 1 ] && [ $PPID -gt 1 ]; then
+    echo "Are you already in a dev shell? Please start this from the initial shell. Exiting..."
+    exit 1
+fi
+
 # export variables to make them vavailable to the interactive shell later
 set -a
 . /scripts/00_setup.sh
@@ -20,13 +25,8 @@ fi
 echo "Source code directory: ${SPRING_DIR}"
 echo "Build directory: ${BUILD_DIR}"
 echo "----------------------------------------------"
-echo "Supported distros: Ubuntu 20.04"
-echo "----------------------------------------------"
 
 
 cd "${BUILD_DIR}"
 
-# check if we are the container main process and start an interactive shell only then
-if [ $$ -eq 1 ]; then
-  /bin/bash
-fi
+/bin/bash --rcfile <(cat ~/.bashrc; echo 'PS1="<springdev> \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "')

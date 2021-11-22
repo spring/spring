@@ -1,10 +1,65 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04 AS mxe
+
+ARG mxe_version=02852a7b690aa411ce2a2089deea25a7292a33d6
+ARG mxe_gcc=gcc11
+
+# Install MXE dependencies
+RUN apt-get update;apt-get install -y \
+    autoconf \
+    automake \
+    autopoint \
+    bash \
+    bison \
+    bzip2 \
+    flex \
+    g++ \
+    g++-multilib \
+    gettext \
+    git \
+    gperf \
+    intltool \
+    libc6-dev-i386 \
+    libgdk-pixbuf2.0-dev \
+    libltdl-dev \
+    libssl-dev \
+    libtool-bin \
+    libxml-parser-perl \
+    lzip \
+    make \
+    openssl \
+    p7zip-full \
+    patch \
+    perl \
+    python \
+    ruby \
+    sed \
+    unzip \
+    wget \
+    xz-utils
+
+
+# Install MXE and build cross-compile windows gcc
+RUN cd /; \
+	git clone https://github.com/mxe/mxe.git; \
+	cd mxe; \
+	git checkout $mxe_version; \
+	make cc -j MXE_USE_CCACHE= MXE_PLUGIN_DIRS=plugins/$mxe_gcc MXE_TARGETS=x86_64-w64-mingw32.static; \
+	rm -rf /mxe/pkg /mxe/src /mxe/log /mxe/.git
+
+
+# Main Image
+FROM ubuntu:18.04
+
+ARG cmake_version=3.16.*
+
+COPY --from=mxe /mxe /mxe
+ENV PATH="/mxe/usr/bin:${PATH}"
 
 # suppress questions from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Build Dependencies (Common)
-RUN  apt-get update -y; \
+RUN apt-get update -y; \
 	apt-get install --fix-missing -y \
 		  clang-format \
 		  coreutils \
@@ -14,12 +69,10 @@ RUN  apt-get update -y; \
 		  pigz \
 		  software-properties-common \
 		  ccache \
-		  cmake
+		  python3-pip; \
+		  pip3 install cmake==$cmake_version; \
+		  apt purge python3-pip -y; apt auto-remove -y
 
-# Install Build Dependencies (windows-64)
-RUN apt-get install --fix-missing -y \
-    binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
-		  
 # GCC-10 PPA (linux-64)
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y; \
         apt update -y; \
@@ -36,10 +89,13 @@ RUN  apt-get install --fix-missing -y \
 ENV CCACHE_DIR=/ccache
 ENV PATH="/usr/lib/ccache:${PATH}"
 
+# set primary config so no config from cache directory will be used
 COPY config/ccache.conf /etc/ccache.conf
+ENV CCACHE_CONFIGPATH=/etc/ccache.conf
+
 RUN /usr/sbin/update-ccache-symlinks; \
-        ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32-g++-posix; \
-        ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32-gcc-posix
+        ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32.static-g++; \
+        ln -s ../../bin/ccache /usr/lib/ccache/x86_64-w64-mingw32.static-gcc
 
 COPY scripts /scripts
 ENV PATH="/scripts:${PATH}"

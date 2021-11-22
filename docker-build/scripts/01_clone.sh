@@ -1,5 +1,6 @@
 set -e
 
+cd /
 UBUNTU_VER=20.04
 
 # Do not use git depth parameter cause git describe later will not work as expected
@@ -30,3 +31,5 @@ else
     echo "Unsupported platform: '${PLATFORM}'"
     exit 1
 fi
+
+cd "${SPRING_DIR}"
