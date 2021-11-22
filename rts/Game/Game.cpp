@@ -412,7 +412,6 @@ void CGame::Load(const std::string& mapFileName)
 			LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 			LoadFinalize();
-			LoadSkirmishAIs();
 		} catch (const content_error& e) {
 			LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
 			forcedQuit = true;
@@ -430,8 +429,19 @@ void CGame::Load(const std::string& mapFileName)
 		}
 	}
 
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+
+			LoadSkirmishAIs();
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
+	}
+
 	try {
-		LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+		LOG("[Game::%s][8] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		if (!globalQuit && saveFileHandler != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
@@ -446,7 +456,7 @@ void CGame::Load(const std::string& mapFileName)
 			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
 		}
 	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
+		LOG_L(L_WARNING, "[Game::%s][8] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
 	}
 
