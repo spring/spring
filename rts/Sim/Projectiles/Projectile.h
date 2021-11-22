@@ -13,6 +13,7 @@
 #include "ExpGenSpawnable.h"
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/Threading/SpringThreading.h"
 
 class CUnit;
 class CFeature;
@@ -124,6 +125,7 @@ public:
 
 	int drawOrder = 0;
 
+	inline static spring::mutex mut = {};
 protected:
 	std::array<bool, 5> validTextures = {false, false, false, false, false}; //overall state and 4 textures
 	unsigned int ownerID = -1u;

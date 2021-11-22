@@ -397,7 +397,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	const float3 npos = pos + camVect * moveLength;
 
-	std::unique_lock<spring::mutex> lock(mut, std::defer_lock);
+	std::unique_lock<spring::mutex> lock(CProjectile::mut, std::defer_lock);
 	if (withMutex) {
 		lock.lock();
 	}
@@ -962,7 +962,7 @@ bool CCustomExplosionGenerator::Explosion(
 	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectiles;
 	const GroundFlashInfo& groundFlash = expGenParams.groundFlash;
 
-	std::unique_lock<spring::mutex> lock(mut, std::defer_lock);
+	std::unique_lock<spring::mutex> lock(CProjectile::mut, std::defer_lock);
 	if (withMutex) {
 		lock.lock();
 	}

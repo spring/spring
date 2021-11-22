@@ -114,7 +114,6 @@ public:
 
 protected:
 	unsigned int generatorID;
-	inline static spring::mutex mut = {};
 };
 
 
