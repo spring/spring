@@ -43,7 +43,7 @@ RUN cd /; \
 	git clone https://github.com/mxe/mxe.git; \
 	cd mxe; \
 	git checkout $mxe_version; \
-	make cc -j MXE_USE_CCACHE= MXE_PLUGIN_DIRS=plugins/$mxe_gcc MXE_TARGETS=x86_64-w64-mingw32.static; \
+	make cc -j$(nproc) MXE_USE_CCACHE= MXE_PLUGIN_DIRS=plugins/$mxe_gcc MXE_TARGETS=x86_64-w64-mingw32.static; \
 	rm -rf /mxe/pkg /mxe/src /mxe/log /mxe/.git
 
 
