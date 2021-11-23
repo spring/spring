@@ -24,15 +24,28 @@ inputs:
   use-cache:
     description: 'Use Cache'
     required: false
-    default: true
+    default: 'true'
   strip-symbols:
     description: 'Strip debug symbols from artifacts'
     required: false
-    default: true
+    default: 'true'
   repository-url:
     description: 'URL of the SpringRTS git repository'
-    required: false
+    required: 'false'
     default: 'https://github.com/beyond-all-reason/spring '
+  debug-tmate:
+    description: 'Debug with tmate'
+    required: false
+    default: 'false'
+  debug-ccache:
+    description: 'Debug ccache'
+    required: false
+    default: 'true'
+  docker-image:
+    description: 'Docker Image to use from Docker Hub (instead of embedded image)'
+    required: false
+    #default: '*'
+    default: 'verybadsoldier/springrts-build:dbg'
 outputs:
   bin_name:
     description: 'Spring Binary Package Filename'
@@ -43,40 +56,93 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Get Primary Cache key
+      id: get-prim-cache-key
+      run: |
+        # Docker image will be built by both jobs (win and linux) but we want to only cache the windows one
+        # we dont want the docker image built by linux-64 to be cached since it would produce ccache-misses for windows-64
+        # so we add a random string to the linux-key so windows-64 won't pick it up
+        CACHEKEY="docker-image-${{ hashFiles('./docker-build/**') }}"
+        if [ ${{ inputs.platform }} == "linux-64" ]; then
+          RANDOMNUMB=$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')
+          CACHEKEY+="-${RANDOMNUMB}"
+        fi
+        echo "::set-output name=cachekey::$CACHEKEY"
+      shell: bash
+
     - name: Download Cache Data
-      if: github.event.inputs.use-cache == 'true'
+      if: inputs.use-cache == 'true' && inputs.docker-image == '*'
       id: cache-dl-docker
       uses: actions/cache@v2
       with:
         path: /tmp/docker
-        key: docker-image-${{ hashFiles('./docker-build/**') }}
-    - name: Build and store Docker image
-      if: steps.cache-dl-docker.outputs.cache-hit != 'true'
+        key: ${{ steps.get-prim-cache-key.outputs.cachekey }}
+        restore-keys: |
+          docker-image-${{ hashFiles('./docker-build/**') }}
+
+    - name: Extract or build Docker image
+      if: inputs.docker-image == '*'
       run: |
-          docker build -t local ./docker-build
-          mkdir -p /tmp/docker
-          echo "Saving docker image to /tmp/docker/local.tgz..."
-          docker save local | pigz -1 > /tmp/docker/local.tgz
+          if [ -f /tmp/docker/local.tgz ]; then
+            echo "Found cached Docker image: /tmp/docker/local.tgz"
+
+            echo "Extracting and loading..."
+            pigz -dc /tmp/docker/local.tgz > /tmp/docker/local.tar
+            docker load -i /tmp/docker/local.tar
+          else
+            echo "No cached Docker image found. Building Docker image from scratch..."
+
+            docker build -t local ./docker-build
+            mkdir -p /tmp/docker
+
+            # as we don't want linux to cache its docker image (as described above), we don't store the linux docker image
+            if [ ${{ inputs.platform }} == "windows-64" ]; then
+              echo "Saving docker image to /tmp/docker/local.tgz..."
+              docker save local | pigz -1 > /tmp/docker/local.tgz
+            fi
+          fi
       shell: bash
-    - name: Extract Docker image
-      if: steps.cache-dl-docker.outputs.cache-hit == 'true'
+
+    - name: Run Docker Build
       run: |
-          pigz -dc /tmp/docker/local.tgz > /tmp/docker/local.tar
-          docker load -i /tmp/docker/local.tar
-      shell: bash      
-    - run: |
-        ARGS=(run --rm -v /tmp/ccache:/ccache -v "${{ github.workspace }}/artifacts:/publish" local build)
-        ARGS+=(-p "${{ inputs.platform }}" -u "${{ inputs.repository-url }}" -b "${{ inputs.branch }}" -c "${{ inputs.archtune-flags }}" -r "${{ inputs.relwithdeb-flags }}" -f "${{ inputs.compilation-flags }}")
-        if [ ${use-cache} ]; then
+        # Docker args
+        ARGS=(run -v /tmp/ccache:/ccache -v "${{ github.workspace }}/artifacts:/publish")
+
+        if [ "${{ inputs.debug-ccache }}" == "true" ]; then
+          ARGS+=(-v "${{ github.workspace }}/ccache_dbg:/ccache_dbg" )
+        fi
+        
+        DOCKER_IMAGE="${{ inputs.docker-image }}"
+        if [ "${DOCKER_IMAGE}" == "*" ]; then
+          DOCKER_IMAGE="local"
+        fi
+
+        # Image args
+        ARGS+=("${DOCKER_IMAGE}" build -p "${{ inputs.platform }}" -u "${{ inputs.repository-url }}" -b "${{ inputs.branch }}" -c "${{ inputs.archtune-flags }}" -r "${{ inputs.relwithdeb-flags }}" -f "${{ inputs.compilation-flags }}")
+        if [ "${use-cache}" == "true" ]; then
           ARGS+=(-h 1)
         fi
 
-        if [ ${strip-symbols} ]; then
-          ARGS+=(-s 1)
+        if [ "${{ inputs.debug-ccache }}" == "true" ]; then
+          ARGS+=(-z 1)
         fi
 
-        echo "Running docker with arguments: ${ARGS[@]}"
-        docker "${ARGS[@]}"
+        if [ "${{ inputs.strip-symbols }}" == "true" ]; then
+          ARGS+=(-s 1)
+        fi
+        
+        echo "Running docker with arguments: 'docker ${ARGS[@]}'"
+
+        echo "tmate-debug: ${{ inputs.debug-tmate }}"
+
+        if [ "${{ inputs.debug-tmate }}" == "pre" ]; then
+          echo "tmate debugging enabled. Skipping docker run command. Connect via SSH now..."
+        else
+          docker "${ARGS[@]}"
+        fi
       shell: bash
       id: docker-run
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: ${{ inputs.debug-tmate == 'pre' || inputs.debug-tmate == 'post' }}

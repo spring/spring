@@ -20,7 +20,7 @@ if [ "${DUMMY}" == "1" ]; then
 fi
 
 echo "ccache pre Statistics:"
-ccache -s
+ccache -s -v
 echo "---------------------------------"
 echo "Zeroing ccache statistics..."
 ccache -z
@@ -39,4 +39,4 @@ fi
 . /scripts/08_copy_to_publish_dir.sh
 
 echo "ccache post Statistics:"
-ccache -s
+ccache -s -v -x

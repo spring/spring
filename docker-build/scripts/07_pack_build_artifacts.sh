@@ -18,3 +18,10 @@ if [ "${STRIP_SYMBOLS}" == "1" ]; then
     tar cvfz $dbg_name ${DEBUGFILES}
     echo "::set-output name=dbg_name::${dbg_name}"
 fi
+
+if [ -d /ccache_dbg ]; then
+    echo "Packing ccache debug data..."
+    tar cvfz /publish/ccache_dbg.tgz -C /ccache_dbg /ccache_dbg > /dev/null 2>&1
+else
+    echo "No ccache debug data, so skipping packing it..."
+fi

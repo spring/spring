@@ -11,6 +11,10 @@ case "${COMMAND}" in
     . dev.sh
     ;;
 
+  shell)
+    /bin/bash
+    ;;
+
   *)
     echo "Invalid operation mode: $COMMAND" >&2
     exit 1

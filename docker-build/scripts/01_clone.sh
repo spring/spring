@@ -1,7 +1,7 @@
 set -e
 
 cd /
-UBUNTU_VER=20.04
+UBUNTU_VER=18.04
 
 # Do not use git depth parameter cause git describe later will not work as expected
 
