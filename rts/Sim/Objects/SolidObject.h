@@ -345,6 +345,8 @@ public:
 
 	///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
 	bool noDraw = false;
+	///< if true, object will not be drawn by the engine, but drawFlags will still be calculated
+	bool noEngineDraw = false;
 	///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
 	bool luaDraw = false;
 	///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)

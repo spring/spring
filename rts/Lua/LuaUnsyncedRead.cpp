@@ -123,12 +123,14 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetUnitLuaDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
+	REGISTER_LUA_CFUNC(GetUnitNoEngineDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
 	REGISTER_LUA_CFUNC(GetUnitAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(GetFeatureNoEngineDraw);
 	REGISTER_LUA_CFUNC(GetFeatureAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
 
@@ -333,6 +335,15 @@ static int GetSolidObjectNoDraw(lua_State* L, const CSolidObject* obj)
 		return 0;
 
 	lua_pushboolean(L, obj->noDraw);
+	return 1;
+}
+
+static int GetSolidObjectNoEngineDraw(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	lua_pushboolean(L, obj->noEngineDraw);
 	return 1;
 }
 
@@ -711,6 +722,11 @@ int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
+int LuaUnsyncedRead::GetUnitNoEngineDraw(lua_State* L)
+{
+	return (GetSolidObjectNoEngineDraw(L, ParseUnit(L, __func__, 1)));
+}
+
 int LuaUnsyncedRead::GetUnitAlwaysUpdateMatrix(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
@@ -757,6 +773,11 @@ int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 {
 	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
+}
+
+int LuaUnsyncedRead::GetFeatureNoEngineDraw(lua_State* L)
+{
+	return (GetSolidObjectNoEngineDraw(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureAlwaysUpdateMatrix(lua_State* L)

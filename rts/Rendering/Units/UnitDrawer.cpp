@@ -166,6 +166,9 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
+	if (u->noEngineDraw)
+		return false;
+
 	return true;
 }
 
@@ -192,6 +195,9 @@ bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRe
 	if (LuaObjectDrawer::AddAlphaMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
+	if (u->noEngineDraw)
+		return false;
+
 	return true;
 }
 
@@ -204,6 +210,9 @@ bool CUnitDrawer::ShouldDrawUnitShadow(CUnit* u)
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(u, LUAOBJ_UNIT))
+		return false;
+
+	if (u->noEngineDraw)
 		return false;
 
 	return true;

@@ -76,6 +76,9 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
+	if (f->noEngineDraw)
+		return false;
+
 	return true;
 }
 
@@ -99,6 +102,9 @@ bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f, bool drawReflection, bo
 	if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
+	if (f->noEngineDraw)
+		return false;
+
 	return true;
 }
 
@@ -111,6 +117,9 @@ bool CFeatureDrawer::ShouldDrawFeatureShadow(CFeature* f)
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
+		return false;
+
+	if (f->noEngineDraw)
 		return false;
 
 	return true;
