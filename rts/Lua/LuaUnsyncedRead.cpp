@@ -42,6 +42,8 @@
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/Env/Particles/Classes/NanoProjectile.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Units/UnitDrawer.h"
+#include "Rendering/Features/FeatureDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -138,6 +140,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 	REGISTER_LUA_CFUNC(GetVisibleProjectiles);
+
+	REGISTER_LUA_CFUNC(GetRenderUnits);
+	REGISTER_LUA_CFUNC(GetRenderFeatures);
 
 	REGISTER_LUA_CFUNC(GetUnitsInScreenRectangle);
 
@@ -1109,6 +1114,48 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 			lua_pushnumber(L, p->id);
 			lua_rawseti(L, -2, ++count);
 		}
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetRenderUnits(lua_State* L)
+{
+	int drawMask = luaL_checkint(L, 1);
+
+	const auto& renderObjects = unitDrawer->GetUnsortedUnits();
+
+	lua_createtable(L, renderObjects.size(), 0);
+
+	uint32_t count = 0;
+	for (const auto renderObject : renderObjects)
+	{
+		if ((renderObject->drawFlag & drawMask) != drawMask)
+			continue;
+
+		lua_pushnumber(L, renderObject->id);
+		lua_rawseti(L, -2, ++count);
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetRenderFeatures(lua_State* L)
+{
+	int drawMask = luaL_checkint(L, 1);
+
+	const auto& renderObjects = featureDrawer->GetUnsortedFeatures();
+
+	lua_createtable(L, renderObjects.size(), 0);
+
+	uint32_t count = 0;
+	for (const auto renderObject : renderObjects)
+	{
+		if ((renderObject->drawFlag & drawMask) != drawMask)
+			continue;
+
+		lua_pushnumber(L, renderObject->id);
+		lua_rawseti(L, -2, ++count);
 	}
 
 	return 1;
