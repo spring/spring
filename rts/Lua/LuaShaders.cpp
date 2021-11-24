@@ -845,7 +845,7 @@ namespace {
 		int size = LuaUtils::ParseFloatArray(L, 2, floatArray.data(), ModelUniformData::MAX_MODEL_UD_UNIFORMS);
 
 		const int offset = std::max(luaL_optint(L, 3, 0), 0);
-		size = std::min(size, ModelUniformData::MAX_MODEL_UD_UNIFORMS) - offset;
+		size = std::min(size, ModelUniformData::MAX_MODEL_UD_UNIFORMS - offset);
 
 		if (size < 1) {
 			lua_pushnumber(L, 0);
