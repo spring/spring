@@ -847,6 +847,11 @@ namespace {
 		const int offset = luaL_optint(L, 3, 0);
 		size = std::min(size, ModelUniformData::MAX_MODEL_UD_UNIFORMS) - offset;
 
+		if (size < 1) {
+			lua_pushnumber(L, 0);
+			return 1;
+		}
+
 		std::copy(floatArray.cbegin(), floatArray.cbegin() + size, uni.userDefined.begin() + offset);
 
 		lua_pushnumber(L, size);
