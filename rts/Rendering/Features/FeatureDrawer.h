@@ -27,7 +27,7 @@ public:
 	virtual void DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall) const = 0;
 protected:
 	virtual void DrawOpaqueFeature(CFeature* f, bool drawReflection, bool drawRefraction) const = 0;
-	virtual void DrawAlphaFeature(CFeature* f) const = 0;
+	virtual void DrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction) const = 0;
 public:
 	// modelDrawerData proxies
 	void ConfigNotify(const std::string& key, const std::string& value) { modelDrawerData->ConfigNotify(key, value); }
@@ -36,7 +36,7 @@ public:
 	virtual void DrawFeatureModel(const CFeature* feature, bool noLuaCall) const = 0;
 protected:
 	static bool ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, bool drawRefraction);
-	static bool ShouldDrawAlphaFeature(CFeature* f);
+	static bool ShouldDrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction);
 	static bool ShouldDrawFeatureShadow(CFeature* f);
 
 	void PushIndividualState(const CFeature* feature, bool deferredPass) const;
@@ -49,8 +49,8 @@ public:
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction) const override {
 		DrawOpaquePassImpl<LuaObjType::LUAOBJ_FEATURE>(deferredPass, drawReflection, drawRefraction);
 	}
-	void DrawAlphaPass() const override {
-		DrawAlphaPassImpl<LuaObjType::LUAOBJ_FEATURE>();
+	void DrawAlphaPass(bool drawReflection, bool drawRefraction = false) const override {
+		DrawAlphaPassImpl<LuaObjType::LUAOBJ_FEATURE>(drawReflection, drawRefraction);
 	};
 protected:
 	void DrawOpaqueObjectsAux(int modelType) const override {} //no aux objects here
@@ -77,10 +77,10 @@ public:
 protected:
 	void DrawObjectsShadow(int modelType) const override;
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
-	void DrawAlphaObjects(int modelType) const override;
+	void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
 
 	void DrawOpaqueFeature(CFeature* f, bool drawReflection, bool drawRefraction) const;
-	void DrawAlphaFeature(CFeature* f) const override;
+	void DrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction) const override;
 	void DrawFeatureShadow(CFeature* f) const;
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall) const override;
@@ -104,7 +104,7 @@ protected:
 	void DrawObjectsShadow(int modelType) const override;
 
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
-	void DrawAlphaObjects(int modelType) const override;
+	void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
 };
 
 #define featureDrawer (CFeatureDrawer::modelDrawer)

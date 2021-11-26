@@ -27,10 +27,10 @@ class CLuaRules : public CSplitLuaHandle
 {
 public:
 	static bool CanLoadHandler() { return true; }
-	static bool ReloadHandler(bool onlySynced = false) { return (FreeHandler(), LoadFreeHandler(onlySynced)); } // NOTE the ','
-	static bool LoadFreeHandler(bool onlySynced = false) { return (LoadHandler(onlySynced) || FreeHandler()); }
+	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+	static bool LoadFreeHandler(bool dryRun = false) { return (LoadHandler(dryRun) || FreeHandler()); }
 
-	static bool LoadHandler(bool onlySynced);
+	static bool LoadHandler(bool dryRun);
 	static bool FreeHandler();
 
 public: // call-ins
@@ -43,7 +43,7 @@ public: // call-ins
 
 
 private:
-	CLuaRules(bool onlySynced);
+	CLuaRules(bool dryRun);
 	virtual ~CLuaRules();
 
 protected:

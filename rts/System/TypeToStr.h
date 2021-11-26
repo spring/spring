@@ -65,4 +65,10 @@ namespace spring {
 		constexpr auto& value = impl::type_name_holder<T>::value;
 		return std::string_view{ value.data(), value.size() };
 	}
+
+	template <typename T>
+	constexpr auto TypeToCStr() -> const char*
+	{
+		return static_cast<const char*>(TypeToStr<T>().data());
+	}
 }

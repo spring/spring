@@ -24,7 +24,7 @@ class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
 class CSolidObject;
-class TKPFSPathDrawer;
+struct TKPFSPathDrawer;
 
 namespace TKPFS {
 
@@ -103,7 +103,7 @@ private:
 
 private:
 	friend class CPathManager;
-	friend class ::TKPFSPathDrawer;
+	friend struct ::TKPFSPathDrawer;
 
 	unsigned int BLOCKS_TO_UPDATE = 0;
 

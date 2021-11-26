@@ -86,8 +86,8 @@ public:
 	int currentNanoParticles = 0;
 
 	// these vars are used to precache parts of GetCurrentParticles() calculations
-	int lastCurrentParticles = 0;
-	int lastProjectileCounts[2] = {0, 0};
+	mutable int frameCurrentParticles = 0;
+	mutable int frameProjectileCounts[2] = {0, 0};
 
 	// flying pieces (unsynced) are sorted from time to time to reduce GL state changes
 	std::array<                bool, MODELTYPE_CNT> resortFlyingPieces;
@@ -105,10 +105,11 @@ private:
 	void CreateProjectile(CProjectile*);
 	void DestroyProjectile(CProjectile*);
 
-	void UpdateProjectiles(bool);
+	template<bool synced>
+	void UpdateProjectilesImpl();
 	void UpdateProjectiles() {
-		UpdateProjectiles( true);
-		UpdateProjectiles(false);
+		UpdateProjectilesImpl< true>();
+		UpdateProjectilesImpl<false>();
 	}
 
 private:

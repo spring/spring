@@ -362,85 +362,99 @@ void CUnitHandler::SlowUpdateUnits()
 		unit->SanityCheck();
 	}
 
-	std::vector<CUnit*> unitsToMove(activeUnits.size());
-	size_t unitsToMoveCount = 0;
+	// some paths are requested at slow rate
+	UpdateUnitPathing(idxBeg, idxEnd);
+}
 
+void CUnitHandler::UpdateUnitPathing(const size_t idxBeg, const size_t idxEnd)
+{
+	SCOPED_TIMER("Sim::Unit::RequestPath");
+	TKPFS::PathingSystemActive = true;
+
+	std::vector<CUnit*> unitsToMove;
+	unitsToMove.reserve(activeUnits.size());
+
+	GetUnitsWithPathRequests(unitsToMove, idxBeg, idxEnd);
+
+	if (pathManager->SupportsMultiThreadedRequests())
+		MultiThreadPathRequests(unitsToMove);
+	else
+		SingleThreadPathRequests(unitsToMove);
+
+	TKPFS::PathingSystemActive = false;
+}
+
+void CUnitHandler::GetUnitsWithPathRequests(std::vector<CUnit*>& unitsToMove, const size_t idxBeg, const size_t idxEnd)
+{
 	for (size_t i = 0; i<idxBeg; ++i)
 	{
 		CUnit* unit = activeUnits[i];
 		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_IMMEDIATE))
-			unitsToMove[unitsToMoveCount++] = unit;
+			unitsToMove.push_back(unit);
 	}
 	for (size_t i = idxBeg; i<idxEnd; ++i)
 	{
 		CUnit* unit = activeUnits[i];
 		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_TIMING_IMMEDIATE))
-			unitsToMove[unitsToMoveCount++] = unit;
+			unitsToMove.push_back(unit);
 	}
 	for (size_t i = idxEnd; i<activeUnits.size(); ++i)
 	{
 		CUnit* unit = activeUnits[i];
 		if (unit->moveType->WantsReRequestPath() & (PATH_REQUEST_TIMING_IMMEDIATE))
-			unitsToMove[unitsToMoveCount++] = unit;
+			unitsToMove.push_back(unit);
+	}
+}
+
+void CUnitHandler::MultiThreadPathRequests(std::vector<CUnit*>& unitsToMove)
+{
+	size_t unitsToMoveCount = unitsToMove.size();
+
+	// Carry out the pathing requests without heatmap updates.
+	for_mt(0, unitsToMoveCount, [&unitsToMove](const int i){
+		CUnit* unit = unitsToMove[i];
+		unit->moveType->DelayedReRequestPath();
+	});
+
+	// update cache
+	for (size_t i = 0; i<unitsToMoveCount; ++i){
+		CUnit* unit = unitsToMove[i];
+		auto pathId = unit->moveType->GetPathId();
+		if (pathId > 0)
+			pathManager->SavePathCacheForPathId(pathId);
 	}
 
-	if (pathManager->SupportsMultiThreadedRequests()) {
-		SCOPED_TIMER("Sim::Unit::RequestPath");
-
-		TKPFS::PathingSystemActive = true;
-
-		//LOG("----- Unit Path Requests for Frame Started -----");
-		// Carry out the pathing requests without heatmap updates.
-		for_mt(0, unitsToMoveCount, [&unitsToMove](const int i){
-			CUnit* unit = unitsToMove[i];
-			unit->moveType->DelayedReRequestPath();
-		});
-		// for (size_t i = 0; i<unitsToMoveCount; ++i){
-		// 	CUnit* unit = unitsToMove[i];
-		// 	unit->moveType->DelayedReRequestPath();
-		// }
-
-		// update cache
-		for (size_t i = 0; i<unitsToMoveCount; ++i){
-			CUnit* unit = unitsToMove[i];
-			auto pathId = unit->moveType->GetPathId();
-			if (pathId > 0)
-				pathManager->SavePathCacheForPathId(pathId);
-		}
-
-		// Update Heatmaps for moved units.
-		for (size_t i = 0; i<unitsToMoveCount; ++i){
-			CUnit* unit = unitsToMove[i];
-			auto pathId = unit->moveType->GetPathId();
-			if (pathId > 0)
-				pathManager->UpdatePath(unit, pathId);
-		}
-
-		for (size_t i = 0; i<unitsToMoveCount; ++i){
-			CUnit* unit = unitsToMove[i];
-			unit->moveType->SyncWaypoints();
-		}
-
-		TKPFS::PathingSystemActive = false;
-		//LOG("----- Unit Path Requests for Frame Ended -----");
+	// Update Heatmaps for moved units.
+	for (size_t i = 0; i<unitsToMoveCount; ++i){
+		CUnit* unit = unitsToMove[i];
+		auto pathId = unit->moveType->GetPathId();
+		if (pathId > 0)
+			pathManager->UpdatePath(unit, pathId);
 	}
-	else
-	{
-		SCOPED_TIMER("Sim::Unit::RequestPath");
-		for (size_t i = 0; i<unitsToMoveCount; ++i){
-			CUnit* unit = unitsToMove[i];
-			unit->moveType->DelayedReRequestPath();
 
-			// Update heatmap inline with request to keep as close as possible to the original
-			// behaviour.
-			auto pathId = unit->moveType->GetPathId();
-			if (pathId > 0)
-				pathManager->UpdatePath(unit, pathId);
+	for (size_t i = 0; i<unitsToMoveCount; ++i){
+		CUnit* unit = unitsToMove[i];
+		unit->moveType->SyncWaypoints();
+	}
+}
 
-			unit->moveType->SyncWaypoints();
+void CUnitHandler::SingleThreadPathRequests(std::vector<CUnit*>& unitsToMove)
+{
+	size_t unitsToMoveCount = unitsToMove.size();
 
-			// update cache is still done inside the ST pathing
-		}
+	for (size_t i = 0; i<unitsToMoveCount; ++i){
+		CUnit* unit = unitsToMove[i];
+		unit->moveType->DelayedReRequestPath();
+
+		// Update heatmap inline with request to keep as close as possible to the original
+		// behaviour.
+		auto pathId = unit->moveType->GetPathId();
+		if (pathId > 0)
+			pathManager->UpdatePath(unit, pathId);
+
+		unit->moveType->SyncWaypoints();
+
+		// update cache is still done inside the ST pathing
 	}
 }
 

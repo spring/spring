@@ -696,3 +696,16 @@ IModelDrawerState::IModelDrawerState()
 	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);
 	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
 }
+
+bool IModelDrawerState::IsValid() const
+{
+	bool valid = true;
+	for (auto ms : modelShaders) {
+		if (!ms)
+			continue;
+
+		valid &= ms->IsValid();
+	}
+
+	return valid;
+}

@@ -42,7 +42,7 @@
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/MatrixUploader.h"
+#include "Rendering/ModelsDataUploader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/Units/UnitDrawer.h"
@@ -396,15 +396,11 @@ void CGame::Load(const std::string& mapFileName)
 		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
 	}
-
-	// skip Lua handlers in case of forced exit
-	// makes the specific error(s) more obvious
 	if (!forcedQuit) {
 		try {
 			LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 			LoadInterface();
-			LoadLua(saveFileHandler != nullptr, false);
 		} catch (const content_error& e) {
 			LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
 			forcedQuit = true;
@@ -416,20 +412,46 @@ void CGame::Load(const std::string& mapFileName)
 			LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 			LoadFinalize();
-			LoadSkirmishAIs();
 		} catch (const content_error& e) {
 			LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
 			forcedQuit = true;
 		}
 	}
 
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+
+			LoadLua(saveFileHandler != nullptr, false);
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
+	}
+
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+
+			LoadSkirmishAIs();
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
+	}
+
 	try {
-		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+		LOG("[Game::%s][8] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		if (!globalQuit && saveFileHandler != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
 			saveFileHandler->LoadGame();
 			LoadLua(false, true);
+		} else {
+			ENTER_SYNCED_CODE();
+			eventHandler.GamePreload();
+			eventHandler.CollectGarbage(true);
+			LEAVE_SYNCED_CODE();
 		}
 
 		{
@@ -439,7 +461,7 @@ void CGame::Load(const std::string& mapFileName)
 			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
 		}
 	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
+		LOG_L(L_WARNING, "[Game::%s][8] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
 	}
 
@@ -633,6 +655,7 @@ void CGame::PreLoadRendering()
 
 	// load components that need to exist before PostLoadSimulation
 	matrixUploader.Init();
+	modelsUniformsUploader.Init();
 	worldDrawer.InitPre();
 }
 
@@ -728,15 +751,15 @@ void CGame::LoadInterface()
 	}
 }
 
-void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
+void CGame::LoadLua(bool dryRun, bool onlyUnsynced)
 {
-	assert(!(onlySynced && onlyUnsynced));
+	assert(!(dryRun && onlyUnsynced));
 	// Lua components
 	ENTER_SYNCED_CODE();
 	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
 	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
 
-	const std::string prefix = (onlySynced ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
+	const std::string prefix = (dryRun ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
 	const std::string names[] = {"LuaRules", "LuaGaia"};
 
 	CSplitLuaHandle* handles[] = {luaRules, luaGaia};
@@ -748,13 +771,13 @@ void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
 		if (onlyUnsynced && handles[i] != nullptr) {
 			handles[i]->InitUnsynced();
 		} else {
-			loaders[i](onlySynced);
+			loaders[i](dryRun);
 		}
 	}
 
 	LEAVE_SYNCED_CODE();
 
-	if (!onlySynced) {
+	if (!dryRun) {
 		loadscreen->SetLoadMessage("Loading LuaUI");
 		CLuaUI::LoadFreeHandler();
 	}
@@ -786,13 +809,6 @@ void CGame::LoadSkirmishAIs()
 
 void CGame::LoadFinalize()
 {
-	if (saveFileHandler == nullptr) {
-		ENTER_SYNCED_CODE();
-		eventHandler.GamePreload();
-		eventHandler.CollectGarbage(true);
-		LEAVE_SYNCED_CODE();
-	}
-
 	{
 		loadscreen->SetLoadMessage("[" + std::string(__func__) + "] finalizing PFS");
 
@@ -880,6 +896,7 @@ void CGame::KillRendering()
 	spring::SafeDelete(geometricObjects);
 	worldDrawer.Kill();
 	matrixUploader.Kill();
+	modelsUniformsUploader.Kill();
 }
 
 void CGame::KillInterface()
@@ -1201,6 +1218,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	{
 		worldDrawer.Update(newSimFrame);
 		matrixUploader.Update();
+		modelsUniformsUploader.Update();
 
 		CNamedTextures::Update();
 		CFontTexture::Update();

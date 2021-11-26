@@ -594,7 +594,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 	, dirty(true)
 
-	, scriptSetVisible(piece->HasGeometryData())
+	, scriptSetVisible(true)
 	, blockScriptAnims(false)
 
 	, lmodelPieceIndex(-1)
@@ -676,6 +676,9 @@ void LocalModelPiece::Draw() const
 	if (!scriptSetVisible)
 		return;
 
+	if (!original->HasGeometryData())
+		return;
+
 	glPushMatrix();
 	glMultMatrixf(GetModelSpaceMatrix());
 	glCallList(dispListID);
@@ -685,6 +688,9 @@ void LocalModelPiece::Draw() const
 void LocalModelPiece::DrawLOD(uint32_t lod) const
 {
 	if (!scriptSetVisible)
+		return;
+
+	if (!original->HasGeometryData())
 		return;
 
 	glPushMatrix();

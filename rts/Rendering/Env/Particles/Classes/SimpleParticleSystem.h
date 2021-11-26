@@ -19,9 +19,9 @@ public:
 	CSimpleParticleSystem();
 	virtual ~CSimpleParticleSystem() { particles.clear(); }
 
-	virtual void Draw(CVertexArray* va) override;
-	virtual void Update() override;
-	virtual void Init(const CUnit* owner, const float3& offset) override;
+	void Draw(CVertexArray* va) override;
+	void Update() override;
+	void Init(const CUnit* owner, const float3& offset) override;
 
 	int GetProjectilesCount() const override;
 

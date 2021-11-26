@@ -8,9 +8,9 @@ layout (location = 4) in vec4 uv;
 layout (location = 5) in uint pieceIndex;
 
 layout (location = 6) in uvec4 instData;
-// u32 ssboOffset
+// u32 matOffset
+// u32 uniOffset
 // u32 {teamIdx, drawFlag, unused, unused}
-// u32 unused
 // u32 unused
 
 layout(std140, binding = 0) uniform UniformMatrixBuffer {
@@ -83,7 +83,7 @@ layout(std140, binding = 1) uniform UniformParamsBuffer {
 	vec4 teamColor[255]; //all team colors
 };
 
-layout(std140, binding=0) readonly buffer MatrixBuffer {
+layout(std140, binding = 0) readonly buffer MatrixBuffer {
 	mat4 mat[];
 };
 
@@ -112,9 +112,7 @@ out Data {
 };
 out float gl_ClipDistance[3];
 
-mat4 mat4mix(mat4 a, mat4 b, float alpha) {
-	return (a * (1.0 - alpha) + b * alpha);
-}
+#line 1115
 
 void TransformPlayerCam(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
@@ -128,16 +126,13 @@ void TransformPlayerCamStaticMat(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
 }
 
-mat4 GetPieceMatrix(bool staticModel) {
-	return mat[instData.x + pieceIndex + uint(!staticModel)];
-}
-
-#line 1131
+#define GetPieceMatrix(staticModel) (mat[instData.x + pieceIndex + uint(!staticModel)])
 
 void main(void)
 {
-	mat4 pieceMatrix = GetPieceMatrix(drawMode < 0);
+	mat4 pieceMatrix = GetPieceMatrix(bool(drawMode < 0));
 	mat4 worldMatrix = (drawMode >= 0) ? mat[instData.x] : staticModelMatrix;
+
 	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
 	#if 0
@@ -157,7 +152,7 @@ void main(void)
 	gl_ClipDistance[1] = dot(modelPos, clipPlane1); //lower construction clip plane
 	gl_ClipDistance[2] = dot(worldPos, clipPlane2); //water clip plane
 
-	uint teamIndex = (instData.y & 0x000000FFu); //leftmost ubyte is teamIndex
+	uint teamIndex = (instData.z & 0x000000FFu); //leftmost ubyte is teamIndex
 	teamCol = teamColor[teamIndex];
 	teamCol.a = teamColorAlpha;
 

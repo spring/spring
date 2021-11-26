@@ -19,7 +19,6 @@ class CPathManager;
  */
 class PathHeatMap {
 public:
-	static PathHeatMap* GetInstance();
 	static void FreeInstance(PathHeatMap*);
 
 	void Init(unsigned int sizex, unsigned int sizez);
@@ -62,6 +61,8 @@ private:
 	// heatmap values are relative to this
 	unsigned int heatMapOffset = 0;
 };
+
+extern PathHeatMap gPathHeatMap;
 
 }
 

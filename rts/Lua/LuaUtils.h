@@ -75,6 +75,13 @@ class LuaUtils {
 				bool bol;
 			} data;
 		};
+		// 0 and positive numbers are teams (not allyTeams)
+		enum UnitAllegiance {
+			AllUnits = -1,
+			MyUnits = -2,
+			AllyUnits = -3,
+			EnemyUnits = -4
+		};
 
 	public:
 		// Backups lua data into a c++ vector and restores it from it
@@ -152,6 +159,21 @@ class LuaUtils {
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
 
 		static void PushCommandDesc(lua_State* L, const SCommandDescription& cd);
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
+		static int ParseAllegiance(lua_State* L, const char* caller, int index);
+
+		//  Access helpers
+		static bool IsAlliedTeam(lua_State* L, int team);
+		static bool IsAlliedAllyTeam(lua_State* L, int allyTeam);
+		static bool IsAllyUnit(lua_State* L, const CUnit* unit);
+		static bool IsEnemyUnit(lua_State* L, const CUnit* unit);
+		static bool IsUnitVisible(lua_State* L, const CUnit* unit);
+		static bool IsUnitInLos(lua_State* L, const CUnit* unit);
+		static bool IsUnitTyped(lua_State* L, const CUnit* unit);
+		static const UnitDef* EffectiveUnitDef(lua_State* L, const CUnit* unit);
+		static bool IsFeatureVisible(lua_State* L, const CFeature* feature);
+		static bool IsProjectileVisible(lua_State* L, const CProjectile* pro);
+#endif
 
 		template<typename ...Args>
 		static void SolLuaError(const std::string& format, Args ...args)

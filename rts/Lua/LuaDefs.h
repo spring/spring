@@ -101,7 +101,7 @@ namespace {
 	}
 
 #define DECL_LOAD_SPLIT_HANDLER(HandlerType, handlerInst)             \
-	bool HandlerType::LoadHandler(bool onlySynced) {                  \
+	bool HandlerType::LoadHandler(bool dryRun) {                      \
 		std::lock_guard<spring::mutex> lk(m_singleton);               \
                                                                       \
 		if (handlerInst != nullptr)                                   \
@@ -109,7 +109,7 @@ namespace {
 		if (!HandlerType::CanLoadHandler())                           \
 			return false;                                             \
                                                                       \
-		if (!(handlerInst = new HandlerType(onlySynced))->IsValid())  \
+		if (!(handlerInst = new HandlerType(dryRun))->IsValid())      \
 			return false;                                             \
                                                                       \
 		return (handlerInst->CollectGarbage(true), true);             \

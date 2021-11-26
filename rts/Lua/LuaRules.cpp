@@ -38,14 +38,14 @@ DECL_FREE_HANDLER(CLuaRules, luaRules)
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaRules::CLuaRules(bool onlySynced): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
+CLuaRules::CLuaRules(bool dryRun): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
 	currentCobArgs = nullptr;
 
 	if (!IsValid())
 		return;
 
-	Init(onlySynced);
+	Init(dryRun);
 }
 
 CLuaRules::~CLuaRules()

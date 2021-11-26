@@ -35,9 +35,12 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/HsiehHash.h"
 
-// TODO: Remove (only needed for debug)
-// #include <sim/Path/TKPFS/PathGlobal.h>
-// #include "System/Threading/ThreadPool.h"
+// #define PATHING_DEBUG
+
+#ifdef PATHING_DEBUG
+#include <sim/Path/TKPFS/PathGlobal.h>
+#include "System/Threading/ThreadPool.h"
+#endif
 
 #if 1
 #include "Rendering/IPathDrawer.h"
@@ -424,8 +427,6 @@ void CGroundMoveType::PostLoad()
 		return;
 
 	ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
-	//ReRequestPath(true);
-	//pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true);
 }
 
 bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, const float3& cmpEps) {
@@ -555,7 +556,6 @@ void CGroundMoveType::SlowUpdate()
 					LOG_L(L_DEBUG, "[%s] unit %i has pathID %i but %i ETA failures", __func__, owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						//ReRequestPath(true);
 						ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 					} else {
 						// unit probably ended up on a non-traversable
@@ -566,7 +566,6 @@ void CGroundMoveType::SlowUpdate()
 			} else {
 				// case B: we want to be moving but don't have a path
 				LOG_L(L_DEBUG, "[%s] unit %i has no path", __func__, owner->id);
-				//ReRequestPath(true);
 				ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 			}
 		}
@@ -584,15 +583,19 @@ void CGroundMoveType::SlowUpdate()
 void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) {
 	const float deltaRadius = std::max(0.0f, ownerRadius - moveGoalRadius);
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s unit goal (%f,%f,%f) [%f]", __func__
-	// 			, static_cast<float>(moveGoalPos.x)
-	// 			, static_cast<float>(moveGoalPos.y)
-	// 			, static_cast<float>(moveGoalPos.z)
-	// 			, moveGoalRadius);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s unit goal (%f,%f,%f) [%f]", __func__
+				, static_cast<float>(moveGoalPos.x)
+				, static_cast<float>(moveGoalPos.y)
+				, static_cast<float>(moveGoalPos.z)
+				, moveGoalRadius);
+		}
+	}
+	#endif
 
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
@@ -622,15 +625,19 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// not needed if goalRadius actually exceeds ownerRadius, e.g. for builders
 	const float deltaRadius = std::max(0.0f, ownerRadius - moveGoalRadius);
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s unit goal (%f,%f,%f) [%f]", __func__
-	// 			, static_cast<float>(moveGoalPos.x)
-	// 			, static_cast<float>(moveGoalPos.y)
-	// 			, static_cast<float>(moveGoalPos.z)
-	// 			, moveGoalRadius);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s unit goal (%f,%f,%f) [%f]", __func__
+				, static_cast<float>(moveGoalPos.x)
+				, static_cast<float>(moveGoalPos.y)
+				, static_cast<float>(moveGoalPos.z)
+				, moveGoalRadius);
+		}
+	}
+	#endif
 
 	// set the new goal
 	goalPos = moveGoalPos * XZVector;
@@ -661,7 +668,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	//ReRequestPath(true);
 	ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_FULLPATH);
 
 	if (owner->team == gu->myTeam)
@@ -706,24 +712,28 @@ bool CGroundMoveType::FollowPath()
 		ASSERT_SYNCED(nextWayPoint);
 		ASSERT_SYNCED(owner->pos);
 
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// LOG("%s unit origin (%f,%f,%f)", __func__
-		// 	, static_cast<float>(owner->pos.x)
-		// 	, static_cast<float>(owner->pos.y)
-		// 	, static_cast<float>(owner->pos.z));
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s unit origin (%f,%f,%f)", __func__
+					, static_cast<float>(owner->pos.x)
+					, static_cast<float>(owner->pos.y)
+					, static_cast<float>(owner->pos.z));
 
-		// LOG("%s currWayPoint (%f,%f,%f)", __func__
-		// 	, static_cast<float>(currWayPoint.x)
-		// 	, static_cast<float>(currWayPoint.y)
-		// 	, static_cast<float>(currWayPoint.z));
+				LOG("%s currWayPoint (%f,%f,%f)", __func__
+					, static_cast<float>(currWayPoint.x)
+					, static_cast<float>(currWayPoint.y)
+					, static_cast<float>(currWayPoint.z));
 
-		// LOG("%s nextWayPoint (%f,%f,%f)", __func__
-		// 	, static_cast<float>(nextWayPoint.x)
-		// 	, static_cast<float>(nextWayPoint.y)
-		// 	, static_cast<float>(nextWayPoint.z));
-		// 	}
-		// }
+				LOG("%s nextWayPoint (%f,%f,%f)", __func__
+					, static_cast<float>(nextWayPoint.x)
+					, static_cast<float>(nextWayPoint.y)
+					, static_cast<float>(nextWayPoint.z));
+			}
+		}
+		#endif
 
 		const float3& opos = owner->pos;
 		const float3& ovel = owner->speed;
@@ -754,28 +764,32 @@ bool CGroundMoveType::FollowPath()
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) && !reversing && (ffd.dot(goalPos - opos) > 0.0f && ffd.dot(goalPos - (opos + ovel)) <= 0.0f));
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) &&  reversing && (ffd.dot(goalPos - opos) < 0.0f && ffd.dot(goalPos - (opos + ovel)) >= 0.0f));
 		
-			// if (DEBUG_DRAWING_ENABLED) {
-			// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-			// 		LOG("%s opos (%f,%f,%f)", __func__
-			// 			, static_cast<float>(opos.x)
-			// 			, static_cast<float>(opos.y)
-			// 			, static_cast<float>(opos.z));
+			#ifdef PATHING_DEBUG
+			if (DEBUG_DRAWING_ENABLED) {
+				bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+					&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+				if (printMoveInfo) {
+					LOG("%s opos (%f,%f,%f)", __func__
+						, static_cast<float>(opos.x)
+						, static_cast<float>(opos.y)
+						, static_cast<float>(opos.z));
 
-			// 		LOG("%s cwp (%f,%f,%f)", __func__
-			// 			, static_cast<float>(cwp.x)
-			// 			, static_cast<float>(cwp.y)
-			// 			, static_cast<float>(cwp.z));
+					LOG("%s cwp (%f,%f,%f)", __func__
+						, static_cast<float>(cwp.x)
+						, static_cast<float>(cwp.y)
+						, static_cast<float>(cwp.z));
 
-			// 		LOG("%s goalpos (%f,%f,%f)", __func__
-			// 			, static_cast<float>(goalPos.x)
-			// 			, static_cast<float>(goalPos.y)
-			// 			, static_cast<float>(goalPos.z));
+					LOG("%s goalpos (%f,%f,%f)", __func__
+						, static_cast<float>(goalPos.x)
+						, static_cast<float>(goalPos.y)
+						, static_cast<float>(goalPos.z));
 
-			// 		LOG("%s curGoalDistSq(%f) <= minGoalDistSq(%f)", __func__, curGoalDistSq, minGoalDistSq);
-			// 		LOG("%s (ffd.dot(goalPos - opos)(%f) ffd.dot(goalPos - (opos + ovel))(%f)", __func__, ffd.dot(goalPos - opos), ffd.dot(goalPos - (opos + ovel)));
-			// 		LOG("%s atGoal(%d?) reversing(%d?)", __func__, (int)atGoal, (int)reversing);
-			// 	}
-			// }
+					LOG("%s curGoalDistSq(%f) <= minGoalDistSq(%f)", __func__, curGoalDistSq, minGoalDistSq);
+					LOG("%s (ffd.dot(goalPos - opos)(%f) ffd.dot(goalPos - (opos + ovel))(%f)", __func__, ffd.dot(goalPos - opos), ffd.dot(goalPos - (opos + ovel)));
+					LOG("%s atGoal(%d?) reversing(%d?)", __func__, (int)atGoal, (int)reversing);
+				}
+			}
+			#endif
 		}
 
 		if (!atGoal) {
@@ -790,20 +804,27 @@ bool CGroundMoveType::FollowPath()
 			//ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_EXISTING);
 		} else {
 			if (atGoal){
-				// if (DEBUG_DRAWING_ENABLED) {
-				// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-				// 		LOG("%s arrival signaled", __func__);
-				// 	}
-				// }
+				#ifdef PATHING_DEBUG
+				if (DEBUG_DRAWING_ENABLED) {
+					bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+						&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+					if (printMoveInfo) {
+						LOG("%s arrival signaled", __func__);
+					}
+				}
+				#endif
 				Arrived(false);
 			} else {
-				// if (DEBUG_DRAWING_ENABLED) {
-				// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-				// 		LOG("%s request new path since not at goal", __func__);
-				// 	}
-				// }
+				#ifdef PATHING_DEBUG
+				if (DEBUG_DRAWING_ENABLED) {
+					bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+						&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+					if (printMoveInfo) {
+						LOG("%s request new path since not at goal", __func__);
+					}
+				}
+				#endif
 				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
-				//ReRequestPath(false);
 			}
 		}
 
@@ -831,34 +852,39 @@ bool CGroundMoveType::FollowPath()
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
 
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s waypointVec (%f,%f,%f)", __func__
-		// 			, static_cast<float>(waypointVec.x)
-		// 			, static_cast<float>(waypointVec.y)
-		// 			, static_cast<float>(waypointVec.z));
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
 
-		// 		LOG("%s waypointDir (%f,%f,%f)", __func__
-		// 			, static_cast<float>(waypointDir.x)
-		// 			, static_cast<float>(waypointDir.y)
-		// 			, static_cast<float>(waypointDir.z));
+				LOG("%s waypointVec (%f,%f,%f)", __func__
+					, static_cast<float>(waypointVec.x)
+					, static_cast<float>(waypointVec.y)
+					, static_cast<float>(waypointVec.z));
 
-		// 		LOG("%s rawWantedDir (%f,%f,%f)", __func__
-		// 			, static_cast<float>(rawWantedDir.x)
-		// 			, static_cast<float>(rawWantedDir.y)
-		// 			, static_cast<float>(rawWantedDir.z));
+				LOG("%s waypointDir (%f,%f,%f)", __func__
+					, static_cast<float>(waypointDir.x)
+					, static_cast<float>(waypointDir.y)
+					, static_cast<float>(waypointDir.z));
 
-		// 		LOG("%s ffd (%f,%f,%f)", __func__
-		// 			, static_cast<float>(ffd.x)
-		// 			, static_cast<float>(ffd.y)
-		// 			, static_cast<float>(ffd.z));
+				LOG("%s rawWantedDir (%f,%f,%f)", __func__
+					, static_cast<float>(rawWantedDir.x)
+					, static_cast<float>(rawWantedDir.y)
+					, static_cast<float>(rawWantedDir.z));
 
-		// 		LOG("%s change heading (%f, %f) [%d]", __func__
-		// 				, modWantedDir.x, modWantedDir.z
-		// 				, GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
-		// 		LOG("%s change speed (%f, %d?)", __func__, maxWantedSpeed, (int)wantReverse);
-		// 	}
-		// }
+				LOG("%s ffd (%f,%f,%f)", __func__
+					, static_cast<float>(ffd.x)
+					, static_cast<float>(ffd.y)
+					, static_cast<float>(ffd.z));
+
+				LOG("%s change heading (%f, %f) [%d]", __func__
+						, modWantedDir.x, modWantedDir.z
+						, GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
+				LOG("%s change speed (%f, %d?)", __func__, maxWantedSpeed, (int)wantReverse);
+			}
+		}
+		#endif
 
 		if (!atEndOfPath && !useRawMovement) {
 			SetNextWayPoint();
@@ -1577,22 +1603,30 @@ unsigned int CGroundMoveType::GetNewPath()
 {
 	unsigned int newPathID = 0;
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s useRawMovement (%d)", __func__, useRawMovement);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s useRawMovement (%d)", __func__, useRawMovement);
+		}
+	}
+	#endif
 
 	if (useRawMovement)
 		return newPathID;
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s Dist Away (%f) Goal Radius (%f)", __func__
-	// 				, (owner->pos - goalPos).SqLength2D()
-	// 				, Square(goalRadius + extraRadius));
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s Dist Away (%f) Goal Radius (%f)", __func__
+					, (owner->pos - goalPos).SqLength2D()
+					, Square(goalRadius + extraRadius));
+		}
+	}
+	#endif
 
 	// avoid frivolous requests if called from outside StartMoving*()
 	if ((owner->pos - goalPos).SqLength2D() <= Square(goalRadius + extraRadius))
@@ -1621,11 +1655,15 @@ unsigned int CGroundMoveType::GetNewPath()
 }
 
 void CGroundMoveType::ReRequestPath(PathRequestType requestType) {
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s want <- request (%d <- %d)", __func__, wantRepath, requestType);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s want <- request (%d <- %d)", __func__, wantRepath, requestType);
+		}
+	}
+	#endif
 
 	if (wantRepath == PATH_REQUEST_NONE){
 		wantRepath = requestType;
@@ -1648,11 +1686,15 @@ void CGroundMoveType::ReRequestPath(PathRequestType requestType) {
 	if (requestScope > currentScope)
 		wantRepath = requestType;
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s fin: want <- request (%d <- %d)", __func__, wantRepath, requestType);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s fin: want <- request (%d <- %d)", __func__, wantRepath, requestType);
+		}
+	}
+	#endif
 }
 
 void CGroundMoveType::DoReRequestPath() {
@@ -1672,13 +1714,16 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 	if (!pathController.AllowSetTempGoalPosition(pathID, nextWayPoint))
 		return false;
 
-
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s currWayPoint.y = %f, nextWayPoint.y = %f", __func__
-	// 			, static_cast<float>(currWayPoint.y), static_cast<float>(nextWayPoint.y));
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s currWayPoint.y = %f, nextWayPoint.y = %f", __func__
+				, static_cast<float>(currWayPoint.y), static_cast<float>(nextWayPoint.y));
+		}
+	}
+	#endif
 
 	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
 		const float3& pos = owner->pos;
@@ -1728,28 +1773,37 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 
 		#if 1
 
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s turnSpeed %f", __func__, turnSpeed);
-		// 		LOG("%s turnradius %f = max(%f*%f*%f=%f, %f)", __func__
-		// 				, turnRadius, currentSpeed, framesToTurn, math::INVPI2
-		// 				, (currentSpeed * framesToTurn) * math::INVPI2
-		// 				, currentSpeed * 1.05f);
-		// 		LOG("%s currWayPointDist %f, turn radius*2 = %f", __func__, currWayPointDist, (turnRadius * 2.0f));
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s turnSpeed %f", __func__, turnSpeed);
+				LOG("%s turnradius %f = max(%f*%f*%f=%f, %f)", __func__
+						, turnRadius, currentSpeed, framesToTurn, math::INVPI2
+						, (currentSpeed * framesToTurn) * math::INVPI2
+						, currentSpeed * 1.05f);
+				LOG("%s currWayPointDist %f, turn radius*2 = %f", __func__, currWayPointDist, (turnRadius * 2.0f));
+			}
+		}
+		#endif
+
 		// wp outside turning circle
 		if (currWayPointDist > (turnRadius * 2.0f))
 			return false;
 
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s currWayPointDist %f, max=%f, wayDot=%f", __func__
-		// 				, currWayPointDist
-		// 				, std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f)
-		// 				, waypointDot);
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s currWayPointDist %f, max=%f, wayDot=%f", __func__
+						, currWayPointDist
+						, std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f)
+						, waypointDot);
+			}
+		}
+		#endif
 
 		// wp inside but ~straight ahead and not reached within one tick
 		if (currWayPointDist > std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f) && waypointDot >= 0.995f)
@@ -1775,13 +1829,17 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true);
 			const bool allowSkip = ((cwp - pos).SqLength() <= Square(SQUARE_SIZE));
 
-			// if (DEBUG_DRAWING_ENABLED) {
-			// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-			// 		LOG("%s allowSkip %d, rangeTest=%d", __func__
-			// 				, (int)allowSkip
-			// 				, (int)rangeTest);
-			// 	}
-			// }
+			#ifdef PATHING_DEBUG
+			if (DEBUG_DRAWING_ENABLED) {
+				bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+					&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+				if (printMoveInfo) {
+					LOG("%s allowSkip %d, rangeTest=%d", __func__
+							, (int)allowSkip
+							, (int)rangeTest);
+				}
+			}
+			#endif
 
 			// CanSetNextWayPoint may return true if (allowSkip || rangeTest)
 			if (!allowSkip && !rangeTest)
@@ -1805,11 +1863,15 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			atEndOfPath |= (curGoalDistSq <= minGoalDistSq);
 		}
 
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s atEndOfPath %d", __func__, (int)atEndOfPath);
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s atEndOfPath %d", __func__, (int)atEndOfPath);
+			}
+		}
+		#endif
 
 		if (atEndOfPath) {
 			currWayPoint = goalPos;
@@ -1818,11 +1880,15 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		}
 	}
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s result is true", __func__);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s result is true", __func__);
+		}
+	}
+	#endif
 
 	return true;
 }
@@ -1833,11 +1899,15 @@ void CGroundMoveType::SetNextWayPoint()
 	//LOG("%s activated", __func__);
 
 	if (CanSetNextWayPoint()) {
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s setting next waypoint", __func__);
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s setting next waypoint", __func__);
+			}
+		}
+		#endif
 		ReRequestPath(PATH_REQUEST_TIMING_IMMEDIATE|PATH_REQUEST_UPDATE_EXISTING);
 		return;
 		//DoSetNextWaypoint();
@@ -1855,11 +1925,15 @@ void CGroundMoveType::SetNextWayPoint()
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 		Fail(false);
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s path failed", __func__);
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s path failed", __func__);
+			}
+		}
+		#endif
 		return;
 	}
 
@@ -1867,24 +1941,31 @@ void CGroundMoveType::SetNextWayPoint()
 	const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
 
 	if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0 && (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0){
-		// if (DEBUG_DRAWING_ENABLED) {
-		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-		// 		LOG("%s path is clear", __func__);
-		// 	}
-		// }
+		#ifdef PATHING_DEBUG
+		if (DEBUG_DRAWING_ENABLED) {
+			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+				&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+			if (printMoveInfo) {
+				LOG("%s path is clear", __func__);
+			}
+		}
+		#endif
 		return;
 	}
 
 	// this can happen if we crushed a non-blocking feature
 	// and it spawned another feature which we cannot crush
 	// (eg.) --> repath
-	//ReRequestPath(false);
 	ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s requesting new path", __func__);
-	// 	}
-	// }
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s requesting new path", __func__);
+		}
+	}
+	#endif
 }
 
 
@@ -1899,19 +1980,23 @@ void CGroundMoveType::DoSetNextWaypoint() {
 	earlyCurrWayPoint = nextWayPoint;
 	earlyNextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 
-	// if (DEBUG_DRAWING_ENABLED) {
-	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()){
-	// 		LOG("%s currWayPoint (%f,%f,%f)", __func__
-	// 			, static_cast<float>(earlyCurrWayPoint.x)
-	// 			, static_cast<float>(earlyCurrWayPoint.y)
-	// 			, static_cast<float>(earlyCurrWayPoint.z));
+	#ifdef PATHING_DEBUG
+	if (DEBUG_DRAWING_ENABLED) {
+		bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
+			&& (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end());
+		if (printMoveInfo) {
+			LOG("%s currWayPoint (%f,%f,%f)", __func__
+				, static_cast<float>(earlyCurrWayPoint.x)
+				, static_cast<float>(earlyCurrWayPoint.y)
+				, static_cast<float>(earlyCurrWayPoint.z));
 
-	// 		LOG("%s nextWayPoint (%f,%f,%f)", __func__
-	// 			, static_cast<float>(earlyNextWayPoint.x)
-	// 			, static_cast<float>(earlyNextWayPoint.y)
-	// 			, static_cast<float>(earlyNextWayPoint.z));
-	// 	}
-	// }
+			LOG("%s nextWayPoint (%f,%f,%f)", __func__
+				, static_cast<float>(earlyNextWayPoint.x)
+				, static_cast<float>(earlyNextWayPoint.y)
+				, static_cast<float>(earlyNextWayPoint.z));
+		}
+	}
+	#endif
 }
 
 
@@ -2054,7 +2139,6 @@ void CGroundMoveType::HandleObjectCollisions()
 		if (!HandleStaticObjectCollision(owner, owner, owner->moveDef,  colliderFootPrintRadius, 0.0f,  ZeroVector, true, false, true))
 			return;
 
-		//ReRequestPath(false);
 		ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
 	}
 }
@@ -2378,7 +2462,6 @@ void CGroundMoveType::HandleUnitCollisions(
 
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, allowNewPath, checkYardMap, false))
 				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
-				//ReRequestPath(false);
 
 			continue;
 		}
@@ -2485,7 +2568,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if (!collidee->IsMoving()) {
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), true, false))
 				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
-				//ReRequestPath(false);
 
 			continue;
 		}

@@ -31,6 +31,7 @@
 #include "System/Cpp11Compat.hpp"
 #include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
+#include "System/Threading/ThreadPool.h"
 
 
 // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
@@ -52,8 +53,8 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
 	CR_MEMBER(currentNanoParticles),
-	CR_MEMBER_UN(lastCurrentParticles),
-	CR_MEMBER_UN(lastProjectileCounts),
+	CR_MEMBER_UN(frameCurrentParticles),
+	CR_MEMBER_UN(frameProjectileCounts),
 
 	CR_MEMBER(freeProjectileIDs),
 	CR_MEMBER(projectileMaps)
@@ -71,9 +72,9 @@ CProjectileHandler projectileHandler;
 void CProjectileHandler::Init()
 {
 	currentNanoParticles = 0;
-	lastCurrentParticles = 0;
-	lastProjectileCounts[false] = 0;
-	lastProjectileCounts[ true] = 0;
+	frameCurrentParticles = 0;
+	frameProjectileCounts[false] = 0;
+	frameProjectileCounts[ true] = 0;
 
 	resortFlyingPieces.fill(false);
 
@@ -181,7 +182,8 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 }
 
 
-void CProjectileHandler::UpdateProjectiles(bool synced)
+template<bool synced>
+void CProjectileHandler::UpdateProjectilesImpl()
 {
 	ProjectileContainer& pc = projectileContainers[synced];
 
@@ -218,16 +220,28 @@ void CProjectileHandler::UpdateProjectiles(bool synced)
 	SCOPED_TIMER("Sim::Projectiles::Update");
 
 	// WARNING: same as above but for p->Update()
-	for (size_t i = 0; i < pc.size(); ++i) {
-		CProjectile* p = pc[i];
-		assert(p != nullptr);
+	if constexpr (synced) {
+		for (size_t i = 0; i < pc.size(); ++i) {
+			CProjectile* p = pc[i];
+			assert(p != nullptr);
 
-		MAPPOS_SANITY_CHECK(p->pos);
+			MAPPOS_SANITY_CHECK(p->pos);
 
-		p->Update();
-		quadField.MovedProjectile(p);
+			p->Update();
+			quadField.MovedProjectile(p);
 
-		MAPPOS_SANITY_CHECK(p->pos);
+			MAPPOS_SANITY_CHECK(p->pos);
+		}
+	}
+	else {
+		for_mt_chunk(0, pc.size(), [&pc](int i) {
+			CProjectile* p = pc[i];
+			assert(p != nullptr);
+
+			MAPPOS_SANITY_CHECK(p->pos);
+			p->Update();
+			MAPPOS_SANITY_CHECK(p->pos);
+		});
 	}
 }
 
@@ -353,17 +367,17 @@ void CProjectileHandler::Update()
 	}
 
 	// precache part of particles count calculation that else becomes very heavy
-	lastCurrentParticles = 0;
+	frameCurrentParticles = 0;
 
-	for (const CProjectile* p: projectileContainers[true]) {
-		lastCurrentParticles += p->GetProjectilesCount();
+	for (const CProjectile* p: projectileContainers[ true]) {
+		frameCurrentParticles += p->GetProjectilesCount();
 	}
 	for (const CProjectile* p: projectileContainers[false]) {
-		lastCurrentParticles += p->GetProjectilesCount();
+		frameCurrentParticles += p->GetProjectilesCount();
 	}
 
-	lastProjectileCounts[ true] = projectileContainers[true].size();
-	lastProjectileCounts[false] = projectileContainers[false].size();
+	frameProjectileCounts[ true] = projectileContainers[ true].size();
+	frameProjectileCounts[false] = projectileContainers[false].size();
 }
 
 
@@ -801,7 +815,7 @@ float CProjectileHandler::GetParticleSaturation(bool randomized) const
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
 	const float total = std::max(1.0f, maxParticles * 1.0f);
-	const float fract = std::max(int(curParticles >= maxParticles), curParticles) / total;
+	const float fract = curParticles / total;
 	const float rmult = 1.0f + (int(randomized) * 0.3f * guRNG.NextFloat());
 
 	return (fract * rmult);
@@ -811,13 +825,17 @@ int CProjectileHandler::GetCurrentParticles() const
 {
 	// use precached part of particles count calculation that else becomes very heavy
 	// example where it matters: (in ZK) /cheat /give 20 armraven -> shoot ground
-	int partCount = lastCurrentParticles;
-	for (size_t i = lastProjectileCounts[true], e = projectileContainers[true].size(); i < e; ++i) {
-		partCount += projectileContainers[true][i]->GetProjectilesCount();
+	for (size_t i = frameProjectileCounts[true], e = projectileContainers[true].size(); i < e; ++i) {
+		frameCurrentParticles += projectileContainers[true][i]->GetProjectilesCount();
 	}
-	for (size_t i = lastProjectileCounts[false], e = projectileContainers[false].size(); i < e; ++i) {
-		partCount += projectileContainers[false][i]->GetProjectilesCount();
+	frameProjectileCounts[true ] = projectileContainers[true ].size();
+
+	for (size_t i = frameProjectileCounts[false], e = projectileContainers[false].size(); i < e; ++i) {
+		frameCurrentParticles += projectileContainers[false][i]->GetProjectilesCount();
 	}
+	frameProjectileCounts[false] = projectileContainers[false].size();
+
+	int partCount = frameCurrentParticles;
 	for (const auto& c: flyingPieces) {
 		for (const auto& fp: c) {
 			partCount += fp.GetDrawCallCount();

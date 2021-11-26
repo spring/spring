@@ -44,9 +44,10 @@ enum DrawFlags : uint8_t {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-//	YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
-	YARDMAP_YARD        = 1,    // walkable when yard is open
-	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
+	YARDMAP_STACKABLE   = 1,    // can be built on top of YARDMAP_BLOCKED
+	YARDMAP_YARD        = 2,    // walkable when yard is open
+	YARDMAP_YARDINV     = 4,    // walkable when yard is closed
+//	YARDMAP_WALKABLE    = 8,    // open for walk    (    walkable, not buildable)
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
 
 	// helpers
@@ -300,8 +301,9 @@ public:
 	virtual void SetMass(float newMass);
 
 	void ResetDrawFlag() { drawFlag = DrawFlags::SO_NODRAW_FLAG; }
-	void SetDrawFlag(DrawFlags f) { drawFlag  = f; }
-	void AddDrawFlag(DrawFlags f) { drawFlag |= f; }
+	void SetDrawFlag(DrawFlags f) { drawFlag  =  f; }
+	void AddDrawFlag(DrawFlags f) { drawFlag |=  f; }
+	void DelDrawFlag(DrawFlags f) { drawFlag &= ~f; }
 	bool HasDrawFlag(DrawFlags f) const { return (drawFlag & f) == f; }
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -343,6 +345,8 @@ public:
 
 	///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
 	bool noDraw = false;
+	///< if true, object will not be drawn by the engine, but drawFlags will still be calculated
+	bool noEngineDraw = false;
 	///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
 	bool luaDraw = false;
 	///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)

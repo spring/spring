@@ -8,6 +8,10 @@ layout (location = 4) in vec4 uv;
 layout (location = 5) in uint pieceIndex;
 
 layout (location = 6) in uvec4 instData;
+// u32 matOffset
+// u32 uniOffset
+// u32 {teamIdx, drawFlag, unused, unused}
+// u32 unused
 
 layout(std140, binding = 0) uniform UniformMatrixBuffer {
 	mat4 screenView;

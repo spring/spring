@@ -9,21 +9,12 @@
 
 namespace TKPFS {
 
-// not extern'ed, so static
-static PathHeatMap gPathHeatMap;
-
-
-PathHeatMap* PathHeatMap::GetInstance() {
-	gPathHeatMap.Init(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
-	return &gPathHeatMap;
-}
+PathHeatMap gPathHeatMap;
 
 void PathHeatMap::FreeInstance(PathHeatMap* phm) {
 	assert(phm == &gPathHeatMap);
 	phm->Kill();
 }
-
-
 
 void PathHeatMap::Init(unsigned int scalex, unsigned int scalez) {
 	xscale = std::max(1, std::min(mapDims.hmapx, int(scalex)));

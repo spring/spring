@@ -3,6 +3,7 @@
 #include "IPathFinder.h"
 #include "Sim/Path/Default/PathFinderDef.h"
 #include "Sim/Path/Default/PathLog.h"
+#include "Sim/Path/TKPFS/PathGlobal.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
@@ -140,12 +141,6 @@ IPath::SearchResult IPathFinder::GetPath(
 	// 			, BLOCK_SIZE, debugLoggingActive);
 	// }
 
-	// const CPathCache::CacheItem* ct;
-	// {
-	// 	const std::lock_guard<std::mutex> lock(cacheAccessLock);
-	// 	ct = &GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
-	// }
-	// const CPathCache::CacheItem& ci = *ct;
 	const CPathCache::CacheItem& ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 
 	if (ci.pathType != -1) {
@@ -160,10 +155,9 @@ IPath::SearchResult IPathFinder::GetPath(
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveDef, pfDef, path);
 
-		//const std::lock_guard<std::mutex> lock(cacheAccessLock);
-
 		//if (ci.pathType == -1)
-		if (!pfDef.synced)
+		// When the MT 'Pathing System' is running, it will handle updating the cache separately.
+		if (!TKPFS::PathingSystemActive)
 			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 		// else{
 		// 	if (debugLoggingActive == ThreadPool::GetThreadNum()){

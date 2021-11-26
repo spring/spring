@@ -355,7 +355,7 @@ void PathingState::EstimatePathCosts(unsigned int blockIdx, unsigned int threadN
 {
 	const int2 blockPos = BlockIdxToPos(blockIdx);
 
-	if (threadNum == 0 && blockIdx >= nextCostMessageIdx) {
+	if (ThreadPool::GetThreadNum() == 0 && blockIdx >= nextCostMessageIdx) {
 		nextCostMessageIdx = blockIdx + blockStates.GetSize() / 16;
 
 		char calcMsg[128];

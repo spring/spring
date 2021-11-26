@@ -24,7 +24,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Models/3DModelVAO.h"
-#include "Rendering/Models/MatricesMemStorage.h"
+#include "Rendering/Models/ModelsMemStorage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -62,6 +62,12 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	if (f->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 		return false;
 
+	if (drawReflection && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+		return false;
+
 	if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
 		farTextureHandler->Queue(f);
 		return false;
@@ -70,10 +76,13 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
+	if (f->noEngineDraw)
+		return false;
+
 	return true;
 }
 
-bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f)
+bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction)
 {
 	assert(f);
 	assert(f->model);
@@ -84,7 +93,16 @@ bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f)
 	if (f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
 		return false;
 
+	if (drawReflection && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+		return false;
+
 	if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
+		return false;
+
+	if (f->noEngineDraw)
 		return false;
 
 	return true;
@@ -99,6 +117,9 @@ bool CFeatureDrawer::ShouldDrawFeatureShadow(CFeature* f)
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
+		return false;
+
+	if (f->noEngineDraw)
 		return false;
 
 	return true;
@@ -206,7 +227,7 @@ void CFeatureDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection,
 	}
 }
 
-void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType) const
+void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -217,7 +238,7 @@ void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType) const
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			DrawAlphaFeature(o);
+			DrawAlphaFeature(o, drawReflection, drawRefraction);
 		}
 	}
 }
@@ -232,9 +253,9 @@ void CFeatureDrawerLegacy::DrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	DrawFeatureTrans(f, 0, 0, false, false);
 }
 
-void CFeatureDrawerLegacy::DrawAlphaFeature(CFeature* f) const
+void CFeatureDrawerLegacy::DrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction) const
 {
-	if (!ShouldDrawAlphaFeature(f))
+	if (!ShouldDrawAlphaFeature(f, drawReflection, drawRefraction))
 		return;
 
 	SetTeamColor(f->team, IModelDrawerState::alphaValues.x);
@@ -313,7 +334,7 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 	smv.Unbind();
 }
 
-void CFeatureDrawerGL4::DrawAlphaObjects(int modelType) const
+void CFeatureDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -331,7 +352,7 @@ void CFeatureDrawerGL4::DrawAlphaObjects(int modelType) const
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
 		for (auto* o : bin) {
-			if (!ShouldDrawAlphaFeature(o))
+			if (!ShouldDrawAlphaFeature(o, drawReflection, drawRefraction))
 				continue;
 
 			smv.AddToSubmission(o);

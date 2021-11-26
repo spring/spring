@@ -32,7 +32,7 @@ enum ModelDrawerTypes {
 	MODEL_DRAWER_CNT =  4
 };
 
-static constexpr std::string_view ModelDrawerNames[ModelDrawerTypes::MODEL_DRAWER_CNT] = {
+static constexpr const char* ModelDrawerNames[ModelDrawerTypes::MODEL_DRAWER_CNT] = {
 	"FFP : fixed-function path",
 	"ARB : legacy standard shader path",
 	"GLSL: legacy standard shader path",
@@ -128,12 +128,12 @@ public:
 
 	virtual void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawShadowPass() const = 0;
-	virtual void DrawAlphaPass() const = 0;
+	virtual void DrawAlphaPass(bool drawReflection, bool drawRefraction = false) const = 0;
 protected:
 	virtual void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawOpaqueObjectsAux(int modelType) const = 0;
 
-	virtual void DrawAlphaObjects(int modelType) const = 0;
+	virtual void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawAlphaObjectsAux(int modelType) const = 0;
 
 	virtual void DrawObjectsShadow(int modelType) const = 0;
@@ -152,7 +152,7 @@ protected:
 	void DrawOpaquePassImpl(bool deferredPass, bool drawReflection, bool drawRefraction) const;
 
 	template<LuaObjType lot>
-	void DrawAlphaPassImpl() const;
+	void DrawAlphaPassImpl(bool drawReflection, bool drawRefraction) const;
 
 	template<bool legacy, LuaObjType lot>
 	void DrawShadowPassImpl() const;
@@ -191,7 +191,7 @@ protected:
 
 	inline static std::stack<std::tuple<TDrawer*, IModelDrawerState*, bool>> implStack;
 protected:
-	static constexpr std::string_view className = spring::TypeToStr<TDrawer>();
+	static constexpr const char* className = spring::TypeToCStr<TDrawer>();
 };
 
 template<typename T>
@@ -249,7 +249,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::ForceLegacyPath()
 {
 	reselectionRequested = true;
 	forceLegacyPath = true;
-	LOG_L(L_WARNING, "[%s::%s] Using legacy (slow) %s renderer! This is caused by insufficient GPU/driver capabilities or by using of old Lua rendering API", className.data(), __func__, className.data());
+	LOG_L(L_WARNING, "[%s::%s] Using legacy (slow) %s renderer! This is caused by insufficient GPU/driver capabilities or by using of old Lua rendering API", className, __func__, className);
 }
 
 template<typename TDrawerData, typename TDrawer>
@@ -279,6 +279,9 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::SelectImplementation(bool fo
 		if (!s->CanEnable())
 			return false;
 
+		if (!s->IsValid())
+			return false;
+
 		return true;
 	};
 
@@ -286,11 +289,11 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::SelectImplementation(bool fo
 		auto d = modelDrawers[preferedDrawerType];
 		auto s = IModelDrawerState::modelDrawerStates[preferedDrawerType];
 		if (qualifyDrawerFunc(d, s)) {
-			LOG_L(L_INFO, "[%s::%s] Force-switching to %s(%s)", className.data(), __func__, ModelDrawerNames[preferedDrawerType].data(), mtModelDrawer ? "MT" : "ST");
+			LOG_L(L_INFO, "[%s::%s] Force-switching to %s(%s)", className, __func__, ModelDrawerNames[preferedDrawerType], mtModelDrawer ? "MT" : "ST");
 			SelectImplementation(preferedDrawerType);
 		}
 		else {
-			LOG_L(L_ERROR, "[%s::%s] Couldn't force-switch to %s(%s)", className.data(), __func__, ModelDrawerNames[preferedDrawerType].data(), mtModelDrawer ? "MT" : "ST");
+			LOG_L(L_ERROR, "[%s::%s] Couldn't force-switch to %s(%s)", className, __func__, ModelDrawerNames[preferedDrawerType], mtModelDrawer ? "MT" : "ST");
 		}
 		preferedDrawerType = ModelDrawerTypes::MODEL_DRAWER_CNT; //reset;
 		return;
@@ -381,7 +384,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawOpaquePassImpl(bool defe
 
 template<typename TDrawerData, typename TDrawer>
 template<LuaObjType lot>
-inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl() const
+inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl(bool drawReflection, bool drawRefraction) const
 {
 	static const std::string methodName = std::string(className) + "::DrawAlphaPass";
 	SCOPED_TIMER(methodName.c_str());
@@ -393,7 +396,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl() const
 			continue;
 
 		CModelDrawerHelper::PushModelRenderState(modelType);
-		DrawAlphaObjects(modelType);
+		DrawAlphaObjects(modelType, drawReflection, drawRefraction);
 		DrawAlphaObjectsAux(modelType);
 		CModelDrawerHelper::PopModelRenderState(modelType);
 	}

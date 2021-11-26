@@ -12,6 +12,7 @@ make_global_var(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/CRC.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FreeListMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalConfig.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Info.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/InputHandler.cpp"

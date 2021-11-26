@@ -6,6 +6,7 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <memory>
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
@@ -21,6 +22,7 @@ struct LineMarker;
  * @see CInMapDrawModel for M
  * @see CInMapDrawView for V
  */
+class CNotificationPeeper;
 class CInMapDraw
 {
 public:
@@ -78,7 +80,7 @@ private:
 	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
 	bool allowLuaMapDrawing = true;
 
-	uint8_t notificationPeeperMem[96];
+	std::unique_ptr<CNotificationPeeper> notificationPeeper;
 };
 
 extern CInMapDraw* inMapDrawer;

@@ -277,7 +277,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	makesMetal   = udTable.GetFloat("makesMetal", 0.0f);
 	energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
-	health       = std::max(0.1f, udTable.GetFloat("maxDamage",  0.0f)); //avoid some nasty divide by 0
+	/* maxDamage is the legacy Total Annihilation spelling,
+	 * and what most games use, so not really deprecatable */
+	health       = udTable.GetFloat("health", udTable.GetFloat("maxDamage", 0.0f));
+	health       = std::max(0.1f, health); // avoid some nasty divide by 0
+
 	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
@@ -753,9 +757,10 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 		switch (c) {
 			case 'g': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEO; needGeo = true; } break;
 			case 'y': { defYardMap[ymCopyIdx - 1] = YARDMAP_OPEN;                } break;
+			case 's': { defYardMap[ymCopyIdx - 1] = YARDMAP_STACKABLE;           } break;
 			case 'c': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARD;                } break;
 			case 'i': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARDINV;             } break;
-		//	case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
+//			case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
 			case 'w':
 			case 'x':
 			case 'f':

@@ -68,7 +68,8 @@ CPathManager::CPathManager()
 	InitStatic();
 
 	pathFlowMap = PathFlowMap::GetInstance();
-	pathHeatMap = PathHeatMap::GetInstance();
+	gPathHeatMap.Init(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
+	pathHeatMap = &gPathHeatMap;
 
 	pathMap.reserve(1024);
 
@@ -386,9 +387,6 @@ unsigned int CPathManager::RequestPath(
 	float goalRadius,
 	bool synced
 ) {
-	if (!PathingSystemActive && synced)
-		LOG("!!!!! WARNING !!! Request Outside of Pathing System Detected !!!!!");
-
 	if (!IsFinalized())
 		return 0;
 

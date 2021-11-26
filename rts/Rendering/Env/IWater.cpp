@@ -177,8 +177,8 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 		featureDrawer->Draw(true);
 
 		// transparent
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(true);
+		featureDrawer->DrawAlphaPass(true);
 		projectileDrawer->Draw(true);
 		// sun-disc does not blend well with water
 		// sky->DrawSun();
@@ -213,8 +213,8 @@ void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool d
 		featureDrawer->Draw(false, true);
 
 		// transparent
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(false, true);
+		featureDrawer->DrawAlphaPass(false, true);
 		projectileDrawer->Draw(false, true);
 
 		eventHandler.DrawWorldRefraction();

@@ -224,12 +224,12 @@ void CUnitDrawerData::UpdateUnitIconState(CUnit* unit)
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 	// reset
-	unit->isIcon = losStatus & LOS_INRADAR;
+	unit->SetIsIcon(losStatus & LOS_INRADAR);
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView)
-		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
+		unit->SetIsIcon(DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength()));
 
-	if (!unit->isIcon)
+	if (!unit->GetIsIcon())
 		return;
 	if (unit->noDraw)
 		return;
@@ -244,13 +244,13 @@ void CUnitDrawerData::UpdateUnitIconStateScreen(CUnit* unit)
 {
 	if (game->hideInterface && iconHideWithUI) // icons are hidden with UI
 	{
-		unit->isIcon = false; // draw unit model always
+		unit->SetIsIcon(false); // draw unit model always
 		return;
 	}
 
 	if (unit->health <= 0 || unit->beingBuilt)
 	{
-		unit->isIcon = false;
+		unit->SetIsIcon(false);
 		return;
 	}
 
@@ -279,13 +279,13 @@ void CUnitDrawerData::UpdateUnitIconStateScreen(CUnit* unit)
 
 	if (!(losStatus & LOS_INLOS) && !gu->spectatingFullView) // no LOS on unit
 	{
-		unit->isIcon = losStatus & LOS_INRADAR; // draw icon if unit is on radar
+		unit->SetIsIcon(losStatus & LOS_INRADAR); // draw icon if unit is on radar
 		return;
 	}
 
 	// don't render unit's model if it is smaller than icon by 10% in screen space
 	// render it anyway in case icon isn't completely opaque (below FadeStart distance)
-	unit->isIcon = iconZoomDist / iconSizeMult > iconFadeStart && std::abs(pos.x - radiusPos.x) < limit * 0.9;
+	unit->SetIsIcon(iconZoomDist / iconSizeMult > iconFadeStart && std::abs(pos.x - radiusPos.x) < limit * 0.9);
 }
 
 void CUnitDrawerData::UpdateDrawPos(CUnit* u)
@@ -305,7 +305,13 @@ void CUnitDrawerData::UpdateDrawPos(CUnit* u)
 void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 {
 	CUnit* u = static_cast<CUnit*>(o);
-	u->ResetDrawFlag();
+
+	{
+		//icons flag is set before UpdateObjectDrawFlags() is called
+		const bool isIcon = u->HasDrawFlag(DrawFlags::SO_DRICON_FLAG);
+		u->ResetDrawFlag();
+		u->SetIsIcon(isIcon);
+	}
 
 	for (uint32_t camType = CCamera::CAMTYPE_PLAYER; camType < CCamera::CAMTYPE_ENVMAP; ++camType) {
 		if (camType == CCamera::CAMTYPE_UWREFL && !water->CanDrawReflectionPass())
@@ -319,11 +325,11 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 		if (u->noDraw)
 			continue;
 
-		if (u->IsInVoid())
+		// unit will be drawn as icon instead
+		if (u->GetIsIcon())
 			continue;
 
-		// unit will be drawn as icon instead
-		if (u->isIcon)
+		if (u->IsInVoid())
 			continue;
 
 		if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)

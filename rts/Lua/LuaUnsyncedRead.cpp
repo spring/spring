@@ -42,6 +42,8 @@
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/Env/Particles/Classes/NanoProjectile.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Units/UnitDrawer.h"
+#include "Rendering/Features/FeatureDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -73,6 +75,7 @@
 #endif
 
 #include <cctype>
+#include <algorithm>
 
 #include <SDL_clipboard.h>
 #include <SDL_keycode.h>
@@ -120,11 +123,15 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetUnitLuaDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
+	REGISTER_LUA_CFUNC(GetUnitNoEngineDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
+	REGISTER_LUA_CFUNC(GetUnitAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(GetFeatureNoEngineDraw);
+	REGISTER_LUA_CFUNC(GetFeatureAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
@@ -135,6 +142,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 	REGISTER_LUA_CFUNC(GetVisibleProjectiles);
+
+	REGISTER_LUA_CFUNC(GetRenderUnits);
+	REGISTER_LUA_CFUNC(GetRenderFeatures);
+
+	REGISTER_LUA_CFUNC(GetUnitsInScreenRectangle);
 
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
@@ -323,6 +335,15 @@ static int GetSolidObjectNoDraw(lua_State* L, const CSolidObject* obj)
 		return 0;
 
 	lua_pushboolean(L, obj->noDraw);
+	return 1;
+}
+
+static int GetSolidObjectNoEngineDraw(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	lua_pushboolean(L, obj->noEngineDraw);
 	return 1;
 }
 
@@ -650,7 +671,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !unit->isIcon) &&
+				(!checkIcon || !unit->GetIsIcon()) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -659,7 +680,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !unit->isIcon) &&
+				(!checkIcon || !unit->GetIsIcon()) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -674,7 +695,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	lua_pushboolean(L, unit->isIcon);
+	lua_pushboolean(L, unit->GetIsIcon());
 	return 1;
 }
 
@@ -701,6 +722,21 @@ int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
+int LuaUnsyncedRead::GetUnitNoEngineDraw(lua_State* L)
+{
+	return (GetSolidObjectNoEngineDraw(L, ParseUnit(L, __func__, 1)));
+}
+
+int LuaUnsyncedRead::GetUnitAlwaysUpdateMatrix(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	lua_pushboolean(L, unit->alwaysUpdateMat);
+	return 1;
+}
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
@@ -737,6 +773,22 @@ int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 {
 	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
+}
+
+int LuaUnsyncedRead::GetFeatureNoEngineDraw(lua_State* L)
+{
+	return (GetSolidObjectNoEngineDraw(L, ParseFeature(L, __func__, 1)));
+}
+
+int LuaUnsyncedRead::GetFeatureAlwaysUpdateMatrix(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	lua_pushboolean(L, feature->alwaysUpdateMat);
+	return 1;
 }
 
 int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
@@ -789,15 +841,6 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-// FIXME -- copied from LuaSyncedRead.cpp, commonize
-enum UnitAllegiance {
-	AllUnits   = -1,
-	MyUnits    = -2,
-	AllyUnits  = -3,
-	EnemyUnits = -4
-};
-
 
 // never instantiated directly
 template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
@@ -873,13 +916,13 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	int teamID = luaL_optint(L, 1, -1);
 	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 
-	if (teamID == MyUnits) {
+	if (teamID == LuaUtils::MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
 
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
-			teamID = AllUnits;
+			teamID = LuaUtils::AllUnits;
 		}
 	}
 
@@ -931,13 +974,13 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			if (allyTeamID >= 0 && !(u->losStatus[allyTeamID] & LOS_INLOS))
 				continue;
 
-			if (noIcons && u->isIcon)
+			if (noIcons && u->GetIsIcon())
 				continue;
 
-			if ((teamID == AllyUnits)  && (allyTeamID != u->allyteam))
+			if ((teamID == LuaUtils::AllyUnits)  && (allyTeamID != u->allyteam))
 				continue;
 
-			if ((teamID == EnemyUnits) && (allyTeamID == u->allyteam))
+			if ((teamID == LuaUtils::EnemyUnits) && (allyTeamID == u->allyteam))
 				continue;
 
 			if ((teamID >= 0) && (teamID != u->team))
@@ -1090,6 +1133,137 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 				continue;
 
 			lua_pushnumber(L, p->id);
+			lua_rawseti(L, -2, ++count);
+		}
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetRenderUnits(lua_State* L)
+{
+	int drawMask = luaL_checkint(L, 1);
+
+	const auto& renderObjects = unitDrawer->GetUnsortedUnits();
+
+	lua_createtable(L, renderObjects.size(), 0);
+
+	uint32_t count = 0;
+	for (const auto renderObject : renderObjects)
+	{
+		if ((renderObject->drawFlag & drawMask) != drawMask)
+			continue;
+
+		lua_pushnumber(L, renderObject->id);
+		lua_rawseti(L, -2, ++count);
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetRenderFeatures(lua_State* L)
+{
+	int drawMask = luaL_checkint(L, 1);
+
+	const auto& renderObjects = featureDrawer->GetUnsortedFeatures();
+
+	lua_createtable(L, renderObjects.size(), 0);
+
+	uint32_t count = 0;
+	for (const auto renderObject : renderObjects)
+	{
+		if ((renderObject->drawFlag & drawMask) != drawMask)
+			continue;
+
+		lua_pushnumber(L, renderObject->id);
+		lua_rawseti(L, -2, ++count);
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
+{
+	float l = luaL_checkfloat(L, 1);
+	float t = luaL_checkfloat(L, 2);
+	float r = luaL_checkfloat(L, 3);
+	float b = luaL_checkfloat(L, 4);
+
+	if (l > r) std::swap(l, r);
+	if (t > b) std::swap(t, b);
+
+	static CVisUnitQuadDrawer unitQuadIter;
+
+	unitQuadIter.ResetState();
+	readMap->GridVisibility(nullptr, &unitQuadIter, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
+
+	const int readTeam = CLuaHandle::GetHandleReadTeam(L);
+	const int readATeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	const int allegiance = LuaUtils::ParseAllegiance(L, __func__, 5);
+
+	std::function<bool(const CUnit*)> disqualifierFunc;
+
+	switch (allegiance)
+	{
+	case LuaUtils::AllUnits:
+		disqualifierFunc = [L](const CUnit* unit) -> bool { return !LuaUtils::IsUnitVisible(L, unit); };
+		break;
+	case LuaUtils::MyUnits:
+		disqualifierFunc = [readTeam](const CUnit* unit) -> bool { return unit->team != readTeam; };
+		break;
+	case LuaUtils::AllyUnits:
+		disqualifierFunc = [readATeam](const CUnit* unit) -> bool { return unit->allyteam != readATeam; };
+		break;
+	case LuaUtils::EnemyUnits:
+		disqualifierFunc = [readATeam](const CUnit* unit) -> bool { return unit->allyteam == readATeam; };
+		break;
+	default: {
+		if (LuaUtils::IsAlliedTeam(L, allegiance)) {
+			disqualifierFunc = [readTeam, allegiance](const CUnit* unit) -> bool { return unit->team != allegiance; };
+		}
+		else {
+			disqualifierFunc = [readTeam, allegiance, L](const CUnit* unit) -> bool {
+				if (unit->team != allegiance)
+					return true;
+
+				if (!LuaUtils::IsUnitVisible(L, unit))
+					return true;
+
+				return false;
+			};
+		}
+	} break;
+	}
+
+	// Even though we're in unsynced it's ok to use gs->tempNum since its exact value
+// doesn't matter
+	const int tempNum = gs->GetTempNum();
+	lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
+
+	uint32_t count = 0;
+	for (auto visUnitList : unitQuadIter.GetObjectLists()) {
+		for (CUnit* unit : *visUnitList) {
+			if (disqualifierFunc(unit))
+				continue;
+
+			if (unit->tempNum == tempNum)
+				continue;
+
+			unit->tempNum = tempNum;
+
+			const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
+
+			if (winPos.x > r || winPos.x < l)
+				continue;
+
+			if (winPos.y > b || winPos.y < t)
+				continue;
+
+			if (winPos.z > 1.0f || winPos.z < 0.0f)
+				continue;
+
+			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, ++count);
 		}
 	}

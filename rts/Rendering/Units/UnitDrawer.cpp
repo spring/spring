@@ -29,7 +29,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Common/ModelDrawerHelpers.h"
 #include "Rendering/Models/3DModelVAO.h"
-#include "Rendering/Models/MatricesMemStorage.h"
+#include "Rendering/Models/ModelsMemStorage.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
@@ -146,13 +146,16 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (u->drawFlag == 0)
 		return false;
 
-	if (u->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return false;
-
-	if (u->isIcon) //TODO remove isIcon
+	if (u->GetIsIcon())
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
+		return false;
+
+	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
@@ -163,10 +166,13 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
+	if (u->noEngineDraw)
+		return false;
+
 	return true;
 }
 
-bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u)
+bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRefraction)
 {
 	assert(u);
 	assert(u->model);
@@ -174,16 +180,22 @@ bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u)
 	if (u->drawFlag == 0)
 		return false;
 
-	if (u->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return false;
-
-	if (u->isIcon) //TODO remove isIcon
+	if (u->GetIsIcon())
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
 		return false;
 
+	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+		return false;
+
+	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+		return false;
+
 	if (LuaObjectDrawer::AddAlphaMaterialObject(u, LUAOBJ_UNIT))
+		return false;
+
+	if (u->noEngineDraw)
 		return false;
 
 	return true;
@@ -198,6 +210,9 @@ bool CUnitDrawer::ShouldDrawUnitShadow(CUnit* u)
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(u, LUAOBJ_UNIT))
+		return false;
+
+	if (u->noEngineDraw)
 		return false;
 
 	return true;
@@ -305,7 +320,7 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 
 	for (CUnit* u : modelDrawerData->GetUnsortedObjects()) {
-		if (!u->isIcon)
+		if (!u->GetIsIcon())
 			continue;
 
 		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS));
@@ -405,7 +420,7 @@ void CUnitDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 	}
 }
 
-void CUnitDrawerLegacy::DrawAlphaObjects(int modelType) const
+void CUnitDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -551,10 +566,7 @@ void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhost
 		return;
 	}
 
-	if (unit->HasDrawFlag(DrawFlags::SO_DRICON_FLAG))
-		return;
-
-	if (unit->isIcon)
+	if (unit->GetIsIcon())
 		return;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
@@ -753,7 +765,7 @@ void CUnitDrawerLegacy::DrawIconScreenArray(const CUnit* unit, const icon::CIcon
 	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
 	// fade icons away in high zoom in levels
-	if (!unit->isIcon) {
+	if (!unit->GetIsIcon()) {
 		if (dist / unitRadiusMult < modelDrawerData->iconFadeVanish)
 			return;
 		else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && dist / unitRadiusMult < modelDrawerData->iconFadeStart)
@@ -1279,7 +1291,7 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 	smv.Unbind();
 }
 
-void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
+void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
@@ -1299,7 +1311,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType) const
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
 		for (auto* o : bin) {
-			if (!ShouldDrawAlphaUnit(o))
+			if (!ShouldDrawAlphaUnit(o, drawReflection, drawRefraction))
 				continue;
 
 			smv.AddToSubmission(o);

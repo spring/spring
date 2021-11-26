@@ -68,7 +68,7 @@ private:
 	void InstanceDataFromDataCheck(int attrID, const char* func);
 
 	template<typename TObj>
-	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID, uint32_t aux0 = 0u, uint32_t aux1 = 0u);
+	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID);
 
 	template<typename TObj>
 	size_t InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt);

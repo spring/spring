@@ -48,11 +48,15 @@ class LuaUnsyncedRead {
 
 		static int GetUnitLuaDraw(lua_State* L);
 		static int GetUnitNoDraw(lua_State* L);
+		static int GetUnitNoEngineDraw(lua_State* L);
 		static int GetUnitNoMinimap(lua_State* L);
 		static int GetUnitNoSelect(lua_State* L);
+		static int GetUnitAlwaysUpdateMatrix(lua_State* L);
 		static int GetUnitSelectionVolumeData(lua_State* L);
 		static int GetFeatureLuaDraw(lua_State* L);
 		static int GetFeatureNoDraw(lua_State* L);
+		static int GetFeatureNoEngineDraw(lua_State* L);
+		static int GetFeatureAlwaysUpdateMatrix(lua_State* L);
 		static int GetFeatureSelectionVolumeData(lua_State* L);
 
 		static int GetUnitTransformMatrix(lua_State* L);
@@ -63,6 +67,11 @@ class LuaUnsyncedRead {
 		static int GetVisibleUnits(lua_State* L);
 		static int GetVisibleFeatures(lua_State* L);
 		static int GetVisibleProjectiles(lua_State* L);
+
+		static int GetRenderUnits(lua_State* L);
+		static int GetRenderFeatures(lua_State* L);
+
+		static int GetUnitsInScreenRectangle(lua_State* L);
 
 		static int GetTeamColor(lua_State* L);
 		static int GetTeamOrigColor(lua_State* L);

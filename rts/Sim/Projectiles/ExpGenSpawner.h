@@ -16,9 +16,9 @@ public:
 	~CExpGenSpawner() {}
 	void Serialize(creg::ISerializer* s);
 
-	virtual void Update() override;
+	void Update() override;
 
-	virtual int GetProjectilesCount() const override { return 0; }
+	int GetProjectilesCount() const override { return 0; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

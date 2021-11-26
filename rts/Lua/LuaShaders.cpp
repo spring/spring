@@ -16,9 +16,13 @@
 #include "Game/Camera.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
+#include "System/TypeToStr.h"
+#include "Rendering/Models/ModelsMemStorage.h"
+#include "Rendering/Models/ModelsMemStorageDefs.h"
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 struct ActiveUniform {
 	GLint size = 0;
@@ -50,6 +54,9 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UniformArray);
 	REGISTER_LUA_CFUNC(UniformMatrix);
 	REGISTER_LUA_CFUNC(UniformSubroutine);
+
+	REGISTER_LUA_CFUNC(SetUnitBufferUniforms);
+	REGISTER_LUA_CFUNC(SetFeatureBufferUniforms);
 
 	REGISTER_LUA_CFUNC(SetGeometryShaderParameter);
 	REGISTER_LUA_CFUNC(SetTesselationShaderParameter);
@@ -823,6 +830,39 @@ int LuaShaders::GetSubroutineIndex(lua_State* L)
 	lua_pushnumber(L, location);
 	return 1;
 }
+
+namespace {
+	template<typename T> int SetObjectBufferUniforms(lua_State* L, const char* func)
+	{
+		const int id = luaL_checkint(L, 1);
+		const T* o = LuaUtils::IdToObject<T>(id, func);
+		if (o == nullptr)
+			luaL_error(L, "gl.%s() Invalid %s id (%d)", func, &spring::TypeToCStr<T>()[1], id);
+
+		ModelUniformData& uni = modelsUniformsStorage.GetObjUniformsArray(o);
+
+		std::array<float, ModelUniformData::MAX_MODEL_UD_UNIFORMS> floatArray = {0};
+		int size = LuaUtils::ParseFloatArray(L, 2, floatArray.data(), ModelUniformData::MAX_MODEL_UD_UNIFORMS);
+
+		const int offset = std::max(luaL_optint(L, 3, 0), 0);
+		size = std::min(size, ModelUniformData::MAX_MODEL_UD_UNIFORMS - offset);
+
+		if (size < 1) {
+			lua_pushnumber(L, 0);
+			return 1;
+		}
+
+		std::copy(floatArray.cbegin(), floatArray.cbegin() + size, uni.userDefined.begin() + offset);
+
+		lua_pushnumber(L, size);
+		return 1;
+	}
+}
+
+int LuaShaders::SetUnitBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CUnit>(L, __func__); }
+int LuaShaders::SetFeatureBufferUniforms(lua_State* L) { return SetObjectBufferUniforms<CFeature>(L, __func__); }
+
+
 
 /******************************************************************************/
 /******************************************************************************/

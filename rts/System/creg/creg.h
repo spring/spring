@@ -12,6 +12,7 @@
 
 #include "ISerializer.h"
 #include "System/Sync/SyncedPrimitive.h"
+#include "System/SpringMacros.h"
 
 
 namespace creg {
@@ -206,7 +207,7 @@ namespace creg {
 public: \
 	static creg::Class creg_class; \
 	static const bool creg_isStruct = isStr; \
-	typedef TCls MyType; \
+	using MyType = TCls; \
 	static creg::Class* StaticClass() { return &creg_class; } \
 	VIRTUAL creg::Class* GetClass() const OVERRIDE { return &creg_class; } \
 	static void _ConstructInstance(void* d); \
@@ -320,6 +321,13 @@ public: \
 	template<> void TCls::_CregRegisterMembers(creg::Class* class_); \
 	template<> creg::Class TCls::creg_class(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
 
+ /** @def CR_BIND_TEMPLATE_1TYPED
+   *  @see CR_BIND
+   */
+#define CR_BIND_TEMPLATE_1TYPED(TCls, TArg, ctor_args) \
+	template<typename TArg> void TCls<TArg>::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
+	template<typename TArg> void TCls<TArg>::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	template<typename TArg> creg::Class TCls<TArg>::creg_class(TOSTRING(TCls) "<" TOSTRING(TArg) ">", creg::CF_None, nullptr, &TCls<TArg>::_CregRegisterMembers, sizeof(TCls<TArg>), alignof(TCls<TArg>), std::is_polymorphic<TCls<TArg>>::value, TCls<TArg>::creg_isStruct, TCls<TArg>::_ConstructInstance, TCls<TArg>::_DestructInstance, nullptr, nullptr);
 
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
@@ -383,6 +391,20 @@ public: \
 #define CR_REG_METADATA_TEMPLATE(TCls, Members) \
 	template<> void TCls::_CregRegisterMembers(creg::Class* class_) { \
 		typedef TCls Type; \
+		Type* null=nullptr; \
+		(void)null; /*suppress compiler warning if this isn't used*/ \
+		int currentMemberFlags = 0; \
+		(void)currentMemberFlags; \
+		Members; \
+	}
+
+ /** @def CR_REG_METADATA_TEMPLATE_1TYPED
+  * Just like CR_REG_METADATA, but for a typed template.
+  *  @see CR_REG_METADATA
+  */
+#define CR_REG_METADATA_TEMPLATE_1TYPED(TCls, TArg, Members) \
+	template<typename TArg> void TCls<TArg>::_CregRegisterMembers(creg::Class* class_) { \
+		typedef TCls<TArg> Type; \
 		Type* null=nullptr; \
 		(void)null; /*suppress compiler warning if this isn't used*/ \
 		int currentMemberFlags = 0; \

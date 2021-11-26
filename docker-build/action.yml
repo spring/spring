@@ -1,0 +1,82 @@
+name: 'Build SpringRTS Engine'
+description: 'Build the engine'
+inputs:
+  platform:
+    description: 'Platform to build (e.g. "linux-64")'
+    required: false
+    default: 'windows-64'
+  branch:
+    description: 'Branch to build'
+    required: false
+    default: 'BAR105'
+  archtune-flags:
+    description: 'Archtune flags'
+    required: false
+    default: ''
+  relwithdeb-flags:
+    description: 'RELWITHDEBINFO Compilation flags'
+    required: false
+    default: '-O3 -g -DNDEBUG'
+  compilation-flags:
+    description: 'Extra Compilation Flags'
+    required: false
+    default: ''
+  use-cache:
+    description: 'Use Cache'
+    required: false
+    default: true
+  strip-symbols:
+    description: 'Strip debug symbols from artifacts'
+    required: false
+    default: true
+  repository-url:
+    description: 'URL of the SpringRTS git repository'
+    required: false
+    default: 'https://github.com/beyond-all-reason/spring '
+outputs:
+  bin_name:
+    description: 'Spring Binary Package Filename'
+    value: ${{ steps.docker-run.outputs.bin_name }}    
+  dbg_name:
+    description: 'Debug Package Filename'
+    value: ${{ steps.docker-run.outputs.dbg_name }}    
+runs:
+  using: "composite"
+  steps:
+    - name: Download Cache Data
+      if: github.event.inputs.use-cache == 'true'
+      id: cache-dl-docker
+      uses: actions/cache@v2
+      with:
+        path: /tmp/docker
+        key: docker-image-${{ hashFiles('./docker-build/**') }}
+    - name: Build and store Docker image
+      if: steps.cache-dl-docker.outputs.cache-hit != 'true'
+      run: |
+          docker build -t local ./docker-build
+          mkdir -p /tmp/docker
+          echo "Saving docker image to /tmp/docker/local.tgz..."
+          docker save local | pigz -1 > /tmp/docker/local.tgz
+      shell: bash
+    - name: Extract Docker image
+      if: steps.cache-dl-docker.outputs.cache-hit == 'true'
+      run: |
+          pigz -dc /tmp/docker/local.tgz > /tmp/docker/local.tar
+          docker load -i /tmp/docker/local.tar
+      shell: bash      
+    - run: |
+        ARGS=(run --rm -v /tmp/ccache:/ccache -v "${{ github.workspace }}/artifacts:/publish" local build)
+        ARGS+=(-p "${{ inputs.platform }}" -u "${{ inputs.repository-url }}" -b "${{ inputs.branch }}" -c "${{ inputs.archtune-flags }}" -r "${{ inputs.relwithdeb-flags }}" -f "${{ inputs.compilation-flags }}")
+        if [ ${use-cache} ]; then
+          ARGS+=(-h 1)
+        fi
+
+        if [ ${strip-symbols} ]; then
+          ARGS+=(-s 1)
+        fi
+
+        echo "Running docker with arguments: ${ARGS[@]}"
+        docker "${ARGS[@]}"
+      shell: bash
+      id: docker-run
+

@@ -36,6 +36,15 @@ public:
 	/**
 	 * @brief Constructor
 	 * @param x float x
+	 *
+	 * With parameters, initializes x/y/z to the given float.
+	 */
+	constexpr float3(const float a)
+		: x(a), y(a), z(a) {}
+
+	/**
+	 * @brief Constructor
+	 * @param x float x
 	 * @param y float y
 	 * @param z float z
 	 *

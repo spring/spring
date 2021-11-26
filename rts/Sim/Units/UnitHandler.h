@@ -80,10 +80,15 @@ private:
 	void DeleteUnit(CUnit* unit);
 	void DeleteUnits();
 	void SlowUpdateUnits();
+	void UpdateUnitPathing(const size_t idxBeg, const size_t idxEnd);
 	void UpdateUnitMoveTypes();
 	void UpdateUnitLosStates();
 	void UpdateUnits();
 	void UpdateUnitWeapons();
+
+	void GetUnitsWithPathRequests(std::vector<CUnit*>& unitsToMove, const size_t idxBeg, const size_t idxEnd);
+	void MultiThreadPathRequests(std::vector<CUnit*>& unitsToMove);
+	void SingleThreadPathRequests(std::vector<CUnit*>& unitsToMove);
 
 private:
 	SimObjectIDPool idPool;

@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-#include "MatricesMemStorage.h"
+#include "ModelsMemStorage.h"
 #include "Lua/LuaObjectMaterial.h"
 #include "Rendering/GL/VBO.h"
 #include "Sim/Misc/CollisionVolume.h"
