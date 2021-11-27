@@ -163,4 +163,4 @@ jobs:
         if: github.event.inputs.debug-ccache == 'true'
         with:
           name: ccache_debug_${{ matrix.config.os }}.tgz
-          path: ${{ github.workspace }}/artifacts/ccache_dbg.tgz
+          path: ${{ github.workspace }}/artifacts/${{ steps.run-docker-build.outputs.ccache_dbg }}
