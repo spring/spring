@@ -17,6 +17,7 @@
 #include "Sim/Path/Default/PathConstants.h"
 #include "Sim/Path/Default/PathFinderDef.h"
 #include "Sim/Path/Default/PathLog.h"
+#include "Sim/Path/TKPFS/PathGlobal.h"
 #include "PathMemPool.h"
 
 #include "System/Config/ConfigHandler.h"
@@ -218,9 +219,11 @@ void PathingState::InitEstimator(const std::string& peFileName, const std::strin
 		// note: only really needed if numExtraThreads > 0
 		spring::barrier pathBarrier(numThreads);
 
+		TKPFS::PathingSystemActive = true;
 		for_mt(0, numThreads, [this, &pathBarrier](int i) {
 			CalcOffsetsAndPathCosts(i, &pathBarrier);
 		});
+		TKPFS::PathingSystemActive = false;
 
 		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, peFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
@@ -729,6 +732,7 @@ void PathingState::Update()
 		std::atomic<std::int64_t> updateCostBlockNum = consumedBlocks.size();
 		const size_t threadsUsed = std::min(consumedBlocks.size(), (size_t)ThreadPool::GetNumThreads());
 
+		TKPFS::PathingSystemActive = true;
 		for_mt (0, threadsUsed, [this, &updateCostBlockNum](int threadNum){
 			std::int64_t n;
 			while ((n = --updateCostBlockNum) >= 0){
@@ -736,10 +740,7 @@ void PathingState::Update()
 				CalcVertexPathCosts(*consumedBlocks[n].moveDef, consumedBlocks[n].blockPos, threadNum);
 			}
 		});
-		// pathFinders[0]->testedBlocks = 0;
-		// for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
-		// 	CalcVertexPathCosts(*consumedBlocks[n].moveDef, consumedBlocks[n].blockPos);
-		// }
+		TKPFS::PathingSystemActive = false;
 	}
 }
 
