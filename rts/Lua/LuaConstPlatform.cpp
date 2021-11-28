@@ -27,6 +27,32 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "sdlVersionLinkedMinor", globalRenderingInfo.sdlVersionLinked.minor);
 	LuaPushNamedNumber(L, "sdlVersionLinkedPatch", globalRenderingInfo.sdlVersionLinked.patch);
 
+	lua_pushstring(L, "availableVideoModes");
+	lua_createtable(L, 0, globalRenderingInfo.availableVideoModes.size());
+	for (int i = 0; i < globalRenderingInfo.availableVideoModes.size(); ++i) {
+		lua_pushnumber(L, i + 1);
+
+		lua_createtable(L, 0, 4);
+
+		lua_pushsstring(L, "w");
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][0]);
+		lua_rawset(L, -3);
+
+		lua_pushsstring(L, "h");
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][1]);
+		lua_rawset(L, -3);
+
+		lua_pushsstring(L, "bpp");
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][2]);
+		lua_rawset(L, -3);
+
+		lua_pushsstring(L, "hz");
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][3]);
+		lua_rawset(L, -3);
+		lua_rawset(L, -3);
+	}
+	lua_rawset(L, -3);
+
 	LuaPushNamedBool(L, "glSupportNonPowerOfTwoTex", globalRendering->supportNonPowerOfTwoTex);
 	LuaPushNamedBool(L, "glSupportTextureQueryLOD" , globalRendering->supportTextureQueryLOD);
 	LuaPushNamedBool(L, "glSupportMSAAFrameBuffer" , globalRendering->supportMSAAFrameBuffer);

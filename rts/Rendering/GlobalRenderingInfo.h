@@ -6,6 +6,9 @@
 #include <SDL_version.h>
 #include "System/type2.h"
 
+#include <vector>
+#include <array>
+
 struct GlobalRenderingInfo {
 	const char* gpuName;
 	const char* gpuVendor;
@@ -25,6 +28,8 @@ struct GlobalRenderingInfo {
 
 	SDL_version sdlVersionCompiled;
 	SDL_version sdlVersionLinked;
+
+	std::vector<std::array<int, 4>> availableVideoModes;
 };
 
 extern GlobalRenderingInfo globalRenderingInfo;
