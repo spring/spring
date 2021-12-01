@@ -1517,6 +1517,13 @@ void CGame::SimFrame() {
 	gs->frameNum += 1;
 	lastFrameTime = spring_gettime();
 
+	if (globalRendering->timeOffset > 1.0)
+		lastFrameTime += spring_time::fromNanoSecs(static_cast<int64_t>((globalRendering->timeOffset - 1.0f) / globalRendering->weightedSpeedFactor * std::int64_t(1e6)));
+
+	if (globalRendering->timeOffset < 0.0)
+		lastFrameTime += spring_time::fromNanoSecs(static_cast<int64_t>((globalRendering->timeOffset       ) / globalRendering->weightedSpeedFactor * std::int64_t(1e6)));
+
+
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
@@ -1580,7 +1587,7 @@ void CGame::SimFrame() {
 
 	lastSimFrameTime = spring_gettime();
 	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
-	gu->avgSimFrameTime = std::max(gu->avgSimFrameTime, 0.001f);
+	gu->avgSimFrameTime = std::max(gu->avgSimFrameTime, 0.01f);
 
 	eventHandler.DbgTimingInfo(TIMING_SIM, lastFrameTime, lastSimFrameTime);
 
