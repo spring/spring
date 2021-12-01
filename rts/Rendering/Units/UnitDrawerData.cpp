@@ -350,13 +350,13 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 
 				if (!IsAlpha(u)) {
 					u->SetDrawFlag(DrawFlags::SO_OPAQUE_FLAG);
-
-					if (u->IsInWater())
-						u->AddDrawFlag(DrawFlags::SO_REFRAC_FLAG);
 				}
 				else {
 					u->SetDrawFlag(DrawFlags::SO_ALPHAF_FLAG);
 				}
+
+				if (u->IsInWater())
+					u->AddDrawFlag(DrawFlags::SO_REFRAC_FLAG);
 			} break;
 
 			case CCamera::CAMTYPE_UWREFL: {
@@ -364,7 +364,7 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 					continue;
 
 				if (CModelDrawerHelper::ObjectVisibleReflection(u->drawMidPos, cam->GetPos(), u->GetDrawRadius()))
-					u->AddDrawFlag(DrawFlags::SO_REFRAC_FLAG);
+					u->AddDrawFlag(DrawFlags::SO_REFLEC_FLAG);
 			} break;
 
 			case CCamera::CAMTYPE_SHADOW: {

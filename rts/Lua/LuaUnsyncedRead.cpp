@@ -123,16 +123,18 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetUnitLuaDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
-	REGISTER_LUA_CFUNC(GetUnitNoEngineDraw);
+	REGISTER_LUA_CFUNC(GetUnitEngineDrawMask);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
 	REGISTER_LUA_CFUNC(GetUnitAlwaysUpdateMatrix);
+	REGISTER_LUA_CFUNC(GetUnitDrawFlag);
 	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
-	REGISTER_LUA_CFUNC(GetFeatureNoEngineDraw);
+	REGISTER_LUA_CFUNC(GetFeatureEngineDrawMask);
 	REGISTER_LUA_CFUNC(GetFeatureAlwaysUpdateMatrix);
-	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
+	REGISTER_LUA_CFUNC(GetFeatureAlwaysUpdateMatrix);
+	REGISTER_LUA_CFUNC(GetFeatureDrawFlag);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
 	REGISTER_LUA_CFUNC(GetFeatureTransformMatrix);
@@ -338,12 +340,12 @@ static int GetSolidObjectNoDraw(lua_State* L, const CSolidObject* obj)
 	return 1;
 }
 
-static int GetSolidObjectNoEngineDraw(lua_State* L, const CSolidObject* obj)
+static int GetSolidObjectEngineDrawMask(lua_State* L, const CSolidObject* obj)
 {
 	if (obj == nullptr)
 		return 0;
 
-	lua_pushboolean(L, obj->noEngineDraw);
+	lua_pushinteger(L, obj->engineDrawMask);
 	return 1;
 }
 
@@ -722,9 +724,9 @@ int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
-int LuaUnsyncedRead::GetUnitNoEngineDraw(lua_State* L)
+int LuaUnsyncedRead::GetUnitEngineDrawMask(lua_State* L)
 {
-	return (GetSolidObjectNoEngineDraw(L, ParseUnit(L, __func__, 1)));
+	return (GetSolidObjectEngineDrawMask(L, ParseUnit(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetUnitAlwaysUpdateMatrix(lua_State* L)
@@ -735,6 +737,17 @@ int LuaUnsyncedRead::GetUnitAlwaysUpdateMatrix(lua_State* L)
 		return 0;
 
 	lua_pushboolean(L, unit->alwaysUpdateMat);
+	return 1;
+}
+
+int LuaUnsyncedRead::GetUnitDrawFlag(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	lua_pushinteger(L, unit->drawFlag);
 	return 1;
 }
 
@@ -775,9 +788,9 @@ int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
 }
 
-int LuaUnsyncedRead::GetFeatureNoEngineDraw(lua_State* L)
+int LuaUnsyncedRead::GetFeatureEngineDrawMask(lua_State* L)
 {
-	return (GetSolidObjectNoEngineDraw(L, ParseFeature(L, __func__, 1)));
+	return (GetSolidObjectEngineDrawMask(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureAlwaysUpdateMatrix(lua_State* L)
@@ -788,6 +801,17 @@ int LuaUnsyncedRead::GetFeatureAlwaysUpdateMatrix(lua_State* L)
 		return 0;
 
 	lua_pushboolean(L, feature->alwaysUpdateMat);
+	return 1;
+}
+
+int LuaUnsyncedRead::GetFeatureDrawFlag(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	lua_pushinteger(L, feature->drawFlag);
 	return 1;
 }
 
@@ -1050,7 +1074,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			if (f->noDraw)
 				continue;
 
-			if (noIcons && f->drawFlag == DrawFlags::SO_FARTEX_FLAG)
+			if (noIcons && f->drawFlag == DrawFlags::SO_DRICON_FLAG)
 				continue;
 
 			if (noGeos && f->def->geoThermal)
@@ -1140,46 +1164,49 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 	return 1;
 }
 
+namespace {
+	template<typename V>
+	static int GetRenderObjects(lua_State* L, const V& renderObjects, const char* func) {
+		const int  drawMask = luaL_optint(L, 1, 0);
+		const bool sendMask = luaL_optboolean(L, 2, false);
+
+		lua_createtable(L, renderObjects.size(), 0);
+		uint32_t count = 0;
+		for (const auto renderObject : renderObjects)
+		{
+			if ((renderObject->drawFlag & drawMask) == 0)
+				continue;
+
+			lua_pushnumber(L, renderObject->id);
+			lua_rawseti(L, -2, ++count);
+		}
+
+		if 	(!sendMask)
+			return 1;
+
+		lua_createtable(L, count, 0);
+		count = 0;
+		for (const auto renderObject : renderObjects)
+		{
+			if ((renderObject->drawFlag & drawMask) == 0)
+				continue;
+
+			lua_pushnumber(L, renderObject->drawFlag);
+			lua_rawseti(L, -2, ++count);
+		}
+
+		return 2;
+	}
+}
+
 int LuaUnsyncedRead::GetRenderUnits(lua_State* L)
 {
-	int drawMask = luaL_checkint(L, 1);
-
-	const auto& renderObjects = unitDrawer->GetUnsortedUnits();
-
-	lua_createtable(L, renderObjects.size(), 0);
-
-	uint32_t count = 0;
-	for (const auto renderObject : renderObjects)
-	{
-		if ((renderObject->drawFlag & drawMask) != drawMask)
-			continue;
-
-		lua_pushnumber(L, renderObject->id);
-		lua_rawseti(L, -2, ++count);
-	}
-
-	return 1;
+	return GetRenderObjects(L, unitDrawer->GetUnsortedUnits(), __func__);
 }
 
 int LuaUnsyncedRead::GetRenderFeatures(lua_State* L)
 {
-	int drawMask = luaL_checkint(L, 1);
-
-	const auto& renderObjects = featureDrawer->GetUnsortedFeatures();
-
-	lua_createtable(L, renderObjects.size(), 0);
-
-	uint32_t count = 0;
-	for (const auto renderObject : renderObjects)
-	{
-		if ((renderObject->drawFlag & drawMask) != drawMask)
-			continue;
-
-		lua_pushnumber(L, renderObject->id);
-		lua_rawseti(L, -2, ++count);
-	}
-
-	return 1;
+	return GetRenderObjects(L, featureDrawer->GetUnsortedFeatures(), __func__);
 }
 
 int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)

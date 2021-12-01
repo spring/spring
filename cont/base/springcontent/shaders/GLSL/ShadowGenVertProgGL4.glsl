@@ -95,10 +95,6 @@ out Data {
 };
 out float gl_ClipDistance[2];
 
-mat4 mat4mix(mat4 a, mat4 b, float alpha) {
-	return (a * (1.0 - alpha) + b * alpha);
-}
-
 void TransformShadowCam(vec4 worldPos, vec3 worldNormal) {
 	vec4 lightVertexPos = shadowView * worldPos;
 	vec3 lightVertexNormal = normalize(mat3(shadowView) * worldNormal);

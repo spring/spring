@@ -107,15 +107,11 @@ inline CModelDrawerDataBase<T>::CModelDrawerDataBase(const std::string& ecName, 
 	, mtModelDrawer(mtModelDrawer_)
 {
 	matricesMemAllocs.reserve(MMA_SIZE0);
-
-	for (auto& mr : modelRenderers) { mr.Init(); }
 }
 
 template<typename T>
 inline CModelDrawerDataBase<T>::~CModelDrawerDataBase()
 {
-	for (auto& mr : modelRenderers) { mr.Kill(); }
-
 	unsortedObjects.clear();
 	matricesMemAllocs.clear();
 }

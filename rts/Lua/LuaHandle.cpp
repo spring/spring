@@ -1815,6 +1815,9 @@ DRAW_CALLIN(DrawGroundPostDeferred)
 DRAW_CALLIN(DrawUnitsPostDeferred)
 DRAW_CALLIN(DrawFeaturesPostDeferred)
 
+DRAW_CALLIN(DrawShadowUnitsLua)
+DRAW_CALLIN(DrawShadowFeaturesLua)
+
 inline void CLuaHandle::DrawScreenCommon(const LuaHashString& cmdStr)
 {
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1897,6 +1900,92 @@ void CLuaHandle::DrawInMiniMapBackground()
 
 	// call the routine
 	RunCallIn(L, cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+void CLuaHandle::DrawOpaqueUnitsLua(bool deferredPass, bool drawReflection, bool drawRefraction)
+{
+	LUA_CALL_IN_CHECK(L);
+	constexpr int extraArgs = 3;
+	luaL_checkstack(L, 3 + extraArgs, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushboolean(L, deferredPass);
+	lua_pushboolean(L, drawReflection);
+	lua_pushboolean(L, drawRefraction);
+
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, extraArgs, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+void CLuaHandle::DrawOpaqueFeaturesLua(bool deferredPass, bool drawReflection, bool drawRefraction)
+{
+	LUA_CALL_IN_CHECK(L);
+	constexpr int extraArgs = 3;
+	luaL_checkstack(L, 3 + extraArgs, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushboolean(L, deferredPass);
+	lua_pushboolean(L, drawReflection);
+	lua_pushboolean(L, drawRefraction);
+
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, extraArgs, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+void CLuaHandle::DrawAlphaUnitsLua(bool drawReflection, bool drawRefraction)
+{
+	LUA_CALL_IN_CHECK(L);
+	constexpr int extraArgs = 2;
+	luaL_checkstack(L, 3 + extraArgs, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushboolean(L, drawReflection);
+	lua_pushboolean(L, drawRefraction);
+
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, extraArgs, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+void CLuaHandle::DrawAlphaFeaturesLua(bool drawReflection, bool drawRefraction)
+{
+	LUA_CALL_IN_CHECK(L);
+	constexpr int extraArgs = 2;
+	luaL_checkstack(L, 3 + extraArgs, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushboolean(L, drawReflection);
+	lua_pushboolean(L, drawRefraction);
+
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, extraArgs, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 }

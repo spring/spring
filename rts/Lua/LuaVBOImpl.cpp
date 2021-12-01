@@ -805,7 +805,7 @@ size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID,
 	constexpr auto defaultValue = static_cast<lua_Number>(0);
 	for (std::size_t i = 0u; i < idsSize; ++i) {
 		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
-		int id = spring::SafeCast<lua_Number, int>(idLua);
+		int id = spring::SafeCast<int, lua_Number>(idLua);
 		const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID);
 		memcpy(&instanceDataVec[4 * i], &instanceData, sizeof(SInstanceData));
 	}
@@ -1090,7 +1090,7 @@ bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const
 				return false;
 			}
 
-			const auto outVal = spring::SafeCast<TIn, TOut>(*bdvIter);
+			const auto outVal = spring::SafeCast<TOut, TIn>(*bdvIter);
 			memcpy(mappedBuf, &outVal, outValSize);
 			mappedBuf += outValSize;
 			++bdvIter;
@@ -1118,7 +1118,7 @@ bool LuaVBOImpl::TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
 			TIn inVal; memcpy(&inVal, mappedBuf, inValSize);
-			vec.push_back(spring::SafeCast<TIn, lua_Number>(inVal));
+			vec.push_back(spring::SafeCast<lua_Number, TIn>(inVal));
 
 			mappedBuf += inValSize;
 		}

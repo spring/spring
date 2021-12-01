@@ -282,6 +282,13 @@ class CEventHandler
 		bool DrawProjectile(const CProjectile* projectile);
 		bool DrawMaterial(const LuaMaterial* material);
 
+		void DrawOpaqueUnitsLua(bool deferredPass, bool drawReflection, bool drawRefraction);
+		void DrawOpaqueFeaturesLua(bool deferredPass, bool drawReflection, bool drawRefraction);
+		void DrawAlphaUnitsLua(bool drawReflection, bool drawRefraction);
+		void DrawAlphaFeaturesLua(bool drawReflection, bool drawRefraction);
+		void DrawShadowUnitsLua();
+		void DrawShadowFeaturesLua();
+
 		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
 		/// it skips network queuing and caching and can be used to calculate the current catchup
 		/// percentage when reconnecting to a running game

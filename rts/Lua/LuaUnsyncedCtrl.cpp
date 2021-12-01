@@ -170,14 +170,14 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSkyBoxTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
-	REGISTER_LUA_CFUNC(SetUnitNoEngineDraw);
+	REGISTER_LUA_CFUNC(SetUnitEngineDrawMask);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
 	REGISTER_LUA_CFUNC(SetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeatureNoDraw);
-	REGISTER_LUA_CFUNC(SetFeatureNoEngineDraw);
+	REGISTER_LUA_CFUNC(SetFeatureEngineDrawMask);
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysUpdateMatrix);
 	REGISTER_LUA_CFUNC(SetFeatureFade);
 	REGISTER_LUA_CFUNC(SetFeatureSelectionVolumeData);
@@ -1715,14 +1715,14 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 	return 0;
 }
 
-int LuaUnsyncedCtrl::SetUnitNoEngineDraw(lua_State* L)
+int LuaUnsyncedCtrl::SetUnitEngineDrawMask(lua_State* L)
 {
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
 
-	unit->noEngineDraw = luaL_checkboolean(L, 2);
+	unit->engineDrawMask = static_cast<uint8_t>(luaL_checkint(L, 2));
 	return 0;
 }
 
@@ -1804,14 +1804,14 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 	return 0;
 }
 
-int LuaUnsyncedCtrl::SetFeatureNoEngineDraw(lua_State* L)
+int LuaUnsyncedCtrl::SetFeatureEngineDrawMask(lua_State* L)
 {
 	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
 
-	feature->noEngineDraw = luaL_checkboolean(L, 2);
+	feature->engineDrawMask = static_cast<uint8_t>(luaL_checkint(L, 2));
 	return 0;
 }
 

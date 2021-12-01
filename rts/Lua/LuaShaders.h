@@ -5,15 +5,17 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "Rendering/GL/myGL.h"
 
 
 struct lua_State;
 
-
 class LuaShaders {
 	public:
+		struct Program;
+
 		static bool PushEntries(lua_State* L);
 
 		LuaShaders();
@@ -26,34 +28,43 @@ class LuaShaders {
 
 		std::string errorLog;
 
-		GLuint GetProgramName(unsigned int progIdx) const;
-
+		GLuint GetProgramName(uint32_t progIdx) const;
+		const Program& GetProgram(uint32_t progIdx) const;
 	private:
 		struct Object {
 			Object(GLuint _id, GLenum _type) : id(_id), type(_type) {}
 			GLuint id;
 			GLenum type;
 		};
-
+	public:
+		struct ActiveUniform {
+			GLint size = 0;
+			GLenum type = 0;
+			GLint location = -1;
+		};
 		struct Program {
-			Program(GLuint _id): id(_id) {}
+			Program(GLuint _id) : id(_id) {}
 
 			GLuint id;
 			std::vector<Object> objects;
+			std::unordered_map<std::string, ActiveUniform> activeUniforms;
 		};
-
+	private:
 		std::vector<Program> programs;
-		std::vector<unsigned int> unused; // references slots in programs
+		std::vector<uint32_t> unused; // references slots in programs
 
+		inline static const Program dummyProgram = Program(0);
 	private:
-		unsigned int AddProgram(const Program& p);
-		bool RemoveProgram(unsigned int progIdx);
+		uint32_t AddProgram(const Program& p);
+		bool RemoveProgram(uint32_t progIdx);
 		GLuint GetProgramName(lua_State* L, int index) const;
-
+		const Program& GetProgram(lua_State* L, int index) const;
 	private:
+		// helper
 		static bool DeleteProgram(Program& p);
-
+		static GLint GetUniformLocation(const Program& p, const char* name);
 	private:
+
 		// the call-outs
 		static int CreateShader(lua_State* L);
 		static int DeleteShader(lua_State* L);
@@ -78,7 +89,8 @@ class LuaShaders {
 		static int GetShaderLog(lua_State* L);
 
 	private:
-		static int activeShaderDepth;
+		inline static const Program* activeProgram = &dummyProgram;
+		inline static int activeShaderDepth = 0;
 };
 
 

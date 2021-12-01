@@ -844,3 +844,36 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
+
+void CEventHandler::DrawOpaqueUnitsLua(bool deferredPass, bool drawReflection, bool drawRefraction)
+{
+	ITERATE_EVENTCLIENTLIST(DrawOpaqueUnitsLua, deferredPass, drawReflection, drawRefraction);
+}
+
+void CEventHandler::DrawOpaqueFeaturesLua(bool deferredPass, bool drawReflection, bool drawRefraction)
+{
+	ITERATE_EVENTCLIENTLIST(DrawOpaqueFeaturesLua, deferredPass, drawReflection, drawRefraction);
+}
+
+void CEventHandler::DrawAlphaUnitsLua(bool drawReflection, bool drawRefraction)
+{
+	ITERATE_EVENTCLIENTLIST(DrawAlphaUnitsLua, drawReflection, drawRefraction);
+}
+
+void CEventHandler::DrawAlphaFeaturesLua(bool drawReflection, bool drawRefraction)
+{
+	ITERATE_EVENTCLIENTLIST(DrawAlphaFeaturesLua, drawReflection, drawRefraction);
+}
+
+void CEventHandler::DrawShadowUnitsLua()
+{
+	ITERATE_EVENTCLIENTLIST_NA(DrawShadowUnitsLua);
+}
+
+void CEventHandler::DrawShadowFeaturesLua()
+{
+	ITERATE_EVENTCLIENTLIST_NA(DrawShadowFeaturesLua);
+}
+
+/******************************************************************************/
+/******************************************************************************/

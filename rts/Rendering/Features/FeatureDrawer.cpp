@@ -51,7 +51,7 @@ void CFeatureDrawer::InitStatic()
 	SelectImplementation();
 }
 
-bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, bool drawRefraction)
+bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, uint8_t thisPassMask)
 {
 	assert(f);
 	assert(f->model);
@@ -62,10 +62,10 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	if (f->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 		return false;
 
-	if (drawReflection && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFLEC_FLAG && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
 		return false;
 
-	if (drawRefraction && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFRAC_FLAG && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
@@ -76,13 +76,13 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
-	if (f->noEngineDraw)
+	if ((f->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
 }
 
-bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction)
+bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f, uint8_t thisPassMask)
 {
 	assert(f);
 	assert(f->model);
@@ -93,16 +93,16 @@ bool CFeatureDrawer::ShouldDrawAlphaFeature(CFeature* f, bool drawReflection, bo
 	if (f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
 		return false;
 
-	if (drawReflection && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFLEC_FLAG && !f->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
 		return false;
 
-	if (drawRefraction && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFRAC_FLAG && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
-	if (f->noEngineDraw)
+	if ((f->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
@@ -113,13 +113,15 @@ bool CFeatureDrawer::ShouldDrawFeatureShadow(CFeature* f)
 	assert(f);
 	assert(f->model);
 
+	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHADOW_FLAG;
+
 	if (!f->HasDrawFlag(DrawFlags::SO_SHADOW_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
 		return false;
 
-	if (f->noEngineDraw)
+	if ((f->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
@@ -213,6 +215,11 @@ void CFeatureDrawerLegacy::DrawObjectsShadow(int modelType) const
 
 void CFeatureDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_OPAQUE_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
@@ -222,13 +229,18 @@ void CFeatureDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection,
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			DrawOpaqueFeature(o, drawReflection, drawRefraction);
+			DrawOpaqueFeature(o, thisPassMask);
 		}
 	}
 }
 
 void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_ALPHAF_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
@@ -238,14 +250,14 @@ void CFeatureDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, 
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			DrawAlphaFeature(o, drawReflection, drawRefraction);
+			DrawAlphaFeature(o, thisPassMask);
 		}
 	}
 }
 
-void CFeatureDrawerLegacy::DrawOpaqueFeature(CFeature* f, bool drawReflection, bool drawRefraction) const
+void CFeatureDrawerLegacy::DrawOpaqueFeature(CFeature* f, uint8_t thisPassMask) const
 {
-	if (!ShouldDrawOpaqueFeature(f, drawReflection, drawRefraction))
+	if (!ShouldDrawOpaqueFeature(f, thisPassMask))
 		return;
 
 	// draw the unit with the default (non-Lua) material
@@ -253,9 +265,9 @@ void CFeatureDrawerLegacy::DrawOpaqueFeature(CFeature* f, bool drawReflection, b
 	DrawFeatureTrans(f, 0, 0, false, false);
 }
 
-void CFeatureDrawerLegacy::DrawAlphaFeature(CFeature* f, bool drawReflection, bool drawRefraction) const
+void CFeatureDrawerLegacy::DrawAlphaFeature(CFeature* f, uint8_t thisPassMask) const
 {
-	if (!ShouldDrawAlphaFeature(f, drawReflection, drawRefraction))
+	if (!ShouldDrawAlphaFeature(f, thisPassMask))
 		return;
 
 	SetTeamColor(f->team, IModelDrawerState::alphaValues.x);
@@ -309,6 +321,11 @@ void CFeatureDrawerGL4::DrawObjectsShadow(int modelType) const
 
 void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_OPAQUE_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	modelDrawerState->SetColorMultiplier();
@@ -323,7 +340,7 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			if (!ShouldDrawOpaqueFeature(o, drawReflection, drawRefraction))
+			if (!ShouldDrawOpaqueFeature(o, thisPassMask))
 				continue;
 
 			smv.AddToSubmission(o);
@@ -336,6 +353,11 @@ void CFeatureDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 
 void CFeatureDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_ALPHAF_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	auto& smv = S3DModelVAO::GetInstance();
@@ -352,7 +374,7 @@ void CFeatureDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, boo
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
 		for (auto* o : bin) {
-			if (!ShouldDrawAlphaFeature(o, drawReflection, drawRefraction))
+			if (!ShouldDrawAlphaFeature(o, thisPassMask))
 				continue;
 
 			smv.AddToSubmission(o);

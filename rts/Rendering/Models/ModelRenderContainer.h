@@ -4,7 +4,6 @@
 #define MODEL_RENDER_CONTAINER_HDR
 
 #define MDL_TYPE(o) (o->model->type)
-#define TEX_TYPE(o) (o->model->textureType)
 
 #include <array>
 #include <vector>
@@ -13,6 +12,12 @@
 #include "System/ContainerUtil.h"
 
 template<typename TObject>
+class ModelRenderContainerSelector {
+public:
+	size_t operator()(const TObject* o) const { return size_t(o->model->textureType); }
+};
+
+template<typename TObject, typename TObjectSelector = ModelRenderContainerSelector<TObject>>
 class ModelRenderContainer {
 private:
 	// note: there can be no more texture-types than S3DModel instances
@@ -22,25 +27,38 @@ private:
 	size_t numObjs = 0;
 	size_t numBins = 0;
 
+	const TObjectSelector objectSelector;
 private:
-	int CalcObjectBinIdx(const TObject* o) const { return (TEX_TYPE(o)); }
+	int CalcObjectBinIdx(const TObject* o) const { return objectSelector(o); }
 public:
 	typedef  typename decltype(bins)::value_type  ObjectBin;
 public:
-	void Kill() {}
-	void Init() {
-		keys.fill(0);
+	ModelRenderContainer(TObjectSelector objectSelector_)
+		: objectSelector{std::move(objectSelector_)}
+		, numObjs{ 0 }
+		, numBins{ 0 }
+	{
 		bins.reserve(32);
+		Clear();
+	}
+
+	ModelRenderContainer()
+		: ModelRenderContainer(TObjectSelector{})
+	{ }
+
+	~ModelRenderContainer() {}
+
+	void Clear() {
+		keys.fill(0);
 
 		// reuse inner vectors when reloading
-		for (auto& bin: bins) {
+		for (auto& bin : bins) {
 			bin.clear();
 		}
 
 		numObjs = 0;
 		numBins = 0;
 	}
-
 
 	void AddObject(const TObject* o) {
 		const auto kb = keys.begin();

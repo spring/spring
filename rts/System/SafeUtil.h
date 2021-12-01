@@ -4,6 +4,7 @@
 #define SAFE_UTIL_H
 
 #include <limits>
+#include <cstring>
 
 namespace spring {
 	template<class T> inline void SafeDestruct(T*& p)
@@ -51,7 +52,7 @@ namespace spring {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
-    template<typename TIn, typename TOut>
+    template<typename TOut, typename TIn>
     inline TOut SafeCast(TIn value)
     {
         using DstLim = std::numeric_limits<TOut>;
@@ -98,6 +99,20 @@ namespace spring {
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+    template<typename TOut, typename TIn>
+    TOut bit_cast(TIn t1) {
+        static_assert(sizeof(TIn) == sizeof(TOut), "Types must match sizes");
+        static_assert(std::is_trivially_copyable<TIn>::value , "Requires TriviallyCopyable input");
+        static_assert(std::is_trivially_copyable<TOut>::value, "Requires TriviallyCopyable output");
+        static_assert(std::is_trivially_constructible_v<TOut>,
+            "This implementation additionally requires destination type to be trivially constructible");
+
+        TOut t2;
+        std::memcpy(std::addressof(t2), std::addressof(t1), sizeof(TIn));
+        return t2;
+    }
+
 
 };
 

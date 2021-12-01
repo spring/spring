@@ -172,6 +172,10 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 				if (sqrCamDist < sqFadeDistEnd) {
 					f->drawAlpha = 1.0f - (sqrCamDist - sqFadeDistBeg) / (sqFadeDistEnd - sqFadeDistBeg);
 					f->SetDrawFlag(DrawFlags::SO_ALPHAF_FLAG);
+
+					if (f->IsInWater())
+						f->AddDrawFlag(DrawFlags::SO_REFRAC_FLAG);
+
 					continue;
 				}
 			} break;
@@ -184,7 +188,7 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 					continue;
 
 				if (CModelDrawerHelper::ObjectVisibleReflection(f->drawMidPos, cam->GetPos(), f->GetDrawRadius()))
-					f->AddDrawFlag(DrawFlags::SO_REFRAC_FLAG);
+					f->AddDrawFlag(DrawFlags::SO_REFLEC_FLAG);
 			} break;
 
 			case CCamera::CAMTYPE_SHADOW: {

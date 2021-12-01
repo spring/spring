@@ -31,10 +31,10 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockHeightChanges),
 
 	CR_MEMBER_UN(noDraw),
-	CR_MEMBER_UN(noEngineDraw),
 	CR_MEMBER_UN(luaDraw),
 	CR_MEMBER_UN(noSelect),
 	CR_MEMBER_UN(alwaysUpdateMat), //don't save?
+	CR_MEMBER_UN(engineDrawMask),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),

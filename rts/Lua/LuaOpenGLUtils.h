@@ -113,9 +113,6 @@ class LuaMatTexture {
 		int2 GetSize() const;
 		GLuint GetTextureID() const;
 		GLuint GetTextureTarget() const;
-
-	public:
-		static constexpr int maxTexUnits = 16;
 };
 
 

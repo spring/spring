@@ -258,10 +258,6 @@ void CProjectileDrawer::Init() {
 
 	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
-		modelRenderers[modelType].Init();
-	}
-
 	LoadWeaponTextures();
 
 	if (CheckSoftenExt()) {
@@ -290,10 +286,6 @@ void CProjectileDrawer::Kill() {
 	glDeleteTextures(8, perlinBlendTex);
 	spring::SafeDelete(textureAtlas);
 	spring::SafeDelete(groundFXAtlas);
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
-		modelRenderers[modelType].Kill();
-	}
 
 	smokeTextures.clear();
 

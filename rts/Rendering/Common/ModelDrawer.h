@@ -132,11 +132,14 @@ public:
 protected:
 	virtual void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawOpaqueObjectsAux(int modelType) const = 0;
+	virtual void DrawOpaqueObjectsLua(bool deferredPass, bool drawReflection, bool drawRefraction) const = 0;
 
 	virtual void DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const = 0;
 	virtual void DrawAlphaObjectsAux(int modelType) const = 0;
+	virtual void DrawAlphaObjectsLua(bool drawReflection, bool drawRefraction) const = 0;
 
 	virtual void DrawObjectsShadow(int modelType) const = 0;
+	virtual void DrawShadowObjectsLua() const = 0;
 public:
 	// Setup Fixed State, reused by a few other classes, thus public:
 	void SetupOpaqueDrawing(bool deferredPass) const { modelDrawerState->SetupOpaqueDrawing(deferredPass); }
@@ -374,6 +377,8 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawOpaquePassImpl(bool defe
 		CModelDrawerHelper::PopModelRenderState(modelType);
 	}
 
+	DrawOpaqueObjectsLua(deferredPass, drawReflection, drawRefraction);
+
 	ResetOpaqueDrawing(deferredPass);
 
 	ScopedModelDrawerImpl<CModelDrawerBase<TDrawerData, TDrawer>> smdi(true, false, false);
@@ -400,6 +405,8 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawAlphaPassImpl(bool drawR
 		DrawAlphaObjectsAux(modelType);
 		CModelDrawerHelper::PopModelRenderState(modelType);
 	}
+
+	DrawAlphaObjectsLua(drawReflection, drawRefraction);
 
 	ResetAlphaDrawing(false);
 
@@ -452,6 +459,8 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawShadowPassImpl() const
 	}
 
 	po->Disable();
+
+	DrawShadowObjectsLua();
 
 	if constexpr (legacy) {
 		glDisable(GL_ALPHA_TEST);
