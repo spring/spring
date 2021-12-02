@@ -57,6 +57,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) override;
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) override;
+		bool AllowUnitCaptureStep(const CUnit* builder, const CUnit* unit, float part) override;
 		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) override;
 		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) override;
 		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) override;

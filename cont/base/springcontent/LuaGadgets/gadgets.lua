@@ -1150,6 +1150,16 @@ function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam, unitID, unitDe
 end
 
 
+function gadgetHandler:AllowUnitCaptureStep(builderID, builderTeam, unitID, unitDefID, part)
+  for _,g in r_ipairs(self.AllowUnitCaptureStepList) do
+    if (not g:AllowUnitCaptureStep(builderID, builderTeam, unitID, unitDefID, part)) then
+      return false
+    end
+  end
+  return true
+end
+
+
 function gadgetHandler:AllowUnitTransport(
   transporterID, transporterUnitDefID, transporterTeam,
   transporteeID, transporteeUnitDefID, transporteeTeam

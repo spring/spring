@@ -101,6 +101,7 @@ CALLIN_LIST = {
 	"AllowUnitCreation",
 	"AllowUnitTransfer",
 	"AllowUnitBuildStep",
+	"AllowUnitCaptureStep",
 	"AllowUnitTransport",
 	"AllowUnitTransportLoad",
 	"AllowUnitTransportUnload",

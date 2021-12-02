@@ -267,6 +267,11 @@ bool CEventHandler::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, 
 	return ControlIterateDefTrue(listAllowUnitBuildStep, &CEventClient::AllowUnitBuildStep, builder, unit, part);
 }
 
+bool CEventHandler::AllowUnitCaptureStep(const CUnit* builder, const CUnit* unit, float part)
+{
+	return ControlIterateDefTrue(listAllowUnitCaptureStep, &CEventClient::AllowUnitCaptureStep, builder, unit, part);
+}
+
 bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
 {
 	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);

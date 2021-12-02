@@ -169,6 +169,7 @@
 	SETUP_EVENT(AllowUnitCreation,        MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitTransfer,        MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitBuildStep,       MANAGED_BIT | CONTROL_BIT)
+	SETUP_EVENT(AllowUnitCaptureStep,     MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitTransport,       MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitTransportLoad,   MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitTransportUnload, MANAGED_BIT | CONTROL_BIT)
