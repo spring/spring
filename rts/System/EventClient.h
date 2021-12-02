@@ -203,6 +203,7 @@ class CEventClient
 		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
 		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
 		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
+		virtual bool AllowUnitCaptureStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
 		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) { return true; }
 		virtual bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) { return true; }
 		virtual bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) { return true; }

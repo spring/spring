@@ -628,6 +628,31 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder, const CUnit* uni
 	return allow;
 }
 
+bool CSyncedLuaHandle::AllowUnitCaptureStep(const CUnit* builder, const CUnit* unit, float part)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 7, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return true; // the call is not defined
+
+	lua_pushnumber(L, builder->id);
+	lua_pushnumber(L, builder->team);
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, part);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 5, 1))
+		return true;
+
+	// get the results
+	const bool allow = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return allow;
+}
+
 
 bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
 {
