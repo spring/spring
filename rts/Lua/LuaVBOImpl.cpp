@@ -12,6 +12,7 @@
 #include "System/SpringMem.h"
 #include "System/SafeUtil.h"
 #include "Rendering/ModelsDataUploader.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VBO.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Features/Feature.h"
@@ -804,7 +805,7 @@ size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID,
 	constexpr auto defaultValue = static_cast<lua_Number>(0);
 	for (std::size_t i = 0u; i < idsSize; ++i) {
 		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
-		int id = spring::SafeCast<lua_Number, int>(idLua);
+		int id = spring::SafeCast<int, lua_Number>(idLua);
 		const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID);
 		memcpy(&instanceDataVec[4 * i], &instanceData, sizeof(SInstanceData));
 	}
@@ -949,7 +950,7 @@ size_t LuaVBOImpl::InstanceDataFromFeatureIDs(const sol::stack_table& ids, int a
 	return InstanceDataFromImpl<CFeature>(ids, attrID, /*noop*/ 0u, elemOffsetOpt);
 }
 
-int LuaVBOImpl::BindBufferRangeImpl(const GLuint index,  const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, const bool bind)
+int LuaVBOImpl::BindBufferRangeImpl(GLuint bindingIndex,  const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, bool bind)
 {
 	if (!vbo) {
 		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Buffer definition is invalid. Did you succesfully call :Define()?", __func__);
@@ -974,13 +975,14 @@ int LuaVBOImpl::BindBufferRangeImpl(const GLuint index,  const sol::optional<int
 	}
 	defTarget = target;
 
-	GLuint bindingIndex = index;
 	switch (defTarget) {
 	case GL_UNIFORM_BUFFER: {
-		bindingIndex += uboMinIndex;
+		if (bindingIndex < uboMinIndex || bindingIndex >= globalRendering->glslMaxUniformBufferBindings)
+			LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid (Un)binding index [%u]. Index must be within [%u : %d)", __func__, uboMinIndex, globalRendering->glslMaxUniformBufferBindings);
 	} break;
 	case GL_SHADER_STORAGE_BUFFER: {
-		bindingIndex += ssboMinIndex;
+		if (bindingIndex < ssboMinIndex || bindingIndex >= globalRendering->glslMaxStorageBufferBindings)
+			LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid (Un)binding index [%u]. Index must be within [%u : %d)", __func__, ssboMinIndex, globalRendering->glslMaxStorageBufferBindings);
 	} break;
 	default:
 		LuaUtils::SolLuaError("[LuaVBOImpl::%s] (Un)binding target can only be equal to [%u] or [%u]", __func__, GL_UNIFORM_BUFFER, GL_SHADER_STORAGE_BUFFER);
@@ -1039,7 +1041,7 @@ void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 
 	bufferSizeInBytes = byteSize; //be strict here and don't account for possible increase of size on GPU due to alignment requirements
 
-	vbo = new VBO(defTarget, MapPersistently());
+	vbo = new VBO(defTarget, false);
 	vbo->Bind();
 	//LOG("freqUpdated = %d", freqUpdated);
 	vbo->New(byteSize, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
@@ -1088,7 +1090,7 @@ bool LuaVBOImpl::TransformAndWrite(int& bytesWritten, GLubyte*& mappedBuf, const
 				return false;
 			}
 
-			const auto outVal = spring::SafeCast<TIn, TOut>(*bdvIter);
+			const auto outVal = spring::SafeCast<TOut, TIn>(*bdvIter);
 			memcpy(mappedBuf, &outVal, outValSize);
 			mappedBuf += outValSize;
 			++bdvIter;
@@ -1116,7 +1118,7 @@ bool LuaVBOImpl::TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int
 	if (copyData) {
 		for (int n = 0; n < count; ++n) {
 			TIn inVal; memcpy(&inVal, mappedBuf, inValSize);
-			vec.push_back(spring::SafeCast<TIn, lua_Number>(inVal));
+			vec.push_back(spring::SafeCast<lua_Number, TIn>(inVal));
 
 			mappedBuf += inValSize;
 		}

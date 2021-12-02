@@ -39,7 +39,7 @@ enum DrawFlags : uint8_t {
 	SO_REFRAC_FLAG = 8,
 	SO_SHADOW_FLAG = 16,
 	SO_FARTEX_FLAG = 32,
-	SO_DRICON_FLAG = 128, //unused so far
+	SO_DRICON_FLAG = 128,
 };
 
 enum YardmapStates {
@@ -345,14 +345,15 @@ public:
 
 	///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
 	bool noDraw = false;
-	///< if true, object will not be drawn by the engine, but drawFlags will still be calculated
-	bool noEngineDraw = false;
 	///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
 	bool luaDraw = false;
 	///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
 	bool noSelect = false;
 	///< if true, unsynced matrices (transformation + pieceSpaceMat/modelSpaceMat) will be updated unconditionally
 	bool alwaysUpdateMat = false;
+
+	///< specifies which draw passes will be drawn by the engine
+	uint8_t engineDrawMask = uint8_t(-1);
 
 	///< x-size of this object, according to its footprint (note: rotated depending on buildFacing)
 	int xsize = 1;

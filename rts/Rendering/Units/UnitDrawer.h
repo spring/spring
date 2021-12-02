@@ -77,8 +77,8 @@ public:
 	        bool ShowUnitBuildSquare(const BuildInfo& buildInfo) const { return ShowUnitBuildSquare(buildInfo, std::vector<Command>()); }
 	virtual bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands) const = 0;
 protected:
-	static bool ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawRefraction);
-	static bool ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRefraction);
+	static bool ShouldDrawOpaqueUnit(CUnit* u, uint8_t thisPassMask);
+	static bool ShouldDrawAlphaUnit(CUnit* u, uint8_t thisPassMask);
 	static bool ShouldDrawUnitShadow(CUnit* u);
 
 	virtual void DrawGhostedBuildings(int modelType) const = 0;
@@ -105,11 +105,20 @@ class CUnitDrawerBase : public CUnitDrawer {
 public:
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction) const override {
 		DrawOpaquePassImpl<LuaObjType::LUAOBJ_UNIT>(deferredPass, drawReflection, drawRefraction);
-	};
+	}
 	void DrawAlphaPass(bool drawReflection, bool drawRefraction = false) const override {
 		DrawAlphaPassImpl<LuaObjType::LUAOBJ_UNIT>(drawReflection, drawRefraction);
-	};
+	}
 protected:
+	void DrawOpaqueObjectsLua(bool deferredPass, bool drawReflection, bool drawRefraction) const override {
+		eventHandler.DrawOpaqueUnitsLua(deferredPass, drawReflection, drawRefraction);
+	}
+	void DrawAlphaObjectsLua(bool drawReflection, bool drawRefraction) const override {
+		eventHandler.DrawAlphaUnitsLua(drawReflection, drawRefraction);
+	}
+	void DrawShadowObjectsLua() const override {
+		eventHandler.DrawShadowUnitsLua();
+	}
 	void Update() const override;
 };
 
@@ -147,9 +156,9 @@ protected:
 
 	void DrawGhostedBuildings(int modelType) const override;
 
-	void DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool drawRefraction) const;
+	void DrawOpaqueUnit(CUnit* unit, uint8_t thisPassMask) const;
 	void DrawUnitShadow(CUnit* unit) const;
-	void DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) const;
+	void DrawAlphaUnit(CUnit* unit, int modelType, uint8_t thisPassMask, bool drawGhostBuildingsPass) const;
 
 	void DrawOpaqueAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;
 	void DrawAlphaAIUnit(const CUnitDrawerData::TempDrawUnit& unit) const;

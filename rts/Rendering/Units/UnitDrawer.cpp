@@ -135,9 +135,9 @@ void CUnitDrawer::InitStatic()
 	SelectImplementation();
 }
 
-bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawRefraction)
+bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, uint8_t thisPassMask)
 {
-	if (u == (drawReflection ? nullptr : (gu->GetMyPlayer())->fpsController.GetControllee()))
+	if (u == ((thisPassMask == DrawFlags::SO_REFLEC_FLAG) ? nullptr : (gu->GetMyPlayer())->fpsController.GetControllee()))
 		return false;
 
 	assert(u);
@@ -152,10 +152,10 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 		return false;
 
-	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFLEC_FLAG && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
 		return false;
 
-	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFRAC_FLAG && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (u->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
@@ -166,13 +166,13 @@ bool CUnitDrawer::ShouldDrawOpaqueUnit(CUnit* u, bool drawReflection, bool drawR
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
-	if (u->noEngineDraw)
+	if ((u->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
 }
 
-bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRefraction)
+bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, uint8_t thisPassMask)
 {
 	assert(u);
 	assert(u->model);
@@ -186,16 +186,16 @@ bool CUnitDrawer::ShouldDrawAlphaUnit(CUnit* u, bool drawReflection, bool drawRe
 	if (u->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
 		return false;
 
-	if (drawReflection && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFLEC_FLAG && !u->HasDrawFlag(DrawFlags::SO_REFLEC_FLAG))
 		return false;
 
-	if (drawRefraction && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
+	if (thisPassMask == DrawFlags::SO_REFRAC_FLAG && !u->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddAlphaMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
-	if (u->noEngineDraw)
+	if ((u->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
@@ -206,13 +206,15 @@ bool CUnitDrawer::ShouldDrawUnitShadow(CUnit* u)
 	assert(u);
 	assert(u->model);
 
+	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHADOW_FLAG;
+
 	if (!u->HasDrawFlag(DrawFlags::SO_SHADOW_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(u, LUAOBJ_UNIT))
 		return false;
 
-	if (u->noEngineDraw)
+	if ((u->engineDrawMask & thisPassMask) != thisPassMask)
 		return false;
 
 	return true;
@@ -406,6 +408,11 @@ void CUnitDrawerLegacy::DrawObjectsShadow(int modelType) const
 
 void CUnitDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_OPAQUE_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
@@ -415,13 +422,18 @@ void CUnitDrawerLegacy::DrawOpaqueObjects(int modelType, bool drawReflection, bo
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			DrawOpaqueUnit(o, drawReflection, drawRefraction);
+			DrawOpaqueUnit(o, thisPassMask);
 		}
 	}
 }
 
 void CUnitDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_ALPHAF_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	for (uint32_t i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
@@ -431,7 +443,7 @@ void CUnitDrawerLegacy::DrawAlphaObjects(int modelType, bool drawReflection, boo
 		CModelDrawerHelper::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			DrawAlphaUnit(o, modelType, false);
+			DrawAlphaUnit(o, modelType, thisPassMask, false);
 		}
 	}
 
@@ -491,13 +503,13 @@ void CUnitDrawerLegacy::DrawGhostedBuildings(int modelType) const
 	}
 
 	for (CUnit* lgb : liveGhostedBuildings) {
-		DrawAlphaUnit(lgb, modelType, true);
+		DrawAlphaUnit(lgb, modelType, DrawFlags::SO_ALPHAF_FLAG, true);
 	}
 }
 
-void CUnitDrawerLegacy::DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool drawRefraction) const
+void CUnitDrawerLegacy::DrawOpaqueUnit(CUnit* unit, uint8_t thisPassMask) const
 {
-	if (!ShouldDrawOpaqueUnit(unit, drawReflection, drawRefraction))
+	if (!ShouldDrawOpaqueUnit(unit, thisPassMask))
 		return;
 
 	// draw the unit with the default (non-Lua) material
@@ -511,15 +523,9 @@ void CUnitDrawerLegacy::DrawUnitShadow(CUnit* unit) const
 		DrawUnitTrans(unit, 0, 0, false, false);
 }
 
-void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) const
+void CUnitDrawerLegacy::DrawAlphaUnit(CUnit* unit, int modelType, uint8_t thisPassMask, bool drawGhostBuildingsPass) const
 {
-	if (unit->drawFlag == 0)
-		return;
-
-	if (unit->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
-		return;
-
-	if (LuaObjectDrawer::AddAlphaMaterialObject(unit, LUAOBJ_UNIT))
+	if (!ShouldDrawAlphaUnit(unit, thisPassMask))
 		return;
 
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -1252,6 +1258,11 @@ void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 
 void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_OPAQUE_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	SetTeamColor(0, 1.0f);
@@ -1270,7 +1281,7 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 		beingBuilt.clear();
 
 		for (auto* o : mdlRenderer.GetObjectBin(i)) {
-			if (!ShouldDrawOpaqueUnit(o, drawReflection, drawRefraction))
+			if (!ShouldDrawOpaqueUnit(o, thisPassMask))
 				continue;
 
 			if (o->beingBuilt && o->unitDef->showNanoFrame) {
@@ -1293,6 +1304,11 @@ void CUnitDrawerGL4::DrawOpaqueObjects(int modelType, bool drawReflection, bool 
 
 void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool drawRefraction) const
 {
+	const uint8_t thisPassMask =
+		(1 - (drawReflection || drawRefraction)) * DrawFlags::SO_ALPHAF_FLAG +
+		(drawReflection * DrawFlags::SO_REFLEC_FLAG) +
+		(drawRefraction * DrawFlags::SO_REFRAC_FLAG);
+
 	const auto& mdlRenderer = modelDrawerData->GetModelRenderer(modelType);
 
 	auto& smv = S3DModelVAO::GetInstance();
@@ -1311,7 +1327,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool d
 		const auto& bin = mdlRenderer.GetObjectBin(i);
 
 		for (auto* o : bin) {
-			if (!ShouldDrawAlphaUnit(o, drawReflection, drawRefraction))
+			if (!ShouldDrawAlphaUnit(o, thisPassMask))
 				continue;
 
 			smv.AddToSubmission(o);

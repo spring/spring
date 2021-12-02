@@ -5,28 +5,41 @@ on:
       strip-symbols:
         description: Strip Debug Symbols
         required: true
-        default: "true"
-      use-cache:
-        description: Use Cache
+        default: 'true'
+      use-caches:
+        description: Use Caches (Docker/ccache)
         required: true
-        default: "true"
+        default: 'true'
       archtune-flags:
         description: Arch/Tune Flags
         required: false
-        default: ""
+        default: ''
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags
         required: true
-        default: "-O3 -g -DNDEBUG"
+        default: '-O3 -g -DNDEBUG'
       compilation-flags:
         description: Extra Compilation Flags
         required: false
-        default: ""
+        default: ''
       clean-ccache:
-        description: Reset ccache
+        description: Reset ccache before build
         required: false
-        default: "false"
-jobs:
+        default: 'false'
+      debug-tmate:
+        description: Debug with tmate (either "pre" or "post" Docker run)
+        required: false
+        default: 'false'
+      debug-ccache:
+        description: Generate ccache Debug Artifacts
+        required: false
+        default: 'false'
+      docker-image:
+        description: 'Docker Image to use (Docker Hub name or "*" to used embedded image)'
+        required: false
+        default: '*'
+        #default: 'verybadsoldier/springrts-build:dbg'
+jobs: 
   build_engine:
     name: ${{ matrix.config.os }}
     runs-on: ${{ matrix.config.runs-on }}
@@ -38,10 +51,6 @@ jobs:
             os: 'windows-64',
             runs-on: 'ubuntu-20.04'
           }
-#        - {
-#            os: 'windows-32',
-#            runs-on: 'ubuntu-20.04'
-#          }
         - {
             os: 'linux-64',
             runs-on: 'ubuntu-18.04'
@@ -53,14 +62,14 @@ jobs:
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
         shell: bash
 
-      - name: Build Info
+      - name: Print Build Info
         run: |
           echo "Build info:"
           echo "Git commit hash: ${{ github.sha }}"
           echo "Repository: ${{ github.repository }}"
         shell: bash
         
-      - name: Checkout engine repository
+      - name: Checkout Source Repository
         uses: actions/checkout@v2
 
       - name: Get Random Number
@@ -71,8 +80,8 @@ jobs:
           echo "::set-output name=number::$number"
         shell: bash
 
-      - name: Download Cache Data
-        if: github.event.inputs.use-cache == 'true'
+      - name: Download ccache Data
+        if: github.event.inputs.use-caches == 'true'
         id: cache-dl
         uses: actions/cache@v2
         with:
@@ -81,7 +90,7 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.config.os }}-
 
-      - name: Check and Unpack Cache Data
+      - name: Check and unpack ccache Data
         id: cache
         run: |
           CACHE_FILENAME="/tmp/ccache_archive/${{ matrix.config.os }}.tgz"
@@ -108,13 +117,16 @@ jobs:
         uses: ./docker-build
         id: run-docker-build
         with:
-          archtune-flags: ${{ github.event.inputs.archtune-flags }}
-          relwithdeb-flags: ${{ github.event.inputs.relwithdeb-flags }}
-          compilation-flags: ${{ github.event.inputs.compilation-flags }}
-          use-cache: ${{ github.event.inputs.use-cache }}
-          platform: ${{ matrix.config.os }}
-          branch: ${{ env.BRANCH_NAME }}
-          repository-url: https://github.com/${{ github.repository }}
+          archtune-flags: "${{ github.event.inputs.archtune-flags }}"
+          relwithdeb-flags: "${{ github.event.inputs.relwithdeb-flags }}"
+          compilation-flags: "${{ github.event.inputs.compilation-flags }}"
+          use-cache: "${{ github.event.inputs.use-caches }}"
+          platform: "${{ matrix.config.os }}"
+          branch: "${{ env.BRANCH_NAME }}"
+          repository-url: "https://github.com/${{ github.repository }}"
+          debug-tmate: "${{ github.event.inputs.debug-tmate }}"
+          debug-ccache: "${{ github.event.inputs.debug-ccache }}"
+          docker-image: "${{ github.event.inputs.docker-image }}"
 
       - name: Upload Bin as Artifact
         uses: actions/upload-artifact@v2
@@ -135,8 +147,8 @@ jobs:
           name: buildoptions_${{ matrix.config.os }}.txt
           path: ${{ github.workspace }}/artifacts/buildoptions_${{ matrix.config.os }}.txt
 
-      - name: Pack Cache Data
-        if: github.event.inputs.use-cache == 'true'
+      - name: Pack ccache Data
+        if: github.event.inputs.use-caches == 'true'
         run: |
           CACHE_FILENAME="${{ steps.cache.outputs.cache-filename }}"
           echo "Creating cache file: ${CACHE_FILENAME}"
@@ -145,3 +157,10 @@ jobs:
           tar cvf - -C /tmp/ccache . 2> /dev/null | pigz -1 > "${CACHE_FILENAME}"
           echo "Raw ccache size: $(du -sch /tmp/ccache | tail -n1 | cut -f1)"
           echo "Archived ccache size: $(du -h "${CACHE_FILENAME}" | cut -f1)"
+
+      - name: Upload ccache Debug Data
+        uses: actions/upload-artifact@v2
+        if: github.event.inputs.debug-ccache == 'true'
+        with:
+          name: ccache_debug_${{ matrix.config.os }}.tgz
+          path: ${{ github.workspace }}/artifacts/${{ steps.run-docker-build.outputs.ccache_dbg }}

@@ -343,6 +343,13 @@ class CEventClient
 		virtual bool DrawProjectile(const CProjectile* projectile) { return false; }
 		virtual bool DrawMaterial(const LuaMaterial* material) { return false; }
 
+		virtual void DrawOpaqueUnitsLua(bool deferredPass, bool drawReflection, bool drawRefraction) {}
+		virtual void DrawOpaqueFeaturesLua(bool deferredPass, bool drawReflection, bool drawRefraction) {}
+		virtual void DrawAlphaUnitsLua(bool drawReflection, bool drawRefraction) {}
+		virtual void DrawAlphaFeaturesLua(bool drawReflection, bool drawRefraction) {}
+		virtual void DrawShadowUnitsLua() {}
+		virtual void DrawShadowFeaturesLua() {}
+
 		virtual void GameProgress(int gameFrame);
 
 		virtual void DrawLoadScreen();

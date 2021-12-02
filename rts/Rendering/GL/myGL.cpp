@@ -14,6 +14,7 @@
 #include "myGL.h"
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -54,6 +55,8 @@ bool CheckAvailableVideoModes()
 	SDL_GetDesktopDisplayMode(0, &ddm);
 	SDL_GetCurrentDisplayMode(0, &cdm);
 
+	globalRenderingInfo.availableVideoModes.clear();
+
 	LOG(
 		"[GL::%s] desktop={%ix%ix%ibpp@%iHz} current={%ix%ix%ibpp@%iHz}",
 		__func__,
@@ -89,6 +92,8 @@ bool CheckAvailableVideoModes()
 			// show only the largest refresh-rate and bit-depth per resolution
 			if (cm.w == pm.w && cm.h == pm.h && (SDL_BPP(cm.format) < SDL_BPP(pm.format) || cm.refresh_rate < pm.refresh_rate))
 				continue;
+
+			globalRenderingInfo.availableVideoModes.emplace_back(std::array{ cm.w, cm.h, static_cast<int>(SDL_BPP(cm.format)), cm.refresh_rate });
 
 			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), cm.w, cm.h, SDL_BPP(cm.format), cm.refresh_rate);
 			pm = cm;

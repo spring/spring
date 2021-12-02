@@ -134,7 +134,7 @@ int LuaVAOImpl::AddObjectsToSubmissionImpl(const sol::stack_table& ids)
 	constexpr auto defaultValue = static_cast<lua_Number>(0);
 	for (std::size_t i = 0u; i < idsSize; ++i) {
 		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
-		int id = spring::SafeCast<lua_Number, int>(idLua);
+		int id = spring::SafeCast<int, lua_Number>(idLua);
 
 		submitCmds.emplace_back(DrawObjectGetCmdImpl<TObj>(id));
 	}

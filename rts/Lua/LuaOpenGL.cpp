@@ -3450,9 +3450,11 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 	if (!LuaOpenGLUtils::ParseTextureImage(L, tex, luaL_checkstring(L, 1)))
 		return 0;
 
-	lua_createtable(L, 0, 2);
-	HSTR_PUSH_NUMBER(L, "xsize", tex.GetSize().x);
-	HSTR_PUSH_NUMBER(L, "ysize", tex.GetSize().y);
+	lua_createtable(L, 0, 4);
+	HSTR_PUSH_NUMBER(L, "xsize" , tex.GetSize().x);
+	HSTR_PUSH_NUMBER(L, "ysize" , tex.GetSize().y);
+	HSTR_PUSH_NUMBER(L, "id"    , tex.GetTextureID());
+	HSTR_PUSH_NUMBER(L, "target", tex.GetTextureTarget());
 	// HSTR_PUSH_BOOL(L,   "alpha", texInfo.alpha);  FIXME
 	// HSTR_PUSH_NUMBER(L, "type",  texInfo.type);
 	return 1;
@@ -4199,15 +4201,16 @@ int LuaOpenGL::ClipDistance(lua_State* L) {
 	CheckDrawingEnabled(L, __func__);
 
 	const int clipId = luaL_checkint(L, 1);
-	if ((clipId < 1) || (clipId > 2)) { //follow ClipPlane() for consistency
-		luaL_error(L, "gl.ClipDistance: bad clip number (use 1 or 2)");
+
+	if ((clipId < 0) || (clipId > 7)) { // GL_MAX_CLIP_DISTANCES / The value must be at least 8.
+		luaL_error(L, "gl.ClipDistance: bad clip number (use 0-7)");
 	}
 
 	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "gl.ClipDistance: second param must be boolean");
 	}
 
-	const GLenum gl_clipId = GL_CLIP_DISTANCE4 + clipId - 1;
+	const GLenum gl_clipId = GL_CLIP_DISTANCE0 + clipId;
 
 	if (lua_toboolean(L, 2)) {
 		glEnable(gl_clipId);

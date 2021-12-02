@@ -250,6 +250,13 @@ class CLuaHandle : public CEventClient
 		void DrawInMiniMap() override;
 		void DrawInMiniMapBackground() override;
 
+		void DrawOpaqueUnitsLua(bool deferredPass, bool drawReflection, bool drawRefraction) override;
+		void DrawOpaqueFeaturesLua(bool deferredPass, bool drawReflection, bool drawRefraction) override;
+		void DrawAlphaUnitsLua(bool drawReflection, bool drawRefraction) override;
+		void DrawAlphaFeaturesLua(bool drawReflection, bool drawRefraction) override;
+		void DrawShadowUnitsLua() override;
+		void DrawShadowFeaturesLua() override;
+
 		void GameProgress(int frameNum) override;
 		void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime) override;
 
@@ -298,6 +305,7 @@ class CLuaHandle : public CEventClient
 
 		void RunDrawCallIn(const LuaHashString& hs);
 
+		void DrawObjectsLua(std::initializer_list<bool> bools, const char* func);
 	protected:
 		bool userMode = false;
 		bool killMe = false; // set for handles that fail to RunCallIn

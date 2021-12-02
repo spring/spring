@@ -1839,6 +1839,48 @@ function gadgetHandler:DrawWorldPreParticles()
   end
 end
 
+function gadgetHandler:DrawOpaqueUnitsLua(deferredPass, drawReflection, drawRefraction)
+	for _, w in r_ipairs(self.DrawOpaqueUnitsLuaList) do
+		w:DrawOpaqueUnitsLua(deferredPass, drawReflection, drawRefraction)
+	end
+	return
+end
+
+function gadgetHandler:DrawOpaqueFeaturesLua(deferredPass, drawReflection, drawRefraction)
+	for _, w in r_ipairs(self.DrawOpaqueFeaturesLuaList) do
+		w:DrawOpaqueFeaturesLua(deferredPass, drawReflection, drawRefraction)
+	end
+	return
+end
+
+function gadgetHandler:DrawAlphaUnitsLua(drawReflection, drawRefraction)
+	for _, w in r_ipairs(self.DrawAlphaUnitsLuaList) do
+		w:DrawAlphaUnitsLua(drawReflection, drawRefraction)
+	end
+	return
+end
+
+function gadgetHandler:DrawAlphaFeaturesLua(drawReflection, drawRefraction)
+	for _, w in r_ipairs(self.DrawAlphaFeaturesLuaList) do
+		w:DrawAlphaFeaturesLua(drawReflection, drawRefraction)
+	end
+	return
+end
+
+function gadgetHandler:DrawShadowUnitsLua()
+	for _, w in r_ipairs(self.DrawShadowUnitsLuaList) do
+		w:DrawShadowUnitsLua()
+	end
+	return
+end
+
+function gadgetHandler:DrawShadowFeaturesLua()
+	for _, w in r_ipairs(self.DrawShadowFeaturesLuaList) do
+		w:DrawShadowFeaturesLua()
+	end
+	return
+end
+
 function gadgetHandler:DrawWorldShadow()
   for _,g in r_ipairs(self.DrawWorldShadowList) do
     g:DrawWorldShadow()
