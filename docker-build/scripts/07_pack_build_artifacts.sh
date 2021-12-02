@@ -6,7 +6,7 @@ bin_name=spring_bar_$tag_name-minimal-portable.7z
 dbg_name=spring_bar_$tag_name-minimal-symbols.tgz
 ccache_dbg_name=ccache_dbg.tgz
 
-cd ./bin-dir
+cd "${INSTALL_DIR}"
 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on ../$bin_name ./* -xr\!*.dbg
 # export github output variables
 echo "::set-output name=bin_name::${bin_name}"

@@ -14,6 +14,7 @@ MYRWDIFLAGS="-O3 -g -DNDEBUG"
 SPRING_DIR="/spring"
 BUILD_DIR="/spring/build"
 PUBLISH_DIR="/publish"
+INSTALL_DIR="${BUILD_DIR}/install"
 
 
 function print_usage() {

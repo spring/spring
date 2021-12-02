@@ -1,4 +1,4 @@
-cd "${BUILD_DIR}/bin-dir"
+cd "${INSTALL_DIR}"
 
 if [ "${PLATFORM}" == "windows-64" ]; then
     EXECUTABLES=$(find -maxdepth 1 -name '*.dll')" "$(find -maxdepth 1 -name '*.exe')" "$(find AI/Skirmish -name SkirmishAI.dll)" "$(find AI/Interfaces -name AIInterface.dll)" "$(find -name pr-downloader_shared.dll)
