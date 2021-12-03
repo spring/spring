@@ -93,7 +93,7 @@ bool CheckAvailableVideoModes()
 			if (cm.w == pm.w && cm.h == pm.h && (SDL_BPP(cm.format) < SDL_BPP(pm.format) || cm.refresh_rate < pm.refresh_rate))
 				continue;
 
-			globalRenderingInfo.availableVideoModes.emplace_back(std::array{ cm.w, cm.h, static_cast<int>(SDL_BPP(cm.format)), cm.refresh_rate });
+			globalRenderingInfo.availableVideoModes.emplace_back(std::array{ k + 1, cm.w, cm.h, static_cast<int>(SDL_BPP(cm.format)), cm.refresh_rate });
 
 			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), cm.w, cm.h, SDL_BPP(cm.format), cm.refresh_rate);
 			pm = cm;

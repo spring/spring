@@ -29,7 +29,7 @@ struct GlobalRenderingInfo {
 	SDL_version sdlVersionCompiled;
 	SDL_version sdlVersionLinked;
 
-	std::vector<std::array<int, 4>> availableVideoModes;
+	std::vector<std::array<int, 5>> availableVideoModes;
 };
 
 extern GlobalRenderingInfo globalRenderingInfo;
