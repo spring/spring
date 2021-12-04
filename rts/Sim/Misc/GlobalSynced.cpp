@@ -22,8 +22,11 @@
  *
  * Global instance of CGlobalSynced
  */
-CGlobalSynced* gs = nullptr;
+
+CGlobalSynced gsOBJ;
 CGlobalSyncedRNG gsRNG;
+
+CGlobalSynced* gs = &gsOBJ;
 
 
 CR_BIND(CGlobalSynced, )
@@ -31,12 +34,12 @@ CR_BIND(CGlobalSynced, )
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
 	CR_MEMBER(tempNum),
+	CR_MEMBER(godMode),
 
 	CR_MEMBER(speedFactor),
 	CR_MEMBER(wantedSpeedFactor),
 
 	CR_MEMBER(paused),
-	CR_MEMBER(godMode),
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
@@ -44,20 +47,8 @@ CR_REG_METADATA(CGlobalSynced, (
 ))
 
 
-/**
- * Initializes variables in CGlobalSynced
- */
-CGlobalSynced::CGlobalSynced()
+void CGlobalSynced::Kill()
 {
-	assert(teamHandler == nullptr);
-	ResetState();
-}
-
-CGlobalSynced::~CGlobalSynced()
-{
-	spring::SafeDelete(teamHandler);
-	assert(teamHandler == nullptr);
-
 	log_framePrefixer_setFrameNumReference(nullptr);
 }
 
@@ -65,6 +56,7 @@ CGlobalSynced::~CGlobalSynced()
 void CGlobalSynced::ResetState() {
 	frameNum = -1; // first real frame is 0
 	tempNum  =  1;
+	godMode  =  0;
 
 #ifdef SYNCCHECK
 	// reset checksum
@@ -74,9 +66,7 @@ void CGlobalSynced::ResetState() {
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;
 
-	paused  = false;
-	godMode = false;
-
+	paused          = false;
 	cheatEnabled    = false;
 	noHelperAIs     = false;
 	editDefsEnabled = false;
@@ -84,23 +74,16 @@ void CGlobalSynced::ResetState() {
 
 	gsRNG.SetSeed(18655, true);
 	log_framePrefixer_setFrameNumReference(&frameNum);
-
-	if (teamHandler == NULL) {
-		// needs to be available as early as PreGame
-		teamHandler = new CTeamHandler();
-	} else {
-		// less cavemanly than delete + new
-		teamHandler->ResetState();
-		skirmishAIHandler.ResetState();
-	}
 }
 
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
-	noHelperAIs     = setup->noHelperAIs;
-	useLuaGaia      = setup->useLuaGaia;
+	noHelperAIs = setup->noHelperAIs;
+	useLuaGaia  = setup->useLuaGaia;
 
-	teamHandler->LoadFromSetup(setup);
+	teamHandler.ResetState();
+	teamHandler.LoadFromSetup(setup);
+	skirmishAIHandler.ResetState();
 	skirmishAIHandler.LoadFromSetup(*setup);
 }
 

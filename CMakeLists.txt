@@ -1,10 +1,8 @@
-# CMake 2.8.10
-# + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.1)
 
 
-SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
+set(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
 # enable flag overrides for compilers
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_MODULES_SPRING}/OverrideFlags.cmake")
@@ -17,14 +15,11 @@ if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 endif()
 
 # includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
-INCLUDE(Util)
-INCLUDE(PreferStaticLibs)
-
-CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
-
+include(Util)
+include(PreferStaticLibs)
 
 # check for minimal gcc version
-set(MIN_GCC_VER "4.8")
+set(MIN_GCC_VER "7.0")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
 		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
@@ -35,12 +30,12 @@ endif()
 
 # set some internal vars
 
-if(NOT "${CMAKE_C_FLAGS}" STREQUAL "")
-	Message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
+if (NOT "${CMAKE_C_FLAGS}" STREQUAL "")
+	message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
 endif()
 
-if(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "")
-	Message(WARNING "Using custom CXX_FLAGS: ${CMAKE_CXX_FLAGS} this build will very likely not sync in online mode!")
+if (NOT "${CMAKE_CXX_FLAGS}" STREQUAL "")
+	message(WARNING "Using custom CXX_FLAGS: ${CMAKE_CXX_FLAGS} this build will very likely not sync in online mode!")
 endif()
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
@@ -51,7 +46,7 @@ endif (CUSTOM_COMPILER_DEFINITIONS)
 
 ### set the default build type
 if    (NOT CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING
+	set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING
 		"Choose the type of build, options are: RELWITHDEBINFO DEBUG RELEASE PROFILE"
 		FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
@@ -73,8 +68,8 @@ endif()
 # Tell windows to pass arguments around in @response files
 # (32k arg limit workaround)
 if    (WIN32)
-	SET(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 1)
-	SET(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 1)
+	set(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 1)
+	set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 1)
 endif (WIN32)
 
 
@@ -90,7 +85,7 @@ else  (APPLE)
 endif (APPLE)
 
 ### Compiler flags and defines based on build type
-INCLUDE(TestCXXFlags)
+include(TestCXXFlags)
 
 ## 32bit or 64bit?
 set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
@@ -100,9 +95,9 @@ else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(MARCH_BITS 32 CACHE INTERNAL "" FORCE)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-Message(STATUS "Building Spring on ${MARCH_BITS}bit environment")
+message(STATUS "Building Spring on ${MARCH_BITS}bit environment")
 set(BUILD_BITS "${MARCH_BITS}" CACHE STRING "Target arch machine type")
-Message(STATUS "Targetting ${BUILD_BITS}bit")
+message(STATUS "Targetting ${BUILD_BITS}bit")
 
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
@@ -138,7 +133,7 @@ else  (UNIX AND NOT MINGW)
 		# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
 		# (Actually on second look, I think it only needs one of the m* libraries.)
 		if(NOT MSVC)
-			SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
+			set(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
 		endif(NOT MSVC)
 		set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 		set(CMAKE_PREFIX_PATH ${MINGWLIBS})
@@ -150,21 +145,22 @@ else  (UNIX AND NOT MINGW)
 		set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 		set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 	else()
-		MESSAGE(WARNING "Compiling for windows. MINGWLIBS '${MINGWLIBS}' is not a valid directory, trying system libs")
+		message(WARNING "Compiling for windows. MINGWLIBS '${MINGWLIBS}' is not a valid directory, trying system libs")
 	endif ()
 
 
 	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
 	add_definitions(-D__USE_MINGW_ANSI_STDIO=1) ## use __mingw_sprintf instead of __builtin_sprintf (it's used by lua in a synced way, and builtin doesn't sync)
 
+	if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		add_definitions(-DWIN32)
+	endif()
 
 	if(MSVC)
-		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
-		set(Boost_USE_STATIC_LIBS ON)
-		set(GLEW_STATIC ON)
+		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(EXE_FLAGS WIN32)
 	else()
-		INCLUDE_DIRECTORIES(rts/lib/mingw-std-threads)
+		include_directories(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
 
@@ -239,38 +235,29 @@ if    (WIN32)
 		## stdout console
 		option(WINDOWS_CONSOLE "Show a visible cmd.exe with stdout when spring runs" FALSE)
 		if    (NOT WINDOWS_CONSOLE)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 		endif (NOT WINDOWS_CONSOLE)
 	endif(NOT MSVC)
 endif (WIN32)
 
-option(USE_LIBSQUISH "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
-if    (USE_LIBSQUISH)
-	add_definitions(-DUSE_LIBSQUISH)
-endif (USE_LIBSQUISH)
-
-
-
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex system REQUIRED)
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
-FIND_PACKAGE(SDL2)
+find_package(SDL2)
 
-FIND_PACKAGE_STATIC(DevIL)
-IF    (PREFER_STATIC_LIBS)
+find_package_static(DevIL)
+if    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
-	FIND_PACKAGE_STATIC(JPEG REQUIRED)
-	FIND_PACKAGE_STATIC(PNG REQUIRED)
-	FIND_PACKAGE_STATIC(TIFF REQUIRED)
-	FIND_PACKAGE_STATIC(GIF REQUIRED)
-ENDIF (PREFER_STATIC_LIBS)
+	find_package_static(JPEG REQUIRED)
+	find_package_static(PNG REQUIRED)
+	find_package_static(TIFF REQUIRED)
+	find_package_static(GIF REQUIRED)
+endif (PREFER_STATIC_LIBS)
 
 if    (WIN32)
-	FIND_PACKAGE(Windres)
-	SET(CMAKE_RC_COMPILER ${WINDRES_BIN})
-	FIND_PACKAGE(Win32Libs REQUIRED)
+	find_package(Windres REQUIRED)
+	set(CMAKE_RC_COMPILER ${WINDRES_BIN})
+	find_package(Win32Libs REQUIRED)
 endif (WIN32)
 
 if     (WIN32)
@@ -280,30 +267,30 @@ elseif (UNIX)
 	# unix specifics
 else   (UNIX)
 	# mac
-	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
-	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
+	find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+	include_directories("${COREFOUNDATION_LIBRARY}/Headers")
 endif  (WIN32)
 
-FIND_PACKAGE(Valgrind)
+find_package(Valgrind)
 if    (VALGRIND_FOUND)
 	add_definitions(-DUSE_VALGRIND)
 endif (VALGRIND_FOUND)
 
-INCLUDE (CheckSymbolExists)
-CHECK_SYMBOL_EXISTS(strnlen string.h HAVE_STRNLEN)
+include (CheckSymbolExists)
+check_symbol_exists(strnlen string.h HAVE_STRNLEN)
 if (NOT HAVE_STRNLEN)
-	Message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
+	message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
 endif()
 
 ### Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
 option(LTO "Link Time Optimizations (LTO)" FALSE)
 if    (LTO)
 	if    (NOT LTO_FLAGS)
-		Message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
+		message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
 	endif (NOT LTO_FLAGS)
-	Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
-	Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
-	Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
+	set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
+	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 endif (LTO)
 
 
@@ -311,20 +298,20 @@ endif (LTO)
 option(DEBUG_BOUNDSCHECK "Array/Pointer BoundsChecking a.k.a. buffer overflow protection (debug)" FALSE)
 if    (DEBUG_BOUNDSCHECK)
 	if    (NOT MPX_FLAGS)
-		Message(WARNING "Tried to enable BoundsCheck, but compiler doesn't support it!")
+		message(WARNING "Tried to enable BoundsCheck, but compiler doesn't support it!")
 	endif (NOT MPX_FLAGS)
-	Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${MPX_FLAGS}")
-	Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${MPX_FLAGS}")
-	Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${MPX_FLAGS}")
+	set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${MPX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${MPX_FLAGS}")
+	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${MPX_FLAGS}")
 endif (DEBUG_BOUNDSCHECK)
 
 
 ### ld.gold
 option(COMPRESS_DEBUG_SYMBOLS "Compresses the DebugSymbols (needs ld.gold, beware: slow)" FALSE)
 if    (LDGOLD_FOUND)
-	Message(STATUS "Found ld.gold")
+	message(STATUS "Found ld.gold")
 	if    (COMPRESS_DEBUG_SYMBOLS)
-		Message(STATUS "Compressing debug symbols")
+		message(STATUS "Compressing debug symbols")
 		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${LDGOLD_LINKER_FLAGS}")
 	endif (COMPRESS_DEBUG_SYMBOLS)
 
@@ -332,13 +319,12 @@ if    (LDGOLD_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
 else  (LDGOLD_FOUND)
-	Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
+	message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
 endif (LDGOLD_FOUND)
 
+message(STATUS "Compiling with C++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
 
-### C++11
-Message(STATUS "Compiling with C++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
 add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
 add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 
@@ -391,9 +377,16 @@ option(ENABLE_STREFLOP "build Spring with streflop support (REQUIRED FOR MULTIPL
 
 if (ENABLE_STREFLOP)
 ## note: is removed in ./AI/CMakeLists.txt since it would break AI compilation
-add_definitions(-DSTREFLOP_SSE)
+	if (HAS_I686_FLAG_ OR HAS_X86_64_FLAG_ OR MSVC)
+		add_definitions(-DSTREFLOP_SSE)
+		message(STATUS "Build with streflop support (using SSE implementation)")
+	else ()
+		add_definitions(-DSTREFLOP_SOFT)
+		message(STATUS "Build with streflop support (using software implementation)")
+	endif ()
 else ()
-add_definitions(-DNOT_USING_STREFLOP)
+	add_definitions(-DNOT_USING_STREFLOP)
+	message(STATUS "Build without streflop support (REQUIRED FOR MULTIPLAYER)")
 endif ()
 
 
@@ -410,15 +403,15 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
-		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
+		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
 
 	if    (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
-		Message(STATUS "using march=${MARCH_FLAG}")
+		message(STATUS "using march=${MARCH_FLAG}")
 	else  (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-		Message(STATUS "using mtune=generic")
+		message(STATUS "using mtune=generic")
 	endif (MARCH_FLAG)
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
@@ -426,7 +419,7 @@ elseif (MSVC)
 	# silence warnings
 	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
 else   (MSVC)
-	Message(WARNING "unknown compiler")
+	message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
 set(CXX_DEBUG_DEFINES          "-DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
@@ -456,10 +449,8 @@ else  (MSVC)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 	endif (UNIX)
 	if    (MINGW)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mthreads")
 	endif (MINGW)
-
-	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 
 	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} ${CXX_RELWITHDEBINFO_DEFINES}")
@@ -482,10 +473,10 @@ else  (MSVC)
 		if    (BUILD_BITS EQUAL 32)
 			# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
-			Message(STATUS "Enable IMAGE_FILE_LARGE_ADDRESS_AWARE (>2GB memory limit)")
+			message(STATUS "Enable IMAGE_FILE_LARGE_ADDRESS_AWARE (>2GB memory limit)")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--large-address-aware")
 		else (BUILD_BITS EQUAL 32)
-			Message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
+			message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
 		endif (BUILD_BITS EQUAL 32)
 	endif  (MINGW)
 endif (MSVC)
@@ -500,19 +491,19 @@ endif (MSVC)
 add_custom_target(generateSources)
 
 # Make sure git is found if git is used
-If   (EXISTS "${CMAKE_SOURCE_DIR}/.git")
+if   (EXISTS "${CMAKE_SOURCE_DIR}/.git")
 	find_package(Git REQUIRED)
-Endif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+endif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
 
 # Generate the version files
-Set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
+set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
 
-Set(VERSION_GENERATE_SOURCES
+set(VERSION_GENERATE_SOURCES
 		"${VERSION_GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
 		"${VERSION_GENERATE_DIR}/VERSION"
 	)
 
-Set_Source_Files_Properties(
+set_source_files_properties(
 	${VERSION_GENERATE_SOURCES}
 	PROPERTIES GENERATED TRUE
 )
@@ -520,8 +511,8 @@ Set_Source_Files_Properties(
 # This is always executed (on every run of "make"),
 # but the actual version files are only written in case of a change
 # in the version info they use, or in the template file content.
-IF (MSVC)
-	Add_Custom_Command(
+if (MSVC)
+	add_custom_command(
 		OUTPUT ${VERSION_GENERATE_SOURCES}
 		COMMAND "${CMAKE_COMMAND}"
 			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
@@ -533,13 +524,13 @@ IF (MSVC)
 		COMMENT
 			"  Configuring Version files ..." VERBATIM
 		)
-	Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
-ELSE (MSVC)
+	add_custom_target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
+else (MSVC)
 	# This is always executed (on every run of "make"),
 	# but the actual version files are only written in case of a change
 	# in the version info they use, or in the template file content.
-	Add_Custom_Target(generateVersionFiles)
-	Add_Custom_Command(TARGET generateVersionFiles
+	add_custom_target(generateVersionFiles)
+	add_custom_command(TARGET generateVersionFiles
 		COMMAND "${CMAKE_COMMAND}"
 			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
 			"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
@@ -551,40 +542,40 @@ ELSE (MSVC)
 			"  Configuring Version files ..." VERBATIM
 	)
 
-ENDIF (MSVC)
+endif (MSVC)
 
-Add_Dependencies(generateSources generateVersionFiles)
+add_dependencies(generateSources generateVersionFiles)
 
 
 ### Where the other CMakeLists.txt are
 
 # As the libs are required by all the other sub-projects, we add them first
-Add_Subdirectory(rts/lib)
+add_subdirectory(rts/lib)
 
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
-	Add_Subdirectory(AI)
+	add_subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
 
 # As tools/unitsync/ depends on sources from here, we add this one first
-Add_Subdirectory(rts/System)
+add_subdirectory(rts/System)
 
 # additional tools
-Add_Subdirectory(tools)
+add_subdirectory(tools)
 
 # man pages & user-docs
-Add_Subdirectory(doc)
+add_subdirectory(doc)
 
 ### Handle game content
 ### - Pack base-files
 ### - Install base-files
 ### - Install freedesktop stuff
 ### - Install mingw DLLs
-Add_Subdirectory(cont)
+add_subdirectory(cont)
 
 # As rts/builds/* depends on most other stuff, we add this one as last
-Add_Subdirectory(rts)
+add_subdirectory(rts)
 
 # Unit tests
-# this has to be in root CMakeLists.txt; it requires CMake 2.6.3 or later
-ENABLE_TESTING()
-Add_Subdirectory(test)
+# this has to be in root CMakeLists.txt
+enable_testing()
+add_subdirectory(test)

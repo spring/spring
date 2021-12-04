@@ -15,9 +15,6 @@ public:
 	static HUDDrawer* GetInstance();
 
 private:
-	void PushState();
-	void PopState();
-
 	void DrawModel(const CUnit*);
 	void DrawUnitDirectionArrow(const CUnit*);
 	void DrawCameraDirectionArrow(const CUnit*);

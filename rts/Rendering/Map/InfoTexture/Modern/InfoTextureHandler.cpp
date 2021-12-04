@@ -87,7 +87,7 @@ void CInfoTextureHandler::DisableCurrentMode()
 
 void CInfoTextureHandler::SetMode(const std::string& name)
 {
-	returnToLOS &= (name !=      "");
+	returnToLOS &= (name !=      ""); // NOLINT(readability-container-size-empty)
 	returnToLOS |= (name ==   "los");
 	inMetalMode  = (name == "metal");
 
@@ -123,7 +123,6 @@ int2 CInfoTextureHandler::GetCurrentInfoTextureSize() const
 void CInfoTextureHandler::Update()
 {
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 
 	for (auto& p: infoTextures) {
 		CPboInfoTexture* tex = p.second;

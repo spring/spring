@@ -18,20 +18,24 @@
 
 
 bool CTeamHighlight::highlight = false;
-static spring::unordered_map<int, int> oldColors;
+
+static spring::unsynced_map<int, int> oldColors;
 
 void CTeamHighlight::Enable(unsigned currentTime)
 {
 	if (!highlight)
 		return;
 
-	for (int i = 0; i < teamHandler->ActiveTeams(); ++i) {
-		CTeam* t = teamHandler->Team(i);
+	oldColors.clear();
+	oldColors.reserve(teamHandler.ActiveTeams());
+
+	for (int i = 0; i < teamHandler.ActiveTeams(); ++i) {
+		CTeam* t = teamHandler.Team(i);
 
 		if (t->highlight <= 0.0f)
 			continue;
 
-		oldColors[i] = *(int *)t->color;
+		oldColors[i] = *reinterpret_cast<int*>(t->color);
 		float s = (float)(currentTime & 255) * 4.0f / 255.0f;
 		int c = (int)(255.0f * ((s > 2.0f) ? 3.0f - s : s - 1.0f));
 		c *= t->highlight;
@@ -47,9 +51,9 @@ void CTeamHighlight::Disable()
 	if (oldColors.empty())
 		return;
 
-	for (auto i = oldColors.begin(); i != oldColors.end(); ++i) {
-		CTeam* team = teamHandler->Team((*i).first);
-		*(int*)team->color = (*i).second;
+	for (const auto& pair: oldColors) {
+		CTeam* team = teamHandler.Team(pair.first);
+		*reinterpret_cast<int*>(team->color) = pair.second;
 	}
 
 	oldColors.clear();
@@ -60,28 +64,37 @@ void CTeamHighlight::Update(int frameNum) {
 		return;
 
 	bool hl = false;
-	if ((globalConfig->teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig->teamHighlight == HIGHLIGHT_ALL) {
-		const int maxhl = 1000 * (globalConfig->networkTimeout + 1);
 
-		for (int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
-			CTeam* t = teamHandler->Team(ti);
+	if ((globalConfig.teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig.teamHighlight == HIGHLIGHT_ALL) {
+		const int maxhl = 1000 * (globalConfig.networkTimeout + 1);
+
+		for (int ti = 0; ti < teamHandler.ActiveTeams(); ++ti) {
+			CTeam* t = teamHandler.Team(ti);
 			float teamhighlight = 0.0f;
 
-			if (t->gaia) { continue; }
-			if (t->isDead) { continue; }
-			if (t->units.empty()) { continue; }
-			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) { continue; }
-			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti)) { continue; }
+			if (t->gaia)
+				continue;
+			if (t->isDead)
+				continue;
+			if (t->GetNumUnits() == 0)
+				continue;
+			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty())
+				continue;
+			if (!gu->spectatingFullView && !teamHandler.AlliedTeams(gu->myTeam, ti))
+				continue;
 
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
 
-			for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
-				CPlayer* p = playerHandler->Player(pi);
+			for (int pi = 0; pi < playerHandler.ActivePlayers(); ++pi) {
+				CPlayer* p = playerHandler.Player(pi);
 
-				if (!p->active) { continue; }
-				if (p->spectator) { continue; }
-				if ((p->team != ti)) { continue; }
+				if (!p->active)
+					continue;
+				if (p->spectator)
+					continue;
+				if ((p->team != ti))
+					continue;
 
 				hasPlayers = true;
 
@@ -94,13 +107,12 @@ void CTeamHighlight::Update(int frameNum) {
 			} else if (minPing != INT_MAX && minPing > 1000) {
 				teamhighlight = std::max(0, std::min(minPing, maxhl)) / float(maxhl);
 			}
-			if (teamhighlight > 0.0f) {
-				hl = true;
-			}
 
-			*(volatile float *)&t->highlight = teamhighlight;
+			hl |= (teamhighlight > 0.0f);
+			t->highlight = teamhighlight;
 		}
 	}
 
-	*(volatile bool *)&highlight = hl;
+	highlight = hl;
 }
+

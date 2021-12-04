@@ -4,6 +4,7 @@
 #define PATCH_H
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 #include "Game/Camera.h"
 #include "System/Rectangle.h"
 #include "System/type2.h"
@@ -23,36 +24,40 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // how many TriTreeNodes should be reserved per pool
-// this is a reasonable baseline for *most* maps but
-// not guaranteed to suffice under all possible user
-// detail levels on every map in existence
-#define NEW_POOL_SIZE (1 << 20)
+// (2M is a reasonable baseline for most large maps)
+// if a 32bit TriTreeNode struct is 28 bytes, the total ram usage of LOAM is 2M*28*2 = 104 MB
+#define NEW_POOL_SIZE (1 << 21)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
 
-
+class Patch; //declare it so that tritreenode can store its parent
 // stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
-	TriTreeNode()
-		: LeftChild(nullptr)
-		, RightChild(nullptr)
-		, BaseNeighbor(nullptr)
-		, LeftNeighbor(nullptr)
-		, RightNeighbor(nullptr)
-	{}
+	static TriTreeNode dummyNode;
 
 	// all non-leaf nodes have both children, so just check for one
-	bool IsValid() const { return ((LeftChild == nullptr && RightChild == nullptr) || (LeftChild != nullptr && RightChild != nullptr)); }
-	bool IsLeaf() const { assert(IsValid()); return (LeftChild == nullptr); }
-	bool IsBranch() const { assert(IsValid()); return (RightChild != nullptr); }
+	bool IsLeaf() const { assert(!IsDummy()); return (LeftChild == &dummyNode); }
+	bool IsBranch() const { assert(!IsDummy()); return (LeftChild != &dummyNode); }
+	bool IsDummy() const { return (this == &dummyNode); }
 
-	TriTreeNode* LeftChild;
-	TriTreeNode* RightChild;
+	void Reset() {
+		 LeftChild = &dummyNode;
+		RightChild = &dummyNode;
 
-	TriTreeNode* BaseNeighbor;
-	TriTreeNode* LeftNeighbor;
-	TriTreeNode* RightNeighbor;
+		 BaseNeighbor = &dummyNode;
+		 LeftNeighbor = &dummyNode;
+		RightNeighbor = &dummyNode;
+	}
+
+	TriTreeNode*  LeftChild = &dummyNode;
+	TriTreeNode* RightChild = &dummyNode;
+
+	TriTreeNode*  BaseNeighbor = &dummyNode;
+	TriTreeNode*  LeftNeighbor = &dummyNode;
+	TriTreeNode* RightNeighbor = &dummyNode;
+
+	Patch* parentPatch = NULL; //triangles know their parent patch so they know of a neighbour's Split() func caused changes to them
 };
 
 
@@ -65,21 +70,24 @@ class CTriNodePool
 public:
 	static void InitPools(bool shadowPass, size_t newPoolSize = NEW_POOL_SIZE);
 	static void ResetAll(bool shadowPass);
+
 	inline static CTriNodePool* GetPool(bool shadowPass);
 
 public:
-	CTriNodePool(const size_t poolSize);
-
-	void Reset();
+	void Resize(size_t poolSize);
+	void Reset() { nextTriNodeIdx = 0; }
 	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
-	bool OutOfNodes() const { return (nextTriNodeIdx >= pool.size()); }
+	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }
+	bool OutOfNodes() const { return (nextTriNodeIdx >= tris.size()); }
 
+	size_t getPoolSize() { return tris.size(); }
+	size_t getNextTriNodeIdx() { return nextTriNodeIdx; }
 private:
-	std::vector<TriTreeNode> pool;
+	std::vector<TriTreeNode> tris;
 
 	// index of next free TriTreeNode
-	size_t nextTriNodeIdx;
+	size_t nextTriNodeIdx = 0;
 };
 
 
@@ -87,13 +95,6 @@ private:
 // stores information needed at the Patch level
 class Patch
 {
-public:
-	enum RenderMode {
-		VBO = 1,
-		DL  = 2,
-		VA  = 3
-	};
-
 public:
 	friend class CRoamMeshDrawer;
 	friend class CPatchInViewChecker;
@@ -109,101 +110,102 @@ public:
 
 	bool IsVisible(const CCamera*) const;
 	char IsDirty() const { return isDirty; }
-	int GetTriCount() const { return (indices.size() / 3); }
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
+	float3 lastCameraPosition ; //the last camera position this patch was tesselated from
+
+	//this specifies the manhattan distance from the camera during the last tesselation
+	//note that this can only become lower, as we can only increase tesselation levels while maintaining no cracks
+	float camDistanceLastTesselation;
+
+	// create an approximate mesh
+
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
+	// compute the variance tree for each of the binary triangles in this patch
 	void ComputeVariance();
 
 	void GenerateIndices();
-	void Upload();
+	void UploadIndices();
+	void GenerateBorderVertices();
+
 	void Draw();
 	void DrawBorder();
 	void SetSquareTexture() const;
 
 public:
-	static void SwitchRenderMode(int mode = -1);
-	static int GetRenderMode() { return renderMode; }
-
-	#if 0
-	void UpdateVisibility(CCamera* cam);
-	#endif
 	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
-	void VBOUploadVertices();
+	void UploadVertices();
+	void UploadBorderVertices();
 
 private:
-	// recursive functions
+	// split a single triangle and link it into the mesh; will correctly force-split diamonds
 	bool Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
-	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
+	// tessellate patch; will continue to split until the variance metric is met
+	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int treeIdx, const int curNodeIdx);
+	void RecursGenIndices(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
+	// computes variance over the entire tree; does not examine node relationships
 	float RecursComputeVariance(
 		const   int2 left,
 		const   int2 rght,
 		const   int2 apex,
 		const float3 hgts,
-		const    int node
+		const    int treeIdx,
+		const    int curNodeIdx
 	);
 
-	void RecursBorderRender(
-		CVertexArray* va,
+	void RecursGenBorderVertices(
 		const TriTreeNode* tri,
 		const int2 left,
 		const int2 rght,
 		const int2 apex,
-		int depth,
-		bool leftChild
+		const int2 depth
 	);
 
 	float GetHeight(int2 pos);
 
-	void GenerateBorderIndices(CVertexArray* va);
-
 private:
-	static RenderMode renderMode;
-
-	CSMFGroundDrawer* smfGroundDrawer;
+	CSMFGroundDrawer* smfGroundDrawer = nullptr;
 
 	// pool used during Tessellate; each invoked Split allocates from this
-	CTriNodePool* curTriPool;
-
-	// which variance we are currently using [only valid during the Tessellate and ComputeVariance passes]
-	float* currentVariance;
-
+	CTriNodePool* curTriPool = nullptr;
+	float3 midPos;
 	// does the variance-tree need to be recalculated for this Patch?
-	bool isDirty;
-	bool vboVerticesUploaded;
+	bool isDirty = true;
+	bool isTesselated = false;
+	// Did the tesselation tree change from what we have stored in the VBO?
+	bool isChanged = false;
 
-	float varianceMaxLimit;
-	float camDistLODFactor; // defines the LOD falloff in camera distance
+	float varianceMaxLimit = std::numeric_limits<float>::max();
+	float camDistLODFactor = 1.0f; // defines the LOD falloff in camera distance
 
 	// world-coordinate offsets of this patch
-	int2 coors;
+	int2 coors = {-1, -1};
 
 
 	TriTreeNode baseLeft;  // left base-triangle tree node
 	TriTreeNode baseRight; // right base-triangle tree node
 
-	std::vector<float> varianceLeft;  // left variance tree
-	std::vector<float> varianceRight; // right variance tree
-
-	// TODO: remove for both the Displaylist and the VBO implementations (only really needed for VA's)
-	std::vector<float> vertices;
+	std::array<float, 1 << VARIANCE_DEPTH> varianceTrees[2];
+	// TODO: remove, map+update buffer instead
+	std::array<float, 3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1)> vertices;
+	std::vector<VA_TYPE_C> borderVertices;
 	std::vector<unsigned int> indices;
 
 	// frame on which this patch was last visible, per pass
 	// NOTE:
 	//   shadow-mesh patches are only ever viewed by one camera
 	//   normal-mesh patches can be viewed by *multiple* types!
-	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
+	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames = {};
 
 
-	GLuint triList;
-	GLuint vertexBuffer;
-	GLuint vertexIndexBuffer;
+	// [0] := inner, [1] := border
+	GLuint vertexArrays[2] = {0, 0};
+	GLuint vertexBuffers[2] = {0, 0};
+	GLuint indexBuffer = 0;
 };
 
 #endif

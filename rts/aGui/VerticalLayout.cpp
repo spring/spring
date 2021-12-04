@@ -2,6 +2,7 @@
 
 #include "VerticalLayout.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 
 namespace agui
@@ -13,16 +14,18 @@ VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 
 void VerticalLayout::DrawSelf()
 {
-	if (borderWidth > 0)
-	{
-		glLineWidth(borderWidth);
-		glColor4f(1.f,1.f,1.f, Opacity());
-		DrawBox(GL_LINE_LOOP);
-	}
+	if (!visibleBorder)
+		return;
+
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
+	gui->SetColor(1.f,1.f,1.f, Opacity());
+	DrawOutline();
 }
 
 void VerticalLayout::GeometryChangeSelf()
 {
+	GuiElement::GeometryChangeSelf();
+
 	if (children.empty())
 		return;
 	unsigned numFixed = 0;

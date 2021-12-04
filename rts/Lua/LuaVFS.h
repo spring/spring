@@ -4,26 +4,27 @@
 #define LUA_VFS_H
 
 #include <string>
-using std::string;
 
 struct lua_State;
 
 
 class LuaVFS {
 	public:
+		static bool PushCommon(lua_State* L);
 		static bool PushSynced(lua_State* L);
 		static bool PushUnsynced(lua_State* L);
 
 	private:
-		static const string GetModes(lua_State* L, int index, bool synced);
-
-		static bool PushCommon(lua_State* L);
+		static const std::string GetModes(lua_State* L, int index, bool synced);
 
 		static int Include(lua_State* L, bool synced);
 		static int LoadFile(lua_State* L, bool synced);
 		static int FileExists(lua_State* L, bool synced);
 		static int DirList(lua_State* L, bool synced);
 		static int SubDirs(lua_State* L, bool synced);
+
+		static int GetFileAbsolutePath(lua_State* L);
+		static int GetArchiveContainingFile(lua_State* L);
 
 		static int SyncInclude(lua_State* L);
 		static int SyncLoadFile(lua_State* L);
@@ -40,7 +41,7 @@ class LuaVFS {
 		static int UseArchive(lua_State* L); ///< temporary
 
 		static int CompressFolder(lua_State* L);
-		static int SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes);
+		static int SevenZipFolder(lua_State* L, const std::string& folderPath, const std::string& zipFilePath, bool includeFolder, const std::string& modes);
 		/**
 		@brief Permanent mapping of files into VFS (only from unsynced)
 		

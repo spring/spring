@@ -28,8 +28,8 @@ public:
 	slimsig::signal<void (void)> DefaultAction;
 
 private:
-	virtual void DrawSelf();
-	virtual bool HandleEventSelf(const SDL_Event& ev);
+	virtual void DrawSelf() override;
+	virtual bool HandleEventSelf(const SDL_Event& ev) override;
 
 	bool hasFocus;
 	bool crypt;

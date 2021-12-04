@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <cctype>
 
 #include "LuaWeaponDefs.h"
@@ -42,6 +41,8 @@ static int WeaponDefMetatable(lua_State* L);
 static int NoFeatureCollide(lua_State* L, const void* data);
 static int NoFriendlyCollide(lua_State* L, const void* data);
 static int NoNeutralCollide(lua_State* L, const void* data);
+static int NoFireBaseCollide(lua_State* L, const void* data);
+static int NoNonTargetCollide(lua_State* L, const void* data);
 
 static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
@@ -60,7 +61,7 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
 
-	const auto& defsMap = weaponDefHandler->weaponID;
+	const auto& defsVec = weaponDefHandler->GetWeaponDefsVec();
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
@@ -72,13 +73,14 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 		LuaHashString("next")
 	}};
 
-	const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
-	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {{WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable}};
+	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
+	for (const auto& weaponDef: defsVec) {
+		// The first weaponDef is invalid (dummy), so we skip it
+		const auto def = weaponDefHandler->GetWeaponDefByID(weaponDef.id);
 
-		if (def == NULL)
+		if (def == nullptr)
 			continue;
 
 		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
@@ -136,7 +138,7 @@ static int WeaponDefIndex(lua_State* L)
 			return elem.func(L, p);
 		}
 		case ERROR_TYPE: {
-			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index", __FUNCTION__, name);
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index", __func__, name);
 			lua_pushnil(L);
 			return 1;
 		}
@@ -199,7 +201,7 @@ static int WeaponDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case ERROR_TYPE: {
-			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex", __FUNCTION__, name);
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex", __func__, name);
 			lua_pushnil(L);
 			return 1;
 		}
@@ -241,7 +243,8 @@ static int Pairs(lua_State* L)
 static int DamagesArray(lua_State* L, const void* data)
 {
 	const DamageArray& d = *static_cast<const DamageArray*>(data);
-	lua_newtable(L);
+
+	lua_createtable(L, damageArrayHandler.GetNumTypes(), 5);
 	HSTR_PUSH_NUMBER(L, "impulseFactor",      d.impulseFactor);
 	HSTR_PUSH_NUMBER(L, "impulseBoost",       d.impulseBoost);
 	HSTR_PUSH_NUMBER(L, "craterMult",         d.craterMult);
@@ -249,8 +252,7 @@ static int DamagesArray(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "paralyzeDamageTime", d.paralyzeDamageTime);
 
 	// damage values
-	const int typeCount = damageArrayHandler->GetNumTypes();
-	for (int i = 0; i < typeCount; i++) {
+	for (int i = 0, n = damageArrayHandler.GetNumTypes(); i < n; i++) {
 		lua_pushnumber(L, i);
 		lua_pushnumber(L, d.Get(i));
 		lua_rawset(L, -3);
@@ -263,7 +265,7 @@ static int DamagesArray(lua_State* L, const void* data)
 static int VisualsTable(lua_State* L, const void* data)
 {
 	const struct WeaponDef::Visuals& v = *static_cast<const struct WeaponDef::Visuals*>(data);
-	lua_newtable(L);
+	lua_createtable(L, 0, 22);
 	HSTR_PUSH_STRING(L, "modelName",      modelLoader.FindModelPath(v.modelName));
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
@@ -288,47 +290,49 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_BOOL  (L, "beamWeapon",     false); // DEPRECATED
 
 	return 1;
-//	CColorMap *colorMap;
-//	AtlasedTexture *texture1;
-//	AtlasedTexture *texture2;
-//	AtlasedTexture *texture3;
-//	AtlasedTexture *texture4;
 }
 
 
 
 static int NoEnemyCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NOENEMIES));
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NOENEMIES);
 	return 1;
 }
 
 static int NoFriendlyCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NOFRIENDLIES));
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NOFRIENDLIES);
 	return 1;
 }
 
 static int NoFeatureCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NOFEATURES));
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NOFEATURES);
 	return 1;
 }
 
 static int NoNeutralCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NONEUTRALS));
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NONEUTRALS);
+	return 1;
+}
+
+static int NoFireBaseCollide(lua_State* L, const void* data)
+{
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NOFIREBASES);
+	return 1;
+}
+
+static int NoNonTargetCollide(lua_State* L, const void* data)
+{
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NONONTARGETS);
 	return 1;
 }
 
 static int NoGroundCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NOGROUND));
+	lua_pushboolean(L, (*reinterpret_cast<const int*>(data)) & Collision::NOGROUND);
 	return 1;
 }
 
@@ -336,13 +340,14 @@ static int NoGroundCollide(lua_State* L, const void* data)
 
 static inline int BuildCategorySet(lua_State* L, const vector<string>& cats)
 {
-	lua_newtable(L);
-	const int count = (int)cats.size();
-	for (int i = 0; i < count; i++) {
+	lua_createtable(L, 0, cats.size());
+
+	for (size_t i = 0, n = cats.size(); i < n; i++) {
 		lua_pushsstring(L, cats[i]);
 		lua_pushboolean(L, true);
 		lua_rawset(L, -3);
 	}
+
 	return 1;
 }
 
@@ -369,11 +374,11 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 static int CustomParamsTable(lua_State* L, const void* data)
 {
 	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
-	lua_newtable(L);
+	lua_createtable(L, 0, params.size());
 
-	for (auto it = params.cbegin(); it != params.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushsstring(L, it->second);
+	for (const auto& param: params) {
+		lua_pushsstring(L, param.first);
+		lua_pushsstring(L, param.second);
 		lua_rawset(L, -3);
 	}
 	return 1;
@@ -383,19 +388,25 @@ static int CustomParamsTable(lua_State* L, const void* data)
 static int GuiSoundSetTable(lua_State* L, const void* data)
 {
 	const GuiSoundSet& soundSet = *static_cast<const GuiSoundSet*>(data);
-	const int soundCount = (int)soundSet.sounds.size();
-	lua_newtable(L);
-	for (int i = 0; i < soundCount; i++) {
+
+	lua_createtable(L, soundSet.NumSounds(), 0);
+
+	for (size_t i = 0, n = soundSet.NumSounds(); i < n; i++) {
 		lua_pushnumber(L, i + 1);
-		lua_newtable(L);
-		const GuiSoundSet::Data& sound = soundSet.sounds[i];
+		lua_createtable(L, 0, 3);
+
+		const GuiSoundSetData& sound = soundSet.GetSoundData(i);
+
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
+
 		if (!CLuaHandle::GetHandleSynced(L)) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
+
 		lua_rawset(L, -3);
 	}
+
 	return 1;
 }
 
@@ -426,6 +437,8 @@ static bool InitParamMap()
 	ADD_FUNCTION("noFriendlyCollide",    wd.collisionFlags, NoFriendlyCollide);
 	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
+	ADD_FUNCTION("noFireBaseCollide",    wd.collisionFlags, NoFireBaseCollide);
+	ADD_FUNCTION("noNonTargetCollide",   wd.collisionFlags, NoNonTargetCollide);
 	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
 
 	ADD_DEPRECATED_LUADEF_KEY("areaOfEffect");

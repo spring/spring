@@ -19,21 +19,39 @@ typedef SVertexData SS3OVertex;
 
 
 struct SS3OPiece: public S3DModelPiece {
-	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {
+public:
+	SS3OPiece() = default;
+	SS3OPiece(const SS3OPiece&) = delete;
+	SS3OPiece(SS3OPiece&& p) { *this = std::move(p); }
+
+	SS3OPiece& operator = (const SS3OPiece& p) = delete;
+	SS3OPiece& operator = (SS3OPiece&& p) {
+		#if 0
+		// piece is never actually moved, just need the operator for pool
+		vertices = std::move(p.vertices);
+		indices = std::move(p.indices);
+
+		primType = p.primType;
+		#endif
+		return *this;
 	}
 
-public:
-	void UploadGeometryVBOs() override;
-	void DrawForList() const override;
+	void Clear() override {
+		S3DModelPiece::Clear();
+
+		vertices.clear();
+		indices.clear();
+
+		primType = S3O_PRIMTYPE_TRIANGLES;
+	}
 
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
-	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
-	void BindVertexAttribVBOs() const override;
-	void UnbindVertexAttribVBOs() const override;
+	const std::vector<SS3OVertex>& GetVertexElements() const override { return vertices; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 public:
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
@@ -46,9 +64,10 @@ public:
 	void SetVertexTangents();
 
 public:
-	int primType;
 	std::vector<SS3OVertex> vertices;
 	std::vector<unsigned int> indices;
+
+	int primType = S3O_PRIMTYPE_TRIANGLES;
 };
 
 
@@ -56,10 +75,20 @@ public:
 class CS3OParser: public IModelParser
 {
 public:
-	S3DModel Load(const std::string& name);
+	void Init() override;
+	void Kill() override;
+
+	S3DModel Load(const std::string& name) override;
 
 private:
-	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
+	SS3OPiece* AllocPiece();
+	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, std::vector<uint8_t>& buf, int offset);
+
+private:
+	std::vector<SS3OPiece> piecePool;
+	spring::mutex poolMutex;
+
+	unsigned int numPoolPieces = 0;
 };
 
 #endif /* S3O_PARSER_H */

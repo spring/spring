@@ -4,13 +4,13 @@
 
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CSpherePartProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -75,42 +75,41 @@ void CSpherePartProjectile::Update()
 	pos = centerPos + vectors[12] * sphereSize;
 }
 
-void CSpherePartProjectile::Draw(CVertexArray* va)
+void CSpherePartProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
-	unsigned char col[4];
-	va->EnlargeArrays(4*4*4, 0, VA_SIZE_TC);
+	unsigned char colors[2][4];
 
 	const float interSize = sphereSize + expansionSpeed * globalRendering->timeOffset;
+	const float offsetAge = float(age + globalRendering->timeOffset);
 
 	for (int y = 0; y < 4; ++y) {
 		for (int x = 0; x < 4; ++x) {
-			float alpha =
-				baseAlpha *
-				(1.0f - std::min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
-				(1.0f - std::fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
+			const float2 alpha = {
+				(1.0f - std::min(1.0f, offsetAge / (float) ttl)) * (1.0f - std::fabs(y +     ybase - 8.0f) / 8.0f),
+				(1.0f - std::min(1.0f, offsetAge / (float) ttl)) * (1.0f - std::fabs(y + 1 + ybase - 8.0f) / 8.0f)
+			};
 
-			col[0] = (unsigned char) (color.x * 255.0f * alpha);
-			col[1] = (unsigned char) (color.y * 255.0f * alpha);
-			col[2] = (unsigned char) (color.z * 255.0f * alpha);
-			col[3] = ((unsigned char) (40 * alpha)) + 1;
-			va->AddVertexQTC(centerPos + vectors[y*5 + x]     * interSize, texx, texy, col);
-			va->AddVertexQTC(centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col);
-			alpha = baseAlpha * (1.0f - std::min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - std::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
+			colors[0][0] =  (unsigned char) (color.x * 255.0f * baseAlpha * alpha.x);
+			colors[0][1] =  (unsigned char) (color.y * 255.0f * baseAlpha * alpha.x);
+			colors[0][2] =  (unsigned char) (color.z * 255.0f * baseAlpha * alpha.x);
+			colors[0][3] = ((unsigned char) (           40.0f * baseAlpha * alpha.x)) + 1;
 
-			col[0] = (unsigned char) (color.x * 255.0f * alpha);
-			col[1] = (unsigned char) (color.y * 255.0f * alpha);
-			col[2] = (unsigned char) (color.z * 255.0f * alpha);
-			col[3] = ((unsigned char) (40 * alpha)) + 1;
-			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x + 1] * interSize, texx, texy, col);
-			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x]     * interSize, texx, texy, col);
+			colors[1][0] =  (unsigned char) (color.x * 255.0f * baseAlpha * alpha.y);
+			colors[1][1] =  (unsigned char) (color.y * 255.0f * baseAlpha * alpha.y);
+			colors[1][2] =  (unsigned char) (color.z * 255.0f * baseAlpha * alpha.y);
+			colors[1][3] = ((unsigned char) (           40.0f * baseAlpha * alpha.y)) + 1;
+
+			va->SafeAppend({centerPos + vectors[(y    ) * 5 + x    ] * interSize, texx, texy, colors[0]});
+			va->SafeAppend({centerPos + vectors[(y    ) * 5 + x + 1] * interSize, texx, texy, colors[0]});
+			va->SafeAppend({centerPos + vectors[(y + 1) * 5 + x + 1] * interSize, texx, texy, colors[1]});
+
+			va->SafeAppend({centerPos + vectors[(y + 1) * 5 + x + 1] * interSize, texx, texy, colors[1]});
+			va->SafeAppend({centerPos + vectors[(y + 1) * 5 + x    ] * interSize, texx, texy, colors[1]});
+			va->SafeAppend({centerPos + vectors[(y    ) * 5 + x    ] * interSize, texx, texy, colors[0]});
 		}
 	}
 }
 
-int CSpherePartProjectile::GetProjectilesCount() const
-{
-	return 4 * 4;
-}
 
 void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alpha, float expansionSpeed, float3 pos, float3 color)
 {
@@ -126,8 +125,7 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 
 
 CSpherePartSpawner::CSpherePartSpawner()
-	: CProjectile()
-	, alpha(0.0f)
+	: alpha(0.0f)
 	, ttl(0)
 	, expansionSpeed(0.0f)
 	, color(ZeroVector)
@@ -135,7 +133,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 }
 
 
-CR_BIND_DERIVED_POOL(CSpherePartSpawner, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
 
 CR_REG_METADATA(CSpherePartSpawner,
 (

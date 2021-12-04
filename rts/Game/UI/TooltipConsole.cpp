@@ -11,22 +11,24 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
 
 
 CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
-CONFIG(bool, TooltipOutlineFont).defaultValue(true).headlessValue(false);
 
-CTooltipConsole* tooltip = NULL;
+CTooltipConsole* tooltip = nullptr;
 
 
 CTooltipConsole::CTooltipConsole()
@@ -40,57 +42,35 @@ CTooltipConsole::CTooltipConsole()
 		w = 0.41f;
 		h = 0.10f;
 	}
-
-	outFont = configHandler->GetBool("TooltipOutlineFont");
 }
 
-
-CTooltipConsole::~CTooltipConsole()
-{
-}
 
 
 void CTooltipConsole::Draw()
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
 	const std::string& s = mouse->GetCurrentTooltip();
 
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (!outFont) {
-		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
-		glRectf(x, y, (x + w), (y + h));
-	}
+	const float fontSize = (h * globalRendering->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
 
-	const float fontSize   = (h * globalRendering->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
+	const float curX = x + 0.01f;
+	const float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
-	float curX = x + 0.01f;
-	float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() / globalRendering->viewSizeY;
-	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-
-	smallFont->Begin();
 	smallFont->SetColors(); //default
-
-	if (outFont) {
-		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_OUTLINE | FONT_NORM, s);
-	} else {
-		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_NORM, s);
-	}
-
-	smallFont->End();
+	smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, s);
+	smallFont->DrawBufferedGL4();
 }
 
 
 bool CTooltipConsole::IsAbove(int x, int y)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -116,37 +96,32 @@ static void GetDecoyResources(const CUnit* unit,
 	mMake = mUse = eMake = eUse = 0.0f;
 	const UnitDef* rd = unit->unitDef;;
 	const UnitDef* ud = rd->decoyDef;
-	if (ud == NULL) {
+	if (ud == nullptr)
 		return;
-	}
 
 	mMake += ud->metalMake;
 	eMake += ud->energyMake;
-	if (ud->tidalGenerator > 0.0f) {
-		eMake += (ud->tidalGenerator * mapInfo->map.tidalStrength);
-	}
+	eMake += (ud->tidalGenerator * envResHandler.GetCurrentTidalStrength() * (ud->tidalGenerator > 0.0f));
 
 	bool active = ud->activateWhenBuilt;
-	if (rd->onoffable && ud->onoffable) {
+	if (rd->onoffable && ud->onoffable)
 		active = unit->activated;
-	}
 
 	if (active) {
 		mMake += ud->makesMetal;
-		if (ud->extractsMetal > 0.0f) {
-			if (rd->extractsMetal > 0.0f) {
-				mMake += unit->metalExtract * (ud->extractsMetal / rd->extractsMetal);
-			}
-		}
-		mUse += ud->metalUpkeep;
+
+		if (ud->extractsMetal > 0.0f && rd->extractsMetal > 0.0f)
+			mMake += unit->metalExtract * (ud->extractsMetal / rd->extractsMetal);
 
 		if (ud->windGenerator > 0.0f) {
-			if (wind.GetCurrentStrength() > ud->windGenerator) {
+			if (envResHandler.GetCurrentWindStrength() > ud->windGenerator) {
 				eMake += ud->windGenerator;
 			} else {
-				eMake += wind.GetCurrentStrength();
+				eMake += envResHandler.GetCurrentWindStrength();
 			}
 		}
+
+		mUse += ud->metalUpkeep;
 		eUse += ud->energyUpkeep;
 	}
 }
@@ -154,40 +129,35 @@ static void GetDecoyResources(const CUnit* unit,
 
 std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 {
-	string custom = eventHandler.WorldTooltip(unit, NULL, NULL);
-	if (!custom.empty()) {
+	string custom = std::move(eventHandler.WorldTooltip(unit, nullptr, nullptr));
+
+	if (!custom.empty())
 		return custom;
-	}
 
 	std::string s;
 	s.reserve(512);
 
-	const bool enemyUnit = (teamHandler->AllyTeam(unit->team) != gu->myAllyTeam) &&
-	                       !gu->spectatingFullView;
+	const bool enemyUnit = (teamHandler.AllyTeam(unit->team) != gu->myAllyTeam) && !gu->spectatingFullView;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : NULL;
+	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : nullptr;
 	const UnitDef* effectiveDef = !enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
-	const CTeam* team = NULL;
+	const CTeam* team = teamHandler.Team(unit->team);
 
 	// don't show the unit type if it is not known
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-	if (enemyUnit &&
-	    !(losStatus & LOS_INLOS) &&
-	    ((losStatus & prevMask) != prevMask)) {
+	if (enemyUnit && !(losStatus & LOS_INLOS) && ((losStatus & prevMask) != prevMask))
 		return "Enemy unit";
-	}
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		team = teamHandler->Team(unit->team);
 		s = team->GetControllerName();
 	} else {
-		s = unit->tooltip;
-		if (decoyDef) {
+		s = unitToolTipMap.Get(unit->id);
+
+		if (decoyDef != nullptr)
 			s = decoyDef->humanName + " - " + decoyDef->tooltip;
-		}
 	}
 
 	// don't show the unit health and other info if it has
@@ -199,12 +169,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		s += MakeUnitStatsString(stats);
 	}
 
-	if (gs->cheatEnabled) {
-		s += IntToString(unit->unitDef->techLevel, DARKBLUE "  [TechLevel %i]");
-	}
-
-	s += "\n" + teamHandler->Team(unit->team)->GetControllerName();
-
+	s += "\n";
+	s += team->GetControllerName();
 	return s;
 }
 
@@ -249,15 +215,15 @@ std::string CTooltipConsole::MakeUnitStatsString(const SUnitStats& stats)
 
 std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 {
-	string custom = eventHandler.WorldTooltip(NULL, feature, NULL);
-	if (!custom.empty()) {
+	string custom = std::move(eventHandler.WorldTooltip(nullptr, feature, nullptr));
+
+	if (!custom.empty())
 		return custom;
-	}
 
 	std::string s = feature->def->description;
-	if (s.empty()) {
+
+	if (s.empty())
 		s = "Feature";
-	}
 
 	const float remainingMetal  = feature->resources.metal;
 	const float remainingEnergy = feature->resources.energy;
@@ -271,17 +237,16 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 		energyColor, remainingEnergy);
 
 	s += tmp;
-
 	return s;
 }
 
 
 std::string CTooltipConsole::MakeGroundString(const float3& pos)
 {
-	string custom = eventHandler.WorldTooltip(NULL, NULL, &pos);
-	if (!custom.empty()) {
+	string custom = std::move(eventHandler.WorldTooltip(nullptr, nullptr, &pos));
+
+	if (!custom.empty())
 		return custom;
-	}
 
 	const int px = pos.x / 16;
 	const int pz = pos.z / 16;
@@ -298,8 +263,9 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		pos.x, pos.z, pos.y, tt->name.c_str(),
 		tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
 		tt->hardness * mapDamage->mapHardness,
-		readMap->metalMap->GetMetalAmount(px, pz)
+		metalMap.GetMetalAmount(px, pz)
 	);
+
 	return tmp;
 }
 

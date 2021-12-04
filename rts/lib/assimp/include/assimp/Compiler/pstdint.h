@@ -200,7 +200,7 @@
 #if ((defined(__SUNPRO_C) && __SUNPRO_C >= 0x570) || (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || (defined (__WATCOMC__) && (defined (_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (__GNUC__ > 3 || defined(_STDINT_H) || defined(_STDINT_H_) || defined (__UINT_FAST64_TYPE__)) )) && !defined (_PSTDINT_H_INCLUDED)
 #include <stdint.h>
 #define _PSTDINT_H_INCLUDED
-# if defined(__GNUC__) && (defined(__x86_64__) || defined(__ppc64__)) && !(defined(__APPLE__) && defined(__MACH__))
+# if defined(__GNUC__) && (defined(__x86_64__) || defined(__ppc64__) || defined(__e2k__)) && !(defined(__APPLE__) && defined(__MACH__))
 #  ifndef PRINTF_INT64_MODIFIER
 #   define PRINTF_INT64_MODIFIER "l"
 #  endif
@@ -741,7 +741,7 @@ typedef uint_least32_t uint_fast32_t;
 #endif
 
 #ifndef STDINT_H_UINTPTR_T_DEFINED
-# if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) || defined (_WIN64) || defined (__ppc64__)
+# if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) || defined (_WIN64) || defined (__ppc64__) || defined (__e2k__)
 #  define stdint_intptr_bits 64
 # elif defined (__WATCOMC__) || defined (__TURBOC__)
 #  if defined(__TINY__) || defined(__SMALL__) || defined(__MEDIUM__)

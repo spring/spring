@@ -7,20 +7,30 @@
 #include "MapInfo.h"
 #include "Game/GameSetup.h"
 
-IMapDamage* mapDamage = nullptr;
+static CDummyMapDamage dummyMapDamage;
+static CBasicMapDamage basicMapDamage;
 
-IMapDamage::IMapDamage():
-	disabled(true),
-	mapHardness(0.0f)
+// never null
+IMapDamage* mapDamage = &dummyMapDamage;
+
+IMapDamage* IMapDamage::InitMapDamage()
 {
+	if (mapInfo->map.notDeformable) {
+		dummyMapDamage.Init();
+		return &dummyMapDamage;
+	}
+	if (gameSetup->disableMapDamage) {
+		dummyMapDamage.Init();
+		return &dummyMapDamage;
+	}
+
+	basicMapDamage.Init();
+	return &basicMapDamage;
 }
 
-IMapDamage* IMapDamage::GetMapDamage()
+void IMapDamage::FreeMapDamage(IMapDamage* p)
 {
-	if (mapInfo->map.notDeformable)
-		return (new CNoMapDamage());
-	if (gameSetup != nullptr && gameSetup->disableMapDamage)
-		return (new CNoMapDamage());
-	
-	return (new CBasicMapDamage());
+	assert(p == mapDamage);
+	mapDamage = &dummyMapDamage;
 }
+

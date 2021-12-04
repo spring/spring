@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-#include <string.h>
+#include <cstring>
 
 #include "creg_cond.h"
 #include "System/UnorderedMap.hpp"
@@ -48,85 +48,71 @@ static std::vector<Class*>& classes()
 }
 
 // -------------------------------------------------------------------
-// Class Binder
+// Class
 // -------------------------------------------------------------------
 
-ClassBinder::ClassBinder(const char* className, ClassFlags cf,
-		ClassBinder* baseClsBinder, void (*memberRegistrator)(creg::Class*), int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
-		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst), void* (*allocProc)(), void (*freeProc)(void* instance))
-	: class_(className)
-	, base(baseClsBinder)
+Class::Class(const char* className, ClassFlags cf,
+		Class* baseCls, void (*memberRegistrator)(creg::Class*), int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
+		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst), void* (*allocProc)(size_t size), void (*freeProc)(void* instance))
+	: baseClass(baseCls)
 	, flags(cf)
+	, hasVTable(hasVTable)
+	, isCregStruct(isCregStruct)
 	, name(className)
 	, size(instanceSize)
 	, alignment(instanceAlignment)
-	, hasVTable(hasVTable)
-	, isCregStruct(isCregStruct)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
 	, poolAlloc(allocProc)
 	, poolFree(freeProc)
+	, serializeProc(nullptr)
+	, postLoadProc(nullptr)
+	, getSizeProc(nullptr)
 {
-	class_.binder = this;
-	class_.size = instanceSize;
-	class_.alignment = instanceAlignment;
-	System::AddClass(&class_);
+	System::AddClass(this);
 
-	if (base) {
-		derivedClasses()[&base->class_].push_back(&class_);
+	// we don't know whether the base was constructed before or after
+	// after the current class,
+	// so we update poolAlloc/poolFree in both directions
+
+	if (baseClass != nullptr) {
+		derivedClasses()[baseClass].push_back(this);
+
+		if (poolAlloc == nullptr && poolFree == nullptr) {
+			poolAlloc = baseClass->poolAlloc;
+			poolFree = baseClass->poolFree;
+		}
 	}
+
+	// only prop
+	if (poolAlloc != nullptr && poolFree != nullptr)
+		PropagatePoolFuncs();
 
 	// Register members
 	assert(memberRegistrator);
-	memberRegistrator(&class_);
+	memberRegistrator(this);
 }
 
 
-// -------------------------------------------------------------------
-// System
-// -------------------------------------------------------------------
-
-const std::vector<Class*>& System::GetClasses()
+void Class::PropagatePoolFuncs()
 {
-	return classes();
-}
+	for (Class* dc: derivedClasses()[this]) {
+		if (dc->poolAlloc != nullptr || dc->poolFree != nullptr)
+			continue;
 
-Class* System::GetClass(const std::string& name)
-{
-	const auto it = mapNameToClass().find(name);
-	if (it == mapNameToClass().end()) {
-		return NULL;
+		dc->poolAlloc = poolAlloc;
+		dc->poolFree = poolFree;
+
+		dc->PropagatePoolFuncs();
 	}
-	return it->second;
-}
-
-void System::AddClass(Class* c)
-{
-	classes().push_back(c);
-	mapNameToClass()[c->name] = c;
-}
-
-
-// ------------------------------------------------------------------
-// creg::Class: Class description
-// ------------------------------------------------------------------
-
-Class::Class(const char* _name)
-: binder(nullptr)
-, size(0)
-, alignment(0)
-, currentMemberFlags(0)
-{
-	name = _name;
 }
 
 
 bool Class::IsSubclassOf(Class* other) const
 {
 	for (const Class* c = this; c; c = c->base()) {
-		if (c == other) {
+		if (c == other)
 			return true;
-		}
 	}
 
 	return false;
@@ -137,9 +123,8 @@ std::vector<Class*> Class::GetImplementations()
 	std::vector<Class*> classes;
 
 	for (Class* dc: derivedClasses()[this]) {
-		if (!dc->IsAbstract()) {
+		if (!dc->IsAbstract())
 			classes.push_back(dc);
-		}
 
 		const std::vector<Class*>& impl = dc->GetImplementations();
 		classes.insert(classes.end(), impl.begin(), impl.end());
@@ -155,22 +140,12 @@ const std::vector<Class*>& Class::GetDerivedClasses() const
 }
 
 
-void Class::BeginFlag(ClassMemberFlag flag)
-{
-	currentMemberFlags |= (int)flag;
-}
-
-void Class::EndFlag(ClassMemberFlag flag)
-{
-	currentMemberFlags &= ~(int)flag;
-}
-
 void Class::SetFlag(ClassFlags flag)
 {
-	binder->flags = (ClassFlags) (binder->flags | flag);
+	flags = (ClassFlags) (flags | flag);
 }
 
-void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment)
+void Class::AddMember(const char* name, std::unique_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags)
 {
 	assert(!FindMember(name, false));
 
@@ -179,9 +154,9 @@ void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned in
 
 	m.name = name;
 	m.offset = offset;
-	m.type = type;
+	m.type = std::move(type);
 	m.alignment = alignment;
-	m.flags = currentMemberFlags;
+	m.flags = flags;
 }
 
 Class::Member* Class::FindMember(const char* name, const bool inherited)
@@ -207,30 +182,29 @@ void Class::SetMemberFlag(const char* name, ClassMemberFlag f)
 	}
 }
 
-void* Class::CreateInstance()
+void* Class::CreateInstance(size_t size)
 {
 	void* inst;
-	if (binder->poolAlloc) {
-		inst = binder->poolAlloc();
+	if (poolAlloc != nullptr) {
+		inst = poolAlloc(size);
 	} else {
-		inst = ::operator new(binder->size);
-		if (binder->constructor) {
-			binder->constructor(inst);
-		}
+		inst = ::operator new(size);
 	}
+
+	if (constructor != nullptr)
+		constructor(inst);
 
 	return inst;
 }
 
 void Class::DeleteInstance(void* inst)
 {
-	if (binder->poolFree) {
-		binder->poolFree(inst);
-	} else {
-		if (binder->destructor) {
-			binder->destructor(inst);
-		}
+	if (destructor != nullptr)
+		destructor(inst);
 
+	if (poolFree != nullptr) {
+		poolFree(inst);
+	} else {
 		::operator delete(inst);
 	}
 }
@@ -243,8 +217,38 @@ void Class::CalculateChecksum(unsigned int& checksum)
 		checksum = HsiehHash(m.type->GetName().data(), m.type->GetName().size(), checksum);
 		checksum += m.type->GetSize();
 	}
-	if (base()) {
+	if (base())
 		base()->CalculateChecksum(checksum);
-	}
 }
+
+
+// -------------------------------------------------------------------
+// System
+// -------------------------------------------------------------------
+
+const std::vector<Class*>& System::GetClasses()
+{
+	return classes();
+}
+
+Class* System::GetClass(const std::string& name)
+{
+	const auto it = mapNameToClass().find(name);
+	if (it == mapNameToClass().end()) {
+		return nullptr;
+	}
+	return it->second;
+}
+
+void System::AddClass(Class* c)
+{
+	classes().push_back(c);
+	mapNameToClass()[c->name] = c;
+}
+
+
+// ------------------------------------------------------------------
+// creg::Class: Class description
+// ------------------------------------------------------------------
+
 

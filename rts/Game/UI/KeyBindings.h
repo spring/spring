@@ -5,24 +5,23 @@
 
 #include <string>
 #include <vector>
-#include <set>
-#include <map>
 
 #include "KeySet.h"
 #include "Game/Console.h"
 #include "Game/Action.h"
-
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 
 class CKeyBindings : public CommandReceiver
 {
 	public:
 		typedef std::vector<Action> ActionList;
-		typedef std::set<std::string> HotkeyList;
+		typedef spring::unsynced_set<std::string> HotkeyList;
 
 	public:
-		CKeyBindings();
-		~CKeyBindings();
+		void Init();
+		void Kill();
 
 		bool Load(const std::string& filename);
 		bool Save(const std::string& filename) const;
@@ -32,14 +31,13 @@ class CKeyBindings : public CommandReceiver
 		const ActionList& GetActionList(const CKeyChain& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
-		virtual void PushAction(const Action&);
+		virtual void PushAction(const Action&) override;
 		bool ExecuteCommand(const std::string& line);
-
-		int GetFakeMetaKey() const { return fakeMetaKey; }
 
 		// Receive configuration notifications (for KeyChainTimeout)
 		void ConfigNotify(const std::string& key, const std::string& value);
 
+		int GetFakeMetaKey() const { return fakeMetaKey; }
 		int GetKeyChainTimeout() const { return keyChainTimeout; }
 
 	protected:
@@ -58,23 +56,31 @@ class CKeyBindings : public CommandReceiver
 		bool FileSave(FILE* file) const;
 
 	protected:
-		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
-		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
+		struct KeySetHash {
+			uint64_t operator ()(const CKeySet& ks) const {
+				return ((ks.Key() * 6364136223846793005ull + ks.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
+			}
+		};
+
+		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
+		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
+
 		KeyMap bindings;
 		ActionMap hotkeys;
 
 		// commands that use both Up and Down key presses
-		std::set<std::string> statefulCommands;
+		spring::unsynced_set<std::string> statefulCommands;
 
-		int fakeMetaKey;
-		bool buildHotkeyMap;
 	private:
-		bool debugEnabled;
-		int keyChainTimeout;
+		int fakeMetaKey = -1;
+		int keyChainTimeout = 750;
+
+		bool buildHotkeyMap = true;
+		bool debugEnabled = false;
 };
 
 
-extern CKeyBindings* keyBindings;
+extern CKeyBindings keyBindings;
 
 
 #endif /* KEYBINDINGS_H */

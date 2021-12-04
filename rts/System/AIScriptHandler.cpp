@@ -3,9 +3,10 @@
 #include "AIScriptHandler.h"
 
 #include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/SkirmishAIKey.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 CAIScriptHandler& CAIScriptHandler::Instance()
@@ -17,65 +18,49 @@ CAIScriptHandler& CAIScriptHandler::Instance()
 
 bool CAIScriptHandler::IsSkirmishAITestScript(const std::string& scriptName) const
 {
-	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
+	using P = decltype(scriptMap)::value_type;
 
-	if (scriptsIt == scripts.end())
-		return false;
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(scriptMap.begin(), scriptMap.end(), P{scriptName, SkirmishAIData{}}, pred);
 
-	return (dynamic_cast<const CSkirmishAIScript*>(scriptsIt->second) != NULL);
+	return (iter != scriptMap.end() && iter->first == scriptName);
 }
 
 
 const SkirmishAIData& CAIScriptHandler::GetSkirmishAIData(const std::string& scriptName) const
 {
-	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
+	using P = decltype(scriptMap)::value_type;
 
-	if (scriptsIt == scripts.end()) {
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(scriptMap.begin(), scriptMap.end(), P{scriptName, SkirmishAIData{}}, pred);
+
+	if (iter == scriptMap.end() || iter->first != scriptName)
 		throw std::runtime_error("start-script \"" + scriptName + "\" does not exist");
-	}
 
-	const CSkirmishAIScript* aiScript = dynamic_cast<const CSkirmishAIScript*>(scriptsIt->second);
-
-	if (aiScript == NULL) {
-		throw std::runtime_error("start-script \"" + scriptName + "\" is not a CSkirmishAIScript");
-	}
-
-	return aiScript->aiData;
-}
-
-
-void CAIScriptHandler::Add(CScript* script)
-{
-	scripts.insert(ScriptMap::value_type(script->name, script));
-	scriptNames.push_back(script->name);
+	return (iter->second);
 }
 
 
 CAIScriptHandler::CAIScriptHandler()
 {
+	// add the C interface Skirmish AI's
+	// Lua AI's can not be added since they would
+	// get invalidated when selecting another mod
+	const AILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
 
-	// add the C interface Skirmish AIs
-	// Lua AIs can not be added, as the selection would get invalid when
-	// selecting another mod.
-	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
+	scriptMap.clear();
+	scriptMap.reserve(skirmishAIKeys.size());
 
-	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
-	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
-
-	for (; i != e; ++i) {
+	for (const auto& aiKey: skirmishAIKeys) {
 		SkirmishAIData aiData;
-		aiData.shortName = i->GetShortName();
-		aiData.version   = i->GetVersion();
+
+		aiData.shortName = aiKey.GetShortName();
+		aiData.version   = aiKey.GetVersion();
 		aiData.isLuaAI   = false;
 
-		Add(new CSkirmishAIScript(aiData));
+		scriptMap.emplace_back(std::move("Player vs. AI: " + aiData.shortName + " " + aiData.version), std::move(aiData));
 	}
+
+	std::sort(scriptMap.begin(), scriptMap.end(), [](const decltype(scriptMap)::value_type& a, const decltype(scriptMap)::value_type& b) { return (a.first < b.first); });
 }
 
-
-CAIScriptHandler::~CAIScriptHandler()
-{
-	for (ScriptMap::iterator it = scripts.begin(); it != scripts.end(); ++it) {
-		delete it->second;
-	}
-}

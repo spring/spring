@@ -13,6 +13,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -23,6 +24,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
 #include "Rendering/Env/Particles/Classes/MuzzleFlame.h"
@@ -38,11 +40,10 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FastMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Sound/ISoundChannels.h"
-#include "System/Sync/SyncTracer.h"
 
 #endif
 
@@ -458,7 +459,7 @@ bool CUnitScript::EmitRelSFX(int sfxType, const float3& relPos, const float3& re
 bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& absDir, const float3& relDir)
 {
 	// skip adding (non-CEG) particles when we have too many
-	if (sfxType < SFX_CEG && projectileHandler->GetParticleSaturation() > 1.0f)
+	if (sfxType < SFX_CEG && projectileHandler.GetParticleSaturation() > 1.0f)
 		return false;
 
 	// make sure wakes are only emitted on water
@@ -486,7 +487,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 			projMemPool.alloc<CWakeProjectile>(
 				unit,
 				absPos + guRNG.NextVector() * 2.0f,
-				absDir * 0.4f,
+				absDir * -0.4f,
 				6.0f + guRNG.NextFloat() * 4.0f,
 				0.15f + guRNG.NextFloat() * 0.3f,
 				wakeAlphaStart, wakeAlphaDecay, wakeFadeupTime
@@ -549,16 +550,22 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 		} break;
 
 		default: {
+			if ((sfxType & SFX_GLOBAL) != 0) {
+				// emit defined explosion-generator (can only be custom, not standard)
+				// index is made valid by callee, an ID of -1 means CEG failed to load
+				explGenHandler.GenExplosion(sfxType - SFX_GLOBAL, absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
+				return true;
+			}
 			if ((sfxType & SFX_CEG) != 0) {
 				// emit defined explosion-generator (can only be custom, not standard)
 				// index is made valid by callee, an ID of -1 means CEG failed to load
-				explGenHandler->GenExplosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
+				explGenHandler.GenExplosion(ud->GetModelExpGenID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
 				return true;
 			}
 
 			if ((sfxType & SFX_FIRE_WEAPON) != 0) {
 				// make a weapon fire from the piece
-				const unsigned index = sfxType - SFX_FIRE_WEAPON;
+				const unsigned int index = sfxType - SFX_FIRE_WEAPON;
 
 				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("[US::EmitSFX::FIRE_WEAPON] invalid weapon index");
@@ -631,7 +638,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CUnit* tgtUnit = unitHandler->GetUnit(u);
+	CUnit* tgtUnit = unitHandler.GetUnit(u);
 
 	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
 		return;
@@ -644,7 +651,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CUnit* tgtUnit = unitHandler->GetUnit(u);
+	CUnit* tgtUnit = unitHandler.GetUnit(u);
 
 	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
 		return;
@@ -694,11 +701,6 @@ void CUnitScript::Explode(int piece, int flags)
 	const float3 relPos = GetPiecePos(piece);
 	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
-#ifdef TRACE_SYNC
-	tracefile << "Cob explosion: ";
-	tracefile << absPos.x << " " << absPos.y << " " << absPos.z << " " << piece << " " << flags << "\n";
-#endif
-
 	// do an explosion at the location first
 	if (!(flags & PF_NoHeatCloud))
 		projMemPool.alloc<CHeatCloudProjectile>(nullptr, absPos, ZeroVector, 30, 30);
@@ -731,7 +733,7 @@ void CUnitScript::Explode(int piece, int flags)
 		baseSpeed *= (l2 / l);
 	}
 
-	const float partSat = projectileHandler->GetParticleSaturation();
+	const float partSat = projectileHandler.GetParticleSaturation();
 
 	unsigned int newFlags = 0;
 	newFlags |= (PF_Explode    *  ((flags & PF_Explode   ) != 0)                    );
@@ -747,17 +749,19 @@ void CUnitScript::Explode(int piece, int flags)
 
 void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
+	const S3DModel* mdl = unit->model;
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
 
 	if (!omp->HasGeometryData())
 		return;
 
-	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
-	if (pieceChance > 0.0f) {
-		const CMatrix44f m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
-		omp->Shatter(pieceChance, unit->model->type, unit->model->textureType, unit->team, pos, speed, m);
-	}
+	const float pieceChance = 1.0f - (projectileHandler.GetCurrentParticles() - (projectileHandler.maxParticles - 2000)) / 2000.0f;
+
+	if (pieceChance <= 0.0f)
+		return;
+
+	omp->Shatter(mdl, unit->team, pieceChance, pos, speed, unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix());
 }
 
 
@@ -800,7 +804,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int((unit->health / unit->maxHealth) * 100.0f);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -838,7 +842,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return PACKXZ(0, 0);
@@ -849,7 +853,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->pos.y * COBSCALE);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -860,7 +864,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->radius * COBSCALE);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -898,25 +902,25 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case IN_WATER:
 		return (unit->IsInWater());
 	case MAX_ID:
-		return unitHandler->MaxUnits()-1;
+		return unitHandler.MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
 
 	case UNIT_TEAM: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		return (u != nullptr)? unit->team : 0;
 	} break;
 	case UNIT_ALLIED: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u != nullptr)
-			return teamHandler->Ally(unit->allyteam, u->allyteam) ? 1 : 0;
+			return teamHandler.Ally(unit->allyteam, u->allyteam) ? 1 : 0;
 
 		return 0;
 	} break;
 
 	case UNIT_BUILD_PERCENT_LEFT: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		if (u != nullptr)
 			return int((1.0f - u->buildProgress) * 100);
 
@@ -936,15 +940,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UPRIGHT:
 		return !!unit->upright;
 	case POW:
-		return int(math::pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
-	case PRINT:
-		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
-		break;
+		return int(math::pow((p1 * 1.0f) / COBSCALE, (p2 * 1.0f) / COBSCALE) * COBSCALE);
+	case PRINT: {
+		const char*   unitName = unit->unitDef->name.c_str();
+		const char* scriptName = unit->unitDef->scriptName.c_str();
+
+		LOG("[UnitScript::PRINT][unit=%s script=%s] p1=%d p2=%d p3=%d p4=%d", unitName, scriptName, p1, p2, p3, p4);
+	} break;
 	case HEADING: {
 		if (p1 <= 0)
 			return unit->heading;
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u != nullptr)
 			return u->heading;
@@ -954,7 +961,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case TARGET_ID: {
 		if (size_t(p1 - 1) < unit->weapons.size()) {
 			const CWeapon* w = unit->weapons[p1 - 1];
-			auto curTarget = w->GetCurrentTarget();
+			const auto curTarget = w->GetCurrentTarget();
 			switch (curTarget.type) {
 				case Target_Unit:      return curTarget.unit->id;
 				case Target_None:      return -1;
@@ -1014,56 +1021,76 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return unit->unitDef->cobID;
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		return ((u == nullptr)? -1 : u->unitDef->cobID);
 	} break;
 
  	case PLAY_SOUND: {
- 		// FIXME: this can currently only work for CCobInstance, because Lua can not get sound IDs
+ 		// FIXME: this currently only works for CCobInstance, because Lua can not get sound IDs
  		// (however, for Lua scripts there is already LuaUnsyncedCtrl::PlaySoundFile)
- 		CCobInstance* cob = dynamic_cast<CCobInstance*>(this);
+ 		CCobInstance* cobInst = dynamic_cast<CCobInstance*>(this);
 
- 		if (cob == nullptr)
+ 		if (cobInst == nullptr)
  			return 1;
 
- 		const CCobFile* script = cob->GetScriptAddr();
+ 		const CCobFile* cobFile = cobInst->GetFile();
 
- 		if (script == nullptr)
+ 		if (cobFile == nullptr)
  			return 1;
 
-		if ((p1 < 0) || (static_cast<size_t>(p1) >= script->sounds.size()))
+		if ((p1 < 0) || (static_cast<size_t>(p1) >= cobFile->sounds.size()))
 			return 1;
 
-		switch (p3) {	//who hears the sound
-			case 0:		//ALOS
-				if (!losHandler->InAirLos(unit,gu->myAllyTeam)) { return 0; }
-				break;
-			case 1:		//LOS
-				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
-				break;
-			case 2:		//ALOS or radar
-				if (!(losHandler->InAirLos(unit,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
-				break;
-			case 3:		//LOS or radar
-				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }
-				break;
-			case 4:		//everyone
-				break;
-			case 5:		//allies
-				if (unit->allyteam != gu->myAllyTeam) { return 0; }
-				break;
-			case 6:		//team
-				if (unit->team != gu->myTeam) { return 0; }
-				break;
-			case 7:		//enemies
-				if (unit->allyteam == gu->myAllyTeam) { return 0; }
-				break;
+		// who hears the sound
+		switch (p3) {
+			case 0: {
+				// ALOS
+				if (!losHandler->InAirLos(unit, gu->myAllyTeam))
+					return 0;
+			} break;
+			case 1: {
+				// LOS
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS))
+					return 0;
+			} break;
+			case 2: {
+				// ALOS or radar
+				if (!(losHandler->InAirLos(unit, gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR)))
+					return 0;
+			} break;
+			case 3: {
+				// LOS or radar
+				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)))
+					return 0;
+			} break;
+			case 4: {
+				// everyone
+			} break;
+			case 5: {
+				// allies
+				if (unit->allyteam != gu->myAllyTeam)
+					return 0;
+			} break;
+			case 6: {
+				// team
+				if (unit->team != gu->myTeam)
+					return 0;
+			} break;
+			case 7: {
+				// enemies
+				if (unit->allyteam == gu->myAllyTeam)
+					return 0;
+			} break;
+			default: {
+			} break;
 		}
+
 		if (p4 == 0) {
-			Channels::General->PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::General->PlaySample(cobFile->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::General->PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::General->PlaySample(cobFile->sounds[p1], float(p2) / COBSCALE);
 		}
+
 		return 0;
 	} break;
 
@@ -1082,7 +1109,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		// if targetID is 0, just sets weapon->haveUserTarget
 		// to false (and targetType to None) without attacking
-		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): nullptr;
+		CUnit* target = (targetID > 0)? unitHandler.GetUnit(targetID): nullptr;
 		return (weapon->Attack(SWeaponTarget(target, userTarget)));
 	} break;
 
@@ -1142,7 +1169,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 	case KILL_UNIT: {
 		// ID 0 is reserved for the script's owner
-		CUnit* u = (p1 > 0)? unitHandler->GetUnit(p1): this->unit;
+		CUnit* u = (p1 > 0)? unitHandler.GetUnit(p1): this->unit;
 
 		if (u == nullptr)
 			return 0;
@@ -1223,32 +1250,38 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	case WEAPON_RANGE: {
-		const int np1 = -p1;
-
+		// get (+)
 		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->range * COBSCALE);
 
-		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			CWeapon* w = unit->weapons[np1 - 1];
-			const int old = w->range * COBSCALE;
-			w->range = float(p2) / COBSCALE;
-			return old;
+		// set (-)
+		if (-p1 > 0 && static_cast<size_t>(-p1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[-p1 - 1];
+
+			const float  wr = w->range * COBSCALE;
+			const float nwr = float(p2) / COBSCALE;
+
+			w->UpdateRange(nwr);
+			return int(wr);
 		}
 
 		return -1;
 	} break;
 
 	case WEAPON_PROJECTILE_SPEED: {
-		const int np1 = -p1;
-
+		// get (+)
 		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->projectileSpeed * COBSCALE);
 
-		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			CWeapon* w = unit->weapons[np1 - 1];
-			const int old = w->projectileSpeed * COBSCALE;
-			w->projectileSpeed = float(p2) / COBSCALE;
-			return old;
+		// set (-)
+		if (-p1 > 0 && static_cast<size_t>(-p1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[-p1 - 1];
+
+			const float  wps = w->projectileSpeed * COBSCALE;
+			const float nwps = float(p2) / COBSCALE;
+
+			w->UpdateProjectileSpeed(nwps);
+			return int(wps);
 		}
 
 		return -1;
@@ -1260,26 +1293,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	default:
-		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB global vars are deprecated");
-			return 0;
-		}
-		else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB team vars are deprecated");
-			return 0;
-		}
-		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB allyteam vars are deprecated");
-			return 0;
-		}
-		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB unit vars are deprecated");
-			return 0;
-		}
-		else {
-			ShowUnitScriptError("[US::GetUnitVal] CobError: unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " +
-			IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
-		}
+		ShowUnitScriptError("[US::GetUnitVal] unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " + IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
 	}
 #endif
 
@@ -1371,19 +1385,19 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case YARD_OPEN: {
-			if (unit->blockMap != nullptr) {
+			if (unit->GetBlockMap() != nullptr) {
 				// note: if this unit is a factory, engine-controlled
 				// OpenYard() and CloseYard() calls can interfere with
 				// the yardOpen state (they probably should be removed
 				// at some point)
 				if (param == 0) {
-					if (groundBlockingObjectMap->CanCloseYard(unit)) {
-						groundBlockingObjectMap->CloseBlockingYard(unit);
-					}
+					if (groundBlockingObjectMap.CanCloseYard(unit))
+						groundBlockingObjectMap.CloseBlockingYard(unit);
+
 				} else {
-					if (groundBlockingObjectMap->CanOpenYard(unit)) {
-						groundBlockingObjectMap->OpenBlockingYard(unit);
-					}
+					if (groundBlockingObjectMap.CanOpenYard(unit))
+						groundBlockingObjectMap.OpenBlockingYard(unit);
+
 				}
 			}
 		} break;
@@ -1395,11 +1409,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case ARMORED: {
-			if (param) {
-				unit->curArmorMultiple = unit->armoredMultiple;
-			} else {
-				unit->curArmorMultiple = 1;
-			}
+			unit->curArmorMultiple = mix(1.0f, unit->armoredMultiple, param != 0);
 			unit->armoredState = (param != 0);
 		} break;
 
@@ -1408,8 +1418,12 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case MAX_SPEED: {
-			// interpret negative values as non-persistent changes
-			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
+			if (param >= 0) {
+				unit->moveType->SetMaxSpeed(param / float(COBSCALE));
+			} else {
+				// temporarily (until the next command is issued) change unit's speed
+				unit->moveType->SetWantedMaxSpeed(-param / float(COBSCALE));
+			}
 		} break;
 
 		case CLOAKED: {
@@ -1425,16 +1439,14 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case HEADING: {
-			unit->SetHeading(param % COBSCALE, !unit->upright);
+			unit->SetHeading(param % COBSCALE, !unit->upright && unit->IsOnGround(), false);
 		} break;
 		case LOS_RADIUS: {
-			unit->ChangeLos(param, unit->realAirLosRadius);
-			unit->realLosRadius = param;
+			unit->ChangeLos(unit->realLosRadius = param, unit->realAirLosRadius);
 		} break;
 
 		case AIR_LOS_RADIUS: {
-			unit->ChangeLos(unit->realLosRadius, param);
-			unit->realAirLosRadius = param;
+			unit->ChangeLos(unit->realLosRadius, unit->realAirLosRadius = param);
 		} break;
 
 		case RADAR_RADIUS: {
@@ -1504,33 +1516,19 @@ void CUnitScript::SetUnitVal(int val, int param)
 			unit->flankingBonusMobilityAdd = (param / (float)COBSCALE);
 		} break;
 		case FLANK_B_MAX_DAMAGE: {
-			float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage)*0.5f;
-			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage)*0.5f;
+			const float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage) * 0.5f;
+			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage) * 0.5f;
 		} break;
 
 		case FLANK_B_MIN_DAMAGE: {
-			float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE)*0.5f;
-			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE)*0.5f;
+			const float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE) * 0.5f;
+			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE) * 0.5f;
 		} break;
 
 		default: {
-			if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB global vars are deprecated");
-			}
-			else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB team vars are deprecated");
-			}
-			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB allyteam vars are deprecated");
-			}
-			else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB unit vars are deprecated");
-			}
-			else {
-				ShowUnitScriptError("[US::SetUnitVal] CobError: unknown set-constant " + IntToString(val));
-			}
+			ShowUnitScriptError("[US::SetUnitVal] unknown set-constant " + IntToString(val));
 		}
 	}
 #endif

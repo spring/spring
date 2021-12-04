@@ -4,37 +4,42 @@
 #define _FIRE_BALL_PROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include <deque>
 
 class CFireBallProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CFireBallProjectile)
 	CR_DECLARE_SUB(Spark)
+
 public:
 	// creg only
 	CFireBallProjectile() { }
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
-
-	int GetProjectilesCount() const override;
-
 	void Collision() override;
 
+	int GetProjectilesCount() const override {
+		return (numSparks + std::min(10u, numSparks));
+	}
+
+private:
+	void EmitSpark();
+	void TickSparks();
+
+private:
 	struct Spark {
 		CR_DECLARE_STRUCT(Spark)
 		float3 pos;
 		float3 speed;
-		float size;
-		int ttl;
+		float size = 0.0f;
+		int ttl = 0;
 	};
 
-	typedef std::deque<Spark> spark_list_type;
+	// one spark emitted per (checkCol) Update, each lives N frames
+	Spark sparks[12];
 
-private:
-	spark_list_type sparks;
-	void EmitSpark();
+	unsigned int numSparks = 0;
 };
 
 #endif // _FIRE_BALL_PROJECTILE_H

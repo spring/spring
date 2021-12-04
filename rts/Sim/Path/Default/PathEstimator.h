@@ -34,14 +34,16 @@ public:
 	 * @param BSIZE
 	 *   The resolution of the estimator, given in mapsquares.
 	 *
-	 * @param cacheFileName
+	 * @param peFileName
 	 *   Name of the file on disk where pre-calculated data is stored.
 	 *   The name given are added to the end of the filename, after the
 	 *   name of the corresponding map.
 	 *   Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
-	~CPathEstimator();
+	void Init(IPathFinder*, unsigned int BSIZE, const std::string& peFileName, const std::string& mapFileName);
+	void Kill();
+
+	bool RemoveCacheFile(const std::string& peFileName, const std::string& mapFileName);
 
 
 	/**
@@ -65,12 +67,15 @@ public:
 	 */
 	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
-	static const int2* GetDirectionVectorsTable();
+
+	const std::vector<float>& GetVertexCosts() const { return vertexCosts; }
+	const std::deque<int2>& GetUpdatedBlocks() const { return updatedBlocks; }
+
 
 protected: // IPathFinder impl
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const float3 sw, const float3 gw);
-	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) override;
 
 	bool TestBlock(
 		const MoveDef& moveDef,
@@ -80,8 +85,8 @@ protected: // IPathFinder impl
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod
-	);
-	void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
+	) override;
+	void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const override;
 
 	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
@@ -89,7 +94,7 @@ protected: // IPathFinder impl
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) const;
+	) const override;
 
 	void AddCache(
 		const IPath::Path* path,
@@ -99,10 +104,10 @@ protected: // IPathFinder impl
 		float goalRadius,
 		int pathType,
 		const bool synced
-	);
+	) override;
 
 private:
-	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
+	void InitEstimator(const std::string& peFileName, const std::string& mapFileName);
 	void InitBlocks();
 
 	void CalcOffsetsAndPathCosts(unsigned int threadNum, spring::barrier* pathBarrier);
@@ -113,8 +118,8 @@ private:
 	void CalcVertexPathCosts(const MoveDef&, int2, unsigned int threadNum = 0);
 	void CalcVertexPathCost(const MoveDef&, int2, unsigned int pathDir, unsigned int threadNum = 0);
 
-	bool ReadFile(const std::string& baseFileName, const std::string& mapName);
-	void WriteFile(const std::string& baseFileName, const std::string& mapName);
+	bool ReadFile(const std::string& peFileName, const std::string& mapFileName);
+	bool WriteFile(const std::string& peFileName, const std::string& mapFileName);
 
 	std::uint32_t CalcChecksum() const;
 	std::uint32_t CalcHash(const char* caller) const;
@@ -123,16 +128,18 @@ private:
 	friend class CPathManager;
 	friend class CDefaultPathDrawer;
 
-	const unsigned int BLOCKS_TO_UPDATE;
+	unsigned int BLOCKS_TO_UPDATE = 0;
 
-	unsigned int nextOffsetMessageIdx;
-	unsigned int nextCostMessageIdx;
+	unsigned int nextOffsetMessageIdx = 0;
+	unsigned int nextCostMessageIdx = 0;
 
-	std::uint32_t pathChecksum;
-	std::uint32_t fileHashCode;
+	int blockUpdatePenalty = 0;
 
-	std::atomic<std::int64_t> offsetBlockNum;
-	std::atomic<std::int64_t> costBlockNum;
+	std::uint32_t pathChecksum = 0;
+	std::uint32_t fileHashCode = 0;
+
+	std::atomic<std::int64_t> offsetBlockNum = {0};
+	std::atomic<std::int64_t> costBlockNum = {0};
 
 	IPathFinder* parentPathFinder; // parent (PF if BLOCK_SIZE is 16, PE[16] if 32)
 	CPathEstimator* nextPathEstimator; // next lower-resolution estimator
@@ -145,8 +152,6 @@ private:
 	std::vector<float> vertexCosts;
 	/// blocks that may need an update due to map changes
 	std::deque<int2> updatedBlocks;
-
-	int blockUpdatePenalty;
 
 	struct SOffsetBlock {
 		float cost;

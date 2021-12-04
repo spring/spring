@@ -14,10 +14,10 @@
 #endif
 
 #if defined(__APPLE__)
-	#include <OpenGL/glu.h>
-	#include <OpenGL/glext.h>
+	#include <OpenGL/gl3.h>
+	#include <OpenGL/gl3ext.h>
 #else
-	#include <GL/glu.h>
+	#include <GL/gl.h>
 	#include <GL/glext.h>
 #endif
 
@@ -32,8 +32,8 @@ extern "C" {
 #define GLEW_VERSION_2_0 GL_FALSE
 #define GLEW_VERSION_3_0 GL_FALSE
 
-#define GLEW_NV_vertex_program2 GL_FALSE
-#define GLEW_NV_depth_clamp GL_FALSE
+#define GLEW_ARB_vertex_program2 GL_FALSE
+#define GLEW_ARB_depth_clamp GL_FALSE
 #define GLEW_EXT_framebuffer_blit GL_FALSE
 #define GLEW_EXT_framebuffer_object GL_FALSE
 #define GLEW_EXT_stencil_two_side GL_TRUE

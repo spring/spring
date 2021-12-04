@@ -6,6 +6,8 @@
 CR_BIND_DERIVED(CWorldObject, CObject, )
 CR_REG_METADATA(CWorldObject, (
 	CR_MEMBER(id),
+	CR_MEMBER(tempNum),
+
 	CR_MEMBER(radius),
 	CR_MEMBER(height),
 	CR_MEMBER(sqRadius),

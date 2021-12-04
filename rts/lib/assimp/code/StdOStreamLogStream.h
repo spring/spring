@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -66,7 +67,7 @@ public:
     ~StdOStreamLogStream();
 
     /** @brief  Writer  */
-    void write(const char* message);
+    void write(const char* message) override;
 
 private:
     std::ostream& mOstream;

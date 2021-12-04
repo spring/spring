@@ -5,12 +5,12 @@
 #include <utility>
 
 class TSocketRule {
-
 public:
 	std::string hostname;
 	unsigned int port;
 	bool allowed;
-	TSocketRule(std::string hostname, unsigned int port, bool allowed = true) {
+
+	TSocketRule(const std::string& hostname, unsigned int port, bool allowed = true) {
 		this->hostname = hostname;
 		this->port = port;
 		this->allowed = allowed;
@@ -21,7 +21,7 @@ class CLuaSocketRestrictions {
 public:
 
 	enum RestrictType{
-		TCP_CONNECT=0,
+		TCP_CONNECT = 0,
 		TCP_LISTEN,
 		UDP_CONNECT,
 		UDP_LISTEN,
@@ -31,10 +31,14 @@ public:
 
 	CLuaSocketRestrictions();
 	~CLuaSocketRestrictions();
+
+	static void InitStatic();
+	static void KillStatic();
+
 	/**
 	* check if host & port is in the list for type of allowed, if port is -1, it is ignored
 	*/
-	bool isAllowed(RestrictType type, const char* hostname, int port=-1);
+	bool isAllowed(RestrictType type, const char* hostname, int port = -1);
 	/**
 	* add resolved ip to the rules where the hostname is used
 	*/

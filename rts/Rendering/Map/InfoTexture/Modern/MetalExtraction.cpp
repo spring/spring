@@ -6,12 +6,22 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
+constexpr VA_TYPE_0 VERTS[] = {
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+	{{-1.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f, -1.0f, 0.0f}}, // br
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+};
 
 
 CMetalExtractionTexture::CMetalExtractionTexture()
@@ -34,50 +44,64 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 	//  then on the gpu instead.
 	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_R32F, texSize.x, texSize.y);
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CMetalExtractionTexture");
 		FBO::Unbind();
 	}
 
+	if (!fbo.IsValid())
+		throw opengl_error("");
+
 	const std::string vertexCode = R"(
-		varying vec2 texCoord;
+		#version 410 core
+
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords; // ignored
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_Vertex.xy * 0.5 + 0.5;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aVertexPos.xy * 0.5 + 0.5;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	)";
 
 	const std::string fragmentCode = R"(
+		#version 410 core
+
 		uniform sampler2D tex0;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 		void main() {
-			gl_FragColor = texture2D(tex0, texCoord) * 800.0;
+			fFragColor = texture(tex0, vTexCoords) * 800.0;
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CMetalExtractionTexture]", "CMetalExtractionTexture", false);
+	const char* errorFormats[2] = {
+		"%s-shader compilation error: %s",
+		"%s-shader validation error: %s",
+	};
+
+	shader = shaderHandler->CreateProgramObject("[CMetalExtractionTexture]", "CMetalExtractionTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();
+
 	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader compilation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-	} else {
-		shader->Enable();
-		shader->SetUniform("tex0", 0);
-		shader->Disable();
-		shader->Validate();
-		if (!shader->IsValid()) {
-			const char* fmt = "%s-shader validation error: %s";
-			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		}
+		LOG_L(L_ERROR, errorFormats[0], shader->GetName().c_str(), shader->GetLog().c_str());
+		throw opengl_error("");
 	}
 
-	if (!fbo.IsValid() || !shader->IsValid()) {
+	shader->Enable();
+	shader->SetUniform("tex0", 0);
+	shader->Disable();
+	shader->Validate();
+
+	if (!shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[1], shader->GetName().c_str(), shader->GetLog().c_str());
 		throw opengl_error("");
 	}
 }
@@ -96,31 +120,32 @@ void CMetalExtractionTexture::Update()
 	if (!fbo.IsValid() || !shader->IsValid())
 		return;
 
-	const      CMetalMap* metalMap        = readMap->metalMap;
-	const          float* extractDepthMap = metalMap->GetExtractionMap();
-//	const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
-	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
+	CInfoTexture* infoTex = infoTextureHandler->GetInfoTexture("los");
+
+	assert(metalMap.GetSizeX() == texSize.x && metalMap.GetSizeZ() == texSize.y);
 
 	// upload raw data to gpu
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, extractDepthMap);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, metalMap.GetExtractionMap());
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
+
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ZERO, GL_SRC_COLOR);
+	glBindTexture(GL_TEXTURE_2D, infoTex->GetTexture());
+
+	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
+
 	shader->Enable();
-	glViewport(0,0, texSize.x, texSize.y);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
-	glBegin(GL_QUADS);
-		glVertex2f(-1.f, -1.f);
-		glVertex2f(-1.f, +1.f);
-		glVertex2f(+1.f, +1.f);
-		glVertex2f(+1.f, -1.f);
-	glEnd();
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glDisable(GL_BLEND);
-	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
+
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+
 	FBO::Unbind();
 }

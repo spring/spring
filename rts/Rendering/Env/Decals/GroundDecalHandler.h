@@ -8,14 +8,13 @@
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/LegacyTrackHandler.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/float3.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 
 class CSolidObject;
 class CUnit;
-class CVertexArray;
 struct SolidObjectGroundDecal;
 struct SolidObjectDecalType;
 
@@ -27,28 +26,19 @@ namespace Shader {
 
 struct SolidObjectGroundDecal {
 public:
-	SolidObjectGroundDecal()
-		: owner(nullptr)
-		, gbOwner(nullptr)
-		, posx(0)
-		, posy(0)
-		, xsize(0)
-		, ysize(0)
-		, facing(-1)
-		, pos(ZeroVector)
-		, radius(0.0f)
-		, alpha(1.0f)
-		, alphaFalloff(1.0f)
-	{}
+	SolidObjectGroundDecal() = default;
 	SolidObjectGroundDecal(const SolidObjectGroundDecal& d) = delete;
 	SolidObjectGroundDecal(SolidObjectGroundDecal&& d) { *this = std::move(d); }
 
 	SolidObjectGroundDecal& operator = (const SolidObjectGroundDecal& d) = delete;
 	SolidObjectGroundDecal& operator = (SolidObjectGroundDecal&& d) {
-		va = std::move(d.va);
-
 		owner   = d.owner;   d.owner   = nullptr;
 		gbOwner = d.gbOwner; d.gbOwner = nullptr;
+
+		bufIndx = d.bufIndx;
+		bufSize = d.bufSize;
+
+		lastUpdateFrame = d.lastUpdateFrame;
 
 		posx   = d.posx;
 		posy   = d.posy;
@@ -65,22 +55,25 @@ public:
 	}
 
 public:
-	CVertexArray va;
+	CSolidObject* owner = nullptr;
+	GhostSolidObject* gbOwner = nullptr;
 
-	CSolidObject* owner;
-	GhostSolidObject* gbOwner;
+	unsigned int bufIndx = 0; // verts
+	unsigned int bufSize = 0; // bytes
 
-	int posx;
-	int posy;
-	int xsize;
-	int ysize;
-	int facing;
+	unsigned int lastUpdateFrame = 0;
+
+	int posx = 0;
+	int posy = 0;
+	int xsize = 0;
+	int ysize = 0;
+	int facing = -1;
 
 	float3 pos;
 
-	float radius;
-	float alpha;
-	float alphaFalloff;
+	float radius = 0.0f;
+	float alpha = 1.0f;
+	float alphaFalloff = 1.0f;
 };
 
 
@@ -98,8 +91,9 @@ public:
 	void GhostDestroyed(GhostSolidObject* gb) override;
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+
+	void AddSolidObject(CSolidObject* object) override;
 	void ForceRemoveSolidObject(CSolidObject* object) override;
-	static void RemoveTrack(CUnit* unit);
 
 	void OnDecalLevelChanged() override {}
 
@@ -145,17 +139,15 @@ public:
 
 public:
 	struct SolidObjectDecalType {
-		SolidObjectDecalType(): texture(0) {}
-
 		std::string name;
 		std::vector<SolidObjectGroundDecal*> objectDecals;
 
-		unsigned int texture;
+		unsigned int texture = 0;
 	};
 
 	struct Scar {
 	public:
-		Scar(): va(2048) {}
+		Scar() = default;
 		Scar(const Scar& s) = delete;
 		Scar(Scar&& s) { *this = std::move(s); }
 
@@ -163,14 +155,17 @@ public:
 		Scar& operator = (Scar&& s) {
 			id = s.id;
 
+			bufIndx = s.bufIndx;
+			bufSize = s.bufSize;
+
 			x1 = s.x1; x2 = s.x2;
 			y1 = s.y1; y2 = s.y2;
 
 			creationTime = s.creationTime;
 			lifeTime     = s.lifeTime;
 
-			lastTest = s.lastTest;
-			lastDraw = s.lastDraw;
+			lastOverlapTest = s.lastOverlapTest;
+			lastUpdateFrame = s.lastUpdateFrame;
 
 			pos = s.pos;
 
@@ -180,64 +175,44 @@ public:
 
 			alphaDecay = s.alphaDecay;
 			startAlpha = s.startAlpha;
+			fadedAlpha = s.fadedAlpha;
+
 			texOffsetX = s.texOffsetX;
 			texOffsetY = s.texOffsetY;
-
-			va = std::move(s.va);
 			return *this;
 		}
 
-		void Reset() {
-			id = -1;
-
-			x1 = 0; x2 = 0;
-			y1 = 0; y2 = 0;
-
-			creationTime = 0;
-			lifeTime = 0;
-			lastTest = 0;
-			lastDraw = -1;
-
-			pos = ZeroVector;
-
-			radius = 0.0f;
-			basesize = 0.0f;
-			overdrawn = 0.0f;
-
-			alphaDecay = 0.0f;
-			startAlpha = 1.0f;
-			texOffsetX = 0.0f;
-			texOffsetY = 0.0f;
-
-			va.Initialize();
-		}
-
 	public:
-		int id;
+		int id = -1;
 
-		int x1, x2;
-		int y1, y2;
+		unsigned int bufIndx = 0; // verts
+		unsigned int bufSize = 0; // bytes
 
-		int creationTime;
-		int lifeTime;
-		int lastTest;
-		int lastDraw;
+		unsigned int lastOverlapTest = 0;
+		unsigned int lastUpdateFrame = 0;
+
+		int x1 = 0, x2 = 0;
+		int y1 = 0, y2 = 0;
+
+		int creationTime = 0;
+		int lifeTime = 0;
 
 		float3 pos;
 
-		float radius;
-		float basesize;
-		float overdrawn;
+		float radius = 0.0f;
+		float basesize = 0.0f;
+		float overdrawn = 0.0f;
 
-		float alphaDecay;
-		float startAlpha;
-		float texOffsetX;
-		float texOffsetY;
+		float alphaDecay = 0.0f;
+		float startAlpha = 1.0f;
+		float fadedAlpha = 1.0f;
 
-		CVertexArray va;
+		float texOffsetX = 0.0f;
+		float texOffsetY = 0.0f;
 	};
 
 private:
+	void GenDecalBuffers();
 	void LoadScarTextures();
 	void LoadDecalShaders();
 	void DrawObjectDecals();
@@ -255,11 +230,11 @@ private:
 	int ScarOverlapSize(const Scar& s1, const Scar& s2);
 	void TestScarOverlaps(const Scar& scar);
 	void RemoveScar(Scar& scar);
-	void LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset);
+	bool LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset);
 
 private:
 	enum DecalShaderProgram {
-		DECAL_SHADER_ARB,
+		DECAL_SHADER_NULL,
 		DECAL_SHADER_GLSL,
 		DECAL_SHADER_CURR,
 		DECAL_SHADER_LAST
@@ -267,26 +242,30 @@ private:
 
 	std::vector<SolidObjectDecalType> objectDecalTypes;
 
-	std::vector<Shader::IProgramObject*> decalShaders;
+	std::array<Shader::IProgramObject*, DECAL_SHADER_LAST> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
 	std::vector<int> addedScars;
 
 	// stores indices into <scars> of reserved slots, per quad
-	std::vector< std::vector<int> > scarField;
+	std::vector<std::vector<int>> scarField;
 
 
-	int scarFieldX;
-	int scarFieldY;
+	GL::RenderDataBuffer decalBuffer;
 
-	unsigned int scarTex;
+	VA_TYPE_TC* mapBufferPtr = nullptr; // start-pos
+	VA_TYPE_TC* curBufferPos = nullptr; // write-pos
+
+
+	int scarFieldX = 0;
+	int scarFieldY = 0;
+
+	unsigned int scarAtlasTex = 0;
 
 	// number of calls made to TestScarOverlaps
-	int lastScarOverlapTest;
+	int lastScarOverlapTest = 0;
 
-	float maxScarOverlapSize;
-
-	bool groundScarAlphaFade;
+	float maxScarOverlapSize = 0.0f;
 
 	LegacyTrackHandler trackHandler;
 };

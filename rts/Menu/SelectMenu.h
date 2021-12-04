@@ -27,9 +27,10 @@ public:
 	SelectMenu(std::shared_ptr<ClientSetup> setup);
 	~SelectMenu();
 
-	bool Draw();
+	bool Draw() override;
 
 private:
+	void Demo();
 	void Single();
 	void Settings();
 	void Multi();
@@ -37,7 +38,7 @@ private:
 	void ShowConnectWindow(bool show);
 	void DirectConnect(const std::string& addr);
 
-	bool HandleEventSelf(const SDL_Event& ev);
+	bool HandleEventSelf(const SDL_Event& ev) override;
 
 	void SelectScript(const std::string& s);
 	void SelectMap(const std::string& s);

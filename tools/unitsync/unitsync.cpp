@@ -18,7 +18,6 @@
 #include "Map/SMF/SMFMapFile.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/Archives/IArchive.h"
@@ -34,6 +33,7 @@
 #include "System/Log/Level.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Misc/SpringTime.h"
+#include "System/Platform/Misc.h" //!!
 #include "System/Threading/ThreadPool.h"
 #include "System/Exceptions.h"
 #include "System/Info.h"
@@ -44,7 +44,7 @@
 #include "System/StringUtil.h"
 #include "System/ExportDefines.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -60,11 +60,11 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_UNITSYNC
 
-// for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
+// avoid including GlobalConstants.h
 #define SQUARE_SIZE 8
 
 
-#ifdef WIN32
+#ifdef _WIN32
 BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
 	return TRUE;
@@ -75,33 +75,6 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 CONFIG(bool, UnitsyncAutoUnLoadMaps).defaultValue(true).description("Automaticly load and unload the required map for some unitsync functions.");
 CONFIG(bool, UnitsyncAutoUnLoadMapsIsSupported).defaultValue(true).readOnly(true).description("Check for support of UnitsyncAutoUnLoadMaps");
 
-//////////////////////////
-//////////////////////////
-
-// Helper class for popping up a MessageBox only once
-
-class CMessageOnce
-{
-public:
-	CMessageOnce(const std::string& message)
-		: alreadyDone(false)
-		, message(message)
-	{
-		assert(!message.empty());
-	}
-
-	void print() {
-		if (!alreadyDone) {
-			alreadyDone = true;
-			LOG_L(L_WARNING, "%s", message.c_str());
-		}
-	}
-
-private:
-	bool alreadyDone;
-	const std::string message;
-};
-
 
 //////////////////////////
 //////////////////////////
@@ -110,10 +83,9 @@ private:
 
 static bool CheckInit(bool throwException = true)
 {
-	if (archiveScanner == NULL || vfsHandler == NULL) {
-		if (throwException) {
+	if (archiveScanner == nullptr || vfsHandler == nullptr) {
+		if (throwException)
 			throw std::logic_error("UnitSync not initialized. Call Init first.");
-		}
 
 		return false;
 	}
@@ -151,16 +123,60 @@ static void _CheckPositive(int value, const char* name)
 #define CheckBounds(arg, size) _CheckBounds((arg), (size), #arg)
 #define CheckPositive(arg)     _CheckPositive((arg), #arg);
 
-static std::vector<InfoItem> info;
-static std::set<std::string> infoSet;
-
-
 struct GameDataUnitDef {
 	std::string name;
 	std::string fullName;
 };
 
+/**
+ * @brief map related meta-data
+ */
+struct InternalMapInfo
+{
+	std::string description;  ///< Description (max 255 chars)
+	std::string author;       ///< Creator of the map (max 200 chars)
+	int tidalStrength;        ///< Tidal strength
+	int gravity;              ///< Gravity
+	float maxMetal;           ///< Metal scale factor
+	int extractorRadius;      ///< Extractor radius (of metal extractors)
+	int minWind;              ///< Minimum wind speed
+	int maxWind;              ///< Maximum wind speed
+	int width;                ///< Width of the map
+	int height;               ///< Height of the map
+	std::vector<float> xPos;  ///< Start positions X coordinates defined by the map
+	std::vector<float> zPos;  ///< Start positions Z coordinates defined by the map
+};
+
+
+static std::vector<InfoItem> infoItems;
+static std::set<std::string> infoSet;
 static std::vector<GameDataUnitDef> unitDefs;
+static std::map<int, InternalMapInfo> mapInfos;
+static std::map<int, IArchive*> openArchives;
+static std::map<int, CFileHandler*> openFiles;
+static std::vector<std::string> curFindFiles;
+
+// Updated on every call to GetMapCount
+static std::vector<std::string> mapNames;
+static std::vector<std::string> mapArchives;
+
+static std::vector<Option> options;
+static std::set<std::string> optionsSet;
+
+static CLuaAIImplHandler::InfoItemVector luaAIInfos;
+// Updated on every call to GetSkirmishAICount
+static std::vector<std::string> skirmishAIDataDirs;
+
+static std::vector<std::string> modValidMaps;
+
+static std::string lastError;
+
+static int nextArchive = 0;
+static int nextFile = 0;
+
+static bool autoUnLoadmap = true;
+
+
 
 void LoadGameDataUnitDefs() {
 	unitDefs.clear();
@@ -189,15 +205,12 @@ void LoadGameDataUnitDefs() {
 	}
 }
 
-static bool autoUnLoadmap = true;
+
 
 //////////////////////////
 //////////////////////////
 
 // error handling
-
-static std::string lastError;
-
 static void _SetLastError(const std::string& err)
 {
 	LOG_L(L_ERROR, "%s", err.c_str());
@@ -205,7 +218,7 @@ static void _SetLastError(const std::string& err)
 }
 
 #define SetLastError(str) \
-	_SetLastError(std::string(__FUNCTION__) + ": " + (str))
+	_SetLastError(std::string(__func__) + ": " + (str))
 
 #define UNITSYNC_CATCH_BLOCKS \
 	catch (const user_error& ex) { \
@@ -222,19 +235,18 @@ EXPORT(const char*) GetNextError()
 {
 	try {
 		// queue is only 1 element long now for simplicity :-)
+		if (lastError.empty())
+			return nullptr;
 
-		if (lastError.empty()) return NULL;
-
-		std::string err = lastError;
-		lastError.clear();
+		const std::string err = std::move(lastError);
 		return GetStr(err);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	// Oops, can't even return errors anymore...
 	// Returning anything but NULL might cause infinite loop in lobby client...
-	//return __FUNCTION__ ": fatal error: an exception was thrown in GetNextError";
-	return NULL;
+	//return __func__ ": fatal error: an exception was thrown in GetNextError";
+	return nullptr;
 }
 
 
@@ -247,10 +259,9 @@ static std::string GetMapFile(const std::string& mapName)
 {
 	const std::string mapFile = archiveScanner->MapNameToMapFile(mapName);
 
-	if (mapFile != mapName) {
-		//! translation finished fine
+	// translation finished fine
+	if (mapFile != mapName)
 		return mapFile;
-	}
 
 	throw std::invalid_argument("Could not find a map named \"" + mapName + "\"");
 	return "";
@@ -265,17 +276,15 @@ class ScopedMapLoader {
 		 * @param mapFile checks if this file already exists in the current VFS,
 		 *   if so skip reloading
 		 */
-		ScopedMapLoader(const std::string& mapName, const std::string& mapFile)
-			: oldHandler(vfsHandler)
+		ScopedMapLoader(const std::string& mapName, const std::string& mapFile): oldHandler(vfsHandler)
 		{
 			if (!autoUnLoadmap)
 				return;
 			CFileHandler f(mapFile);
-			if (f.FileExists()) {
+			if (f.FileExists())
 				return;
-			}
 
-			vfsHandler = new CVFSHandler();
+			CVFSHandler::SetGlobalInstance(new CVFSHandler("ScopedMapLoaderVFS"));
 			vfsHandler->AddArchiveWithDeps(mapName, false);
 		}
 
@@ -284,8 +293,8 @@ class ScopedMapLoader {
 			if (!autoUnLoadmap)
 				return;
 			if (vfsHandler != oldHandler) {
-				delete vfsHandler;
-				vfsHandler = oldHandler;
+				CVFSHandler::FreeGlobalInstance();
+				CVFSHandler::SetGlobalInstance(oldHandler);
 			}
 		}
 
@@ -297,19 +306,22 @@ class ScopedMapLoader {
 
 EXPORT(const char*) GetSpringVersion()
 {
+	if (SpringVersion::IsRelease()) {
+		return GetStr(SpringVersion::GetSync() + "." + SpringVersion::GetPatchSet());
+	}
 	return GetStr(SpringVersion::GetSync());
 }
 
 
 EXPORT(const char*) GetSpringVersionPatchset()
 {
-	return GetStr(SpringVersion::GetPatchSet());
+	return "";
 }
 
 
 EXPORT(bool) IsSpringReleaseVersion()
 {
-	return SpringVersion::IsRelease();
+	return false;
 }
 
 class UnitsyncConfigObserver
@@ -345,16 +357,16 @@ static void _Cleanup()
 
 static void CheckForImportantFilesInVFS()
 {
-	std::vector<std::string> filesToCheck;
-	filesToCheck.push_back("base/springcontent.sdz");
-	filesToCheck.push_back("base/maphelper.sdz");
-	filesToCheck.push_back("base/spring/bitmaps.sdz");
-	filesToCheck.push_back("base/cursors.sdz");
+	const std::array<std::string, 4> filesToCheck = {{
+		"base/springcontent.sdz",
+		"base/maphelper.sdz",
+		"base/spring/bitmaps.sdz",
+		"base/cursors.sdz",
+	}};
 
-	for (std::vector<std::string>::const_iterator it = filesToCheck.begin(); it != filesToCheck.end(); ++it) {
-		if (!CFileHandler::FileExists(*it, SPRING_VFS_RAW)) {
-			throw content_error("Required base file '" + *it + "' does not exist.");
-		}
+	for (const std::string& file: filesToCheck) {
+		if (!CFileHandler::FileExists(file, SPRING_VFS_RAW))
+			throw content_error("Required base file '" + file + "' does not exist.");
 	}
 }
 
@@ -379,14 +391,13 @@ EXPORT(int) Init(bool isServer, int id)
 		log_filter_section_setMinLevel(LOG_LEVEL_INFO, LOG_SECTION_UNITSYNC);
 #endif
 
-		if (CheckInit(false)) {
-			// reinitialize filesystem to detect new files
+		// reinitialize filesystem to detect new files
+		if (CheckInit(false))
 			FileSystemInitializer::Cleanup();
-		}
 
 		dataDirLocater.UpdateIsolationModeByEnvVar();
 
-		const std::string& configFile = (configHandler != NULL)? configHandler->GetConfigFile(): "";
+		const std::string& configFile = (configHandler != nullptr)? configHandler->GetConfigFile(): "";
 		const std::string& springFull = SpringVersion::GetFull();
 
 		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
@@ -399,7 +410,7 @@ EXPORT(int) Init(bool isServer, int id)
 		configHandler->Set("UnitsyncAutoUnLoadMaps", true); //reset on each load (backwards compatibility)
 		unitsyncConfigObserver = new UnitsyncConfigObserver();
 		ret = 1;
-		LOG("[UnitSync::%s] initialized %s (call %d)", __FUNCTION__, springFull.c_str(), numCalls);
+		LOG("[UnitSync::%s] initialized %s (call %d)", __func__, springFull.c_str(), numCalls);
 	}
 
 	UNITSYNC_CATCH_BLOCKS;
@@ -427,7 +438,7 @@ EXPORT(const char*) GetWritableDataDirectory()
 		return GetStr(dataDirLocater.GetWriteDirPath());
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(int) GetDataDirectoryCount()
@@ -448,20 +459,20 @@ EXPORT(const char*) GetDataDirectory(int index)
 	try {
 		CheckInit();
 		const std::vector<std::string> datadirs = dataDirLocater.GetDataDirPaths();
-		if (index > datadirs.size()) {
-			return NULL;
-		}
+		if (index > datadirs.size())
+			return nullptr;
+
 		return GetStr(datadirs[index]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(int) ProcessUnits()
 {
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "[%s] loaded=%d", __FUNCTION__, unitDefs.empty());
+		LOG_L(L_DEBUG, "[%s] loaded=%d", __func__, unitDefs.empty());
 		LoadGameDataUnitDefs();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -475,7 +486,7 @@ EXPORT(int) GetUnitCount()
 
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "[%s]", __FUNCTION__);
+		LOG_L(L_DEBUG, "[%s]", __func__);
 		count = unitDefs.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -488,11 +499,11 @@ EXPORT(const char*) GetUnitName(int unitDefID)
 {
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __FUNCTION__, unitDefID);
+		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __func__, unitDefID);
 		return GetStr(unitDefs[unitDefID].name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -500,11 +511,11 @@ EXPORT(const char*) GetFullUnitName(int unitDefID)
 {
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __FUNCTION__, unitDefID);
+		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __func__, unitDefID);
 		return GetStr(unitDefs[unitDefID].fullName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 //////////////////////////
@@ -539,8 +550,9 @@ EXPORT(void) RemoveAllArchives()
 		CheckInit();
 
 		LOG_L(L_DEBUG, "removing all archives");
-		spring::SafeDelete(vfsHandler);
-		vfsHandler = new CVFSHandler();
+
+		CVFSHandler::FreeGlobalInstance();
+		CVFSHandler::SetGlobalInstance(new CVFSHandler("UnitSyncVFS"));
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -552,7 +564,7 @@ EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName)
 		CheckNullOrEmpty(archiveName);
 
 		LOG_L(L_DEBUG, "archive checksum: %s", archiveName);
-		return archiveScanner->GetSingleArchiveChecksum(archiveName);
+		return archiveScanner->GetArchiveSingleChecksum(archiveName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -568,34 +580,10 @@ EXPORT(const char*) GetArchivePath(const char* archiveName)
 		return GetStr(archiveScanner->GetArchivePath(archiveName));
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
-static void safe_strzcpy(char* dst, std::string src, size_t max)
-{
-	STRCPY_T(dst, max, src.c_str());
-}
-
-
-/**
- * @brief map related meta-data
- */
-struct InternalMapInfo
-{
-	std::string description;  ///< Description (max 255 chars)
-	std::string author;       ///< Creator of the map (max 200 chars)
-	int tidalStrength;        ///< Tidal strength
-	int gravity;              ///< Gravity
-	float maxMetal;           ///< Metal scale factor
-	int extractorRadius;      ///< Extractor radius (of metal extractors)
-	int minWind;              ///< Minimum wind speed
-	int maxWind;              ///< Maximum wind speed
-	int width;                ///< Width of the map
-	int height;               ///< Height of the map
-	std::vector<float> xPos;  ///< Start positions X coordinates defined by the map
-	std::vector<float> zPos;  ///< Start positions Z coordinates defined by the map
-};
 
 static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 {
@@ -609,12 +597,12 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 
 	ScopedMapLoader mapLoader(mapName, mapFile);
 
-	std::string err("");
+	std::string err;
 
 	MapParser mapParser(mapFile);
-	if (!mapParser.IsValid()) {
+	if (!mapParser.IsValid())
 		err = mapParser.GetErrorLog();
-	}
+
 	const LuaTable mapTable = mapParser.GetRoot();
 
 	// Retrieve the map header as well
@@ -682,8 +670,6 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 }
 
 
-// Updated on every call to GetMapCount
-static std::vector<std::string> mapNames;
 
 EXPORT(int) GetMapCount()
 {
@@ -715,7 +701,7 @@ EXPORT(const char*) GetMapName(int index)
 		return GetStr(mapNames[index]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -728,39 +714,36 @@ EXPORT(const char*) GetMapFileName(int index)
 		return GetStr(archiveScanner->MapNameToMapFile(mapNames[index]));
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
-static std::map<int, InternalMapInfo> mapInfos;
 
-static InternalMapInfo* internal_getMapInfo(int index) {
-
+static InternalMapInfo* internal_getMapInfo(int index)
+{
 	if (index >= mapNames.size()) {
 		SetLastError("invalid map index");
 	} else {
-		if (mapInfos.find(index) == mapInfos.end()) {
-			try {
-				InternalMapInfo imi;
-				if (internal_GetMapInfo(mapNames[index].c_str(), &imi)) {
-					mapInfos[index] = imi;
-					return &(mapInfos[index]);
-				}
-			}
-			UNITSYNC_CATCH_BLOCKS;
-		} else {
+		if (mapInfos.find(index) != mapInfos.end())
 			return &(mapInfos[index]);
+
+		try {
+			InternalMapInfo imi;
+			if (internal_GetMapInfo(mapNames[index].c_str(), &imi)) {
+				mapInfos[index] = imi;
+				return &(mapInfos[index]);
+			}
 		}
+		UNITSYNC_CATCH_BLOCKS;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
-static void internal_deleteMapInfos() {
-
+static void internal_deleteMapInfos()
+{
 	while (!mapInfos.empty()) {
-		std::map<int, InternalMapInfo>::iterator mi = mapInfos.begin();
-		mapInfos.erase(mi);
+		mapInfos.erase(mapInfos.begin());
 	}
 }
 
@@ -777,12 +760,11 @@ EXPORT(float) GetMapMinHeight(const char* mapName) {
 		const LuaTable rootTable = parser.GetRoot();
 		const LuaTable smfTable = rootTable.SubTable("smf");
 
-		if (smfTable.KeyExists("minHeight")) {
-			// override the header's minHeight value
+		// override the header's minHeight value
+		if (smfTable.KeyExists("minHeight"))
 			return (smfTable.GetFloat("minHeight", 0.0f));
-		} else {
-			return (header.minHeight);
-		}
+
+		return (header.minHeight);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0.0f;
@@ -813,8 +795,6 @@ EXPORT(float) GetMapMaxHeight(const char* mapName) {
 
 
 
-static std::vector<std::string> mapArchives;
-
 EXPORT(int) GetMapArchiveCount(const char* mapName)
 {
 	int count = -1;
@@ -840,7 +820,7 @@ EXPORT(const char*) GetMapArchiveName(int index)
 		return GetStr(mapArchives[index]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -884,7 +864,7 @@ static unsigned short imgbuf[1024*1024];
 static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 {
 	throw content_error("SM3 maps are no longer supported as of Spring 95.0");
-	return NULL;
+	return nullptr;
 
 	/*
 	MapParser mapParser(mapFileName);
@@ -931,11 +911,10 @@ static unsigned short* GetMinimapSMF(std::string mapFileName, int mipLevel)
 
 	// Do stuff
 	unsigned short* colors = (unsigned short*)((void*)imgbuf);
-
 	unsigned char* temp = &buffer[0];
 
-	const int numblocks = buffer.size()/8;
-	for ( int i = 0; i < numblocks; i++ ) {
+	const int numblocks = buffer.size() / 8;
+	for (int i = 0; i < numblocks; i++) {
 		unsigned short color0 = (*(unsigned short*)&temp[0]);
 		unsigned short color1 = (*(unsigned short*)&temp[2]);
 		unsigned int bits = (*(unsigned int*)&temp[4]);
@@ -995,7 +974,7 @@ EXPORT(unsigned short*) GetMinimap(const char* mapName, int mipLevel)
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader mapLoader(mapName, mapFile);
 
-		unsigned short* ret = NULL;
+		unsigned short* ret = nullptr;
 		const std::string extension = FileSystem::GetExtension(mapFile);
 		if (extension == "smf") {
 			ret = GetMinimapSMF(mapFile, mipLevel);
@@ -1006,7 +985,7 @@ EXPORT(unsigned short*) GetMinimap(const char* mapName, int mipLevel)
 		return ret;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -1054,11 +1033,10 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 		ScopedMapLoader mapLoader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
 
-		const std::string n = name;
-		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
+		const int actualType = (strcmp(name, "height") == 0)? bm_grayscale_16 : bm_grayscale_8;
 
 		if (actualType == typeHint) {
-			ret = file.ReadInfoMap(n, data);
+			ret = file.ReadInfoMap(name, data);
 		} else if (actualType == bm_grayscale_16 && typeHint == bm_grayscale_8) {
 			// convert from 16 bits per pixel to 8 bits per pixel
 			MapBitmapInfo bmInfo;
@@ -1067,7 +1045,7 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 			const int size = bmInfo.width * bmInfo.height;
 			if (size > 0) {
 				unsigned short* temp = new unsigned short[size];
-				if (file.ReadInfoMap(n, temp)) {
+				if (file.ReadInfoMap(name, temp)) {
 					const unsigned short* inp = temp;
 					const unsigned short* inp_end = temp + size;
 					unsigned char* outp = data;
@@ -1114,16 +1092,16 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 		CheckInit();
 		CheckBounds(modIndex, modData.size());
 
-		info.clear();
+		const std::vector<InfoItem>& modInfoItems = modData[modIndex].GetInfoItems();
 
-		std::vector<InfoItem> modInfoItems = modData[modIndex].GetInfoItems();
-		info.insert(info.end(), modInfoItems.begin(), modInfoItems.end());
+		infoItems.clear();
+		infoItems.insert(infoItems.end(), modInfoItems.begin(), modInfoItems.end());
 
-		return (int)info.size();
+		return (int)infoItems.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	info.clear();
+	infoItems.clear();
 
 	return -1;
 }
@@ -1138,7 +1116,7 @@ EXPORT(const char*) GetPrimaryModArchive(int index)
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -1171,7 +1149,7 @@ EXPORT(const char*) GetPrimaryModArchiveList(int archiveNr)
 		return GetStr(primaryArchives[archiveNr]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(int) GetPrimaryModIndex(const char* name)
@@ -1244,7 +1222,7 @@ EXPORT(const char*) GetSideName(int side)
 		return GetStr(sideParser.GetCaseName(side));
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetSideStartUnit(int side)
@@ -1256,16 +1234,15 @@ EXPORT(const char*) GetSideStartUnit(int side)
 		return GetStr(sideParser.GetStartUnit(side));
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
-//////////////////////////
-//////////////////////////
 
 
-static std::vector<Option> options;
-static std::set<std::string> optionsSet;
+
+//////////////////////////
+//////////////////////////
 
 static void ParseOptions(const std::string& fileName, const std::string& fileModes, const std::string& accessModes)
 {
@@ -1384,11 +1361,9 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 //////////////////////////
 //////////////////////////
 
-static std::vector< std::vector<InfoItem> > luaAIInfos;
-
 static void GetLuaAIInfo()
 {
-	luaAIInfos = luaAIImplHandler.LoadInfos();
+	luaAIInfos = luaAIImplHandler.LoadInfoItems();
 }
 
 
@@ -1412,13 +1387,9 @@ static int GetNumberOfLuaAIs()
 }
 
 
+
 //////////////////////////
 //////////////////////////
-
-
-
-// Updated on every call to GetSkirmishAICount
-static std::vector<std::string> skirmishAIDataDirs;
 
 EXPORT(int) GetSkirmishAICount() {
 
@@ -1429,27 +1400,17 @@ EXPORT(int) GetSkirmishAICount() {
 
 		skirmishAIDataDirs.clear();
 
-		std::vector<std::string> dataDirs_tmp =
-				dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
-
 		// filter out dirs not containing an AIInfo.lua file
-		std::vector<std::string>::const_iterator i;
-		for (i = dataDirs_tmp.begin(); i != dataDirs_tmp.end(); ++i) {
-			const std::string& possibleDataDir = *i;
-			std::vector<std::string> infoFile = CFileHandler::FindFiles(
-					possibleDataDir, "AIInfo.lua");
-			if (!infoFile.empty()) {
-				skirmishAIDataDirs.push_back(possibleDataDir);
-			}
+		for (const std::string& dataDir: dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR)) {
+			const std::vector<std::string>& infoFiles = CFileHandler::FindFiles(dataDir, "AIInfo.lua");
+
+			if (!infoFiles.empty())
+				skirmishAIDataDirs.push_back(dataDir);
 		}
 
-		sort(skirmishAIDataDirs.begin(), skirmishAIDataDirs.end());
+		std::sort(skirmishAIDataDirs.begin(), skirmishAIDataDirs.end());
 
-		int luaAIs = GetNumberOfLuaAIs();
-
-		//LOG_L(L_DEBUG, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u",
-		//		luaAIs, skirmishAIDataDirs.size());
-		count = skirmishAIDataDirs.size() + luaAIs;
+		count = skirmishAIDataDirs.size() + GetNumberOfLuaAIs();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1457,18 +1418,15 @@ EXPORT(int) GetSkirmishAICount() {
 }
 
 
-static void ParseInfo(const std::string& fileName,
-                      const std::string& fileModes,
-                      const std::string& accessModes)
+static void ParseInfo(const std::string& fileName, const std::string& fileModes, const std::string& accessModes)
 {
-	info_parseInfo(info, fileName, fileModes, accessModes, &infoSet);
+	info_parseInfo(infoItems, fileName, fileModes, accessModes, &infoSet);
 }
 
 static void CheckSkirmishAIIndex(int aiIndex)
 {
 	CheckInit();
-	int numSkirmishAIs = skirmishAIDataDirs.size() + luaAIInfos.size();
-	CheckBounds(aiIndex, numSkirmishAIs);
+	CheckBounds(aiIndex, skirmishAIDataDirs.size() + luaAIInfos.size());
 }
 
 static bool IsLuaAIIndex(int aiIndex) {
@@ -1484,68 +1442,67 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
-		info.clear();
+		infoItems.clear();
 
 		if (IsLuaAIIndex(aiIndex)) {
-			const std::vector<InfoItem>& iInfo = luaAIInfos[ToPureLuaAIIndex(aiIndex)];
-			info.insert(info.end(), iInfo.begin(), iInfo.end());
+			const auto& iInfo = luaAIInfos[ToPureLuaAIIndex(aiIndex)];
+			infoItems.insert(infoItems.end(), iInfo.begin(), iInfo.end());
 		} else {
 			infoSet.clear();
-			ParseInfo(skirmishAIDataDirs[aiIndex] + "/AIInfo.lua",
-					SPRING_VFS_RAW, SPRING_VFS_RAW);
+			ParseInfo(skirmishAIDataDirs[aiIndex] + "/AIInfo.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
 			infoSet.clear();
 		}
 
-		return (int)info.size();
+		return (int)infoItems.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	info.clear();
+	infoItems.clear();
 
 	return -1;
 }
 
 EXPORT(int) GetMapInfoCount(int index) {
 	try{
-		info.clear();
+		infoItems.clear();
 		CheckBounds(index, mapNames.size());
 		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
-		if (mapInfo == nullptr) {
+		if (mapInfo == nullptr)
 			return -1;
+
+		infoItems.emplace_back("description", "", mapInfo->description);
+		infoItems.emplace_back("author", "", mapInfo->author);
+		infoItems.emplace_back("tidalStrength", "", mapInfo->tidalStrength);
+		infoItems.emplace_back("gravity", "", mapInfo->gravity);
+		infoItems.emplace_back("maxMetal", "", mapInfo->maxMetal);
+		infoItems.emplace_back("extractorRadius", "", mapInfo->extractorRadius);
+		infoItems.emplace_back("minWind", "", mapInfo->minWind);
+		infoItems.emplace_back("maxWind", "", mapInfo->maxWind);
+		infoItems.emplace_back("width", "", mapInfo->width);
+		infoItems.emplace_back("height", "", mapInfo->height);
+		infoItems.emplace_back("resource", "", "Metal");
+		for (int i = 0; i < mapInfo->xPos.size() && i < mapInfo->zPos.size(); i++) {
+			infoItems.emplace_back("xPos", "", mapInfo->xPos[i]);
+			infoItems.emplace_back("zPos", "", mapInfo->zPos[i]);
 		}
-		info.push_back(InfoItem("description", "", mapInfo->description));
-		info.push_back(InfoItem("author", "", mapInfo->author));
-		info.push_back(InfoItem("tidalStrength", "", mapInfo->tidalStrength));
-		info.push_back(InfoItem("gravity", "", mapInfo->gravity));
-		info.push_back(InfoItem("maxMetal", "", mapInfo->maxMetal));
-		info.push_back(InfoItem("extractorRadius", "", mapInfo->extractorRadius));
-		info.push_back(InfoItem("minWind", "", mapInfo->minWind));
-		info.push_back(InfoItem("maxWind", "", mapInfo->maxWind));
-		info.push_back(InfoItem("width", "", mapInfo->width));
-		info.push_back(InfoItem("height", "", mapInfo->height));
-		info.push_back(InfoItem("resource", "", "Metal"));
-		for(int i = 0; i < mapInfo->xPos.size() && i < mapInfo->zPos.size(); i++) {
-			info.push_back(InfoItem("xPos", "", mapInfo->xPos[i]));
-			info.push_back(InfoItem("zPos", "", mapInfo->zPos[i]));
-		}
-		return (int)info.size();
+		return (int)infoItems.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	info.clear();
+	infoItems.clear();
 
 	return -1;
 }
 
-static const InfoItem* GetInfoItem(int infoIndex) {
-
+static const InfoItem* GetInfoItem(int infoIndex)
+{
 	CheckInit();
-	CheckBounds(infoIndex, info.size());
-	return &(info[infoIndex]);
+	CheckBounds(infoIndex, infoItems.size());
+	return &(infoItems[infoIndex]);
 }
 
-static void CheckInfoValueType(const InfoItem* infoItem, InfoValueType requiredValueType) {
-
+static void CheckInfoValueType(const InfoItem* infoItem, InfoValueType requiredValueType)
+{
 	if (infoItem->valueType != requiredValueType) {
 		throw std::invalid_argument(
 				std::string("Tried to fetch info-value of type ")
@@ -1556,7 +1513,7 @@ static void CheckInfoValueType(const InfoItem* infoItem, InfoValueType requiredV
 
 EXPORT(const char*) GetInfoKey(int infoIndex) {
 
-	const char* key = NULL;
+	const char* key = nullptr;
 
 	try {
 		key = GetStr(GetInfoItem(infoIndex)->key);
@@ -1567,7 +1524,7 @@ EXPORT(const char*) GetInfoKey(int infoIndex) {
 }
 EXPORT(const char*) GetInfoType(int infoIndex) {
 
-	const char* type = NULL;
+	const char* type = nullptr;
 
 	try {
 		type = info_convertTypeToString(GetInfoItem(infoIndex)->valueType);
@@ -1579,7 +1536,7 @@ EXPORT(const char*) GetInfoType(int infoIndex) {
 
 EXPORT(const char*) GetInfoValueString(int infoIndex) {
 
-	const char* value = NULL;
+	const char* value = nullptr;
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
@@ -1631,7 +1588,7 @@ EXPORT(bool) GetInfoValueBool(int infoIndex) {
 }
 EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
-	const char* desc = NULL;
+	const char* desc = nullptr;
 
 	try {
 		desc = GetStr(GetInfoItem(infoIndex)->desc);
@@ -1681,7 +1638,7 @@ EXPORT(const char*) GetOptionKey(int optIndex)
 		return GetStr(options[optIndex].key);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionScope(int optIndex)
@@ -1691,7 +1648,7 @@ EXPORT(const char*) GetOptionScope(int optIndex)
 		return GetStr(options[optIndex].scope);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionName(int optIndex)
@@ -1701,7 +1658,7 @@ EXPORT(const char*) GetOptionName(int optIndex)
 		return GetStr(options[optIndex].name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionSection(int optIndex)
@@ -1711,7 +1668,7 @@ EXPORT(const char*) GetOptionSection(int optIndex)
 		return GetStr(options[optIndex].section);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionDesc(int optIndex)
@@ -1721,7 +1678,7 @@ EXPORT(const char*) GetOptionDesc(int optIndex)
 		return GetStr(options[optIndex].desc);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(int) GetOptionType(int optIndex)
@@ -1815,7 +1772,7 @@ EXPORT(const char*) GetOptionStringDef(int optIndex)
 		return GetStr(options[optIndex].stringDef);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(int) GetOptionStringMaxLen(int optIndex)
@@ -1854,7 +1811,7 @@ EXPORT(const char*) GetOptionListDef(int optIndex)
 		return GetStr(options[optIndex].listDef);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
@@ -1866,7 +1823,7 @@ EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 		return GetStr(list[itemIndex].key);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
@@ -1878,7 +1835,7 @@ EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 		return GetStr(list[itemIndex].name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
@@ -1890,19 +1847,17 @@ EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 		return GetStr(list[itemIndex].desc);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
+
 //////////////////////////
 //////////////////////////
-
-static std::vector<std::string> modValidMaps;
-
 
 static int LuaGetMapList(lua_State* L)
 {
-	lua_newtable(L);
+	lua_createtable(L, GetMapCount(), 0);
 	const int mapCount = GetMapCount();
 	for (int i = 0; i < mapCount; i++) {
 		lua_pushnumber(L, i + 1);
@@ -1913,8 +1868,7 @@ static int LuaGetMapList(lua_State* L)
 }
 
 
-static void LuaPushNamedString(lua_State* L,
-                              const std::string& key, const std::string& value)
+static void LuaPushNamedString(lua_State* L, const std::string& key, const std::string& value)
 {
 	lua_pushstring(L, key.c_str());
 	lua_pushstring(L, value.c_str());
@@ -1936,8 +1890,7 @@ static int LuaGetMapInfo(lua_State* L)
 
 	InternalMapInfo mi;
 	if (!internal_GetMapInfo(mapName.c_str(), &mi)) {
-		LOG_L(L_ERROR, "LuaGetMapInfo: internal_GetMapInfo(\"%s\") failed",
-				mapName.c_str());
+		LOG_L(L_ERROR, "LuaGetMapInfo: internal_GetMapInfo(\"%s\") failed", mapName.c_str());
 		return 0;
 	}
 
@@ -1956,10 +1909,10 @@ static int LuaGetMapInfo(lua_State* L)
 	LuaPushNamedNumber(L, "extractorRadius", mi.extractorRadius);
 
 	lua_pushstring(L, "startPos");
-	lua_newtable(L);
+	lua_createtable(L, mi.xPos.size(), 0);
 	for (size_t p = 0; p < mi.xPos.size(); p++) {
 		lua_pushnumber(L, p + 1);
-		lua_newtable(L);
+		lua_createtable(L, 2, 0);
 		LuaPushNamedNumber(L, "x", mi.xPos[p]);
 		LuaPushNamedNumber(L, "z", mi.zPos[p]);
 		lua_rawset(L, -3);
@@ -1984,20 +1937,18 @@ EXPORT(int) GetModValidMapCount()
 		luaParser.AddFunc("GetMapList", LuaGetMapList);
 		luaParser.AddFunc("GetMapInfo", LuaGetMapInfo);
 		luaParser.EndTable();
-		if (!luaParser.Execute()) {
+
+		if (!luaParser.Execute())
 			throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
-		}
 
 		const LuaTable root = luaParser.GetRoot();
-		if (!root.IsValid()) {
+		if (!root.IsValid())
 			throw content_error("root table invalid");
-		}
 
 		for (int index = 1; root.KeyExists(index); index++) {
 			const std::string map = root.GetString(index, "");
-			if (!map.empty()) {
+			if (!map.empty())
 				modValidMaps.push_back(map);
-			}
 		}
 
 		count = modValidMaps.size();
@@ -2015,16 +1966,12 @@ EXPORT(const char*) GetModValidMap(int index)
 		return GetStr(modValidMaps[index]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
 //////////////////////////
 //////////////////////////
-
-static std::map<int, CFileHandler*> openFiles;
-static int nextFile = 0;
-static std::vector<std::string> curFindFiles;
 
 static void CheckFileHandle(int file)
 {
@@ -2049,8 +1996,7 @@ EXPORT(int) OpenFileVFS(const char* name)
 			throw content_error("File '" + std::string(name) + "' does not exist");
 		}
 
-		nextFile++;
-		openFiles[nextFile] = fh;
+		openFiles[++nextFile] = fh;
 
 		return nextFile;
 	}
@@ -2078,8 +2024,7 @@ EXPORT(int) ReadFileVFS(int file, unsigned char* buf, int numBytes)
 		CheckPositive(numBytes);
 
 		LOG_L(L_DEBUG, "ReadFileVFS: %d", file);
-		CFileHandler* fh = openFiles[file];
-		return fh->Read(buf, numBytes);
+		return openFiles[file]->Read(buf, numBytes);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;
@@ -2091,8 +2036,7 @@ EXPORT(int) FileSizeVFS(int file)
 		CheckFileHandle(file);
 
 		LOG_L(L_DEBUG, "FileSizeVFS: %d", file);
-		CFileHandler* fh = openFiles[file];
-		return fh->FileSize();
+		return openFiles[file]->FileSize();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;
@@ -2104,8 +2048,8 @@ EXPORT(int) InitFindVFS(const char* pattern)
 		CheckInit();
 		CheckNullOrEmpty(pattern);
 
-		std::string path = FileSystem::GetDirectory(pattern);
-		std::string patt = FileSystem::GetFilename(pattern);
+		const std::string path = FileSystem::GetDirectory(pattern);
+		const std::string patt = FileSystem::GetFilename(pattern);
 		LOG_L(L_DEBUG, "InitFindVFS: %s", pattern);
 		curFindFiles = CFileHandler::FindFiles(path, patt);
 		return 0;
@@ -2119,9 +2063,10 @@ EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* mo
 	try {
 		CheckInit();
 
-		if (path    == NULL) { path = "";              }
-		if (modes   == NULL) { modes = SPRING_VFS_ALL; }
-		if (pattern == NULL) { pattern = "*";          }
+		if (path    == nullptr) { path = "";              }
+		if (modes   == nullptr) { modes = SPRING_VFS_ALL; }
+		if (pattern == nullptr) { pattern = "*";          }
+
 		LOG_L(L_DEBUG, "InitDirListVFS: '%s' '%s' '%s'", path, pattern, modes);
 		curFindFiles = CFileHandler::DirList(path, pattern, modes);
 		return 0;
@@ -2134,9 +2079,11 @@ EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* mo
 {
 	try {
 		CheckInit();
-		if (path    == NULL) { path = "";              }
-		if (modes   == NULL) { modes = SPRING_VFS_ALL; }
-		if (pattern == NULL) { pattern = "*";          }
+
+		if (path    == nullptr) { path = "";              }
+		if (modes   == nullptr) { modes = SPRING_VFS_ALL; }
+		if (pattern == nullptr) { pattern = "*";          }
+
 		LOG_L(L_DEBUG, "InitSubDirsVFS: '%s' '%s' '%s'", path, pattern, modes);
 		curFindFiles = CFileHandler::SubDirs(path, pattern, modes);
 		return 0;
@@ -2153,10 +2100,10 @@ EXPORT(int) FindFilesVFS(int file, char* nameBuf, int size)
 		CheckPositive(size);
 
 		LOG_L(L_DEBUG, "FindFilesVFS: %d", file);
-		if ((unsigned)file >= curFindFiles.size()) {
+		if ((unsigned)file >= curFindFiles.size())
 			return 0;
-		}
-		safe_strzcpy(nameBuf, curFindFiles[file], size);
+
+		STRCPY_T(nameBuf, size, curFindFiles[file].c_str());
 		return file + 1;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2167,17 +2114,14 @@ EXPORT(int) FindFilesVFS(int file, char* nameBuf, int size)
 //////////////////////////
 //////////////////////////
 
-static std::map<int, IArchive*> openArchives;
-static int nextArchive = 0;
-
-
 static void CheckArchiveHandle(int archive)
 {
 	CheckInit();
 
-	if (openArchives.find(archive) == openArchives.end()) {
-		throw content_error("Unregistered archive handle. Pass an archive handle returned by OpenArchive.");
-	}
+	if (openArchives.find(archive) != openArchives.end())
+		return;
+
+	throw content_error("Unregistered archive handle. Pass an archive handle returned by OpenArchive.");
 }
 
 
@@ -2189,12 +2133,10 @@ EXPORT(int) OpenArchive(const char* name)
 
 		IArchive* a = archiveLoader.OpenArchive(name);
 
-		if (!a) {
+		if (a == nullptr)
 			throw content_error("Archive '" + std::string(name) + "' could not be opened");
-		}
 
-		nextArchive++;
-		openArchives[nextArchive] = a;
+		openArchives[++nextArchive] = a;
 		return nextArchive;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2223,22 +2165,19 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 
 		LOG_L(L_DEBUG, "FindFilesArchive: %d", archive);
 
-		if (file < arch->NumFiles())
-		{
+		if (file < arch->NumFiles()) {
 			const int nameBufSize = *size;
 			std::string fileName;
 			int fileSize;
 			arch->FileInfo(file, fileName, fileSize);
 			*size = fileSize;
-			if (nameBufSize > fileName.length())
-			{
+
+			if (nameBufSize > fileName.length()) {
 				STRCPY(nameBuf, fileName.c_str());
 				return ++file;
 			}
-			else
-			{
-				SetLastError("name-buffer is too small");
-			}
+
+			SetLastError("name-buffer is too small");
 		}
 		return 0;
 	}
@@ -2255,10 +2194,10 @@ EXPORT(int) OpenArchiveFile(int archive, const char* name)
 		CheckNullOrEmpty(name);
 
 		IArchive* arch = openArchives[archive];
-		fileID = arch->FindFile(name);
-		if (fileID == arch->NumFiles()) {
+
+		if ((fileID = arch->FindFile(name)) == arch->NumFiles())
 			fileID = -2;
-		}
+
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -2276,6 +2215,7 @@ EXPORT(int) ReadArchiveFile(int archive, int file, unsigned char* buffer, int nu
 		std::vector<uint8_t> buf;
 		if (!a->GetFile(file, buf))
 			return -1;
+
 		memcpy(buffer, &buf[0], std::min(buf.size(), (size_t)numBytes));
 		return std::min(buf.size(), (size_t)numBytes);
 	}
@@ -2313,7 +2253,7 @@ EXPORT(int) SizeArchiveFile(int archive, int file)
 char strBuf[STRBUF_SIZE];
 
 /// defined in unitsync.h. Just returning str.c_str() does not work
-const char* GetStr(std::string str)
+const char* GetStr(const std::string& str)
 {
 	if (str.length() + 1 > STRBUF_SIZE) {
 		sprintf(strBuf, "Increase STRBUF_SIZE (needs %u bytes)", (unsigned) str.length() + 1);
@@ -2348,7 +2288,7 @@ EXPORT(const char*) GetSpringConfigFile()
 		return GetStr(configHandler->GetConfigFile());
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -2419,25 +2359,22 @@ EXPORT(void) DeleteSpringConfigKey(const char* name)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-/*
-**********************DEPRECATED SECTION
-*/
 
-#ifdef ENABLE_DEPRECATED_FUNCTIONS
+EXPORT(const char*) GetSysInfoHash() {
+	static std::array<char, 16384> infoHashBuf;
+	const std::string& sysInfoHash = Platform::GetSysInfoHash();
 
-/*
-#define DEPRECATED \
-	static CMessageOnce msg( \
-			"The deprecated unitsync function " \
-			+ std::string(__FUNCTION__) + " was called." \
-			" Please update your lobby client"); \
-	msg.print(); \
-	SetLastError("deprecated unitsync function called: " \
-			+ std::string(__FUNCTION__))
-*/
+	memset(infoHashBuf.data(), 0, sizeof(infoHashBuf));
+	memcpy(infoHashBuf.data(), sysInfoHash.data(), std::min(sysInfoHash.size(), infoHashBuf.size()));
+	return (infoHashBuf.data());
+}
 
-#endif //
-/*
-**********************DEPRECATED SECTION END
-*/
+EXPORT(const char*) GetMacAddrHash() {
+	static std::array<char, 16384> macAddrBuf;
+	const std::string& macAddrHash = Platform::GetMacAddrHash();
+
+	memset(macAddrBuf.data(), 0, sizeof(macAddrBuf));
+	memcpy(macAddrBuf.data(), macAddrHash.data(), std::min(macAddrHash.size(), macAddrBuf.size()));
+	return (macAddrBuf.data());
+}
 

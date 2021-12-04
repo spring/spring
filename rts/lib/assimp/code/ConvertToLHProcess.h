@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -78,10 +79,10 @@ public:
     ~MakeLeftHandedProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
 
@@ -129,10 +130,10 @@ public:
     ~FlipWindingOrderProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
     void ProcessMesh( aiMesh* pMesh);
@@ -153,10 +154,10 @@ public:
     ~FlipUVsProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
     void ProcessMesh( aiMesh* pMesh);

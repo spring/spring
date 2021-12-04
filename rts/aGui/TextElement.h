@@ -13,13 +13,17 @@ namespace agui
 class TextElement : public GuiElement
 {
 public:
-	TextElement(const std::string& text, GuiElement* parent = NULL);
-	void SetText(const std::string& str);
+	TextElement(const std::string& str, GuiElement* parent = nullptr) : GuiElement(parent) { SetText(str); }
+
+	void SetText(const std::string& str) { WrapText(wtext = text = str); }
 
 private:
-	virtual void DrawSelf();
+	void DrawSelf() override;
+	void GeometryChangeSelf() override { WrapText(wtext = text); }
+	void WrapText(std::string& str);
 
 	std::string text;
+	std::string wtext;
 };
 }
 #endif // TEXTELEMENT_H

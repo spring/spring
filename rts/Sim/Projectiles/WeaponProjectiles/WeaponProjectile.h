@@ -9,7 +9,6 @@
 
 struct WeaponDef;
 struct ProjectileParams;
-class CVertexArray;
 class DynDamageArray;
 
 
@@ -33,7 +32,7 @@ public:
 	/// @return 0=unaffected, 1=instant repulse, 2=gradual repulse
 	virtual int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
 
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	virtual void DrawOnMinimap(GL::RenderDataBufferC* va) override;
 
 	void DependentDied(CObject* o) override;
 	void PostLoad();
@@ -62,7 +61,7 @@ public:
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
 	bool HasScheduledBounce() const { return bounced; }
-	bool TraveledRange() const;
+	bool TraveledRange() const { return ((pos - startPos).SqLength() > (myrange * myrange)); }
 
 	const DynDamageArray* damages;
 

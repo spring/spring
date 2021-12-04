@@ -11,21 +11,24 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
-CFeatureDefHandler* featureDefHandler = NULL;
+static CFeatureDefHandler gFeatureDefHandler;
+CFeatureDefHandler* featureDefHandler = &gFeatureDefHandler;
 
-CFeatureDefHandler::CFeatureDefHandler(LuaParser* defsParser)
+void CFeatureDefHandler::Init(LuaParser* defsParser)
 {
 	const LuaTable rootTable = defsParser->GetRoot().SubTable("FeatureDefs");
-	if (!rootTable.IsValid()) {
+
+	if (!rootTable.IsValid())
 		throw content_error("Error loading FeatureDefs");
-	}
 
-	// featureDefIDs start with 1
-	featureDefsVector.emplace_back();
-
-	// get most of the feature defs (missing trees and geovent from the map)
+	// get most of the feature defs (excluding map-defined trees and geovents)
 	std::vector<std::string> keys;
 	rootTable.GetKeys(keys);
+
+	// FeatureDef ID's start with 1
+	featureDefIDs.reserve(keys.size());
+	featureDefsVector.reserve(keys.size());
+	featureDefsVector.emplace_back();
 
 	for (unsigned int i = 0; i < keys.size(); i++) {
 		const std::string& nameMixedCase = keys[i];
@@ -52,25 +55,19 @@ CFeatureDefHandler::CFeatureDefHandler(LuaParser* defsParser)
 	}
 }
 
-CFeatureDefHandler::~CFeatureDefHandler()
-{
-	featureDefs.clear();
-	featureDefsVector.clear();
-}
-
 
 void CFeatureDefHandler::AddFeatureDef(const std::string& name, FeatureDef* fd, bool isDefaultFeature)
 {
 	if (fd == nullptr)
 		return;
 
-	assert(featureDefs.find(name) == featureDefs.end());
+	assert(featureDefIDs.find(name) == featureDefIDs.end());
 
 	// generated trees, etc have no pieces
 	fd->collisionVolume.SetDefaultToPieceTree(fd->collisionVolume.DefaultToPieceTree() && !isDefaultFeature);
 	fd->collisionVolume.SetIgnoreHits(fd->geoThermal);
 
-	featureDefs[name] = fd->id;
+	featureDefIDs[name] = fd->id;
 }
 
 FeatureDef& CFeatureDefHandler::GetNewFeatureDef()
@@ -87,7 +84,7 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 {
 	const std::string& name = StringToLower(mixedCase);
 
-	if (featureDefs.find(name) != featureDefs.end())
+	if (featureDefIDs.find(name) != featureDefIDs.end())
 		return nullptr;
 
 	FeatureDef& fd = GetNewFeatureDef();
@@ -107,7 +104,11 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 
 	fd.metal       = fdTable.GetFloat("metal",  0.0f);
 	fd.energy      = fdTable.GetFloat("energy", 0.0f);
-	fd.health      = fdTable.GetFloat("damage", 0.0f);
+
+	// "damage" is the legacy Total Annihilation spelling
+	fd.health      = fdTable.GetFloat("health", fdTable.GetFloat("damage", 0.0f));
+	fd.health      = std::max(0.1f, fd.health);
+
 	fd.reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd.metal + fd.energy) * 6.0f));
 
 	fd.smokeTime = fdTable.GetInt("smokeTime", 300);
@@ -115,9 +116,8 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 	fd.modelName = fdTable.GetString("object", "");
 	fd.drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
 
-	if (!fd.modelName.empty()) {
+	if (!fd.modelName.empty())
 		fd.drawType = DRAWTYPE_MODEL;
-	}
 
 
 	// initialize the (per-featuredef) collision-volume,
@@ -205,9 +205,9 @@ const FeatureDef* CFeatureDefHandler::GetFeatureDef(string name, const bool show
 		return nullptr;
 
 	StringToLowerInPlace(name);
-	const auto fi = featureDefs.find(name);
+	const auto fi = featureDefIDs.find(name);
 
-	if (fi != featureDefs.end())
+	if (fi != featureDefIDs.end())
 		return &featureDefsVector[fi->second];
 
 	if (showError)
@@ -219,29 +219,34 @@ const FeatureDef* CFeatureDefHandler::GetFeatureDef(string name, const bool show
 
 void CFeatureDefHandler::LoadFeatureDefsFromMap()
 {
+	// reserved names
+	const char* treeDefName = "treetype";
+	const char*  geoDefName =  "geovent";
+	const char* errorFormat = "[%s] unknown map default feature-type \"%s\" (only \"%s\" and \"%s\" are recognized)";
+
 	// add default tree and geo FeatureDefs defined by the map
-	const int numFeatureTypes = readMap->GetNumFeatureTypes();
+	for (int i = 0, n = readMap->GetNumFeatureTypes(); i < n; ++i) {
+		const std::string& name = StringToLower(readMap->GetFeatureTypeName(i));
 
-	for (int a = 0; a < numFeatureTypes; ++a) {
-		const string& name = StringToLower(readMap->GetFeatureTypeName(a));
+		if (GetFeatureDef(name, false) != nullptr)
+			continue;
 
-		if (GetFeatureDef(name, false) == nullptr) {
-			if (name.find("treetype") != string::npos) {
-				AddFeatureDef(name, CreateDefaultTreeFeatureDef(name), true);
-			}
-			else if (name.find("geovent") != string::npos) {
-				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name), true);
-			}
-			else {
-				LOG_L(L_ERROR, "[%s] unknown map feature type \"%s\"",
-						__FUNCTION__, name.c_str());
-			}
+		if (name.find(treeDefName) != string::npos) {
+			AddFeatureDef(name, CreateDefaultTreeFeatureDef(name), true);
+			continue;
 		}
+		if (name.find(geoDefName) != string::npos) {
+			AddFeatureDef(name, CreateDefaultGeoFeatureDef(name), true);
+			continue;
+		}
+
+		LOG_L(L_ERROR, errorFormat, __func__, name.c_str(), treeDefName, geoDefName);
 	}
 
 	// add a default geovent FeatureDef if the map did not
-	if (GetFeatureDef("geovent", false) == nullptr) {
-		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"), true);
-	}
+	if (GetFeatureDef(geoDefName, false) != nullptr)
+		return;
 
+	AddFeatureDef(geoDefName, CreateDefaultGeoFeatureDef(geoDefName), true);
 }
+

@@ -6,11 +6,10 @@
 #include "Game/Camera.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/ISky.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 #define LOG_SECTION_FAR_TEXTURE_HANDLER "FarTextureHandler"
@@ -60,14 +59,14 @@ CFarTextureHandler::CFarTextureHandler()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	fbo.Bind();
 	fbo.AttachTexture(farTextureID);
 
 	if (fbo.CheckStatus("FARTEXTURE")) {
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 	}
 	fbo.Unbind();
 
@@ -91,7 +90,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int farTextureNum, const int 
 
 	const int row = texnum       / (texSize.x / iconSize.x);
 	const int col = texnum - row * (texSize.x / iconSize.x);
-	return int2(col, row);
+	return {col, row};
 }
 
 /**
@@ -141,18 +140,12 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		return;
 
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
 	fbo.CheckStatus("FARTEXTURE");
 
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_BLEND);
-	glFrontFace(GL_CW);
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glFogi(GL_FOG_MODE,   GL_LINEAR);
-	glFogf(GL_FOG_START,  0.0f);
-	glFogf(GL_FOG_END,    1e6);
-	glFogf(GL_FOG_DENSITY, 1.0f);
+	glAttribStatePtr->PushBits(GL_POLYGON_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->FrontFace(GL_CW);
 
 	// NOTE:
 	//   the icons are RTT'ed using a snapshot of the
@@ -164,45 +157,50 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 	// can pick any perspective-type
 	CCamera iconCam(CCamera::CAMTYPE_PLAYER);
+
 	CMatrix44f viewMat;
+	CMatrix44f iconMat;
 
 	// twice the radius is not quite far away enough for some models
-	viewMat.Translate(float3(0.0f, 0.0f, -obj->GetDrawRadius() * (2.0f + 1.0f)));
+	viewMat.Translate(FwdVector * (-obj->GetDrawRadius() * (2.0f + 1.0f)));
 	viewMat.Scale(float3(-1.0f, 1.0f, 1.0f));
 	viewMat.RotateX(-60.0f * math::DEG_TO_RAD);
 
-	// overwrite the matrices set by SetupOpaqueDrawing
-	//
 	// RTT with a 60-degree top-down view and 1:1 AR perspective
-	// model shaders expect view-matrix on the PROJECTION stack!
 	iconCam.UpdateMatrices(1, 1, 1.0f);
-	iconCam.SetProjMatrix(iconCam.GetProjectionMatrix() * viewMat);
-	iconCam.SetViewMatrix(viewMat.LoadIdentity());
-	iconCam.LoadMatrices();
+	iconCam.SetViewMatrix(viewMat);
+
+
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	Shader::IProgramObject* shader = state->GetActiveShader();
+
+	// overwrite the matrices set by SetupOpaqueDrawing
+	shader->SetUniformMatrix4fv(7, false, iconCam.GetViewMatrix());
+	shader->SetUniformMatrix4fv(8, false, iconCam.GetProjectionMatrix());
+
 
 	for (int orient = 0; orient < NUM_ICON_ORIENTATIONS; ++orient) {
 		// setup viewport
 		const int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 
-		glViewport(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glAttribStatePtr->ViewPort(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
+		glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT);
 
-		glPushMatrix();
 		// draw (static-pose) model
-		model->DrawStatic();
-		glPopMatrix();
+		state->SetMatrices(iconMat, model->GetPieceMatrices());
+		model->Draw();
 
-		// rotate for the next orientation
-		glRotatef(-360.0f / NUM_ICON_ORIENTATIONS, 0.0f, 1.0f, 0.0f);
+		iconMat.LoadIdentity();
+		iconMat.RotateY((360.0f / NUM_ICON_ORIENTATIONS) * (orient + 1) * math::DEG_TO_RAD);
 	}
 
 	unitDrawer->PopModelRenderState(model);
 	unitDrawer->ResetOpaqueDrawing(false);
 
-	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glPopAttrib();
+	// glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->PopBits();
 
-	fbo.Detach(GL_DEPTH_ATTACHMENT_EXT);
+	fbo.Detach(GL_DEPTH_ATTACHMENT);
 	fbo.Unbind();
 
 	// cache object's current radius s.t. quad is always drawn with fixed size
@@ -212,7 +210,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 }
 
 
-void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va)
+void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, GL::RenderDataBufferTN* rdb)
 {
 	const CachedIcon& icon = iconCache[obj->team][obj->model->id];
 
@@ -237,11 +235,15 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const float3 pos = obj->drawPos + icon.texOffset;
 	const float3 upv = camera->GetUp()    * icon.texScales.y;
 	const float3 rgv = camera->GetRight() * icon.texScales.x;
+	const float3 cnv = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
 
-	va->AddVertexQT(pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                );
-	va->AddVertexQT(pos + upv + rgv, objTexCoors.x,                 objTexCoors.y + objIconSize.y);
-	va->AddVertexQT(pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y);
-	va->AddVertexQT(pos - upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y                );
+	rdb->SafeAppend({pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                , cnv}); // br
+	rdb->SafeAppend({pos + upv + rgv, objTexCoors.x,                 objTexCoors.y + objIconSize.y, cnv}); // tr
+	rdb->SafeAppend({pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y, cnv}); // tl
+
+	rdb->SafeAppend({pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y, cnv}); // tl
+	rdb->SafeAppend({pos - upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y                , cnv}); // bl
+	rdb->SafeAppend({pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                , cnv}); // br
 }
 
 
@@ -272,28 +274,25 @@ void CFarTextureHandler::Draw()
 
 	// render currently queued far-icons
 	if (!renderQueue.empty()) {
-		const float3 camNorm = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
-
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, farTextureID);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glNormal3fv((const GLfloat*) &camNorm.x);
 
-		sky->SetupFog();
+		// TODO: readd fog for icons?
+		GL::RenderDataBufferTN* buffer = GL::GetRenderBufferTN();
+		Shader::IProgramObject* shader = buffer->GetShader();
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(renderQueue.size() * 4, 0, VA_SIZE_T);
+		shader->Enable();
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 
 		for (const CSolidObject* obj: renderQueue) {
-			DrawFarTexture(obj, va);
+			DrawFarTexture(obj, buffer);
 		}
 
-		va->DrawArrayT(GL_QUADS);
-		glDisable(GL_ALPHA_TEST);
+		buffer->Submit(GL_TRIANGLES);
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+		shader->Disable();
 	}
 
 	renderQueue.clear();

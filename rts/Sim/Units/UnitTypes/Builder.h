@@ -18,7 +18,7 @@ class CSolidObject;
 class CBuilder : public CUnit
 {
 private:
-	void PreInit(const UnitLoadParams& params);
+	void PreInit(const UnitLoadParams& params) override;
 
 public:
 	inline float f3Dist(const float3& a, const float3& b) const { return (f3Len(a - b)); }
@@ -27,13 +27,13 @@ public:
 	inline float f3SqLen(const float3& a) const { return (range3D ? a.SqLength() : a.SqLength2D()); }
 
 public:
-	CR_DECLARE(CBuilder)
+	CR_DECLARE_DERIVED(CBuilder)
 
 	CBuilder();
 
-	void Update();
-	void SlowUpdate();
-	void DependentDied(CObject* o);
+	void Update() override;
+	void SlowUpdate() override;
+	void DependentDied(CObject* o) override;
 
 	bool UpdateTerraform(const Command& fCommand);
 	bool AssistTerraform(const Command& fCommand);

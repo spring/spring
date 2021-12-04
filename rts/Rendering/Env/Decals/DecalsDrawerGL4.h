@@ -9,10 +9,12 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/LegacyTrackHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/FBO.h"
-#include "System/EventClient.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Sim/Projectiles/ExplosionListener.h"
+#include "System/EventClient.h"
 #include "System/type2.h"
 #include "System/float3.h"
 #include "System/float4.h"
@@ -54,7 +56,9 @@
 		void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override {}
 		int CreateLuaDecal() { return 0;}
 		const std::vector<Decal>& GetAllDecals() const { return decals; }
-		Decal& GetDecalByIdx(unsigned idx) { assert(false); static Decal tmp; return tmp; }
+
+		const Decal& GetDecalByIdx(unsigned idx) const { assert(false); static Decal tmp; return tmp; }
+		      Decal& GetDecalByIdx(unsigned idx)       { assert(false); static Decal tmp; return tmp; }
 	private:
 		std::vector<Decal> decals;
 	};
@@ -77,7 +81,10 @@ public:
 	//FIXME make eventClient!!!
 	void GhostDestroyed(GhostSolidObject* gb) override;
 	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override;
+
+	void AddSolidObject(CSolidObject* object) override { /*TODO*/ }
 	void ForceRemoveSolidObject(CSolidObject* object) override;
+
 	void OnDecalLevelChanged() override;
 
 	void ExplosionOccurred(const CExplosionParams&) override;
@@ -184,12 +191,10 @@ public:
 
 	Decal& GetDecalOwnedBy(const void* owner);
 	const std::vector<Decal>& GetAllDecals() const { return decals; }
-	Decal& GetDecalByIdx(unsigned idx) {
-		if (idx < decals.size()) {
-			return decals[idx];
-		}
-		return decals.front();
-	}
+
+	const Decal& GetDecalByIdx(unsigned idx) const { return ((idx < decals.size())? decals[idx]: decals.front()); }
+	      Decal& GetDecalByIdx(unsigned idx)       { return ((idx < decals.size())? decals[idx]: decals.front()); }
+
 
 private:
 	void AddExplosion(float3 pos, float damage, float radius);
@@ -217,9 +222,9 @@ private:
 
 	void UpdateOverlap();
 	std::vector<int> UpdateOverlap_PreCheck();
-	void UpdateOverlap_Initialize();
-	std::vector<int> UpdateOverlap_CheckQueries();
-	void UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap);
+	void UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb);
+	std::vector<int> UpdateOverlap_CheckQueries(GL::RenderDataBufferTC* rdb);
+	void UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap, GL::RenderDataBufferTC* rdb);
 	std::vector<int> CandidatesForOverlap() const;
 
 	void DrawDecals();
@@ -245,12 +250,15 @@ private:
 
 	// used to remove decals that are totally overlapped by others
 	int overlapStage;
-	std::vector<std::pair<int,GLuint>> waitingOverlapGlQueries;
+
+	std::vector<std::pair<int, GLuint>> waitingOverlapGlQueries;
 	std::vector<int> waitingDecalsForOverlapTest;
+
 	FBO fboOverlap;
 
-	VBO vboVertices;
-	VBO vboIndices;
+	VAO bboxArray;
+	VBO bboxVerts;
+	VBO bboxIndcs;
 
 	VBO uboGroundLighting;
 

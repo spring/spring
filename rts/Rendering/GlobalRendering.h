@@ -3,6 +3,8 @@
 #ifndef _GLOBAL_RENDERING_H
 #define _GLOBAL_RENDERING_H
 
+#include <string>
+
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
@@ -23,28 +25,48 @@ class CGlobalRendering {
 public:
 	CGlobalRendering();
 	~CGlobalRendering();
+
+	static void InitStatic();
+	static void KillStatic();
+
 	/**
 	 * @return whether setting the video mode was successful
 	 *
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
-	bool CreateGLContext(const int2& minCtx);
-	void DestroyWindowAndContext();
+	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
+	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
+	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
+	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
+
+	void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context);
+	void KillSDL() const;
 	void PostInit();
+
+	void SetGLTimeStamp(uint32_t queryIdx) const;
+	uint64_t CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const;
+
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
+
+	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
 
 	void CheckGLExtensions() const;
 	void SetGLSupportFlags();
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
-	void LogDisplayMode() const;
+	void LogGLSupportInfo() const;
+	void LogDisplayMode(SDL_Window* window) const;
 
-	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
+	void SetWindowTitle(const std::string& title);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
+
+	bool SetWindowInputGrabbing(bool enable);
+	bool ToggleWindowInputGrabbing();
+
+	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
@@ -58,9 +80,37 @@ public:
 	int2 GetCfgWinRes(bool fullScrn) const;
 
 	bool CheckGLMultiSampling() const;
+	bool CheckGLStencilBufferBits(int minBufferBits) const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
+	bool CheckGLEWContextVersion(const int2& curCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
+
+
+public:
+	/**
+	* @brief max view range in elmos
+	*/
+	static constexpr float MAX_VIEW_RANGE = 65536.0f;
+
+	/**
+	* @brief near z-plane distance in elmos
+	*/
+	static constexpr float MIN_ZNEAR_DIST = 0.5f;
+
+
+	/// magic constant to reduce overblending on SMF maps
+	/// (scales the MapInfo::light_t::ground*Color values;
+	/// roughly equal to 210.0f / 255.0f)
+	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
+
+
+	static constexpr int MIN_WIN_SIZE_X = 400;
+	static constexpr int MIN_WIN_SIZE_Y = 300;
+
+	static constexpr unsigned int NUM_OPENGL_TIMER_QUERIES = 8;
+	static constexpr unsigned int FRAME_REF_TIME_QUERY_IDX = 0;
+	static constexpr unsigned int FRAME_END_TIME_QUERY_IDX = NUM_OPENGL_TIMER_QUERIES - 1;
 
 public:
 	/**
@@ -115,6 +165,8 @@ public:
 	float pixelX;
 	float pixelY;
 
+	float minViewRange;
+	float maxViewRange;
 	/**
 	 * @brief aspect ratio
 	 *
@@ -122,18 +174,8 @@ public:
 	 */
 	float aspectRatio;
 
-	/**
-	 * @brief view range
-	 *
-	 * Player's view range
-	 */
-	float zNear;
-	float viewRange;
+	float gammaExponent;
 
-
-	int forceDisableShaders;
-	int forceCoreContext;
-	int forceSwapBuffers;
 
 	/**
 	 * @brief MSAA
@@ -149,38 +191,7 @@ public:
 	 */
 	int maxTextureSize;
 
-	int gpuMemorySize;
-
 	float maxTexAnisoLvl;
-
-
-	bool drawSky;
-	bool drawWater;
-	bool drawGround;
-	bool drawMapMarks;
-
-	/**
-	 * @brief draw fog
-	 *
-	 * Whether fog (of war) is drawn or not
-	 */
-	bool drawFog;
-
-	/**
-	 * @brief draw debug
-	 *
-	 * Whether debugging info is drawn
-	 */
-	bool drawdebug;
-	bool drawdebugtraceray;
-
-	bool glDebug;
-	bool glDebugErrors;
-
-	/**
-	 * Does the user want team colored nanospray?
-	 */
-	bool teamNanospray;
 
 
 	/**
@@ -190,8 +201,27 @@ public:
 	 */
 	bool active;
 
-	/// whether we're capturing video - relevant for frame timing
-	bool isVideoCapturing;
+	bool drawSky;
+	bool drawWater;
+	bool drawGround;
+	bool drawMapMarks;
+
+	/**
+	 * @brief draw debug
+	 *
+	 * Whether debugging info is drawn
+	 */
+	bool drawDebug;
+	bool drawDebugTraceRay;
+	bool drawDebugCubeMap;
+
+	bool glDebug;
+	bool glDebugErrors;
+
+	/**
+	 * Does the user want team colored nanospray?
+	 */
+	bool teamNanospray;
 
 	/**
 	 * @brief compressTextures
@@ -213,13 +243,6 @@ public:
 
 
 	/**
-	 * @brief collection of some ATI bugfixes
-	 *
-	 * enables some ATI bugfixes
-	 */
-	bool atiHacks;
-
-	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *
 	 * Especially some ATI cards report that they support NPOTs, but don't (or just very limited).
@@ -236,13 +259,8 @@ public:
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
+	bool supportSeamlessCubeMaps;
 	bool supportFragDepthLayout;
-
-	/**
-	 * Shader capabilities
-	 */
-	bool haveARB;
-	bool haveGLSL;
 
 	/**
 	 * Shader capabilities
@@ -275,29 +293,13 @@ public:
 	bool fullScreen;
 	bool borderless;
 
-public:
-	SDL_Window* window;
-	SDL_GLContext glContext;
+private:
+	// [0] := primary, [1] := secondary (hidden)
+	SDL_Window* sdlWindows[2];
+	SDL_GLContext glContexts[2];
 
-public:
-	/**
-	* @brief max view range in elmos
-	*/
-	static const float MAX_VIEW_RANGE;
-
-	/**
-	* @brief near z-plane distance in elmos
-	*/
-	static const float NEAR_PLANE;
-
-
-	/// magic constant to reduce overblending on SMF maps
-	/// (scales the MapInfo::light_t::ground*Color values)
-	static const float SMF_INTENSITY_MULT;
-
-
-	static const int minWinSizeX;
-	static const int minWinSizeY;
+	// double-buffered; results from frame N become available on frame N+1
+	unsigned int glTimerQueries[NUM_OPENGL_TIMER_QUERIES * 2];
 };
 
 extern CGlobalRendering* globalRendering;

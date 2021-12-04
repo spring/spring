@@ -43,7 +43,7 @@ static int SyncTableIndex(lua_State* dstL)
 	if (lua_isnoneornil(dstL, -1))
 		return 0;
 
-	auto slh  = CLuaHandleSynced::GetSyncedHandle(dstL);
+	auto slh = CSplitLuaHandle::GetSyncedHandle(dstL);
 	if (!slh->IsValid())
 		return 0;
 	auto srcL = slh->GetLuaState();

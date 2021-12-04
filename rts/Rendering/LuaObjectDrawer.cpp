@@ -13,6 +13,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // MAX_TEAMS
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -21,11 +22,15 @@
 #include "System/SafeUtil.h"
 
 
-#define USE_OBJECT_RENDERING_BUCKETS
+// optimisation for team-color, but potentially breaks
+// the alpha-pass and matrices can not be bucket-sorted
+// #define USE_OBJECT_RENDERING_BUCKETS
 
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDrawModelPostDeferredEvents).defaultValue(true);
+CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -68,17 +73,15 @@ typedef std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsig
 // (another reason to use statics), but also much more
 // cache-friendly than std::function's ASM bloat
 //
-// (if only 'decltype(auto) unitDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, ...}' would
-// work, or even 'std::array<auto, 2> unitDrawFuncs = {&CUnitDrawer::DrawUnitNoTrans, ...}'
+// (if only 'decltype(auto) unitDrawFuncs[2] = {&CUnitDrawer::DrawUnitLuaTrans, ...}' would
+// work, or even 'std::array<auto, 2> unitDrawFuncs = {&CUnitDrawer::DrawUnitLuaTrans, ...}'
 // while this can actually be done with C++11 forward magic, the code becomes unreadable)
 //
 typedef void(CEventHandler::*EventFunc)();
-typedef void(CUnitDrawer   ::*   UnitDrawFunc)(const CUnit*,    unsigned int, unsigned int, bool, bool);
-typedef void(CFeatureDrawer::*FeatureDrawFunc)(const CFeature*, unsigned int, unsigned int, bool, bool);
+typedef void(*   UnitDrawFunc)(const CUnit*,    bool, bool, bool);
+typedef void(*FeatureDrawFunc)(const CFeature*, bool, bool);
 
 #endif
-
-typedef const void (*TeamColorFunc)(const bool, const CSolidObject*, const LuaMaterial*, const float2);
 
 
 
@@ -120,99 +123,163 @@ static float GetLODFloat(const std::string& name)
 
 
 // opaque-pass state management funcs
-static void SetupOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
+static void SetupDefOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
 	unitDrawer->PushModelRenderState(modelType);
+	unitDrawer->SetAlphaTest({0.5f, 1.0f, 0.0f, 0.0}); // test > 0.5 (engine shaders)
 }
 
-static void ResetOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
+static void ResetDefOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
+	unitDrawer->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0}); // no test
 	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetOpaqueDrawing(deferredPass);
 }
 
 // NOTE: incomplete (FeatureDrawer::Draw sets more state)
-static void SetupOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupOpaqueUnitDrawState(modelType, deferredPass); }
-static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetOpaqueUnitDrawState(modelType, deferredPass); }
+static void SetupDefOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupDefOpaqueUnitDrawState(modelType, deferredPass); }
+static void ResetDefOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetDefOpaqueUnitDrawState(modelType, deferredPass); }
+
+
+static void SetupLuaOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
+
+static void SetupLuaOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
 
 
 
 // transparency-pass (reflection, ...) state management funcs
-static void SetupAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->SetupAlphaDrawing(deferredPass);
+static void SetupDefAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
+	unitDrawer->SetupAlphaDrawing(deferredPass, true);
 	unitDrawer->PushModelRenderState(modelType);
+	unitDrawer->SetAlphaTest({0.1f, 1.0f, 0.0f, 0.0}); // test > 0.1 (engine shaders)
 }
 
-static void ResetAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
+static void ResetDefAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
+	unitDrawer->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0}); // no test
 	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetAlphaDrawing(deferredPass);
 }
 
 // NOTE: incomplete (FeatureDrawer::DrawAlphaPass sets more state)
-static void SetupAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupAlphaUnitDrawState(modelType, deferredPass); }
-static void ResetAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetAlphaUnitDrawState(modelType, deferredPass); }
+static void SetupDefAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupDefAlphaUnitDrawState(modelType, deferredPass); }
+static void ResetDefAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetDefAlphaUnitDrawState(modelType, deferredPass); }
+
+
+static void SetupLuaAlphaUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaAlphaUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
+
+static void SetupLuaAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
+
 
 
 
 // shadow-pass state management funcs
 // FIXME: setup face culling for S3O?
-static void SetupShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glDisable(GL_TEXTURE_2D);
+static void SetupDefShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 }
 
-static void ResetShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+static void ResetDefShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	po->Disable();
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
 // NOTE: incomplete (FeatureDrawer::DrawShadowPass sets more state)
-static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupShadowUnitDrawState(modelType, deferredPass); }
-static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
+static void SetupDefShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupDefShadowUnitDrawState(modelType, deferredPass); }
+static void ResetDefShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetDefShadowUnitDrawState(modelType, deferredPass); }
+
+
+static void SetupLuaShadowUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaShadowUnitDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
+
+static void SetupLuaShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_LUA); }
+static void ResetLuaShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { unitDrawer->SetDrawerState(DRAWER_STATE_SSP); }
 
 
 
-static const void SetObjectTeamColorNoType(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2) {
-	// material without any shader for the current (fwd/def) pass
-	const LuaMatShader* s = &m->shaders[deferredPass];
-	assert((!s->IsCustomType() && !s->IsEngineType()) || (o->team == LuaObjectDrawer::GetBinObjTeam()));
+
+static const void SetObjectMatricesNop(const CSolidObject* o, const LuaMaterial* m, bool deferredPass) {}
+static const void SetObjectMatricesLua(const CSolidObject* o, const LuaMaterial* m, bool deferredPass) {
+	LocalModel* lm = const_cast<LocalModel*>(&o->localModel);
+
+	assert(m->shaders[deferredPass].IsCustomType());
+	lm->UpdatePieceMatrices(gs->frameNum);
+	m->ExecuteInstanceMatrices(o->GetTransformMatrix(), lm->GetPieceMatrices(), deferredPass);
 }
+// no-op; *Drawer::Draw*Trans sets the uniforms via default SSP state
+static const void SetObjectMatricesDef(const CSolidObject* o, const LuaMaterial* m, bool deferredPass) {}
 
-static const void SetObjectTeamColorCustom(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
+
+static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, const float2, bool) {}
+static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
 {
 	assert(m->shaders[deferredPass].IsCustomType());
-	m->ExecuteInstance(deferredPass, o, alpha);
+	m->ExecuteInstanceTeamColor(IUnitDrawerState::GetTeamColor(o->team, a.x), deferredPass);
 }
 
-static const void SetObjectTeamColorEngine(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
+static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
 {
 	// only useful to set this if the object has a standard
 	// (engine) shader attached, otherwise requires testing
-	// if shader is bound in DrawerState etc (there is *no*
-	// FFP texenv fallback for customs to rely on anymore!)
+	// if shader is bound in DrawerState etc
 	assert(m->shaders[deferredPass].IsEngineType());
-
-	unitDrawer->SetTeamColour(o->team, alpha);
-	//FIXME binObjTeam = o->team;
+	unitDrawer->SetTeamColour(o->team, a);
 }
 
-static const TeamColorFunc teamColorFuncs[] = {
-	SetObjectTeamColorNoType,
-	SetObjectTeamColorCustom,
-	SetObjectTeamColorEngine,
+
+static const void SetObjectUniformsNop(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+static const void SetObjectUniformsLua(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) { m->ExecuteInstanceUniforms(o->id, objectType, deferredPass); }
+static const void SetObjectUniformsDef(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+
+
+
+static const decltype(&SetObjectTeamColorDef) tcUniformFuncs[] = {
+	SetObjectTeamColorNop,
+	SetObjectTeamColorLua,
+	SetObjectTeamColorDef,
 };
 
-static inline unsigned int GetTeamColorFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
-	return ((int(s->IsCustomType()) * 1 + int(s->IsEngineType()) * 2) * (o->team != LuaObjectDrawer::GetBinObjTeam())); //FIXME
+static const decltype(&SetObjectMatricesDef) tmUniformFuncs[] = {
+	SetObjectMatricesNop,
+	SetObjectMatricesLua,
+	SetObjectMatricesDef,
+};
+
+static const decltype(&SetObjectUniformsDef) soUniformFuncs[] = {
+	SetObjectUniformsNop,
+	SetObjectUniformsLua,
+	SetObjectUniformsDef,
+};
+
+
+
+static inline unsigned int CalcTeamColorUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	// if still in the same team{-bucket}, pick the no-op func
+	return ((isCustomType | isEngineType) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
+}
+
+static inline unsigned int CalcTransMatrUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
+}
+
+static inline unsigned int CalcSetObjectUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
 }
 
 
@@ -222,11 +289,11 @@ void LuaObjectDrawer::Init()
 	eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
 	eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
-	unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
-	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnitTrans;
+	unitDrawFuncs[false] = &CUnitDrawer::DrawUnitLuaTrans;
+	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnitDefTrans;
 
-	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
-	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureTrans;
+	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureLuaTrans;
+	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureDefTrans;
 
 	drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 	bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
@@ -234,8 +301,7 @@ void LuaObjectDrawer::Init()
 	assert(geomBuffer == nullptr);
 
 	// cannot be a unique_ptr because it is leaked
-	geomBuffer = new GL::GeometryBuffer();
-	geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
+	geomBuffer = new GL::GeometryBuffer("LUAOBJECTDRAWER-GBUFFER");
 }
 
 void LuaObjectDrawer::Kill()
@@ -265,17 +331,16 @@ void LuaObjectDrawer::Update(bool init)
 	if ((drawDeferredEnabled = geomBuffer->Valid())) {
 		drawDeferredEnabled &= (geomBuffer->Update(init));
 
-		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
-		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred();
 
 		// if both object types are going to be drawn deferred, only
 		// reset buffer for the first s.t. just a single shading pass
 		// is needed (in Lua)
-		if (bufferClearFlags[LUAOBJ_UNIT] && bufferClearFlags[LUAOBJ_FEATURE]) {
+		if (bufferClearFlags[LUAOBJ_UNIT] && bufferClearFlags[LUAOBJ_FEATURE])
 			bufferClearFlags[LUAOBJ_FEATURE] = bufferClearAllowed;
-		}
 	}
 }
 
@@ -290,7 +355,7 @@ void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
 
 void LuaObjectDrawer::SetDrawPassGlobalLODFactor(LuaObjType objType)
 {
-	if (shadowHandler->InShadowPass()) {
+	if (shadowHandler.InShadowPass()) {
 		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleShadow(objType) * camera->GetLPPScale());
 		return;
 	}
@@ -323,29 +388,25 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	inDrawPass = true;
 	inAlphaBin = (matType == LUAMAT_ALPHA || matType == LUAMAT_ALPHA_REFLECT);
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+	glAttribStatePtr->PushBits(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
 	if (inAlphaBin) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.1f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
 
-	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		DrawMaterialBin(*it, prevMat, objType, matType, deferredPass, inAlphaBin);
-		prevMat = *it;
+	for (const auto& bin: bins) {
+		assert(matType == bin->type);
+		DrawMaterialBin(bin, prevMat, objType, matType, deferredPass, inAlphaBin);
+		prevMat = bin;
 	}
 
 	LuaMaterial::defMat.Execute(*prevMat, deferredPass);
 	luaMatHandler.ClearBins(objType, matType);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 
 	inAlphaBin = false;
 	inDrawPass = false;
@@ -364,8 +425,13 @@ void LuaObjectDrawer::DrawMaterialBin(
 	const std::vector<CSolidObject*>& objects = currBin->GetObjects(objType);
 	const LuaMatShader* binShader = &currBin->shaders[deferredPass];
 
-	// skip entire bin if we need a shader for this pass and have none
+	// skip entire bin if we have no shader for this pass
 	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
+		return;
+
+	// objType and matType can be inferred from the material's (custom) uuid
+	// deferredPass and alphaMatBin can be inferred from drawMode and matType
+	if (currBin->HasDrawCall() && eventHandler.DrawMaterial(currBin))
 		return;
 
 	// reset; also sort objects by team
@@ -375,6 +441,7 @@ void LuaObjectDrawer::DrawMaterialBin(
 	int minObjTeam = MAX_TEAMS;
 	int maxObjTeam = 0;
 
+	// FIXME: alpha-bin might be sorted
 	for (const CSolidObject* obj: objects) {
 		objectBuckets[obj->team].push_back(obj);
 
@@ -385,9 +452,9 @@ void LuaObjectDrawer::DrawMaterialBin(
 	for (int objTeam = minObjTeam; objTeam <= maxObjTeam; objTeam++) {
 		for (const CSolidObject* obj: objectBuckets[objTeam]) {
 			const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-			const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
+			const LuaMatRef* lodMatRef = matData->GetLODMatRef(matType);
 
-			DrawBinObject(obj, objType, lodMat, currBin,  deferredPass, alphaMatBin, true, false);
+			DrawBinObject(obj, objType, lodMatRef, currBin,  deferredPass, alphaMatBin, true, false);
 		}
 
 		objectBuckets[objTeam].clear();
@@ -398,9 +465,9 @@ void LuaObjectDrawer::DrawMaterialBin(
 
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-		const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
+		const LuaMatRef* lodMatRef = matData->GetLODMatRef(matType);
 
-		DrawBinObject(obj, objType, lodMat, currBin,  deferredPass, alphaMatBin, true, false);
+		DrawBinObject(obj, objType, lodMatRef, currBin,  deferredPass, alphaMatBin, true, false);
 	}
 	#endif
 }
@@ -408,41 +475,50 @@ void LuaObjectDrawer::DrawMaterialBin(
 void LuaObjectDrawer::DrawBinObject(
 	const CSolidObject* obj,
 	LuaObjType objType,
-	const LuaObjectLODMaterial* lodMat,
+	const LuaMatRef* matRef,
 	const LuaMaterial* luaMat,
 	bool deferredPass,
 	bool alphaMatBin,
 	bool applyTrans,
 	bool noLuaCall
 ) {
-	const unsigned int preList  = lodMat->preDisplayList;
-	const unsigned int postList = lodMat->postDisplayList;
-	const unsigned int tcFunIdx = GetTeamColorFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int tcFuncIdx = CalcTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int tmFuncIdx = CalcTransMatrUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int soFuncIdx = CalcSetObjectUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const UnitDrawFunc drawFunc = unitDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
-			const CUnit* unit = static_cast<const CUnit*>(obj);
+			const auto udFunc = unitDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
 
-			tcolFunc(deferredPass, unit, luaMat, float2(1.0f, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
+			const CUnit* u = static_cast<const CUnit*>(obj);
+
+			tcFunc(u, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
+			tmFunc(u, luaMat, deferredPass);
+			soFunc(u, luaMat, objType, deferredPass);
+			udFunc(u, true, noLuaCall, true);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const FeatureDrawFunc drawFunc = featureDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
-			const CFeature* feat = static_cast<const CFeature*>(obj);
+			const auto fdFunc = featureDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
 
-			tcolFunc(deferredPass, feat, luaMat, float2(feat->drawAlpha, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
+			const CFeature* f = static_cast<const CFeature*>(obj);
+
+			tcFunc(f, luaMat, {f->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
+			tmFunc(f, luaMat, deferredPass);
+			soFunc(f, luaMat, objType, deferredPass);
+			fdFunc(f, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
 		} break;
 	}
 
-	//FIXME
-	binObjTeam = obj->team; //FIXME alpha????
+	binObjTeam = obj->team;
 }
 
 
@@ -453,15 +529,11 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	if (!geomBuffer->Valid())
 		return;
 
-	// deferred pass must be executed with GLSL base shaders so
-	// bail early if the FFP state *is going to be* selected by
-	// SetupOpaqueDrawing, and also if our shader-path happens
-	// to be ARB instead (saves an FBO bind)
-	if (!(unitDrawer->GetWantedDrawerState(false))->CanDrawDeferred())
-		return;
+	// deferred pass must be executable with base shaders
+	assert((unitDrawer->GetWantedDrawerState(false))->CanDrawDeferred());
 
 	// note: should also set this during the map pass (in SMFGD)
-	game->SetDrawMode(CGame::gameDeferredDraw);
+	game->SetDrawMode(Game::DeferredDraw);
 	geomBuffer->Bind();
 	geomBuffer->SetDepthRange(1.0f, 0.0f);
 
@@ -476,10 +548,10 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			unitDrawer->DrawOpaquePass(true, false, false);
+			unitDrawer->DrawOpaquePass(true);
 		} break;
 		case LUAOBJ_FEATURE: {
-			featureDrawer->DrawOpaquePass(true, false, false);
+			featureDrawer->DrawOpaquePass(true);
 		} break;
 		default: {
 			assert(false);
@@ -488,7 +560,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 
 	geomBuffer->SetDepthRange(0.0f, 1.0f);
 	geomBuffer->UnBind();
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 
 	#if 0
 	geomBuffer->DrawDebug(geomBuffer->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
@@ -509,29 +581,35 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans)
 {
 	const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-	const LuaObjectLODMaterial* lodMat = nullptr;
+	const LuaMatRef* lodMatRef = nullptr;
 
 	if (!matData->Enabled())
 		return false;
 
 	// note: always uses an opaque material (for now)
-	if ((lodMat = matData->GetLuaLODMaterial(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
+	if ((lodMatRef = matData->GetLODMatRef(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
 		return false;
-	if (!lodMat->IsActive())
+	if (!lodMatRef->IsActive())
 		return false;
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueUnitDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueUnitDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefOpaqueUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefOpaqueUnitDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaOpaqueUnitDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaOpaqueUnitDrawState;
 		} break;
 		case LUAOBJ_FEATURE: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueFeatureDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueFeatureDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefOpaqueFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefOpaqueFeatureDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaOpaqueFeatureDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaOpaqueFeatureDrawState;
 		} break;
 		default: {
 			assert(false);
@@ -542,7 +620,7 @@ bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType
 	LuaObjectMaterialData::SetGlobalLODFactor(objType, LuaObjectDrawer::GetLODScale(objType) * camera->GetLPPScale());
 
 	// get the ref-counted actual material
-	const LuaMatBin* currBin = lodMat->matref.GetBin();
+	const LuaMatBin* currBin = lodMatRef->GetBin();
 	const LuaMaterial* currMat = currBin;
 
 	// reset
@@ -551,7 +629,7 @@ bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType
 	// NOTE: doesn't make sense to support deferred mode for this? (extra arg in gl.Unit, etc)
 	currMat->Execute(LuaMaterial::defMat, false);
 
-	DrawBinObject(obj, objType, lodMat, currMat, false, false, applyTrans, true);
+	DrawBinObject(obj, objType, lodMatRef, currMat, false, false, applyTrans, true);
 
 	// switch back to default material
 	LuaMaterial::defMat.Execute(*currMat, false);
@@ -564,7 +642,7 @@ bool LuaObjectDrawer::DrawSingleObject(const CSolidObject* obj, LuaObjType objTy
 	return (DrawSingleObjectCommon(obj, objType, true));
 }
 
-bool LuaObjectDrawer::DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType)
+bool LuaObjectDrawer::DrawSingleObjectLuaTrans(const CSolidObject* obj, LuaObjType objType)
 {
 	return (DrawSingleObjectCommon(obj, objType, false));
 }
@@ -629,15 +707,21 @@ void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, bool deferre
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueUnitDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueUnitDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefOpaqueUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefOpaqueUnitDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaOpaqueUnitDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaOpaqueUnitDrawState;
 		} break;
 		case LUAOBJ_FEATURE: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueFeatureDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueFeatureDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefOpaqueFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefOpaqueFeatureDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaOpaqueFeatureDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaOpaqueFeatureDrawState;
 		} break;
 		default: {
 			assert(false);
@@ -652,15 +736,21 @@ void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupAlphaUnitDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetAlphaUnitDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefAlphaUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefAlphaUnitDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaAlphaUnitDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaAlphaUnitDrawState;
 		} break;
 		case LUAOBJ_FEATURE: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupAlphaFeatureDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetAlphaFeatureDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefAlphaFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefAlphaFeatureDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaAlphaFeatureDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaAlphaFeatureDrawState;
 		} break;
 		default: {
 			assert(false);
@@ -676,15 +766,21 @@ void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupShadowUnitDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetShadowUnitDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefShadowUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefShadowUnitDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaShadowUnitDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaShadowUnitDrawState;
 		} break;
 		case LUAOBJ_FEATURE: {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				luaMatHandler.setupDrawStateFuncs[modelType] = SetupShadowFeatureDrawState;
-				luaMatHandler.resetDrawStateFuncs[modelType] = ResetShadowFeatureDrawState;
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupDefShadowFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetDefShadowFeatureDrawState;
 			}
+
+			luaMatHandler.setupDrawStateFuncs[MODELTYPE_OTHER] = SetupLuaShadowFeatureDrawState;
+			luaMatHandler.resetDrawStateFuncs[MODELTYPE_OTHER] = ResetLuaShadowFeatureDrawState;
 		} break;
 		default: {
 			assert(false);

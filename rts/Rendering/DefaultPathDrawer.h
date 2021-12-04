@@ -5,19 +5,22 @@
 
 #include "IPathDrawer.h"
 
+#include "GL/WideLineAdapterFwd.hpp"
+
 class CPathManager;
 class CPathFinderDef;
 class CPathFinder;
 class CPathEstimator;
 struct UnitDef;
 
+
 struct DefaultPathDrawer: public IPathDrawer {
 public:
 	DefaultPathDrawer();
 
-	void DrawAll() const;
-	void DrawInMiniMap();
-	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
+	void DrawAll() const override;
+	void DrawInMiniMap() override;
+	void UpdateExtraTexture(int, int, int, int, unsigned char*) const override;
 
 	enum BuildSquareStatus {
 		NOLOS          = 0,
@@ -28,7 +31,7 @@ public:
 
 private:
 	void Draw() const;
-	void Draw(const CPathFinderDef*) const;
+	void Draw(const CPathFinderDef*, GL::WideLineAdapterC*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
 

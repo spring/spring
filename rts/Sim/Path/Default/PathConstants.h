@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PATH_CONSTANTS_HDR
-#define PATH_CONSTANTS_HDR
+#ifndef PATH_CONSTANTS_H
+#define PATH_CONSTANTS_H
 
 #include <limits>
 #include <array>
@@ -26,7 +26,7 @@ static const float MEDRES_SEARCH_DISTANCE_EXT = (MEDRES_SEARCH_DISTANCE * 0.4f) 
 // how many recursive refinement attempts NextWayPoint should make
 static constexpr unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static constexpr unsigned int PATHESTIMATOR_VERSION = 88;
+static constexpr unsigned int PATHESTIMATOR_VERSION = 100;
 
 static constexpr unsigned int MEDRES_PE_BLOCKSIZE = 16;
 static constexpr unsigned int LOWRES_PE_BLOCKSIZE = 32;
@@ -41,19 +41,16 @@ static constexpr unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. mapDims.mapy
 
 
 // PE-only flags (indices)
-enum {
-	PATHDIR_LEFT       = 0, // +x (LEFT *TO* RIGHT)
-	PATHDIR_LEFT_UP    = 1, // +x+z
-	PATHDIR_UP         = 2, // +z (UP *TO* DOWN)
-	PATHDIR_RIGHT_UP   = 3, // -x+z
+static constexpr unsigned int PATHDIR_LEFT       = 0; // +x (LEFT *TO* RIGHT)
+static constexpr unsigned int PATHDIR_LEFT_UP    = 1; // +x+z
+static constexpr unsigned int PATHDIR_UP         = 2; // +z (UP *TO* DOWN)
+static constexpr unsigned int PATHDIR_RIGHT_UP   = 3; // -x+z
+static constexpr unsigned int PATHDIR_RIGHT      = 4; // -x (RIGHT *TO* LEFT)
+static constexpr unsigned int PATHDIR_RIGHT_DOWN = 5; // -x-z
+static constexpr unsigned int PATHDIR_DOWN       = 6; // -z (DOWN *TO* UP)
+static constexpr unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
+static constexpr unsigned int PATH_DIRECTIONS    = 8;
 
-	PATHDIR_RIGHT      = 4, // -x (RIGHT *TO* LEFT)
-	PATHDIR_RIGHT_DOWN = 5, // -x-z
-	PATHDIR_DOWN       = 6, // -z (DOWN *TO* UP)
-	PATHDIR_LEFT_DOWN  = 7, // +x-z
-
-	PATH_DIRECTIONS    = 8,
-};
 
 static constexpr unsigned int PATHDIR_CARDINALS[4] = {PATHDIR_LEFT, PATHDIR_RIGHT, PATHDIR_UP, PATHDIR_DOWN};
 static constexpr unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
@@ -65,62 +62,92 @@ static constexpr unsigned int PATH_NODE_SPACING = 2;
 // factor which would drop performance four-fold --> messy
 static_assert(PATH_NODE_SPACING == 2, "");
 
-// PF and PE flags (used in nodeMask[])
-enum {
-	PATHOPT_LEFT      =   1, // +x
-	PATHOPT_RIGHT     =   2, // -x
-	PATHOPT_UP        =   4, // +z
-	PATHOPT_DOWN      =   8, // -z
-	PATHOPT_OPEN      =  16,
-	PATHOPT_CLOSED    =  32,
-	PATHOPT_BLOCKED   =  64,
-	PATHOPT_OBSOLETE  = 128,
 
-	PATHOPT_SIZE      = 255, // size of PATHOPT bitmask
+// these give the changes in (x, z) coors
+// when moving one step in given direction
+//
+// NOTE: the choices of +1 for LEFT and UP are *not* arbitrary
+// (they are related to GetBlockVertexOffset) and also need to
+// be consistent with the PATHOPT_* flags (for PathDir2PathOpt)
+static constexpr int2 PE_DIRECTION_VECTORS[] = {
+	{+1,  0}, // PATHDIR_LEFT
+	{+1, +1}, // PATHDIR_LEFT_UP
+	{ 0, +1}, // PATHDIR_UP
+	{-1, +1}, // PATHDIR_RIGHT_UP
+	{-1,  0}, // PATHDIR_RIGHT
+	{-1, -1}, // PATHDIR_RIGHT_DOWN
+	{ 0, -1}, // PATHDIR_DOWN
+	{+1, -1}, // PATHDIR_LEFT_DOWN
 };
+
+//FIXME why not use PATHDIR_* consts and merge code with top one
+static constexpr int2 PF_DIRECTION_VECTORS_2D[] = {
+	{ 0,                           0                         },
+	{+1 * int(PATH_NODE_SPACING),  0 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT
+	{-1 * int(PATH_NODE_SPACING),  0 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT
+	{ 0,                           0                         }, // PATHOPT_LEFT | PATHOPT_RIGHT
+	{ 0 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_UP
+	{+1 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT | PATHOPT_UP
+	{-1 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT | PATHOPT_UP
+	{ 0,                           0                         }, // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	{ 0 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_DOWN
+	{+1 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT | PATHOPT_DOWN
+	{-1 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT | PATHOPT_DOWN
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+};
+
+
+// PF and PE flags (used in nodeMask[])
+static constexpr unsigned int PATHOPT_LEFT      =   1; // +x
+static constexpr unsigned int PATHOPT_RIGHT     =   2; // -x
+static constexpr unsigned int PATHOPT_UP        =   4; // +z
+static constexpr unsigned int PATHOPT_DOWN      =   8; // -z
+static constexpr unsigned int PATHOPT_OPEN      =  16;
+static constexpr unsigned int PATHOPT_CLOSED    =  32;
+static constexpr unsigned int PATHOPT_BLOCKED   =  64;
+static constexpr unsigned int PATHOPT_OBSOLETE  = 128;
+static constexpr unsigned int PATHOPT_SIZE      = 255; // size of PATHOPT bitmask
 
 static constexpr unsigned int PATHOPT_CARDINALS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
 
+static constexpr unsigned int DIR2OPT[] = {
+	(PATHOPT_LEFT                ),
+	(PATHOPT_LEFT  | PATHOPT_UP  ),
+	(                PATHOPT_UP  ),
+	(PATHOPT_RIGHT | PATHOPT_UP  ),
+	(PATHOPT_RIGHT               ),
+	(PATHOPT_RIGHT | PATHOPT_DOWN),
+	(PATHOPT_DOWN                ),
+	(PATHOPT_LEFT  | PATHOPT_DOWN),
+};
 
-static inline std::array<unsigned int, PATH_DIRECTIONS> GetPathDir2PathOpt()
-{
-	std::array<unsigned int, PATH_DIRECTIONS> a;
 
-	a[PATHDIR_LEFT]       = PATHOPT_LEFT;
-	a[PATHDIR_RIGHT]      = PATHOPT_RIGHT;
-	a[PATHDIR_UP]         = PATHOPT_UP;
-	a[PATHDIR_DOWN]       = PATHOPT_DOWN;
-	a[PATHDIR_LEFT_UP]    = (PATHOPT_LEFT  | PATHOPT_UP);
-	a[PATHDIR_RIGHT_UP]   = (PATHOPT_RIGHT | PATHOPT_UP);
-	a[PATHDIR_RIGHT_DOWN] = (PATHOPT_RIGHT | PATHOPT_DOWN);
-	a[PATHDIR_LEFT_DOWN]  = (PATHOPT_LEFT  | PATHOPT_DOWN);
-
-	return a;
-}
-
-static inline std::array<unsigned int, 15> GetPathOpt2PathDir()
-{
-	std::array<unsigned int, 15> a;
-	a.fill(0);
-
-	a[PATHOPT_LEFT]       = PATHDIR_LEFT;
-	a[PATHOPT_RIGHT]      = PATHDIR_RIGHT;
-	a[PATHOPT_UP]         = PATHDIR_UP;
-	a[PATHOPT_DOWN]       = PATHDIR_DOWN;
-
-	a[(PATHOPT_LEFT  | PATHOPT_UP)]   = PATHDIR_LEFT_UP;
-	a[(PATHOPT_RIGHT | PATHOPT_UP)]   = PATHDIR_RIGHT_UP;
-	a[(PATHOPT_RIGHT | PATHOPT_DOWN)] = PATHDIR_RIGHT_DOWN;
-	a[(PATHOPT_LEFT  | PATHOPT_DOWN)] = PATHDIR_LEFT_DOWN;
-	return a;
-}
-
-static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
-static const std::array<unsigned int, 15>              OPT2DIR = GetPathOpt2PathDir();
+static constexpr unsigned int OPT2DIR[] = {
+	0,
+	PATHDIR_LEFT,       // PATHOPT_LEFT
+	PATHDIR_RIGHT,      // PATHOPT_RIGHT
+	0,                  // PATHOPT_LEFT  | PATHOPT_RIGHT
+	PATHDIR_UP,         // PATHOPT_UP
+	PATHDIR_LEFT_UP,    // PATHOPT_LEFT  | PATHOPT_UP
+	PATHDIR_RIGHT_UP,   // PATHOPT_RIGHT | PATHOPT_UP
+	0,                  // PATHOPT_LEFT  | PATHOPT_RIGHT | PATHOPT_UP
+	PATHDIR_DOWN,       // PATHOPT_DOWN
+	PATHDIR_LEFT_DOWN,  // PATHOPT_LEFT  | PATHOPT_DOWN
+	PATHDIR_RIGHT_DOWN, // PATHOPT_RIGHT | PATHOPT_DOWN
+	0,
+	0,
+	0,
+	0,
+	0,
+};
 
 // converts a PATHDIR* index to a PATHOPT* bitmask and vice versa
-static inline unsigned int PathDir2PathOpt(unsigned int pathDir)    { return DIR2OPT[pathDir]; }
-static inline unsigned int PathOpt2PathDir(unsigned int pathOptDir) { return OPT2DIR[pathOptDir]; }
+static constexpr unsigned int PathDir2PathOpt(unsigned int pathDir)    { return DIR2OPT[pathDir]; }
+static constexpr unsigned int PathOpt2PathDir(unsigned int pathOptDir) { return OPT2DIR[pathOptDir]; }
 
 
 // transition costs between vertices are bi-directional

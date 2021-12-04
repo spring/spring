@@ -12,30 +12,32 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Misc/NonCopyable.h"
 #include "System/float3.h"
+#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
-// disable this if you want minimal profiling
-// (sim time is still measured because of game slowdown)
-#define SCOPED_TIMER(name) ScopedTimer __scopedTimer(name);
-#define SCOPED_SPECIAL_TIMER(name) ScopedTimer __scopedTimer(name, false, true)
-#define SCOPED_MT_TIMER(name) ScopedMtTimer __scopedTimer(name);
+// disable these for minimal profiling; all special
+// timers contribute even when profiler is disabled
+// NB: names are assumed to be compile-time literals
+#define SCOPED_TIMER(      name)  static TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name));
+#define SCOPED_TIMER_NOREG(name)                                         ScopedTimer __scopedTimer(hashString(name));
+
+#define SCOPED_SPECIAL_TIMER(      name)  static TimerNameRegistrar __stnr(name); ScopedTimer __scopedTimer(hashString(name), false, true);
+#define SCOPED_SPECIAL_TIMER_NOREG(name)                                          ScopedTimer __scopedTimer(hashString(name), false, true);
+
+#define SCOPED_MT_TIMER(name)  ScopedMtTimer __scopedTimer(hashString(name));
 
 
 class BasicTimer : public spring::noncopyable
 {
 public:
-	BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
-	BasicTimer(const std::string& timerName);
-	BasicTimer(const char* timerName);
+	//BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
+	BasicTimer(unsigned _nameHash) : nameHash(_nameHash), startTime(spring_gettime()) { }
 
-	const std::string& GetName() const { return name; }
 	spring_time GetDuration() const;
 
 protected:
 	const unsigned nameHash;
 	const spring_time startTime;
-
-	std::string name;
 };
 
 
@@ -48,8 +50,7 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const std::string& timerName, bool _autoShowGraph = false, bool _specialTimer = false);
-	ScopedTimer(const char* timerName, bool _autoShowGraph = false, bool _specialTimer = false);
+	ScopedTimer(const unsigned _nameHash, bool _autoShowGraph = false, bool _specialTimer = false);
 	~ScopedTimer();
 
 private:
@@ -61,8 +62,7 @@ private:
 class ScopedMtTimer : public BasicTimer
 {
 public:
-	ScopedMtTimer(const std::string& timerName, bool _autoShowGraph = false);
-	ScopedMtTimer(const char* timerName, bool _autoShowGraph = false);
+	ScopedMtTimer(const unsigned _nameHash, bool _autoShowGraph = false);
 	~ScopedMtTimer();
 
 private:
@@ -77,8 +77,8 @@ private:
 class ScopedOnceTimer
 {
 public:
-	ScopedOnceTimer(const std::string& name);
-	ScopedOnceTimer(const char* name);
+	ScopedOnceTimer(const std::string& name, const char* frmt = "[%s][%s] %ims");
+	ScopedOnceTimer(const char* name, const char* frmt = "[%s][%s] %ims");
 	~ScopedOnceTimer();
 
 	spring_time GetDuration() const;
@@ -86,7 +86,8 @@ public:
 protected:
 	const spring_time startTime;
 
-	std::string name;
+	char name[128];
+	char frmt[128];
 };
 
 
@@ -99,17 +100,62 @@ public:
 
 	static CTimeProfiler& GetInstance();
 
-	float GetPercent(const char* name) const;
-	float GetPercentRaw(const char* name) const {
+	static bool RegisterTimer(const char* name);
+	static bool UnRegisterTimer(const char* name);
+
+
+	struct TimeRecord {
+		TimeRecord() {
+			memset(frames, 0, sizeof(frames));
+		}
+
+		static constexpr unsigned numFrames = 128;
+
+		spring_time total = spring_notime;
+		spring_time current = spring_notime;
+		spring_time frames[numFrames];
+
+		// .x := maximum dt, .y := time-percentage, .z := peak-percentage
+		float3 stats;
+		float3 color;
+
+		bool newPeak = false;
+		bool newLagPeak = false;
+		bool showGraph = false;
+	};
+
+public:
+	std::vector< std::pair<std::string, TimeRecord> >& GetSortedProfiles() { return sortedProfiles; }
+	std::vector< std::deque< std::pair<spring_time, spring_time> > >& GetThreadProfiles() { return threadProfiles; }
+
+	size_t GetNumSortedProfiles() const { return (sortedProfiles.size()); }
+	size_t GetNumThreadProfiles() const { return (threadProfiles.size()); }
+
+	float GetTimePercentage(const char* name) const { return (GetTimeRecord(name).stats.y); }
+	float GetTimePercentageRaw(const char* name) const { return (GetTimeRecordRaw(name).stats.y); }
+
+	const TimeRecord& GetTimeRecord(const char* name) const;
+	const TimeRecord& GetTimeRecordRaw(const char* name) const {
 		// do not default-create keys, breaks resorting
-		const auto it = profile.find(name);
-		if (it != profile.end())
-			return ((it->second).percent);
-		return 0.0f;
+		const auto it = profiles.find(hashString(name));
+		const static TimeRecord tr;
+
+		if (it == profiles.end())
+			return tr;
+
+		return (it->second);
 	}
 
-	void ResetState();
 	void ToggleLock(bool lock);
+	void ResetState();
+	void ResetPeaks() {
+		ToggleLock(true);
+
+		for (auto& p: profiles)
+			p.second.stats.z = 0.0f;
+
+		ToggleLock(false);
+	}
 
 	void Update();
 	void UpdateRaw();
@@ -122,7 +168,7 @@ public:
 	void PrintProfilingInfo() const;
 
 	void AddTime(
-		const std::string& name,
+		unsigned nameHash,
 		const spring_time startTime,
 		const spring_time deltaTime,
 		const bool showGraph = false,
@@ -130,53 +176,19 @@ public:
 		const bool threadTimer = false
 	);
 	void AddTimeRaw(
-		const std::string& name,
+		unsigned nameHash,
 		const spring_time startTime,
 		const spring_time deltaTime,
 		const bool showGraph,
 		const bool threadTimer
 	);
 
-public:
-	struct TimeRecord {
-		TimeRecord()
-		: total(0.0f)
-		, current(0.0f)
-
-		, maxLag(0.0f)
-		, percent(0.0f)
-		, peak(0.0f)
-
-		, newPeak(false)
-		, newLagPeak(false)
-		, showGraph(false)
-		{
-			memset(frames, 0, sizeof(frames));
-		}
-
-		static constexpr unsigned numFrames = 128;
-
-		spring_time total;
-		spring_time current;
-		spring_time frames[numFrames];
-
-		float maxLag;
-		float percent;
-		float peak;
-
-		float3 color;
-
-		bool newPeak;
-		bool newLagPeak;
-		bool showGraph;
-	};
-
-	spring::unordered_map<std::string, TimeRecord> profile;
-
-	std::vector< std::pair<std::string, TimeRecord> > sortedProfile;
-	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfile;
-
 private:
+	spring::unordered_map<unsigned, TimeRecord> profiles;
+
+	std::vector< std::pair<std::string, TimeRecord> > sortedProfiles;
+	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfiles;
+
 	spring_time lastBigUpdate;
 
 	/// increases each update, from 0 to (numFrames-1)
@@ -185,6 +197,15 @@ private:
 
 	// if false, AddTime is a no-op for (almost) all timers
 	std::atomic<bool> enabled;
+};
+
+
+class TimerNameRegistrar : public spring::noncopyable
+{
+public:
+	TimerNameRegistrar(const char* timerName) {
+		CTimeProfiler::RegisterTimer(timerName);
+	}
 };
 
 #define profiler (CTimeProfiler::GetInstance())

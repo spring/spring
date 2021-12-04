@@ -142,6 +142,7 @@ bool LuaConstSFX::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "CEG",             SFX_CEG);
 	LuaPushNamedNumber(L, "FIRE_WEAPON",     SFX_FIRE_WEAPON);
 	LuaPushNamedNumber(L, "DETONATE_WEAPON", SFX_DETONATE_WEAPON);
+	LuaPushNamedNumber(L, "GLOBAL",          SFX_GLOBAL);
 
 	return true;
 }

@@ -14,15 +14,15 @@ public:
 private:
 	void GenerateInfo();
 
-	virtual void GenerateMap();
+	virtual void GenerateMap() override;
 
-	virtual const int2& GetMapSize() const
+	virtual const int2& GetMapSize() const override
 	{ return mapSize; }
 
-	virtual const std::vector<int2>& GetStartPositions() const
+	virtual const std::vector<int2>& GetStartPositions() const override
 	{ return startPositions; }
 
-	virtual const std::string& GetMapDescription() const
+	virtual const std::string& GetMapDescription() const override
 	{ return mapDescription; }
 
 	std::vector<int2> startPositions;

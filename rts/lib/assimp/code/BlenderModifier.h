@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -121,7 +122,7 @@ class BlenderModifier_Mirror : public BlenderModifier
 public:
 
     // --------------------
-    virtual bool IsActive( const ModifierData& modin);
+    virtual bool IsActive( const ModifierData& modin) override;
 
     // --------------------
     virtual void DoIt(aiNode& out,
@@ -129,7 +130,7 @@ public:
         const ElemBase& orig_modifier,
         const Scene& in,
         const Object& orig_object
-    ) ;
+    ) override ;
 };
 
 // -------------------------------------------------------------------------------------------
@@ -140,7 +141,7 @@ class BlenderModifier_Subdivision : public BlenderModifier
 public:
 
     // --------------------
-    virtual bool IsActive( const ModifierData& modin);
+    virtual bool IsActive( const ModifierData& modin) override;
 
     // --------------------
     virtual void DoIt(aiNode& out,
@@ -148,7 +149,7 @@ public:
         const ElemBase& orig_modifier,
         const Scene& in,
         const Object& orig_object
-    ) ;
+    ) override ;
 };
 
 

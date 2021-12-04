@@ -4,32 +4,37 @@
 #define UNITDRAWER_STATE_H
 
 #include <array>
+#include "Map/MapDrawPassTypes.h"
 #include "System/type2.h"
+#include "System/Matrix44f.h"
 
 struct float4;
 class CUnitDrawer;
 class CCamera;
 struct ISkyLight;
 
+class LuaMatShader;
 namespace Shader {
 	struct IProgramObject;
 }
 
 enum {
-	DRAWER_STATE_FFP = 0, // fixed-function path
-	DRAWER_STATE_SSP = 1, // standard-shader path (ARB/GLSL)
-	DRAWER_STATE_SEL = 2, // selected path
-	DRAWER_STATE_CNT = 3,
+	DRAWER_STATE_NOP = 0, // no-op path
+	DRAWER_STATE_SSP = 1, // standard-shader path
+	DRAWER_STATE_LUA = 2, // custom-shader path
+	DRAWER_STATE_SEL = 3, // selected path
+	DRAWER_STATE_CNT = 4,
 };
 
 
 struct IUnitDrawerState {
 public:
-	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
+	static IUnitDrawerState* GetInstance(bool nopState, bool luaState);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
-	static void PushTransform(const CCamera* cam);
-	static void PopTransform();
+	static const CMatrix44f& GetDummyPieceMatrixRef(size_t idx = 0);
+	static const CMatrix44f* GetDummyPieceMatrixPtr(size_t idx = 0);
+
 	static float4 GetTeamColor(int team, float alpha);
 
 	IUnitDrawerState() { modelShaders.fill(nullptr); }
@@ -47,18 +52,26 @@ public:
 
 	virtual void EnableTextures() const = 0;
 	virtual void DisableTextures() const = 0;
-	virtual void EnableShaders(const CUnitDrawer*) {}
-	virtual void DisableShaders(const CUnitDrawer*) {}
+	virtual void EnableShaders(const CUnitDrawer*) = 0;
+	virtual void DisableShaders(const CUnitDrawer*) = 0;
 
-	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
+	virtual void SetSkyLight(const ISkyLight*) const = 0;
+	virtual void SetAlphaTest(const float4& params) const = 0;
 	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
-	virtual void SetNanoColor(const float4& color) const {}
+	virtual void SetNanoColor(const float4& color) const = 0;
+	virtual void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const = 0;
+	virtual void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const = 0;
+	virtual void SetWaterClipPlane(const DrawPass::e& drawPass) const = 0; // water
+	virtual void SetBuildClipPlanes(const float4&, const float4&) const = 0; // nano-frames
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
 		// shadowed=0 --> shader 0 (deferred=0) or 2 (deferred=1)
 		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[shadowed + deferred * 2];
 	}
+
+	const Shader::IProgramObject* GetActiveShader() const { return modelShaders[MODEL_SHADER_ACTIVE]; }
+	      Shader::IProgramObject* GetActiveShader()       { return modelShaders[MODEL_SHADER_ACTIVE]; }
 
 	enum ModelShaderProgram {
 		MODEL_SHADER_NOSHADOW_STANDARD = 0, ///< model shader (V+F) without self-shadowing
@@ -84,38 +97,55 @@ protected:
 
 
 
-struct UnitDrawerStateFFP: public IUnitDrawerState {
+struct UnitDrawerStateNOP: public IUnitDrawerState {
 public:
-	bool CanEnable(const CUnitDrawer*) const override;
+	bool Init(const CUnitDrawer*) override { return true; }
+	void Kill() override {}
 
-	void Enable(const CUnitDrawer*, bool, bool) override;
-	void Disable(const CUnitDrawer*, bool) override;
+	bool CanEnable(const CUnitDrawer*) const override { return true; }
+	bool CanDrawAlpha() const override { return false; }
+	bool CanDrawDeferred() const  override { return false; }
 
-	void EnableTextures() const override;
-	void DisableTextures() const override;
+	void Enable(const CUnitDrawer*, bool, bool) override {}
+	void Disable(const CUnitDrawer*, bool) override {}
 
-	void SetTeamColor(int team, const float2 alpha) const override;
-	void SetNanoColor(const float4& color) const override;
+	void EnableTextures() const override {}
+	void DisableTextures() const override {}
+	void EnableShaders(const CUnitDrawer*) override {}
+	void DisableShaders(const CUnitDrawer*) override {}
+
+	void SetSkyLight(const ISkyLight*) const override {}
+	void SetAlphaTest(const float4& params) const override {}
+	void SetTeamColor(int team, const float2 alpha) const override {}
+	void SetNanoColor(const float4& color) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override {}
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
+	void SetBuildClipPlanes(const float4&, const float4&) const override {}
 };
 
 
-struct UnitDrawerStateARB: public IUnitDrawerState {
+// does nothing by itself; LuaObjectDrawer handles custom uniforms
+// this exists to ensure UnitDrawerStateGLSL::SetMatrices will not
+// be invoked (via *Drawer::Draw*Trans) during a custom bin-pass
+struct UnitDrawerStateLUA: public IUnitDrawerState {
 public:
-	bool Init(const CUnitDrawer*) override;
-	void Kill() override;
+	void Enable(const CUnitDrawer* ud, bool, bool) override { EnableShaders(ud); }
+	void Disable(const CUnitDrawer* ud, bool) override { DisableShaders(ud); }
 
-	bool CanEnable(const CUnitDrawer*) const override;
+	void EnableTextures() const override {}
+	void DisableTextures() const override {}
+	void EnableShaders(const CUnitDrawer*) override {}
+	void DisableShaders(const CUnitDrawer*) override {}
 
-	void Enable(const CUnitDrawer*, bool, bool) override;
-	void Disable(const CUnitDrawer*, bool) override;
-
-	void EnableTextures() const override;
-	void DisableTextures() const override;
-	void EnableShaders(const CUnitDrawer*) override;
-	void DisableShaders(const CUnitDrawer*) override;
-
-	void SetNanoColor(const float4& color) const override;
-	void SetTeamColor(int team, const float2 alpha) const override;
+	void SetSkyLight(const ISkyLight*) const override {}
+	void SetAlphaTest(const float4& params) const override {}
+	void SetTeamColor(int team, const float2 alpha) const override {} // handled via LuaObjectDrawer::SetObjectTeamColor
+	void SetNanoColor(const float4& color) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override {} // handled via LuaObjectDrawer::SetObjectMatrices
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
+	void SetBuildClipPlanes(const float4&, const float4&) const override {}
 };
 
 
@@ -124,7 +154,7 @@ public:
 	bool Init(const CUnitDrawer*) override;
 	void Kill() override;
 
-	bool CanEnable(const CUnitDrawer*) const override;
+	bool CanEnable(const CUnitDrawer*) const override { return true; }
 	bool CanDrawAlpha() const override { return true; }
 	bool CanDrawDeferred() const  override { return true; }
 
@@ -136,9 +166,14 @@ public:
 	void EnableShaders(const CUnitDrawer*) override;
 	void DisableShaders(const CUnitDrawer*) override;
 
-	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override;
+	void SetSkyLight(const ISkyLight*) const override;
+	void SetAlphaTest(const float4& params) const override;
 	void SetTeamColor(int team, const float2 alpha) const override;
 	void SetNanoColor(const float4& color) const override;
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override;
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override;
+	void SetBuildClipPlanes(const float4&, const float4&) const override;
 };
 
 #endif

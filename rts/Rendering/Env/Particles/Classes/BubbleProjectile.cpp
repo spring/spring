@@ -6,13 +6,12 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CBubbleProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, )
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER_BEGINFLAG(CM_Config),
@@ -26,8 +25,7 @@ CR_REG_METADATA(CBubbleProjectile, (
 
 
 CBubbleProjectile::CBubbleProjectile()
-	: CProjectile()
-	, ttl(0)
+	: ttl(0)
 	, alpha(0.0f)
 	, size(0.0f)
 	, startSize(0.0f)
@@ -77,7 +75,7 @@ void CBubbleProjectile::Update()
 	}
 }
 
-void CBubbleProjectile::Draw(CVertexArray* va)
+void CBubbleProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	col[0] = (unsigned char)(255 * alpha);
@@ -88,16 +86,14 @@ void CBubbleProjectile::Draw(CVertexArray* va)
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 
 	#define bt projectileDrawer->bubbletex
-	va->AddVertexTC(drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col);
-	#undef bt
-}
+	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col});
 
-int CBubbleProjectile::GetProjectilesCount() const
-{
-	return 1;
+	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col});
+	#undef bt
 }
 
 

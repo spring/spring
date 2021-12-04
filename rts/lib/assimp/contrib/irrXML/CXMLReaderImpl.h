@@ -13,7 +13,7 @@ using namespace Assimp;
 
 #ifdef _DEBUG
 #define IRR_DEBUGPRINT(x) printf((x));
-#else // _DEBUG 
+#else // _DEBUG
 #define IRR_DEBUGPRINT(x)
 #endif // _DEBUG
 
@@ -43,7 +43,7 @@ public:
 		// read whole xml file
 
 		readFile(callback);
-		
+
 		// clean up
 
 		if (deleteCallBack)
@@ -56,7 +56,7 @@ public:
 		// set pointer to text begin
 		P = TextBegin;
 	}
-    	
+
 
 	//! Destructor
 	virtual ~CXMLReaderImpl()
@@ -65,9 +65,9 @@ public:
 	}
 
 
-	//! Reads forward to the next xml node. 
-	//! \return Returns false, if there was no further node. 
-	virtual bool read()
+	//! Reads forward to the next xml node.
+	//! \return Returns false, if there was no further node.
+	virtual bool read() override
 	{
 		// if not end reached, parse the node
 		if (P && (unsigned int)(P - TextBegin) < TextSize - 1 && *P != 0)
@@ -82,21 +82,21 @@ public:
 
 
 	//! Returns the type of the current XML node.
-	virtual EXML_NODE getNodeType() const
+	virtual EXML_NODE getNodeType() const override
 	{
 		return CurrentNodeType;
 	}
 
 
 	//! Returns attribute count of the current XML node.
-	virtual int getAttributeCount() const
+	virtual int getAttributeCount() const override
 	{
 		return Attributes.size();
 	}
 
 
 	//! Returns name of an attribute.
-	virtual const char_type* getAttributeName(int idx) const
+	virtual const char_type* getAttributeName(int idx) const override
 	{
 		if (idx < 0 || idx >= (int)Attributes.size())
 			return 0;
@@ -105,8 +105,8 @@ public:
 	}
 
 
-	//! Returns the value of an attribute. 
-	virtual const char_type* getAttributeValue(int idx) const
+	//! Returns the value of an attribute.
+	virtual const char_type* getAttributeValue(int idx) const override
 	{
 		if (idx < 0 || idx >= (int)Attributes.size())
 			return 0;
@@ -115,8 +115,8 @@ public:
 	}
 
 
-	//! Returns the value of an attribute. 
-	virtual const char_type* getAttributeValue(const char_type* name) const
+	//! Returns the value of an attribute.
+	virtual const char_type* getAttributeValue(const char_type* name) const override
 	{
 		const SAttribute* attr = getAttributeByName(name);
 		if (!attr)
@@ -127,7 +127,7 @@ public:
 
 
 	//! Returns the value of an attribute
-	virtual const char_type* getAttributeValueSafe(const char_type* name) const
+	virtual const char_type* getAttributeValueSafe(const char_type* name) const override
 	{
 		const SAttribute* attr = getAttributeByName(name);
 		if (!attr)
@@ -138,22 +138,22 @@ public:
 
 
 
-	//! Returns the value of an attribute as integer. 
-	int getAttributeValueAsInt(const char_type* name) const
+	//! Returns the value of an attribute as integer.
+	int getAttributeValueAsInt(const char_type* name) const override
 	{
 		return (int)getAttributeValueAsFloat(name);
 	}
 
 
-	//! Returns the value of an attribute as integer. 
-	int getAttributeValueAsInt(int idx) const
+	//! Returns the value of an attribute as integer.
+	int getAttributeValueAsInt(int idx) const override
 	{
 		return (int)getAttributeValueAsFloat(idx);
 	}
 
 
-	//! Returns the value of an attribute as float. 
-	float getAttributeValueAsFloat(const char_type* name) const
+	//! Returns the value of an attribute as float.
+	float getAttributeValueAsFloat(const char_type* name) const override
 	{
 		const SAttribute* attr = getAttributeByName(name);
 		if (!attr)
@@ -164,8 +164,8 @@ public:
 	}
 
 
-	//! Returns the value of an attribute as float. 
-	float getAttributeValueAsFloat(int idx) const
+	//! Returns the value of an attribute as float.
+	float getAttributeValueAsFloat(int idx) const override
 	{
 		const char_type* attrvalue = getAttributeValue(idx);
 		if (!attrvalue)
@@ -177,33 +177,33 @@ public:
 
 
 	//! Returns the name of the current node.
-	virtual const char_type* getNodeName() const
+	virtual const char_type* getNodeName() const override
 	{
 		return NodeName.c_str();
 	}
 
 
 	//! Returns data of the current node.
-	virtual const char_type* getNodeData() const
+	virtual const char_type* getNodeData() const override
 	{
 		return NodeName.c_str();
 	}
 
 
 	//! Returns if an element is an empty element, like <foo />
-	virtual bool isEmptyElement() const
+	virtual bool isEmptyElement() const override
 	{
 		return IsEmptyElement;
 	}
 
 	//! Returns format of the source xml file.
-	virtual ETEXT_FORMAT getSourceFormat() const
+	virtual ETEXT_FORMAT getSourceFormat() const override
 	{
 		return SourceFormat;
 	}
 
 	//! Returns format of the strings returned by the parser.
-	virtual ETEXT_FORMAT getParserFormat() const
+	virtual ETEXT_FORMAT getParserFormat() const override
 	{
 		return TargetFormat;
 	}
@@ -235,14 +235,14 @@ private:
 		switch(*P)
 		{
 		case L'/':
-			parseClosingXMLElement(); 
+			parseClosingXMLElement();
 			break;
 		case L'?':
-			ignoreDefinition();	
+			ignoreDefinition();
 			break;
 		case L'!':
 			if (!parseCDATA())
-				parseComment();	
+				parseComment();
 			break;
 		default:
 			parseOpeningXMLElement();
@@ -254,7 +254,7 @@ private:
 	//! sets the state that text was found. Returns true if set should be set
 	bool setText(char_type* start, char_type* end)
 	{
-		// check if text is more than 2 characters, and if not, check if there is 
+		// check if text is more than 2 characters, and if not, check if there is
 		// only white space, so that this text won't be reported
 		if (end - start < 3)
 		{
@@ -358,7 +358,7 @@ private:
 
 					// read the attribute value
 					// check for quotes and single quotes, thx to murphy
-					while( (*P != L'\"') && (*P != L'\'') && *P) 
+					while( (*P != L'\"') && (*P != L'\'') && *P)
 						++P;
 
 					if (!*P) // malformatted xml file
@@ -368,7 +368,7 @@ private:
 
 					++P;
 					const char_type* attributeValueBegin = P;
-					
+
 					while(*P != attributeQuoteChar && *P)
 						++P;
 
@@ -379,10 +379,10 @@ private:
 					++P;
 
 					SAttribute attr;
-					attr.Name = core::string<char_type>(attributeNameBegin, 
+					attr.Name = core::string<char_type>(attributeNameBegin,
 						(int)(attributeNameEnd - attributeNameBegin));
 
-					core::string<char_type> s(attributeValueBegin, 
+					core::string<char_type> s(attributeValueBegin,
 						(int)(attributeValueEnd - attributeValueBegin));
 
 					attr.Value = replaceSpecialCharacters(s);
@@ -405,7 +405,7 @@ private:
 			IsEmptyElement = true;
 			endName--;
 		}
-		
+
 		NodeName = core::string<char_type>(startName, (int)(endName - startName));
 
 		++P;
@@ -458,7 +458,7 @@ private:
 		// find end of CDATA
 		while(*P && !cDataEnd)
 		{
-			if (*P == L'>' && 
+			if (*P == L'>' &&
 			   (*(P-1) == L']') &&
 			   (*(P-2) == L']'))
 			{
@@ -541,7 +541,7 @@ private:
 
 			// find next &
 			oldPos = pos;
-			pos = origstr.findNext(L'&', pos);		
+			pos = origstr.findNext(L'&', pos);
 		}
 
 		if (oldPos < origstr.size()-1)
@@ -555,7 +555,7 @@ private:
 	//! reads the xml file and converts it into the wanted character format.
 	bool readFile(IFileReadCallBack* callback)
 	{
-		int size = callback->getSize();		
+		int size = callback->getSize();
 		size += 4; // We need two terminating 0's at the end.
 		           // For ASCII we need 1 0's, for UTF-16 2, for UTF-32 4.
 
@@ -575,7 +575,7 @@ private:
 		data8[size-4] = 0;
 
 		char16* data16 = reinterpret_cast<char16*>(data8);
-		char32* data32 = reinterpret_cast<char32*>(data8);	
+		char32* data32 = reinterpret_cast<char32*>(data8);
 
 		// now we need to convert the data to the desired target format
 		// based on the byte order mark.
@@ -587,7 +587,7 @@ private:
 		const int UTF32_LE = 0x0000FEFF;
 
 		// check source for all utf versions and convert to target data format
-		
+
 		if (size >= 4 && data32[0] == (char32)UTF32_BE)
 		{
 			// UTF-32, big endian
@@ -642,7 +642,7 @@ private:
 	void convertTextData(src_char_type* source, char* pointerToStore, int sizeWithoutHeader)
 	{
 		// convert little to big endian if necessary
-		if (sizeof(src_char_type) > 1 && 
+		if (sizeof(src_char_type) > 1 &&
 			isLittleEndian(TargetFormat) != isLittleEndian(SourceFormat))
 			convertToLittleEndian(source);
 
@@ -656,9 +656,9 @@ private:
 		}
 		else
 		{
-			// convert source into target data format. 
-			// TODO: implement a real conversion. This one just 
-			// copies bytes. This is a problem when there are 
+			// convert source into target data format.
+			// TODO: implement a real conversion. This one just
+			// copies bytes. This is a problem when there are
 			// unicode symbols using more than one character.
 
 			TextData = new char_type[sizeWithoutHeader];
@@ -671,7 +671,7 @@ private:
 			volatile unsigned int c = 3;
 			const src_char_type cc = (src_char_type)((((uint64_t)1u << (sizeof( char_type)<<c)) - 1));
 			for (int i=0; i<sizeWithoutHeader; ++i)
-				TextData[i] = char_type( source[i] & cc); 
+				TextData[i] = char_type( source[i] & cc);
 
 			TextBegin = TextData;
 			TextSize = sizeWithoutHeader;
@@ -685,7 +685,7 @@ private:
 	template<class src_char_type>
 	void convertToLittleEndian(src_char_type* t)
 	{
-		if (sizeof(src_char_type) == 4) 
+		if (sizeof(src_char_type) == 4)
 		{
 			// 32 bit
 
@@ -700,7 +700,7 @@ private:
 		}
 		else
 		{
-			// 16 bit 
+			// 16 bit
 
 			while(*t)
 			{
@@ -730,7 +730,7 @@ private:
 	//! generates a list with xml special characters
 	void createSpecialCharacterList()
 	{
-		// list of strings containing special symbols, 
+		// list of strings containing special symbols,
 		// the first character is the special character,
 		// the following is the symbol string without trailing &.
 
@@ -739,7 +739,7 @@ private:
 		SpecialCharacters.push_back(">gt;");
 		SpecialCharacters.push_back("\"quot;");
 		SpecialCharacters.push_back("'apos;");
-		
+
 	}
 
 
@@ -765,13 +765,13 @@ private:
 
 		switch(sizeof(char_type))
 		{
-		case 1: 
+		case 1:
 			TargetFormat = ETF_UTF8;
 			break;
-		case 2: 
+		case 2:
 			TargetFormat = ETF_UTF16_LE;
 			break;
-		case 4: 
+		case 4:
 			TargetFormat = ETF_UTF32_LE;
 			break;
 		default:
@@ -799,7 +799,7 @@ private:
 	core::array< core::string<char_type> > SpecialCharacters; // see createSpecialCharacterList()
 
 	core::array<SAttribute> Attributes; // attributes of current element
-	
+
 }; // end CXMLReaderImpl
 
 

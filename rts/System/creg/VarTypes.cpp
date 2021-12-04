@@ -9,10 +9,9 @@
 
 #include "System/StringUtil.h"
 
-#include <assert.h>
+#include <cassert>
 
 using namespace creg;
-using std::string;
 
 // serialization code
 
@@ -36,14 +35,14 @@ std::string BasicType::GetName() const
 	return std::string();
 }
 
-size_t BasicType::GetSize() const
+std::unique_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 {
-	return size;
+	return std::unique_ptr<IType>(new BasicType(t, size));
 }
 
-std::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
+std::string ObjectPointerBaseType::GetName() const
 {
-	return std::shared_ptr<IType>(new BasicType(t, size));
+	return std::string(objClass->name) + "*";
 }
 
 std::string StringType::GetName() const
@@ -51,17 +50,9 @@ std::string StringType::GetName() const
 	return "string";
 }
 
-size_t StringType::GetSize() const
+std::unique_ptr<IType> IType::CreateStringType()
 {
-	return sizeof(std::string);
-}
-
-StringType::StringType(std::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
-
-std::shared_ptr<IType> IType::CreateStringType()
-{
-	DeduceType<char> charType;
-	return std::shared_ptr<IType>(new StringType(charType.Get()));
+	return std::unique_ptr<IType>(new StringType());
 }
 
 void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
@@ -74,24 +65,22 @@ std::string ObjectInstanceType::GetName() const
 	return objectClass->name;
 }
 
-size_t ObjectInstanceType::GetSize() const
+std::unique_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t size)
 {
-	return objectClass->size;
+	return std::unique_ptr<IType>(new ObjectInstanceType(objectType, size));
 }
 
-std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
+std::string StaticArrayBaseType::GetName() const
 {
-	return std::shared_ptr<IType>(new ObjectInstanceType(objectType));
+	return elemType->GetName() + "[" + IntToString(size / elemType->GetSize()) + "]";
 }
 
-string StaticArrayBaseType::GetName() const
+std::string DynamicArrayBaseType::GetName() const
 {
-	char sstr[16];
-	SNPRINTF(sstr, 16, "%d", size);
-	return elemType->GetName() + "[" + std::string(sstr) + "]";
+	return elemType->GetName() + "[]";
 }
 
-std::shared_ptr<IType> IType::CreateIgnoredType(size_t size)
+std::unique_ptr<IType> IType::CreateIgnoredType(size_t size)
 {
-	return std::shared_ptr<IType>(new IgnoredType(size));
+	return std::unique_ptr<IType>(new IgnoredType(size));
 }

@@ -48,10 +48,6 @@ struct CExplosionParams {
 class CGameHelper
 {
 public:
-	enum {
-		TEST_ALLIED  = 1,
-		TEST_NEUTRAL = 2,
-	};
 	enum BuildSquareStatus {
 		BUILDSQUARE_BLOCKED     = 0,
 		BUILDSQUARE_OCCUPIED    = 1,
@@ -62,18 +58,19 @@ public:
 	CGameHelper() {}
 	CGameHelper(const CGameHelper&) = delete; // no-copy
 
-	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
-	static void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static size_t GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static size_t GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+
 	static CUnit* GetClosestUnit(const float3& pos, float searchRadius);
 	static CUnit* GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
 	static CUnit* GetClosestEnemyUnitNoLosTest(
 		const CUnit* excludeUnit,
-		const float3& pos,
+		const float3& searchPos,
 		float searchRadius,
 		int searchAllyteam,
-		bool sphere,
-		bool canBeBlind
+		bool sphereDistTest,
+		bool checkSightDist
 	);
 	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
@@ -117,11 +114,19 @@ public:
 	);
 
 	/**
-	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
+	 * @param minDistance measured in 1/BUILD_SQUARE_SIZE = 1/16 of full map resolution.
 	 */
-	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
+	static float3 ClosestBuildPos(
+		int team,
+		const UnitDef* unitDef,
+		const float3& worldPos,
+		float searchRadius,
+		int minDistance,
+		int buildFacing = 0,
+		bool synced = false
+	);
 
-	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
+	static size_t GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
 
 	void Init();
 	void Update();
@@ -176,6 +181,10 @@ private:
 
 	// note: size must be a power of two
 	std::array<std::vector<WaitingDamage>, 128> waitingDamages;
+
+public:
+	std::vector<int> targetUnitIDs; // GetEnemyUnits{NoLosTest}
+	std::vector<std::pair<float, CUnit*>> targetPairs; // GenerateWeaponTargets
 };
 
 extern CGameHelper* helper;

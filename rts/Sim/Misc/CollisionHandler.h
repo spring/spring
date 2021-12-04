@@ -5,13 +5,13 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
+#include "System/Matrix44f.h"
 
 #include <algorithm>
 
 class CSolidObject;
 struct LocalModelPiece;
 struct CollisionVolume;
-class CMatrix44f;
 
 enum {
 	CQ_POINT_NO_INT = 0,
@@ -21,24 +21,33 @@ enum {
 
 struct CollisionQuery {
 public:
-	CollisionQuery()
-	: b0(CQ_POINT_NO_INT)
-	, b1(CQ_POINT_NO_INT)
-	, t0(0.0f)
-	, t1(0.0f)
-	, p0(ZeroVector)
-	, p1(ZeroVector)
-	, lmp(nullptr)
-	{ }
+	bool SwapParams() {
+		if (!AllHit() || ValidRay())
+			return false;
 
-	void Reset(const CollisionQuery* cq = nullptr) {
-		*this = (cq != nullptr) ? *cq : CollisionQuery();
+		std::swap(t1, t0);
+		std::swap(p1, p0);
+		std::swap(b1, b0);
+		return true;
+	}
+	void Transform(const CMatrix44f& m) {
+		// transform intersection points (iff not a special
+		// case, otherwise calling code should not use them)
+		if (b0 == CQ_POINT_ON_RAY) { p0 = m.Mul(p0); }
+		if (b1 == CQ_POINT_ON_RAY) { p1 = m.Mul(p1); }
 	}
 
+	void Reset(const CollisionQuery* cq = nullptr) {
+		*this = (cq != nullptr) ? *cq : CollisionQuery{};
+	}
+
+	// t0 > t1 can happen when intersecting cylinder endcaps
+	bool ValidRay() const { return (t0 <= t1); }
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
 	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
 	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
-	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT) || (b1 != CQ_POINT_NO_INT); }
+	bool AllHit() const { return (b0 != CQ_POINT_NO_INT && b1 != CQ_POINT_NO_INT); }
+	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT || b1 != CQ_POINT_NO_INT); }
 
 	const float3& GetIngressPos() const { return p0; }
 	const float3& GetEgressPos() const { return p1; }
@@ -53,9 +62,9 @@ public:
 	// inside-hit special case), the projected distance could be
 	// positive or negative depending on <dir> but we want it to
 	// be 0 --> turn <pos> into a ZeroVector if InsideHit()
-	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos * (1 - InsideHit())).dot(dir)))); }
-	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetIngressPos() - pos).dot(dir)))); }
-	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
+	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, dir.dot(GetHitPos() - pos * (1 - InsideHit())))); }
+	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, dir.dot(GetIngressPos() - pos))); }
+	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, dir.dot(GetEgressPos() - pos))); }
 
 	const LocalModelPiece* GetHitPiece() const { return lmp; }
 	void SetHitPiece(const LocalModelPiece* p) { lmp = p; }
@@ -63,11 +72,18 @@ public:
 private:
 	friend class CCollisionHandler;
 
-	int    b0, b1;        ///< true (non-zero) if ingress (b0) or egress (b1) point on ray segment
-	float  t0, t1;        ///< distance parameter for ingress and egress point
-	float3 p0, p1;        ///< ray-volume ingress and egress points
+	///< true (non-zero) if {in,e}gress (b{0,1}) point on ray segment
+	int    b0 = CQ_POINT_NO_INT;
+	int    b1 = CQ_POINT_NO_INT;
+	///< distance parameter for ingress and egress point
+	float  t0 = 0.0f;
+	float  t1 = 0.0f;
+	///< ray-volume ingress and egress points
+	float3 p0;
+	float3 p1;
 
-	const LocalModelPiece* lmp; ///< impacted piece
+	///< impacted piece
+	const LocalModelPiece* lmp = nullptr;
 };
 
 /**

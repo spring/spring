@@ -27,7 +27,7 @@ public:
 
 	static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans);
 	static bool DrawSingleObject(const CSolidObject* obj, LuaObjType objType);
-	static bool DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType);
+	static bool DrawSingleObjectLuaTrans(const CSolidObject* obj, LuaObjType objType);
 
 	static void Update(bool init);
 	static void Init();
@@ -83,7 +83,7 @@ private:
 	static void DrawBinObject(
 		const CSolidObject* obj,
 		LuaObjType objType,
-		const LuaObjectLODMaterial* lodMat,
+		const LuaMatRef* matRef,
 		const LuaMaterial* luaMat,
 		bool deferredPass,
 		bool alphaMatBin,

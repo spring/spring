@@ -22,7 +22,9 @@
 #include "Game/ChatMessage.h"
 #include "Game/CommandMessage.h"
 #include "Game/GlobalUnsynced.h" // for syncdebug
+#ifndef DEDICATED
 #include "Game/IVideoCapturing.h"
+#endif
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 
@@ -37,10 +39,11 @@
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SpringExitCode.h"
 #include "System/SpringFormat.h"
 #include "System/TdfParser.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
@@ -56,7 +59,6 @@
 
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
-#include "Rendering/GlobalRendering.h"
 #endif
 
 #define ALLOW_DEMO_GODMODE
@@ -68,7 +70,7 @@ CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, ServerSleepTime).defaultValue(5).description("number of milliseconds to sleep per tick");
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
-CONFIG(bool, AllowSpectatorJoin).defaultValue(true).description("allow any unauthenticated clients to join as spectator with any name, name will be prefixed with ~");
+CONFIG(bool, AllowSpectatorJoin).defaultValue(true).dedicatedValue(false).description("allow any unauthenticated clients to join as spectator with any name, name will be prefixed with ~");
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
@@ -88,31 +90,32 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
 
 
 /// frames until a synccheck will time out and a warning is given out
-static const unsigned SYNCCHECK_TIMEOUT = 300;
+static constexpr unsigned SYNCCHECK_TIMEOUT = 300;
 
 /// used to prevent msg spam
-static const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
+static constexpr unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
 /// The time interval in msec for sending player statistics to each client
 static const spring_time playerInfoTime = spring_secs(2);
 
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
-static const unsigned serverKeyframeInterval = 16;
+static constexpr unsigned serverKeyframeInterval = 16;
 
 /// players incoming bandwidth new allowance every X milliseconds
-static const unsigned playerBandwidthInterval = 100;
+static constexpr unsigned playerBandwidthInterval = 100;
 
 /// every 10 sec we'll broadcast current frame in a message that skips queue & cache
 /// to let clients that are fast-forwarding to current point to know their loading %
-static const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
+static constexpr unsigned gameProgressFrameInterval = GAME_SPEED * 10;
 
-static const unsigned syncResponseEchoInterval = GAME_SPEED * 2;
+static constexpr unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
 
 //FIXME remodularize server commands, so they get registered in word completion etc.
-static const std::array<std::string, 23> SERVER_COMMANDS = {
+decltype(CGameServer::commandBlacklist) CGameServer::commandBlacklist{
 	"kick", "kickbynum",
 	"mute", "mutebynum",
+	"aictrl", "aictrlbynum",
 	"setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
@@ -121,54 +124,17 @@ static const std::array<std::string, 23> SERVER_COMMANDS = {
 };
 
 
-std::set<std::string> CGameServer::commandBlacklist;
 
-
-
-CGameServer* gameServer = NULL;
+CGameServer* gameServer = nullptr;
 
 CGameServer::CGameServer(
 	const std::shared_ptr<const ClientSetup> newClientSetup,
 	const std::shared_ptr<const    GameData> newGameData,
 	const std::shared_ptr<const  CGameSetup> newGameSetup
-)
-: quitServer(false)
-, serverFrameNum(-1)
+) {
+	lastPlayerInfo = serverStartTime;
+	lastUpdate = serverStartTime;
 
-, serverStartTime(spring_gettime())
-, readyTime(spring_notime)
-, gameEndTime(spring_notime)
-, lastPlayerInfo(serverStartTime)
-, lastUpdate(serverStartTime)
-
-, modGameTime(0.0f)
-, gameTime(0.0f)
-, startTime(0.0f)
-, frameTimeLeft(0.0f)
-
-, isPaused(false)
-, gamePausable(true)
-
-, userSpeedFactor(1.0f)
-, internalSpeed(1.0f)
-
-, medianCpu(0.0f)
-, medianPing(0)
-
-, cheating(false)
-, noHelperAIs(false)
-, canReconnect(false)
-, allowSpecDraw(true)
-
-, syncErrorFrame(0)
-, syncWarningFrame(0)
-
-, localClientNumber(-1u)
-
-, gameHasStarted(false)
-, generatedGameID(false)
-, reloadingServer(false)
-{
 	myClientSetup = newClientSetup;
 	myGameData = newGameData;
 	myGameSetup = newGameSetup;
@@ -180,10 +146,9 @@ CGameServer::~CGameServer()
 {
 	quitServer = true;
 
-	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
-	thread->join();
-	delete thread;
-	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][1]", __func__);
+	thread.join();
+	LOG_L(L_INFO, "[%s][2]", __func__);
 
 	// after this, demoRecorder goes out of scope and its dtor is called
 	WriteDemoData();
@@ -194,7 +159,7 @@ void CGameServer::Initialize()
 {
 	// configs
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
-	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin");
+	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin") || myGameSetup->onlyLocal; ///!!! mantis #4418
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
 	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
@@ -203,7 +168,7 @@ void CGameServer::Initialize()
 
 	// start network
 	if (!myGameSetup->onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
+		udpListener.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 	Message(spring::format(ServerStart, myClientSetup->hostPort), false);
@@ -212,7 +177,9 @@ void CGameServer::Initialize()
 	maxUserSpeed = myGameSetup->maxSpeed;
 	minUserSpeed = myGameSetup->minSpeed;
 	noHelperAIs  = myGameSetup->noHelperAIs;
-	StripGameSetupText(myGameData.get());
+
+	// modify and save GameSetup text (remove passwords)
+	StripGameSetupText(const_cast<GameData*>(myGameData.get()));
 
 	// load demo (if there is one)
 	if (myGameSetup->hostDemo) {
@@ -222,10 +189,10 @@ void CGameServer::Initialize()
 
 	// initialize players, teams & ais
 	{
-		clientDrawFilter.fill({spring_notime, 0});
-		clientMuteFilter.fill({false, false});
-
-		usedSkirmishAIIds.fill(false);
+		netPingTimings.fill(spring_notime);
+		mapDrawTimings.fill({spring_notime, 0});
+		chatMutedFlags.fill({false, false});
+		aiControlFlags.fill(false);
 
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
 		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
@@ -235,12 +202,11 @@ void CGameServer::Initialize()
 		teams.resize(teamStartData.size());
 
 		players.resize(playerStartData.size());
-		if (demoReader != NULL) {
+		if (demoReader != nullptr) {
 			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
 			players.resize(std::max(demoPlayers, playerStartData.size()));
-			if (players.size() >= MAX_PLAYERS) {
+			if (players.size() >= MAX_PLAYERS)
 				Message(spring::format("Too many Players (%d) in the demo", players.size()));
-			}
 		}
 
 		std::copy(playerStartData.begin(), playerStartData.end(), players.begin());
@@ -250,24 +216,34 @@ void CGameServer::Initialize()
 		for (size_t n = 0; n < players.size(); n++)
 			players[n].id = n;
 
+		skirmishAIs.clear();
+		skirmishAIs.resize(MAX_AIS, {false, {}});
+		freeSkirmishAIs.clear();
+		freeSkirmishAIs.resize(MAX_AIS, 0);
+
+		std::for_each(freeSkirmishAIs.begin(), freeSkirmishAIs.end(), [&](const uint8_t& id) { freeSkirmishAIs[&id - &freeSkirmishAIs[0]] = &id - &freeSkirmishAIs[0]; });
+		std::reverse(freeSkirmishAIs.begin(), freeSkirmishAIs.end());
+
 		for (const SkirmishAIData& skd: aiStartData) {
 			const uint8_t skirmishAIId = ReserveSkirmishAIId();
+
 			if (skirmishAIId == MAX_AIS) {
-				Message(spring::format("Too many AIs (%d) in game setup", aiStartData.size()));
+				Message(spring::format("Too many AIs (%d) specified in game-setup script", aiStartData.size()));
 				break;
 			}
-			players[skd.hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
-			ais[skirmishAIId] = skd;
+
+			players[skd.hostPlayer].aiClientLinks[skirmishAIId] = {};
+			skirmishAIs[skirmishAIId] = std::make_pair(true, skd);
 
 			teams[skd.team].SetActive(true);
-			if (!teams[skd.team].HasLeader()) {
+
+			if (!teams[skd.team].HasLeader())
 				teams[skd.team].SetLeader(skd.hostPlayer);
-			}
 		}
 	}
 
-	for (unsigned int n = 0; n < SERVER_COMMANDS.size(); n++) {
-		commandBlacklist.insert(SERVER_COMMANDS[n]);
+	{
+		std::sort(commandBlacklist.begin(), commandBlacklist.end());
 	}
 
 	if (configHandler->GetBool("ServerRecordDemos")) {
@@ -279,11 +255,12 @@ void CGameServer::Initialize()
 	}
 
 	loopSleepTime = configHandler->GetInt("ServerSleepTime");
+	linkMinPacketSize = globalConfig.linkIncomingMaxPacketRate > 0 ? (globalConfig.linkIncomingSustainedBandwidth / globalConfig.linkIncomingMaxPacketRate) : 1;
+
 	lastNewFrameTick = spring_gettime();
-	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
-	thread = new spring::thread(std::bind(&CGameServer::UpdateLoop, this));
+	thread = std::move(spring::thread(std::bind(&CGameServer::UpdateLoop, this)));
 
 	// Something in CGameServer::CGameServer borks the FPU control word
 	// maybe the threading, or something in CNet::InitServer() ??
@@ -325,7 +302,7 @@ void CGameServer::Reload(const std::shared_ptr<const CGameSetup> newGameSetup)
 
 void CGameServer::WriteDemoData()
 {
-	if (demoRecorder == NULL)
+	if (demoRecorder == nullptr)
 		return;
 
 	// there is always at least one non-Gaia team (numTeams > 0)
@@ -342,47 +319,46 @@ void CGameServer::WriteDemoData()
 
 	/*
 	// TODO?
-	for (size_t i = 0; i < ais.size(); ++i) {
-		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
+	for (size_t i = 0; i < skirmishAIs.size(); ++i) {
+		if (!skirmishAIs[i].first)
+			continue;
+
+		demoRecorder->SetSkirmishAIStats(i, skirmishAIs[i].second.lastStats);
 	}
 	for (int i = 0; i < numTeams; ++i) {
-		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+		record->SetTeamStats(i, teamHandler.Team(i)->statHistory);
 	}
 	*/
 }
 
-void CGameServer::StripGameSetupText(const GameData* newGameData)
+void CGameServer::StripGameSetupText(GameData* gameData)
 {
-	// modify and save GameSetup text (remove passwords)
-	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
-	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
+	TdfParser parser((gameData->GetSetupText()).c_str(), (gameData->GetSetupText()).length());
 
-	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
-		const std::string& sectionKey = StringToLower(it->first);
+	TdfParser::TdfSection* rootSec = parser.GetRootSection();
+	TdfParser::TdfSection* gameSec = rootSec->sections["game"];
 
-		if (!StringStartsWith(sectionKey, "player"))
+	for (const auto& sectionPair: gameSec->sections) {
+		if (!StringStartsWith(StringToLower(sectionPair.first), "player"))
 			continue;
 
-		TdfParser::TdfSection* playerSec = it->second;
+		TdfParser::TdfSection* playerSec = sectionPair.second;
 		playerSec->remove("password", false);
 	}
 
 	std::ostringstream strbuf;
 	parser.print(strbuf);
 
-	GameData* modGameData = new GameData(*newGameData);
-
-	modGameData->SetSetupText(strbuf.str());
-	myGameData.reset(modGameData);
+	gameData->SetSetupText(strbuf.str());
 }
 
 
-void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
+void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion, const std::string& myPlatform)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	assert(!HasLocalClient());
 
-	localClientNumber = BindConnection(myName, "", myVersion, true, std::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(std::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()), myName, "", myVersion, myPlatform, true);
 }
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
@@ -397,7 +373,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 
 #ifndef DEDICATED
 	// disallow luasockets access to autohost interface
-	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP.c_str(), autohostPort, false);
+	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP, autohostPort, false);
 #endif
 
 	if (!hostif) {
@@ -424,7 +400,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 
 	if (!gameHasStarted) { return; }
 	if (serverFrameNum >= targetFrameNum) { return; }
-	if (demoReader == NULL) { return; }
+	if (demoReader == nullptr) { return; }
 
 	CommandMessage startMsg(spring::format("skip start %d", targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
@@ -438,18 +414,17 @@ void CGameServer::SkipTo(int targetFrameNum)
 		gameTime = GetDemoTime();
 		modGameTime = demoReader->GetModGameTime() + 0.001f;
 
-		if (UDPNet == NULL) { continue; }
+		if (udpListener == nullptr) { continue; }
 		if ((serverFrameNum % 20) != 0) { continue; }
 
 		// send data every few frames, as otherwise packets would grow too big
-		UDPNet->Update();
+		udpListener->Update();
 	}
 
 	Broadcast(std::shared_ptr<const netcode::RawPacket>(endMsg.Pack()));
 
-	if (UDPNet) {
-		UDPNet->Update();
-	}
+	if (udpListener != nullptr)
+		udpListener->Update();
 
 	lastUpdate = spring_gettime();
 	isPaused = wasPaused;
@@ -470,10 +445,10 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 bool CGameServer::SendDemoData(int targetFrameNum)
 {
 	bool ret = false;
-	netcode::RawPacket* buf = NULL;
+	netcode::RawPacket* buf = nullptr;
 
 	// if we reached EOS before, demoReader has become NULL
-	if (demoReader == NULL)
+	if (demoReader == nullptr)
 		return ret;
 
 	// get all packets from the stream up to <modGameTime>
@@ -552,15 +527,14 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 		}
 	}
 
-	if (targetFrameNum > 0) {
-		// skipping
+	// skipping
+	if (targetFrameNum > 0)
 		ret = (serverFrameNum < targetFrameNum);
-	}
 
 	if (demoReader->ReachedEnd()) {
 		demoReader.reset();
 		Message(DemoEnd);
-		gameEndTime = spring_gettime();
+
 		ret = false;
 	}
 
@@ -574,7 +548,7 @@ void CGameServer::Broadcast(std::shared_ptr<const netcode::RawPacket> packet)
 	}
 
 	if (canReconnect || allowSpecJoin || !gameHasStarted)
-		AddToPacketCache(packet);
+		packetCache.push_back(packet);
 
 	if (demoRecorder != nullptr)
 		demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
@@ -641,7 +615,7 @@ void CGameServer::CheckSync()
 			checksums.reserve(players.size());
 
 			for (const GameParticipant& p: players) {
-				if (!p.link)
+				if (p.clientLink == nullptr)
 					continue;
 
 				const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
@@ -675,7 +649,7 @@ void CGameServer::CheckSync()
 					continue;
 
 				// first time we have seen this checksum
-				checksums.push_back(std::pair<unsigned, unsigned>(pChecksum, 1));
+				checksums.emplace_back(pChecksum, 1);
 
 				if (maxChecksumCount == 0) {
 					maxChecksumCount = 1;
@@ -693,7 +667,7 @@ void CGameServer::CheckSync()
 		desyncSpecs.clear();
 
 		for (GameParticipant& p: players) {
-			if (!p.link)
+			if (p.clientLink == nullptr)
 				continue;
 
 			const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
@@ -759,9 +733,9 @@ void CGameServer::CheckSync()
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin
 				// the resync checksum request packets to multiple clients in the same group.
-				for (auto g = desyncGroups.begin(); g != desyncGroups.end(); ++g) {
-					const std::string& playerNames = GetPlayerNames(g->second);
-					Message(spring::format(SyncError, playerNames.c_str(), outstandingSyncFrame, g->first, correctChecksum));
+				for (const auto& desyncGroup: desyncGroups) {
+					const std::string& playerNames = GetPlayerNames(desyncGroup.second);
+					Message(spring::format(SyncError, playerNames.c_str(), outstandingSyncFrame, desyncGroup.first, correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
@@ -816,7 +790,7 @@ void CGameServer::Update()
 		// if we are not playing a demo, or have no local client, or the
 		// local client is less than <GAME_SPEED> frames behind, advance
 		// <modGameTime>
-		if (demoReader == NULL || !HasLocalClient() || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
+		if (demoReader == nullptr || !HasLocalClient() || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
 			modGameTime += (tdif * internalSpeed);
 	}
 
@@ -849,11 +823,11 @@ void CGameServer::Update()
 
 	if (!gameHasStarted)
 		CheckForGameStart();
-	else if (!PreSimFrame() || demoReader != NULL)
+	else if (!PreSimFrame() || demoReader != nullptr)
 		CreateNewFrame(true, false);
 
-	if (hostif) {
-		std::string msg = hostif->GetChatMessage();
+	if (hostif != nullptr) {
+		const std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty()) {
 			if (msg.at(0) != '/') { // normal chat message
@@ -868,20 +842,19 @@ void CGameServer::Update()
 		}
 	}
 
-	const bool pregameTimeoutReached = (spring_gettime() > serverStartTime + spring_secs(globalConfig->initialNetworkTimeout));
-	if (pregameTimeoutReached || gameHasStarted) {
+	const bool pregameTimeoutReached = (spring_gettime() > (serverStartTime + spring_secs(globalConfig.initialNetworkTimeout)));
+	const bool canCheckForPlayers = (pregameTimeoutReached || gameHasStarted);
+
+	if (canCheckForPlayers) {
 		bool hasPlayers = false;
-		for (GameParticipant& p: players) {
-			if (p.link) {
-				hasPlayers = true;
+
+		for (const GameParticipant& p: players) {
+			if ((hasPlayers |= (p.clientLink != nullptr)))
 				break;
-			}
 		}
 
-		if (!hasPlayers) {
+		if ((quitServer = (quitServer || !hasPlayers)))
 			Message(NoClientsExit);
-			quitServer = true;
-		}
 	}
 }
 
@@ -947,15 +920,19 @@ void CGameServer::LagProtection()
 		//if the current cpu of the target is smaller than the aimed cpu target but the clamp will cap it
 		// the clamp will throttle it to the wanted one, otherwise it's a simple linear proportion aiming
 		// to keep cpu load constant
-		float newSpeed = internalSpeed/refCpuUsage*wantedCpuUsage;
+		float newSpeed = internalSpeed / refCpuUsage * wantedCpuUsage;
+
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
 		//average to smooth the speed change over time to reduce the impact of cpu spikes in the players
 		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+
 #ifndef DEDICATED
 		// in non-dedicated hosting, we'll add an additional safeguard to make sure the host can keep up with the game's speed
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
-		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
-		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
+		const float invSimDrawFract = 1.0f - CGlobalUnsynced::reconnectSimDrawBalance;
+		const float maxSimFrameRate = (1000.0f / gu->avgSimFrameTime) * invSimDrawFract;
+
+		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFrameRate / GAME_SPEED) + internalSpeed) * 0.5f);
 #endif
 
 		if (newSpeed != internalSpeed)
@@ -976,6 +953,7 @@ static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& pla
 	return playersInTeam;
 }
 
+
 /**
  * Duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
  * as playerHandler is not available on the server
@@ -985,40 +963,80 @@ static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, co
 	return getPlayersInTeam(players, teamId).size();
 }
 
-/// has to be consistent with Game.cpp/CSkirmishAIHandler
-static std::vector<unsigned char> getSkirmishAIIds(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId, const int hostPlayer = -2)
-{
-	std::vector<unsigned char> skirmishAIIds;
-	for (std::map<unsigned char, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
-		if ((ai->second.team == teamId) && ((hostPlayer == -2) || (ai->second.hostPlayer == hostPlayer)))
-			skirmishAIIds.push_back(ai->first);
+/// has to be consistent with Game.cpp/CSkirmishAIHandler (CSkirmishAIHandler::GetSkirmishAIsInTeam)
+static std::vector<uint8_t> getSkirmishAIIds(
+	const std::vector< std::pair<bool, GameSkirmishAI> >& skirmAIs,
+	const std::vector<uint8_t>& freeAIs,
+	const int teamId,
+	const int hostPlayerId = -2
+) {
+	std::vector<uint8_t> ids;
+
+	if (freeAIs.size() < MAX_AIS) {
+		ids.reserve(MAX_AIS - freeAIs.size());
+
+		for (const auto& p: skirmAIs) {
+			const GameSkirmishAI& aiData = p.second;
+
+			if (!p.first)
+				continue;
+
+			if (aiData.team != teamId)
+				continue;
+			if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
+				continue;
+
+			ids.push_back(&p - &skirmAIs[0]);
+		}
+
+		// not strictly necessary, only contents have to match client
+		std::sort(ids.begin(), ids.end());
 	}
-	return skirmishAIIds;
+
+	return ids;
 }
 
 /**
  * Duplicates functionality of CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
  * as skirmishAIHandler is not available on the server
  */
-static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId)
-{
-	return getSkirmishAIIds(ais, teamId).size();
+static int countNumSkirmishAIsInTeam(
+	const std::vector< std::pair<bool, GameSkirmishAI> >& skirmAIs,
+	const std::vector<uint8_t>& freeAIs,
+	const int teamId
+) {
+	return getSkirmishAIIds(skirmAIs, freeAIs, teamId).size();
 }
 
 
 void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const netcode::RawPacket> packet)
 {
 	const std::uint8_t* inbuf = packet->data;
+
 	const unsigned a = playerNum;
-	unsigned msgCode = (unsigned) inbuf[0];
+	const unsigned msgCode = (unsigned) inbuf[0];
 
 	switch (msgCode) {
 		case NETMSG_KEYFRAME: {
-			const int frameNum = *(int*)&inbuf[1];
+			const int frameNum = *(int*) &inbuf[1];
+
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
 			break;
 		}
+
+		case NETMSG_PING: {
+			if (inbuf[1] != playerNum) {
+				Message(spring::format(WrongPlayer, msgCode, playerNum, (unsigned)inbuf[1]));
+				break;
+			}
+
+			// limit to 50 pings per second
+			if (spring_diffmsecs(spring_now(), netPingTimings[playerNum]) >= 20) {
+				players[playerNum].SendData(CBaseNetProtocol::Get().SendPing(playerNum, inbuf[2], *(reinterpret_cast<const float*>(&inbuf[3]))));
+				netPingTimings[playerNum] = spring_now();
+			}
+		} break;
 
 		case NETMSG_PAUSE:
 			if (inbuf[1] != a) {
@@ -1028,10 +1046,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			if (!inbuf[2])  // reset sync checker
 				syncErrorFrame = 0;
 			if (gamePausable || players[a].isLocal) { // allow host to pause even if nopause is set
-				if (!players[a].isLocal && players[a].spectator && demoReader == NULL) {
+				if (!players[a].isLocal && players[a].spectator && demoReader == nullptr) {
 					PrivateMessage(a, "Spectators cannot pause the game");
-				}
-				else {
+				} else {
 					frameTimeLeft = 0.0f;
 
 					if ((isPaused != !!inbuf[2]) || demoReader)
@@ -1045,24 +1062,22 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			break;
 
 		case NETMSG_USER_SPEED: {
-			if (!players[a].isLocal && players[a].spectator && demoReader == NULL) {
+			if (!players[a].isLocal && players[a].spectator && demoReader == nullptr) {
 				PrivateMessage(a, "Spectators cannot change game speed");
-			}
-			else {
-				float speed = *((float*) &inbuf[2]);
-				UserSpeedChange(speed, a);
+			} else {
+				UserSpeedChange(*((float*) &inbuf[2]), a);
 			}
 		} break;
 
 		case NETMSG_CPU_USAGE:
-			players[a].cpuUsage = *((float*)&inbuf[1]);
+			players[a].cpuUsage = *((float*) &inbuf[1]);
 			break;
 
 		case NETMSG_QUIT: {
 			Message(spring::format(PlayerLeft, players[a].GetType(), players[a].name.c_str(), " normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].Kill("[GameServer] user exited", true);
-			if (hostif)
+			if (hostif != nullptr)
 				hostif->SendPlayerLeft(a, 1);
 			break;
 		}
@@ -1081,7 +1096,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
 				Message(spring::format(PlayerJoined, players[playerNum].GetType(), players[playerNum].name.c_str()), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
-				if (hostif)
+				if (hostif != nullptr)
 					hostif->SendPlayerJoined(playerNum, players[playerNum].name);
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %d sent invalid PlayerName: %s", a, ex.what()));
@@ -1107,7 +1122,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				// if this player is chat-muted, drop his messages quietly
-				if (clientMuteFilter[a].first)
+				if (chatMutedFlags[a].first)
 					break;
 
 				GotChatMessage(msg);
@@ -1145,7 +1160,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			if (myGameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				if (team >= teams.size()) {
 					Message(spring::format("Invalid teamID %d in NETMSG_STARTPOS from player %d", team, player));
-				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
+				} else if (getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
 					Message(spring::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d", player, team));
 				} else {
 					teams[team].SetStartPos(float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])));
@@ -1153,9 +1168,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(player, team, rdyState, *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])));
 
-					if (hostif) {
+					if (hostif != nullptr)
 						hostif->SendPlayerReady(a, rdyState);
-					}
 				}
 			} else {
 				Message(spring::format(NoStartposChange, a));
@@ -1174,7 +1188,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 
 				#ifndef ALLOW_DEMO_GODMODE
-				if (demoReader == NULL)
+				if (demoReader == nullptr)
 				#endif
 				{
 					Broadcast(packet); //forward data
@@ -1195,7 +1209,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 
 				#ifndef ALLOW_DEMO_GODMODE
-				if (demoReader == NULL)
+				if (demoReader == nullptr)
 				#endif
 				{
 					Broadcast(packet); //forward data
@@ -1214,9 +1228,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
+
 				if (noHelperAIs)
 					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
-				else if (demoReader == NULL)
+				else if (demoReader == nullptr)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid AICommand: %s", players[a].name.c_str(), ex.what()));
@@ -1229,13 +1244,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				netcode::UnpackPacket pckt(packet, 3);
 				unsigned char playerNum;
 				pckt >> playerNum;
+
 				if (playerNum != a) {
 					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
+
 				if (noHelperAIs)
 					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
-				else if (demoReader == NULL)
+				else if (demoReader == nullptr)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid AICommands: %s", players[a].name.c_str(), ex.what()));
@@ -1369,7 +1386,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				// if this player is draw-muted, drop his messages quietly
-				if (clientMuteFilter[a].second)
+				if (chatMutedFlags[a].second)
 					break;
 
 
@@ -1377,15 +1394,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				// each followed the previous by less than 50 milliseconds
 				// this is impossible to reach manually, but (very) easily
 				// through Lua and would allow clients to be DOS'ed
-				clientDrawFilter[a].second += (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
-				clientDrawFilter[a].second *= (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
-				clientDrawFilter[a].first   = spring_now();
+				mapDrawTimings[a].second += (spring_diffmsecs(spring_now(), mapDrawTimings[a].first) < 50);
+				mapDrawTimings[a].second *= (spring_diffmsecs(spring_now(), mapDrawTimings[a].first) < 50);
+				mapDrawTimings[a].first   = spring_now();
 
-				if (clientDrawFilter[a].second > 25)
+				if (mapDrawTimings[a].second > 25)
 					break;
 
 
-				if (!players[playerNum].spectator || allowSpecDraw)
+				if (allowSpecDraw || !players[playerNum].spectator)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid MapDraw: %s", players[a].name.c_str(), ex.what()));
@@ -1397,7 +1414,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL) {
+			if (demoReader == nullptr) {
 				if (!players[inbuf[1]].spectator)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
 				else
@@ -1410,7 +1427,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL)
+			if (demoReader == nullptr)
 				Broadcast(CBaseNetProtocol::Get().SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5])));
 			break;
 
@@ -1444,46 +1461,47 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						break;
 					}
 
-					const std::vector<unsigned char>& totAIsInGiverTeam = getSkirmishAIIds(ais, giverTeam);
-					const std::vector<unsigned char>& myAIsInGiverTeam  = getSkirmishAIIds(ais, giverTeam, player);
+					const std::vector<uint8_t>& giverTeamAIs       = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam);
+					const std::vector<uint8_t>& giverTeamPlayerAIs = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam, player);
 
-					const int numPlayersInGiverTeam          = countNumPlayersInTeam(players, giverTeam);
-					const size_t numControllersInGiverTeam   = numPlayersInGiverTeam + totAIsInGiverTeam.size();
+					const size_t numPlayersInGiverTeam       = countNumPlayersInTeam(players, giverTeam);
+					const size_t numControllersInGiverTeam   = numPlayersInGiverTeam + giverTeamAIs.size();
+
 					const bool isGiverLeader                 = (teams[giverTeam].GetLeader() == player);
 					const bool isGiverOwnTeam                = (giverTeam == fromTeam);
 					const bool isSpec                        = players[player].spectator;
-					const bool giverHasAIs                   = (!myAIsInGiverTeam.empty());
+					const bool giverHasAIs                   = (!giverTeamPlayerAIs.empty());
 					const bool giverIsAllied                 = (teams[giverTeam].teamAllyteam == teams[fromTeam].teamAllyteam);
 					const bool isSinglePlayer                = (players.size() <= 1);
+					const bool giveAwayOk                    = (isGiverOwnTeam || numPlayersInGiverTeam == 0);
+
+					const char* playerName                   = players[player].name.c_str();
 					const char* playerType                   = players[player].GetType();
 
 					if (!isSinglePlayer &&
 						(isSpec || (!isGiverOwnTeam && !isGiverLeader) ||
 						(giverHasAIs && !giverIsAllied && !cheating))) {
-							Message(spring::format("%s %s sent invalid team giveaway", playerType, players[player].name.c_str()), true);
+							Message(spring::format("%s %s sent invalid team giveaway", playerType, playerName), true);
 							break;
 					}
 
 					Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, giverTeam));
 
-					bool giveAwayOk = false;
-
 					if (isGiverOwnTeam) {
 						// player is giving stuff from his own team
-						giveAwayOk = true;
 						//players[player].team = 0;
 						players[player].spectator = true;
 
-						if (hostif)
+						if (hostif != nullptr)
 							hostif->SendPlayerDefeated(player);
 					} else {
 						// player is giving stuff from one of his AI teams
 						if (numPlayersInGiverTeam == 0) {
 							// kill the first AI
-							ais.erase(myAIsInGiverTeam[0]);
-							giveAwayOk = true;
+							skirmishAIs[ giverTeamPlayerAIs[0] ] = std::make_pair(false, GameSkirmishAI{});
+							freeSkirmishAIs.push_back(giverTeamPlayerAIs[0]);
 						} else {
-							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, players[player].name.c_str(), giverTeam), true);
+							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, playerName, giverTeam), true);
 						}
 					}
 
@@ -1492,12 +1510,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						teams[giverTeam].SetActive(false);
 						teams[giverTeam].SetLeader(-1);
 
-						const int toLeader = teams[toTeam].GetLeader();
-						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : UncontrolledPlayerName;
+						const int leadPlayer = teams[toTeam].GetLeader();
 
-						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
-						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
+						const std::string  giverName = players[player].name;
+						const std::string& recipName = (leadPlayer >= 0) ? players[leadPlayer].name : UncontrolledPlayerName;
+
+						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, giverName + " gave everything to " + recipName));
 					}
 					break;
 				}
@@ -1509,8 +1527,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						Message(spring::format("Spectator %s sent invalid team resign", players[player].name.c_str()), true);
 						break;
 					}
-					ResignPlayer(player);
 
+					ResignPlayer(player);
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
@@ -1558,9 +1576,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 								//players[p].team = 0;
 								players[p].spectator = true;
 
-								if (hostif) {
+								if (hostif != nullptr)
 									hostif->SendPlayerDefeated(p);
-								}
 
 								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, teamID));
 							}
@@ -1577,98 +1594,106 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 			break;
 		}
+
 		case NETMSG_AI_CREATED: {
 			try {
+				// client issued aicontrol command
 				netcode::UnpackPacket pckt(packet, 2);
-				unsigned char playerId;
+				std::string aiName;
+
+				uint8_t playerId;
+				uint8_t skirmishAIId;
+				uint8_t aiTeamId;
+
 				pckt >> playerId;
+
 				if (playerId != a) {
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 					break;
 				}
-				unsigned char skirmishAIId_rec; // ignored, we have to create the real one
-				pckt >> skirmishAIId_rec;
-				unsigned char aiTeamId;
+				if (aiControlFlags[playerId]) {
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] player %d not allowed to use /aicontrol", __func__, int(playerId)));
+					break;
+				}
+
+				pckt >> skirmishAIId;
 				pckt >> aiTeamId;
-				std::string aiName;
 				pckt >> aiName;
 
 				if (aiTeamId >= teams.size()) {
-					Message(spring::format("Invalid teamID %d in NETMSG_AI_CREATED from player %d", unsigned(aiTeamId), unsigned(playerId)));
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] invalid teamID %d from player %d", __func__, int(aiTeamId), int(playerId)));
 					break;
 				}
 
-				const unsigned char playerTeamId = players[playerId].team;
+				const uint8_t playerTeamId = players[playerId].team;
 
-				GameTeam* tpl                    = &teams[playerTeamId];
-				GameTeam* tai                    = &teams[aiTeamId];
+				GameTeam* tpl           = &teams[playerTeamId];
+				GameTeam* tai           = &teams[aiTeamId];
 
-				const bool weAreLeader           = (tai->GetLeader() == playerId);
-				const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
-				const bool singlePlayer          = (players.size() <= 1);
+				const bool weAreLeader  = (tai->GetLeader() == playerId);
+				const bool weAreAllied  = (tpl->teamAllyteam == tai->teamAllyteam);
+				const bool singlePlayer = (players.size() <= 1);
 
-				if (weAreLeader || singlePlayer || (weAreAllied && (cheating || !tai->HasLeader()))) {
-					// creating the AI is ok
-				} else {
+				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || !tai->HasLeader())))) {
 					Message(spring::format(NoAICreated, players[playerId].name.c_str(), (int)playerId, (int)aiTeamId));
 					break;
 				}
-				const uint8_t skirmishAIId = ReserveSkirmishAIId();
-				if (skirmishAIId == MAX_AIS) {
-					Message(spring::format("Unable to create AI, limit reached (%d)", (int)MAX_AIS));
+
+				// discard bogus ID from message, reserve actual slot here
+				if ((skirmishAIId = ReserveSkirmishAIId()) == MAX_AIS) {
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] unable to create AI, limit reached (%d)", __func__, (int)MAX_AIS));
 					break;
 				}
-				players[playerId].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
+
+				players[playerId].aiClientLinks[skirmishAIId] = {};
+
+				skirmishAIs[skirmishAIId].first = true;
+				skirmishAIs[skirmishAIId].second.team = aiTeamId;
+				skirmishAIs[skirmishAIId].second.name = aiName;
+				skirmishAIs[skirmishAIId].second.hostPlayer = playerId;
+
+				// bounce back, sender will do local creation
 				Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
 
-/*
-#ifdef SYNCDEBUG
-			if (myId != skirmishAIId) {
-				Message(spring::format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).", players[playerId].name, skirmishAIId, myId));
-			}
-#endif // SYNCDEBUG
-*/
-				ais[skirmishAIId].team = aiTeamId;
-				ais[skirmishAIId].name = aiName;
-				ais[skirmishAIId].hostPlayer = playerId;
-
 				if (!tai->HasLeader()) {
-					tai->SetLeader(ais[skirmishAIId].hostPlayer);
+					tai->SetLeader(playerId);
 					tai->SetActive(true);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(spring::format("Player %s sent invalid AICreated: %s", players[a].name.c_str(), ex.what()));
+				Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] exception \"%s\" parsing message from player %s", ex.what(), players[a].name.c_str()));
 			}
 			break;
 		}
 		case NETMSG_AI_STATE_CHANGED: {
-			const unsigned char playerId     = inbuf[1];
+			const uint8_t playerId     = inbuf[1];
+			const uint8_t skirmishAIId = inbuf[2];
+
 			if (playerId != a) {
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 				break;
 			}
-			const unsigned char skirmishAIId = inbuf[2];
-			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
 
-			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
-			if (!skirmishAIId_valid) {
+			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
+			const ESkirmishAIStatus oldState = skirmishAIs[skirmishAIId].second.status;
+
+			if (!skirmishAIs[skirmishAIId].first) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (-1), (int)newState));
 				break;
 			}
 
-			const unsigned aiTeamId          = ais[skirmishAIId].team;
-			const unsigned playerTeamId      = players[playerId].team;
-			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
-			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			const uint8_t aiTeamId          = skirmishAIs[skirmishAIId].second.team;
+			const uint8_t playerTeamId      = players[playerId].team;
 
-			GameTeam* tpl                    = &teams[playerTeamId];
-			GameTeam* tai                    = &teams[aiTeamId];
+			const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(skirmishAIs, freeSkirmishAIs, aiTeamId);
 
-			const bool weAreAIHost           = (ais[skirmishAIId].hostPlayer == playerId);
-			const bool weAreLeader           = (tai->GetLeader() == playerId);
-			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
-			const bool singlePlayer          = (players.size() <= 1);
-			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
+			GameTeam* tpl                   = &teams[playerTeamId];
+			GameTeam* tai                   = &teams[aiTeamId];
+
+			const bool weAreAIHost          = (skirmishAIs[skirmishAIId].second.hostPlayer == playerId);
+			const bool weAreLeader          = (tai->GetLeader() == playerId);
+			const bool weAreAllied          = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer         = (players.size() <= 1);
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (int)aiTeamId, (int)newState));
@@ -1676,41 +1701,37 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 			Broadcast(packet); // forward data
 
-			ais[skirmishAIId].status = newState;
-			if (newState == SKIRMAISTATE_DEAD) {
-				if (oldState == SKIRMAISTATE_RELOADING) {
-					// skip resetting this AIs management state,
-					// as it will be reinitialized instantly
-				} else {
-					ais.erase(skirmishAIId);
-					players[playerId].linkData.erase(skirmishAIId);
-					FreeSkirmishAIId(skirmishAIId);
-					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
-						// team has no controller left now
-						tai->SetActive(false);
-						tai->SetLeader(-1);
-					}
+			// skip resetting management state for reloading AI's; will be reinitialized instantly
+			if ((skirmishAIs[skirmishAIId].second.status = newState) == SKIRMAISTATE_DEAD && oldState != SKIRMAISTATE_RELOADING) {
+				skirmishAIs[skirmishAIId] = std::make_pair(false, GameSkirmishAI{});
+
+				freeSkirmishAIs.push_back(skirmishAIId);
+				players[playerId].aiClientLinks.erase(skirmishAIId);
+
+				if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+					// team has no controller left now
+					tai->SetActive(false);
+					tai->SetLeader(-1);
 				}
 			}
 			break;
 		}
+
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];
 			const int whichAllyTeam = inbuf[2];
 			const unsigned char allied = inbuf[3];
+
 			if (player != a) {
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)player));
 				break;
 			}
+
 			if (whichAllyTeam == teams[players[a].team].teamAllyteam) {
 				Message(spring::format("Player %s tried to send spoofed alliance message", players[a].name.c_str()));
-			}
-			else {
-				if (!myGameSetup->fixedAllies) {
+			} else {
+				if (!myGameSetup->fixedAllies)
 					Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
-				}
-				else { // not allowed
-				}
 			}
 			break;
 		}
@@ -1719,11 +1740,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				CommandMessage msg(packet);
 
 				if (static_cast<unsigned>(msg.GetPlayerID()) == a) {
-					if ((commandBlacklist.find(msg.GetAction().command) != commandBlacklist.end()) && players[a].isLocal) {
+					const bool serverCommand = IsServerCommand(msg.GetAction().command);
+
+					if (serverCommand && players[a].isLocal) {
 						// command is restricted to server but player is allowed to execute it
 						PushAction(msg.GetAction(), false);
 					}
-					else if (commandBlacklist.find(msg.GetAction().command) == commandBlacklist.end()) {
+					else if (!serverCommand) {
 						// command is safe
 						Broadcast(packet);
 					}
@@ -1739,7 +1762,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 		}
 
 		case NETMSG_TEAMSTAT: {
-			if (hostif)
+			if (hostif != nullptr)
 				hostif->Send(packet->data, packet->length);
 			break;
 		}
@@ -1765,11 +1788,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					pckt >> winningAllyTeams;
 				}
 
-				if (hostif)
+				if (hostif != nullptr)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
-				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
-				gameEndTime = spring_gettime();
+				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid GameOver: %s", players[a].name.c_str(), ex.what()));
 			}
@@ -1809,12 +1831,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 void CGameServer::HandleConnectionAttempts()
 {
-	while (UDPNet != nullptr && UDPNet->HasIncomingConnections()) {
-		std::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
+	while (udpListener != nullptr && udpListener->HasIncomingConnections()) {
+		std::shared_ptr<netcode::UDPConnection> prev = udpListener->PreviewConnection().lock();
 		std::shared_ptr<const RawPacket> packet = prev->GetData();
 
 		if (packet == nullptr) {
-			UDPNet->RejectConnection();
+			udpListener->RejectConnection();
 			continue;
 		}
 
@@ -1831,20 +1853,25 @@ void CGameServer::HandleConnectionAttempts()
 				throw netcode::UnpackPacketException("Invalid message ID");
 
 			netcode::UnpackPacket msg(packet, 3);
-			std::string name, passwd, version;
-			unsigned char reconnect, netloss;
-			unsigned short netversion;
+			std::string name;
+			std::string passwd;
+			std::string version;
+			std::string platform;
+			uint8_t reconnect;
+			uint8_t netloss;
+			uint16_t netversion;
 			msg >> netversion;
 			msg >> name;
 			msg >> passwd;
 			msg >> version;
+			msg >> platform;
 			msg >> reconnect;
 			msg >> netloss;
 
 			if (netversion != NETWORK_VERSION)
 				throw netcode::UnpackPacketException(spring::format("Wrong network version: received %d, required %d", (int)netversion, (int)NETWORK_VERSION));
 
-			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
+			BindConnection(udpListener->AcceptConnection(), name, passwd, version, platform, false, reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
 			const asio::ip::udp::endpoint endp = prev->GetEndpoint();
 			const asio::ip::address addr = endp.address();
@@ -1873,7 +1900,7 @@ void CGameServer::HandleConnectionAttempts()
 				Message(msg, false, true);
 			}
 
-			UDPNet->RejectConnection();
+			udpListener->RejectConnection();
 		}
 	}
 }
@@ -1889,80 +1916,130 @@ void CGameServer::ServerReadNet()
 		lastBandwidthUpdate = spring_gettime();
 
 	for (GameParticipant& player: players) {
-		std::shared_ptr<netcode::CConnection>& plink = player.link;
-		if (!plink)
-			continue; // player not connected
-		if (plink->CheckTimeout(0, !gameHasStarted)) {
-			Message(spring::format(PlayerLeft, player.GetType(), player.name.c_str(), " timeout")); //this must happen BEFORE the reset!
+		std::shared_ptr<netcode::CConnection>& playerLink = player.clientLink;
+		std::shared_ptr<const RawPacket> packet;
+
+		spring::unordered_map<uint8_t, GameParticipant::ClientLinkData>& aiClientLinks = player.aiClientLinks;
+		std::array<uint8_t, MAX_AIS + 1> aiClientNumbers;
+
+		// if no link, player is not connected
+		if (playerLink == nullptr)
+			continue;
+
+		if (playerLink->CheckTimeout(0, !gameHasStarted)) {
+			// this must happen BEFORE the reset!
+			Message(spring::format(PlayerLeft, player.GetType(), player.name.c_str(), " timeout"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(player.id, 0));
+
 			player.Kill("User timeout");
-			if (hostif)
+
+			if (hostif != nullptr)
 				hostif->SendPlayerLeft(player.id, 0);
+
 			continue;
 		}
 
-		std::map<unsigned char, GameParticipant::PlayerLinkData>& pld = player.linkData;
-		std::shared_ptr<const RawPacket> packet;
-		while ((packet = plink->GetData())) {  // relay all the packets to separate connections for the player and AIs
-			unsigned char aiID = MAX_AIS;
-			int cID = -1;
+		// relay all packets to separate connections for player and AIs
+		while ((packet = playerLink->GetData()) != nullptr) {
+			uint8_t aiID = MAX_AIS;
+			int cmdID = -1;
+
 			if (packet->length >= 5) {
-				cID = packet->data[0];
-				if (cID == NETMSG_AICOMMAND || cID == NETMSG_AICOMMAND_TRACKED || cID == NETMSG_AICOMMANDS || cID == NETMSG_AISHARE)
+				cmdID = packet->data[0];
+
+				if (cmdID == NETMSG_AICOMMAND || cmdID == NETMSG_AICOMMAND_TRACKED || cmdID == NETMSG_AICOMMANDS || cmdID == NETMSG_AISHARE)
 					aiID = packet->data[4];
 			}
-			auto liit = pld.find(aiID);
-			if (liit != pld.end())
-				liit->second.link->SendData(packet);
-			else
-				Message(spring::format("Player %s sent invalid AI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cID));
+
+			const auto aiLinkIt = aiClientLinks.find(aiID);
+
+			if (aiLinkIt != aiClientLinks.end()) {
+				aiLinkIt->second.link->SendData(packet);
+			} else {
+				// unreachable, aiClientLinks always contains a loopback entry for id=MAX_AIS
+				Message(spring::format("Player %s sent invalid SkirmishAI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cmdID));
+			}
 		}
 
-		for (std::map<unsigned char, GameParticipant::PlayerLinkData>::iterator lit = pld.begin(); lit != pld.end(); ++lit) {
-			int bandwidthUsage = lit->second.bandwidthUsage;
-			std::shared_ptr<netcode::CConnection>& link = lit->second.link;
 
-			bool bwLimitWasReached = (globalConfig->linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig->linkIncomingPeakBandwidth);
-			if (updateBandwidth >= 1.0f && globalConfig->linkIncomingSustainedBandwidth > 0)
-				bandwidthUsage = std::max(0, bandwidthUsage - std::max(1, (int)((float)globalConfig->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
+		// copy client AI id's; ProcessPacket() can cause aiClientLinks to be rehashed during iteration below
+		aiClientNumbers.fill(0);
 
-			int numDropped = 0;
-			std::shared_ptr<const RawPacket> packet;
+		for (const auto& pair: aiClientLinks) {
+			aiClientNumbers[ aiClientNumbers[MAX_AIS]++ ] = pair.first;
+		}
 
-			bool dropPacket = globalConfig->linkIncomingMaxWaitingPackets > 0 && (globalConfig->linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
-			int ahead = 0;
-			bool bwLimitIsReached = globalConfig->linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig->linkIncomingPeakBandwidth;
-			while (link) {
-				if (dropPacket)
-					dropPacket = (NULL != (packet = link->Peek(globalConfig->linkIncomingMaxWaitingPackets)));
-				packet = (!bwLimitIsReached || dropPacket) ? link->GetData() : link->Peek(ahead++);
-				if (!packet)
+		for (size_t i = 0, n = aiClientLinks.size(); i < n; i++) {
+			const uint8_t aiClientNum = aiClientNumbers[i];
+			const auto aiLinkData = aiClientLinks[aiClientNum];
+
+			int bandwidthUsage = aiLinkData.bandwidthUsage;
+			int numPacketsSent = aiLinkData.numPacketsSent;
+
+			int numPktsDropped = 0;
+			int peekAheadIndex = 0;
+
+			const bool bwLimitWasReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
+
+			if (updateBandwidth >= 1.0f && globalConfig.linkIncomingSustainedBandwidth > 0)
+				bandwidthUsage = std::max(0, bandwidthUsage - std::max(1, int(globalConfig.linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
+
+			bool bwLimitIsReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
+			bool forcedDropPacket = (globalConfig.linkIncomingMaxWaitingPackets > 0 && (globalConfig.linkIncomingPeakBandwidth <= 0 || bwLimitWasReached));
+
+			std::shared_ptr<netcode::CConnection> aiLink = aiLinkData.link;
+			std::shared_ptr<const RawPacket> aiPacket;
+
+			while (aiLink != nullptr) {
+				if (forcedDropPacket)
+					forcedDropPacket = ((aiPacket = aiLink->Peek(globalConfig.linkIncomingMaxWaitingPackets)) != nullptr);
+
+				// if packet is to be dropped, just pull it from queue instead of peek
+				if (!bwLimitIsReached || forcedDropPacket)
+					numPacketsSent += ((aiPacket = aiLink->GetData()) != nullptr);
+				else
+					aiPacket = aiLink->Peek(peekAheadIndex++);
+
+				if (aiPacket == nullptr)
 					break;
 
-				bool droppablePacket = (packet->length <= 0 || (packet->data[0] != NETMSG_SYNCRESPONSE && packet->data[0] != NETMSG_KEYFRAME));
-				if (dropPacket && droppablePacket)
-					++numDropped;
-				else if (!bwLimitIsReached || !droppablePacket) {
-					ProcessPacket(player.id, packet); // non droppable packets may be processed more than once, but this does no harm
-					if (globalConfig->linkIncomingPeakBandwidth > 0 && droppablePacket) {
-						bandwidthUsage += std::max((unsigned)linkMinPacketSize, packet->length);
-						if (!bwLimitIsReached)
-							bwLimitIsReached = (bandwidthUsage > globalConfig->linkIncomingPeakBandwidth);
-					}
+				const bool droppablePacket = (aiPacket->length <= 0 || (aiPacket->data[0] != NETMSG_SYNCRESPONSE && aiPacket->data[0] != NETMSG_KEYFRAME));
+
+				if (forcedDropPacket && droppablePacket) {
+					++numPktsDropped;
+					continue;
+				}
+
+				if (bwLimitIsReached && droppablePacket)
+					continue;
+
+				// non-droppable packets may be processed more than once, but this does no harm
+				ProcessPacket(player.id, aiPacket);
+
+				if (globalConfig.linkIncomingPeakBandwidth > 0 && droppablePacket) {
+					bandwidthUsage += std::max((unsigned)linkMinPacketSize, aiPacket->length);
+
+					if (!bwLimitIsReached)
+						bwLimitIsReached = (bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
 				}
 			}
-			if (numDropped > 0) {
-				if (lit->first == MAX_AIS)
-					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [packets dropped]", player.name.c_str()));
+
+			// "if" needs C++17
+			for (auto it = aiClientLinks.find(aiClientNum); it != aiClientLinks.end(); it = aiClientLinks.end())
+				it->second.numPacketsSent = numPacketsSent;
+
+			if (numPktsDropped > 0) {
+				if (aiClientNum == MAX_AIS)
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [%d packets dropped, %d sent]", player.name.c_str(), numPktsDropped, numPacketsSent));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI %d [%d packets dropped, %d sent]", player.name.c_str(), (int)aiClientNum, numPktsDropped, numPacketsSent));
 			}
 
 			if (!bwLimitWasReached && bwLimitIsReached) {
-				if (lit->first == MAX_AIS)
-					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed]", player.name.c_str()));
+				if (aiClientNum == MAX_AIS)
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed, %d sent]", player.name.c_str(), numPacketsSent));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI %d [packets delayed, %d sent]", player.name.c_str(), (int)aiClientNum, numPacketsSent));
 			}
 		}
 	}
@@ -1976,7 +2053,7 @@ void CGameServer::ServerReadNet()
 void CGameServer::GenerateAndSendGameID()
 {
 	// First and second dword are time based (current time and load time).
-	gameID.intArray[0] = (unsigned) time(NULL);
+	gameID.intArray[0] = (unsigned) time(nullptr);
 	for (int i = 4; i < 12; ++i)
 		gameID.charArray[i] = rng();
 
@@ -2013,7 +2090,7 @@ void CGameServer::GenerateAndSendGameID()
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
 
-	if (demoRecorder != NULL) {
+	if (demoRecorder != nullptr) {
 		demoRecorder->SetGameID(gameID.charArray);
 	}
 
@@ -2033,7 +2110,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		else if (players[a].myState < GameParticipant::INGAME) {
 			allReady = false;
 			break;
-		} else if (!players[a].spectator && teams[players[a].team].IsActive() && !players[a].IsReadyToStart() && demoReader == NULL) {
+		} else if (!players[a].spectator && teams[players[a].team].IsActive() && !players[a].IsReadyToStart() && demoReader == nullptr) {
 			allReady = false;
 			break;
 		}
@@ -2064,11 +2141,12 @@ void CGameServer::StartGame(bool forced)
 	assert(!gameHasStarted);
 	gameHasStarted = true;
 	startTime = gameTime;
+
 	if (!canReconnect && !allowSpecJoin)
 		packetCache.clear(); // free memory
 
-	if (UDPNet && !canReconnect && !allowSpecJoin)
-		UDPNet->SetAcceptingConnections(false); // do not accept new connections
+	if (udpListener && !canReconnect && !allowSpecJoin)
+		udpListener->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and send a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
@@ -2091,7 +2169,7 @@ void CGameServer::StartGame(bool forced)
 			const unsigned int team = p.team;
 			const float3& teamStartPos = teams[team].GetStartPos();
 
-			if (false && !teams[team].HasLeader())
+			if (false && !teams[team].HasLeader()) // NOLINT{readability-simplify-boolean-expr}
 				continue;
 
 			teamStartPosSent[team] = true;
@@ -2133,8 +2211,8 @@ void CGameServer::StartGame(bool forced)
 
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 
-	if (hostif != NULL) {
-		if (demoRecorder != NULL) {
+	if (hostif != nullptr) {
+		if (demoRecorder != nullptr) {
 			hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
 		} else {
 			hostif->SendStartPlaying(gameID.charArray, "");
@@ -2154,227 +2232,282 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 {
-	if (action.command == "kickbynum") {
-		if (!action.extra.empty()) {
-			const int playerNum = atoi(action.extra.c_str());
-			KickPlayer(playerNum);
-		}
-	}
-	else if (action.command == "kick") {
-		if (!action.extra.empty()) {
-			std::string name = action.extra;
-			StringToLowerInPlace(name);
-			for (GameParticipant& p: players) {
-				std::string playerLower = StringToLower(p.name);
-				if (playerLower.find(name)==0) {	// can kick on substrings of name
-					if (!p.isLocal) // do not kick host
-						KickPlayer(p.id);
-				}
+	switch (hashString(action.command.c_str())) {
+		case hashString("kickbynum"): {
+			if (action.extra.empty())
+				return;
+
+			KickPlayer(atoi(action.extra.c_str()));
+		} break;
+
+		case hashString("kick"): {
+			if (action.extra.empty())
+				return;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow kick on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			// do not kick host
+			if (iter != players.end() && !iter->isLocal)
+				KickPlayer(iter->id);
+		} break;
+
+
+		case hashString("mute"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-name> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "mute") {
-		if (action.extra.empty()) {
-			LOG_L(L_WARNING, "Failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-		} else {
+
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				LOG_L(L_WARNING, "Failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-			} else {
-				const std::string name = StringToLower(tokens[0]);
-
-				bool muteChat = true;
-				bool muteDraw = true;
-
-				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
-				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
-
-				for (GameParticipant& p: players) {
-					const std::string playerLower = StringToLower(p.name);
-
-					if (playerLower.find(name) == 0) {	// can kick on substrings of name
-						MutePlayer(p.id, muteChat, muteDraw);
-						break;
-					}
-				}
+				LOG_L(L_WARNING, "[%s] incorrect arguments, usage: /%s <player-name> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "mutebynum") {
 
-		if (action.extra.empty()) {
-			LOG_L(L_WARNING, "Failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-		} else {
+			const std::string name = StringToLower(tokens[0]);
+
+			bool muteChat = true;
+			bool muteDraw = true;
+
+			if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+			if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
+
+			// allow mute on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter != players.end())
+				MutePlayer(iter->id, muteChat, muteDraw);
+		} break;
+
+		case hashString("mutebynum"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-id> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
+			}
+
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				LOG_L(L_WARNING, "Failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-			} else {
-				const int playerID = atoi(tokens[0].c_str());
-				bool muteChat = true;
-				bool muteDraw = true;
-
-				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
-				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
-
-				MutePlayer(playerID, muteChat, muteDraw);
+				LOG_L(L_WARNING, "[%s] incorrect arguments, usage: /%s <player-id> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	if (action.command == "specbynum") {
-		if (!action.extra.empty()) {
-			const int playerNum = atoi(action.extra.c_str());
-			SpecPlayer(playerNum);
-		}
-	}
-	else if (action.command == "spec") {
-		if (!action.extra.empty()) {
-			std::string name = action.extra;
-			StringToLowerInPlace(name);
-			for (GameParticipant& p: players) {
-				std::string playerLower = StringToLower(p.name);
-				if (playerLower.find(name)==0) {	// can spec on substrings of name
-					SpecPlayer(p.id);
-				}
+
+			const int playerID = atoi(tokens[0].c_str());
+
+			bool muteChat = true;
+			bool muteDraw = true;
+
+			if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+			if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
+
+			MutePlayer(playerID, muteChat, muteDraw);
+		} break;
+
+
+		case hashString("aictrl"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-name>", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "nopause") {
-		InverseOrSetBool(gamePausable, action.extra);
-	}
-	else if (action.command == "nohelp") {
-		InverseOrSetBool(noHelperAIs, action.extra);
-		// sent it because clients have to do stuff when this changes
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "nospecdraw") {
-		InverseOrSetBool(allowSpecDraw, action.extra, true);
-		// sent it because clients have to do stuff when this changes
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "setmaxspeed" && !action.extra.empty()) {
-		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
-		if (newUserSpeed > 0.2) {
-			maxUserSpeed = newUserSpeed;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow aictrl on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter == players.end())
+				return;
+
+			aiControlFlags[iter->id] = !aiControlFlags[iter->id];
+		} break;
+
+		case hashString("aictrlbynum"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-id>", __func__, action.command.c_str());
+				return;
+			}
+
+			const size_t playerNum = atoi(action.extra.c_str());
+
+			if (playerNum >= players.size())
+				return;
+
+			// toggle
+			aiControlFlags[playerNum] = !aiControlFlags[playerNum];
+		} break;
+
+
+		case hashString("specbynum"): {
+			if (action.extra.empty())
+				return;
+
+			SpecPlayer(atoi(action.extra.c_str()));
+		} break;
+
+		case hashString("spec"): {
+			if (action.extra.empty())
+				return;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow spec on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter != players.end())
+				SpecPlayer(iter->id);
+		} break;
+
+
+		case hashString("nopause"): {
+			InverseOrSetBool(gamePausable, action.extra);
+		} break;
+		case hashString("nohelp"): {
+			InverseOrSetBool(noHelperAIs, action.extra);
+			// sent it because clients have to do stuff when this changes
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+		case hashString("nospecdraw"): {
+			InverseOrSetBool(allowSpecDraw, action.extra, true);
+			// sent it because clients have to do stuff when this changes
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+
+		case hashString("setmaxspeed"): {
+			if (action.extra.empty())
+				return;
+
+			const float argUserSpeed = static_cast<float>(atof(action.extra.c_str()));
+			const float newUserSpeed = std::max(argUserSpeed, minUserSpeed);
+
+			if (newUserSpeed > 0.2f) {
+				maxUserSpeed = newUserSpeed;
+				UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
+			}
+		} break;
+		case hashString("setminspeed"): {
+			if (action.extra.empty())
+				return;
+
+			minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
 			UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
-		}
-	}
-	else if (action.command == "setminspeed" && !action.extra.empty()) {
-		minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
-		UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
-	}
-	else if (action.command == "forcestart") {
-		if (!gameHasStarted)
-			CheckForGameStart(true);
-	}
-	else if (action.command == "skip") {
-		if (demoReader) {
-			std::string timeStr = action.extra;
+		} break;
+
+		case hashString("forcestart"): {
+			if (!gameHasStarted)
+				CheckForGameStart(true);
+		} break;
+
+		case hashString("skip"): {
+			if (demoReader == nullptr)
+				return;
 
 			// parse the skip time
+			std::string timeStr = action.extra;
 
-			// skip in seconds
 			bool skipFrames = false;
-			if (timeStr[0] == 'f') {
-				// skip in frame
-				skipFrames = true;
-				timeStr.erase(0, 1); // remove first char
-			}
-
-			// skip to absolute game-second/-frame
 			bool skipRelative = false;
-			if (timeStr[0] == '+') {
-				// skip to relative game-second/-frame
-				skipRelative = true;
+
+			// skip in seconds/frame
+			if ((skipFrames = (timeStr[0] == 'f')))
 				timeStr.erase(0, 1); // remove first char
-			}
+
+			// skip to absolute or relative game-second/-frame
+			if ((skipRelative = (timeStr[0] == '+')))
+				timeStr.erase(0, 1); // remove first char
 
 			// amount of frames/seconds to skip (to)
 			const int amount = atoi(timeStr.c_str());
-
 			// the absolute frame to skip to
-			int endFrame;
+			const int endFrame = skipFrames? amount: (GAME_SPEED * amount);
 
-			if (skipFrames)
-				endFrame = amount;
-			else
-				endFrame = GAME_SPEED * amount;
+			SkipTo(endFrame + (serverFrameNum * skipRelative));
+		} break;
 
-			if (skipRelative)
-				endFrame += serverFrameNum;
+		case hashString("cheat"): {
+			InverseOrSetBool(cheating, action.extra);
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
 
-			SkipTo(endFrame);
-		}
-	}
-	else if (action.command == "cheat") {
-		InverseOrSetBool(cheating, action.extra);
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "singlestep") {
-		if (isPaused) {
-			if (demoReader != NULL) {
-				// we only want to advance one frame at most, so
-				// the next time-index must be "close enough" not
-				// to move past more than 1 NETMSG_NEWFRAME
+		case hashString("singlestep"): {
+			if (!isPaused)
+				return;
+
+			// we only want to advance one frame at most, so
+			// the next time-index must be "close enough" not
+			// to move past more than 1 NETMSG_NEWFRAME
+			if (demoReader != nullptr)
 				modGameTime = demoReader->GetModGameTime() + 0.001f;
-			}
 
 			CreateNewFrame(true, true);
-		}
-	}
-	else if (action.command == "adduser") {
-		if (!action.extra.empty() && whiteListAdditionalPlayers) {
+		} break;
+
+		case hashString("adduser"): {
+			if (action.extra.empty())
+				return;
+			if (!whiteListAdditionalPlayers)
+				return;
+
 			// split string by whitespaces
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
 
-			if (tokens.size() > 1) {
-				const std::string& name = tokens[0];
-				const std::string& pwd = tokens[1];
-				int team = 0;
-				bool spectator = true;
-				if ( tokens.size() > 2 ) {
-					spectator = (tokens[2] == "0") ? false : true;
-				}
-				if ( tokens.size() > 3 ) {
-					team = atoi(tokens[3].c_str());
-				}
-				// note: this must only compare by name
-				auto participantIter = std::find_if(players.begin(), players.end(), [&name](GameParticipant& p) {
-					return p.name == name;
-				});
-
-				if (participantIter != players.end()) {
-					participantIter->SetValue("password", pwd);
-
-					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), pwd.c_str());
-				} else {
-					AddAdditionalUser(name, pwd, false, spectator, team);
-
-					LOG("Added client \"%s\" with password \"%s\" to team %d (as a %s)",
-						name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
-					);
-				}
-			} else {
+			if (tokens.size() <= 1) {
 				LOG_L(L_WARNING,
-					"Failed to add player/spectator password. usage: "
-					"/adduser <player-name> <password> [spectator] [team]"
+					"[%s] failed to add player/spectator password, usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__func__
+				);
+				return;
+			}
+
+			const std::string& name = tokens[0];
+			const std::string& pwd = tokens[1];
+			int team = 0;
+			bool spectator = true;
+
+			if (tokens.size() > 2)
+				spectator = (tokens[2] != "0");
+			if (tokens.size() > 3)
+				team = atoi(tokens[3].c_str());
+
+			// note: this must only compare by name
+			const auto playerPred = [&name](const GameParticipant& p) { return (p.name == name); };
+			const auto playerIter = std::find_if(players.begin(), players.end(), playerPred);
+
+			if (playerIter != players.end()) {
+				playerIter->SetValue("password", pwd);
+
+				LOG("[%s] changed password for client \"%s\" to \"%s\"", __func__, name.c_str(), pwd.c_str());
+			} else {
+				AddAdditionalUser(name, pwd, false, spectator, team);
+
+				LOG("[%s] added %s \"%s\" with password \"%s\" to team %d",
+					__func__, (spectator? "spectator": "player"), name.c_str(), pwd.c_str(), team
 				);
 			}
-		}
-	}
-	else if (action.command == "kill") {
-		LOG("Server killed!");
-		quitServer = true;
-	}
-	else if (action.command == "pause") {
-		if (gameHasStarted) {
+		} break;
+
+		case hashString("kill"): {
+			LOG("Server killed!");
+			quitServer = true;
+		} break;
+		case hashString("pause"): {
 			// action can originate from autohost prior to start
 			// (normal clients are blocked from sending any pause
 			// commands during this period)
+			if (!gameHasStarted)
+				return;
+
 			bool newPausedState = isPaused;
 
 			if (action.extra.empty()) {
@@ -2386,12 +2519,13 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 			}
 
 			isPaused = newPausedState;
-		}
-	}
-	else {
-		// only forward to players (send over network)
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+
+		default: {
+			// only forward to players (send over network)
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
 	}
 }
 
@@ -2402,7 +2536,7 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (demoReader != NULL) {
+	if (demoReader != nullptr) {
 		CheckSync();
 		SendDemoData(-1);
 		return;
@@ -2414,7 +2548,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 	CheckSync();
 #ifndef DEDICATED
-	const bool vidRecording = globalRendering->isVideoCapturing;
+	const bool vidRecording = videoCapturing->AllowRecord();
 #else
 	const bool vidRecording = false;
 #endif
@@ -2428,7 +2562,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		LOG_L(
 			L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
 			"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
-			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, HasLocalClient(), normalFrame
+			__func__, serverFrameNum, fromServerThread, fixedFrameTime, HasLocalClient(), normalFrame
 		);
 	}
 
@@ -2484,7 +2618,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 	}
 
 	if (normalFrame || videoFrame || singleStep) {
-		assert(demoReader == NULL);
+		assert(demoReader == nullptr);
 
 		for (unsigned int i = 0; i < numNewFrames; ++i) {
 			++serverFrameNum;
@@ -2528,8 +2662,7 @@ std::string CGameServer::SpeedControlToString(int speedCtrl)
 	std::string desc = "<invalid>";
 	if (speedCtrl == 0) {
 		desc = "Maximum CPU";
-	} else
-	if (speedCtrl == 1) {
+	} else if (speedCtrl == 1) {
 		desc = "Average CPU";
 	}
 	return desc;
@@ -2546,8 +2679,8 @@ void CGameServer::UpdateLoop()
 		while (!quitServer) {
 			spring_msecs(loopSleepTime).sleep(true);
 
-			if (UDPNet != nullptr)
-				UDPNet->Update();
+			if (udpListener != nullptr)
+				udpListener->Update();
 
 			std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 			ServerReadNet();
@@ -2566,8 +2699,8 @@ void CGameServer::UpdateLoop()
 
 		// flush the quit messages to reduce ugly network error messages on the client side
 		for (GameParticipant& p: players) {
-			if (p.link != nullptr)
-				p.link->Flush();
+			if (p.clientLink != nullptr)
+				p.clientLink->Flush();
 		}
 
 		// now let clients close their connections
@@ -2578,35 +2711,39 @@ void CGameServer::UpdateLoop()
 }
 
 
-void CGameServer::KickPlayer(const int playerNum)
+void CGameServer::KickPlayer(int playerNum)
 {
-	if (!players[playerNum].link) { // only kick connected players
+	// only kick connected players
+	if (players[playerNum].clientLink == nullptr) {
 		Message(spring::format("Attempt to kick user %d who is not connected", playerNum));
 		return;
 	}
+
 	Message(spring::format(PlayerLeft, players[playerNum].GetType(), players[playerNum].name.c_str(), "kicked"));
 	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
+
 	players[playerNum].Kill("Kicked from the battle", true);
-	if (hostif)
+
+	if (hostif != nullptr)
 		hostif->SendPlayerLeft(playerNum, 2);
 }
 
 
-void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw)
+void CGameServer::MutePlayer(int playerNum, bool muteChat, bool muteDraw)
 {
 	if (playerNum >= players.size()) {
-		LOG_L(L_WARNING, "MutePlayer: invalid playerNum");
+		LOG_L(L_WARNING, "[%s] invalid playerNum %d", __func__, playerNum);
 		return;
 	}
 
-	clientMuteFilter[playerNum].first  = muteChat;
-	clientMuteFilter[playerNum].second = muteDraw;
+	chatMutedFlags[playerNum].first  = muteChat;
+	chatMutedFlags[playerNum].second = muteDraw;
 }
 
 
-void CGameServer::SpecPlayer(const int player)
+void CGameServer::SpecPlayer(int player)
 {
-	if (!players[player].link) {
+	if (players[player].clientLink == nullptr) {
 		Message(spring::format("Attempt to spec user %d who is not connected", player));
 		return;
 	}
@@ -2614,6 +2751,7 @@ void CGameServer::SpecPlayer(const int player)
 		Message(spring::format("Attempt to spec user %d who is spectating already", player));
 		return;
 	}
+
 	Message(spring::format(PlayerResigned, players[player].name.c_str(), "forced spec"));
 	ResignPlayer(player);
 }
@@ -2631,8 +2769,8 @@ void CGameServer::ResignPlayer(const int player)
 		if (teams[t].GetLeader() != player)
 			continue;
 
-		const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
-		const std::vector<unsigned char>& teamAIs  = getSkirmishAIIds(ais, t);
+		const std::vector<int>& teamPlayers = getPlayersInTeam(players, t);
+		const std::vector<uint8_t>& teamAIs = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, t);
 
 		if ((teamPlayers.size() + teamAIs.size()) == 0) {
 			// no controllers left in team
@@ -2640,30 +2778,27 @@ void CGameServer::ResignPlayer(const int player)
 			teams[t].SetLeader(-1);
 		} else if (teamPlayers.empty()) {
 			// no human player left in team
-			teams[t].SetLeader(ais[teamAIs[0]].hostPlayer);
+			teams[t].SetLeader(skirmishAIs[teamAIs[0]].second.hostPlayer);
 		} else {
 			// still human controllers left in team
 			teams[t].SetLeader(teamPlayers[0]);
 		}
 	}
 
-	if (hostif)
+	if (hostif != nullptr)
 		hostif->SendPlayerDefeated(player);
 }
 
 
-bool CGameServer::CheckPlayersPassword(const int playerNum, const std::string& pw) const
+bool CGameServer::CheckPlayerPassword(const int playerNum, const std::string& pw) const
 {
 	if (playerNum >= players.size()) // new player
 		return true;
 
-	const GameParticipant::customOpts& opts = players[playerNum].GetAllValues();
-	auto it = opts.find("password");
+	const auto& opts = players[playerNum].GetAllValues();
+	const auto it = opts.find("password");
 
-	if (it == opts.end() || it->second == pw)
-		return true;
-
-	return false;
+	return (it == opts.end() || it->second == pw);
 }
 
 
@@ -2676,12 +2811,14 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 
 	GameParticipant& p = players[playerNum];
 	assert(p.myState == GameParticipant::UNCONNECTED); // we only add _new_ players here, we don't handle reconnects here!
+
 	p.id = playerNum;
 	p.name = name;
 	p.spectator = spectator;
 	p.team = team;
 	p.isMidgameJoin = true;
 	p.isFromDemo = fromDemo;
+
 	if (!passwd.empty())
 		p.SetValue("password", passwd);
 
@@ -2691,73 +2828,116 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 }
 
 
-unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
-{
-	Message(spring::format("%s attempt from %s", (reconnect ? "Reconnection" : "Connection"), name.c_str()));
-	Message(spring::format(" -> Version: %s", version.c_str()));
-	Message(spring::format(" -> Address: %s", link->GetFullAddress().c_str()), false);
+unsigned CGameServer::BindConnection(
+	std::shared_ptr<netcode::CConnection> clientLink,
+	std::string clientName,
+	const std::string& clientPassword,
+	const std::string& clientVersion,
+	const std::string& clientPlatform,
+	bool isLocal,
+	bool reconnect,
+	int netloss
+) {
+	Message(spring::format("%s attempt from %s", (reconnect ? "Reconnection" : "Connection"), clientName.c_str()));
+	Message(spring::format(" -> Version: %s [%s]", clientVersion.c_str(), clientPlatform.c_str()));
+	Message(spring::format(" -> Address: %s", clientLink->GetFullAddress().c_str()), false);
 
-	if (link->CanReconnect())
+	if (clientLink->CanReconnect())
 		canReconnect = true;
+	// first client to connect determines the reference version
+	// the proliferation of maintenance builds since 104.0 means
+	// comparing just NETWORK_VERSION is no longer strict enough
+	if (refClientVersion.second.empty())
+		refClientVersion = {clientName, clientVersion};
 
-	std::string errmsg = "";
-	bool terminate = false;
+	std::string errMsg;
 
 	size_t newPlayerNumber = players.size();
 
-	// find the player in the current list
-	for (GameParticipant& p: players) {
-		if (name != p.name)
-			continue;
+	bool killExistingLink = false;
+	// bool reconnectAllowed = canReconnect;
 
-		if (p.isFromDemo) {
-			errmsg = "User name duplicated in the demo";
-		} else
-		if (!p.link) {
-			if (reconnect)
-				errmsg = "User is not ingame";
-			else if (canReconnect || !gameHasStarted)
-				newPlayerNumber = p.id;
-			else
-				errmsg = "Game has already started";
-		}
-		else {
-			bool reconnectAllowed = canReconnect && p.link->CheckTimeout(-1);
-			if (!reconnect && reconnectAllowed) {
-				newPlayerNumber = p.id;
-				terminate = true;
+	if (clientVersion != refClientVersion.second) {
+		errMsg = "client version '" + clientVersion + "' mismatch, reference is '" + refClientVersion.second + "' set by '" + refClientVersion.first + "'";
+	} else {
+		struct ConnectionFlags {
+			const char* error;
+			bool allowConnect;
+			bool forceNewLink;
+		};
+
+		// find the player in the current list
+		const auto pred = [&clientName](const GameParticipant& gp) { return (clientName == gp.name); };
+		const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+		const auto GetConnectionFlags = [&](const GameParticipant& gp) -> ConnectionFlags {
+			if (gp.isFromDemo)
+				return {"User name duplicated in the demo", false, false};
+
+			if (gp.clientLink == nullptr) {
+				// not an existing connection
+				if (reconnect)
+					return {"User is not ingame", false, false};
+				if (canReconnect || !gameHasStarted)
+					return {"", true, false};
+
+				return {"Game has already started", false, false};
 			}
-			else if (reconnect && reconnectAllowed && p.link->GetFullAddress() != link->GetFullAddress())
-				newPlayerNumber = p.id;
+
+			if (!canReconnect || !gp.clientLink->CheckTimeout(-1))
+				return {"User can not reconnect", false, false};
+
+			if (!reconnect)
+				return {"", true, true};
+
+			if (gp.clientLink->GetFullAddress() != clientLink->GetFullAddress())
+				return {"", true, false};
+
+			return {"User is already ingame", false, false};
+		};
+
+		if (iter != players.end()) {
+			const GameParticipant& gameParticipant = *iter;
+			const ConnectionFlags& gpConnectionFlags = GetConnectionFlags(gameParticipant);
+
+			if (gpConnectionFlags.allowConnect) {
+				// allowed, possibly with new link
+				newPlayerNumber = gameParticipant.id;
+				killExistingLink = gpConnectionFlags.forceNewLink;
+			} else {
+				// disallowed
+				errMsg = gpConnectionFlags.error;
+			}
+		}
+
+		// not found in the original start script, allow spectator join?
+		if (errMsg.empty() && newPlayerNumber >= players.size()) {
+			// add tilde prefix to "anonymous" spectators (#4949)
+			if (!demoReader && allowSpecJoin)
+				clientName = "~" + clientName;
+
+			if (demoReader || allowSpecJoin)
+				AddAdditionalUser(clientName, clientPassword);
 			else
-				errmsg = "User is already ingame";
+				errMsg = "User name not authorized to connect";
 		}
-		break;
+
+		// check user's password; disabled for local host
+		if (errMsg.empty() && !isLocal)
+			if (!CheckPlayerPassword(newPlayerNumber, clientPassword))
+				errMsg = "Incorrect password";
+
+		// do not respond before we are sure we want to, and never respond to
+		// reconnection attempts since it could interfere with the protocol and
+		// desync
+		if (!reconnect)
+			clientLink->Unmute();
 	}
-
-	// not found in the original start script, allow spector join?
-	if (errmsg.empty() && newPlayerNumber >= players.size()) {
-		if (!demoReader && allowSpecJoin) { //add prefix to "anonymous" spectators (#4949)
-			name = std::string("~") + name;
-		}
-		if (demoReader || allowSpecJoin)
-			AddAdditionalUser(name, passwd);
-		else
-			errmsg = "User name not authorized to connect";
-	}
-
-	// check user's password
-	if (errmsg.empty() && !isLocal) // disable pw check for local host
-		if (!CheckPlayersPassword(newPlayerNumber, passwd))
-			errmsg = "Incorrect password";
-
-	if (!reconnect) // don't respond before we are sure we want to do it
-		link->Unmute(); // never respond to reconnection attempts, it could interfere with the protocol and desync
 
 	// >> Reject Connection <<
-	if (!errmsg.empty() || newPlayerNumber >= players.size()) {
-		Message(spring::format(" -> %s", errmsg.c_str()));
-		link->SendData(CBaseNetProtocol::Get().SendQuit(spring::format("Connection rejected: %s", errmsg.c_str())));
+	if (!errMsg.empty() || newPlayerNumber >= players.size()) {
+		Message(spring::format(" -> %s", errMsg.c_str()));
+		clientLink->SendData(CBaseNetProtocol::Get().SendQuit(spring::format("Connection rejected: %s", errMsg.c_str())));
 		return 0;
 	}
 
@@ -2766,68 +2946,83 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newPlayer.isReconn = gameHasStarted;
 
 	// there is a running link already -> terminate it
-	if (terminate) {
+	if (killExistingLink) {
 		Message(spring::format(PlayerLeft, newPlayer.GetType(), newPlayer.name.c_str(), " terminating existing connection"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
-		newPlayer.link.reset(); // prevent sending a quit message since this might kill the new connection
+
+		// prevent sending a quit message since that might kill the new connection
+		newPlayer.clientLink.reset();
 		newPlayer.Kill("Terminating connection");
-		if (hostif)
+
+		if (hostif != nullptr)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
 	}
 
 	// inform the player about himself if it's a midgame join
 	if (newPlayer.isMidgameJoin)
-		link->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
+		clientLink->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
 
 	// there is an open link -> reconnect
-	if (newPlayer.link) {
-		newPlayer.link->ReconnectTo(*link);
-		if (UDPNet)
-			UDPNet->UpdateConnections();
+	if (newPlayer.clientLink != nullptr) {
+		newPlayer.clientLink->ReconnectTo(*clientLink);
+
+		if (udpListener != nullptr)
+			udpListener->UpdateConnections();
+
 		Message(spring::format(" -> Connection reestablished (id %i)", newPlayerNumber));
-		newPlayer.link->SetLossFactor(netloss);
-		newPlayer.link->Flush(!gameHasStarted);
+		newPlayer.clientLink->SetLossFactor(netloss);
+		newPlayer.clientLink->Flush(!gameHasStarted);
 		return newPlayerNumber;
 	}
 
-	newPlayer.Connected(link, isLocal);
+	newPlayer.Connected(clientLink, isLocal);
 	newPlayer.SendData(std::shared_ptr<const RawPacket>(myGameData->Pack()));
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playerNum, the player can start loading
-	// throw at him all stuff he missed until now
-	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
-		newPlayer.SendData(p);
-
-	if (demoReader == NULL || myGameSetup->demoName.empty()) {
+	if (demoReader == nullptr || myGameSetup->demoName.empty()) {
 		// player wants to play -> join team
 		if (!newPlayer.spectator) {
-			unsigned newPlayerTeam = newPlayer.team;
-			if (!teams[newPlayerTeam].IsActive()) { // create new team
+			const unsigned newPlayerTeam = newPlayer.team;
+
+			if (!teams[newPlayerTeam].IsActive()) {
+				// create new team
 				newPlayer.SetReadyToStart(myGameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 				teams[newPlayerTeam].SetActive(true);
 			}
+
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
 		}
 	}
 
+	// finally send player all packets he missed until now
+	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
+		newPlayer.SendData(p);
+
 	// new connection established
 	Message(spring::format(" -> Connection established (given id %i)", newPlayerNumber));
-	link->SetLossFactor(netloss);
-	link->Flush(!gameHasStarted);
+	clientLink->SetLossFactor(netloss);
+	clientLink->Flush(!gameHasStarted);
 	return newPlayerNumber;
 }
 
 
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
-	if (!msg.msg.empty()) { // silently drop empty chat messages
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-		if (hostif && msg.fromPlayer >= 0 && msg.fromPlayer != SERVER_PLAYER) {
-			// do not echo packets to the autohost
-			hostif->SendPlayerChat(msg.fromPlayer, msg.destination, msg.msg);
-		}
-	}
+	// silently drop empty chat messages
+	if (msg.msg.empty())
+		return;
+
+	Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+
+	if (hostif == nullptr)
+		return;
+
+	// do not echo packets to the autohost
+	if (msg.fromPlayer < 0 || msg.fromPlayer == SERVER_PLAYER)
+		return;
+
+	hostif->SendPlayerChat(msg.fromPlayer, msg.destination, msg.msg);
 }
 
 
@@ -2836,10 +3031,8 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 	if (internalSpeed == newSpeed)
 		return;
 
-	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
-	internalSpeed = newSpeed;
+	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(internalSpeed = newSpeed));
 }
-
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
@@ -2849,26 +3042,17 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 	if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
 		InternalSpeedChange(newSpeed);
 
-	Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
-	userSpeedFactor = newSpeed;
+	Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, userSpeedFactor = newSpeed));
 }
 
 
 uint8_t CGameServer::ReserveSkirmishAIId()
 {
-	// find the first free id
-	for (uint8_t n = 0; n < MAX_AIS; n++) {
-		if (!usedSkirmishAIIds[n]) {
-			usedSkirmishAIIds[n] = true;
-			return n;
-		}
-	}
+	if (freeSkirmishAIs.empty())
+		return MAX_AIS;
 
-	return MAX_AIS;
+	const uint8_t id = freeSkirmishAIs.back();
+	freeSkirmishAIs.pop_back();
+	return id;
 }
 
-
-void CGameServer::AddToPacketCache(std::shared_ptr<const netcode::RawPacket> &pckt)
-{
-	packetCache.push_back(pckt);
-}

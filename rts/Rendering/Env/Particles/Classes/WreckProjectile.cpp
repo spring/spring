@@ -7,12 +7,13 @@
 #include "Map/Ground.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CWreckProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, )
 CR_REG_METADATA(CWreckProjectile, )
 
 
@@ -28,20 +29,19 @@ void CWreckProjectile::Update()
 	speed.y += mygravity;
 	speed.x *= 0.994f;
 	speed.z *= 0.994f;
-
-	if (speed.y > 0.0f)
-		speed.y *= 0.998f;
+	speed.y *= (0.998f + 0.002f * (speed.y <= 0.0f));
 
 	pos += speed;
 
-	if (!(gs->frameNum & (projectileHandler->GetParticleSaturation() < 0.5f? 1: 3))) {
+	if (!(gs->frameNum & (projectileHandler.GetParticleSaturation() < 0.5f? 1: 3))) {
 		CSmokeProjectile* hp = projMemPool.alloc<CSmokeProjectile>(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
+
 	deleteMe |= (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z));
 }
 
-void CWreckProjectile::Draw(CVertexArray* va)
+void CWreckProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	col[0] = (unsigned char) (0.15f * 200);
@@ -50,19 +50,19 @@ void CWreckProjectile::Draw(CVertexArray* va)
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col);
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col});
 	#undef wt
 }
 
-void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CWreckProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::redA);
+	va->SafeAppend({pos        , color4::redA});
+	va->SafeAppend({pos + speed, color4::redA});
 }
 
-int CWreckProjectile::GetProjectilesCount() const
-{
-	return 1;
-}

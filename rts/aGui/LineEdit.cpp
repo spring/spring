@@ -2,6 +2,7 @@
 
 #include "LineEdit.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "System/Misc/SpringTime.h"
@@ -31,24 +32,24 @@ void LineEdit::SetCrypt(bool focus)
 void LineEdit::SetContent(const std::string& line, bool moveCursor)
 {
 	content = line;
-	if (moveCursor) {
-		cursorPos = content.size();
-	}
+	if (!moveCursor)
+		return;
+	cursorPos = content.size();
 }
 
 void LineEdit::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
-	glColor4f(1.0f, 1.0f, 1.0f, opacity);
-	DrawBox(GL_QUADS);
+	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
+	DrawBox();
 
-	glLineWidth(1.49f);
 	if (hasFocus) {
-		glColor4f(0.0f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
+		DrawOutline();
 	} else {
-		glColor4f(0.5f, 0.5f, 0.5f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		gui->SetColor(0.5f, 0.5f, 0.5f, opacity);
+		DrawOutline();
 	}
 
 	std::string tempText;
@@ -62,7 +63,7 @@ void LineEdit::DrawSelf()
 	if (hasFocus) {
 		// draw the caret
 		const std::string caretStr = tempText.substr(0, cursorPos);
-        float caretWidth = font->GetSize() * font->GetTextWidth(caretStr) / float(screensize[0]);
+		float caretWidth = font->GetSize() * font->GetTextWidth(caretStr) / float(screensize[0]);
 
 		char c = tempText[cursorPos];
 		if (c == 0) { c = ' '; }
@@ -71,13 +72,16 @@ void LineEdit::DrawSelf()
 		float cw = font->GetSize() * font->GetCharacterWidth(c) /float(screensize[0]);
 		float csx = pos[0] + 0.01 + caretWidth;
 		float f = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
-		glColor4f(f, f, f, opacity);
+		gui->SetColor(f, f, f, opacity);
 		glRectf(csx, textCenter + cursorHeight/2, csx + cw, textCenter - cursorHeight/2);
-		glColor4f(0.0f, 0.0f, 0.0f, 1.0f); // black
+		gui->SetColor(0.0f, 0.0f, 0.0f, 1.0f); // black
 	}
 
+	gui->SetDrawMode(Gui::DrawMode::FONT);
 	font->SetTextColor(); //default
-	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, tempText);
+	font->SetTextDepth(depth);
+	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, tempText);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 bool LineEdit::HandleEventSelf(const SDL_Event& ev)
@@ -91,6 +95,10 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 			}
 			break;
 		}
+		case SDL_TEXTINPUT: {
+			content.insert(cursorPos, ev.text.text);
+			cursorPos+=strlen(ev.text.text);
+		} break;
 		case SDL_KEYDOWN: {
 			if (!hasFocus) {
 				break;
@@ -136,15 +144,6 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 				case SDLK_RETURN: {
 					DefaultAction.emit();
 					return true;
-				}
-				default:
-				{
-					auto currentUnicode = ev.key.keysym.sym;
-					// only ASCII supported ATM
-					if ((currentUnicode >= 32) && (currentUnicode <= 126)) {
-						char buf[2] = { (const char)currentUnicode, 0 };
-						content.insert(cursorPos++, buf);
-					}
 				}
 			}
 			break;

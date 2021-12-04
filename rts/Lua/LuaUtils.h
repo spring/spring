@@ -5,8 +5,6 @@
 
 #include <string>
 #include <vector>
-using std::string;
-using std::vector;
 
 #include "LuaHashString.h"
 #include "LuaInclude.h"
@@ -99,9 +97,8 @@ class LuaUtils {
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
-		static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
-		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, Command& cmd, const char* caller, int index);
+		static int  PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
+
 		static Command ParseCommand(lua_State* L, const char* caller, int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller, int table);
 		static void ParseCommandArray(lua_State* L, const char* caller, int table, vector<Command>& commands);
@@ -113,6 +110,8 @@ class LuaUtils {
 
 		static void PrintStack(lua_State* L);
 
+		static int IsEngineMinVersion(lua_State* L);
+
 		// from LuaFeatureDefs.cpp / LuaUnitDefs.cpp / LuaWeaponDefs.cpp
 		// (helper for the Next() iteration routine)
 		static int Next(const ParamMap& paramMap, lua_State* L);
@@ -120,6 +119,7 @@ class LuaUtils {
 		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
 		// (implementation copied from lua/src/lib/lbaselib.c)
 		static int Echo(lua_State* L);
+		static int ParseLogLevel(lua_State* L, int index);
 		static int Log(lua_State* L);
 		static bool PushLogEntries(lua_State* L);
 
@@ -279,7 +279,23 @@ static inline int CtrlAllyTeam(const lua_State* L)
 	if (ctrlTeam < 0)
 		return ctrlTeam;
 
-	return teamHandler->AllyTeam(ctrlTeam);
+	return teamHandler.AllyTeam(ctrlTeam);
+}
+
+static inline int SelectTeam(const lua_State* L)
+{
+	return CLuaHandle::GetHandleSelectTeam(L);
+}
+
+
+static inline bool CanSelectTeam(const lua_State* L, int teamID)
+{
+	const int selectTeam = SelectTeam(L);
+
+	if (selectTeam < 0)
+		return (selectTeam == CEventClient::AllAccessTeam);
+
+	return (selectTeam == teamID);
 }
 
 
@@ -300,7 +316,7 @@ static inline bool CanControlAllyTeam(const lua_State* L, int allyTeamID)
 	if (ctrlTeam < 0)
 		return (ctrlTeam == CEventClient::AllAccessTeam);
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
@@ -311,9 +327,9 @@ static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
 		return (ctrlTeam == CEventClient::AllAccessTeam);
 
 	if (allyTeamID < 0)
-		return (ctrlTeam == teamHandler->GaiaTeamID());
+		return (ctrlTeam == teamHandler.GaiaTeamID());
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeamID)
@@ -326,7 +342,7 @@ static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeam
 	if (allyTeamID < 0)
 		return false;
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 

@@ -386,7 +386,7 @@ bool CAVIGenerator::readOpenglPixelDataThreaded()
 		}
 	}
 
-	glReadPixels(0, 0, bitmapInfo.biWidth, bitmapInfo.biHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, readBuf);
+	glReadPixels(0, 0, bitmapInfo.biWidth, bitmapInfo.biHeight, GL_BGR, GL_UNSIGNED_BYTE, readBuf);
 	return true;
 }
 

@@ -14,14 +14,14 @@ public:
 
 	CLaserProjectile(const ProjectileParams& params);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* feature) override;
 	void Collision() override;
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 6; }
 
 private:
 	void UpdateIntensity();

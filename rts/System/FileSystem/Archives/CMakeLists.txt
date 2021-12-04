@@ -16,6 +16,7 @@ add_library(archives STATIC
 	${sources_engine_System_Log_sinkConsole}
 )
 
+include_directories(${ZLIB_INCLUDE_DIR})
 target_link_libraries(archives
 	7zip
 	${SPRING_MINIZIP_LIBRARY}

@@ -28,7 +28,7 @@ GameSetupDrawer* GameSetupDrawer::instance = nullptr;
 void GameSetupDrawer::Enable()
 {
 	assert(instance == nullptr);
-	assert(gameSetup);
+	assert(gameSetup != nullptr);
 
 	instance = new GameSetupDrawer();
 }
@@ -53,15 +53,15 @@ GameSetupDrawer::GameSetupDrawer():
 	readyCountdown(spring_notime),
 	lastTick(spring_notime)
 {
-	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
-		new CStartPosSelecter();
-	}
-	lctrl_pressed = false;
+	if (gameSetup->hostDemo)
+		return;
+	if (gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame)
+		return;
+
+	new CStartPosSelecter();
 }
 
-GameSetupDrawer::~GameSetupDrawer()
-{
-}
+GameSetupDrawer::~GameSetupDrawer() = default;
 
 
 void GameSetupDrawer::Draw()
@@ -76,18 +76,18 @@ void GameSetupDrawer::Draw()
 		}
 	}
 
-	const unsigned int numPlayers = playerHandler->ActivePlayers();
+	const unsigned int numPlayers = playerHandler.ActivePlayers();
 
 	std::vector< std::pair<int, std::string> > playerStates(numPlayers);
 	std::string startState = "Unknown state.";
 
 	if (readyCountdown > spring_nulltime) {
 		startState = "Starting in " + IntToString(readyCountdown.toSecsi(), "%i");
-	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->IsReadyToStart()) {
+	} else if (!playerHandler.Player(gu->myPlayerNum)->spectator && !playerHandler.Player(gu->myPlayerNum)->IsReadyToStart()) {
 		startState = "Choose start pos";
 	} else if (gameServer) {
 		// we are the host and can get the show on the road by force
-		const CKeyBindings::HotkeyList& fsKeys = keyBindings->GetHotkeys("forcestart");
+		const CKeyBindings::HotkeyList& fsKeys = keyBindings.GetHotkeys("forcestart");
 		const std::string fsKey = fsKeys.empty() ? "<none>" : *fsKeys.begin();
 		startState = std::string("Waiting for players, press ") + fsKey + " to force start";
 	} else {
@@ -95,7 +95,7 @@ void GameSetupDrawer::Draw()
 	}
 
 	for (unsigned int a = 0; a < numPlayers; a++) {
-		const CPlayer* player = playerHandler->Player(a);
+		const CPlayer* player = playerHandler.Player(a);
 
 		// redundant
 		playerStates[a].first = a;
@@ -132,21 +132,20 @@ void GameSetupDrawer::Draw()
 	}
 
 	// LuaUI doesn't want to draw, keep showing the box
-	if (CStartPosSelecter::GetSelector() != nullptr) {
+	if (CStartPosSelecter::GetSelector() != nullptr)
 		CStartPosSelecter::GetSelector()->ShowReadyBox(true);
-	}
 
-	font->Begin();
+
 	font->SetColors(); // default
-	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, startState);
+	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM | FONT_BUFFERED, startState);
 
 	for (unsigned int a = 0; a <= numPlayers; a++) {
-		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
-		static const float4    green(0.2f, 1.0f, 0.2f, 1.0f);
-		static const float4   yellow(0.8f, 0.8f, 0.2f, 1.0f);
-		static const float4    white(1.0f, 1.0f, 1.0f, 1.0f);
-		static const float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
-		static const float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
+		static constexpr float4      red(1.0f, 0.2f, 0.2f, 1.0f);
+		static constexpr float4    green(0.2f, 1.0f, 0.2f, 1.0f);
+		static constexpr float4   yellow(0.8f, 0.8f, 0.2f, 1.0f);
+		static constexpr float4    white(1.0f, 1.0f, 1.0f, 1.0f);
+		static constexpr float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
+		static constexpr float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
 
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();
@@ -164,7 +163,7 @@ void GameSetupDrawer::Draw()
 			color = &white;
 			name = "Players:";
 		} else {
-			player = playerHandler->Player(a);
+			player = playerHandler.Player(a);
 			name = player->name;
 
 			if (player->spectator) {
@@ -183,7 +182,8 @@ void GameSetupDrawer::Draw()
 		}
 
 		font->SetColors(color, nullptr);
-		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
+		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, name);
 	}
-	font->End();
+
+	font->DrawBufferedGL4();
 }

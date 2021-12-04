@@ -65,10 +65,10 @@ class CWaitCommandsAI {
 	private:
 		// Wait Base Class
 		class Wait : public CObject {
-			CR_DECLARE(Wait)
+			CR_DECLARE_DERIVED(Wait)
 			public:
 				virtual ~Wait();
-				virtual void DependentDied(CObject* o) = 0; // from CObject
+				virtual void DependentDied(CObject* o) override = 0; // from CObject
 				virtual void AddUnit(CUnit* unit) = 0;
 				virtual void RemoveUnit(CUnit* unit) = 0;
 				virtual void Update() = 0;
@@ -107,17 +107,17 @@ class CWaitCommandsAI {
 
 		// TimeWait
 		class TimeWait : public Wait {
-			CR_DECLARE(TimeWait)
+			CR_DECLARE_DERIVED(TimeWait)
 			public:
 				static TimeWait* New(const Command& cmd, CUnit* unit);
 				static TimeWait* New(int duration, CUnit* unit);
 				~TimeWait();
-				void DependentDied(CObject* o);
-				void AddUnit(CUnit* unit);
-				void RemoveUnit(CUnit* unit);
-				void Update();
-				void Draw() const;
-				const std::string& GetStateText() const;
+				void DependentDied(CObject* o) override;
+				void AddUnit(CUnit* unit) override;
+				void RemoveUnit(CUnit* unit) override;
+				void Update() override;
+				void Draw() const override;
+				const std::string& GetStateText() const override;
 				int GetDuration() const { return duration; }
 			private:
 				TimeWait(const Command& cmd, CUnit* unit);
@@ -132,16 +132,16 @@ class CWaitCommandsAI {
 
 		// DeathWait
 		class DeathWait : public Wait {
-			CR_DECLARE(DeathWait)
+			CR_DECLARE_DERIVED(DeathWait)
 			public:
 				static DeathWait* New(const Command& cmd);
 				~DeathWait();
-				void DependentDied(CObject* o);
-				void AddUnit(CUnit* unit);
-				void RemoveUnit(CUnit* unit);
-				void Update();
-				void Draw() const;
-				void AddUnitPosition(const float3& pos);
+				void DependentDied(CObject* o) override;
+				void AddUnit(CUnit* unit) override;
+				void RemoveUnit(CUnit* unit) override;
+				void Update() override;
+				void Draw() const override;
+				void AddUnitPosition(const float3& pos) override;
 			private:
 				DeathWait(const Command& cmd);
 				void SelectAreaUnits(const float3& pos0, const float3& pos1,
@@ -154,16 +154,16 @@ class CWaitCommandsAI {
 
 		// SquadWait
 		class SquadWait : public Wait {
-			CR_DECLARE(SquadWait)
+			CR_DECLARE_DERIVED(SquadWait)
 			public:
 				static SquadWait* New(const Command& cmd);
 				~SquadWait();
-				void DependentDied(CObject* o);
-				void AddUnit(CUnit* unit);
-				void RemoveUnit(CUnit* unit);
-				void Update();
-				void Draw() const;
-				const std::string& GetStateText() const { return stateText; }
+				void DependentDied(CObject* o) override;
+				void AddUnit(CUnit* unit) override;
+				void RemoveUnit(CUnit* unit) override;
+				void Update() override;
+				void Draw() const override;
+				const std::string& GetStateText() const override { return stateText; }
 			private:
 				SquadWait(const Command& cmd);
 				void UpdateText();
@@ -176,14 +176,14 @@ class CWaitCommandsAI {
 
 		// GatherWait
 		class GatherWait : public Wait {
-			CR_DECLARE(GatherWait)
+			CR_DECLARE_DERIVED(GatherWait)
 			public:
 				static GatherWait* New(const Command& cmd);
 				~GatherWait();
-				void DependentDied(CObject * o);
-				void AddUnit(CUnit* unit);
-				void RemoveUnit(CUnit* unit);
-				void Update();
+				void DependentDied(CObject * o) override;
+				void AddUnit(CUnit* unit) override;
+				void RemoveUnit(CUnit* unit) override;
+				void Update() override;
 			private:
 				GatherWait(const Command& cmd);
 			private:

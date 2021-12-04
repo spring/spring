@@ -46,7 +46,7 @@ CPathTexture::CPathTexture()
 	infoTexPBO.New(texSize.x * texSize.y * texChannels, GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CPathTexture");
@@ -59,7 +59,7 @@ CPathTexture::CPathTexture()
 }
 
 
-enum BuildSquareStatus {
+enum VisBuildSquareStatus {
 	NOLOS          = 0,
 	FREE           = 1,
 	OBJECTBLOCKED  = 2,
@@ -73,11 +73,6 @@ static const SColor buildColors[] = {
 	SColor(  0,   0, 255), // objblocked
 	SColor(254,   0,   0), // terrainblocked
 };
-
-
-static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
-	return buildColors[status];
-}
 
 
 static SColor GetSpeedModColor(const float sm) {
@@ -97,23 +92,23 @@ static SColor GetSpeedModColor(const float sm) {
 const MoveDef* CPathTexture::GetSelectedMoveDef()
 {
 	if (forcedPathType >= 0)
-		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
+		return moveDefHandler.GetMoveDefByPathType(forcedPathType);
 
-	const MoveDef* md = nullptr;
 	const auto& unitSet = selectedUnitsHandler.selectedUnits;
-	if (!unitSet.empty()) {
-		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
-		md = unit->moveDef;
-	}
-	return md;
+
+	if (unitSet.empty())
+		return nullptr;
+
+	const auto iter = unitSet.begin();
+	const CUnit* unit = unitHandler.GetUnit(*iter);
+	return unit->moveDef;
 }
 
 
 const UnitDef* CPathTexture::GetCurrentBuildCmdUnitDef()
 {
-	if (forcedUnitDef >= 0) {
+	if (forcedUnitDef >= 0)
 		return unitDefHandler->GetUnitDefByID(forcedUnitDef);
-	}
 
 	if ((unsigned)guihandler->inCommand > guihandler->commands.size())
 		return nullptr;
@@ -160,8 +155,10 @@ bool CPathTexture::IsUpdateNeeded()
 
 	// newly build cmd active?
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
-	if (ud) {
-		const unsigned int buildDefID = ud ? -(ud->id + 1) : 0;
+
+	if (ud != nullptr) {
+		const unsigned int buildDefID = -(ud->id + 1);
+
 		if (buildDefID != lastSelectedPathType) {
 			lastSelectedPathType = buildDefID;
 			updateProcess = 0;
@@ -170,8 +167,10 @@ bool CPathTexture::IsUpdateNeeded()
 	} else {
 		// newly unit/moveType active?
 		const MoveDef* md = GetSelectedMoveDef();
-		if (md) {
-			const unsigned int pathType = md ? (md->pathType + 1) : 0;
+
+		if (md != nullptr) {
+			const unsigned int pathType = md->pathType + 1;
+
 			if (pathType != lastSelectedPathType) {
 				lastSelectedPathType = pathType;
 				updateProcess = 0;
@@ -181,11 +180,7 @@ bool CPathTexture::IsUpdateNeeded()
 	}
 
 	// nothing selected nor any build cmd active -> don't update
-	if (lastSelectedPathType == 0 && isCleared) {
-		return false;
-	}
-
-	return true;
+	return (lastSelectedPathType != 0 || !isCleared);
 }
 
 
@@ -195,20 +190,21 @@ void CPathTexture::Update()
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
 
 	// just clear
-	if (!(ud || md)) {
+	if (ud == nullptr && md == nullptr) {
 		isCleared = true;
 		updateProcess = 0;
 		fbo.Bind();
-		glViewport(0,0, texSize.x, texSize.y);
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(0,0, texSize.x, texSize.y);
+		glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 		FBO::Unbind();
 		return;
 	}
 
 	// spread update across time
-	if (updateProcess >= texSize.y) updateProcess = 0;
+	updateProcess *= (updateProcess < texSize.y);
+
 	int start = updateProcess;
 	const int updateLines = std::max((64*64) / texSize.x, ThreadPool::GetNumThreads());
 	updateProcess += updateLines;
@@ -230,23 +226,25 @@ void CPathTexture::Update()
 				const float3 pos = float3(x << 1, 0.0f, y << 1) * SQUARE_SIZE;
 				const int idx = y * texSize.x + x;
 
-				BuildSquareStatus status = FREE;
+				VisBuildSquareStatus status = FREE;
 				BuildInfo bi(ud, pos, guihandler->buildFacing);
 				bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 				CFeature* f = nullptr;
+
 				if (CGameHelper::TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
-					if (f != nullptr) {
+					// occupied, reclaimable, or open
+					if (f != nullptr)
 						status = OBJECTBLOCKED;
-					}
 				} else {
+					// blocked
 					status = TERRAINBLOCKED;
 				}
 
-				infoTexMem[idx - offset] = GetBuildColor(status);
+				infoTexMem[idx - offset] = buildColors[status];
 			}
 		}
-	} else if (md != NULL) {
+	} else if (md != nullptr) {
 		for_mt(start, updateProcess, [&](const int y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int2 sq = int2(x << 1, y << 1);
@@ -255,15 +253,14 @@ void CPathTexture::Update()
 				float scale = 1.0f;
 
 				if (losFullView || losHandler->InLos(SquareToFloat3(sq), gu->myAllyTeam)) {
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 				}
 
 				// NOTE: raw speedmods are not necessarily clamped to [0, 1]
-				const float sm = CMoveMath::GetPosSpeedMod(*md, sq.x, sq.y);
-				infoTexMem[idx - offset] = GetSpeedModColor(sm * scale);
+				infoTexMem[idx - offset] = GetSpeedModColor(CMoveMath::GetPosSpeedMod(*md, sq.x, sq.y) * scale);
 			}
 		});
 	}
@@ -272,5 +269,6 @@ void CPathTexture::Update()
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, texSize.x, updateProcess - start, GL_RGBA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset * sizeof(SColor)));
 	infoTexPBO.Unbind();
+
 	isCleared = false;
 }

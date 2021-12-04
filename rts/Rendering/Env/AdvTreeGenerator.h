@@ -4,11 +4,11 @@
 #define _ADV_TREE_GENERATOR_H
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 
-// XXX This has a duplicate in BasicTreeDrawer.h
 #define MAX_TREE_HEIGHT 60
 
-class CVertexArray;
+class CBitmap;
 
 namespace Shader {
 	struct IProgramObject;
@@ -20,30 +20,44 @@ public:
 	~CAdvTreeGenerator();
 
 	void Init();
-	void Draw() const;
 
-	GLuint barkTex;
-	GLuint farTex[2];
-	unsigned int leafDL;
-	unsigned int pineDL;
+	void BindTreeBuffer(unsigned int treeType) const;
+	void DrawTreeBuffer(unsigned int treeType) const;
 
-	CVertexArray* va;
-	CVertexArray* barkva;
-
-	void MainTrunk(int numBranch, float height, float width);
-	void CreateFarTex(Shader::IProgramObject*);
-	void CreateFarView(unsigned char* mem, int dx, int dy, unsigned int displist);
+	unsigned int GetBushBuffer() const { return treeVBOs[0]; }
+	unsigned int GetPineBuffer() const { return treeVBOs[1]; }
+	unsigned int GetBarkTex() const { return barkTex; }
 
 private:
-	void CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);
-	void TrunkIterator(const float3& start, const float3& dir, float length, float size, int depth);
-	void DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size);
+	bool CopyBarkTexMem(const std::string& barkTexFile);
+	bool GenBarkTextures(const std::string& leafTexFile);
+	void GenVertexBuffers();
+
+	void CreateBushLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);
+	void BushTrunkIterator(const float3& start, const float3& dir, float length, float size, int depth);
+	void DrawBushTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size);
 	void DrawPineTrunk(const float3& start, const float3& end, float size);
 	void DrawPineBranch(const float3& start, const float3& dir, float size);
 	void CreateGranTexBranch(const float3& start, const float3& end);
-	void CreateGranTex(unsigned char* data, int xpos, int ypos, int xsize);
-	void PineTree(int numBranch, float height);
-	void CreateLeafTex(unsigned int baseTex, int xpos, int ypos, unsigned char buf[256][2048][4]);
+
+	void GenPineTree(int numBranch, float height);
+	void GenBushTree(int numBranch, float height, float width);
+
+	void CreateGranTex(uint8_t* data, int xpos, int ypos, int xsize);
+	void CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsize);
+
+private:
+	constexpr static unsigned int NUM_TREE_TYPES =    8; // FIXME: duplicated from ITreeDrawer.h
+	constexpr static unsigned int MAX_TREE_VERTS = 2048; // number of vertices per randomized subtype
+
+	VA_TYPE_TN* prvVertPtr = nullptr;
+	VA_TYPE_TN* curVertPtr = nullptr;
+
+	size_t numTreeVerts[NUM_TREE_TYPES * 2] = {0};
+
+	GLuint treeVBOs[2] = {0, 0};
+	GLuint treeVAOs[2] = {0, 0};
+	GLuint barkTex = 0;
 };
 
 #endif // _ADV_TREE_GENERATOR_H

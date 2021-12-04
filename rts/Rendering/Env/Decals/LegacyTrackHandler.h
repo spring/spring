@@ -4,67 +4,27 @@
 #define LEGACYTRACKHANDLER_H
 
 
+#include <array>
 #include <deque>
 #include <vector>
 #include <string>
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/EventClient.h"
+#include "System/UnorderedMap.hpp"
 
+// comment out if using DecalsDrawerGL4
+#define USE_DECALHANDLER_STATE
 
 
 class CSolidObject;
 class CUnit;
-class CVertexArray;
+struct SolidObjectDecalDef;
 
 namespace Shader {
 	struct IProgramObject;
 }
-
-struct TrackPart {
-	TrackPart()
-		: texPos(0.0f)
-		, connected(false)
-		, isNewTrack(false)
-		, creationTime(0)
-	{}
-	float3 pos1;
-	float3 pos2;
-	float texPos;
-	bool connected;
-	bool isNewTrack;
-	unsigned int creationTime;
-};
-
-struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* owner)
-		: owner(owner)
-		, lastUpdate(0)
-		, lifeTime(0)
-		, alphaFalloff(0.0f)
-	{}
-
-	CUnit* owner;
-
-	unsigned int lastUpdate;
-	unsigned int lifeTime;
-
-	float alphaFalloff;
-
-	TrackPart lastAdded;
-	std::deque<TrackPart> parts;
-};
-
-struct TrackToClean {
-	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
-		: track(t)
-		, tracks(ts)
-	{}
-
-	UnitTrackStruct* track;
-	std::vector<UnitTrackStruct*>* tracks;
-};
-
 
 
 class LegacyTrackHandler: public CEventClient
@@ -73,22 +33,22 @@ public:
 	LegacyTrackHandler();
 	~LegacyTrackHandler();
 
-	void Draw();
+	void Draw(Shader::IProgramObject* shader);
 
 public:
 	//CEventClient
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitDestroyed") ||
 			(eventName == "UnitMoved");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void SunChanged();
-	void RenderUnitDestroyed(const CUnit*);
-	void UnitMoved(const CUnit* unit);
+	void SunChanged() override;
+	void RenderUnitDestroyed(const CUnit*) override;
+	void UnitMoved(const CUnit* unit) override;
 
 private:
 	bool GetDrawTracks() const;
@@ -101,37 +61,91 @@ private:
 	void BindShader(const float3& ambientColor);
 
 	void AddTracks();
-	void DrawTracks();
+	void DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IProgramObject* shader);
 	void CleanTracks();
 
 
-	static void RemoveTrack(CUnit* unit);
-	void AddTrack(CUnit* unit, const float3& newPos);
-	int GetTrackType(const std::string& name);
+	void RemoveTrack(CUnit* unit);
+	void AddTrack(const CUnit* unit, const float3& newPos);
+	void CreateOrAddTrackPart(const CUnit* unit, const SolidObjectDecalDef& decalDef, const float3& pos);
+
+	int GetTrackType(const SolidObjectDecalDef& def);
 	unsigned int LoadTexture(const std::string& name);
 
 private:
-	struct TrackType {
-		TrackType(const std::string& s, unsigned t): name(s), texture(t) {}
-		std::string name;
-		std::vector<UnitTrackStruct*> tracks;
-		unsigned int texture;
+	struct TrackPart {
+		float3 pos1;
+		float3 pos2;
+
+		float texPos = 0.0f;
+
+		unsigned int creationTime = 0;
+
+		bool connected = false;
 	};
 
-	std::vector<TrackType> trackTypes;
+	struct UnitTrack {
+		UnitTrack(                    ) = default;
+		UnitTrack(const UnitTrack&  ut) = delete;
+		UnitTrack(      UnitTrack&& ut) { *this = std::move(ut); }
+
+		UnitTrack& operator = (const UnitTrack&  ut) = delete;
+		UnitTrack& operator = (      UnitTrack&& ut) {
+			owner = ut.owner;
+			ut.owner = nullptr;
+
+			id = ut.id;
+			lastUpdate = ut.lastUpdate;
+			lifeTime = ut.lifeTime;
+
+			alphaFalloff = ut.alphaFalloff;
+
+			parts = std::move(ut.parts);
+			return *this;
+		}
+
+		const CUnit* owner = nullptr;
+
+		unsigned int id = -1u;
+		unsigned int lastUpdate = 0;
+		unsigned int lifeTime = 0;
+
+		float alphaFalloff = 0.0f;
+
+		std::deque<TrackPart> parts;
+	};
+
+	struct TrackType {
+		TrackType(const std::string& s, unsigned t): name(s), texture(t) {}
+
+		std::string name;
+		std::vector<unsigned int> trackIDs;
+
+		unsigned int texture;
+	};
+	struct TrackToClean {
+		TrackToClean(unsigned int id, unsigned tti): trackID(id), ttIndex(tti) {}
+
+		unsigned int trackID;
+		unsigned int ttIndex;
+	};
 
 	enum DecalShaderProgram {
-		DECAL_SHADER_ARB,
+		DECAL_SHADER_NULL,
 		DECAL_SHADER_GLSL,
 		DECAL_SHADER_CURR,
 		DECAL_SHADER_LAST
 	};
 
-	std::vector<Shader::IProgramObject*> decalShaders;
+	#ifndef USE_DECALHANDLER_STATE
+	std::array<Shader::IProgramObject*, DECAL_SHADER_LAST> decalShaders;
+	#endif
 
-	std::vector<UnitTrackStruct*> tracksToBeAdded;
-	std::vector<TrackToClean>     tracksToBeCleaned;
-	std::vector<UnitTrackStruct*> tracksToBeDeleted;
+	std::vector<TrackType> trackTypes;
+	spring::unsynced_map<int, UnitTrack> unitTracks;
+
+	std::vector<unsigned int> updatedTrackIDs;
+	std::vector<TrackToClean> cleanedTrackIDs;
 };
 
 

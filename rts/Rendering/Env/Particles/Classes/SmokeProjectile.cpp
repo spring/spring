@@ -8,13 +8,12 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CSmokeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSmokeProjectile, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile,
 (
@@ -31,8 +30,6 @@ CR_REG_METADATA(CSmokeProjectile,
 
 
 CSmokeProjectile::CSmokeProjectile():
-	CProjectile(),
-
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -64,7 +61,7 @@ CSmokeProjectile::CSmokeProjectile(
 	ageSpeed = 1.0f / ttl;
 	checkCol = false;
 	castShadow = true;
-	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
 
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
 	alwaysVisible |= (owner == nullptr);
@@ -74,7 +71,7 @@ CSmokeProjectile::CSmokeProjectile(
 
 void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
 
 	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
 	alwaysVisible |= (owner == nullptr);
@@ -85,7 +82,7 @@ void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile::Update()
 {
 	pos += speed;
-	pos += wind.GetCurrentWind() * age * 0.05f;
+	pos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
 	age += ageSpeed;
 	size += sizeExpansion;
 	size += ((startSize - size) * 0.2f * (size < startSize));
@@ -96,33 +93,28 @@ void CSmokeProjectile::Update()
 	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile::Draw(CVertexArray* va)
+void CSmokeProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);
 	col[1] = (unsigned char) (color * alpha);
 	col[2] = (unsigned char) (color * alpha);
-	col[3] = (unsigned char) alpha/*-alphaFalloff*globalRendering->timeOffset*/;
-	//int frame=textureNum;
-	//float xmod=0.125f+(float(int(frame%6)))/16;
-	//float ymod=(int(frame/6))/16.0f;
+	col[3] = (unsigned char) alpha /* -alphaFalloff * globalRendering->timeOffset */;
 
 	const float interSize = size + (sizeExpansion * globalRendering->timeOffset);
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
-	#define st projectileDrawer->smoketex[textureNum]
-	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
-	va->AddVertexTC(drawPos + pos1, st->xend,   st->ystart, col);
-	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);
-	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
-	#undef st
-}
+	#define st projectileDrawer->GetSmokeTexture(textureNum)
+	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
+	va->SafeAppend({drawPos + pos1, st->xend,   st->ystart, col});
+	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
 
-int CSmokeProjectile::GetProjectilesCount() const
-{
-	return 1;
+	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
+	va->SafeAppend({drawPos - pos1, st->xstart, st->yend,   col});
+	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
+	#undef st
 }
 
 

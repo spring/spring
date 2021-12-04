@@ -14,7 +14,9 @@ struct lua_State;
 typedef unsigned int GLuint;
 
 enum LuaMatrixType {
-	LUAMATRICES_SHADOW,
+	LUAMATRICES_SHADOW_VIEW,
+	LUAMATRICES_SHADOW_PROJ,
+
 	LUAMATRICES_VIEW,
 	LUAMATRICES_VIEWINVERSE,
 	LUAMATRICES_PROJECTION,
@@ -22,6 +24,14 @@ enum LuaMatrixType {
 	LUAMATRICES_VIEWPROJECTION,
 	LUAMATRICES_VIEWPROJECTIONINVERSE,
 	LUAMATRICES_BILLBOARD,
+
+	LUAMATRICES_MINIMAP_DRAWVIEW,
+	LUAMATRICES_MINIMAP_DRAWPROJ,
+	LUAMATRICES_MINIMAP_DIMMVIEW,
+	LUAMATRICES_MINIMAP_DIMMPROJ,
+	LUAMATRICES_MINIMAP_DIMMVIEW_LUA,
+	LUAMATRICES_MINIMAP_DIMMPROJ_LUA,
+
 	LUAMATRICES_NONE
 };
 
@@ -41,7 +51,6 @@ class LuaMatTexture {
 
 			LUATEX_MAP_REFLECTION,
 			LUATEX_SKY_REFLECTION,
-			LUATEX_SPECULAR,
 
 
 			LUATEX_SHADOWMAP,
@@ -85,42 +94,36 @@ class LuaMatTexture {
 		};
 
 	public:
-		LuaMatTexture()
-		: type(LUATEX_NONE), data(nullptr), state(nullptr), enable(false), enableTexParams(false) {}
+		LuaMatTexture() = default;
 
-		void Finalize();
-
+		void Enable(bool b) { enable = b; }
+		void Finalize() { /*enableTexParams = true;*/ }
 		void Bind() const;
 		void Unbind() const;
 
 		void Print(const std::string& indent) const;
 
 		static int Compare(const LuaMatTexture& a, const LuaMatTexture& b);
-		bool operator <(const LuaMatTexture& mt) const {
-			return Compare(*this, mt)  < 0;
-		}
-		bool operator==(const LuaMatTexture& mt) const {
-			return Compare(*this, mt) == 0;
-		}
-		bool operator!=(const LuaMatTexture& mt) const {
-			return Compare(*this, mt) != 0;
-		}
+
+		bool operator <(const LuaMatTexture& mt) const { return (Compare(*this, mt) <  0); }
+		bool operator==(const LuaMatTexture& mt) const { return (Compare(*this, mt) == 0); }
+		bool operator!=(const LuaMatTexture& mt) const { return (Compare(*this, mt) != 0); }
 
 	public:
-		Type type;
+		Type type = LUATEX_NONE;
 
-		const void* data;
-		      void* state;
+		const void* data = nullptr;
+		      void* state = nullptr;
 
-		bool enable;
-		bool enableTexParams;
+		bool enable = false;
+		// bool enableTexParams = false;
 
 		int2 GetSize() const;
 		GLuint GetTextureID() const;
 		GLuint GetTextureTarget() const;
 
 	public:
-		static const int maxTexUnits = 16;
+		static constexpr int maxTexUnits = 16;
 };
 
 
@@ -128,10 +131,10 @@ class LuaOpenGLUtils {
 public:
 	static void ResetState();
 
-	static const CMatrix44f* GetNamedMatrix(const std::string& name);
+	static const CMatrix44f* GetNamedMatrix(const char* name);
 
 	static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name);
-	static LuaMatrixType GetLuaMatrixType(const std::string& name);
+	static LuaMatrixType GetLuaMatrixType(const char* name);
 
 	static bool ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image);
 };

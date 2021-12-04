@@ -35,9 +35,9 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 					for (int i = 0; i<4; ++i) {
 						vi[i] = values.GetInt(i+1, 0);
 					}
-					program->SetUniform4v(key, vi);
+					program->SetUniform4v(key.c_str(), vi);
 				} else {
-					program->SetUniform(key, subTable.GetInt(key, 0));
+					program->SetUniform(key.c_str(), subTable.GetInt(key, 0));
 				}
 			} break;
 			case UNIFORM_TYPE_FLOAT: {
@@ -47,9 +47,9 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 					for (int i = 0; i<4; ++i) {
 						vf[i] = values.GetFloat(i+1, 0.0f);
 					}
-					program->SetUniform4v(key, vf);
+					program->SetUniform4v(key.c_str(), vf);
 				} else {
-					program->SetUniform(key, subTable.GetFloat(key, 0.0f));
+					program->SetUniform(key.c_str(), subTable.GetFloat(key, 0.0f));
 				}
 			} break;
 			case UNIFORM_TYPE_FLOAT_MATRIX: {
@@ -61,19 +61,19 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 							for (int i = 0; i<4; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix2x2(key, false, vf);
+							program->SetUniformMatrix2x2(key.c_str(), false, vf);
 						} break;
 						case 9: {
 							for (int i = 0; i<9; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix3x3(key, false, vf);
+							program->SetUniformMatrix3x3(key.c_str(), false, vf);
 						} break;
 						case 16: {
 							for (int i = 0; i<16; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix4x4(key, false, vf);
+							program->SetUniformMatrix4x4(key.c_str(), false, vf);
 						} break;
 						default:
 							LOG_L(L_ERROR, "%s-shader uniformMatrix error: only square matrices supported right now: %s", program->GetName().c_str(), program->GetLog().c_str());
@@ -135,8 +135,10 @@ static void ParseShaderTable(
 static void LoadTextures(Shader::IProgramObject* program, const LuaTable* root)
 {
 	const LuaTable& textures = root->SubTable("textures");
-	spring::unordered_map<int, std::string> data;
-	textures.GetMap(data);
+	std::vector<std::pair<int, std::string>> data;
+
+	data.reserve(8);
+	textures.GetPairs(data);
 
 	for (const auto& p: data) {
 		program->AddTextureBinding(p.first, p.second);
@@ -149,17 +151,15 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 {
 	// lua only supports glsl shaders
 	assert(dynamic_cast<Shader::GLSLProgramObject*>(program) != nullptr);
-	if (!globalRendering->haveGLSL) {
-		return false;
-	}
 
 	LuaParser p(filename, SPRING_VFS_RAW_FIRST, SPRING_VFS_MOD_BASE);
 	p.SetLowerKeys(false);
 	p.SetLowerCppKeys(false);
 
 	p.GetTable("Spring");
-	p.AddFunc("GetConfigInt",     LuaUnsyncedCtrl::GetConfigInt);
-	p.AddFunc("GetConfigString",  LuaUnsyncedCtrl::GetConfigString);
+	p.AddFunc("GetConfigInt",     LuaUnsyncedRead::GetConfigInt);
+	p.AddFunc("GetConfigFloat",   LuaUnsyncedRead::GetConfigFloat);
+	p.AddFunc("GetConfigString",  LuaUnsyncedRead::GetConfigString);
 	p.AddFunc("GetLosViewColors", LuaUnsyncedRead::GetLosViewColors);
 	p.EndTable();
 
@@ -185,7 +185,7 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 		return false;
 
 	CreateShaderObject(program, shdrDefs.str(), vertSrcs.str(), GL_VERTEX_SHADER);
-	CreateShaderObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER_EXT);
+	CreateShaderObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER);
 	CreateShaderObject(program, shdrDefs.str(), fragSrcs.str(), GL_FRAGMENT_SHADER);
 
 	//FIXME ApplyGeometryParameters(L, 1, prog); // done before linking

@@ -2,18 +2,26 @@ return {
 	definitions = {
 		Spring.GetConfigInt("HighResInfoTexture") and "#define HIGH_QUALITY" or "",
 	},
-	vertex = [[#version 130
-		varying vec2 texCoord;
+
+	vertex = [[
+		#version 410 core
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords;
+
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_MultiTexCoord0.st;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aTexCoords;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	]],
-	fragment = [[#version 130
-	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
-	#endif
+
+	fragment = [[
+		#version 410 core
+		#ifdef HIGH_QUALITY
+		#extension GL_ARB_texture_query_lod : enable
+		#endif
+
 		uniform float time;
 
 		uniform vec4 alwaysColor;
@@ -25,7 +33,9 @@ return {
 		uniform sampler2D tex0;
 		uniform sampler2D tex1;
 		uniform sampler2D tex2;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 	#ifdef HIGH_QUALITY
 
@@ -44,33 +54,33 @@ return {
 
 			for (int i = 0; i<4; i++) {
 				off = (vec2(rand(p.st + off.st), rand(p.ts - off.ts)) * 2.0 - 1.0) / texSize;
-				c += texture2D(tex, p + off);
+				c += texture(tex, p + off);
 			}
 			c *= 0.25;
 
 			return smoothstep(0.5, 1.0, c);
 		}
 	#else
-		#define getTexel texture2D
+		#define getTexel texture
 	#endif
 
 		void main() {
-			gl_FragColor  = vec4(0.0);
-			//gl_FragColor  = alwaysColor;
+			fFragColor = vec4(0.0);
+			// fFragColor = alwaysColor;
 
-			vec2 radarJammer = getTexel(tex2, texCoord).rg;
-			gl_FragColor += jamColor * radarJammer.g;
-			gl_FragColor += radarColor2 * step(0.8, radarJammer.r) * radarJammer.r;
-			gl_FragColor.rgb = fract(gl_FragColor.rgb);
-			
-			float los = getTexel(tex0, texCoord).r;
-			float airlos = getTexel(tex1, texCoord).r;
-			gl_FragColor += losColor * ((los + airlos) * 0.5);
-			
-			gl_FragColor += radarColor * step(0.2, fract(1 - radarJammer.r));
-			
-			gl_FragColor += alwaysColor;
-			gl_FragColor.a = 0.05;
+			vec2 radarJammer = getTexel(tex2, vTexCoords).rg;
+
+			fFragColor += jamColor * radarJammer.g;
+			fFragColor += radarColor2 * step(0.8, radarJammer.r) * radarJammer.r;
+			fFragColor.rgb = fract(fFragColor.rgb);
+
+			float los = getTexel(tex0, vTexCoords).r;
+			float airlos = getTexel(tex1, vTexCoords).r;
+
+			fFragColor += losColor * ((los + airlos) * 0.5);
+			fFragColor += radarColor * step(0.2, fract(1 - radarJammer.r));
+			fFragColor += alwaysColor;
+			fFragColor.a = 0.05;
 		}
 	]],
 	uniformFloat = {

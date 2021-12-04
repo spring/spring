@@ -2,24 +2,34 @@ return {
 	definitions = {
 		Spring.GetConfigInt("HighResInfoTexture") and "#define HIGH_QUALITY" or "",
 	},
-	vertex = [[#version 130
-		varying vec2 texCoord;
+
+	vertex = [[
+		#version 410 core
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords;
+
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_MultiTexCoord0.st;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aTexCoords;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	]],
-	fragment = [[#version 130
-	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
-	#endif
+
+	fragment = [[
+		#version 410 core
+		#ifdef HIGH_QUALITY
+		#extension GL_ARB_texture_query_lod : enable
+		#endif
+
 		uniform sampler2D tex0;
 		uniform sampler2D tex1;
-		varying vec2 texCoord;
 
-		mat4 COLORMATRIX0 = mat4(0.00,3.00,1.80,1.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
-		mat4 COLORMATRIX1 = mat4(0.90,0.00,0.00,1.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
+
+		mat4 COLORMATRIX0 = mat4(0.00, 3.00, 1.80, 1.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 1.0);
+		mat4 COLORMATRIX1 = mat4(0.90, 0.00, 0.00, 1.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 1.0);
 
 	#ifdef HIGH_QUALITY
 
@@ -39,34 +49,30 @@ return {
 			vec2 i = floor(p);
 			vec2 f = p - i;
 			vec2 ff = f*f;
+
 			f = ff * f * ((ff * 6.0 - f * 15.0) + 10.0);
 			p = i + f;
-
 			p = (p - 0.5) / texSize;
 
 			vec2 off = vec2(0.0);
 			vec4 c = vec4(0.0);
 
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.5);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.5);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.5);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.5);
+			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize; c += texture(tex, p + off * 0.5);
+			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize; c += texture(tex, p + off * 0.5);
+			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize; c += texture(tex, p + off * 0.5);
+			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize; c += texture(tex, p + off * 0.5);
 
 			return c * 0.15;
 		}
 	#else
-		#define getTexel texture2D
+		#define getTexel texture
 	#endif
 
 		void main() {
-			gl_FragColor  = vec4(0.0, 0.0, 0.0, 1.0);
-			gl_FragColor += COLORMATRIX0 * texture2D(tex0, texCoord);
-			gl_FragColor += COLORMATRIX1 * getTexel(tex1, texCoord);
-			gl_FragColor.a = 0.25;
+			fFragColor  = vec4(0.0, 0.0, 0.0, 1.0);
+			fFragColor += COLORMATRIX0 * texture(tex0, vTexCoords);
+			fFragColor += COLORMATRIX1 * getTexel(tex1, vTexCoords);
+			fFragColor.a = 0.25;
 		}
 	]],
 	uniformInt = {

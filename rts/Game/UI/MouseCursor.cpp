@@ -8,11 +8,12 @@
 #include "CommandColors.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/UnorderedMap.hpp"
@@ -20,43 +21,32 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
-CMouseCursor::CMouseCursor()
- : hwCursor(nullptr)
 
- , animTime(0.0f)
- , animPeriod(0.0f)
- , currentFrame(0)
+// FIXME: "array must be initialized with a brace-enclosed initializer" if constexpr
+static const VA_TYPE_TC CURSOR_VERTS[] = {
+	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tl
+	VA_TYPE_TC{{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // bl
+	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // br
 
- , xmaxsize(0)
- , ymaxsize(0)
+	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // br
+	VA_TYPE_TC{{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tr
+	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tl
+};
 
- , xofs(0)
- , yofs(0)
 
- , hwValid(false)
-{}
-
-CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
+CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs): hotSpot(hs)
 {
-	// default-initialize
-	*this = std::move(CMouseCursor());
+	frames.reserve(8);
+	images.reserve(8);
 
-	hwCursor = GetNewHwCursor();
-	hwCursor->hotSpot = (hotSpot = hs);
-
-	if (!BuildFromSpecFile(name))
-		BuildFromFileNames(name, 123456);
-
-	if (frames.empty())
-		return;
-
-	hwValid = hwCursor->IsValid();
+	Build(name);
 
 	for (FrameData& frame: frames) {
 		frame.startTime = animPeriod;
 		frame.endTime = (animPeriod += frame.length);
-		xmaxsize = std::max(frame.image.xOrigSize, xmaxsize);
-		ymaxsize = std::max(frame.image.yOrigSize, ymaxsize);
+
+		xmaxsize = std::max(images[frame.imageIdx].xOrigSize, xmaxsize);
+		ymaxsize = std::max(images[frame.imageIdx].yOrigSize, ymaxsize);
 	}
 
 	if (hotSpot == Center) {
@@ -65,50 +55,91 @@ CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
 	}
 }
 
-
 CMouseCursor::~CMouseCursor()
 {
-	spring::SafeDelete(hwCursor);
+	if (hwCursor != nullptr) {
+		hwCursor->Kill();
+		IHardwareCursor::Free(hwCursor);
+	}
 
-	for (auto it = images.begin(); it != images.end(); ++it)
-		glDeleteTextures(1, &it->texture);
+	for (const auto& image: images) {
+		glDeleteTextures(1, &image.texture);
+	}
 }
 
 
-bool CMouseCursor::BuildFromSpecFile(const std::string& name)
-{
-	assert(hwCursor != nullptr);
+CMouseCursor& CMouseCursor::operator = (CMouseCursor&& mc) noexcept {
+	images = std::move(mc.images);
+	frames = std::move(mc.frames);
 
-	const std::string specFile = "anims/" + name + ".txt";
-	CFileHandler specFH(specFile);
-	if (!specFH.FileExists())
+	if (mc.hwCursor != nullptr) {
+		memcpy(hwCursorMem, mc.hwCursorMem, sizeof(hwCursorMem));
+		memset(mc.hwCursorMem, 0, sizeof(hwCursorMem));
+
+		hwCursor = reinterpret_cast<IHardwareCursor*>(hwCursorMem);
+		mc.hwCursor = nullptr;
+	}
+
+	hotSpot = mc.hotSpot;
+
+	animTime = mc.animTime;
+	animPeriod = mc.animPeriod;
+	currentFrame = mc.currentFrame;
+
+	xmaxsize = mc.xmaxsize;
+	ymaxsize = mc.ymaxsize;
+
+	xofs = mc.xofs;
+	yofs = mc.yofs;
+
+	hwValid = mc.hwValid;
+	return *this;
+}
+
+
+bool CMouseCursor::Build(const std::string& name)
+{
+	int lastFrame = 1000;
+
+	hwCursor = IHardwareCursor::Alloc(hwCursorMem);
+	hwCursor->Init(hotSpot);
+
+	if (!BuildFromSpecFile(name, lastFrame))
+		BuildFromFileNames(name, lastFrame);
+
+	hwCursor->Finish();
+
+	return (hwValid = hwCursor->IsValid(), IsValid());
+}
+
+bool CMouseCursor::BuildFromSpecFile(const std::string& name, int& lastFrame)
+{
+	const std::string specFileName = "anims/" + name + ".txt";
+
+	if (!CFileHandler::FileExists(specFileName, SPRING_VFS_RAW_FIRST))
 		return false;
 
-	CSimpleParser parser(specFH);
-	int lastFrame = 123456789;
+	CFileHandler specFile(specFileName);
+	CSimpleParser specParser(specFile);
 
 	const std::array<std::pair<std::string, int>, 3> commandsMap = {{{"frame", 0}, {"hotspot", 1}, {"lastframe", 2}}};
-	      spring::unsynced_map<std::string, int>     imageIdxMap;
+		  spring::unsynced_map<std::string, int>     imageIdxMap;
 
-	while (true) {
-		const std::string& line = parser.GetCleanLine();
-		if (line.empty())
-			break;
-
-		const std::vector<std::string>& words = parser.Tokenize(line, 2);
+	for (std::string line = std::move(specParser.GetCleanLine()); !line.empty(); line = std::move(specParser.GetCleanLine())) {
+		const std::vector<std::string>& words = specParser.Tokenize(line, 2);
 		const std::string& command = StringToLower(words[0]);
 
 		const auto cmdPred = [&](const std::pair<std::string, int>& p) { return (p.first == command); };
 		const auto cmdIter = std::find_if(commandsMap.cbegin(), commandsMap.cend(), cmdPred);
 
 		if (cmdIter == commandsMap.end()) {
-			LOG_L(L_ERROR, "[MouseCursor::%s] unknown command \"%s\" in file \"%s\"", __func__, command.c_str(), specFile.c_str());
+			LOG_L(L_ERROR, "[MouseCursor::%s] unknown command \"%s\" in file \"%s\"", __func__, command.c_str(), specFileName.c_str());
 			continue;
 		}
 
 		if ((cmdIter->second == 0) && (words.size() >= 2)) {
 			const std::string& imageName = words[1];
-			float length = minFrameLength;
+			float length = MIN_FRAME_LENGTH;
 
 			if (words.size() >= 3)
 				length = std::max(length, float(std::atof(words[2].c_str())));
@@ -116,7 +147,7 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 			const auto imageIdxIt = imageIdxMap.find(imageName);
 
 			if (imageIdxIt != imageIdxMap.end()) {
-				frames.emplace_back(images[imageIdxIt->second], length);
+				frames.emplace_back(imageIdxIt->second, length);
 				hwCursor->PushFrame(imageIdxIt->second, length);
 				continue;
 			}
@@ -128,7 +159,7 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 				imageIdxMap[imageName] = images.size();
 
 				images.push_back(image);
-				frames.emplace_back(image, length);
+				frames.emplace_back(images.size() - 1, length);
 			}
 
 			continue;
@@ -136,15 +167,15 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 
 		if ((cmdIter->second == 1) && (!words.empty())) {
 			if (words[1] == "topleft") {
-				hwCursor->hotSpot = (hotSpot = TopLeft);
+				hwCursor->SetHotSpot(hotSpot = TopLeft);
 				continue;
 			}
 			if (words[1] == "center") {
-				hwCursor->hotSpot = (hotSpot = Center);
+				hwCursor->SetHotSpot(hotSpot = Center);
 				continue;
 			}
 
-			LOG_L(L_ERROR, "[MouseCursor::%s] unknown hotspot \"%s\" in file \"%s\"", __func__, words[1].c_str(), specFile.c_str());
+			LOG_L(L_ERROR, "[MouseCursor::%s] unknown hotspot \"%s\" in file \"%s\"", __func__, words[1].c_str(), specFileName.c_str());
 			continue;
 		}
 
@@ -154,11 +185,7 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 		}
 	}
 
-	if (frames.empty())
-		return BuildFromFileNames(name, lastFrame);
-
-	hwCursor->Finish();
-	return true;
+	return (IsValid());
 }
 
 
@@ -167,28 +194,54 @@ bool CMouseCursor::BuildFromFileNames(const std::string& name, int lastFrame)
 	// find the image file type to use
 	const char* ext = "";
 	const char* exts[] = {"png", "tga", "bmp"};
-	const int extCount = sizeof(exts) / sizeof(exts[0]);
 
-	for (int e = 0; e < extCount; e++) {
-		ext = exts[e];
+	char animFrameStr[512];
 
-		if (CFileHandler::FileExists("anims/" + name + "_0." + std::string(ext), SPRING_VFS_RAW_FIRST))
+	for (auto& e: exts) {
+		memset(animFrameStr, 0, sizeof(animFrameStr));
+		snprintf(animFrameStr, sizeof(animFrameStr) - 1, "anims/%s_%d.%s", name.c_str(), 0, ext = e);
+
+		if (CFileHandler::FileExists(animFrameStr, SPRING_VFS_RAW_FIRST))
 			break;
 	}
 
 	while (int(frames.size()) < lastFrame) {
+		memset(animFrameStr, 0, sizeof(animFrameStr));
+		snprintf(animFrameStr, sizeof(animFrameStr) - 1, "anims/%s_%d.%s", name.c_str(), static_cast<int>(frames.size()), ext);
+
 		ImageData image;
-		if (!LoadCursorImage("anims/" + name + "_" + IntToString(frames.size()) + "." + std::string(ext), image))
+
+		if (!LoadCursorImage(animFrameStr, image))
 			break;
 
 		images.push_back(image);
-		frames.emplace_back(image, defFrameLength);
+		frames.emplace_back(images.size() - 1, float(DEF_FRAME_LENGTH));
 	}
 
-	hwCursor->Finish();
-	return true;
+	return (IsValid());
 }
 
+#if 0
+bool CMouseCursor::LoadDummyImage()
+{
+	ImageData id;
+	CBitmap bn;
+
+	bn.Alloc(16, 16, 4);
+	bn.Fill(SColor(255, 255 * 0, 255, 255));
+
+	id.texture = bn.CreateTexture();
+	id.xOrigSize = bn.xsize;
+	id.yOrigSize = bn.ysize;
+	id.xAlignedSize = bn.xsize;
+	id.yAlignedSize = bn.ysize;
+
+	images.emplace_back(id);
+	frames.emplace_back(images.size() - 1, float(DEF_FRAME_LENGTH));
+
+	hwCursor->PushImage(bn.xsize, bn.ysize, bn.GetRawMem());
+}
+#endif
 
 bool CMouseCursor::LoadCursorImage(const std::string& name, ImageData& image)
 {
@@ -197,7 +250,7 @@ bool CMouseCursor::LoadCursorImage(const std::string& name, ImageData& image)
 
 	CBitmap b;
 	if (!b.Load(name)) {
-		LOG_L(L_ERROR, "CMouseCursor: Bad image file: %s", name.c_str());
+		LOG_L(L_ERROR, "[MouseCursor::%s] bad image file \"%s\"", __func__, name.c_str());
 		return false;
 	}
 
@@ -206,11 +259,11 @@ bool CMouseCursor::LoadCursorImage(const std::string& name, ImageData& image)
 		b.SetTransparent(SColor(84, 84, 252));
 
 	if (hwCursor->NeedsYFlip()) {
-		//WINDOWS
+		// WINDOWS
 		b.ReverseYAxis();
 		hwCursor->PushImage(b.xsize, b.ysize, b.GetRawMem());
 	} else {
-		//X11
+		// X11
 		hwCursor->PushImage(b.xsize, b.ysize, b.GetRawMem());
 		b.ReverseYAxis();
 	}
@@ -246,74 +299,33 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	if (frames.empty())
 		return;
 
-	scale = std::max(scale, -scale);
-
 	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);
-	const int ys = int(float(frame.image.yAlignedSize) * scale);
+	const ImageData& image = images[frame.imageIdx];
 
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
-	const int yp = int(float(y) + (float(ys) - (float(yofs) * scale)));
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
+	const float3 winCoors = {x * 1.0f, (globalRendering->viewSizeY - y) * 1.0f, 0.0f};
+	const float2 winScale = {std::max(scale, -scale), 1.0f};
+	const float4& matParams = CalcFrameMatrixParams(winCoors, winScale);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.01f);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	CMatrix44f cursorMat;
+	cursorMat.Translate(matParams.x, matParams.y, 0.0f);
+	cursorMat.Scale({matParams.z, matParams.w, 1.0f});
 
-	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,         0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
+	glBindTexture(GL_TEXTURE_2D, image.texture);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-}
-
-
-void CMouseCursor::DrawQuad(int x, int y) const
-{
-	if (frames.empty())
-		return;
-
-	const float scale = cmdColors.QueueIconScale();
-
-	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);
-	const int ys = int(float(frame.image.yAlignedSize) * scale);
-
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
-	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
-
-	glViewport(globalRendering->viewPosX + xp, yp, xs, ys);
-
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,          0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-//FIXME pass va?
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	shader->Enable();
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, cursorMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
+	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
+	buffer->Submit(GL_TRIANGLES);
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+	shader->Disable();
 }
 
 
@@ -341,12 +353,38 @@ void CMouseCursor::BindTexture() const
 	if (frames.empty())
 		return;
 
-	glBindTexture(GL_TEXTURE_2D, frames[currentFrame].image.texture);
+	const FrameData& frame = frames[currentFrame];
+	const ImageData& image = images[frame.imageIdx];
+
+	glBindTexture(GL_TEXTURE_2D, image.texture);
 }
 
 void CMouseCursor::BindHwCursor() const
 {
 	assert(hwCursor != nullptr);
 	hwCursor->Bind();
+}
+
+
+float4 CMouseCursor::CalcFrameMatrixParams(const float3& winCoors, const float2& winScale) const
+{
+	if (winCoors.z > 1.0f || frames.empty())
+		return {0.0f, 0.0f, 0.0f, 0.0f};
+
+	const FrameData& frame = frames[currentFrame];
+	const ImageData& image = images[frame.imageIdx];
+
+	const float qis = winScale.x;
+	const float  xs = image.xAlignedSize * qis;
+	const float  ys = image.yAlignedSize * qis;
+
+	const float rxs = xs * globalRendering->pixelX;
+	const float rys = ys * globalRendering->pixelY;
+
+	// center on hotspot
+	const float xp = (winCoors.x -                    (xofs * qis )) * globalRendering->pixelX;
+	const float yp = (winCoors.y - winScale.y * (ys - (yofs * qis))) * globalRendering->pixelY;
+
+	return {xp, yp, rxs, rys};
 }
 

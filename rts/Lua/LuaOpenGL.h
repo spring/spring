@@ -3,7 +3,6 @@
 #ifndef LUA_GL_H
 #define LUA_GL_H
 
-#include <string>
 #include <vector>
 
 #include "Lua/LuaHandle.h"
@@ -27,7 +26,7 @@ class LuaOpenGL {
 		};
 
 	public:
-		static void Init();
+		static void Init() {}
 		static void Free();
 
 		static bool PushEntries(lua_State* L);
@@ -35,10 +34,8 @@ class LuaOpenGL {
 		static bool IsDrawingEnabled(lua_State* L) { return GetLuaContextData(L)->drawingEnabled; }
 		static void SetDrawingEnabled(lua_State* L, bool value) { GetLuaContextData(L)->drawingEnabled = value; }
 
-		static bool CanUseShaders() { return canUseShaders; }
-
-		static bool GetSafeMode() { return safeMode; }
-		static void SetSafeMode(bool value) { safeMode = value; }
+		static bool GetSafeMode() { return inSafeMode; }
+		static void SetSafeMode(bool value) { inSafeMode = value; }
 
 		#define NOOP_STATE_FUNCS(Name)    \
 		static void Enable  ## Name () {} \
@@ -52,6 +49,12 @@ class LuaOpenGL {
 		static void EnableDrawGenesis();
 		static void ResetDrawGenesis();
 		static void DisableDrawGenesis();
+
+		NOOP_STATE_FUNCS(DrawWater)
+		NOOP_STATE_FUNCS(DrawSky)
+		NOOP_STATE_FUNCS(DrawSun)
+		NOOP_STATE_FUNCS(DrawGrass)
+		NOOP_STATE_FUNCS(DrawTrees)
 
 		static void EnableDrawWorld();
 		static void ResetDrawWorld();
@@ -77,6 +80,7 @@ class LuaOpenGL {
 
 		// no-ops (should probably guard some state)
 		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPostForward)
 		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
 		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
 		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
@@ -117,36 +121,18 @@ class LuaOpenGL {
 
 		static void ClearMatrixStack(int);
 
-		static void ResetGenesisMatrices();
-		static void ResetWorldMatrices();
-		static void ResetWorldShadowMatrices();
-		static void ResetScreenMatrices();
-		static void ResetMiniMapMatrices();
+		static void ResetGenesisMatrices() {}
+		static void ResetWorldMatrices() {}
+		static void ResetWorldShadowMatrices() {}
+		static void ResetScreenMatrices() { SetupScreenMatrices(); }
+		static void ResetMiniMapMatrices() {}
 
 		static void SetupScreenMatrices();
 		static void RevertScreenMatrices();
-		static void SetupScreenLighting();
-		static void RevertScreenLighting();
-
-		static void SetupWorldLighting();
-		static void RevertWorldLighting();
 
 	private:
-		static DrawMode drawMode;
-		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
-		static bool safeMode;
-		static bool canUseShaders;
-		static float screenWidth;
-		static float screenDistance;
-		static void (*resetMatrixFunc)(void);
-		static unsigned int resetStateList;
-
-		struct OcclusionQuery {
-			unsigned int index; // into LuaOpenGL::occlusionQueries
-			unsigned int id;
-		};
-
-		static std::vector<OcclusionQuery*> occlusionQueries;
+		static bool inSafeMode;
+		static bool inBeginEnd;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -155,10 +141,16 @@ class LuaOpenGL {
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
+		static int GetDefaultShaderSources(lua_State* L);
 
 		static int ConfigScreen(lua_State* L);
 
+		static int GetScreenViewTrans(lua_State* L);
+		static int GetScreenViewMatrix(lua_State* L);
+		static int GetScreenProjMatrix(lua_State* L);
+
 		static int GetViewSizes(lua_State* L);
+		static int GetViewRange(lua_State* L);
 
 		static int DrawMiniMap(lua_State* L);
 		static int SlaveMiniMap(lua_State* L);
@@ -169,8 +161,11 @@ class LuaOpenGL {
 		static int Clear(lua_State* L);
 		static int SwapBuffers(lua_State* L);
 
-		static int Lighting(lua_State* L);
-		static int ShadeModel(lua_State* L);
+		static int CreateVertexArray(lua_State* L);
+		static int DeleteVertexArray(lua_State* L);
+		static int UpdateVertexArray(lua_State* L);
+		static int RenderVertexArray(lua_State* L);
+
 		static int Scissor(lua_State* L);
 		static int Viewport(lua_State* L);
 		static int ColorMask(lua_State* L);
@@ -179,16 +174,12 @@ class LuaOpenGL {
 		static int DepthClamp(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
-		static int Fog(lua_State* L);
-		static int AlphaTest(lua_State* L);
-		static int LineStipple(lua_State* L);
 		static int Blending(lua_State* L);
 		static int BlendEquation(lua_State* L);
 		static int BlendFunc(lua_State* L);
 		static int BlendEquationSeparate(lua_State* L);
 		static int BlendFuncSeparate(lua_State* L);
 
-		static int Material(lua_State* L);
 		static int Color(lua_State* L);
 
 		static int PolygonMode(lua_State* L);
@@ -202,13 +193,9 @@ class LuaOpenGL {
 		static int StencilFuncSeparate(lua_State* L);
 		static int StencilOpSeparate(lua_State* L);
 
-		static int LineWidth(lua_State* L);
-		static int PointSize(lua_State* L);
-		static int PointSprite(lua_State* L);
-		static int PointParameter(lua_State* L);
-
 		static int Texture(lua_State* L);
 		static int CreateTexture(lua_State* L);
+		static int ChangeTextureParams(lua_State* L);
 		static int DeleteTexture(lua_State* L);
 		static int DeleteTextureFBO(lua_State* L);
 		static int TextureInfo(lua_State* L);
@@ -216,27 +203,20 @@ class LuaOpenGL {
 		static int RenderToTexture(lua_State* L);
 		static int GenerateMipmap(lua_State* L);
 		static int ActiveTexture(lua_State* L);
-		static int TexEnv(lua_State* L);
-		static int TexGen(lua_State* L);
-		static int MultiTexEnv(lua_State* L);
-		static int MultiTexGen(lua_State* L);
 
-		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);
+		static int VertexIndices(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
-		static int MultiTexCoord(lua_State* L);
-		static int SecondaryColor(lua_State* L);
-		static int FogCoord(lua_State* L);
-		static int EdgeFlag(lua_State* L);
 
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 
 		static int BeginText(lua_State* L);
-		static int Text(lua_State* L);
 		static int EndText(lua_State* L);
+		static int DrawBufferedText(lua_State* L);
+		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 
@@ -267,13 +247,11 @@ class LuaOpenGL {
 		static int FeaturePieceMultMatrix(lua_State* L);
 
 
-		static int DrawListAtUnit(lua_State* L);
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
 		static int DrawGroundQuad(lua_State* L);
 
-		static int Light(lua_State* L);
-		static int ClipPlane(lua_State* L);
+		static int ClipDist(lua_State* L);
 
 		static int MatrixMode(lua_State* L);
 		static int LoadIdentity(lua_State* L);
@@ -290,13 +268,11 @@ class LuaOpenGL {
 		static int PushPopMatrix(lua_State* L);
 		static int GetMatrixData(lua_State* L);
 
+		static int GetDrawMode(lua_State* L);
+
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);
-
-		static int CreateList(lua_State* L);
-		static int CallList(lua_State* L);
-		static int DeleteList(lua_State* L);
 
 		static int Flush(lua_State* L);
 		static int Finish(lua_State* L);
@@ -304,13 +280,19 @@ class LuaOpenGL {
 		static int ReadPixels(lua_State* L);
 		static int SaveImage(lua_State* L);
 
-		static int CreateQuery(lua_State* L);
-		static int DeleteQuery(lua_State* L);
-		static int RunQuery(lua_State* L);
-		static int GetQuery(lua_State* L);
+		// occlusion queries
+		static int CreateQuery(lua_State* L) { return (CreateOcclusionQuery(L)); }
+		static int DeleteQuery(lua_State* L) { return (DeleteOcclusionQuery(L)); }
+		static int RunQuery(lua_State* L) { return (RunOcclusionQuery(L)); }
+		static int GetQuery(lua_State* L) { return (GetOcclusionQuery(L)); }
+		static int CreateOcclusionQuery(lua_State* L);
+		static int DeleteOcclusionQuery(lua_State* L);
+		static int RunOcclusionQuery(lua_State* L);
+		static int GetOcclusionQuery(lua_State* L);
+		// timer queries
+		static int SetTimerQuery(lua_State* L);
+		static int GetTimerQuery(lua_State* L);
 
-		static int GetGlobalTexNames(lua_State* L);
-		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);
 
 		static int GetAtmosphere(lua_State* L);
@@ -326,7 +308,7 @@ inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {
 		glGetIntegerv(GL_MATRIX_MODE, &curmode);
 		if (curmode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", fn);
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_MODELVIEW);
 	}
 #endif
 }

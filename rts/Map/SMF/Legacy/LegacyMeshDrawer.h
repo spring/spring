@@ -20,12 +20,11 @@ class CLegacyMeshDrawer : public IMeshDrawer
 {
 public:
 	CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
-	~CLegacyMeshDrawer();
 
-	void Update() {}
+	void Update() override {}
 
-	void DrawMesh(const DrawPass::e& drawPass);
-	void DrawBorderMesh(const DrawPass::e& drawPass) {}
+	void DrawMesh(const DrawPass::e& drawPass) override;
+	void DrawBorderMesh(const DrawPass::e& drawPass) override {}
 	void DrawShadowMesh();
 
 private:
@@ -45,8 +44,8 @@ private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	int viewRadius;
-	int neededLod;
+	int viewRadius = 4;
+	int neededLod = 4;
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_

@@ -14,7 +14,7 @@
 class IAtlasAllocator
 {
 public:
-	IAtlasAllocator() : maxsize(2048, 2048), npot(false) {}
+	IAtlasAllocator() = default;
 	virtual ~IAtlasAllocator() {}
 
 	void SetMaxSize(int xsize, int ysize) { maxsize = int2(xsize, ysize); }
@@ -25,7 +25,7 @@ public:
 	virtual int GetMaxMipMaps() = 0;
 
 public:
-	void AddEntry(const std::string& name, int2 size, void* data = NULL)
+	void AddEntry(const std::string& name, int2 size, void* data = nullptr)
 	{
 		entries[name] = SAtlasEntry(size, data);
 	}
@@ -37,7 +37,6 @@ public:
 
 	void*& GetEntryData(const std::string& name)
 	{
-		assert(entries[name].data);
 		return entries[name].data;
 	}
 
@@ -68,8 +67,7 @@ public:
 	{
 		entries.clear();
 	}
-	//auto begin() { return entries.begin(); }
-	//auto end() { return entries.end(); }
+
 
 	int2 GetMaxSize() const { return maxsize; }
 	int2 GetAtlasSize() const { return atlasSize; }
@@ -77,8 +75,8 @@ public:
 protected:
 	struct SAtlasEntry
 	{
-		SAtlasEntry() : data(NULL) {}
-		SAtlasEntry(const int2 _size, void* _data = NULL) : size(_size), data(_data) {}
+		SAtlasEntry() : data(nullptr) {}
+		SAtlasEntry(const int2 _size, void* _data = nullptr) : size(_size), data(_data) {}
 		
 		int2 size;
 		float4 texCoords;
@@ -88,9 +86,9 @@ protected:
 	spring::unordered_map<std::string, SAtlasEntry> entries;
 
 	int2 atlasSize;
-	int2 maxsize;
+	int2 maxsize = {2048, 2048};
 
-	bool npot;
+	bool npot = false;
 };
 
 #endif // IATLAS_ALLOC_H

@@ -4,10 +4,10 @@
 
 #include "FileSystem.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
-// as defiend here: http://www.brynosaurus.com/cachedir/spec.html
+// as defiend here (DEAD LINK): http://www.brynosaurus.com/cachedir/spec.html
 const std::string CacheDir::tagFile_name          = "CACHEDIR.TAG";
 const std::string CacheDir::tagFile_content       = "Signature: 8a477f597d28d172789f06886806bc55";
 const size_t      CacheDir::tagFile_content_size  = 43;
@@ -17,7 +17,6 @@ const std::string CacheDir::defaultAdditionalText = "# This file is a cache dire
 
 
 bool CacheDir::IsCacheDir(const std::string& dir) {
-
 	const std::string cacheFile = GetCacheTagFilePath(dir);
 	bool isTagged = CacheDir::FileContentStartsWith(cacheFile, CacheDir::tagFile_content, CacheDir::tagFile_content_size);
 
@@ -25,7 +24,6 @@ bool CacheDir::IsCacheDir(const std::string& dir) {
 }
 
 bool CacheDir::SetCacheDir(const std::string& dir, bool wantedCacheState, const std::string& additionalText, bool forceRewrite) {
-
 	bool requestedStatePresent = false;
 
 	const bool currentCacheState = CacheDir::IsCacheDir(dir);
@@ -51,11 +49,10 @@ bool CacheDir::SetCacheDir(const std::string& dir, bool wantedCacheState, const 
 }
 
 bool CacheDir::FileContentStartsWith(const std::string& filePath, const std::string& content, size_t content_size) {
-
 	bool startsWith = false;
 
 	FILE* fileH = ::fopen(filePath.c_str(), "r");
-	if (fileH != NULL) {
+	if (fileH != nullptr) {
 		content_size = ((content_size > content.size()) ? content.size() : content_size);
 		char currFileChar;
 		size_t i = 0;
@@ -74,11 +71,10 @@ bool CacheDir::FileContentStartsWith(const std::string& filePath, const std::str
 }
 
 bool CacheDir::WriteCacheTagFile(const std::string& filePath, const std::string& additionalText) {
-
 	bool fileWritten = false;
 
 	FILE* fileH = ::fopen(filePath.c_str(), "w");
-	if (fileH != NULL) {
+	if (fileH != nullptr) {
 		int ret;
 		ret = fputs(CacheDir::tagFile_content.c_str(), fileH);
 		if (!additionalText.empty() && (ret != EOF)) {
@@ -95,7 +91,6 @@ bool CacheDir::WriteCacheTagFile(const std::string& filePath, const std::string&
 }
 
 std::string CacheDir::GetCacheTagFilePath(const std::string& dir) {
-
 	std::string cacheFile = dir;
 	FileSystem::EnsurePathSepAtEnd(cacheFile);
 	cacheFile = cacheFile + CacheDir::tagFile_name;

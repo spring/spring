@@ -7,6 +7,7 @@
 #include <string>
 
 #include "Rendering/GlobalRendering.h"
+#include "System/Rectangle.h"
 
 class CInputReceiver
 {
@@ -34,47 +35,16 @@ public:
 	static void CollectGarbage();
 	static void DrawReceivers();
 
-	struct ContainerBox {
-		ContainerBox(): x1(0.0f), y1(0.0f), x2(0.0f), y2(0.0f) {}
-		ContainerBox operator+(ContainerBox other) const {
-			ContainerBox b;
-			b.x1 = x1 + other.x1;
-			b.x2 = x1 + other.x2;
-			b.y1 = y1 + other.y1;
-			b.y2 = y1 + other.y2;
-			return b;
-		}
+	bool InBox(float x, float y, const TRectangle<float>& box) const;
 
-		float x1;
-		float y1;
-		float x2;
-		float y2;
-	};
-	bool InBox(float x, float y, const ContainerBox& box) const;
-	void DrawBox(const ContainerBox& b, int polyMode = -1);
+	// transform from mouse X/Y to OpenGL X/Y value in screen pixels
+	static float MouseX(int x) { return (float(x - globalRendering->viewPosX     ) * globalRendering->pixelX); }
+	static float MouseY(int y) { return (float(    globalRendering->viewSizeY - y) * globalRendering->pixelY); }
 
-	/// Transform from mouse X to OpenGL X value in screen pixels.
-	static float MouseX(int x) {
-		return float(x - globalRendering->viewPosX) / globalRendering->viewSizeX;
-	}
-	/// Transform from mouse Y to OpenGL Y value in screen pixels.
-	static float MouseY(int y) {
-		return float(globalRendering->viewSizeY - y) / globalRendering->viewSizeY;
-	}
-	/**
-	 * Transform from mouse X to OpenGL X value
-	 * in orthogonal projection 0-1 left-right.
-	 */
-	static float MouseMoveX(int x) {
-		return float(x) / globalRendering->viewSizeX;
-	}
-	/**
-	 * Transform from mouse Y to OpenGL Y value
-	 * in orthogonal projection 0-1 bottom-top.
-	 */
-	static float MouseMoveY(int y) {
-		return -float(y) / globalRendering->viewSizeY;
-	}
+	// transform from mouse X/Y to OpenGL X/Y value in
+	// orthogonal projection 0-1 left-right/bottom-top
+	static float MouseMoveX(int x) { return ( float(x) * globalRendering->pixelX); }
+	static float MouseMoveY(int y) { return (-float(y) * globalRendering->pixelY); }
 
 	static float guiAlpha;
 

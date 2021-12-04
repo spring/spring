@@ -39,29 +39,11 @@ for tostripfile in ${EXECUTABLES}; do
 			else
 				echo "not stripping ${tostripfile}"
 			fi
+			# remove RPATH/RUNPATH
+			chrpath --delete ${tostripfile}
 		fi
 	fi
 done
-
-# not all distros have a libSDL-1.2.so.0 link, so better link to the always existing libSDL.so
-# note, cmake says it links to /usr/lib/libSDL.so. But the final binary links then libSDL-1.2.so.0, so either cmake or gcc/ld fails.
-# WTF it seems libraries with general names are against ubuntu's `naming scheme` (see https://bugs.launchpad.net/ubuntu/+source/libsdl1.2/+bug/182439) ...
-if (( 0 > 1)); then
-	SDL_LIB_NAME_VER="libSDL-1.2.so.0"
-	SDL_LIB_NAME_FIX="libSDL.so\x0\x0\x0\x0\x0\x0"
-	OMP_LIB_NAME_VER="libgomp.so.1"
-	OMP_LIB_NAME_FIX="libgomp.so\x0\x0"
-	for binary in ${BINARIES}; do
-		if [ -f ${binary} ]; then
-			if readelf -h ${binary} &> /dev/null; then
-				if grep -q "${SDL_LIB_NAME_VER}" ${binary}; then
-					echo "fix libSDL.so linking in ${binary}"
-					sed -i -e "s/${SDL_LIB_NAME_VER}/${SDL_LIB_NAME_FIX}/g" -e "s/${OMP_LIB_NAME_VER}/${OMP_LIB_NAME_FIX}/g" ${binary}
-				fi
-			fi
-		fi
-	done
-fi
 
 mkdir -p ${TMP_PATH}
 

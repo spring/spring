@@ -23,10 +23,10 @@ public:
 		const float3& color
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 1; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

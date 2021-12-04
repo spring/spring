@@ -5,79 +5,84 @@
 
 #include <string>
 
-using std::string;
-
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
 #include "System/UnorderedMap.hpp"
 
 struct lua_State;
 class LuaSyncedCtrl;
-class CLuaHandleSynced;
+class CSplitLuaHandle;
 struct BuildInfo;
 
 
 class CUnsyncedLuaHandle : public CLuaHandle
 {
-	friend class CLuaHandleSynced;
+	friend class CSplitLuaHandle;
 
 	public: // call-ins
-		bool DrawUnit(const CUnit* unit);
-		bool DrawFeature(const CFeature* feature);
-		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
-		bool DrawProjectile(const CProjectile* projectile);
+		bool DrawUnit(const CUnit* unit) override;
+		bool DrawFeature(const CFeature* feature) override;
+		bool DrawShield(const CUnit* unit, const CWeapon* weapon) override;
+		bool DrawProjectile(const CProjectile* projectile) override;
+		bool DrawMaterial(const LuaMaterial* material) override;
 
 	public: // all non-eventhandler callins
 		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
 
 	protected:
-		CUnsyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		CUnsyncedLuaHandle(CSplitLuaHandle* base, const std::string& name, int order);
 		virtual ~CUnsyncedLuaHandle();
 
-		bool Init(const string& code, const string& file);
+		bool Init(const std::string& code, const std::string& file);
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
-			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
+			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)) != nullptr);
 			return static_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L));
 		}
 
 	protected:
-		CLuaHandleSynced& base;
+		CSplitLuaHandle& base;
 };
 
 
 
 class CSyncedLuaHandle : public CLuaHandle
 {
-	friend class CLuaHandleSynced;
+	friend class CSplitLuaHandle;
 
 	public: // call-ins
-		bool CommandFallback(const CUnit* unit, const Command& cmd);
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+		bool CommandFallback(const CUnit* unit, const Command& cmd) override;
+		bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) override;
 
-		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
-		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
-		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
-		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
-		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
-		bool AllowResourceLevel(int teamID, const string& type, float level);
-		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
-		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
-		bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) override;
+		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;
+		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) override;
+		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) override;
+		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) override;
+		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) override;
+		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) override;
+		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) override;
+		bool AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed) override;
+		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) override;
+		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) override;
+		bool AllowResourceLevel(int teamID, const std::string& type, float level) override;
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount) override;
+		bool AllowDirectUnitControl(int playerID, const CUnit* unit) override;
+		bool AllowBuilderHoldFire(const CUnit* unit, int action) override;
+		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) override;
 
-		bool TerraformComplete(const CUnit* unit, const CUnit* build);
-		bool MoveCtrlNotify(const CUnit* unit, int data);
+		bool TerraformComplete(const CUnit* unit, const CUnit* build) override;
+		bool MoveCtrlNotify(const CUnit* unit, int data) override;
 
-		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) override;
 		bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID,
 			float* targetPriority
-		);
-		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+		) override;
+		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) override;
 
 		bool UnitPreDamaged(
 			const CUnit* unit,
@@ -88,7 +93,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			bool paralyzer,
 			float* newDamage,
 			float* impulseMult
-		);
+		) override;
 
 		bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -98,7 +103,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			int projectileID,
 			float* newDamage,
 			float* impulseMult
-		);
+		) override;
 
 		bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -109,15 +114,15 @@ class CSyncedLuaHandle : public CLuaHandle
 			const CUnit* beamCarrier,
 			const float3& startPos,
 			const float3& hitPos
-		);
+		) override;
 
-		bool SyncedActionFallback(const string& line, int playerID);
+		bool SyncedActionFallback(const std::string& line, int playerID) override;
 
 	protected:
-		CSyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		CSyncedLuaHandle(CSplitLuaHandle* base, const std::string& name, int order);
 		virtual ~CSyncedLuaHandle();
 
-		bool Init(const string& code, const string& file);
+		bool Init(const std::string& code, const std::string& file);
 
 		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
 			assert(dynamic_cast<CSyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
@@ -125,9 +130,9 @@ class CSyncedLuaHandle : public CLuaHandle
 		}
 
 	protected:
-		CLuaHandleSynced& base;
+		CSplitLuaHandle& base;
 
-		spring::unordered_map<string, string> textCommands; // name, help
+		spring::unordered_map<std::string, std::string> textCommands; // name, help
 
 	private:
 		int origNextRef;
@@ -148,20 +153,32 @@ class CSyncedLuaHandle : public CLuaHandle
 		static int SetWatchUnitDef(lua_State* L);
 		static int GetWatchFeatureDef(lua_State* L);
 		static int SetWatchFeatureDef(lua_State* L);
+		static int GetWatchExplosionDef(lua_State* L);
+		static int SetWatchExplosionDef(lua_State* L);
+		static int GetWatchProjectileDef(lua_State* L);
+		static int SetWatchProjectileDef(lua_State* L);
+		static int GetWatchAllowTargetDef(lua_State* L);
+		static int SetWatchAllowTargetDef(lua_State* L);
+
 		static int GetWatchWeaponDef(lua_State* L);
-		static int SetWatchWeaponDef(lua_State* L);
+		static int SetWatchWeaponDef(lua_State* L) {
+			SetWatchExplosionDef(L);
+			SetWatchProjectileDef(L);
+			SetWatchAllowTargetDef(L);
+			return 0;
+		}
 };
 
 
-class CLuaHandleSynced
+// split synced and unsynced components
+class CSplitLuaHandle
 {
 	public: // Non-eventhandler call-ins
-		bool GotChatMsg(const string& msg, int playerID) {
-			return syncedLuaHandle.GotChatMsg(msg, playerID) ||
-				unsyncedLuaHandle.GotChatMsg(msg, playerID);
+		bool GotChatMsg(const std::string& msg, int playerID) {
+			return syncedLuaHandle.GotChatMsg(msg, playerID) || unsyncedLuaHandle.GotChatMsg(msg, playerID);
 		}
 
-		bool RecvLuaMsg(const string& msg, int playerID) {
+		bool RecvLuaMsg(const std::string& msg, int playerID) {
 			return syncedLuaHandle.RecvLuaMsg(msg, playerID);
 		}
 
@@ -169,6 +186,10 @@ class CLuaHandleSynced
 		void CheckStack() {
 			syncedLuaHandle.CheckStack();
 			unsyncedLuaHandle.CheckStack();
+		}
+		void CollectGarbage(bool forced) {
+			syncedLuaHandle.CollectGarbage(forced);
+			unsyncedLuaHandle.CollectGarbage(forced);
 		}
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
@@ -187,12 +208,19 @@ class CLuaHandleSynced
 			return &ulh->base.syncedLuaHandle;
 		}
 
-	protected:
-		CLuaHandleSynced(const string& name, int order);
-		virtual ~CLuaHandleSynced();
+		bool ReloadUnsynced() { return (FreeUnsynced(), LoadUnsynced()); }
+		bool SwapSyncedHandle(lua_State* L, lua_State* L_GC);
+		bool InitUnsynced();
 
-		string LoadFile(const string& filename, const string& modes) const;
-		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);
+	protected:
+		CSplitLuaHandle(const std::string& name, int order);
+		virtual ~CSplitLuaHandle();
+
+		std::string LoadFile(const std::string& filename, const std::string& modes) const;
+		bool InitSynced();
+		bool Init(bool onlySynced);
+		bool FreeUnsynced();
+		bool LoadUnsynced();
 
 		bool IsValid() const {
 			return (syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid());
@@ -224,6 +252,11 @@ class CLuaHandleSynced
 		// hooks to add code during initialization
 		virtual bool AddSyncedCode(lua_State* L) = 0;
 		virtual bool AddUnsyncedCode(lua_State* L) = 0;
+
+		virtual std::string GetUnsyncedFileName() const = 0;
+		virtual std::string GetSyncedFileName() const = 0;
+		virtual std::string GetInitFileModes() const = 0;
+		virtual int GetInitSelectTeam() const = 0;
 
 		// call-outs
 		static int LoadStringData(lua_State* L);

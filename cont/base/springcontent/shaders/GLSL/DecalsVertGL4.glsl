@@ -16,6 +16,8 @@ layout(packed) uniform decalGroupsUBO
 };
 
 
+layout(location = 0) in vec3 vertexPos;
+
 uniform vec3 camPos;
 uniform mat4 viewProjMatrix;
 
@@ -25,6 +27,6 @@ flat out int decalGroupId;
 void main() {
 	decalGroupId = gl_InstanceID;
 	SDecalGroup g = groups[gl_InstanceID];
-	vec3 v = mix(g.boundAABB[0].xyz, g.boundAABB[1].xyz, step(vec3(0.0), gl_Vertex.xyz) );
-	gl_Position = viewProjMatrix * vec4(v, 1.0);
+	vec3 clampedPos = mix(g.boundAABB[0].xyz, g.boundAABB[1].xyz, step(vec3(0.0), vertexPos) );
+	gl_Position = viewProjMatrix * vec4(clampedPos, 1.0);
 }

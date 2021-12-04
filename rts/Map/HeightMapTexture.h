@@ -11,13 +11,13 @@ class HeightMapTexture : public CEventClient
 {
 	public:
 		//! CEventClient interface
-		bool WantsEvent(const std::string& eventName) {
+		bool WantsEvent(const std::string& eventName) override {
 			return (eventName == "UnsyncedHeightMapUpdate");
 		}
-		bool GetFullRead() const { return true; }
-		int GetReadAllyTeam() const { return AllAccessTeam; }
+		bool GetFullRead() const override { return true; }
+		int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-		void UnsyncedHeightMapUpdate(const SRectangle& rect);
+		void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 
 	public:
 		HeightMapTexture();
@@ -32,10 +32,13 @@ class HeightMapTexture : public CEventClient
 		void Init();
 		void Kill();
 
-		GLuint texID;
-		int xSize;
-		int ySize;
-		PBO pbo;
+	private:
+		GLuint texID = 0;
+
+		int xSize = 0;
+		int ySize = 0;
+
+		PBO pbos[3];
 };
 
 extern HeightMapTexture* heightMapTexture;

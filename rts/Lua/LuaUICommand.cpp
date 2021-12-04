@@ -29,25 +29,27 @@ bool LuaUICommand::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaUICommand::GetUICommands(lua_State* L) 
+int LuaUICommand::GetUICommands(lua_State* L)
 {
-	SyncedGameCommands::actionExecutorsMap_t syncedExecutors = syncedGameCommands->GetActionExecutors();
-	UnsyncedGameCommands::actionExecutorsMap_t unsyncedExecutors = unsyncedGameCommands->GetActionExecutors();
+	const auto& syncedExecutors = syncedGameCommands->GetSortedActionExecutors();
+	const auto& unsyncedExecutors = unsyncedGameCommands->GetSortedActionExecutors();
 	
 	int count = 0;
 	lua_createtable(L, syncedExecutors.size() + unsyncedExecutors.size(), 0);
-	for (SyncedGameCommands::actionExecutorsMap_t::iterator iter = syncedExecutors.begin(); iter != syncedExecutors.end(); ++iter) {
+	for (const auto& pair: syncedExecutors) {
+		const ISyncedActionExecutor* exec = pair.second;
+
 		lua_createtable(L, 0, 4);
-		ISyncedActionExecutor* exec = iter->second;
 		HSTR_PUSH_STRING(L, "command",     exec->GetCommand());
 		HSTR_PUSH_STRING(L, "description", exec->GetDescription());
 		HSTR_PUSH_BOOL(L,   "synced",      exec->IsSynced());
 		HSTR_PUSH_BOOL(L,   "cheat",       exec->IsCheatRequired());
 		lua_rawseti(L, -2, count++);
 	}
-	for (UnsyncedGameCommands::actionExecutorsMap_t::iterator iter = unsyncedExecutors.begin(); iter != unsyncedExecutors.end(); ++iter) {
+	for (const auto& pair: unsyncedExecutors) {
+		const IUnsyncedActionExecutor* exec = pair.second;
+
 		lua_createtable(L, 0, 4);
-		IUnsyncedActionExecutor* exec = iter->second;
 		HSTR_PUSH_STRING(L, "command",     exec->GetCommand());
 		HSTR_PUSH_STRING(L, "description", exec->GetDescription());
 		HSTR_PUSH_BOOL(L,   "synced",      exec->IsSynced());

@@ -19,6 +19,9 @@
 
 namespace Shader {
 	struct UniformState {
+	public:
+		static constexpr size_t NAME_BUF_LEN = 128;
+
 	private:
 		union {
 			std::int32_t i[17];
@@ -28,36 +31,40 @@ namespace Shader {
 		/// current glGetUniformLocation
 		int location;
 
-		/// uniform name in the shader
-		std::string name;
-
-	#ifdef DEBUG
+		#ifdef DEBUG
 		/// uniform type
 		int type;
-	#endif
+		#endif
+
+		/// uniform name in the shader
+		char name[NAME_BUF_LEN];
 
 	public:
-		UniformState(const std::string& _name): location(-1), name(_name) {
+		UniformState(const char* _name): location(-1) {
 			i[0] = -0xFFFFFF;
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
 			i[3] = -0xFFFFFF;
-		#ifdef DEBUG
+
+			#ifdef DEBUG
 			type = -1;
-		#endif
+			#endif
+
+			memset(name, 0, sizeof(name));
+			strncpy(name, _name, sizeof(name) - 1);
 		}
 
 		const int* GetIntValues() const { return &i[0]; }
 		const float* GetFltValues() const { return &f[0]; }
 
 		int GetLocation() const { return location; }
-		const std::string& GetName() const { return name; }
+		const char* GetName() const { return name; }
 
 		void SetLocation(int loc) { location = loc; }
 
 		bool IsLocationValid() const;
-		bool IsUninit() const {
-			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
+		bool IsInitialized() const {
+			return (i[0] != -0xFFFFFF) || (i[1] != -0xFFFFFF) || (i[2] != -0xFFFFFF) || (i[3] != -0xFFFFFF);
 		}
 
 	public:
@@ -217,6 +224,20 @@ namespace Shader {
 	struct ShaderFlags {
 	public:
 		ShaderFlags() { Clear(); }
+		ShaderFlags(const ShaderFlags& sf) = delete;
+		ShaderFlags(ShaderFlags&& sf) { *this = std::move(sf); }
+
+		ShaderFlags& operator = (const ShaderFlags& sf) = delete;
+		ShaderFlags& operator = (ShaderFlags&& sf) {
+			bitFlags = std::move(sf.bitFlags);
+			intFlags = std::move(sf.intFlags);
+			fltFlags = std::move(sf.fltFlags);
+
+			numValUpdates = sf.numValUpdates;
+			prvValUpdates = sf.prvValUpdates;
+			flagHashValue = sf.flagHashValue;
+			return *this;
+		}
 
 		std::string GetString() const {
 			char buf[8192] = {0};

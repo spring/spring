@@ -2,7 +2,7 @@
 // detail/reactive_socket_service_base.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -22,14 +22,15 @@
 
 #include "asio/buffer.hpp"
 #include "asio/error.hpp"
-#include "asio/io_service.hpp"
+#include "asio/io_context.hpp"
 #include "asio/socket_base.hpp"
-#include "asio/detail/addressof.hpp"
 #include "asio/detail/buffer_sequence_adapter.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/reactive_null_buffers_op.hpp"
 #include "asio/detail/reactive_socket_recv_op.hpp"
 #include "asio/detail/reactive_socket_recvmsg_op.hpp"
 #include "asio/detail/reactive_socket_send_op.hpp"
+#include "asio/detail/reactive_wait_op.hpp"
 #include "asio/detail/reactor.hpp"
 #include "asio/detail/reactor_op.hpp"
 #include "asio/detail/socket_holder.hpp"
@@ -62,10 +63,10 @@ public:
 
   // Constructor.
   ASIO_DECL reactive_socket_service_base(
-      asio::io_service& io_service);
+      asio::io_context& io_context);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown_service();
+  ASIO_DECL void base_shutdown();
 
   // Construct a new socket implementation.
   ASIO_DECL void construct(base_implementation_type& impl);
@@ -90,6 +91,10 @@ public:
 
   // Destroy a socket implementation.
   ASIO_DECL asio::error_code close(
+      base_implementation_type& impl, asio::error_code& ec);
+
+  // Release ownership of the socket.
+  ASIO_DECL socket_type release(
       base_implementation_type& impl, asio::error_code& ec);
 
   // Get the native socket representation.
@@ -162,12 +167,69 @@ public:
     return ec;
   }
 
-  // Disable sends or receives on the socket.
-  asio::error_code shutdown(base_implementation_type& impl,
-      socket_base::shutdown_type what, asio::error_code& ec)
+  // Wait for the socket to become ready to read, ready to write, or to have
+  // pending error conditions.
+  asio::error_code wait(base_implementation_type& impl,
+      socket_base::wait_type w, asio::error_code& ec)
   {
-    socket_ops::shutdown(impl.socket_, what, ec);
+    switch (w)
+    {
+    case socket_base::wait_read:
+      socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
+      break;
+    case socket_base::wait_write:
+      socket_ops::poll_write(impl.socket_, impl.state_, -1, ec);
+      break;
+    case socket_base::wait_error:
+      socket_ops::poll_error(impl.socket_, impl.state_, -1, ec);
+      break;
+    default:
+      ec = asio::error::invalid_argument;
+      break;
+    }
+
     return ec;
+  }
+
+  // Asynchronously wait for the socket to become ready to read, ready to
+  // write, or to have pending error conditions.
+  template <typename Handler>
+  void async_wait(base_implementation_type& impl,
+      socket_base::wait_type w, Handler& handler)
+  {
+    bool is_continuation =
+      asio_handler_cont_helpers::is_continuation(handler);
+
+    // Allocate and construct an operation to wrap the handler.
+    typedef reactive_wait_op<Handler> op;
+    typename op::ptr p = { asio::detail::addressof(handler),
+      op::ptr::allocate(handler), 0 };
+    p.p = new (p.v) op(handler);
+
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_wait"));
+
+    int op_type;
+    switch (w)
+    {
+      case socket_base::wait_read:
+        op_type = reactor::read_op;
+        break;
+      case socket_base::wait_write:
+        op_type = reactor::write_op;
+        break;
+      case socket_base::wait_error:
+        op_type = reactor::except_op;
+        break;
+      default:
+        p.p->ec_ = asio::error::invalid_argument;
+        reactor_.post_immediate_completion(p.p, is_continuation);
+        p.v = p.p = 0;
+        return;
+    }
+
+    start_op(impl, op_type, p.p, is_continuation, false, false);
+    p.v = p.p = 0;
   }
 
   // Send the given data to the peer.
@@ -188,7 +250,7 @@ public:
       socket_base::message_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_write(impl.socket_, impl.state_, ec);
+    socket_ops::poll_write(impl.socket_, impl.state_, -1, ec);
 
     return 0;
   }
@@ -206,11 +268,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_socket_send_op<ConstBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
-    p.p = new (p.v) op(impl.socket_, buffers, flags, handler);
+      op::ptr::allocate(handler), 0 };
+    p.p = new (p.v) op(impl.socket_, impl.state_, buffers, flags, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_send"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_send"));
 
     start_op(impl, reactor::write_op, p.p, is_continuation, true,
         ((impl.state_ & socket_ops::stream_oriented)
@@ -230,12 +292,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket",
-          &impl, "async_send(null_buffers)"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_send(null_buffers)"));
 
     start_op(impl, reactor::write_op, p.p, is_continuation, false, false);
     p.v = p.p = 0;
@@ -259,7 +320,7 @@ public:
       socket_base::message_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_read(impl.socket_, impl.state_, ec);
+    socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
 
     return 0;
   }
@@ -277,11 +338,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_socket_recv_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(impl.socket_, impl.state_, buffers, flags, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_receive"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_receive"));
 
     start_op(impl,
         (flags & socket_base::message_out_of_band)
@@ -305,12 +366,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket",
-          &impl, "async_receive(null_buffers)"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_receive(null_buffers)"));
 
     start_op(impl,
         (flags & socket_base::message_out_of_band)
@@ -340,7 +400,7 @@ public:
       socket_base::message_flags& out_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_read(impl.socket_, impl.state_, ec);
+    socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
 
     // Clear out_flags, since we cannot give it any other sensible value when
     // performing a null_buffers operation.
@@ -362,12 +422,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_socket_recvmsg_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(impl.socket_, buffers, in_flags, out_flags, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket",
-          &impl, "async_receive_with_flags"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_receive_with_flags"));
 
     start_op(impl,
         (in_flags & socket_base::message_out_of_band)
@@ -389,12 +448,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef reactive_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket", &impl,
-          "async_receive_with_flags(null_buffers)"));
+    ASIO_HANDLER_CREATION((reactor_.context(), *p.p, "socket",
+          &impl, impl.socket_, "async_receive_with_flags(null_buffers)"));
 
     // Clear out_flags, since we cannot give it any other sensible value when
     // performing a null_buffers operation.
@@ -430,6 +488,9 @@ protected:
   ASIO_DECL void start_connect_op(base_implementation_type& impl,
       reactor_op* op, bool is_continuation,
       const socket_addr_type* addr, size_t addrlen);
+
+  // The io_context that owns this socket service.
+  io_context& io_context_;
 
   // The selector that performs event demultiplexing for the service.
   reactor& reactor_;

@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -42,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCLUDED_AI_IRRXML_WRAPPER
 
 // some long includes ....
-#include "./../contrib/irrXML/irrXML.h"
+#include <irrXML.h>
 #include "./../include/assimp/IOStream.hpp"
 #include "BaseImporter.h"
 #include <vector>
@@ -92,7 +93,7 @@ public:
 
         // Remove null characters from the input sequence otherwise the parsing will utterly fail
         unsigned int size = 0;
-        unsigned int size_max = data.size();
+        unsigned int size_max = static_cast<unsigned int>(data.size());
         for(unsigned int i = 0; i < size_max; i++) {
             if(data[i] != '\0') {
                 data[size++] = data[i];
@@ -112,12 +113,12 @@ public:
     /**  @param buffer:       Pointer to output buffer.
      *   @param sizeToRead:   Amount of bytes to read
      *   @return              Returns how much bytes were read.  */
-    virtual int read(void* buffer, int sizeToRead)  {
+    virtual int read(void* buffer, int sizeToRead) override {
         if(sizeToRead<0) {
             return 0;
         }
         if(t+sizeToRead>data.size()) {
-            sizeToRead = data.size()-t;
+            sizeToRead = static_cast<int>(data.size()-t);
         }
 
         memcpy(buffer,&data.front()+t,sizeToRead);
@@ -128,7 +129,7 @@ public:
 
     // ----------------------------------------------------------------------------------
     //! Returns size of file in bytes
-    virtual int getSize()   {
+    virtual int getSize() override {
         return (int)data.size();
     }
 

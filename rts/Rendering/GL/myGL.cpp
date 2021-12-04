@@ -1,44 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <array>
-#include <vector>
-#include <string>
 #include <cmath>
 
 #include <SDL.h>
-#if (!defined(HEADLESS) && !defined(WIN32) && !defined(__APPLE__))
+#if (!defined(HEADLESS) && !defined(_WIN32) && !defined(__APPLE__))
 // need this for glXQueryCurrentRendererIntegerMESA (glxext)
 #include <GL/glxew.h>
 #endif
 
 #include "myGL.h"
-#include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
-#include "System/Exceptions.h"
-#include "System/StringUtil.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
+#include "System/StringUtil.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
-static std::array<CVertexArray, 2> vertexArrays;
-static int currentVertexArray = 0;
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-CVertexArray* GetVertexArray()
-{
-	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
-	return &vertexArrays[currentVertexArray];
-}
-
-
-/******************************************************************************/
 
 bool CheckAvailableVideoModes()
 {
@@ -146,8 +124,8 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
-	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
-	static           const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
+	static const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
+	static const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
 
 	if (qcriProcAddr == nullptr)
 		return false;
@@ -196,48 +174,25 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	assert(glVendor != nullptr);
 	assert(glRenderer != nullptr);
 
-	const std::string& _glVendor = StringToLower(glVendor);
-	// const std::string& _glRenderer = StringToLower(glRenderer);
-
 	// should be unreachable
 	// note that checking for Microsoft stubs is no longer required
 	// (context-creation will fail if no vendor-specific or pre-GL3
 	// drivers are installed)
-	if (_glVendor.find("unknown") != std::string::npos)
+	if (StrCaseStr(glVendor, "unknown") != nullptr)
 		return false;
 
-	if (_glVendor.find("vmware") != std::string::npos) {
+	if (StrCaseStr(glVendor, "vmware") != nullptr) {
 		const char* msg =
 			"Running Spring with virtualized drivers can result in severely degraded "
 			"performance and is discouraged. Prefer to use your host operating system.";
 
 		LOG_L(L_WARNING, "%s", msg);
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
-		return true;
 	}
 
 	return true;
 }
 
-
-/******************************************************************************/
-
-void WorkaroundATIPointSizeBug()
-{
-	if (!globalRendering->atiHacks)
-		return;
-	if (!globalRendering->haveGLSL)
-		return;
-
-	GLboolean pointSpritesEnabled = false;
-	glGetBooleanv(GL_POINT_SPRITE, &pointSpritesEnabled);
-	if (pointSpritesEnabled)
-		return;
-
-	GLfloat atten[3] = {1.0f, 0.0f, 0.0f};
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
-}
 
 /******************************************************************************/
 
@@ -319,226 +274,40 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 	if (globalRendering->compressTextures) {
 		switch (internalFormat) {
 			case 4:
-			case GL_RGBA8 :
-			case GL_RGBA :  internalFormat = GL_COMPRESSED_RGBA_ARB; break;
+			case GL_RGBA8:
+			case GL_RGBA :
+				internalFormat = GL_COMPRESSED_RGBA;
+			break;
 
 			case 3:
-			case GL_RGB8 :
-			case GL_RGB :   internalFormat = GL_COMPRESSED_RGB_ARB; break;
+			case GL_RGB8:
+			case GL_RGB :
+				internalFormat = GL_COMPRESSED_RGB;
+			break;
 
-			case GL_LUMINANCE: internalFormat = GL_COMPRESSED_LUMINANCE_ARB; break;
+			default: {
+			} break;
 		}
 	}
 
 	// create mipmapped texture
-
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->atiHacks) {
-		// newest method
-		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		if (globalRendering->atiHacks) {
-			glEnable(target);
-			glGenerateMipmap(target);
-			glDisable(target);
-		} else {
-			glGenerateMipmap(target);
-		}
-	} else if (GLEW_VERSION_1_4) {
-		// This required GL-1.4
-		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
-		glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE);
-		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-	} else {
-		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);
-	}
+	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+	glGenerateMipmap(target);
 }
 
-
-void glSpringMatrix2dProj(const int sizex, const int sizey)
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0,sizex,0,sizey);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
 
 
 /******************************************************************************/
 
 void ClearScreen()
 {
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, 1, 0, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
-	glColor3f(1, 1, 1);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-
-/******************************************************************************/
-
-static unsigned int LoadProgram(GLenum, const char*, const char*);
-
-/**
- * True if the program in DATADIR/shaders/filename is
- * loadable and can run inside our graphics server.
- *
- * @param target glProgramStringARB target: GL_FRAGMENT_PROGRAM_ARB GL_VERTEX_PROGRAM_ARB
- * @param filename Name of the file under shaders with the program in it.
- */
-
-bool ProgramStringIsNative(GLenum target, const char* filename)
-{
-	// clear any current GL errors so that the following check is valid
-	glClearErrors("GL", __func__, globalRendering->glDebugErrors);
-
-	const GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
-
-	if (tempProg == 0)
-		return false;
-
-	glSafeDeleteProgram(tempProg);
-	return true;
-}
-
-
-/**
- * Presumes the last GL operation was to load a vertex or
- * fragment program.
- *
- * If it was invalid, display an error message about
- * what and where the problem in the program source is.
- *
- * @param filename Only substituted in the message.
- * @param program The program text (used to enhance the message)
- */
-static bool CheckParseErrors(GLenum target, const char* filename, const char* program)
-{
-	GLint errorPos = -1;
-	GLint isNative =  0;
-
-	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-	glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
-
-	if (errorPos != -1) {
-		const char* fmtString =
-			"[%s] shader compilation error at index %d (near "
-			"\"%.30s\") when loading %s-program file %s:\n%s";
-		const char* tgtString = (target == GL_VERTEX_PROGRAM_ARB)? "vertex": "fragment";
-		const char* errString = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-
-		if (errString != NULL) {
-			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, errString);
-		} else {
-			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, "(null)");
-		}
-
-		return true;
-	}
-
-	if (isNative != 1) {
-		GLint aluInstrs, maxAluInstrs;
-		GLint texInstrs, maxTexInstrs;
-		GLint texIndirs, maxTexIndirs;
-		GLint nativeTexIndirs, maxNativeTexIndirs;
-		GLint nativeAluInstrs, maxNativeAluInstrs;
-
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_ALU_INSTRUCTIONS_ARB,            &aluInstrs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB,        &maxAluInstrs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_TEX_INSTRUCTIONS_ARB,            &texInstrs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB,        &maxTexInstrs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_TEX_INDIRECTIONS_ARB,            &texIndirs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB,        &maxTexIndirs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB,     &nativeTexIndirs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB, &maxNativeTexIndirs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB,     &nativeAluInstrs);
-		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB, &maxNativeAluInstrs);
-
-		if (aluInstrs > maxAluInstrs)
-			LOG_L(L_ERROR, "[%s] too many ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, aluInstrs, maxAluInstrs);
-
-		if (texInstrs > maxTexInstrs)
-			LOG_L(L_ERROR, "[%s] too many texture instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, texInstrs, maxTexInstrs);
-
-		if (texIndirs > maxTexIndirs)
-			LOG_L(L_ERROR, "[%s] too many texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, texIndirs, maxTexIndirs);
-
-		if (nativeTexIndirs > maxNativeTexIndirs)
-			LOG_L(L_ERROR, "[%s] too many native texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeTexIndirs, maxNativeTexIndirs);
-
-		if (nativeAluInstrs > maxNativeAluInstrs)
-			LOG_L(L_ERROR, "[%s] too many native ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeAluInstrs, maxNativeAluInstrs);
-
-		return true;
-	}
-
-	return false;
-}
-
-
-static unsigned int LoadProgram(GLenum target, const char* filename, const char* program_type)
-{
-	GLuint ret = 0;
-
-	if (!GLEW_ARB_vertex_program)
-		return ret;
-	if (target == GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program)
-		return ret;
-
-	CFileHandler file(std::string("shaders/") + filename);
-	if (!file.FileExists()) {
-		char c[512];
-		SNPRINTF(c, 512, "[myGL::LoadProgram] Cannot find %s-program file '%s'", program_type, filename);
-		throw content_error(c);
-	}
-
-	// buffer does not need to be null-terminated
-	std::vector<unsigned char> fbuf;
-
-	if (!file.IsBuffered()) {
-		fbuf.resize(file.FileSize(), 0);
-		file.Read(fbuf.data(), fbuf.size());
-	} else {
-		fbuf = std::move(file.GetBuffer());
-	}
-
-	glGenProgramsARB(1, &ret);
-	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - (fbuf.back() == '\0'), fbuf.data());
-
-	if (CheckParseErrors(target, filename, reinterpret_cast<char*>(fbuf.data())))
-		ret = 0;
-
-	return ret;
-}
-
-unsigned int LoadVertexProgram(const char* filename)
-{
-	return LoadProgram(GL_VERTEX_PROGRAM_ARB, filename, "vertex");
-}
-
-unsigned int LoadFragmentProgram(const char* filename)
-{
-
-	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
-}
-
-
-void glSafeDeleteProgram(GLuint program)
-{
-	if (!GLEW_ARB_vertex_program || (program == 0))
-		return;
-
-	glDeleteProgramsARB(1, &program);
-}
 
 
 /******************************************************************************/
@@ -554,25 +323,3 @@ void glClearErrors(const char* cls, const char* fnc, bool verbose)
 	}
 }
 
-
-/******************************************************************************/
-
-void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ)
-{
-	const GLfloat planeX[] = {scaleX, 0.0f,   0.0f,  offsetX};
-	const GLfloat planeZ[] = {  0.0f, 0.0f, scaleZ,  offsetZ};
-
-	//BUG: Nvidia drivers take the current texcoord into account when TexGen is used!
-	// You MUST reset the coords before using TexGen!
-	//glMultiTexCoord4f(target, 1.0f,1.0f,1.0f,1.0f);
-
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
-	glEnable(GL_TEXTURE_GEN_S);
-
-	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
-	glEnable(GL_TEXTURE_GEN_T);
-}
-
-/******************************************************************************/

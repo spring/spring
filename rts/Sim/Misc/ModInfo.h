@@ -12,7 +12,7 @@ public:
 	CModInfo() { ResetState(); }
 
 	void ResetState();
-	void Init(const char* modArchive);
+	void Init(const std::string& modFileName);
 
 	/**
 	 * The archive file name.
@@ -48,6 +48,7 @@ public:
 	bool allowCrushingAlliedUnits;   //< determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   //< determines if units take damage from (skidding) collisions
 	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowSepAxisCollisionTest;  //< determines if (ground-)units perform collision-testing via the SAT
 	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
 	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
 
@@ -89,14 +90,20 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+
 	float unitExpMultiplier;
 	float unitExpPowerScale;
 	float unitExpHealthScale;
 	float unitExpReloadScale;
 
+
 	// Paralyze behaviour
+	/// time it takes for paralysis to decay by 100% in seconds
+	float paralyzeDeclineRate;
+
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
+
 
 	// Transportation behaviour
 	/// 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
@@ -129,22 +136,29 @@ public:
 
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
-	///
+	/// when unit->alwaysVisible is true, it is visible even when cloaked
 	bool alwaysVisibleOverridesCloaked;
+	/// ignore enemies when checking decloak if they are further than their spherical sight range
+	bool decloakRequiresLineOfSight;
 	/// should _all_ allyteams share the same jammermap
 	bool separateJammers;
 
 
 	enum {
-		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,
+		FEATURELOS_NONE = 0,
+		FEATURELOS_GAIAONLY,
+		FEATURELOS_GAIAALLIED,
+		FEATURELOS_ALL,
 	};
+
 	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
 	// PFS
-	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	/// which pathfinder system (NOP, DEFAULT/legacy, or QT) the mod will use
 	int pathFinderSystem;
+
 	float pfRawDistMult;
 	float pfUpdateRate;
 

@@ -46,8 +46,8 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		for (auto it = texInfoMap.cbegin(); it != texInfoMap.cend(); ++it) {
-			const size_t texIdx = it->second;
+		for (const auto& item: texInfoMap) {
+			const size_t texIdx = item.second;
 			const GLuint texID = texInfoVec[texIdx].id;
 
 			if (shutdown || !texInfoVec[texIdx].persist) {
@@ -55,7 +55,7 @@ namespace CNamedTextures {
 				// always recycle non-persistent textures
 				freeIndices.push_back(texIdx);
 			} else {
-				tempMap[it->first] = it->second;
+				tempMap[item.first] = item.second;
 			}
 		}
 
@@ -133,7 +133,7 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		//! strip off the qualifiers
+		// strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;
 		bool clamped = false;
@@ -201,12 +201,12 @@ namespace CNamedTextures {
 			}
 		}
 
-		//! get the image
+		// get the image
 		CBitmap bitmap;
 		TexInfo texInfo;
 
 		if (!bitmap.Load(filename)) {
-			LOG_L(L_WARNING, "Couldn't find texture \"%s\"!", filename.c_str());
+			LOG_L(L_WARNING, "[NamedTextures::%s] could not load texture \"%s\"", __func__, filename.c_str());
 			GenInsertTex(texName, texInfo, false, false, true, false);
 			return false;
 		}
@@ -214,15 +214,15 @@ namespace CNamedTextures {
 		if (bitmap.compressed) {
 			texID = bitmap.CreateDDSTexture(texID);
 		} else {
-			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
+			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x, resizeDimensions.y);
 			if (invert) bitmap.InvertColors();
 			if (greyed) bitmap.MakeGrayScale();
 			if (tint)   bitmap.Tint(tintColor);
 
-			const int xbits = count_bits_set(bitmap.xsize);
-			const int ybits = count_bits_set(bitmap.ysize);
+			// const int xbits = count_bits_set(bitmap.xsize);
+			// const int ybits = count_bits_set(bitmap.ysize);
 
-			//! make the texture
+			// make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (clamped) {
@@ -231,10 +231,10 @@ namespace CNamedTextures {
 			}
 
 			if (nearest || linear) {
-				if (border) {
-					GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				constexpr GLfloat white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+				if (border)
 					glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
-				}
 
 				if (nearest) {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -244,25 +244,16 @@ namespace CNamedTextures {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				}
 
-				//! Note: NPOTs + nearest filtering seems broken on ATIs
-				if ((xbits != 1 || ybits != 1) && (!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)))
-					bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
-
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 			} else {
-				//! MIPMAPPING (default)
+				// MIPMAPPING (default)
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-				if ((xbits == 1 && ybits == 1) || GLEW_ARB_texture_non_power_of_two) {
-					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-				} else {
-					//! glu auto resizes to next POT
-					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-				}
+				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 			}
 
-			if (aniso && GLEW_EXT_texture_filter_anisotropic)
+			if (aniso)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalRendering->maxTexAnisoLvl);
 		}
 
@@ -298,13 +289,6 @@ namespace CNamedTextures {
 		}
 
 		// load texture
-		GLboolean inListCompile;
-		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-		if (inListCompile) {
-			GenInsertTex(texName, {}, true, true, false, false);
-			return true;
-		}
-
 		return (GenLoadTex(texName));
 	}
 
@@ -316,7 +300,7 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		glPushAttrib(GL_TEXTURE_BIT);
+		glAttribStatePtr->PushTextureBit();
 
 		for (const std::string& texString: waitingTextures) {
 			const auto mit = texInfoMap.find(texString);
@@ -327,7 +311,7 @@ namespace CNamedTextures {
 			Load(texString, texInfoVec[mit->second].id);
 		}
 
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 		waitingTextures.clear();
 	}
 
@@ -366,14 +350,7 @@ namespace CNamedTextures {
 
 		if (forceLoad) {
 			// load texture
-			GLboolean inListCompile;
-			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-
-			if (inListCompile) {
-				GenInsertTex(texName, {}, true, false, false, persist);
-			} else {
-				GenLoadTex(texName);
-			}
+			GenLoadTex(texName);
 
 			return &texInfoVec[ texInfoMap[texName] ];
 		}

@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -77,7 +78,7 @@ public:
 
     // -------------------------------------------------------------------
     // Read from stream
-    size_t Read(void* pvBuffer, size_t pSize, size_t pCount)    {
+    size_t Read(void* pvBuffer, size_t pSize, size_t pCount) override {
         const size_t cnt = std::min(pCount,(length-pos)/pSize),ofs = pSize*cnt;
 
         memcpy(pvBuffer,buffer+pos,ofs);
@@ -88,14 +89,14 @@ public:
 
     // -------------------------------------------------------------------
     // Write to stream
-    size_t Write(const void* /*pvBuffer*/, size_t /*pSize*/,size_t /*pCount*/)  {
+    size_t Write(const void* /*pvBuffer*/, size_t /*pSize*/,size_t /*pCount*/) override {
         ai_assert(false); // won't be needed
         return 0;
     }
 
     // -------------------------------------------------------------------
     // Seek specific position
-    aiReturn Seek(size_t pOffset, aiOrigin pOrigin) {
+    aiReturn Seek(size_t pOffset, aiOrigin pOrigin) override {
         if (aiOrigin_SET == pOrigin) {
             if (pOffset >= length) {
                 return AI_FAILURE;
@@ -119,19 +120,19 @@ public:
 
     // -------------------------------------------------------------------
     // Get current seek position
-    size_t Tell() const {
+    size_t Tell() const override {
         return pos;
     }
 
     // -------------------------------------------------------------------
     // Get size of file
-    size_t FileSize() const {
+    size_t FileSize() const override {
         return length;
     }
 
     // -------------------------------------------------------------------
     // Flush file contents
-    void Flush() {
+    void Flush() override {
         ai_assert(false); // won't be needed
     }
 
@@ -157,19 +158,19 @@ public:
 
     // -------------------------------------------------------------------
     /** Tests for the existence of a file at the given path. */
-    bool Exists( const char* pFile) const {
+    bool Exists( const char* pFile) const override {
         return !strncmp(pFile,AI_MEMORYIO_MAGIC_FILENAME,AI_MEMORYIO_MAGIC_FILENAME_LENGTH);
     }
 
     // -------------------------------------------------------------------
     /** Returns the directory separator. */
-    char getOsSeparator() const {
+    char getOsSeparator() const override {
         return '/'; // why not? it doesn't care
     }
 
     // -------------------------------------------------------------------
     /** Open a new file with a given path. */
-    IOStream* Open( const char* pFile, const char* /*pMode*/ = "rb") {
+    IOStream* Open( const char* pFile, const char* /*pMode*/ = "rb") override {
         if (strncmp(pFile,AI_MEMORYIO_MAGIC_FILENAME,AI_MEMORYIO_MAGIC_FILENAME_LENGTH)) {
             return NULL;
         }
@@ -178,13 +179,13 @@ public:
 
     // -------------------------------------------------------------------
     /** Closes the given file and releases all resources associated with it. */
-    void Close( IOStream* pFile) {
+    void Close( IOStream* pFile) override {
     	delete pFile;
     }
 
     // -------------------------------------------------------------------
     /** Compare two paths */
-    bool ComparePaths (const char* /*one*/, const char* /*second*/) const {
+    bool ComparePaths (const char* /*one*/, const char* /*second*/) const override {
         return false;
     }
 

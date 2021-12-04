@@ -83,16 +83,16 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 		if (ud == nullptr)
 			return unit;
 		// need to check this BEFORE creating the instance
-		if (!unitHandler->CanAddUnit(params.unitID))
+		if (!unitHandler.CanAddUnit(params.unitID))
 			return unit;
 
 		if (params.teamID < 0) {
-			if (teamHandler->GaiaTeamID() < 0) {
+			if (teamHandler.GaiaTeamID() < 0) {
 				LOG_L(L_WARNING, "[%s] invalid team %d and no Gaia-team", __func__, params.teamID);
 				return unit;
 			}
 
-			const_cast<UnitLoadParams&>(params).teamID = teamHandler->GaiaTeamID();
+			const_cast<UnitLoadParams&>(params).teamID = teamHandler.GaiaTeamID();
 		}
 
 		unit = CUnitHandler::NewUnit(ud);
@@ -151,12 +151,12 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 	if (teamArgIdx >= 0) {
 		team = atoi(args[teamArgIdx].c_str());
 
-		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
+		if ((!teamHandler.IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
 			LOG_L(L_WARNING, "[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
 
-		featureAllyTeam = teamHandler->AllyTeam(team);
+		featureAllyTeam = teamHandler.AllyTeam(team);
 	}
 
 	const std::string& objectName = (amountArgIdx >= 0) ? args[1] : args[0];
@@ -172,16 +172,15 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 
 void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int featureAllyTeam)
 {
-	const CTeam* receivingTeam = teamHandler->Team(team);
+	const CTeam* receivingTeam = teamHandler.Team(team);
 
 	if (objectName == "all") {
-		unsigned int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
-		unsigned int currentNumUnits = receivingTeam->units.size();
+		unsigned int numRequestedUnits = unitDefHandler->NumUnitDefs();
+		unsigned int currentNumUnits = receivingTeam->GetNumUnits();
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits())
 			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
-		}
 
 		// make sure square is entirely on the map
 		const int sqSize = math::ceil(math::sqrt((float) numRequestedUnits));
@@ -191,7 +190,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		pos.z = Clamp(pos.z, sqHalfMapSize, float3::maxzpos - sqHalfMapSize - 1);
 
 		for (int a = 1; a <= numRequestedUnits; ++a) {
-			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
+			Watchdog::ClearTimers(false, true);
+
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
@@ -215,20 +215,19 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 	} else {
 		unsigned int numRequestedUnits = amount;
-		unsigned int currentNumUnits = receivingTeam->units.size();
+		unsigned int currentNumUnits = receivingTeam->GetNumUnits();
 
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
-				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), unitHandler->MaxUnits()
+				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), unitHandler.MaxUnits()
 			);
 			return;
 		}
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits())
 			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
-		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
 		const FeatureDef* featureDef = featureDefHandler->GetFeatureDef(objectName, false);
@@ -255,7 +254,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 
-					Watchdog::ClearPrimaryTimers();
+					Watchdog::ClearTimers(false, true);
 
 					const UnitLoadParams unitParams = {
 						unitDef,
@@ -301,10 +300,11 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 					const float3 featurePos = float3(px, CGround::GetHeightReal(px, pz), pz);
 
-					Watchdog::ClearPrimaryTimers();
+					Watchdog::ClearTimers(false, true);
 					FeatureLoadParams params = {
-						featureDef,
 						nullptr,
+						nullptr,
+						featureDef,
 
 						featurePos,
 						ZeroVector,
@@ -319,7 +319,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						0, // smokeTime
 					};
 
-					featureHandler->LoadFeature(params);
+					featureHandler.LoadFeature(params);
 
 					--total;
 				}
@@ -339,7 +339,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 	const UnitDef* unitDef = unit->unitDef;
 	// const MoveDef* moveDef = unit->moveDef;
 
-	if (mapDamage->disabled)
+	if (mapDamage->Disabled())
 		return;
 	if (!unitDef->levelGround)
 		return;
@@ -374,7 +374,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
 
-	if (mapDamage->disabled)
+	if (mapDamage->Disabled())
 		return;
 	if (!unitDef->levelGround)
 		return;

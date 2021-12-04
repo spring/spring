@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef VBO_H
-#define VBO_H
+#ifndef GL_VBO_H
+#define GL_VBO_H
 
 #include "Rendering/GL/myGL.h"
 
@@ -13,20 +13,24 @@
 class VBO
 {
 public:
-	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(GLenum _defTarget = GL_ARRAY_BUFFER, const bool storage = false, bool readable = false);
 	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
-	virtual ~VBO();
+	virtual ~VBO() { assert(vboId == 0); }
 
 	VBO& operator=(const VBO& other) = delete;
-	VBO& operator=(VBO&& other);
+	VBO& operator=(VBO&& other) noexcept;
 
-	bool IsSupported() const;
-	static bool IsVBOSupported();
-	static bool IsPBOSupported();
+	// NOTE: if declared in global scope, user has to call these before exit
+	void Release() {
+		UnmapIf();
+		Delete();
+	}
+	void Generate() const;
+	void Delete() const;
 
 	/**
-	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
+	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBindBuffer.xml
 	 */
 	void Bind() const { Bind(defTarget); }
@@ -38,8 +42,8 @@ public:
 	 * @param data (optional) initialize the VBO with the data (the array must have minimum `size` length!)
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBufferData.xml
 	 */
-	void Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
-	void New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
+	bool Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
+	bool New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
 	void Invalidate(); //< discards all current data (frees the memory w/o resizing)
 
 	/**
@@ -47,10 +51,21 @@ public:
 	 */
 	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
+
 	void UnmapBuffer();
+	void UnmapIf() {
+		if (!mapped)
+			return;
+
+		Bind();
+		UnmapBuffer();
+		Unbind();
+	}
+
 
 	GLuint GetId() const {
-		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);
+		if (vboId == 0)
+			Generate();
 		return vboId;
 	}
 
@@ -58,21 +73,24 @@ public:
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
 public:
-	mutable GLuint vboId;
-	size_t bufSize; // can be smaller than memSize
-	size_t memSize; // actual length of <data>; only set when !isSupported
-	mutable GLenum curBoundTarget;
-	GLenum defTarget;
-	GLenum usage;
+	mutable GLuint vboId = 0;
+
+	size_t bufSize = 0; // can be smaller than memSize
+	size_t memSize = 0; // actual length of <data>; only set when !isSupported
+
+	mutable GLenum curBoundTarget = 0;
+	GLenum defTarget = GL_ARRAY_BUFFER;
+	GLenum usage = GL_STREAM_DRAW;
+	GLuint mapUnsyncedBit = 0;
 
 public:
-	bool isSupported; // if false, data is allocated in main memory
-	mutable bool bound;
-	bool mapped;
-	bool nullSizeMapped; // Nvidia workaround
-	bool immutableStorage;
+	mutable bool bound = false;
 
-	GLubyte* data;
+	bool mapped = false;
+	bool nullSizeMapped = false; // Nvidia workaround
+
+	bool immutableStorage = false;
+	bool readableStorage = false;
 };
 
 #endif /* VBO_H */

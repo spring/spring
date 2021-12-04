@@ -77,7 +77,7 @@ for _, filename in ipairs(luaFiles) do
   setmetatable(wdEnv, { __index = system })
   local success, wds = pcall(VFS.Include, filename, wdEnv)
   if (not success) then
-    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. wds)
+    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. tostring(wds))
   elseif (wds == nil) then
     Spring.Log(section, LOG.ERROR, 'Missing return table from: ' .. filename)
   else

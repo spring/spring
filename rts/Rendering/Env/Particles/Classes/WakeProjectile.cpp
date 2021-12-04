@@ -7,12 +7,11 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/Env/IWater.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND_DERIVED_POOL(CWakeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -64,30 +63,20 @@ void CWakeProjectile::Update()
 	size += sizeExpansion;
 	drawRadius = size;
 
-	#if 0
 	alpha += (alphaAdd * (alphaAddTime != 0));
-	alphaAddTime -= 1;
+	alphaAddTime -= (1 * (alphaAddTime != 0));
 
 	alpha = std::max(alpha, 0.0f);
 	deleteMe |= (alpha <= 0.0f);
-	#endif
-
-	if (alphaAddTime != 0) {
-		alpha += alphaAdd;
-		--alphaAddTime;
-	} else if (alpha < 0) {
-		alpha = 0;
-		deleteMe = true;
-	}
 }
 
-void CWakeProjectile::Draw(CVertexArray* va)
+void CWakeProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	col[0] = (unsigned char) (255 * alpha);
 	col[1] = (unsigned char) (255 * alpha);
 	col[2] = (unsigned char) (255 * alpha);
-	col[3] = (unsigned char) (255 * alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
+	col[3] = (unsigned char) (255 * alpha) /*- alphaFalloff * globalRendering->timeOffset*/;
 
 	float interSize = size + sizeExpansion * globalRendering->timeOffset;
 	float interRot = rotation + rotSpeed * globalRendering->timeOffset;
@@ -96,14 +85,13 @@ void CWakeProjectile::Draw(CVertexArray* va)
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex
-	va->AddVertexTC(drawPos + dir1 + dir2, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + dir1 - dir2, wt->xstart, wt->yend,   col);
-	va->AddVertexTC(drawPos - dir1 - dir2, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - dir1 + dir2, wt->xend,   wt->ystart, col);
+	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
+	va->SafeAppend({drawPos + dir1 - dir2, wt->xstart, wt->yend,   col});
+	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
+
+	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
+	va->SafeAppend({drawPos - dir1 + dir2, wt->xend,   wt->ystart, col});
+	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
 	#undef wt
 }
 
-int CWakeProjectile::GetProjectilesCount() const
-{
-	return 1;
-}

@@ -5,15 +5,14 @@
 
 #include "Game/Camera.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CNanoProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 
 CR_REG_METADATA(CNanoProjectile,
 (
@@ -24,7 +23,7 @@ CR_REG_METADATA(CNanoProjectile,
 ))
 
 
-CNanoProjectile::CNanoProjectile(): CProjectile()
+CNanoProjectile::CNanoProjectile()
 {
 	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -34,7 +33,7 @@ CNanoProjectile::CNanoProjectile(): CProjectile()
 }
 
 CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
-	: CProjectile(pos, speed, NULL, false, false, false)
+	: CProjectile(pos, speed, nullptr, false, false, false)
 	, deathFrame(gs->frameNum + lifeTime)
 	, color(c)
 {
@@ -42,16 +41,12 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawSorted = false;
 	drawRadius = 3;
 
-	if (projectileHandler != nullptr) {
-		projectileHandler->currentNanoParticles += 1;
-	}
+	projectileHandler.currentNanoParticles += 1;
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
-	if (projectileHandler != nullptr) {
-		projectileHandler->currentNanoParticles -= 1;
-	}
+	projectileHandler.currentNanoParticles -= 1;
 }
 
 
@@ -61,23 +56,23 @@ void CNanoProjectile::Update()
 	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CNanoProjectile::Draw(CVertexArray* va)
+void CNanoProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	const auto* gfxt = projectileDrawer->gfxtex;
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
+
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
 }
 
-void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CNanoProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::green);
-}
-
-int CNanoProjectile::GetProjectilesCount() const
-{
-	return 0; // nano particles use their own counter
+	va->SafeAppend({pos        , color});
+	va->SafeAppend({pos + speed, color});
 }
 
 

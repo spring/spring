@@ -6,27 +6,36 @@
 #include <array>
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 #include "System/UnorderedSet.hpp"
 
 class CSolidObject;
 class CTextureAtlas;
-class CVertexArray;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-class IModelRenderContainer;
 class LuaTable;
 
+namespace Shader {
+	struct IProgramObject;
+};
 
 
 class CProjectileDrawer: public CEventClient {
 public:
-	CProjectileDrawer();
-	~CProjectileDrawer();
+	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinNoiseFBO(true) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -37,21 +46,31 @@ public:
 	void UpdateTextures();
 
 
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderProjectileCreated(const CProjectile* projectile);
-	void RenderProjectileDestroyed(const CProjectile* projectile);
-
-	void IncPerlinTexObjectCount() { perlinTexObjects++; }
-	void DecPerlinTexObjectCount() { perlinTexObjects--; }
+	void RenderProjectileCreated(const CProjectile* projectile) override;
+	void RenderProjectileDestroyed(const CProjectile* projectile) override;
 
 
-	CVertexArray* fxVA = nullptr;
-	CVertexArray* gfVA = nullptr;
+	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
+
+	void IncPerlinTexObjectCount() { perlinData.texObjects++; }
+	void DecPerlinTexObjectCount() { perlinData.texObjects--; }
+
+	bool EnableSorting(bool b) { return (drawSorted =           b); }
+	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
+
+
+	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
+
+	GL::RenderDataBufferTC* fxBuffer = nullptr;
+	GL::RenderDataBufferTC* gfBuffer = nullptr;
+	Shader::IProgramObject* fxShader = nullptr;
+	Shader::IProgramObject* gfShader = nullptr;
 
 	CTextureAtlas* textureAtlas = nullptr;  ///< texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas = nullptr; ///< texture atlas for ground fx
@@ -93,49 +112,63 @@ public:
 
 	AtlasedTexture* seismictex = nullptr;
 
-	std::vector<const AtlasedTexture*> smoketex;
-
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
+
+	void DrawProjectilePass(Shader::IProgramObject*, bool, bool);
+	void DrawParticlePass(Shader::IProgramObject*, bool, bool);
+	void DrawProjectileShadowPass(Shader::IProgramObject*);
+	void DrawParticleShadowPass(Shader::IProgramObject*);
 
 	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
 	void DrawFlyingPieces(int modelType);
 
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
-	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
+	void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
 	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 
-	static void DrawProjectileShadow(CProjectile* projectile);
+	void DrawProjectileShadow(const CProjectile* projectile);
 	static bool DrawProjectileModel(const CProjectile* projectile);
 
 	void UpdatePerlin();
 	static void GenerateNoiseTex(unsigned int tex);
 
 private:
-	static constexpr int perlinBlendTexSize = 16;
-	static constexpr int perlinTexSize = 128;
-	GLuint perlinBlendTex[8];
-	float perlinBlend[4];
-	FBO perlinFB;
-	int perlinTexObjects;
-	bool drawPerlinTex;
+	struct PerlinData {
+		static constexpr int blendTexSize =  16;
+		static constexpr int noiseTexSize = 128;
 
-	/// projectiles without a model
-	std::vector<CProjectile*> renderProjectiles;
-	/// projectiles with a model
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
+		GLuint blendTextures[8];
+		float blendWeights[4];
+
+		int texObjects = 0;
+		bool fboComplete = false;
+	};
+
+	PerlinData perlinData;
+
+	FBO perlinNoiseFBO;
+
+	VAO flyingPieceVAO;
 
 	ProjectileDistanceComparator zSortCmp;
 
-	/**
-	 * distance-sorted projectiles without models; used
-	 * to render particle effects in back-to-front order
-	 */
-	std::vector<CProjectile*> zSortedProjectiles;
-	std::vector<CProjectile*> unsortedProjectiles;
+
+	std::vector<const AtlasedTexture*> smokeTextures;
+
+	/// projectiles without a model, e.g. nano-particles
+	std::vector<CProjectile*> renderProjectiles;
+	/// projectiles with a model
+	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
+
+	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
+	/// used to render particle effects in back-to-front order
+	std::vector<CProjectile*> sortedProjectiles[2];
+
+	bool drawSorted = true;
 };
 
 extern CProjectileDrawer* projectileDrawer;

@@ -13,13 +13,15 @@ namespace agui
 class Picture : public GuiElement
 {
 public:
-	Picture(GuiElement* parent = NULL);
+	Picture(GuiElement* parent = nullptr);
 	~Picture();
 
 	void Load(const std::string& file);
 
+	bool HasTexCoors() const override { return true; }
+
 private:
-	virtual void DrawSelf();
+	void DrawSelf() override;
 	
 	unsigned texture;
 	std::string file;

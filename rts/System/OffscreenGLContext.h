@@ -6,53 +6,7 @@
 #include "Rendering/GL/myGL.h"
 
 #include <functional>
-
-#if defined(HEADLESS)
-	//! nothing
-#elif defined(WIN32)
-	#include "System/Platform/Win/win32.h"
-#elif defined(__APPLE__)
-	#include <OpenGL/CGLTypes.h>
-#else
-	#include <GL/glx.h>
-
-	#include <X11/Xlib.h>
-	#undef KeyPress
-	#undef KeyRelease
-	#undef GrayScale
-#endif
-
 #include "System/Threading/SpringThreading.h"
-#include <chrono>
-
-class COffscreenGLContext
-{
-public:
-	//! Note: the functions are sorted in the way they should be called
-	COffscreenGLContext();
-	virtual ~COffscreenGLContext();
-	void WorkerThreadPost();
-	void WorkerThreadFree(); //! must run in the same thread as the offscreen GL context!
-
-private:
-
-#ifdef HEADLESS
-	//! nothing
-#elif WIN32
-	HDC hdc;
-	HGLRC offscreenRC;
-#elif __APPLE__
-	CGLContextObj cglWorkerCtx;
-#else
-	Display* display;
-	GLXPbuffer pbuf;
-	GLXContext workerCtx;
-#endif
-};
-
-/******************************************************************************/
-
-
 
 /**
  * @brief COffscreenGLThread
@@ -62,17 +16,25 @@ private:
 class COffscreenGLThread
 {
 public:
+	COffscreenGLThread() = default;
 	COffscreenGLThread(std::function<void()> f);
-	~COffscreenGLThread();
+	~COffscreenGLThread() { join(); }
+	COffscreenGLThread(const COffscreenGLThread& t) = delete;
+	COffscreenGLThread(COffscreenGLThread&& t) { *this = std::move(t); }
 
-	void Join();
-	void join() {Join();}
+	COffscreenGLThread& operator = (const COffscreenGLThread& t) = delete;
+	COffscreenGLThread& operator = (COffscreenGLThread&& t) {
+		thread = std::move(t.thread);
+		return *this;
+	};
+
+	void join();
+	bool joinable() const { return (thread.joinable()); }
 
 private:
 	void WrapFunc(std::function<void()> f);
 
-	spring::thread* thread;
-	COffscreenGLContext glOffscreenCtx;
+	spring::thread thread;
 };
 
 

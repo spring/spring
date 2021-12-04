@@ -7,12 +7,11 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CExploSpikeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (
@@ -27,8 +26,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 ))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
-	: CProjectile()
-	, length(0.0f)
+	: length(0.0f)
 	, width(0.0f)
 	, alpha(0.0f)
 	, alphaDecay(0.0f)
@@ -61,6 +59,16 @@ CExploSpikeProjectile::CExploSpikeProjectile(
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
 
+void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
+{
+	CProjectile::Init(owner, offset);
+
+	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
+	dir /= lengthGrowth;
+
+	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
+}
+
 void CExploSpikeProjectile::Update()
 {
 	pos += speed;
@@ -70,7 +78,7 @@ void CExploSpikeProjectile::Update()
 	deleteMe |= (alpha <= 0.0f);
 }
 
-void CExploSpikeProjectile::Draw(CVertexArray* va)
+void CExploSpikeProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
@@ -86,26 +94,14 @@ void CExploSpikeProjectile::Draw(CVertexArray* va)
 	const float3 w = dir2 * width;
 
 	#define let projectileDrawer->laserendtex
-	va->AddVertexTC(drawPos + l + w, let->xend,   let->yend,   col);
-	va->AddVertexTC(drawPos + l - w, let->xend,   let->ystart, col);
-	va->AddVertexTC(drawPos - l - w, let->xstart, let->ystart, col);
-	va->AddVertexTC(drawPos - l + w, let->xstart, let->yend,   col);
+	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
+	va->SafeAppend({drawPos + l - w, let->xend,   let->ystart, col});
+	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
+
+	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
+	va->SafeAppend({drawPos - l + w, let->xstart, let->yend,   col});
+	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
 	#undef let
-}
-
-void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
-{
-	CProjectile::Init(owner, offset);
-
-	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
-	dir /= lengthGrowth;
-
-	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
-}
-
-int CExploSpikeProjectile::GetProjectilesCount() const
-{
-	return 1;
 }
 
 

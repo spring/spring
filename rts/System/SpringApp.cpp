@@ -8,42 +8,48 @@
 #include <SDL.h>
 #include <gflags/gflags.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
 #else
 #include <unistd.h> // isatty
+#include <X11/Xlib.h> // XInitThreads
+
+#undef KeyPress
+#undef KeyRelease
+#undef GrayScale
 #endif
 
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
-
+#ifndef HEADLESS
 #include "aGui/Gui.h"
-#include "ExternalAI/IAILibraryManager.h"
-#include "Game/Benchmark.h"
-#include "Game/Camera.h"
+#endif
+#include "ExternalAI/AILibraryManager.h"
+#include "Game/CameraHandler.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Game/GameController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/LoadScreen.h" // XInitThreads via X11/Xlib
 #include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
+#include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFSDownload.h"
 #include "Menu/LuaMenuController.h"
 #include "Menu/SelectMenu.h"
 #include "Net/GameServer.h"
-#include "Net/Protocol/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h" // clientNet
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -52,16 +58,17 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/MsgStrings.h"
 #include "System/SafeUtil.h"
+#include "System/SplashScreen.hpp"
 #include "System/SpringExitCode.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/UriParser.h"
-#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -72,12 +79,11 @@
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Input/Joystick.h"
+#include "System/LoadSave/LoadSaveHandler.h"
 #include "System/Log/ConsoleSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
-#include "System/Platform/Battery.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
@@ -91,20 +97,10 @@
 
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
-CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
+CONFIG(unsigned, TextureMemPoolSize).defaultValue(128 * (1 + (__archBits__ == 64))).minimumValue(1);
 CONFIG(bool, UseLuaMemPools).defaultValue(__archBits__ == 64).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
-CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
-
-CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
-CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
-
-CONFIG(int, FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
-CONFIG(int, SmallFontSize).defaultValue(14).description("Sets the font size (in pixels) of the engine GUIs and more.");
-CONFIG(int, FontOutlineWidth).defaultValue(3).description("Sets the width of the black outline around Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
-CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opacity of Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
-CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
-CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
+CONFIG(bool, UseFontConfigLib).defaultValue(false).description("Whether the system fontconfig library (if present and enabled at compile-time) should be used for handling fonts.");
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
@@ -113,14 +109,13 @@ CONFIG(std::string, SplashScreenDir).defaultValue(".");
 
 
 DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
+DEFINE_bool_EX  (gen_fontconfig,     "gen-fontconfig",     false, "Generate font-configuration database");
 DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
 DEFINE_bool     (window,                                   false, "Run in windowed mode");
 DEFINE_bool     (hidden,                                   false, "Start in background (minimised, no taskbar entry)");
 DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
 DEFINE_string   (server,                                   "",    "Set listening IP for server");
 DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
-DEFINE_int32    (benchmark,                                -1,    "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
-DEFINE_int32    (benchmarkstart,                           -1,    "Benchmark start time in minutes.");
 
 DEFINE_bool_EX  (list_ai_interfaces, "list-ai-interfaces", false, "Dump a list of available AI Interfaces to stdout");
 DEFINE_bool_EX  (list_skirmish_ais,  "list-skirmish-ais",  false, "Dump a list of available Skirmish AIs to stdout");
@@ -145,8 +140,8 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 
 int spring::exitCode = spring::EXIT_CODE_SUCCESS;
 
-static unsigned int numReloads = 0;
-static unsigned int numKilleds = 0;
+static unsigned int reloadCount = 0;
+static unsigned int killedCount = 0;
 
 
 
@@ -157,90 +152,10 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
 	spring_time::setstarttime(spring_time::gettime(true));
 
 	LOG_DISABLE();
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, "", safemode);
 	FileSystemInitializer::InitializeLogOutput();
 	LOG_ENABLE();
 }
-
-#ifndef HEADLESS
-static void ShowSplashScreen(const std::string& splashScreenFile)
-{
-	CVertexArray* va = GetVertexArray();
-	CBitmap bmp;
-
-	// passing an empty name would cause bmp FileHandler to also
-	// search inside the VFS since its default mode is RAW_FIRST
-	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile))
-		bmp.AllocDummy({0, 0, 0, 0});
-
-	// not constexpr to circumvent a VS bug
-	// https://developercommunity.visualstudio.com/content/problem/10720/constexpr-function-accessing-character-array-leads.html
-	const char* fmtStrs[5] = {
-		"[Initializing Virtual File System]",
-		"* archives scanned: %u",
-		"* scantime elapsed: %.1fms",
-		"Spring %s",
-		"This program is distributed under the GNU General Public License, see doc/LICENSE for more info",
-	};
-
-	char versionStrBuf[512];
-
-	memset(versionStrBuf, 0, sizeof(versionStrBuf));
-	snprintf(versionStrBuf, sizeof(versionStrBuf), fmtStrs[3], (SpringVersion::GetFull()).c_str());
-
-	const unsigned int splashTex = bmp.CreateTexture();
-	const unsigned int fontFlags = FONT_NORM | FONT_SCALE;
-
-	const float4 color = {1.0f, 1.0f, 1.0f, 1.0f};
-	const float4 coors = {0.5f, 0.175f, 0.8f, 0.04f}; // x, y, scale, space
-
-	const float textWidth[3] = {font->GetTextWidth(fmtStrs[0]), font->GetTextWidth(fmtStrs[4]), font->GetTextWidth(versionStrBuf)};
-	const float normWidth[3] = {
-		textWidth[0] * globalRendering->pixelX * font->GetSize() * coors.z,
-		textWidth[1] * globalRendering->pixelX * font->GetSize() * coors.z,
-		textWidth[2] * globalRendering->pixelX * font->GetSize() * coors.z,
-	};
-
-	glPushAttrib(GL_ENABLE_BIT);
-	glEnable(GL_TEXTURE_2D);
-
-	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::Initialized(); t1 = spring_now()) {
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glBindTexture(GL_TEXTURE_2D, splashTex);
-		va->Initialize();
-		va->AddVertex2dT({ZeroVector.x, 1.0f - ZeroVector.y}, {0.0f, 0.0f});
-		va->AddVertex2dT({  UpVector.x, 1.0f -   UpVector.y}, {0.0f, 1.0f});
-		va->AddVertex2dT({  XYVector.x, 1.0f -   XYVector.y}, {1.0f, 1.0f});
-		va->AddVertex2dT({ RgtVector.x, 1.0f -  RgtVector.y}, {1.0f, 0.0f});
-		va->DrawArray2dT(GL_QUADS);
-
-		font->Begin();
-		font->SetTextColor(color.x, color.y, color.z, color.w);
-		font->glFormat(coors.x - (normWidth[0] * 0.500f), coors.y                             , coors.z, fontFlags, fmtStrs[0]);
-		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 1.0f), coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
-		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 2.0f), coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
-		font->End();
-
-		// always render Spring's license notice
-		font->Begin();
-		font->SetOutlineColor(0.0f, 0.0f, 0.0f, 0.65f);
-		font->SetTextColor(color.x, color.y, color.z, color.w);
-		font->glFormat(coors.x - (normWidth[2] * 0.5f), coors.y * 0.5f - (coors.w * coors.z * 1.0f), coors.z, fontFlags | FONT_OUTLINE, versionStrBuf);
-		font->glFormat(coors.x - (normWidth[1] * 0.5f), coors.y * 0.5f - (coors.w * coors.z * 2.0f), coors.z, fontFlags | FONT_OUTLINE, fmtStrs[4]);
-		font->End();
-
-		globalRendering->SwapBuffers(true, true);
-
-		// prevent WM's from assuming the window is unresponsive and
-		// (in recent versions of Windows) generating a kill-request
-		SDL_PollEvent(nullptr);
-	}
-
-	glPopAttrib();
-	glDeleteTextures(1, &splashTex);
-}
-#endif
 
 
 
@@ -252,13 +167,15 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
  */
 SpringApp::SpringApp(int argc, char** argv)
 {
-	// initializes configHandler which we need
+	// NB
+	//   {--,/}help overrides all other flags and causes exit(),
+	//   even in the unusual event it is not given as first arg
 	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
-	ParseCmdLine(argc, argv);
 
-	FileSystemInitializer::InitializeLogOutput();
+	// also initializes configHandler and logOutput
+	ParseCmdLine(argc, argv);
 
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
@@ -267,11 +184,14 @@ SpringApp::SpringApp(int argc, char** argv)
 	// as our clock anymore)
 	spring_time::setstarttime(spring_time::gettime(true));
 
-	CLogOutput::LogConfigInfo();
-	CLogOutput::LogSystemInfo();
-
 	// gu does not exist yet, pre-seed for ShowSplashScreen
 	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
+	// ditto for unsynced Lua states (which do not use guRNG)
+	spring_lua_unsynced_srand(nullptr);
+
+	CLogOutput::LogSectionInfo();
+	CLogOutput::LogConfigInfo();
+	CLogOutput::LogSystemInfo(); // needs spring_clock
 }
 
 /**
@@ -289,10 +209,10 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Init()
 {
-	CMyMath::Init();
+	SpringMath::Init();
 	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
-	globalRendering = new CGlobalRendering();
+	CGlobalRendering::InitStatic();
 	globalRendering->SetFullScreen(FLAGS_window, FLAGS_fullscreen);
 
 	if (!InitPlatformLibs())
@@ -300,8 +220,8 @@ bool SpringApp::Init()
 
 	good_fpu_control_registers(__func__);
 
-	// GlobalConfig
-	GlobalConfig::Instantiate();
+	// populate params
+	globalConfig.Init();
 
 	// Install Watchdog (must happen after time epoch is set)
 	Watchdog::Install();
@@ -318,9 +238,16 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLConfigs();
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
-	CCamera::InitializeStatic();
+
+	GL::SetAttribStatePointer(true);
+	GL::SetMatrixStatePointer(true);
+
+	CCameraHandler::InitStatic();
+	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
+
 	UpdateInterfaceGeometry();
-	LoadFonts();
+	CglFont::LoadConfigFonts();
+
 	ClearScreen();
 
 	if (!InitFileSystem())
@@ -330,26 +257,27 @@ bool SpringApp::Init()
 	Threading::SetThreadName("spring-main"); // set default threadname for pstree
 	Threading::SetThreadScheduler();
 
-	mouseInput = IMouseInput::GetInstance();
+	CInfoConsole::InitStatic();
+	CMouseHandler::InitStatic();
+
 	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
 
 	// Global structures
-	gs = new CGlobalSynced();
-	gu = new CGlobalUnsynced();
+	gs->Init();
+	gu->Init();
 
 	// GUIs
-	agui::InitGui();
-	keyCodes = new CKeyCodes();
+	#ifndef HEADLESS
+	agui::gui = new agui::Gui();
+	#endif
+	keyCodes.Reset();
 
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
-	ISound::Initialize();
-	InitJoystick();
+	ISound::Initialize(false);
 
 	// Lua socket restrictions
-	luaSocketRestrictions = new CLuaSocketRestrictions();
-
-	battery = new CBattery();
+	CLuaSocketRestrictions::InitStatic();
 	LuaVFSDownload::Init();
 
 	// Create CGameSetup and CPreGame objects
@@ -360,7 +288,7 @@ bool SpringApp::Init()
 
 bool SpringApp::InitPlatformLibs()
 {
-#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
+#if !(defined(_WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// MUST run before any other X11 call (including
 	// those by SDL) to make calls to X11 threadsafe
 	if (!XInitThreads()) {
@@ -369,10 +297,10 @@ bool SpringApp::InitPlatformLibs()
 	}
 #endif
 
-#if defined(WIN32) && defined(__GNUC__)
+#if defined(_WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
-		// surpress dialog box if gdb helpers aren't found
+		// suppress dialog box if gdb helpers aren't found
 		const UINT oldErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 		if (LoadLibrary("gdbmacros.dll"))
@@ -393,7 +321,6 @@ bool SpringApp::InitFileSystem()
 	// (employ all available threads, then switch to default)
 	ThreadPool::SetMaximumThreadCount();
 
-	#ifndef HEADLESS
 	// threaded initialization s.t. the window gets CPU time
 	// FileSystem is mostly self-contained, don't need locks
 	// (at this point neither the platform CWD nor data-dirs
@@ -404,16 +331,19 @@ bool SpringApp::InitFileSystem()
 	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.{png,jpg}", 0));
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
 
+	#ifndef HEADLESS
 	if (!splashScreenFiles.empty()) {
-		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ]);
+		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ], SpringVersion::GetFull(), [&]() { return (FileSystemInitializer::Initialized()); });
 	} else {
-		ShowSplashScreen("");
+		ShowSplashScreen("", SpringVersion::GetFull(), [&]() { return (FileSystemInitializer::Initialized()); });
 	}
 
-	fsInitThread.join();
-	#else
-	FileSystemInitializer::InitializeThr(&ret);
+	// skip hangs while waiting for the popup to die and kill us
+	if (!ret)
+		Watchdog::DeregisterThread(WDT_MAIN);
 	#endif
+
+	fsInitThread.join();
 
 	ThreadPool::SetDefaultThreadCount();
 	// see InputHandler::PushEvents
@@ -458,43 +388,12 @@ void SpringApp::SaveWindowPosAndSize()
 
 void SpringApp::UpdateInterfaceGeometry()
 {
+	#ifndef HEADLESS
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	if (agui::gui == nullptr)
-		return;
-
 	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
-}
-
-
-void SpringApp::LoadFonts()
-{
-	// Initialize font
-	const std::string largeFontFile = configHandler->GetString(     "FontFile");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
-
-	const static std::string installBroken = "\", did you forget to run make install?";
-
-	const int largeFontSize = configHandler->GetInt(     "FontSize");
-	const int smallFontSize = configHandler->GetInt("SmallFontSize");
-	const int largeOutlineWidth = configHandler->GetInt(     "FontOutlineWidth");
-	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
-	const float largeOutlineWeight = configHandler->GetFloat(     "FontOutlineWeight");
-	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
-
-	spring::SafeDelete(font);
-	spring::SafeDelete(smallFont);
-
-	font = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
-	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
-
-	if (font == nullptr)
-		throw content_error("Failed to load FontFile \"" + largeFontFile + installBroken);
-
-	if (smallFont == nullptr)
-		throw content_error("Failed to load SmallFontFile \"" + smallFontFile + installBroken);
-
+	#endif
 }
 
 
@@ -508,18 +407,23 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	if (argc >= 2)
 		inputFile = argv[1];
 
-#ifndef WIN32
-	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
+#ifndef _WIN32
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
 
+	if (FLAGS_gen_fontconfig) {
+		CFontTexture::GenFontConfig();
+		exit(spring::EXIT_CODE_SUCCESS);
+	}
+
 	if (FLAGS_sync_version) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
 		std::cout << SpringVersion::GetSync() << std::endl;
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 
 	if (FLAGS_isolation)
@@ -538,84 +442,62 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	// Interface Documentations in JSON-Format
 	if (FLAGS_list_config_vars) {
 		ConfigVariable::OutputMetaDataMap();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	if (FLAGS_list_def_tags) {
 		DefType::OutputTagMap();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	if (FLAGS_list_ceg_classes)
-		exit(CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE);
+		exit(CCustomExplosionGenerator::OutputProjectileClassInfo() ? spring::EXIT_CODE_SUCCESS : spring::EXIT_CODE_FAILURE);
 
 	// Runtime Tests
 	if (FLAGS_test_creg) {
 #ifdef USING_CREG
-		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
+		exit(creg::RuntimeTest() ? spring::EXIT_CODE_SUCCESS : spring::EXIT_CODE_FAILURE);
 #else
-		LOG_L(L_ERROR, "[SpringApp::%s] CREG is not enabled!\n", __func__);
-		exit(EXIT_FAILURE); //Do not fail tests
+		exit(spring::EXIT_CODE_SUCCESS);
 #endif
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (FLAGS_list_ai_interfaces) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
-		IAILibraryManager::OutputAIInterfacesInfo();
-		exit(EXIT_SUCCESS);
+		AILibraryManager::OutputAIInterfacesInfo();
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	else if (FLAGS_list_skirmish_ais) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
-		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(EXIT_SUCCESS);
+		AILibraryManager::OutputSkirmishAIInfo();
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
+
+	CTextureAtlas::SetDebug(FLAGS_textureatlas);
 
 	// if this fails, configHandler remains null
-	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
-
-	if (FLAGS_textureatlas)
-		CTextureAtlas::SetDebug(true);
-
-	if (!FLAGS_name.empty())
-		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
-
-	if (FLAGS_benchmark > 0) {
-		CBenchmark::enabled = true;
-
-		if (FLAGS_benchmarkstart > 0)
-			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
-
-		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
-	}
+	// logOutput's init depends on configHandler
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
+	FileSystemInitializer::InitializeLogOutput();
 }
 
 
 CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 {
-	const std::string& ext = FileSystem::GetExtension(saveFile);
-
-	if (ext != "ssf" && ext != "slsf")
-		throw content_error(std::string("Unknown save extension: ") + ext);
-
 	clientSetup->isHost = true;
 
 	pregame = new CPreGame(clientSetup);
-	pregame->LoadSavefile(saveFile, ext == "ssf");
+	pregame->LoadSaveFile(saveFile);
 	return pregame;
 }
 
 
 CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
 {
-	const std::string& ext = FileSystem::GetExtension(demoFile);
-
-	if (ext != "sdfz")
-		throw content_error(std::string("Unknown demo extension: ") + ext);
-
 	clientSetup->isHost = true;
 	clientSetup->myPlayerName += " (spec)";
 
 	pregame = new CPreGame(clientSetup);
-	pregame->LoadDemo(demoFile);
+	pregame->LoadDemoFile(demoFile);
 	return pregame;
 }
 
@@ -646,7 +528,7 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	pregame = new CPreGame(clientSetup);
 
 	if (clientSetup->isHost)
-		pregame->LoadSetupscript(buf);
+		pregame->LoadSetupScript(buf);
 
 	return pregame;
 }
@@ -679,13 +561,14 @@ void SpringApp::LoadSpringMenu()
 
 	if (FLAGS_oldmenu || startScript.empty()) {
 		// old menu
-	#ifdef HEADLESS
+		#ifdef HEADLESS
 		handleerror(nullptr,
 			"The headless version of the engine can not be run in interactive mode.\n"
 			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK | MBF_EXCL);
-	#endif
+		#else
 		// not a memory-leak: SelectMenu deletes itself on start
 		activeController = new SelectMenu(clientSetup);
+		#endif
 	} else {
 		// run custom menu from game and map
 		StartScript(startScript);
@@ -736,13 +619,18 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdfz") {
-		LoadDemoFile(inputFile);
-	} else if (extension == "slsf" || extension == "ssf") {
-		LoadSaveFile(inputFile);
-	} else {
-		StartScript(inputFile);
+		return;
 	}
+	if (extension == "sdfz") {
+		LoadDemoFile(inputFile);
+		return;
+	}
+	if (extension == "slsf" || extension == "ssf") {
+		LoadSaveFile(inputFile);
+		return;
+	}
+
+	StartScript(inputFile);
 }
 
 
@@ -761,16 +649,17 @@ void SpringApp::Reload(const std::string script)
 		gameServer->SetReloading(true);
 
 	if (clientNet != nullptr)
-		clientNet->SetDemoRecorder(nullptr);
+		clientNet->ResetDemoRecorder();
 
 	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
-	// ~CGame also calls this, which does not matter because handlers are gone by then
-	game->KillLua(false);
+	// ~CGame also calls this, which does not matter because Lua handlers are gone by then
+	if (game != nullptr)
+		game->KillLua(false);
 
 	LOG("[SpringApp::%s][3]", __func__);
 
 	// kill sound here; thread might access readMap which is deleted by ~CGame
-	ISound::Shutdown();
+	ISound::Shutdown(true);
 
 	LOG("[SpringApp::%s][4]", __func__);
 
@@ -786,7 +675,6 @@ void SpringApp::Reload(const std::string script)
 
 	// do not stop running downloads when reloading
 	LuaVFSDownload::Free(false);
-	spring::SafeDelete(battery);
 
 	LOG("[SpringApp::%s][6]", __func__);
 
@@ -806,27 +694,36 @@ void SpringApp::Reload(const std::string script)
 	CNamedTextures::Kill();
 	CNamedTextures::Init();
 
+	shaderHandler->ClearShaders(false);
+
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
-	// normally not needed, but would allow switching fonts
-	// LoadFonts();
+	#if 0
+	// rely only on defrag for now since WindowManagerHelper also keeps a global bitmap
+	CglFont::ReallocAtlases(true);
+	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
+	CglFont::ReallocAtlases(false);
+	#else
+	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
+	#endif
 
 	LOG("[SpringApp::%s][8]", __func__);
 
 	// reload sounds.lua in case we switched to a different game
-	ISound::Initialize();
+	ISound::Initialize(true);
 
 	// make sure all old EventClients are really gone (safety)
 	eventHandler.ResetState();
 
-	battery = new CBattery();
 	LuaVFSDownload::Init();
 
 	LOG("[SpringApp::%s][10]", __func__);
 
 	gu->ResetState();
 	gs->ResetState();
+	// will be reconstructed from given script
+	gameSetup->ResetState();
 
 	profiler.ResetState();
 	modInfo.ResetState();
@@ -840,7 +737,7 @@ void SpringApp::Reload(const std::string script)
 	// clean changed configs
 	configHandler->Update();
 
-	LOG("[SpringApp::%s][12] #script=%lu", __func__, (unsigned long) script.size());
+	LOG("[SpringApp::%s][12] #script=" _STPF_ "", __func__, script.size());
 
 	if (script.empty()) {
 		// if no script, drop back to menu
@@ -849,7 +746,7 @@ void SpringApp::Reload(const std::string script)
 		activeController = RunScript(script);
 	}
 
-	LOG("[SpringApp::%s][13] numReloads=%u\n\n\n", __func__, ++numReloads);
+	LOG("[SpringApp::%s][13] reloadCount=%u\n\n\n", __func__, ++reloadCount);
 }
 
 /**
@@ -887,44 +784,54 @@ bool SpringApp::Update()
  */
 int SpringApp::Run()
 {
-	Threading::Error* thrErr = nullptr;
+	// always lives at the same address
+	const Threading::Error* threadError = Threading::GetThreadErrorC();
 
 	// initialize crash reporting
 	CrashHandler::Install();
 
 	// note: exceptions thrown by other threads are *not* caught here
+	// ErrorMsgBox sets threadError if called from any non-main thread
 	try {
-		if (!Init())
-			return spring::EXIT_CODE_FAILURE;
+		if ((gu->globalQuit = !Init() || gu->globalQuit))
+			spring::exitCode = spring::EXIT_CODE_NOINIT;
 
 		while (!gu->globalQuit) {
 			Watchdog::ClearTimer(WDT_MAIN);
 			input.PushEvents();
 
+			// move to clear global data if a save is queued
+			ILoadSaveHandler::CreateSave(std::move(globalSaveFileData));
+
 			if (gu->globalReload) {
 				// copy; reloadScript is cleared by ResetState
-				Reload(gu->reloadScript);
+				Reload(gameSetup->reloadScript);
 			} else {
-				gu->globalQuit |= (!Update());
+				gu->globalQuit = (!Update() || gu->globalQuit);
 			}
 		}
 	} CATCH_SPRING_ERRORS
 
 	// no exception from main, check if some other thread interrupted our regular loop
-	// in case one did, ErrorMessageBox will call ShutDown and forcibly exit the process
-	if ((thrErr = Threading::GetThreadError()) != nullptr)
-		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+	// in case one did, ErrorMessageBox will call ::Kill and forcibly exit the process
+	if (!threadError->Empty()) {
+		Threading::Error tempError;
+
+		strncat(tempError.caption,    threadError->caption, sizeof(tempError.caption) - 1);
+		strncat(tempError.message, "[thread::error::run] ", sizeof(tempError.message) - 1);
+		strncat(tempError.message,    threadError->message, sizeof(tempError.message) - 1);
+
+		ErrorMessageBox(tempError.message, tempError.caption, threadError->flags);
+	}
 
 	try {
-		if (globalRendering != nullptr) {
-			SaveWindowPosAndSize();
-			Kill(true);
-		}
+		Kill(true);
 	} CATCH_SPRING_ERRORS
 
-	// no exception from main, but a thread might have thrown *during* ShutDown
-	if ((thrErr = Threading::GetThreadError()) != nullptr)
-		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+	// no exception from main, but a thread might have thrown *during* ::Kill
+	// do not attempt to call Kill a second time, just show the error message
+	if (!threadError->Empty())
+		LOG_L(L_ERROR, "[SpringApp::%s] errorMsg=\"[thread::error::kill] %s\" msgCaption=\"%s\"", __func__, threadError->message, threadError->caption);
 
 	// cleanup signal handlers, etc
 	CrashHandler::Remove();
@@ -934,28 +841,18 @@ int SpringApp::Run()
 
 
 
-int SpringApp::PostKill(const Threading::Error& e)
+int SpringApp::PostKill(Threading::Error&& e)
 {
-	if (e.Empty()) {
-		if (Threading::IsMainThread())
-			return (Watchdog::DeregisterThread(WDT_MAIN));
-		if (Threading::IsGameLoadThread())
-			return (Watchdog::DeregisterThread(WDT_LOAD));
-		if (Threading::IsAudioThread())
-			return (Watchdog::DeregisterThread(WDT_AUDIO));
-
-		return 0;
-	}
+	if (e.Empty())
+		return (Watchdog::DeregisterCurrentThread());
 
 	if (Threading::IsMainThread())
 		return -1;
 
 	// checked by Run() after Init()
-	Threading::SetThreadError(e);
+	*(Threading::GetThreadErrorM()) = std::move(e);
 
-	if (gu == nullptr)
-		return 0;
-
+	// gu always exists, though thread might be too late to interrupt Run
 	return (gu->globalQuit = true);
 }
 
@@ -966,62 +863,69 @@ void SpringApp::Kill(bool fromRun)
 {
 	assert(Threading::IsMainThread());
 
-	if (numKilleds > 0) {
+	if (killedCount > 0) {
 		assert(!fromRun);
 		return;
 	}
 	if (!fromRun)
 		Watchdog::ClearTimer();
 
-	numKilleds += 1;
+	// block any (main-thread) exceptions thrown here from causing another Kill
+	killedCount += 1;
 
 	LOG("[SpringApp::%s][1] fromRun=%d", __func__, fromRun);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __func__);
 	LuaVFSDownload::Free(true);
 
+	// save window state early for the same reason as client demo
+	if (globalRendering != nullptr)
+		SaveWindowPosAndSize();
 	// see ::Reload
 	if (game != nullptr)
 		game->KillLua(false);
 	// write the demo before destroying game, such that it can not
 	// be affected by a crash in any of the Game::Kill* functions
 	if (clientNet != nullptr)
-		clientNet->SetDemoRecorder(nullptr);
+		clientNet->ResetDemoRecorder();
 
 	// see ::Reload
-	ISound::Shutdown();
+	ISound::Shutdown(false);
 
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
-
 	spring::SafeDelete(luaMenuController);
+
 	LuaMemPool::KillStatic();
 
 	LOG("[SpringApp::%s][3]", __func__);
 	spring::SafeDelete(clientNet);
 	spring::SafeDelete(gameServer);
-	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4] font=%p", __func__, font);
-	spring::SafeDelete(keyCodes);
-	agui::FreeGui();
+	#ifndef HEADLESS
+	spring::SafeDelete(agui::gui);
+	#endif
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
 
 	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
-	GlobalConfig::Deallocate();
 
-	FreeJoystick();
-	IMouseInput::FreeInstance(mouseInput);
+	CCameraHandler::KillStatic();
+
+	CInfoConsole::KillStatic();
+	CMouseHandler::KillStatic();
 
 	LOG("[SpringApp::%s][6]", __func__);
-	spring::SafeDelete(gs);
-	spring::SafeDelete(gu);
+	gs->Kill();
+	gu->Kill();
 
 	LOG("[SpringApp::%s][7]", __func__);
-	spring::SafeDelete(globalRendering);
-	spring::SafeDelete(luaSocketRestrictions);
+	shaderHandler->ClearAll();
+
+	CGlobalRendering::KillStatic();
+	CLuaSocketRestrictions::KillStatic();
 
 	// also gets rid of configHandler
 	FileSystemInitializer::Cleanup();
@@ -1033,7 +937,7 @@ void SpringApp::Kill(bool fromRun)
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __func__);
 
-	numKilleds -= 1;
+	killedCount -= 1;
 }
 
 
@@ -1047,45 +951,74 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				} break;
 				// case SDL_WINDOWEVENT_RESIZED: // always preceded by CHANGED
 				case SDL_WINDOWEVENT_SIZE_CHANGED: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SIZE_CHANGED][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					Watchdog::ClearTimer(WDT_MAIN, true);
 
-					SaveWindowPosAndSize();
-					globalRendering->UpdateGLConfigs();
-					globalRendering->UpdateGLGeometry();
-					globalRendering->InitGLState();
-					UpdateInterfaceGeometry();
+					{
+						ScopedOnceTimer timer("GlobalRendering::UpdateGL");
 
-					activeController->ResizeEvent();
-					mouseInput->InstallWndCallback();
+						SaveWindowPosAndSize();
+						globalRendering->UpdateGLConfigs();
+						globalRendering->UpdateGLGeometry();
+						globalRendering->InitGLState();
+						UpdateInterfaceGeometry();
+					}
+					{
+						ScopedOnceTimer timer("ActiveController::ResizeEvent");
+
+						activeController->ResizeEvent();
+						mouseInput->InstallWndCallback();
+					}
+
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SIZE_CHANGED][2]\n", __func__);
 				} break;
 				case SDL_WINDOWEVENT_MAXIMIZED:
 				case SDL_WINDOWEVENT_RESTORED:
 				case SDL_WINDOWEVENT_SHOWN: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SHOWN][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					// reactivate sounds and other
 					globalRendering->active = true;
 
-					if (ISound::IsInitialized())
+					if (ISound::IsInitialized()) {
+						ScopedOnceTimer timer("Sound::Iconified");
 						sound->Iconified(false);
+					}
 
-					if (globalRendering->fullScreen)
+					if (globalRendering->fullScreen) {
+						ScopedOnceTimer timer("FBO::GLContextReinit");
 						FBO::GLContextReinit();
+					}
 
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SHOWN][2]\n", __func__);
 				} break;
 				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_HIDDEN][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					// deactivate sounds and other
 					globalRendering->active = false;
 
-					if (ISound::IsInitialized())
+					if (ISound::IsInitialized()) {
+						ScopedOnceTimer timer("Sound::Iconified");
 						sound->Iconified(true);
+					}
 
-					if (globalRendering->fullScreen)
+					if (globalRendering->fullScreen) {
+						ScopedOnceTimer timer("FBO::GLContextLost");
 						FBO::GLContextLost();
+					}
 
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_HIDDEN][2]\n", __func__);
 				} break;
+
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
 					// update keydown table
-					KeyInput::Update(0, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
+					KeyInput::Update(0, keyBindings.GetFakeMetaKey());
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_LOST: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
@@ -1119,22 +1052,21 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 
 					// and make sure to un-capture mouse
-					if (SDL_GetWindowGrab(globalRendering->window))
-						SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
+					globalRendering->SetWindowInputGrabbing(false);
+				} break;
 
-					break;
-				}
 				case SDL_WINDOWEVENT_CLOSE: {
 					gu->globalQuit = true;
-					break;
-				}
+				} break;
 			};
 		} break;
 		case SDL_QUIT: {
 			gu->globalQuit = true;
 		} break;
 		case SDL_TEXTEDITING: {
-			//FIXME don't known when this is called
+			if (activeController != nullptr)
+				activeController->TextEditing(event.edit.text, event.edit.start, event.edit.length);
+
 		} break;
 		case SDL_TEXTINPUT: {
 			if (activeController != nullptr)
@@ -1142,17 +1074,17 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 		} break;
 		case SDL_KEYDOWN: {
-			KeyInput::Update(event.key.keysym.sym, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
+			KeyInput::Update(event.key.keysym.sym, keyBindings.GetFakeMetaKey());
 
 			if (activeController != nullptr)
 				activeController->KeyPressed(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym), event.key.repeat);
 
 		} break;
 		case SDL_KEYUP: {
-			KeyInput::Update(event.key.keysym.sym, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
+			KeyInput::Update(event.key.keysym.sym, keyBindings.GetFakeMetaKey());
 
 			if (activeController != nullptr) {
-				activeController->ignoreNextChar = false;
+				gameTextInput.ignoreNextChar = false;
 				activeController->KeyReleased(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym));
 			}
 		} break;

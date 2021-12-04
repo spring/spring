@@ -18,13 +18,13 @@
 #include "System/Sync/HsiehHash.h"
 
 
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
+CR_BIND_DERIVED_INTERFACE_POOL(CExpGenSpawnable, CWorldObject, projMemPool.allocMem, projMemPool.freeMem)
 CR_REG_METADATA(CExpGenSpawnable, )
 
 CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
  : CWorldObject(pos, spd)
 {
-	assert(projMemPool.ctorCall());
+	assert(projMemPool.alloced(this));
 }
 
 CExpGenSpawnable::CExpGenSpawnable()
@@ -32,6 +32,12 @@ CExpGenSpawnable::CExpGenSpawnable()
 {
 	assert(projMemPool.alloced(this));
 }
+
+CExpGenSpawnable::~CExpGenSpawnable()
+{
+	assert(projMemPool.mapped(this));
+}
+
 
 
 bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)

@@ -9,7 +9,7 @@ class CFeature;
 
 class CGeoThermSmokeProjectile : public CSmokeProjectile
 {
-	CR_DECLARE(CGeoThermSmokeProjectile)
+	CR_DECLARE_DERIVED(CGeoThermSmokeProjectile)
 public:
 	CGeoThermSmokeProjectile() { }
 	CGeoThermSmokeProjectile(
@@ -19,10 +19,8 @@ public:
 		const CFeature* geo
 	);
 
-	void Update();
+	void Update() override;
 	void UpdateDir();
-
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) {}
 
 	static void GeoThermDestroyed(const CFeature* geo);
 

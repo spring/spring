@@ -4,6 +4,7 @@
 #define OBJECT_H
 
 #include <atomic>
+#include <functional>
 #include <vector>
 
 #include "ObjectDependenceTypes.h"
@@ -75,6 +76,7 @@ private:
 public:
 	typedef std::vector<CObject*> TSyncSafeSet;
 	typedef std::vector<TSyncSafeSet> TDependenceMap;
+	typedef std::function<bool(const CObject*, int*)> TObjFilterPred;
 
 	bool detached;
 
@@ -104,6 +106,23 @@ protected:
 
 	const TDependenceMap& GetAllListeners() const { return listeners; }
 	const TDependenceMap& GetAllListening() const { return listening; }
+
+	template<size_t N> static void FilterDepObjects(
+		const TDependenceMap& depObjects,
+		const TObjFilterPred& filterPred,
+		std::array<int, N>& objectIDs
+	) {
+		objectIDs[0] = 0;
+
+		for (const auto& objs: depObjects) {
+			for (const CObject* obj: objs) {
+				objectIDs[0] += ((objectIDs[0] < (N - 1)) && filterPred(obj, &objectIDs[objectIDs[0] + 1]));
+			}
+		}
+	}
+
+	template<size_t N> void FilterListeners(const TObjFilterPred& fp, std::array<int, N>& ids) const { FilterDepObjects(listeners, fp, ids); }
+	template<size_t N> void FilterListening(const TObjFilterPred& fp, std::array<int, N>& ids) const { FilterDepObjects(listening, fp, ids); }
 
 protected:
 	spring::unordered_map<int, size_t> listenersDepTbl; // maps dependence-type to index into listeners

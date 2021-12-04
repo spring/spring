@@ -2,7 +2,7 @@
 // ip/basic_endpoint.hpp
 // ~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -97,13 +97,13 @@ public:
   {
   }
 
-#if defined(ASIO_HAS_MOVE)
+#if defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
   /// Move constructor.
   basic_endpoint(basic_endpoint&& other)
     : impl_(other.impl_)
   {
   }
-#endif // defined(ASIO_HAS_MOVE)
+#endif // defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
   /// Assign from another endpoint.
   basic_endpoint& operator=(const basic_endpoint& other)
@@ -112,14 +112,14 @@ public:
     return *this;
   }
 
-#if defined(ASIO_HAS_MOVE)
+#if defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
   /// Move-assign from another endpoint.
   basic_endpoint& operator=(basic_endpoint&& other)
   {
     impl_ = other.impl_;
     return *this;
   }
-#endif // defined(ASIO_HAS_MOVE)
+#endif // defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
   /// The protocol associated with the endpoint.
   protocol_type protocol() const

@@ -3,6 +3,7 @@
 #ifndef COMMAND_DRAWER_H
 #define COMMAND_DRAWER_H
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/UnorderedSet.hpp"
 
 struct Command;
@@ -20,24 +21,32 @@ public:
 	// clear the set after WorldDrawer and MiniMap have both used it
 	void Update() { luaQueuedUnitSet.clear(); }
 
-	void Draw(const CCommandAI*) const;
-	void DrawLuaQueuedUnitSetCommands() const;
-	void DrawQuedBuildingSquares(const CBuilderCAI*) const;
+	void Draw(const CCommandAI*, bool onMiniMap) const;
+	void DrawLuaQueuedUnitSetCommands(bool onMiniMap) const;
+	void DrawQueuedBuildingSquares(const CBuilderCAI*) const;
 
 	void AddLuaQueuedUnit(const CUnit* unit);
 
+	void SetBuildQueueSquareColor(const float* color) { buildQueueSquareColor = color; }
+
 private:
-	void DrawCommands(const CCommandAI*) const;
-	void DrawAirCAICommands(const CAirCAI*) const;
-	void DrawBuilderCAICommands(const CBuilderCAI*) const;
-	void DrawFactoryCAICommands(const CFactoryCAI*) const;
-	void DrawMobileCAICommands(const CMobileCAI*) const;
+	void DrawCommands(const CCommandAI*, GL::RenderDataBufferC* rdb) const;
+	void DrawAirCAICommands(const CAirCAI*, GL::RenderDataBufferC* rdb) const;
+	void DrawBuilderCAICommands(const CBuilderCAI*, GL::RenderDataBufferC* rdb) const;
+	void DrawFactoryCAICommands(const CFactoryCAI*, GL::RenderDataBufferC* rdb) const;
+	void DrawMobileCAICommands(const CMobileCAI*, GL::RenderDataBufferC* rdb) const;
 
 	void DrawWaitIcon(const Command&) const;
-	void DrawDefaultCommand(const Command&, const CUnit*) const;
+	void DrawDefaultCommand(const Command&, const CUnit*, GL::RenderDataBufferC* rdb) const;
+
+	void DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const;
+	void DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const;
 
 private:
 	spring::unordered_set<int> luaQueuedUnitSet;
+
+	// used by DrawQueuedBuildingSquares
+	const float* buildQueueSquareColor = nullptr;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())

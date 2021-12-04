@@ -6,6 +6,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 
 
 class CSMFReadMap;
@@ -31,17 +32,17 @@ public:
 
 	friend class CSMFReadMap;
 
-	void Draw(const DrawPass::e& drawPass);
+	void Draw(const DrawPass::e& drawPass) override;
 	void DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest);
 	void DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest);
-	void DrawShadowPass();
+	void DrawShadowPass() override;
 
-	void Update();
-	void UpdateRenderState();
+	void Update() override;
+	void UpdateRenderState() override;
 	void SunChanged();
 
-	void SetLuaShader(const LuaMapShaderData*);
-	void SetDrawDeferredPass(bool b) {
+	void SetLuaShader(const LuaMapShaderData*) override;
+	void SetDrawDeferredPass(bool b) override {
 		if ((drawDeferred = b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
 		}
@@ -50,27 +51,30 @@ public:
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 
-	void IncreaseDetail() { SetDetail(groundDetail + 1); }
-	void DecreaseDetail() { SetDetail(groundDetail - 1); }
-	void SetDetail(int newGroundDetail);
-	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
+	void IncreaseDetail() override { SetDetail(groundDetail + 1); }
+	void DecreaseDetail() override { SetDetail(groundDetail - 1); }
+	void SetDetail(int newGroundDetail) override;
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const override;
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
 	      CSMFReadMap* GetReadMap()       { return smfMap; }
-	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
-	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
+	const GL::LightHandler* GetLightHandler() const override { return &lightHandler; }
+	      GL::LightHandler* GetLightHandler()       override { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const override { return &geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       override { return &geomBuffer; }
 
+	IMeshDrawer* GetMeshDrawer() { return meshDrawer; }
 	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
 private:
 	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
-	inline void DrawWaterPlane(bool drawWaterReflection);
-	inline void DrawBorder(const DrawPass::e drawPass);
+	void CreateBorderShader();
+
+	void DrawWaterPlane(bool drawWaterReflection);
+	void DrawBorder(const DrawPass::e drawPass);
 
 	bool HaveLuaRenderState() const;
 	bool UpdateGeometryBuffer(bool init);
@@ -82,9 +86,7 @@ protected:
 	int drawerMode;
 	int groundDetail;
 
-	GLuint waterPlaneDispLists[2];
-
-	// [0] := fallback shader-less rendering path
+	// [0] := no-op rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := custom shader-driven rendering path (via Lua)
 	// [3] := currently selected state (shared by deferred pass)
@@ -92,6 +94,8 @@ protected:
 
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer geomBuffer;
+	GL::RenderDataBuffer waterPlaneBuffers[2];
+	Shader::GLSLProgramObject borderShader;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

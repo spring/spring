@@ -3,24 +3,27 @@
 
 #include "ProjectileDrawer.h"
 
+#include <algorithm>
+
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
+#include "Game/UI/MiniMap.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapInfo.h"
+#include "Map/ReadMap.h" // mapDims
 #include "Rendering/GroundFlash.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/Models/ModelRenderContainer.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -38,10 +41,31 @@
 #include "System/StringUtil.h"
 
 
-
 CProjectileDrawer* projectileDrawer = nullptr;
 
-CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
+// can not be a CProjectileDrawer; destruction in global
+// scope might happen after ~EventHandler (referenced by
+// ~EventClient)
+static uint8_t projectileDrawerMem[sizeof(CProjectileDrawer)];
+
+
+void CProjectileDrawer::InitStatic() {
+	if (projectileDrawer == nullptr)
+		projectileDrawer = new (projectileDrawerMem) CProjectileDrawer();
+
+	projectileDrawer->Init();
+}
+void CProjectileDrawer::KillStatic(bool reload) {
+	projectileDrawer->Kill();
+
+	if (reload)
+		return;
+
+	spring::SafeDestruct(projectileDrawer);
+	memset(projectileDrawerMem, 0, sizeof(projectileDrawerMem));
+}
+
+void CProjectileDrawer::Init() {
 	eventHandler.AddClient(this);
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
@@ -75,9 +99,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		if (resSmokeTexturesTable.IsValid()) {
 			for (smokeTexCount = 0; true; smokeTexCount++) {
 				const std::string& tex = resSmokeTexturesTable.GetString(smokeTexCount + 1, "");
-				if (tex.empty()) {
+				if (tex.empty())
 					break;
-				}
+
 				const std::string texName = "bitmaps/" + tex;
 				const std::string smokeName = "ismoke" + IntToString(smokeTexCount, "%02i");
 
@@ -105,9 +129,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	{
 		// shield-texture memory
-		std::array<char, 4 * perlinTexSize * perlinTexSize> perlinTexMem;
+		std::array<char, 4 * PerlinData::noiseTexSize * PerlinData::noiseTexSize> perlinTexMem;
 		perlinTexMem.fill(70);
-		textureAtlas->AddTexFromMem("perlintex", perlinTexSize, perlinTexSize, CTextureAtlas::RGBA32, &perlinTexMem[0]);
+		textureAtlas->AddTexFromMem("perlintex", PerlinData::noiseTexSize, PerlinData::noiseTexSize, CTextureAtlas::RGBA32, &perlinTexMem[0]);
 		blockedTexNames.insert("perlintex");
 	}
 
@@ -155,6 +179,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	if (!textureAtlas->Finalize())
 		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use fewer/smaller textures.");
 
+
 	flaretex        = &textureAtlas->GetTexture("flare");
 	explotex        = &textureAtlas->GetTexture("explo");
 	explofadetex    = &textureAtlas->GetTexture("explofade");
@@ -167,12 +192,11 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	perlintex       = &textureAtlas->GetTexture("perlintex");
 	flametex        = &textureAtlas->GetTexture("flame");
 
-	for (int i = 0; i < smokeTexCount; i++) {
-		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
-		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
-		smoketex.push_back(smokeTex);
-	}
+	smokeTextures.reserve(smokeTexCount);
 
+	for (int i = 0; i < smokeTexCount; i++) {
+		smokeTextures.push_back(&textureAtlas->GetTexture("ismoke" + IntToString(i, "%02i")));
+	}
 
 	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
 	missiletrailtex    = &textureAtlas->GetTextureWithBackup("missiletrailtexture",    "smoketrail"    );
@@ -201,51 +225,73 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	groundringtex = &groundFXAtlas->GetTexture("groundring");
 	seismictex = &groundFXAtlas->GetTexture("seismic");
 
-	for (int a = 0; a < 4; ++a) {
-		perlinBlend[a] = 0.0f;
-	}
+
+	std::fill(std::begin(perlinData.blendWeights), std::end(perlinData.blendWeights), 0.0f);
 
 	{
-		glGenTextures(8, perlinBlendTex);
-		for (int a = 0; a < 8; ++a) {
-			glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a]);
+		glGenTextures(8, perlinData.blendTextures);
+		for (const GLuint blendTexture: perlinData.blendTextures) {
+			glBindTexture(GL_TEXTURE_2D, blendTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, perlinBlendTexSize,perlinBlendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, PerlinData::blendTexSize, PerlinData::blendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		}
 	}
 
-	perlinTexObjects = 0;
-	drawPerlinTex = false;
 
-	if (perlinFB.IsValid()) {
-		// we never refresh the full texture (just the perlin part). So we need to reload it then.
-		perlinFB.reloadOnAltTab = true;
+	// perlinNoiseFBO is no-op constructed, has to be initialized manually
+	perlinNoiseFBO.Init(false);
 
-		perlinFB.Bind();
-		perlinFB.AttachTexture(textureAtlas->GetTexID());
-		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
-		perlinFB.Unbind();
+	if (perlinNoiseFBO.IsValid()) {
+		// we never refresh the full texture (just the perlin part), so reload it on AT
+		perlinNoiseFBO.reloadOnAltTab = true;
+
+		perlinNoiseFBO.Bind();
+		perlinNoiseFBO.AttachTexture(textureAtlas->GetTexID());
+		perlinData.fboComplete = perlinNoiseFBO.CheckStatus("PERLIN");
+		perlinNoiseFBO.Unbind();
 	}
 
+	flyingPieceVAO.Generate();
+
+
+	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
+		modelRenderers[modelType].Init();
 	}
+
+	LoadWeaponTextures();
 }
 
-CProjectileDrawer::~CProjectileDrawer() {
+void CProjectileDrawer::Kill() {
 	eventHandler.RemoveClient(this);
+	autoLinkedEvents.clear();
 
-	glDeleteTextures(8, perlinBlendTex);
+	glDeleteTextures(8, perlinData.blendTextures);
 	spring::SafeDelete(textureAtlas);
 	spring::SafeDelete(groundFXAtlas);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		spring::SafeDelete(modelRenderers[modelType]);
+		modelRenderers[modelType].Kill();
 	}
 
+	smokeTextures.clear();
+
 	renderProjectiles.clear();
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
+
+	perlinNoiseFBO.Kill();
+	flyingPieceVAO.Delete();
+
+	perlinData.texObjects = 0;
+	perlinData.fboComplete = false;
+
+	drawSorted = true;
+
+	fxBuffer = nullptr;
+	fxShader = nullptr;
 }
 
 
@@ -262,8 +308,8 @@ void CProjectileDrawer::ParseAtlasTextures(
 	textureTable.GetMap(texturesMap);
 	textureTable.GetKeys(subTables);
 
-	for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
-		const std::string textureName = StringToLower(texturesMapIt->first);
+	for (const auto& item: texturesMap) {
+		const std::string textureName = StringToLower(item.first);
 
 		// no textures added to this atlas are allowed
 		// to be overwritten later by other textures of
@@ -272,27 +318,27 @@ void CProjectileDrawer::ParseAtlasTextures(
 			blockedTextures.insert(textureName);
 
 		if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-			texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+			texAtlas->AddTexFromFile(item.first, "bitmaps/" + item.second);
 	}
 
 	texturesMap.clear();
 
-	for (size_t i = 0; i < subTables.size(); i++) {
-		const LuaTable& textureSubTable = textureTable.SubTable(subTables[i]);
+	for (const auto& subTable: subTables) {
+		const LuaTable& textureSubTable = textureTable.SubTable(subTable);
 
 		if (!textureSubTable.IsValid())
 			continue;
 
 		textureSubTable.GetMap(texturesMap);
 
-		for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
-			const std::string textureName = StringToLower(texturesMapIt->first);
+		for (const auto& item: texturesMap) {
+			const std::string textureName = StringToLower(item.first);
 
 			if (blockTextures)
 				blockedTextures.insert(textureName);
 
 			if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-				texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+				texAtlas->AddTexFromFile(item.first, "bitmaps/" + item.second);
 		}
 
 		texturesMap.clear();
@@ -302,11 +348,14 @@ void CProjectileDrawer::ParseAtlasTextures(
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
 	// (this requires CWeaponDefHandler to have been initialized)
-	for (WeaponDef& wd: weaponDefHandler->weaponDefs) {
+	for (WeaponDef& wd: const_cast<std::vector<WeaponDef>&>(weaponDefHandler->GetWeaponDefsVec())) {
 		wd.visuals.texture1 = nullptr;
 		wd.visuals.texture2 = nullptr;
 		wd.visuals.texture3 = nullptr;
 		wd.visuals.texture4 = nullptr;
+
+		if (!wd.visuals.colorMapStr.empty())
+			wd.visuals.colorMap = CColorMap::LoadFromDefString(wd.visuals.colorMapStr);
 
 		if (wd.type == "Cannon") {
 			wd.visuals.texture1 = plasmatex;
@@ -362,18 +411,16 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (!wd.visuals.texNames[2].empty()) { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
 		if (!wd.visuals.texNames[3].empty()) { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
-		if (!wd.visuals.ptrailExpGenTag.empty()) {
-			// these can only be custom EG's so prefix is not required game-side
-			wd.ptrailExplosionGeneratorID = explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
-		}
+		// trails can only be custom EG's, prefix is not required game-side
+		if (!wd.visuals.ptrailExpGenTag.empty())
+			wd.ptrailExplosionGeneratorID = explGenHandler.LoadCustomGeneratorID(wd.visuals.ptrailExpGenTag.c_str());
 
-		if (!wd.visuals.impactExpGenTag.empty()) {
-			wd.impactExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.impactExpGenTag);
-		}
+		if (!wd.visuals.impactExpGenTag.empty())
+			wd.impactExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.impactExpGenTag.c_str());
 
-		if (!wd.visuals.bounceExpGenTag.empty()) {
-			wd.bounceExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.bounceExpGenTag);
-		}
+		if (!wd.visuals.bounceExpGenTag.empty())
+			wd.bounceExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.bounceExpGenTag.c_str());
+
 	}
 }
 
@@ -381,11 +428,12 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
-	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
+	const auto& mdlRenderer = modelRenderers[modelType];
+	// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-		CUnitDrawer::BindModelTypeTexture(modelType, binIt->first);
-		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
+		DrawProjectilesSet(mdlRenderer.GetObjectBin(i), drawReflection, drawRefraction);
 	}
 
 	DrawFlyingPieces(modelType);
@@ -402,7 +450,7 @@ bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidOb
 {
 	auto& th = teamHandler;
 	auto& lh = losHandler;
-	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
+	return (gu->spectatingFullView || (owner != nullptr && th.Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
@@ -418,28 +466,25 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
 		return;
 
-	const CCamera* cam = CCamera::GetActiveCamera();
-	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
+	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
+	// no-op if no model
 	DrawProjectileModel(pro);
 
-	if (pro->drawSorted) {
-		pro->SetSortDist(cam->ProjectedDistance(pro->pos));
-		zSortedProjectiles.push_back(pro);
-	} else {
-		unsortedProjectiles.push_back(pro);
-	}
+	pro->SetSortDist(camera->ProjectedDistance(pro->pos));
+	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
 }
 
 
 
 void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 {
-	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
+	const auto& mdlRenderer = modelRenderers[modelType];
+	// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-		DrawProjectilesSetShadow(binIt->second);
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		DrawProjectilesSetShadow(mdlRenderer.GetObjectBin(i));
 	}
 
 	DrawFlyingPieces(modelType);
@@ -447,96 +492,84 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 
 void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles)
 {
-	for (CProjectile* p: projectiles) {
+	for (const CProjectile* p: projectiles) {
 		DrawProjectileShadow(p);
 	}
 }
 
-void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
+void CProjectileDrawer::DrawProjectileShadow(const CProjectile* p)
 {
-	if (CanDrawProjectile(p, p->owner())) {
-		const CCamera* cam = CCamera::GetActiveCamera();
-		if (!cam->InView(p->drawPos, p->GetDrawRadius()))
-			return;
+	if (!CanDrawProjectile(p, p->owner()))
+		return;
 
-		// if this returns false, then projectile is
-		// neither weapon nor piece, or has no model
-		if (DrawProjectileModel(p))
-			return;
+	if (!camera->InView(p->drawPos, p->GetDrawRadius()))
+		return;
 
-		if (!p->castShadow)
-			return;
+	// if this returns false, then projectile is
+	// neither weapon nor piece, or has no model
+	if (DrawProjectileModel(p))
+		return;
 
-		// don't need to z-sort in the shadow pass
-		p->Draw(projectileDrawer->fxVA);
-	}
+	if (!p->castShadow)
+		return;
+
+	// don't need to z-sort in the shadow pass
+	p->Draw(fxBuffer);
 }
 
 
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	CVertexArray* lines = GetVertexArray();
-	CVertexArray* points = GetVertexArray();
-	lines->Initialize();
-	points->Initialize();
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		const auto& projectileBin = modelRenderers[modelType]->GetProjectileBin();
+		const auto& mdlRenderer = modelRenderers[modelType];
+		// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-		if (projectileBin.empty())
-			continue;
+		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+			const auto& projectileBin = mdlRenderer.GetObjectBin(i);
 
-		for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-			const auto& projectileSet = binIt->second;
-
-			lines->EnlargeArrays(projectileSet.size() * 2, 0, VA_SIZE_C);
-			points->EnlargeArrays(projectileSet.size(), 0, VA_SIZE_C);
-
-			for (CProjectile* p: projectileSet) {
+			for (CProjectile* p: projectileBin) {
 				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
-				p->DrawOnMinimap(*lines, *points);
+				p->DrawOnMinimap(buffer);
 			}
 		}
 	}
 
-	lines->DrawArrayC(GL_LINES);
-	points->DrawArrayC(GL_POINTS);
+	for (CProjectile* p: renderProjectiles) {
+		if (!CanDrawProjectile(p, p->owner()))
+			continue;
 
-	if (!renderProjectiles.empty()) {
-		lines->Initialize();
-		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
-
-		for (CProjectile* p: renderProjectiles) {
-			if (!CanDrawProjectile(p, p->owner()))
-				continue;
-
-			p->DrawOnMinimap(*lines, *points);
-		}
-
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
+		p->DrawOnMinimap(buffer);
 	}
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, minimap->GetViewMat(0));
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, minimap->GetProjMat(0));
+	buffer->Submit(GL_LINES);
+	shader->Disable();
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
-	const FlyingPieceContainer& container = projectileHandler->flyingPieces[modelType];
+	const FlyingPieceContainer& container = projectileHandler.flyingPieces[modelType];
 
 	if (container.empty())
 		return;
 
-	glPushAttrib(GL_POLYGON_BIT);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->PushPolygonBit();
+	glAttribStatePtr->DisableCullFace();
+
+	flyingPieceVAO.Bind();
 
 	const FlyingPiece* last = nullptr;
 
 	for (const FlyingPiece& fp: container) {
-		const bool noLosTst = gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, fp.GetTeam());
+		const bool noLosTst = gu->spectatingFullView || teamHandler.AlliedTeams(gu->myTeam, fp.GetTeam());
 		const bool inAirLos = noLosTst || losHandler->InAirLos(fp.GetPos(), gu->myAllyTeam);
 
 		if (!inAirLos)
@@ -549,329 +582,355 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 		last = &fp;
 	}
 
-	if (last != nullptr)
+	if (last != nullptr) {
 		last->EndDraw();
+		flyingPieceVAO.Unbind();
+	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
-void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glDisable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
-	glDepthMask(GL_TRUE);
 
-	sky->SetupFog();
+void CProjectileDrawer::DrawProjectilePass(Shader::IProgramObject*, bool drawReflection, bool drawRefraction)
+{
+	unitDrawer->SetupOpaqueDrawing(false);
 
-	zSortedProjectiles.clear();
-	unsortedProjectiles.clear();
-
-	{
-		unitDrawer->SetupOpaqueDrawing(false);
-
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			unitDrawer->PushModelRenderState(modelType);
-			DrawProjectiles(modelType, drawReflection, drawRefraction);
-			unitDrawer->PopModelRenderState(modelType);
-		}
-
-		unitDrawer->ResetOpaqueDrawing(false);
-
-		// note: model-less projectiles are NOT drawn by this call but
-		// only z-sorted (if the projectiles indicate they want to be)
-		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
-
-		std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
-
-		fxVA = GetVertexArray();
-		fxVA->Initialize();
-
-		// collect the alpha-translucent particle effects in fxVA
-		for (CProjectile* p: zSortedProjectiles) {
-			p->Draw(fxVA);
-		}
-		for (CProjectile* p: unsortedProjectiles) {
-			p->Draw(fxVA);
-		}
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		unitDrawer->PushModelRenderState(modelType);
+		DrawProjectiles(modelType, drawReflection, drawRefraction);
+		unitDrawer->PopModelRenderState(modelType);
 	}
 
-	glEnable(GL_BLEND);
-	glDisable(GL_FOG);
+	unitDrawer->ResetOpaqueDrawing(false);
 
-	if (fxVA->drawIndex() > 0) {
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_TEXTURE_2D);
+	// note: model-less projectiles are NOT drawn by this call but
+	// only z-sorted (if the projectiles indicate they want to be)
+	DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-		glColor4f(1.0f, 1.0f, 1.0f, 0.2f);
-		glAlphaFunc(GL_GREATER, 0.0f);
-		glEnable(GL_ALPHA_TEST);
-		glDepthMask(GL_FALSE);
+	// empty if !drawSorted
+	std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), zSortCmp);
 
+
+	// collect the alpha-translucent particle effects in fxBuffer
+	for (CProjectile* p: sortedProjectiles[1]) {
+		p->Draw(fxBuffer);
+	}
+	for (CProjectile* p: sortedProjectiles[0]) {
+		p->Draw(fxBuffer);
+	}
+}
+
+void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
+{
+	if (fxBuffer->NumElems() > 0) {
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->DisableDepthMask();
+
+		glActiveTexture(GL_TEXTURE0);
 		// send event after the default state has been set, allows overriding
 		// it for specific cases such as proper blending with depth-aware fog
 		// (requires mask=true and func=always)
 		eventHandler.DrawWorldPreParticles();
 
+
+		po->Enable();
+		po->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		po->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		po->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 		textureAtlas->BindTexture();
-		fxVA->DrawArrayTC(GL_QUADS);
+		fxBuffer->Submit(GL_TRIANGLES);
+		po->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+		po->Disable();
 	} else {
 		eventHandler.DrawWorldPreParticles();
 	}
+}
 
-	glPopAttrib();
+void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableDepthMask();
+
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
+
+
+	fxBuffer = GL::GetRenderBufferTC();
+	fxShader = fxBuffer->GetShader();
+
+	DrawProjectilePass(fxShader, drawReflection, drawRefraction);
+
+	glAttribStatePtr->EnableBlendMask();
+
+	DrawParticlePass(fxShader, drawReflection, drawRefraction);
+
+	glAttribStatePtr->PopBits();
+}
+
+
+
+void CProjectileDrawer::DrawProjectileShadowPass(Shader::IProgramObject* po)
+{
+	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		DrawProjectilesShadow(modelType);
+	}
+
+	// draw the model-less projectiles
+	DrawProjectilesSetShadow(renderProjectiles);
+	po->Disable();
+}
+
+void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
+{
+	if (fxBuffer->NumElems() == 0)
+		return;
+
+	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
+	textureAtlas->BindTexture();
+	fxBuffer->Submit(GL_TRIANGLES);
+	po->Disable();
 }
 
 void CProjectileDrawer::DrawShadowPass()
 {
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
+	glAttribStatePtr->PushEnableBit();
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_TEXTURE_2D);
-	po->Enable();
+	fxBuffer = GL::GetRenderBufferTC();
+	fxShader = nullptr;
 
-	fxVA = GetVertexArray();
-	fxVA->Initialize();
+	DrawProjectileShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE));
+	DrawParticleShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PARTICLE));
 
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			DrawProjectilesShadow(modelType);
-		}
-
-		// draw the model-less projectiles
-		DrawProjectilesSetShadow(renderProjectiles);
-	}
-
-	if (fxVA->drawIndex() > 0) {
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glAlphaFunc(GL_GREATER, 0.3f);
-		glEnable(GL_ALPHA_TEST);
-		glShadeModel(GL_SMOOTH);
-		// glDisable(GL_CULL_FACE);
-
-		textureAtlas->BindTexture();
-		fxVA->DrawArrayTC(GL_QUADS);
-	}
-
-	po->Disable();
-	glShadeModel(GL_FLAT);
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 {
-	if (!(p->weapon || p->piece) || (p->model == nullptr))
+	const S3DModel* model = p->model;
+	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
+	if (model == nullptr)
 		return false;
 
-	if (p->weapon) {
-		// weapon-projectile
-		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
+	switch ((p->weapon * 2) + (p->piece * 1)) {
+		case 2: {
+			// weapon-projectile
+			const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		unitDrawer->SetTeamColour(wp->GetTeamID());
+			unitDrawer->SetTeamColour(wp->GetTeamID());
+			udState->SetMatrices(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)), model->GetPieceMatrices());
 
-		glPushMatrix();
-			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
+			if (p->luaDraw && eventHandler.DrawProjectile(p))
+				return true;
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				wp->model->DrawStatic();
+			model->Draw();
+			return true;
+		} break;
+
+		case 1: {
+			// piece-projectile
+			const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
+
+			CMatrix44f modelMat;
+
+			modelMat.Translate(pp->drawPos);
+			modelMat.Rotate(pp->GetDrawAngle() * math::DEG_TO_RAD, pp->spinVector);
+
+			unitDrawer->SetTeamColour(pp->GetTeamID());
+
+			// NOTE: eventHandler.Draw{Unit,Feature,Projectile} now has no transform
+			if (p->luaDraw && eventHandler.DrawProjectile(p))
+				return true;
+
+			if ((pp->explFlags & PF_Recursive) != 0) {
+				udState->SetMatrices(modelMat, model->GetPieceMatrices());
+				model->DrawPieceRec(pp->modelPiece);
+			} else {
+				// non-recursive, only use the model matrix
+				udState->SetMatrices(modelMat, IUnitDrawerState::GetDummyPieceMatrixPtr(), model->numPieces);
+				model->DrawPiece(pp->modelPiece);
 			}
-		glPopMatrix();
-	} else {
-		// piece-projectile
-		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
-		unitDrawer->SetTeamColour(pp->GetTeamID());
+			return true;
+		} break;
 
-		glPushMatrix();
-			glTranslatef3(pp->drawPos);
-			glRotatef(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
-
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				if (pp->explFlags & PF_Recursive) {
-					pp->omp->DrawStatic();
-				} else {
-					glCallList(pp->dispList);
-				}
-			}
-		glPopMatrix();
+		default: {
+		} break;
 	}
 
-	return true;
+	return false;
 }
 
 void CProjectileDrawer::DrawGroundFlashes()
 {
-	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
+	const GroundFlashContainer& gfc = projectileHandler.groundFlashes;
+
 	if (gfc.empty())
 		return;
 
-	static constexpr GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	glDepthMask(GL_FALSE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glAttribStatePtr->PolygonOffset(-20.0f, -1000.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.01f);
-	glPolygonOffset(-20, -1000);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFogfv(GL_FOG_COLOR, black);
 
-	gfVA = GetVertexArray();
-	gfVA->Initialize();
-	gfVA->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
+	gfBuffer = GL::GetRenderBufferTC();
+	gfShader = gfBuffer->GetShader();
 
+	gfShader->Enable();
+	gfShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	gfShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	gfShader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
 	bool depthTest = true;
 	bool depthMask = false;
 
-	for (CGroundFlash* gf: gfc) {
-		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf, gu->myAllyTeam);
-		if (!inLos)
+	for (const CGroundFlash* gf: gfc) {
+		if (!gf->alwaysVisible && !gu->spectatingFullView && !losHandler->InAirLos(gf, gu->myAllyTeam))
 			continue;
 
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
 		if (depthTest != gf->depthTest) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
+			gfBuffer->Submit(GL_TRIANGLES);
 
 			if ((depthTest = gf->depthTest)) {
-				glEnable(GL_DEPTH_TEST);
+				glAttribStatePtr->EnableDepthTest();
 			} else {
-				glDisable(GL_DEPTH_TEST);
+				glAttribStatePtr->DisableDepthTest();
 			}
 		}
 		if (depthMask != gf->depthMask) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
+			gfBuffer->Submit(GL_TRIANGLES);
 
 			if ((depthMask = gf->depthMask)) {
-				glDepthMask(GL_TRUE);
+				glAttribStatePtr->EnableDepthMask();
 			} else {
-				glDepthMask(GL_FALSE);
+				glAttribStatePtr->DisableDepthMask();
 			}
 		}
 
-		gf->Draw(gfVA);
+		gf->Draw(gfBuffer);
 	}
 
-	gfVA->DrawArrayTC(GL_QUADS);
+	gfBuffer->Submit(GL_TRIANGLES);
+	gfShader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+	gfShader->Disable();
 
-	glFogfv(GL_FOG_COLOR, sky->fogColor);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 
 
-void CProjectileDrawer::UpdateTextures() {
-	if (perlinTexObjects > 0 && drawPerlinTex)
-		UpdatePerlin();
-}
-
+void CProjectileDrawer::UpdateTextures() { UpdatePerlin(); }
 void CProjectileDrawer::UpdatePerlin() {
-	perlinFB.Bind();
-	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, perlinTexSize, perlinTexSize);
+	if (perlinData.texObjects == 0 || !perlinData.fboComplete)
+		return;
 
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0, 1,  0, 1,  -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	perlinNoiseFBO.Bind();
+	glAttribStatePtr->ViewPort(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, PerlinData::noiseTexSize, PerlinData::noiseTexSize);
 
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_FOG);
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
 
 	unsigned char col[4];
-	float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
+	const float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
+
 	float speed = 1.0f;
 	float size = 1.0f;
 
-	CVertexArray* va = GetVertexArray();
-	va->CheckInitSize(4 * VA_SIZE_TC);
+
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 
 	for (int a = 0; a < 4; ++a) {
-		perlinBlend[a] += time * speed;
-		if (perlinBlend[a] > 1) {
-			unsigned int temp = perlinBlendTex[a * 2];
-			perlinBlendTex[a * 2    ] = perlinBlendTex[a * 2 + 1];
-			perlinBlendTex[a * 2 + 1] = temp;
-
-			GenerateNoiseTex(perlinBlendTex[a * 2 + 1]);
-			perlinBlend[a] -= 1;
+		if ((perlinData.blendWeights[a] += (time * speed)) > 1.0f) {
+			std::swap(perlinData.blendTextures[a * 2 + 0], perlinData.blendTextures[a * 2 + 1]);
+			GenerateNoiseTex(perlinData.blendTextures[a * 2 + 1]);
+			perlinData.blendWeights[a] -= 1.0f;
 		}
 
-		float tsize = 8.0f / size;
+		const float tsize = 8.0f / size;
 
 		if (a == 0)
-			glDisable(GL_BLEND);
+			glAttribStatePtr->DisableBlendMask();
 
-		for (int b = 0; b < 4; ++b)
-			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
+		std::fill(std::begin(col), std::end(col), int((1.0f - perlinData.blendWeights[a]) * 16 * size));
 
-		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector, 0,         0, col);
-		va->AddVertexQTC(  UpVector, 0,     tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+		{
+			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->SafeAppend({  UpVector,     0, tsize, col});
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+			buffer->SafeAppend({ RgtVector, tsize,     0, col});
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->Submit(GL_TRIANGLES);
+		}
 
 		if (a == 0)
-			glEnable(GL_BLEND);
+			glAttribStatePtr->EnableBlendMask();
 
-		for (int b = 0; b < 4; ++b)
-			col[b] = int(perlinBlend[a] * 16 * size);
+		std::fill(std::begin(col), std::end(col), int(perlinData.blendWeights[a] * 16 * size));
 
-		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 1]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector,     0,     0, col);
-		va->AddVertexQTC(  UpVector,     0, tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+		{
+			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 1]);
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->SafeAppend({  UpVector,     0, tsize, col});
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+			buffer->SafeAppend({ RgtVector, tsize,     0, col});
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->Submit(GL_TRIANGLES);
+		}
 
 		speed *= 0.6f;
-		size *= 2;
+		size *= 2.0f;
 	}
 
-	perlinFB.Unbind();
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	shader->Disable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
 
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	perlinNoiseFBO.Unbind();
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 {
-	std::array<unsigned char, 4 * perlinBlendTexSize * perlinBlendTexSize> mem;
+	std::array<unsigned char, 4 * PerlinData::blendTexSize * PerlinData::blendTexSize> mem;
 
-	for (int a = 0; a < perlinBlendTexSize * perlinBlendTexSize; ++a) {
+	for (int a = 0; a < PerlinData::blendTexSize * PerlinData::blendTexSize; ++a) {
 		const unsigned char rnd = int(std::max(0.0f, guRNG.NextFloat() * 555.0f - 300.0f));
 
 		mem[a * 4 + 0] = rnd;
@@ -881,27 +940,38 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 	}
 
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, perlinBlendTexSize, perlinBlendTexSize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, PerlinData::blendTexSize, PerlinData::blendTexSize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 }
 
 
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
-	} else {
-		renderProjectiles.push_back(const_cast<CProjectile*>(p));
+	if (p->model != nullptr) {
+		modelRenderers[MDL_TYPE(p)].AddObject(p);
+		return;
 	}
+
+	const_cast<CProjectile*>(p)->SetRenderIndex(renderProjectiles.size());
+	renderProjectiles.push_back(const_cast<CProjectile*>(p));
 }
 
-void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
+void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* p)
 {
-	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
-	} else {
-		auto it = std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p));
-		assert(it != renderProjectiles.end());
-		renderProjectiles.erase(it);
+	if (p->model != nullptr) {
+		modelRenderers[MDL_TYPE(p)].DelObject(p);
+		return;
 	}
+
+	const unsigned int idx = p->GetRenderIndex();
+
+	if (idx >= renderProjectiles.size()) {
+		assert(false);
+		return;
+	}
+
+	renderProjectiles[idx] = renderProjectiles.back();
+	renderProjectiles[idx]->SetRenderIndex(idx);
+
+	renderProjectiles.pop_back();
 }

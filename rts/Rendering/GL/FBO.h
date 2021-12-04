@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef FBO_H
-#define FBO_H
+#ifndef GL_FBO_H
+#define GL_FBO_H
 
 #include <vector>
 
@@ -18,41 +18,31 @@
 class FBO
 {
 public:
-	/**
-	 * @brief IsSupported
-	 *
-	 * if FrameBuffers are supported by the current platform
-	 */
-	static bool IsSupported();
+	FBO(         ) { Init(false); }
+	FBO(bool noop) { Init( noop); }
+	~FBO() { Kill(); }
 
-	/**
-	 * @brief Constructor
-	 */
-	FBO();
-
-	/**
-	 * @brief Destructor
-	 */
-	~FBO();
+	void Init(bool noop);
+	void Kill();
 
 	/**
 	 * @brief fboId
 	 *
 	 * GLuint pointing to the current framebuffer
 	 */
-	GLuint fboId;
+	GLuint fboId = 0;
 
 	/**
 	 * @brief reloadOnAltTab
 	 *
 	 * bool save all attachments in system RAM and reloaded them on OpenGL-Context lost (alt-tab) (default: false)
 	 */
-	bool reloadOnAltTab;
+	bool reloadOnAltTab = false;
 
 	/**
 	 * @brief check FBO status
 	 */
-	bool CheckStatus(std::string name);
+	bool CheckStatus(const char* name);
 
 	/**
 	 * @brief get FBO status
@@ -62,7 +52,7 @@ public:
 	/**
 	 * @return GL_MAX_SAMPLES or 0 if multi-sampling not supported
 	 */
-	static GLsizei GetMaxSamples();
+	static GLsizei GetMaxSamples() { return maxSamples; }
 
 	/**
 	 * @brief IsValid
@@ -70,22 +60,29 @@ public:
 	 */
 	bool IsValid() const;
 
+
+	void AttachTextures(const GLuint* ids, const GLenum* attachments, const GLenum texTarget, const unsigned int texCount, const int mipLevel = 0, const int zSlice = 0) {
+		for (unsigned int i = 0; i < texCount; i++) {
+			AttachTexture(ids[i], texTarget, attachments[i], mipLevel, zSlice);
+		}
+	}
+
 	/**
 	 * @brief AttachTexture
 	 * @param texTarget texture target (GL_TEXTURE_2D etc.)
 	 * @param texId texture to attach
-	 * @param attachment (GL_COLOR_ATTACHMENT0_EXT etc.)
+	 * @param attachment (GL_COLOR_ATTACHMENT0 etc.)
 	 * @param mipLevel miplevel to attach
 	 * @param zSlice z offset (3d textures only)
 	 */
-	void AttachTexture(const GLuint texId, const GLenum texTarget = GL_TEXTURE_2D, const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT, const int mipLevel = 0, const int zSlice = 0);
+	void AttachTexture(const GLuint texId, const GLenum texTarget = GL_TEXTURE_2D, const GLenum attachment = GL_COLOR_ATTACHMENT0, const int mipLevel = 0, const int zSlice = 0);
 
 	/**
 	 * @brief AttachRenderBuffer
 	 * @param rboId RenderBuffer to attach
 	 * @param attachment
 	 */
-	void AttachRenderBuffer(const GLuint rboId, const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT);
+	void AttachRenderBuffer(const GLuint rboId, const GLenum attachment = GL_COLOR_ATTACHMENT0);
 
 	/**
 	 * @brief Creates a RenderBufferObject and attachs it to the FBO (it is also auto destructed)
@@ -141,7 +138,7 @@ public:
 
 
 private:
-	bool valid;
+	bool valid = false;
 
 	/**
 	 * @brief rbos

@@ -10,22 +10,22 @@ class CRotOverheadController : public CCameraController
 public:
 	CRotOverheadController();
 
-	const std::string GetName() const { return "rot"; }
+	const std::string GetName() const override { return "rot"; }
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override;
+	void MouseMove(float3 move) override;
+	void ScreenEdgeMove(float3 move) override;
+	void MouseWheelMove(float move) override;
 
-	void SetPos(const float3& newPos);
+	void SetPos(const float3& newPos) override;
 
-	float3 SwitchFrom() const;
-	void SwitchTo(const int oldCam, const bool showText);
+	float3 SwitchFrom() const override;
+	void SwitchTo(const int oldCam, const bool showText) override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
-	void Update();
+	void Update() override;
 
 private:
 	float mouseScale;

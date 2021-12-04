@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef STRING_UTIL_H
+#define STRING_UTIL_H
 
 #include <algorithm>
-#include <cassert>
+#include <cstring>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -29,9 +29,36 @@
 	struct _UTIL_CONCAT(doOnce, __LINE__) { _UTIL_CONCAT(doOnce, __LINE__)() { code; } }; static _UTIL_CONCAT(doOnce, __LINE__) _UTIL_CONCAT(doOnceVar, __LINE__);
 
 
+static inline const char* StrCaseStr(const char* str, const char* sub) {
+	const char* pos = nullptr;
+
+	char lcstr[32768];
+	char lcsub[32768];
+
+	if (str == nullptr)
+		return nullptr;
+	if (sub == nullptr)
+		return nullptr;
+
+	std::strncpy(lcstr, str, sizeof(lcstr) - 1);
+	std::strncpy(lcsub, sub, sizeof(lcsub) - 1);
+	std::transform(lcstr, lcstr + sizeof(lcstr), lcstr, (int (*)(int)) tolower);
+	std::transform(lcsub, lcsub + sizeof(lcsub), lcsub, (int (*)(int)) tolower);
+
+	if ((pos = std::strstr(lcstr, lcsub)) == nullptr)
+		return nullptr;
+
+	return (str + (pos - lcstr));
+}
+
+
+static inline void StringToLower(const char* in, char* out, size_t len) {
+	std::transform(in, in + len, out, (int (*)(int)) tolower);
+}
+
 static inline void StringToLowerInPlace(std::string& s)
 {
-	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
+	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int)) tolower);
 }
 
 static inline std::string StringToLower(std::string s)
@@ -70,9 +97,9 @@ static inline std::string Quote(std::string esc)
  */
 static inline std::string UnQuote(const std::string& str)
 {
-	if (str[0] == '"' && str[str.length() - 1] == '"') {
+	if (str[0] == '"' && str[str.length() - 1] == '"')
 		return str.substr(1, str.length() - 2);
-	}
+
 	return str;
 }
 
@@ -107,29 +134,29 @@ void StringTrimInPlace(std::string& str, const std::string& ws = " \t\n\r");
 std::string StringTrim(const std::string& str, const std::string& ws = " \t\n\r");
 
 
-static inline std::string IntToString(int i, const std::string& format = "%i")
+static inline std::string IntToString(int i, const char* format = "%i")
 {
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), format.c_str(), i);
-	return std::string(buf);
+	SNPRINTF(buf, sizeof(buf), format, i);
+	return buf;
 }
 
-static inline std::string FloatToString(float f, const std::string& format = "%f")
+static inline std::string FloatToString(float f, const char* format = "%f")
 {
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), format.c_str(), f);
-	return std::string(buf);
+	SNPRINTF(buf, sizeof(buf), format, f);
+	return buf;
 }
 
 template<typename int_type = int>
-static inline int_type StringToInt(std::string str, bool* failed = NULL)
+static inline int_type StringToInt(std::string str, bool* failed = nullptr)
 {
 	StringTrimInPlace(str);
 	std::istringstream stream(str);
 	int_type buffer = 0;
 	stream >> buffer;
 
-	if (failed != NULL)
+	if (failed != nullptr)
 		*failed = stream.fail();
 
 	return buffer;

@@ -10,56 +10,53 @@ class CUnit;
 
 class CUnitTracker
 {
-	public:
-		CUnitTracker();
-		~CUnitTracker();
+public:
+	void Track();
+	void Disable();
+	bool Enabled() const { return enabled; }
 
-		void Track();
-		void Disable();
-		bool Enabled() const { return enabled; }
+	void SetCam();
 
-		void SetCam();
+	int  GetMode() const;
+	void IncMode();
+	/// @param trackMode see enum CUnitTracker::TrackMode
+	void SetMode(int trackMode);
+	enum TrackMode {
+		TrackSingle = 0,
+		TrackAverage,
+		TrackExtents,
+		TrackModeCount
+	};
 
-		int  GetMode() const;
-		void IncMode();
-		/// @param trackMode see enum CUnitTracker::TrackMode
-		void SetMode(int trackMode);
-		enum TrackMode {
-			TrackSingle = 0,
-			TrackAverage,
-			TrackExtents,
-			TrackModeCount
-		};
+protected:
+	void NextUnit();
+	void MakeTrackGroup();
+	void CleanTrackGroup();
+	CUnit* GetTrackUnit();
+	float3 CalcAveragePos() const;
+	float3 CalcExtentsPos() const;
 
-	protected:
-		void NextUnit();
-		void MakeTrackGroup();
-		void CleanTrackGroup();
-		CUnit* GetTrackUnit();
-		float3 CalcAveragePos() const;
-		float3 CalcExtentsPos() const;
-		
-	protected:
-		bool enabled;
-		bool firstUpdate;
+protected:
+	bool enabled = false;
 
-		int trackMode;
-		int trackUnit;
+	int trackMode = TrackSingle;
+	int trackUnit = 0;
 
-		spring::unordered_set<int> trackGroup;
+	int timeOut = 15;
+	int lastFollowUnit = 0;
+	float lastUpdateTime = 0.0f;
 
-		int timeOut;
-		int lastFollowUnit;
-		float lastUpdateTime;
+	float3 trackPos = {500.0f, 100.0f, 500.0f};
+	float3 trackDir = FwdVector;
 
-		float3 trackPos;
-		float3 trackDir;
+	float3 smoothedRight = RgtVector;
+	float3 oldCamDir = RgtVector;
+	float3 oldCamPos = {500.0f, 500.0f, 500.0f};
 
-		float3 smoothedRight;
-		float3 oldCamDir;
-		float3 oldCamPos;
-		
-		static const char* modeNames[TrackModeCount];
+	spring::unordered_set<int> trackedUnitIDs;
+	std::vector<int> deadUnitIDs;
+	
+	static const char* modeNames[TrackModeCount];
 };
 
 extern CUnitTracker unitTracker;

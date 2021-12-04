@@ -8,6 +8,7 @@
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
+#include "Rendering/GlobalRendering.h"
 
 
 /******************************************************************************/
@@ -16,7 +17,7 @@
 LuaRBOs::~LuaRBOs()
 {
 	for (const RBO* rbo: rbos) {
-		glDeleteRenderbuffersEXT(1, &rbo->id);
+		glDeleteRenderbuffers(1, &rbo->id);
 	}
 }
 
@@ -60,12 +61,15 @@ const LuaRBOs::RBO* LuaRBOs::GetLuaRBO(lua_State* L, int index)
 
 void LuaRBOs::RBO::Init()
 {
-	index  = -1u;
-	id     = 0;
-	target = GL_RENDERBUFFER_EXT;
-	format = GL_RGBA;
-	xsize  = 0;
-	ysize  = 0;
+	index   = -1u;
+	id      = 0;
+
+	target  = GL_RENDERBUFFER;
+	format  = GL_RGBA;
+
+	xsize   = 0;
+	ysize   = 0;
+	samples = 0;
 }
 
 
@@ -74,7 +78,7 @@ void LuaRBOs::RBO::Free(lua_State* L)
 	if (id == 0)
 		return;
 
-	glDeleteRenderbuffersEXT(1, &id);
+	glDeleteRenderbuffers(1, &id);
 	id = 0;
 
 	{
@@ -106,13 +110,16 @@ int LuaRBOs::meta_gc(lua_State* L)
 int LuaRBOs::meta_index(lua_State* L)
 {
 	const RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
-	const std::string& key = luaL_checkstring(L, 2);
 
-	if (key ==  "valid") { lua_pushboolean(L, glIsRenderbufferEXT(rbo->id)); return 1; }
-	if (key == "target") { lua_pushnumber(L, rbo->target); return 1; }
-	if (key == "format") { lua_pushnumber(L, rbo->format); return 1; }
-	if (key ==  "xsize") { lua_pushnumber(L, rbo->xsize ); return 1; }
-	if (key ==  "ysize") { lua_pushnumber(L, rbo->ysize ); return 1; }
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString(  "valid"): { lua_pushboolean(L, glIsRenderbuffer(rbo->id)); return 1; } break;
+		case hashString( "target"): { lua_pushnumber(L, rbo->target );               return 1; } break;
+		case hashString( "format"): { lua_pushnumber(L, rbo->format );               return 1; } break;
+		case hashString(  "xsize"): { lua_pushnumber(L, rbo->xsize  );               return 1; } break;
+		case hashString(  "ysize"): { lua_pushnumber(L, rbo->ysize  );               return 1; } break;
+		case hashString("samples"): { lua_pushnumber(L, rbo->samples);               return 1; } break;
+		default                   : {                                                          } break;
+	}
 
 	return 0;
 }
@@ -134,30 +141,49 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 	rbo.xsize = (GLsizei)luaL_checknumber(L, 1);
 	rbo.ysize = (GLsizei)luaL_checknumber(L, 2);
-	rbo.target = GL_RENDERBUFFER_EXT;
-	rbo.format = GL_RGBA;
 
-	const int table = 3;
-	if (lua_istable(L, table)) {
-		lua_getfield(L, table, "target");
-		if (lua_isnumber(L, -1)) {
-			rbo.target = (GLenum)lua_tonumber(L, -1);
+	constexpr int tableIdx = 3;
+	if (lua_istable(L, tableIdx)) {
+		{
+			lua_getfield(L, tableIdx, "target");
+
+			if (lua_isnumber(L, -1))
+				rbo.target = (GLenum)lua_tonumber(L, -1);
+
+			lua_pop(L, 1);
 		}
-		lua_pop(L, 1);
-		lua_getfield(L, table, "format");
-		if (lua_isnumber(L, -1)) {
-			rbo.format = (GLenum)lua_tonumber(L, -1);
+		{
+			lua_getfield(L, tableIdx, "format");
+
+			if (lua_isnumber(L, -1))
+				rbo.format = (GLenum)lua_tonumber(L, -1);
+
+			lua_pop(L, 1);
 		}
-		lua_pop(L, 1);
+		{
+			lua_getfield(L, tableIdx, "samples");
+
+			// not Clamp(lua_tonumber(L, -1), 2, globalRendering->msaaLevel);
+			// AA sample count has to equal the default FB or blitting breaks
+			if (lua_isnumber(L, -1))
+				rbo.samples = globalRendering->msaaLevel;
+
+			lua_pop(L, 1);
+		}
 	}
 
-	glGenRenderbuffersEXT(1, &rbo.id);
-	glBindRenderbufferEXT(rbo.target, rbo.id);
+	glGenRenderbuffers(1, &rbo.id);
+	glBindRenderbuffer(rbo.target, rbo.id);
 
 	// allocate the memory
-	glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
+	// in theory glRenderbufferStorageMultisample(...,samples = 0,...) is equivalent
+	// to glRenderbufferStorage, so these two calls could be replaced with one later
+	if (rbo.samples > 1)
+		glRenderbufferStorageMultisample(rbo.target, rbo.samples, rbo.format, rbo.xsize, rbo.ysize);
+	else
+		glRenderbufferStorage(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
 
-	glBindRenderbufferEXT(rbo.target, 0);
+	glBindRenderbuffer(rbo.target, 0);
 
 	RBO* rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));
 	*rboPtr = rbo;

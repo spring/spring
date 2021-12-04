@@ -7,9 +7,9 @@
 #include <vector>
 #include "System/type2.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 
 class CSolidObject;
-class CVertexArray;
 
 /**
  * @brief Cheap unit lodding using imposters.
@@ -30,7 +30,7 @@ private:
 	float2 GetTextureCoords(const int farTextureNum, const int orientation) const;
 	int2 GetTextureCoordsInt(const int farTextureNum, const int orientation) const;
 
-	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
+	void DrawFarTexture(const CSolidObject* obj, GL::RenderDataBufferTN* rdb);
 	void CreateFarTexture(const CSolidObject* obj);
 
 private:

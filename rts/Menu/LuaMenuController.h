@@ -13,7 +13,7 @@ public:
 	~CLuaMenuController();
 
 	// Reloads the archives but not LuaMenu
-	void Reset();
+	bool Reset();
 	bool Activate(const std::string& msg);
 
 	static bool ActivateInstance(const std::string& msg);
@@ -21,6 +21,7 @@ public:
 	int KeyReleased(int k) override;
 	int KeyPressed(int k, bool isRepeat) override;
 	int TextInput(const std::string& utf8Text) override;
+	int TextEditing(const std::string& utf8, unsigned int start, unsigned int length) override;
 
 	bool Draw() override;
 	void ResizeEvent() override;

@@ -5,12 +5,12 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/ScopedFileLock.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <io.h>
 #else
 	#include <unistd.h>
 #endif
-#include <string.h>
+#include <cstring>
 #include <stdexcept>
 #include <functional>
 
@@ -176,7 +176,7 @@ void FileConfigSource::Read(FILE* file)
 void FileConfigSource::Write(FILE* file)
 {
 	rewind(file);
-#ifdef WIN32
+#ifdef _WIN32
 	int err = _chsize(fileno(file), 0);
 #else
 	int err = ftruncate(fileno(file), 0);
@@ -214,8 +214,8 @@ DefaultConfigSource::DefaultConfigSource()
 {
 	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
 
-	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
-		const ConfigVariableMetaData* metadata = it->second;
+	for (const auto& element: vars) {
+		const ConfigVariableMetaData* metadata = element.second;
 		if (metadata->GetDefaultValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetDefaultValue().ToString();
 		}
@@ -230,8 +230,8 @@ SafemodeConfigSource::SafemodeConfigSource()
 {
 	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
 
-	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
-		const ConfigVariableMetaData* metadata = it->second;
+	for (const auto& element: vars) {
+		const ConfigVariableMetaData* metadata = element.second;
 		if (metadata->GetSafemodeValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetSafemodeValue().ToString();
 		}
@@ -245,8 +245,8 @@ DedicatedConfigSource::DedicatedConfigSource()
 {
 	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
 
-	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
-		const ConfigVariableMetaData* metadata = it->second;
+	for (const auto& element: vars) {
+		const ConfigVariableMetaData* metadata = element.second;
 		if (metadata->GetDedicatedValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetDedicatedValue().ToString();
 		}
@@ -261,8 +261,8 @@ HeadlessConfigSource::HeadlessConfigSource()
 {
 	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
 
-	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
-		const ConfigVariableMetaData* metadata = it->second;
+	for (const auto& element: vars) {
+		const ConfigVariableMetaData* metadata = element.second;
 		if (metadata->GetHeadlessValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetHeadlessValue().ToString();
 		}

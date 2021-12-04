@@ -13,7 +13,10 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Net/GameServer.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/BuildingMaskMap.h"
@@ -29,24 +32,25 @@
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/SafeUtil.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/GZFileHandler.h"
 #include "System/Threading/ThreadPool.h"
+#include "System/creg/SerializeLuaState.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
+#define MAX_STRING_SIZE (1 << 19) // 512kB excluding null-term
 
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
-	: iss(nullptr)
 {}
 
-CCregLoadSaveHandler::~CCregLoadSaveHandler()
-{}
+CCregLoadSaveHandler::~CCregLoadSaveHandler() = default;
 
 #ifdef USING_CREG
 class CGameStateCollector
@@ -54,7 +58,7 @@ class CGameStateCollector
 	CR_DECLARE_STRUCT(CGameStateCollector)
 
 public:
-	CGameStateCollector() {}
+	CGameStateCollector() = default;
 
 	void Serialize(creg::ISerializer* s);
 };
@@ -64,6 +68,7 @@ CR_REG_METADATA(CGameStateCollector, (
 	CR_SERIALIZER(Serialize)
 ))
 
+
 void CGameStateCollector::Serialize(creg::ISerializer* s)
 {
 	s->SerializeObjectInstance(gs, gs->GetClass());
@@ -71,31 +76,64 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s->SerializeObjectInstance(game, game->GetClass());
 	s->SerializeObjectInstance(readMap, readMap->GetClass());
-	s->SerializeObjectInstance(quadField, quadField->GetClass());
-	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
+	s->SerializeObjectInstance(&quadField, quadField.GetClass());
+	s->SerializeObjectInstance(&unitHandler, unitHandler.GetClass());
 	s->SerializeObjectInstance(cobEngine, cobEngine->GetClass());
 	s->SerializeObjectInstance(unitScriptEngine, unitScriptEngine->GetClass());
 	s->SerializeObjectInstance(&CNullUnitScript::value, CNullUnitScript::value.GetClass());
-	s->SerializeObjectInstance(featureHandler, featureHandler->GetClass());
+	s->SerializeObjectInstance(&featureHandler, featureHandler.GetClass());
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
-	s->SerializeObjectInstance(buildingMaskMap, buildingMaskMap->GetClass());
-	s->SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
+	s->SerializeObjectInstance(&buildingMaskMap, buildingMaskMap.GetClass());
+	s->SerializeObjectInstance(&projectileHandler, projectileHandler.GetClass());
+	CPlasmaRepulser::SerializeShieldSegmentCollectionPool(s);
+	CColorMap::SerializeColorMaps(s);
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
-	s->SerializeObjectInstance(&wind, wind.GetClass());
-	s->SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
-	s->SerializeObjectInstance(teamHandler, teamHandler->GetClass());
-	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
-		s->SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
+	s->SerializeObjectInstance(&envResHandler, envResHandler.GetClass());
+	s->SerializeObjectInstance(&moveDefHandler, moveDefHandler.GetClass());
+	s->SerializeObjectInstance(&teamHandler, teamHandler.GetClass());
+	for (int a = 0; a < teamHandler.ActiveTeams(); a++) {
+		s->SerializeObjectInstance(&uiGroupHandlers[a], uiGroupHandlers[a].GetClass());
 	}
-	s->SerializeObjectInstance(commandDescriptionCache, commandDescriptionCache->GetClass());
+	s->SerializeObjectInstance(&commandDescriptionCache, commandDescriptionCache.GetClass());
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
+}
+
+
+class CLuaStateCollector
+{
+	CR_DECLARE_STRUCT(CLuaStateCollector)
+
+public:
+	CLuaStateCollector() = default;
+	bool valid;
+	lua_State* L = nullptr;
+	lua_State* L_GC = nullptr;
+	void Serialize(creg::ISerializer* s);
+};
+
+CR_BIND(CLuaStateCollector, )
+CR_REG_METADATA(CLuaStateCollector, (
+	CR_MEMBER(valid),
+	CR_IGNORED(L),
+	CR_IGNORED(L_GC),
+	CR_SERIALIZER(Serialize)
+))
+
+void CLuaStateCollector::Serialize(creg::ISerializer* s) {
+	if (!valid)
+		return;
+
+	creg::SerializeLuaState(s, &L);
+	creg::SerializeLuaThread(s, &L_GC);
 }
 
 static void WriteString(std::ostream& s, const std::string& str)
 {
-	assert(str.length() < (1 << 16));
+	if (str.length() > MAX_STRING_SIZE)
+		throw content_error("[creg::WriteString] string \"" + str + "\" too long");
+
 	s.write(str.c_str(), str.length() + 1);
 }
 
@@ -115,11 +153,45 @@ static void PrintSize(const char* txt, int size)
 
 static void ReadString(std::istream& s, std::string& str)
 {
-	char cstr[1 << 16]; // 64kB
-	s.getline(cstr, sizeof(cstr), 0);
-	str += cstr;
+	char cstr[MAX_STRING_SIZE + 1];
+	s.getline(cstr, sizeof(cstr) - 1, 0);
+	str.clear();
+	str.append(cstr);
 }
 
+
+static void SaveLuaState(CSplitLuaHandle* handle, creg::COutputStreamSerializer& os, std::stringstream& oss)
+{
+	CLuaStateCollector lsc;
+	lsc.valid = (handle != nullptr) && handle->syncedLuaHandle.IsValid();
+	if (lsc.valid) {
+		lsc.L = handle->syncedLuaHandle.GetLuaState();
+		lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
+		lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
+	}
+	os.SavePackage(&oss, &lsc, lsc.GetClass());
+}
+
+
+static void LoadLuaState(CSplitLuaHandle* handle, creg::CInputStreamSerializer& is, std::stringstream& iss)
+{
+	void* plsc;
+	creg::Class* plsccls = nullptr;
+
+	if ((handle != nullptr) && handle->syncedLuaHandle.IsValid())
+		creg::CopyLuaContext(handle->syncedLuaHandle.GetLuaState());
+
+	is.LoadPackage(&iss, plsc, plsccls);
+	assert(plsc && plsccls == CLuaStateCollector::StaticClass());
+	CLuaStateCollector* lsc = static_cast<CLuaStateCollector*>(plsc);
+
+	if ((handle != nullptr) && handle->syncedLuaHandle.IsValid() && lsc->valid)
+		handle->SwapSyncedHandle(lsc->L, lsc->L_GC);
+
+	spring::SafeDelete(lsc);
+	return;
+
+}
 
 
 void CCregLoadSaveHandler::SaveGame(const std::string& path)
@@ -136,13 +208,22 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 		WriteString(oss, modName);
 		WriteString(oss, mapName);
 
-		CGameStateCollector gsc = CGameStateCollector();
 
 		{
-			// save creg state
 			creg::COutputStreamSerializer os;
+
+			// save lua state first as lua unit scripts depend on it
+			const int luaStart = oss.tellp();
+			SaveLuaState(luaGaia, os, oss);
+			SaveLuaState(luaRules, os, oss);
+			PrintSize("Lua", ((int)oss.tellp()) - luaStart);
+
+			// save creg state
+			const int gameStart = oss.tellp();
+			CGameStateCollector gsc;
 			os.SavePackage(&oss, &gsc, gsc.GetClass());
-			PrintSize("Game", oss.tellp());
+			PrintSize("Game", ((int)oss.tellp()) - gameStart);
+
 
 			// save AI state
 			const int aiStart = oss.tellp();
@@ -153,13 +234,14 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 				std::streamsize aiSize = aiData.tellp();
 				os.SerializeInt(&aiSize, sizeof(aiSize));
-				oss << aiData.rdbuf();
+				if (aiSize > 0)
+					oss << aiData.rdbuf();
 			}
 			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
 		}
 
 		{
-			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
+			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb5");
 
 			if (file == nullptr) {
 				LOG_L(L_ERROR, "[LSH::%s] could not open save-file", __func__);
@@ -195,46 +277,35 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 #endif //USING_CREG
 }
 
-/// this just loads the mapname and some other early stuff
-void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
+/// loads the data (map&mod-name,setup-script) needed by PreGame
+bool CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 {
 	CGZFileHandler saveFile(dataDirsAccess.LocateFile(FindSaveFile(path)), SPRING_VFS_RAW_FIRST);
-	iss = new std::stringstream;
-	std::stringbuf *sbuf = iss->rdbuf();
+
+	std::stringbuf* sbuf = iss.rdbuf();
+	std::string saveVersion;
+	std::string syncVersion = SpringVersion::GetSync();
+
 	char buf[4096];
 	int len;
 	while ((len = saveFile.Read(buf, sizeof(buf))) > 0)
 		sbuf->sputn(buf, len);
 
-	//Check for compatible save versions
-	std::string saveVersion;
-	ReadString(*iss, saveVersion);
-	if (saveVersion != SpringVersion::GetSync()) {
-		if (SpringVersion::IsRelease()) {
-			throw content_error("File was saved by an incompatible engine version: " + saveVersion);
-		} else {
-			LOG_L(L_WARNING, "File was saved by a different engine version: %s", saveVersion.c_str());
-		}
-	}
+	ReadString(iss, saveVersion);
 
+	// check saved engine version against current build
+	// in general these will *not* be binary-compatible
+	// (so prefer to terminate loading from PreGame)
+	if (saveVersion != syncVersion)
+		LOG_L(L_WARNING, "[LSH::%s][release=%d] file \"%s\" saved by engine version \"%s\" incompatible with \"%s\"", __func__, SpringVersion::IsRelease(), path.c_str(), saveVersion.c_str(), syncVersion.c_str());
 
-	// in case these contained values alredy
-	// (this is the case when loading a game through the spring menu eg),
-	// we set them to empty strings, as ReadString() does append,
-	// and we would end up with the correct value but two times
-	// eg: "AbcAbc" instead of "Abc"
-
-	//FIXME remove
-	scriptText = "";
-	modName = "";
-	mapName = "";
-
-	// read our own header.
-	ReadString(*iss, scriptText);
-	ReadString(*iss, modName);
-	ReadString(*iss, mapName);
+	// read our own header
+	ReadString(iss, scriptText);
+	ReadString(iss, modName);
+	ReadString(iss, mapName);
 
 	CGameSetup::LoadSavedScript(path, scriptText);
+	return (saveVersion == syncVersion);
 }
 
 /// this should be called on frame 0 when the game has started
@@ -242,34 +313,40 @@ void CCregLoadSaveHandler::LoadGame()
 {
 #ifdef USING_CREG
 	ENTER_SYNCED_CODE();
+	{
+		creg::CInputStreamSerializer inputStream;
 
-	void* pGSC = nullptr;
-	creg::Class* gsccls = nullptr;
+		// load lua state first, as lua unit scripts depend on it
+		LoadLuaState(luaGaia, inputStream, iss);
+		LoadLuaState(luaRules, inputStream, iss);
 
-	// load creg state
-	creg::CInputStreamSerializer inputStream;
-	inputStream.LoadPackage(iss, pGSC, gsccls);
-	assert(pGSC && gsccls == CGameStateCollector::StaticClass());
+		// load creg state
+		void* pGSC = nullptr;
+		creg::Class* gsccls = nullptr;
 
-	// the only job of gsc is to collect gamestate data
-	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
-	spring::SafeDelete(gsc);
+		inputStream.LoadPackage(&iss, pGSC, gsccls);
+		assert(pGSC && gsccls == CGameStateCollector::StaticClass());
 
-	// load ai state
-	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
-		std::streamsize aiSize;
-		inputStream.SerializeInt(&aiSize, sizeof(aiSize));
+		// the only job of gsc is to collect gamestate data
+		CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
+		spring::SafeDelete(gsc);
 
-		std::vector<char> buffer(aiSize);
-		std::stringstream aiData;
-		iss->read(buffer.data(), buffer.size());
-		aiData.write(buffer.data(), buffer.size());
+		// load ai state
+		for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+			std::streamsize aiSize;
+			inputStream.SerializeInt(&aiSize, sizeof(aiSize));
 
-		eoh->Load(&aiData, ai.first);
+			std::vector<char> buffer(aiSize);
+			std::stringstream aiData;
+			iss.read(buffer.data(), buffer.size());
+			aiData.write(buffer.data(), buffer.size());
+
+			eoh->Load(&aiData, ai.first);
+		}
 	}
 
 	// cleanup
-	spring::SafeDelete(iss);
+	iss.str("");
 
 	gs->paused = false;
 	if (gameServer != nullptr) {

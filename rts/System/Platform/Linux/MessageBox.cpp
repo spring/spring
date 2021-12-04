@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -27,18 +27,19 @@ namespace Platform {
  * could be found, or the used program returned an error) the message is
  * written to stderr.
  */
-void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
+void MsgBox(const char* message, const char* caption, unsigned int flags)
 {
-	char caption2[100];
-	char msg2[1000];
+	char cap[1024];
+	char msg[1024];
 	pid_t pid;
-	int status, len;
+	int status;
+	int len;
 
-	strncpy(caption2, caption.c_str(), sizeof(caption2) - 2);
-	strncpy(msg2, message.c_str(), sizeof(msg2) - 2);
+	strncpy(cap, caption, sizeof(cap) - 2);
+	strncpy(msg, message, sizeof(msg) - 2);
 
-	caption2[sizeof(caption2) - 2] = 0;
-	msg2[sizeof(msg2) - 2] = 0;
+	cap[sizeof(cap) - 2] = 0;
+	msg[sizeof(msg) - 2] = 0;
 
 	/*
 	 * xmessage interprets some strings beginning with '-' as command-line
@@ -49,19 +50,16 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 	 * as a non-option argument.
 	 */
 
-	len = strlen(caption2);
-	if (len == 0 || caption2[len - 1] != '\n')
-		strcat(caption2, "\n");
+	if ((len = strlen(cap)) == 0 || cap[len - 1] != '\n')
+		strcat(cap, "\n");
 
-	len = strlen(msg2);
-	if (len == 0 || msg2[len - 1] != '\n')
-		strcat(msg2, "\n");
+	if ((len = strlen(msg)) == 0 || msg[len - 1] != '\n')
+		strcat(msg, "\n");
 
 	// fork a child
-	pid = fork();
-	switch (pid) {
-		case 0: // child process
-		{
+	switch (pid = fork()) {
+		case 0: {
+			// child process
 			const char* kde   = getenv("KDE_FULL_SESSION");
 			const char* gnome = getenv("GNOME_DESKTOP_SESSION_ID");
 			const char* type = "--error";
@@ -79,7 +77,7 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 				else if (flags & MBF_INFO) {
 					type = "--info";
 				}
-				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
+				execlp("zenity", "zenity", "--title", cap, type, "--text", msg, (char*)nullptr);
 			}
 			if (kde && strstr(kde, "true")) {
 				if (flags & MBF_CRASH) {
@@ -91,26 +89,26 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 				else if (flags & MBF_INFO) {
 					type = "--msgbox";
 				}
-				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)NULL);
+				execlp("kdialog", "kdialog", "--title", cap, type, msg, (char*)nullptr);
 			}
-			execlp("xmessage", "xmessage", "-title", caption2, "-buttons", "OK:0", "-default", "OK", "-center", msg2, (char*)NULL);
+			execlp("xmessage", "xmessage", "-title", cap, "-buttons", "OK:0", "-default", "OK", "-center", msg, (char*)nullptr);
 
 			// if execution reaches here, it means execlp failed
 			_exit(EXIT_FAILURE);
-			break;
-		}
-		default: // parent process
-		{
+		} break;
+
+		default: {
+			// parent process
 			waitpid(pid, &status, 0);
+
 			const bool okButton = (!WIFEXITED(status) || (WEXITSTATUS(status) != 0));
-			if (!okButton) {
+
+			if (!okButton)
 				break;
-			}
 		}
-		case -1: // fork error
-		{
-			// I kept this basically the same as the original
-			// console-only error reporting.
+
+		case -1: {
+			// fork error
 			if (flags & MBF_INFO) {
 				fputs("Info: ", stderr);
 			} else if (flags & MBF_EXCL) {
@@ -118,11 +116,10 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 			} else {
 				fputs("Error: ", stderr);
 			}
-			fputs(caption2, stderr);
+			fputs(cap, stderr);
 			fputs("  ", stderr);
-			fputs(msg2, stderr);
-			break;
-		}
+			fputs(msg, stderr);
+		} break;
 	}
 }
 

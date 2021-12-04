@@ -196,11 +196,12 @@ bool List::MouseUpdate(int x, int y)
 
 void List::DrawSelf()
 {
-	const float opacity = Opacity();
-	font->Begin();
-	float hf = font->GetSize() / ScaleFactor();
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 
-	font->SetTextColor(1,1,0.4f,opacity);
+	const float opacity = Opacity();
+	const float hf = font->GetSize() / ScaleFactor();
+
+	font->SetTextColor(1.0f, 1.0f, 0.4f, opacity);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
@@ -214,86 +215,88 @@ void List::DrawSelf()
 	// Skip to current selection - 3; ie: scroll
 	UpdateTopIndex();
 
-	while (nCurIndex < topIndex) { ++ii; nCurIndex++; }
+	ii += std::max(0, topIndex - nCurIndex);
+	nCurIndex = topIndex;
 
 	const int numDisplay = NumDisplay();
 
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
-	glLineWidth(1.0f);
+	font->SetTextDepth(depth);
 
 	float sbX = b.GetPos()[0];
 	float sbY1 = b.GetPos()[1] + (itemHeight + itemSpacing);
 
-	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
-	{
-		glColor4f(1,1,1,opacity/4.f);
-		b.DrawBox(GL_LINE_LOOP);
+	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii) {
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity * 0.25f);
+		b.DrawOutline();
 
 		if (nCurIndex == place) {
-			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0.2f,0,0,opacity);
-			b.DrawBox(GL_QUADS);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,0,0,opacity/2.f);
-			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
-			glLineWidth(1.0f);
+			glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
+			gui->SetColor(0.2f, 0.0f, 0.0f, opacity);
+			b.DrawBox();
+			glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			gui->SetColor(1.0f, 0.0f, 0.0f, opacity / 2.0f);
+			b.DrawOutline();
 		} else if (b.MouseOver(mx, my)) {
-			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0,0,0.2f,opacity);
-			b.DrawBox(GL_QUADS);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,1,1,opacity/2.f);
-			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
-			glLineWidth(1.0f);
+			glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
+			gui->SetColor(0.0f, 0.0f, 0.2f, opacity);
+			b.DrawBox();
+			glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
+			b.DrawOutline();
 		}
 
-		font->glPrint(pos[0]+borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
+		font->glPrint(pos[0] + borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, *ii);
 
-		// Up our index's
-		nCurIndex++; nDrawOffset++;
+		nCurIndex++;
+		nDrawOffset++;
 		b.Move(0.0,  - (itemHeight + itemSpacing));
 	}
 
-	//scrollbar
-	if(nDrawOffset < filteredItems->size()) {
-		float sbY2 = b.GetPos()[1] + (itemHeight + itemSpacing);
-		float sbHeight = sbY1 - sbY2;
-		float sbSize = ((float)nDrawOffset / (float)filteredItems->size()) * sbHeight;
+	gui->SetDrawMode(Gui::DrawMode::FONT);
+	font->DrawBufferedGL4(gui->GetShader());
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 
-		if(activeScrollbar) {
-			topIndex = std::max(0, std::min((int)(((float)filteredItems->size() * ((sbY1 - sbSize) - (my - std::min(scrollbarGrabPos, sbSize))) / sbHeight) + 0.5f),
-				(int)filteredItems->size() - numDisplay));
+	// scrollbar
+	if (nDrawOffset < filteredItems->size()) {
+		const float sbY2 = b.GetPos()[1] + (itemHeight + itemSpacing);
+		const float sbHeight = sbY1 - sbY2;
+		const float sbSize = (nDrawOffset * 1.0f / filteredItems->size()) * sbHeight;
+
+		if (activeScrollbar) {
+			const float dify = my - std::min(scrollbarGrabPos, sbSize);
+			const float rely = ((sbY1 - sbSize) - dify) / sbHeight;
+
+			const int minIndex = (filteredItems->size() * rely) + 0.5f;
+			const int endIndex = filteredItems->size() - numDisplay;
+
+			topIndex = std::min(minIndex, endIndex);
+			topIndex = std::max(0, topIndex);
 		}
 
-		scrollbar.SetPos(sbX + (size[0] - 2.0f * borderSpacing) - (itemHeight + itemSpacing),
-							sbY1 - sbSize - ((float)topIndex / (float)filteredItems->size()) * sbHeight);
+		scrollbar.SetPos(
+			sbX + (size[0] - 2.0f * borderSpacing) - (itemHeight + itemSpacing),
+			sbY1 - sbSize - ((float)topIndex / (float)filteredItems->size()) * sbHeight
+		);
 		scrollbar.SetSize((itemHeight + itemSpacing) , sbSize);
 
 		b.SetPos(scrollbar.GetPos()[0], sbY2);
 		b.SetSize(itemHeight + itemSpacing, sbHeight);
 
-		glColor4f(1,1,1,opacity/4.f);
-		b.DrawBox(GL_LINE_LOOP);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 4.0f);
+		b.DrawOutline();
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.8f,0.8f,0.8f,opacity);
-		scrollbar.DrawBox(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1,1,1,opacity/2.f);
-		glLineWidth(1.49f);
-		scrollbar.DrawBox(GL_LINE_LOOP);
-		glLineWidth(1.0f);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(0.8f, 0.8f, 0.8f, opacity);
+		scrollbar.DrawBox();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
+		scrollbar.DrawOutline();
+		return;
 	}
-	else
-		scrollbar.SetSize(-1,-1);
-	/**************
-	* End insert *
-	**************/
 
-	font->End();
+	scrollbar.SetSize(-1, -1);
 }
 
 bool List::HandleEventSelf(const SDL_Event& ev)

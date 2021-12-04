@@ -12,19 +12,14 @@
 using namespace netcode;
 
 GameData::GameData()
-	: mapChecksum(0)
-	, modChecksum(0)
-	, randomSeed(0)
 {
+	std::memset(mapChecksum, 0, sizeof(mapChecksum));
+	std::memset(modChecksum, 0, sizeof(modChecksum));
 }
-
-
-GameData::GameData(const std::string& setup)
-	: setupText(setup)
-	, mapChecksum(0)
-	, modChecksum(0)
-	, randomSeed(0)
+GameData::GameData(const std::string& setup): setupText(setup)
 {
+	std::memset(mapChecksum, 0, sizeof(mapChecksum));
+	std::memset(modChecksum, 0, sizeof(modChecksum));
 }
 
 GameData::GameData(std::shared_ptr<const RawPacket> pckt)
@@ -46,8 +41,9 @@ GameData::GameData(std::shared_ptr<const RawPacket> pckt)
 	// avoid reinterpret_cast; buffer is not null-terminated
 	setupText = {buffer.begin(), buffer.end()};
 
-	packet >> mapChecksum;
-	packet >> modChecksum;
+	for (auto& checksum: mapChecksum) { packet >> checksum; }
+	for (auto& checksum: modChecksum) { packet >> checksum; }
+
 	packet >> randomSeed;
 }
 
@@ -59,13 +55,15 @@ const netcode::RawPacket* GameData::Pack() const
 	assert(!compressed.empty());
 	assert(compressed.size() <= std::numeric_limits<std::uint16_t>::max());
 
-	const std::uint16_t size = 3 + 2 * sizeof(std::uint32_t) + compressed.size() + 2 + 4;
+	const std::uint16_t size = 3 + sizeof(mapChecksum) + sizeof(modChecksum) + compressed.size() + 2 + sizeof(uint32_t);
 	PackPacket* buffer = new PackPacket(size, NETMSG_GAMEDATA);
 	*buffer << size;
 	*buffer << std::uint16_t(compressed.size());
 	*buffer << compressed;
-	*buffer << mapChecksum;
-	*buffer << modChecksum;
+
+	for (auto& checksum: mapChecksum) { *buffer << checksum; }
+	for (auto& checksum: modChecksum) { *buffer << checksum; }
+
 	*buffer << randomSeed;
 	return buffer;
 }
@@ -76,17 +74,3 @@ void GameData::SetSetupText(const std::string& newSetup)
 	compressed.clear();
 }
 
-void GameData::SetMapChecksum(const unsigned checksum)
-{
-	mapChecksum = checksum;
-}
-
-void GameData::SetModChecksum(const unsigned checksum)
-{
-	modChecksum = checksum;
-}
-
-void GameData::SetRandomSeed(const unsigned seed)
-{
-	randomSeed = seed;
-}

@@ -2,6 +2,7 @@
 
 #include "LuaMenuController.h"
 
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaInputReceiver.h"
@@ -9,6 +10,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/FileSystem/VFSHandler.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 
 CONFIG(std::string, DefaultLuaMenu).defaultValue("").description("Sets the default menu to be used when spring is started.");
@@ -34,24 +36,29 @@ CLuaMenuController::CLuaMenuController(const std::string& menuName)
 CLuaMenuController::~CLuaMenuController()
 {
 	CLuaMenu::FreeHandler();
-
-	spring::SafeDelete(mouse);
-	spring::SafeDelete(infoConsole);
 }
 
 
-void CLuaMenuController::Reset()
+bool CLuaMenuController::Reset()
 {
-	if (!Valid())
-		return;
+	if (!Valid()) {
+		// if no LuaMenu, cursor will not be updated (again) until game exists so force a reset
+		// calling ReloadCursors here is not possible since no archives are loaded at this point
+		mouse->ResetCursor();
+		return false;
+	}
 
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
+
+	// lock should not be needed here, but does no harm either
+	vfsHandler->GrabLock();
+	vfsHandler->SetName("LuaMenuVFS");
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
+	vfsHandler->SetName("SpringVFS");
+	vfsHandler->FreeLock();
 
-	mouse = CMouseHandler::GetOrReloadInstance();
-
-	if (infoConsole == nullptr)
-		infoConsole = new CInfoConsole();
+	mouse->ReloadCursors();
+	return true;
 }
 
 bool CLuaMenuController::Activate(const std::string& msg)
@@ -88,7 +95,7 @@ bool CLuaMenuController::Draw()
 	// we should not become the active controller unless this holds (see ::Activate)
 	assert(luaMenu != nullptr);
 
-	eventHandler.CollectGarbage();
+	eventHandler.CollectGarbage(false);
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
 	mouse->UpdateCursors();
@@ -135,3 +142,8 @@ int CLuaMenuController::TextInput(const std::string& utf8Text)
 	return 0;
 }
 
+int CLuaMenuController::TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length)
+{
+	eventHandler.TextEditing(utf8Text, start, length);
+	return 0;
+}

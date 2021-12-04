@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/TAPalette.h"
 #include "System/float4.h"
 #include "System/UnorderedMap.hpp"
 
@@ -17,8 +18,8 @@ class C3DOTextureHandler
 public:
 	typedef float4 UnitTexture;
 
-	C3DOTextureHandler();
-	~C3DOTextureHandler();
+	void Init();
+	void Kill();
 
 	// NOTE: safe with unordered_map after all textures have been loaded
 	UnitTexture* Get3DOTexture(const std::string& name);
@@ -38,12 +39,14 @@ private:
 private:
 	spring::unordered_map<std::string, UnitTexture> textures;
 
-	GLuint atlas3do1;
-	GLuint atlas3do2;
-	int bigTexX;
-	int bigTexY;
+	CTAPalette palette;
+
+	GLuint atlas3do1 = 0;
+	GLuint atlas3do2 = 0;
+	int bigTexX = 0;
+	int bigTexY = 0;
 };
 
-extern C3DOTextureHandler* texturehandler3DO;
+extern C3DOTextureHandler textureHandler3DO;
 
 #endif /* _3DO_TEXTURE_HANDLER_H */

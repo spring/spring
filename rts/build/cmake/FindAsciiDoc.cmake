@@ -49,6 +49,9 @@ find_file(DOCBOOK_XSL
 
 IF    (NOT DOCBOOK_XSL)
 	file(GLOB DOCBOOK_XSL / /usr/share/xml/docbook/xsl-stylesheets-*/manpages/docbook.xsl)
+	IF    (DOCBOOK_XSL)
+		list(GET DOCBOOK_XSL 0 DOCBOOK_XSL)
+	ENDIF (DOCBOOK_XSL)
 ENDIF (NOT DOCBOOK_XSL)
 
 # handle the QUIETLY and REQUIRED arguments and set ASCIIDOC_FOUND to TRUE if

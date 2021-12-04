@@ -2,12 +2,11 @@
 
 #include "DGunWeapon.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED_POOL(CDGunWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CDGunWeapon, CWeapon, )
 CR_REG_METADATA(CDGunWeapon, )
 
 

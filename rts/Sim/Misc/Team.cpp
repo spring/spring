@@ -13,9 +13,11 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/MsgStrings.h"
+#include "System/Log/ILog.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
@@ -24,11 +26,12 @@
 CR_BIND_DERIVED(CTeam, TeamBase, )
 CR_REG_METADATA(CTeam, (
 	CR_MEMBER(teamNum),
+	CR_MEMBER(numUnits),
 	CR_MEMBER(maxUnits),
+
 	CR_MEMBER(isDead),
 	CR_MEMBER(gaia),
-	CR_MEMBER(origColor),
-	CR_MEMBER(units),
+
 	CR_MEMBER(res),
 	CR_MEMBER(resStorage),
 	CR_MEMBER(resPull),
@@ -57,14 +60,15 @@ CR_REG_METADATA(CTeam, (
 
 CTeam::CTeam():
 	teamNum(-1),
+	numUnits(0),
 	maxUnits(0),
+
 	isDead(false),
 	gaia(false),
-	removeUnits(true),
+
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
-	origColor(0, 0, 0, 0),
 	highlight(0.0f)
 {
 	statHistory.reserve(1024);
@@ -73,7 +77,7 @@ CTeam::CTeam():
 
 void CTeam::SetDefaultStartPos()
 {
-	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const int allyTeam = teamHandler.AllyTeam(teamNum);
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 
 	assert(!allyStartData.empty());
@@ -91,13 +95,13 @@ void CTeam::SetDefaultStartPos()
 	assert(xcenter >= 0 && xcenter < mapDims.mapx * SQUARE_SIZE);
 	assert(zcenter >= 0 && zcenter < mapDims.mapy * SQUARE_SIZE);
 
-	startPos.x = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
-	startPos.z = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+	startPos.x = (teamNum - teamHandler.ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+	startPos.z = (teamNum - teamHandler.ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
 }
 
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
-	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const int allyTeam = teamHandler.AllyTeam(teamNum);
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	const SRectangle rect(
@@ -116,42 +120,49 @@ void CTeam::ClampStartPosInStartBox(float3* pos) const
 
 bool CTeam::UseMetal(float amount)
 {
-	if (res.metal >= amount) {
-		res.metal -= amount;
-		resExpense.metal += amount;
-		return true;
-	}
-	return false;
+	if (res.metal < amount)
+		return false;
+
+	res.metal -= amount;
+	resExpense.metal += amount;
+	return true;
 }
 
 bool CTeam::UseEnergy(float amount)
 {
-	if (res.energy >= amount) {
-		res.energy -= amount;
-		resExpense.energy += amount;
-		return true;
-	}
-	return false;
+	if (res.energy < amount)
+		return false;
+
+	res.energy -= amount;
+	resExpense.energy += amount;
+	return true;
 }
 
 
 
 void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res.metal += amount;
 	resIncome.metal += amount;
-	if (res.metal > resStorage.metal) {
-		resDelayedShare.metal += (res.metal - resStorage.metal);
-		res.metal = resStorage.metal;
-	}
+
+	if (res.metal <= resStorage.metal)
+		return;
+
+	resDelayedShare.metal += (res.metal - resStorage.metal);
+	res.metal = resStorage.metal;
 }
 
 void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res.energy += amount;
 	resIncome.energy += amount;
+
 	if (res.energy > resStorage.energy) {
 		resDelayedShare.energy += (res.energy - resStorage.energy);
 		res.energy = resStorage.energy;
@@ -167,60 +178,56 @@ bool CTeam::HaveResources(const SResourcePack& amount) const
 
 void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res += amount;
 	resIncome += amount;
+
 	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
-		if (res[i] > resStorage[i]) {
-			resDelayedShare[i] += (res[i] - resStorage[i]);
-			res[i] = resStorage[i];
-		}
+		if (res[i] <= resStorage[i])
+			continue;
+
+		resDelayedShare[i] += (res[i] - resStorage[i]);
+		res[i] = resStorage[i];
 	}
 }
 
-
 bool CTeam::UseResources(const SResourcePack& amount)
 {
-	if (res >= amount) {
-		res -= amount;
-		resExpense += amount;
-		return true;
-	}
-	return false;
+	if (!(res >= amount))
+		return false;
+
+	res -= amount;
+	resExpense += amount;
+	return true;
 }
 
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
-	CTeam* target = teamHandler->Team(toTeam);
+	CTeam* target = teamHandler.Team(toTeam);
 
-	if (!target) {
-		LOG_L(L_WARNING, "Team %i does not exist, can't give units", toTeam);
+	if (target == nullptr) {
+		LOG_L(L_WARNING, "[Team::%s] team %i does not exist, can't give units", __func__, toTeam);
 		return;
 	}
 
 	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "m", res.metal)) {
 		target->res.metal += res.metal;
-		res.metal = 0;
+		res.metal = 0.0f;
 	}
 	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "e", res.energy)) {
 		target->res.energy += res.energy;
-		res.energy = 0;
+		res.energy = 0.0f;
 	}
 
-	{
-		// block RemoveUnit from creating a loop-and-modify
-		// situation for units that end up being transferred
-		removeUnits = false;
+	const auto& teamUnits = unitHandler.GetUnitsByTeam(teamNum);
 
-		for (CUnit* u: units) {
-			u->ChangeTeam(toTeam, CUnit::ChangeGiven);
-		}
-
-		removeUnits = true;
+	// NB: can not be a ranged loop since ChangeTeam removes [i] from teamUnits on success
+	for (size_t i = 0; i < teamUnits.size(); ) {
+		i += (!teamUnits[i]->ChangeTeam(toTeam, CUnit::ChangeGiven));
 	}
-
-	units.clear();
 }
 
 
@@ -237,15 +244,15 @@ void CTeam::Died(bool normalDeath)
 	}
 
 	// demote all players in _this_ team to spectators
-	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-		if (playerHandler->Player(a)->team == teamNum) {
-			playerHandler->Player(a)->StartSpectating();
-			playerHandler->Player(a)->SetControlledTeams();
+	for (int a = 0; a < playerHandler.ActivePlayers(); ++a) {
+		if (playerHandler.Player(a)->team == teamNum) {
+			playerHandler.Player(a)->StartSpectating();
+			playerHandler.Player(a)->SetControlledTeams();
 		}
 	}
 
 	// increase per-team unit-limit for each remaining team in _our_ allyteam
-	teamHandler->UpdateTeamUnitLimitsPreDeath(teamNum);
+	teamHandler.UpdateTeamUnitLimitsPreDeath(teamNum);
 	eventHandler.TeamDied(teamNum);
 
 	isDead = true;
@@ -255,24 +262,22 @@ void CTeam::AddPlayer(int playerNum)
 {
 	// note: does it matter if this team was already dead?
 	// (besides needing to restore its original unit-limit)
-	if (isDead) {
-		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
-	}
+	if (isDead)
+		teamHandler.UpdateTeamUnitLimitsPreSpawn(teamNum);
 
-	if (!HasLeader()) {
+	if (!HasLeader())
 		SetLeader(playerNum);
-	}
 
-	playerHandler->Player(playerNum)->JoinTeam(teamNum);
-	playerHandler->Player(playerNum)->SetControlledTeams();
+	playerHandler.Player(playerNum)->JoinTeam(teamNum);
+	playerHandler.Player(playerNum)->SetControlledTeams();
 
 	isDead = false;
 }
 
 void CTeam::KillAIs()
 {
-	for (const auto& id: skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum)) {
-		skirmishAIHandler.SetLocalSkirmishAIDieing(id, 2 /* = team died */);
+	for (const uint8_t id: skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum)) {
+		skirmishAIHandler.SetLocalKillFlag(id, 2 /* = team died */);
 	}
 }
 
@@ -300,15 +305,17 @@ void CTeam::ResetResourceState()
 void CTeam::SlowUpdate()
 {
 	TeamStatistics& currentStats = GetCurrentStats();
-	float eShare = 0.0f, mShare = 0.0f;
+
+	float eShare = 0.0f;
+	float mShare = 0.0f;
 
 	// calculate the total amount of resources that all
 	// (allied) teams can collectively receive through
 	// sharing
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		CTeam* team = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		CTeam* team = teamHandler.Team(a);
 
-		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
+		if ((a != teamNum) && (teamHandler.AllyTeam(teamNum) == teamHandler.AllyTeam(a))) {
 			if (team->isDead)
 				continue;
 
@@ -330,14 +337,15 @@ void CTeam::SlowUpdate()
 	const float eExcess = std::max(0.0f, res.energy - (resStorage.energy * resShare.energy));
 	const float mExcess = std::max(0.0f, res.metal  - (resStorage.metal  * resShare.metal));
 
-	float de = 0.0f, dm = 0.0f;
+	float de = 0.0f;
+	float dm = 0.0f;
 	if (eShare > 0.0f) { de = std::min(1.0f, eExcess / eShare); }
 	if (mShare > 0.0f) { dm = std::min(1.0f, mExcess / mShare); }
 
 	// now evenly distribute our excess resources among allied teams
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
-			CTeam* team = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		if ((a != teamNum) && (teamHandler.AllyTeam(teamNum) == teamHandler.AllyTeam(a))) {
+			CTeam* team = teamHandler.Team(a);
 			if (team->isDead)
 				continue;
 
@@ -385,75 +393,76 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	spring::VectorInsertUnique(units, unit, false);
+	numUnits++;
+
 	switch (type) {
 		case AddBuilt: {
 			GetCurrentStats().unitsProduced++;
-			break;
-		}
+		} break;
 		case AddGiven: {
 			GetCurrentStats().unitsReceived++;
-			break;
-		}
+		} break;
 		case AddCaptured: {
 			GetCurrentStats().unitsCaptured++;
-			break;
-		}
+		} break;
 	}
 }
 
 
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
-	if (removeUnits)
-		spring::VectorErase(units, unit);
+	numUnits--;
 
 	switch (type) {
 		case RemoveDied: {
 			GetCurrentStats().unitsDied++;
-			break;
-		}
+		} break;
 		case RemoveGiven: {
 			GetCurrentStats().unitsSent++;
-			break;
-		}
+		} break;
 		case RemoveCaptured: {
 			GetCurrentStats().unitsOutCaptured++;
-			break;
-		}
+		} break;
 	}
 }
 
-std::string CTeam::GetControllerName() const {
-	std::string s;
+void CTeam::UpdateControllerName() {
+	// format is "Joe[, AI: ABCAI 0.1 ('Killer')[, AI: DEFAI 1.2 ('Slayer')[, ...]]]"
+	memset(controllerName, 0, sizeof(controllerName));
 
-	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
-	if (HasLeader()) {
-		const CPlayer* leadPlayer = playerHandler->Player(leader);
+	if (!HasLeader()) {
+		std::snprintf(controllerName, sizeof(controllerName), "%s", UncontrolledPlayerName.c_str());
+		return;
+	}
 
-		if (leadPlayer->team != this->teamNum) {
-			const CTeam*   realLeadPlayerTeam = teamHandler->Team(leadPlayer->team);
-			const CPlayer* realLeadPlayer     = NULL;
+	const CPlayer* leadPlayer = playerHandler.Player(leader);
+	char* ptr = controllerName;
 
-			if (realLeadPlayerTeam->HasLeader()) {
-				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->GetLeader());
-				s = realLeadPlayer->name;
-			} else {
-				s = "N/A"; // weird
-			}
-		} else {
-			s = leadPlayer->name;
-		}
-
-		for (const auto& aiId: skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum)) {
-			const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiId);
-			const std::string prefix = "AI: " + aiData->shortName + " " + aiData->version + " ";
-			const std::string pstfix = "(nick: " + aiData->name + ")";
-			s += ", " + prefix + pstfix;
-		}
+	if (leadPlayer->team == this->teamNum) {
+		ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", leadPlayer->name.c_str());
 	} else {
-		s = UncontrolledPlayerName;
+		const CTeam*   realLeadPlayerTeam = teamHandler.Team(leadPlayer->team);
+		const CPlayer* realLeadPlayer     = nullptr;
+
+		if (realLeadPlayerTeam->HasLeader()) {
+			realLeadPlayer = playerHandler.Player(realLeadPlayerTeam->GetLeader());
+
+			ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", realLeadPlayer->name.c_str());
+		} else {
+			ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", "N/A"); // weird
+		}
 	}
 
-	return s;
+	for (const auto& aiId: skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum)) {
+		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiId);
+
+		const char* vs = aiData->version.c_str();
+		const char* sn = aiData->shortName.c_str();
+		const char* nn = aiData->name.c_str();
+
+		ptr += snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), ", AI: %s %s ('%s')", sn, vs, nn);
+	}
+
+	controllerName[sizeof(controllerName) - 1] = 0;
 }
+

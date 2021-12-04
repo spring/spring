@@ -1,24 +1,25 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Game/GameHelper.h"
+#include "Map/Ground.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Sim/Features/Feature.h"
+#include "Sim/Misc/DamageArray.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileParams.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Misc/DamageArray.h"
-#include "Sim/Misc/InterceptHandler.h"
-#include "Sim/Misc/QuadField.h"
-#include "Map/Ground.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
 
 
@@ -90,20 +91,27 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		SetRadiusAndHeight((targetPos - startPos).Length(), 0.0f);
 	}
 
-	collisionFlags = weaponDef->collisionFlags;
-	weaponNum = params.weaponNum;
-	alwaysVisible = weaponDef->visuals.alwaysVisible;
-	ignoreWater = weaponDef->waterweapon;
+	{
+		myrange = weaponDef->range;
 
-	CSolidObject* so = nullptr;
-	CWeaponProjectile* po = nullptr;
+		collisionFlags = weaponDef->collisionFlags;
+		weaponNum = params.weaponNum;
 
-	if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
-		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
+		alwaysVisible = weaponDef->visuals.alwaysVisible;
+		ignoreWater = weaponDef->waterweapon;
+	}
 
-	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
-		po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
-		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
+	{
+		CSolidObject* so = nullptr;
+		CWeaponProjectile* po = nullptr;
+
+		if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
+			AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
+
+		if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
+			po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
+			AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
+		}
 	}
 
 	if (params.model != nullptr) {
@@ -116,16 +124,23 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
-		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
+		allyteamID = teamHandler.IsValidTeam(teamID)? teamHandler.AllyTeam(teamID): -1;
 	}
 
 	if (ownerID != -1u && weaponNum != -1u) {
-		const CUnit* owner = unitHandler->GetUnit(ownerID);
+		const CUnit* owner = unitHandler.GetUnit(ownerID);
+		const CWeapon* weapon = (owner != nullptr && weaponNum < owner->weapons.size())? owner->weapons[weaponNum]: nullptr;
 
-		if (owner != nullptr && weaponNum < owner->weapons.size())
-			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
+		if (weapon != nullptr) {
+			damages = DynDamageArray::IncRef(weapon->damages);
 
+			myrange = weapon->range;
+
+			// inherit from weapon instance if possible since Lua can change the flags at runtime
+			collisionFlags = weapon->collisionFlags;
+		}
 	}
+
 	if (damages == nullptr)
 		damages = DynDamageArray::IncRef(&weaponDef->damages);
 
@@ -136,8 +151,8 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	}
 
 	// must happen after setting position and velocity
-	projectileHandler->AddProjectile(this);
-	quadField->AddProjectile(this);
+	projectileHandler.AddProjectile(this);
+	quadField.AddProjectile(this);
 
 	ASSERT_SYNCED(id);
 
@@ -182,11 +197,12 @@ void CWeaponProjectile::Explode(
 
 	helper->Explosion(params);
 
-	if (!weaponDef->noExplode || TraveledRange()) {
-		// remove ourselves from the simulation (otherwise
-		// keep traveling and generating more explosions)
-		CProjectile::Collision();
-	}
+	if (weaponDef->noExplode && !TraveledRange())
+		return;
+
+	// remove ourselves from the simulation (otherwise
+	// keep traveling and generating more explosions)
+	CProjectile::Collision();
 }
 
 void CWeaponProjectile::Collision()
@@ -320,7 +336,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 		// SetPosition(bounceHitPos + speed * (1.0f - bounceParams.z));
 		SetPosition(bounceHitPos + dir * moveDistance);
 
-		explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, bounceHitPos, bounceNormal, speed.w, 1.0f, 1.0f, owner(), nullptr);
+		explGenHandler.GenExplosion(weaponDef->bounceExplosionGeneratorID, bounceHitPos, bounceNormal, speed.w, 1.0f, 1.0f, owner(), nullptr);
 
 		bounced = false;
 	}
@@ -329,15 +345,10 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
-bool CWeaponProjectile::TraveledRange() const
+void CWeaponProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
-}
-
-
-void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
-{
-	points.AddVertexQC(pos, color4::yellow);
+	va->SafeAppend({pos        , color4::yellow});
+	va->SafeAppend({pos + speed, color4::yellow});
 }
 
 

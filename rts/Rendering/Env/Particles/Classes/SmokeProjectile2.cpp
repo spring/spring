@@ -8,13 +8,12 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CSmokeProjectile2, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile2,
 (
@@ -33,7 +32,6 @@ CR_REG_METADATA(CSmokeProjectile2,
 
 
 CSmokeProjectile2::CSmokeProjectile2():
-	CProjectile(),
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -70,7 +68,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
 
 	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
-	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
+	textureNum = (int)(guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
 }
 
 
@@ -88,7 +86,7 @@ void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile2::Update()
 {
 	wantedPos += speed;
-	wantedPos += wind.GetCurrentWind() * age * 0.05f;
+	wantedPos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
 
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;
@@ -104,18 +102,21 @@ void CSmokeProjectile2::Update()
 	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile2::Draw(CVertexArray* va)
+void CSmokeProjectile2::Draw(GL::RenderDataBufferTC* va) const
 {
 	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
+
 	if (interAge < 0.05f) {
-		alpha = (unsigned char) (interAge * 19 * 127);
+		alpha = (unsigned char) (     interAge  * 19 * 127);
 	} else {
-		alpha = (unsigned char) ((1 - interAge) * 127);
+		alpha = (unsigned char) ((1 - interAge)      * 127);
 	}
+
 	const float rglow = std::max(0.f, (1 - (interAge * glowFalloff))        * 127);
 	const float gglow = std::max(0.f, (1 - (interAge * glowFalloff * 2.5f)) * 127);
+
 	col[0] = (unsigned char) (color * alpha + rglow);
 	col[1] = (unsigned char) (color * alpha + gglow);
 	col[2] = (unsigned char) std::max(0.f, color * alpha - gglow * 0.5f);
@@ -126,17 +127,15 @@ void CSmokeProjectile2::Draw(CVertexArray* va)
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
-	#define st projectileDrawer->smoketex[textureNum]
-	va->AddVertexTC(interPos - pos2, st->xstart, st->ystart, col);
-	va->AddVertexTC(interPos + pos1, st->xend,   st->ystart, col);
-	va->AddVertexTC(interPos + pos2, st->xend,   st->yend,   col);
-	va->AddVertexTC(interPos - pos1, st->xstart, st->yend,   col);
-	#undef st
-}
+	#define st projectileDrawer->GetSmokeTexture(textureNum)
+	va->SafeAppend({interPos - pos2, st->xstart, st->ystart, col});
+	va->SafeAppend({interPos + pos1, st->xend,   st->ystart, col});
+	va->SafeAppend({interPos + pos2, st->xend,   st->yend,   col});
 
-int CSmokeProjectile2::GetProjectilesCount() const
-{
-	return 1;
+	va->SafeAppend({interPos + pos2, st->xend,   st->yend,   col});
+	va->SafeAppend({interPos - pos1, st->xstart, st->yend,   col});
+	va->SafeAppend({interPos - pos2, st->xstart, st->ystart, col});
+	#undef st
 }
 
 

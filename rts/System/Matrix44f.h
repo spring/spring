@@ -11,7 +11,8 @@ class CMatrix44f
 public:
 	CR_DECLARE_STRUCT(CMatrix44f)
 
-	CMatrix44f();
+	// identity
+	CMatrix44f() : m{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f} { }
 	CMatrix44f(const CMatrix44f& mat);
 
 	CMatrix44f(const float3 pos, const float3 x, const float3 y, const float3 z);
@@ -21,7 +22,7 @@ public:
 	bool IsOrthoNormal() const;
 	bool IsIdentity() const;
 
-	CMatrix44f& LoadIdentity();
+	CMatrix44f& LoadIdentity() { return (*this = CMatrix44f()); }
 
 	void SetUpVector(const float3 up);
 	CMatrix44f& RotateX(float angle); // (pitch) angle in radians
@@ -110,6 +111,27 @@ public:
 		ANGLE_R = 2,
 	};
 
+
+	static CMatrix44f Identity() { return {}; }
+	static CMatrix44f PerspProj(float aspect, float thfov, float zn, float zf);
+	static CMatrix44f PerspProj(float l, float r, float b, float t, float zn, float zf);
+	static CMatrix44f OrthoProj(float l, float r, float b, float t, float zn, float zf);
+	static CMatrix44f ClipPerspProj(float aspect, float thfov, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(aspect, thfov, zn, zf)); }
+	static CMatrix44f ClipPerspProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(l, r, b, t, zn, zf)); }
+	static CMatrix44f ClipOrthoProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * OrthoProj(l, r, b, t, zn, zf)); }
+	static CMatrix44f ClipOrthoProj01(float cc) { return (ClipControl(cc) * OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f)); }
+	static CMatrix44f ClipControl(float cc) {
+		CMatrix44f m;
+		m.Translate(FwdVector * 0.5f * cc);
+		m.Scale(OnesVector - (FwdVector * 0.5f * cc));
+		return m;
+	}
+	static CMatrix44f ClipControl(bool enabled) {
+		constexpr float cc[2] = {0.0f, 1.0f};
+		return (ClipControl(cc[enabled]));
+	}
+
+
 public:
 	/// OpenGL ordered (ie. column-major)
 	union {
@@ -118,41 +140,5 @@ public:
 		float4 col[4];
 	};
 };
-
-
-// Templates for simple 2D/3D matrixes that behave
-// pretty much like statically allocated matrixes,
-// but can also be casted to and used as pointers.
-template<class T>
-T **newmat2(int x, int y) {
-	T *mat2 = new T[x*y], **mat = new T *[x];
-	for (int i = 0; i < x; ++i)
-		mat[i] = mat2 + i*y;
-	return mat;
-}
-
-template<class T>
-T ***newmat3(int x, int y, int z) {
-	T *mat3=new T[x*y*z], **mat2=new T *[x*y], ***mat=new T **[x];
-	for (int i = 0; i < x; ++i) {
-		for(int j = 0; j < y; ++j)
-			mat2[i*y+j] = mat3 + (i*y+j)*z;
-		mat[i] = mat2 + i*y;
-	}
-	return mat;
-}
-
-template<class T>
-void delmat2(T** mat) {
-	delete [] *mat;
-	delete [] mat;
-}
-
-template<class T>
-void delmat3(T*** mat) {
-	delete [] **mat;
-	delete [] *mat;
-	delete [] mat;
-}
 
 #endif /* MATRIX44F_H */

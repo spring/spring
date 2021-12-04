@@ -1,158 +1,118 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
-#include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
-#include "System/StringUtil.h"
 
 #include <cassert>
 
 
-// not extern'ed, so static
-static CShaderHandler* gShaderHandler = nullptr;
-static unsigned int gNumInstances = 0;
-
-CShaderHandler* CShaderHandler::GetInstance(unsigned int instanceValue) {
-	assert(instanceValue <= 1);
-
-	if (gShaderHandler == nullptr) {
-		gShaderHandler = new CShaderHandler();
-
-		gNumInstances *= instanceValue;
-		gNumInstances += 1;
-	}
-
-	// nobody should bring us back to life after FreeInstance
-	// (unless n==0, which indicates we have just [re]loaded)
-	assert(gNumInstances <= 1);
-	return gShaderHandler;
-}
-
-void CShaderHandler::FreeInstance(CShaderHandler* sh) {
-	assert(sh == gShaderHandler);
-	delete sh;
-	gShaderHandler = nullptr;
+CShaderHandler* CShaderHandler::GetInstance()
+{
+	static CShaderHandler instance;
+	return &instance;
 }
 
 
-
-CShaderHandler::~CShaderHandler() {
-	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
+void CShaderHandler::ClearShaders(bool persistent)
+{
+	for (auto& p: programObjects[persistent]) {
 		// release by poMap (not poClass) to avoid erase-while-iterating pattern
-		ReleaseProgramObjectsMap(it->second);
+		ReleaseProgramObjectsMap(p.second);
 	}
 
-	programObjects.clear();
-	shaderCache.Clear();
+	programObjects[persistent].clear();
 }
 
 
-void CShaderHandler::ReloadAll() {
-	for (auto it = programObjects.cbegin(); it != programObjects.cend(); ++it) {
-		for (auto jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
-			(jt->second)->Reload(true, true);
+void CShaderHandler::ReloadShaders(bool persistent)
+{
+	for (const auto& p1: programObjects[persistent]) {
+		for (const auto& p2: p1.second) {
+			p2.second->Reload(true, false);
 		}
 	}
 }
 
-bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
-	if (programObjects.find(poClass) == programObjects.end())
+
+void CShaderHandler::InsertExtProgramObject(const char* name, Shader::IProgramObject* prog)
+{
+	assert(name[0] != 0);
+
+	if (GetExtProgramObject(name) != nullptr)
+		return;
+
+	assert(GetExtShaderSources(name) == nullptr);
+
+	// for RenderDataBuffer shaders, collision freedom is
+	// guaranteed at compile-time by GetShaderName switch
+	const unsigned int hash = hashString(name);
+
+	extProgramObjects.insert(hash, prog);
+	extShaderSources.insert(hash, {});
+
+	// the attached shader objects may go away later, so make
+	// copies of their source strings while those still exist
+	for (const Shader::IShaderObject* shader: prog->GetShaderObjs()) {
+		extShaderSources[hash][ GL::ShaderTypeToEnum(shader->GetType()) ] = shader->GetSrc(false);
+	}
+}
+
+
+bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool persistent)
+{
+	ProgramTable& pTable = programObjects[persistent];
+
+	if (pTable.find(poClass) == pTable.end())
 		return false;
 
-	ReleaseProgramObjectsMap(programObjects[poClass]);
+	ReleaseProgramObjectsMap(pTable[poClass]);
 
-	programObjects.erase(poClass);
+	pTable.erase(poClass);
 	return true;
 }
 
-void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap) {
-	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
-		Shader::IProgramObject* po = it->second;
+void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
+{
+	for (const auto& item: poMap) {
+		Shader::IProgramObject* po = item.second;
 
 		// free the program object and its attachments
-		if (po != Shader::nullProgramObject) {
-			po->Release(); delete po;
-		}
+		if (po == Shader::nullProgramObject)
+			continue;
+
+		// erases
+		shaderCache.Find(po->GetHash());
+		po->Release();
+		delete po;
 	}
 
 	poMap.clear();
 }
 
 
-Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poClass, const std::string& poName) {
-	if (programObjects.find(poClass) == programObjects.end())
-		return nullptr;
+Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool persistent)
+{
+	assert(!poClass.empty());
+	assert(!poName.empty());
 
-	if (programObjects[poClass].find(poName) == programObjects[poClass].end())
-		return nullptr;
+	ProgramTable& pTable = programObjects[persistent];
 
-	return (programObjects[poClass][poName]);
+	if (pTable.find(poClass) == pTable.end())
+		pTable[poClass] = ProgramObjMap();
+
+	if (pTable[poClass].find(poName) == pTable[poClass].end())
+		return (pTable[poClass][poName] = new Shader::GLSLProgramObject(poName));
+
+	// do not allow multiple references to the same shader
+	LOG_L(L_WARNING, "[SH::%s] program-object \"%s\" in class \"%s\" already exists", __func__, poName.c_str(), poClass.c_str());
+	return Shader::nullProgramObject;
 }
 
 
-Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram) {
-	Shader::IProgramObject* po = Shader::nullProgramObject;
-	const char* poType = arbProgram? "ARB": "GLSL";
-
-	if (programObjects.find(poClass) != programObjects.end()) {
-		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
-			LOG_L(L_WARNING, "[SH::%s] program-object \"%s\" already exists", __func__, poName.c_str());
-			return (programObjects[poClass][poName]);
-		}
-	} else {
-		programObjects[poClass] = ProgramObjMap();
-	}
-
-	if (arbProgram) {
-		if (globalRendering->haveARB)
-			po = new Shader::ARBProgramObject(poName);
-
-	} else {
-		if (globalRendering->haveGLSL)
-			po = new Shader::GLSLProgramObject(poName);
-
-	}
-
-	if (po == Shader::nullProgramObject)
-		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating (%s) program-object \"%s\"", __func__, poType, poName.c_str());
-
-	programObjects[poClass][poName] = po;
-	return po;
-}
-
-
-
-Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
+Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType)
+{
 	assert(!soName.empty());
-	Shader::IShaderObject* so = Shader::nullShaderObject;
-
-	switch (soType) {
-		case GL_VERTEX_PROGRAM_ARB:
-		case GL_FRAGMENT_PROGRAM_ARB: {
-			// assert(StringToLower(soName).find("arb") != std::string::npos);
-
-			if (globalRendering->haveARB)
-				so = new Shader::ARBShaderObject(soType, soName);
-
-		} break;
-
-		default: {
-			// assume GLSL shaders by default
-			// assert(StringToLower(soName).find("arb") == std::string::npos);
-
-			if (globalRendering->haveGLSL)
-				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
-
-		} break;
-	}
-
-	if (so == Shader::nullShaderObject) {
-		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating shader-object \"%s\"", __func__, soName.c_str());
-		return so;
-	}
-
-	return so;
+	return (new Shader::GLSLShaderObject(soType, soName, soDefs));
 }
+

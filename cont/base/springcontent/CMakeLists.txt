@@ -2,71 +2,66 @@ set(FILES
 	unittextures/tatex/PALETTE.PAL
 	mapgenerator/mapinfo_template.lua
 	EngineOptions.lua
+	shaders/GLSL/bumpWaterVS.glsl
+	shaders/GLSL/bumpWaterFS.glsl
+	shaders/GLSL/bumpWaterCoastBlurVS.glsl
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
+	shaders/GLSL/ReflectiveWaterVertProg.glsl
+	shaders/GLSL/ReflectiveWaterFragProg.glsl
+	shaders/GLSL/RefractiveWaterVertProg.glsl
+	shaders/GLSL/RefractiveWaterFragProg.glsl
+	shaders/GLSL/ColVolDebugVertProg.glsl
+	shaders/GLSL/ColVolDebugFragProg.glsl
 	shaders/GLSL/infoHeight.lua
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
-	shaders/GLSL/ShadowGenVertProg.glsl
-	shaders/GLSL/ShadowGenFragProg.glsl
+	shaders/GLSL/MiniMapVertProg.glsl
+	shaders/GLSL/MiniMapFragProg.glsl
+	shaders/GLSL/MapShadowGenVertProg.glsl
+	shaders/GLSL/MapShadowGenFragProg.glsl
+	shaders/GLSL/ModelShadowGenVertProg.glsl
+	shaders/GLSL/ModelShadowGenFragProg.glsl
+	shaders/GLSL/ParticleShadowGenVertProg.glsl
+	shaders/GLSL/ParticleShadowGenFragProg.glsl
+	shaders/GLSL/ProjectileShadowGenVertProg.glsl
+	shaders/GLSL/ProjectileShadowGenFragProg.glsl
+	shaders/GLSL/TreeShadowGenVertProg.glsl
+	shaders/GLSL/TreeShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
-	shaders/GLSL/terrainCommon.glsl
-	shaders/GLSL/SMFFragProg.glsl
-	shaders/GLSL/GrassFragProg.glsl
-	shaders/GLSL/GroundDecalsFragProg.glsl
-	shaders/GLSL/terrainSimpleCopyFS.glsl
-	shaders/GLSL/ModelVertProg.glsl
-	shaders/GLSL/terrainFragmentShader.glsl
-	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
-	shaders/GLSL/SMFVertProg.glsl
-	shaders/GLSL/bumpWaterFS.glsl
+	shaders/GLSL/SkyBoxVertProg.glsl
+	shaders/GLSL/SkyBoxFragProg.glsl
+	shaders/GLSL/SMFVertProg4.glsl
+	shaders/GLSL/SMFFragProg4.glsl
+	shaders/GLSL/SMFBorderVertProg4.glsl
+	shaders/GLSL/SMFBorderFragProg4.glsl
+	shaders/GLSL/GroundDecalsFragProg.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
-	shaders/GLSL/GrassVertProg.glsl
-	shaders/GLSL/ModelFragProg.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
-	shaders/GLSL/terrainSimpleCopyVS.glsl
-	shaders/GLSL/terrainVertexShader.glsl
-	shaders/GLSL/bumpWaterVS.glsl
-	shaders/ARB/groundshadow.vp
+	shaders/GLSL/DecalsFragGL4.glsl
+	shaders/GLSL/GrassVertProg.glsl
+	shaders/GLSL/GrassFragProg.glsl
+	shaders/GLSL/ModelVertProg.glsl
+	shaders/GLSL/ModelFragProg.glsl
+	shaders/GLSL/GuiVertProg4.glsl
+	shaders/GLSL/GuiFragProg4.glsl
 	shaders/ARB/waterDynWave2.vp
-	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp
-	shaders/ARB/dwgroundreflectinverted.vp
-	shaders/ARB/treeFarShadow.vp
 	shaders/ARB/waterDynNormal.fp
 	shaders/ARB/waterDynWave3.vp
-	shaders/ARB/clouds.fp
-	shaders/ARB/units3o.fp
-	shaders/ARB/water.fp
-	shaders/ARB/ground.vp
 	shaders/ARB/dwAddSplash.vp
 	shaders/ARB/waterDynNT.vp
-	shaders/ARB/treeShadow.vp
 	shaders/ARB/waterDynWave.vp
-	shaders/ARB/units3o2.vp
 	shaders/ARB/waterDyn.fp
-	shaders/ARB/waterRefractT2D.fp
-	shaders/ARB/dwgroundrefract.vp
-	shaders/ARB/unit_genshadow.vp
-	shaders/ARB/units3o_shadow.fp
-	shaders/ARB/treeFar.vp
-	shaders/ARB/waterRefractTR.fp
-	shaders/ARB/GroundDecalsSMF.fp
 	shaders/ARB/dwAddSplash.fp
 	shaders/ARB/waterDyn.vp
-	shaders/ARB/projectileshadow.vp
-	shaders/ARB/treeNS.vp
 	shaders/ARB/waterDynWave.fp
-	shaders/ARB/GroundDecals.vp
 	shaders/ARB/waterDynWave3.fp
 	shaders/ARB/GroundDecalsSM3.fp
 	shaders/ARB/waterDynWave2.fp
-	shaders/ARB/treeFPshadow.fp
-	shaders/ARB/groundFPshadow.fp
 	shaders/ARB/dwDetailNormal.fp
 	shaders/ARB/dwDetailNormal.vp
-	shaders/ARB/tree.vp
 	gamedata/unitdefs.lua
 	gamedata/explosion_alias.lua
 	gamedata/unitdefs_post.lua
@@ -78,6 +73,7 @@ set(FILES
 	gamedata/parse_tdf.lua
 	gamedata/weapondefs.lua
 	gamedata/defs.lua
+	gamedata/defs_post.lua
 	gamedata/weapondefs_post.lua
 	gamedata/modrules.lua
 	gamedata/resources.lua
@@ -187,5 +183,5 @@ set(FILES
 	LuaIntro/Addons/bg_texture.lua
 )
 
-CreateBaseContentArchive("base" "springcontent.sdz" "${FILES}")
+create_base_content_archive("base" "springcontent.sdz" "${FILES}")
 

@@ -14,7 +14,6 @@
 #include "LuaTextures.h"
 
 #include "System/Log/ILog.h"
-#include "System/UnorderedMap.hpp"
 
 
 /******************************************************************************/
@@ -23,7 +22,7 @@
 LuaFBOs::~LuaFBOs()
 {
 	for (const FBO* fbo: fbos) {
-		glDeleteFramebuffersEXT(1, &fbo->id);
+		glDeleteFramebuffers(1, &fbo->id);
 	}
 }
 
@@ -39,10 +38,8 @@ bool LuaFBOs::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteFBO);
 	REGISTER_LUA_CFUNC(IsValidFBO);
 	REGISTER_LUA_CFUNC(ActiveFBO);
-	REGISTER_LUA_CFUNC(UnsafeSetFBO);
-
-	if (GLEW_EXT_framebuffer_blit)
-		REGISTER_LUA_CFUNC(BlitFBO);
+	REGISTER_LUA_CFUNC(RawBindFBO);
+	REGISTER_LUA_CFUNC(BlitFBO);
 
 	return true;
 }
@@ -77,9 +74,9 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 static GLenum GetBindingEnum(GLenum target)
 {
 	switch (target) {
-		case GL_FRAMEBUFFER_EXT:      { return GL_FRAMEBUFFER_BINDING_EXT;      }
-		case GL_DRAW_FRAMEBUFFER_EXT: { return GL_DRAW_FRAMEBUFFER_BINDING_EXT; }
-		case GL_READ_FRAMEBUFFER_EXT: { return GL_READ_FRAMEBUFFER_BINDING_EXT; }
+		case GL_FRAMEBUFFER     : { return GL_FRAMEBUFFER_BINDING     ; }
+		case GL_DRAW_FRAMEBUFFER: { return GL_DRAW_FRAMEBUFFER_BINDING; }
+		case GL_READ_FRAMEBUFFER: { return GL_READ_FRAMEBUFFER_BINDING; }
 		default: {}
 	}
 
@@ -88,31 +85,27 @@ static GLenum GetBindingEnum(GLenum target)
 
 static GLenum ParseAttachment(const std::string& name)
 {
-	static const spring::unordered_map<std::string, GLenum> attachMap = {
-		{"depth"  , GL_DEPTH_ATTACHMENT_EXT},
-		{"stencil", GL_STENCIL_ATTACHMENT_EXT},
-		{"color0" , GL_COLOR_ATTACHMENT0_EXT},
-		{"color1" , GL_COLOR_ATTACHMENT1_EXT},
-		{"color2" , GL_COLOR_ATTACHMENT2_EXT},
-		{"color3" , GL_COLOR_ATTACHMENT3_EXT},
-		{"color4" , GL_COLOR_ATTACHMENT4_EXT},
-		{"color5" , GL_COLOR_ATTACHMENT5_EXT},
-		{"color6" , GL_COLOR_ATTACHMENT6_EXT},
-		{"color7" , GL_COLOR_ATTACHMENT7_EXT},
-		{"color8" , GL_COLOR_ATTACHMENT8_EXT},
-		{"color9" , GL_COLOR_ATTACHMENT9_EXT},
-		{"color10", GL_COLOR_ATTACHMENT10_EXT},
-		{"color11", GL_COLOR_ATTACHMENT11_EXT},
-		{"color12", GL_COLOR_ATTACHMENT12_EXT},
-		{"color13", GL_COLOR_ATTACHMENT13_EXT},
-		{"color14", GL_COLOR_ATTACHMENT14_EXT},
-		{"color15", GL_COLOR_ATTACHMENT15_EXT},
-	};
-
-	const auto it = attachMap.find(name);
-
-	if (it != attachMap.end())
-		return it->second;
+	switch (hashString(name.c_str())) {
+		case hashString(  "depth"): { return GL_DEPTH_ATTACHMENT  ; } break;
+		case hashString("stencil"): { return GL_STENCIL_ATTACHMENT; } break;
+		case hashString("color0" ): { return GL_COLOR_ATTACHMENT0 ; } break;
+		case hashString("color1" ): { return GL_COLOR_ATTACHMENT1 ; } break;
+		case hashString("color2" ): { return GL_COLOR_ATTACHMENT2 ; } break;
+		case hashString("color3" ): { return GL_COLOR_ATTACHMENT3 ; } break;
+		case hashString("color4" ): { return GL_COLOR_ATTACHMENT4 ; } break;
+		case hashString("color5" ): { return GL_COLOR_ATTACHMENT5 ; } break;
+		case hashString("color6" ): { return GL_COLOR_ATTACHMENT6 ; } break;
+		case hashString("color7" ): { return GL_COLOR_ATTACHMENT7 ; } break;
+		case hashString("color8" ): { return GL_COLOR_ATTACHMENT8 ; } break;
+		case hashString("color9" ): { return GL_COLOR_ATTACHMENT9 ; } break;
+		case hashString("color10"): { return GL_COLOR_ATTACHMENT10; } break;
+		case hashString("color11"): { return GL_COLOR_ATTACHMENT11; } break;
+		case hashString("color12"): { return GL_COLOR_ATTACHMENT12; } break;
+		case hashString("color13"): { return GL_COLOR_ATTACHMENT13; } break;
+		case hashString("color14"): { return GL_COLOR_ATTACHMENT14; } break;
+		case hashString("color15"): { return GL_COLOR_ATTACHMENT15; } break;
+		default                   : {                               } break;
+	}
 
 	return 0;
 }
@@ -134,7 +127,7 @@ void LuaFBOs::FBO::Init(lua_State* L)
 {
 	index  = -1u;
 	id     = 0;
-	target = GL_FRAMEBUFFER_EXT;
+	target = GL_FRAMEBUFFER;
 	luaRef = LUA_NOREF;
 	xsize = 0;
 	ysize = 0;
@@ -149,7 +142,7 @@ void LuaFBOs::FBO::Free(lua_State* L)
 	luaL_unref(L, LUA_REGISTRYINDEX, luaRef);
 	luaRef = LUA_NOREF;
 
-	glDeleteFramebuffersEXT(1, &id);
+	glDeleteFramebuffers(1, &id);
 	id = 0;
 
 	{
@@ -206,27 +199,27 @@ int LuaFBOs::meta_newindex(lua_State* L)
 
 		if (type != 0) {
 			GLint currentFBO;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
-			glBindFramebufferEXT(fbo->target, fbo->id);
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+			glBindFramebuffer(fbo->target, fbo->id);
 			ApplyAttachment(L, 3, fbo, type);
-			glBindFramebufferEXT(fbo->target, currentFBO);
+			glBindFramebuffer(fbo->target, currentFBO);
 		}
 		else if (key == "drawbuffers") {
 			GLint currentFBO;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
-			glBindFramebufferEXT(fbo->target, fbo->id);
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+			glBindFramebuffer(fbo->target, fbo->id);
 			ApplyDrawBuffers(L, 3);
-			glBindFramebufferEXT(fbo->target, currentFBO);
+			glBindFramebuffer(fbo->target, currentFBO);
 		}
 		else if (key == "readbuffer") {
 			GLint currentFBO;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
-			glBindFramebufferEXT(fbo->target, fbo->id);
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+			glBindFramebuffer(fbo->target, fbo->id);
 
 			if (lua_isnumber(L, 3))
 				glReadBuffer((GLenum)lua_toint(L, 3));
 
-			glBindFramebufferEXT(fbo->target, currentFBO);
+			glBindFramebuffer(fbo->target, currentFBO);
 		}
 		else if (key == "target") {
 			return 0;// fbo->target = (GLenum)luaL_checkint(L, 3);
@@ -256,11 +249,11 @@ bool LuaFBOs::AttachObject(
 ) {
 	if (lua_isnil(L, index)) {
 		// nil object
-		glFramebufferTexture2DEXT(fbo->target, attachID, GL_TEXTURE_2D, 0, 0);
-		glFramebufferRenderbufferEXT(fbo->target, attachID, GL_RENDERBUFFER_EXT, 0);
+		glFramebufferTexture2D(fbo->target, attachID, GL_TEXTURE_2D, 0, 0);
+		glFramebufferRenderbuffer(fbo->target, attachID, GL_RENDERBUFFER, 0);
 		return true;
 	}
-	else if (lua_israwstring(L, index)) {
+	if (lua_israwstring(L, index)) {
 		// custom texture
 		const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		const LuaTextures::Texture* tex = textures.GetInfo(lua_tostring(L, index));
@@ -271,30 +264,26 @@ bool LuaFBOs::AttachObject(
 		if (attachTarget == 0)
 			attachTarget = tex->target;
 
-		glFramebufferTexture2DEXT(fbo->target,
-		                          attachID, attachTarget, tex->id, attachLevel);
+		glFramebufferTexture2D(fbo->target, attachID, attachTarget, tex->id, attachLevel);
 		fbo->xsize = tex->xsize;
 		fbo->ysize = tex->ysize;
 		return true;
 	}
-	else {
-		// render buffer object
-		const LuaRBOs::RBO* rbo = (LuaRBOs::RBO*)LuaUtils::GetUserData(L, index, "RBO");
 
-		if (rbo == nullptr)
-			return false;
+	// render buffer object
+	const LuaRBOs::RBO* rbo = static_cast<LuaRBOs::RBO*>(LuaUtils::GetUserData(L, index, "RBO"));
 
-		if (attachTarget == 0)
-			attachTarget = rbo->target;
+	if (rbo == nullptr)
+		return false;
 
-		glFramebufferRenderbufferEXT(fbo->target,
-		                             attachID, attachTarget, rbo->id);
-		fbo->xsize = rbo->xsize;
-		fbo->ysize = rbo->ysize;
-		return true;
-	}
+	if (attachTarget == 0)
+		attachTarget = rbo->target;
 
-	return false;
+	glFramebufferRenderbuffer(fbo->target, attachID, attachTarget, rbo->id);
+
+	fbo->xsize = rbo->xsize;
+	fbo->ysize = rbo->ysize;
+	return true;
 }
 
 
@@ -336,18 +325,16 @@ bool LuaFBOs::ApplyAttachment(
 bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 {
 	if (lua_isnumber(L, index)) {
-		glDrawBuffer((GLenum)lua_toint(L, index));
+		glDrawBuffer(static_cast<GLenum>(lua_toint(L, index)));
 		return true;
 	}
-	else if (lua_istable(L, index) && GLEW_ARB_draw_buffers) {
-		const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	if (lua_istable(L, index)) {
+		static_assert(sizeof(GLenum) == sizeof(int), "");
 
-		std::vector<GLenum> buffers;
-		for (int i = 1; lua_checkgeti(L, table, i) != 0; lua_pop(L, 1), i++) {
-			buffers.push_back((GLenum)luaL_checkint(L, -1));
-		}
+		int buffers[32] = {GL_NONE};
+		const int count = LuaUtils::ParseIntArray(L, index, buffers, sizeof(buffers) / sizeof(buffers[0]));
 
-		glDrawBuffersARB(buffers.size(), &buffers.front());
+		glDrawBuffers(count, reinterpret_cast<const GLenum*>(&buffers[0]));
 		return true;
 	}
 
@@ -387,8 +374,8 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	GLint currentFBO;
 	glGetIntegerv(bindTarget, &currentFBO);
 
-	glGenFramebuffersEXT(1, &fbo.id);
-	glBindFramebufferEXT(fbo.target, fbo.id);
+	glGenFramebuffers(1, &fbo.id);
+	glBindFramebuffer(fbo.target, fbo.id);
 
 
 	FBO* fboPtr = static_cast<FBO*>(lua_newuserdata(L, sizeof(FBO)));
@@ -400,21 +387,22 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	// parse the initialization table
 	if (lua_istable(L, table)) {
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const std::string& key = lua_tostring(L, -2);
-				const GLenum type = ParseAttachment(key);
-				if (type != 0) {
-					ApplyAttachment(L, -1, fboPtr, type);
-				}
-				else if (key == "drawbuffers") {
-					ApplyDrawBuffers(L, -1);
-				}
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			const std::string& key = lua_tostring(L, -2);
+			const GLenum type = ParseAttachment(key);
+			if (type != 0) {
+				ApplyAttachment(L, -1, fboPtr, type);
+			}
+			else if (key == "drawbuffers") {
+				ApplyDrawBuffers(L, -1);
 			}
 		}
 	}
 
 	// revert to the old fbo
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
 
 	if (fboPtr->luaRef != LUA_NOREF) {
 		LuaFBOs& activeFBOs = CLuaHandle::GetActiveFBOs(L);
@@ -453,8 +441,8 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 		return 1;
 	}
 
-	const GLenum target = (GLenum)luaL_optint(L, 2, fbo->target);
-	const GLenum bindTarget = GetBindingEnum(target);
+	const GLenum  fboTarget = (GLenum)luaL_optint(L, 2, fbo->target);
+	const GLenum bindTarget = GetBindingEnum(fboTarget);
 
 	if (bindTarget == 0) {
 		lua_pushboolean(L, false);
@@ -463,11 +451,12 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 
 	GLint currentFBO;
 	glGetIntegerv(bindTarget, &currentFBO);
-	glBindFramebufferEXT(target, fbo->id);
-	const GLenum status = glCheckFramebufferStatusEXT(target);
-	glBindFramebufferEXT(target, currentFBO);
 
-	lua_pushboolean(L, (status == GL_FRAMEBUFFER_COMPLETE_EXT));
+	glBindFramebuffer(fboTarget, fbo->id);
+	const GLenum status = glCheckFramebufferStatus(fboTarget);
+	glBindFramebuffer(fboTarget, currentFBO);
+
+	lua_pushboolean(L, (status == GL_FRAMEBUFFER_COMPLETE));
 	lua_pushnumber(L, status);
 	return 2;
 }
@@ -475,7 +464,7 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 
 int LuaFBOs::ActiveFBO(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	
 	const FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 
@@ -484,47 +473,31 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 
 	int funcIndex = 2;
 
-	// target and matrix manipulation options
-	GLenum target = fbo->target;
-	if (lua_israwnumber(L, funcIndex)) {
-		target = (GLenum)lua_toint(L, funcIndex);
-		funcIndex++;
-	}
+	// custom target option
+	const GLenum  fboTarget = (lua_israwnumber(L, funcIndex))? (GLenum)lua_toint(L, funcIndex++): fbo->target;
+	const GLenum bindTarget = GetBindingEnum(fboTarget);
 
-	bool identities = false;
-
-	if (lua_isboolean(L, funcIndex)) {
-		identities = lua_toboolean(L, funcIndex);
-		funcIndex++;
-	}
+	// silently skip deprecated 'identities' argument
+	funcIndex += (lua_isboolean(L, funcIndex));
 
 	if (!lua_isfunction(L, funcIndex))
-		luaL_error(L, "Incorrect arguments to gl.ActiveFBO()");
-
-	const GLenum bindTarget = GetBindingEnum(target);
+		luaL_error(L, "[LuaFBOs::%s] argument %d not a function", __func__, funcIndex);
 
 	if (bindTarget == 0)
 		return 0;
 
-	glPushAttrib(GL_VIEWPORT_BIT);
-	glViewport(0, 0, fbo->xsize, fbo->ysize);
-	if (identities) {
-		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);  glPushMatrix(); glLoadIdentity();
-	}
+	glAttribStatePtr->PushViewPortBit();
+	glAttribStatePtr->ViewPort(0, 0, fbo->xsize, fbo->ysize);
 
-	GLint currentFBO;
+	GLint currentFBO = 0;
 	glGetIntegerv(bindTarget, &currentFBO);
-	glBindFramebufferEXT(target, fbo->id);
+	glBindFramebuffer(fboTarget, fbo->id);
 
+	// draw
 	const int error = lua_pcall(L, (lua_gettop(L) - funcIndex), 0, 0);
 
-	glBindFramebufferEXT(target, currentFBO);
-	if (identities) {
-		glMatrixMode(GL_PROJECTION); glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
-	}
-	glPopAttrib();
+	glBindFramebuffer(fboTarget, currentFBO);
+	glAttribStatePtr->PopBits();
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "gl.ActiveFBO: error(%i) = %s", error, lua_tostring(L, -1));
@@ -535,12 +508,13 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 }
 
 
-int LuaFBOs::UnsafeSetFBO(lua_State* L)
+int LuaFBOs::RawBindFBO(lua_State* L)
 {
-	//CheckDrawingEnabled(L, __FUNCTION__);
+	//CheckDrawingEnabled(L, __func__);
 
 	if (lua_isnil(L, 1)) {
-		glBindFramebufferEXT((GLenum)luaL_optnumber(L, 2, GL_FRAMEBUFFER_EXT), 0);
+		// revert to default or specified FB
+		glBindFramebuffer((GLenum) luaL_optinteger(L, 2, GL_FRAMEBUFFER), luaL_optinteger(L, 3, 0));
 		return 0;
 	}
 		
@@ -549,8 +523,12 @@ int LuaFBOs::UnsafeSetFBO(lua_State* L)
 	if (fbo->id == 0)
 		return 0;
 
-	glBindFramebufferEXT((GLenum)luaL_optnumber(L, 2, fbo->target), fbo->id);
-	return 0;
+	GLint currentFBO = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+	glBindFramebuffer((GLenum) luaL_optinteger(L, 2, fbo->target), fbo->id);
+
+	lua_pushnumber(L, currentFBO);
+	return 1;
 }
 
 
@@ -572,7 +550,7 @@ int LuaFBOs::BlitFBO(lua_State* L)
 		const GLbitfield mask = (GLbitfield)luaL_optint(L, 9, GL_COLOR_BUFFER_BIT);
 		const GLenum filter = (GLenum)luaL_optint(L, 10, GL_NEAREST);
 
-		glBlitFramebufferEXT(x0Src, y0Src, x1Src, y1Src,  x0Dst, y0Dst, x1Dst, y1Dst,  mask, filter);
+		glBlitFramebuffer(x0Src, y0Src, x1Src, y1Src,  x0Dst, y0Dst, x1Dst, y1Dst,  mask, filter);
 		return 0;
 	}
 
@@ -600,14 +578,14 @@ int LuaFBOs::BlitFBO(lua_State* L)
 	const GLenum filter = (GLenum)luaL_optint(L, 12, GL_NEAREST);
 
 	GLint currentFBO;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
 
-	glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, (fboSrc == nullptr)? 0: fboSrc->id);
-	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, (fboDst == nullptr)? 0: fboDst->id);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, (fboSrc == nullptr)? 0: fboSrc->id);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, (fboDst == nullptr)? 0: fboDst->id);
 
-	glBlitFramebufferEXT(x0Src, y0Src, x1Src, y1Src,  x0Dst, y0Dst, x1Dst, y1Dst,  mask, filter);
+	glBlitFramebuffer(x0Src, y0Src, x1Src, y1Src,  x0Dst, y0Dst, x1Dst, y1Dst,  mask, filter);
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
 	return 0;
 }
 

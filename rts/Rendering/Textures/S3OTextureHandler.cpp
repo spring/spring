@@ -38,9 +38,9 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_TEXTURE)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CS3OTextureHandler* texturehandlerS3O = nullptr;
+CS3OTextureHandler textureHandlerS3O;
 
-CS3OTextureHandler::CS3OTextureHandler()
+void CS3OTextureHandler::Init()
 {
 	textures.reserve(128);
 
@@ -49,12 +49,17 @@ CS3OTextureHandler::CS3OTextureHandler()
 	textures.emplace_back();
 }
 
-CS3OTextureHandler::~CS3OTextureHandler()
+void CS3OTextureHandler::Kill()
 {
-	for (S3OTexMat& texture: textures){
+	for (S3OTexMat& texture: textures) {
 		glDeleteTextures(1, &(texture.tex1));
 		glDeleteTextures(1, &(texture.tex2));
 	}
+
+	textures.clear();
+	textureCache.clear();
+	textureTable.clear();
+	bitmapCache.clear();
 }
 
 

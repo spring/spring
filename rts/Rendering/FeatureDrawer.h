@@ -5,13 +5,13 @@
 
 #include <vector>
 #include <array>
+
 #include "Game/Camera.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
-#include "Rendering/Models/ModelRenderContainer.h"
 
 class CFeature;
-class IModelRenderContainer;
 
 namespace GL {
 	struct GeometryBuffer;
@@ -20,40 +20,50 @@ namespace GL {
 class CFeatureDrawer: public CEventClient
 {
 public:
-	CFeatureDrawer();
-	~CFeatureDrawer();
+	CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
+
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 	void UpdateDrawQuad(CFeature* feature);
-	void Update();
+	void Update() override;
 
 	void Draw();
-	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
+	void DrawOpaquePass(bool deferredPass);
 	void DrawShadowPass();
-	void DrawAlphaPass();
+	void DrawAlphaPass(bool aboveWater);
 
-	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawFeatureTrans(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	static void SetFeatureLuaTrans(const CFeature* feature, bool lodCall);
+	static void SetFeatureDefTrans(const CFeature* feature, bool lodCall);
+
+	static void DrawFeatureLuaTrans(const CFeature* feature, bool lodCall, bool noLuaCall);
+	static void DrawFeatureDefTrans(const CFeature*, bool lodCall, bool noLuaCall);
 
 	/// LuaOpenGL::Feature{Raw}: draw a single feature with full state setup
 	void PushIndividualState(const CFeature* feature, bool deferredPass);
 	void PopIndividualState(const CFeature* feature, bool deferredPass);
-	void DrawIndividual(const CFeature* feature, bool noLuaCall);
-	void DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall);
+	void DrawIndividualDefTrans(const CFeature* feature, bool noLuaCall);
+	void DrawIndividualLuaTrans(const CFeature* feature, bool noLuaCall);
 
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureDestroyed(const CFeature* feature);
-	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void RenderFeatureCreated(const CFeature* feature) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
+	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
 
 public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
@@ -72,7 +82,7 @@ private:
 
 	bool CanDrawFeature(const CFeature*) const;
 
-	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
+	static void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
 	void FlagVisibleFeatures(
 		const CCamera*,
@@ -98,35 +108,23 @@ private:
 	// reuse Draw{Opaque}Feature{s} which sets team color
 	bool inAlphaPass;
 	bool inShadowPass;
-	bool ffpAlphaMat;
 
 private:
 	friend class CFeatureQuadDrawer;
 	struct RdrContProxy {
-		RdrContProxy(): lastDrawFrame(0) {
-			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				rendererTypes[modelType] = IModelRenderContainer::GetInstance(modelType);
-			}
-		}
-		~RdrContProxy() {
-			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				delete rendererTypes[modelType];
-			}
-		}
-
-		const IModelRenderContainer* GetRenderer(unsigned int i) const { return rendererTypes[i]; }
-		      IModelRenderContainer* GetRenderer(unsigned int i)       { return rendererTypes[i]; }
+		const ModelRenderContainer<CFeature>& GetRenderer(unsigned int i) const { return rendererTypes[i]; }
+		      ModelRenderContainer<CFeature>& GetRenderer(unsigned int i)       { return rendererTypes[i]; }
 
 		unsigned int GetLastDrawFrame() const { return lastDrawFrame; }
 		void SetLastDrawFrame(unsigned int f) { lastDrawFrame = f; }
 
 	private:
-		std::array<IModelRenderContainer*, MODELTYPE_OTHER> rendererTypes;
+		std::array<ModelRenderContainer<CFeature>, MODELTYPE_OTHER> rendererTypes;
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)
 		// during *any* pass
-		unsigned int lastDrawFrame;
+		unsigned int lastDrawFrame = 0;
 	};
 
 	std::vector<RdrContProxy> modelRenderers;

@@ -9,7 +9,7 @@
 
 class CExtractorBuilding : public CBuilding {
 public:
-	CR_DECLARE(CExtractorBuilding)
+	CR_DECLARE_DERIVED(CExtractorBuilding)
 	CR_DECLARE_SUB(MetalSquareOfControl)
 
 	CExtractorBuilding(): CBuilding() {
@@ -28,7 +28,7 @@ public:
 	float GetExtractionRange() const { return extractionRange; }
 	float GetExtractionDepth() const { return extractionDepth; }
 
-	void FinishedBuilding(bool postInit);
+	void FinishedBuilding(bool postInit) override;
 
 protected:
 	struct MetalSquareOfControl {

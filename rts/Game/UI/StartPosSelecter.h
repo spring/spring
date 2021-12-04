@@ -12,8 +12,8 @@ public:
 	CStartPosSelecter();
 	~CStartPosSelecter();
 
-	virtual bool MousePress(int x, int y, int button);
-	virtual void Draw();
+	virtual bool MousePress(int x, int y, int button) override;
+	virtual void Draw() override;
 
 	bool Ready(bool luaForcedReady);
 	void ShowReadyBox(bool b) { showReadyBox = b; }
@@ -24,7 +24,7 @@ private:
 	void DrawStartBox() const;
 
 private:
-	ContainerBox readyBox;
+	TRectangle<float> readyBox;
 	float3 setStartPos;
 
 	bool showReadyBox;

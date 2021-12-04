@@ -25,37 +25,36 @@ void Button::Label(const std::string& _label)
 
 void Button::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
-	glColor4f(0.8f, 0.8f, 0.8f, opacity);
+	gui->SetColor(0.8f, 0.8f, 0.8f, opacity);
 
-	DrawBox(GL_QUADS);
+	DrawBox();
 
-	glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+	gui->SetColor(1.0f, 1.0f, 1.0f, 0.1f);
 	if (clicked) {
-		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.2f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 0.0f, 0.0f, opacity/2.f);
-		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP);
-		glLineWidth(1.0f);
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
+		gui->SetColor(0.2f, 0.0f, 0.0f, opacity);
+		DrawBox();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(1.0f, 0.0f, 0.0f, opacity / 2.0f);
+		DrawOutline();
 	} else if (hovered) {
-		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.0f, 0.0f, 0.2f, opacity);
-		DrawBox(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 1.0f, 1.0f, opacity/2.0f);
-		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP);
-		glLineWidth(1.0f);
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
+		gui->SetColor(0.0f, 0.0f, 0.2f, opacity);
+		DrawBox();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
+		DrawOutline();
 	}
 
-	font->Begin();
+	gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+	gui->SetDrawMode(Gui::DrawMode::FONT);
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
-	font->glPrint(pos[0] + size[0]/2, pos[1] + size[1]/2, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
-	font->End();
+	font->SetTextDepth(depth);
+	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, label);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 bool Button::HandleEventSelf(const SDL_Event& ev)

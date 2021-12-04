@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
@@ -23,18 +24,23 @@ public:
 	CMouseHandler();
 	~CMouseHandler();
 
-	static CMouseHandler* GetOrReloadInstance();
+	static void InitStatic();
+	static void KillStatic();
 
 	void ChangeCursor(const std::string& cmdName, const float scale = 1.0f);
 	void ReloadCursors();
+	void ResetCursor() {
+		ChangeCursor("");
+		Update();
+	}
 
 	void Update();
 	void UpdateCursors();
-	std::string GetCurrentTooltip();
 
 	void HideMouse();
 	void ShowMouse();
 	void ToggleMiddleClickScroll(); /// lock+hide
+	void CancelButtonMovement(int button) { buttons[button].movement = 0; }
 	void WarpMouse(int x, int y);
 
 	void DrawSelectionBox(); /// draw mousebox (selection box)
@@ -62,10 +68,15 @@ public:
 		return nullptr;
 	}
 
-	const std::string& GetCurrentCursor() const { return newCursor; }
-	const float&  GetCurrentCursorScale() const { return cursorScale; }
+	float3 GetCursorCameraDir(int x, int y) const;
+	float3 GetWorldMapPos() const;
 
-	void ToggleHwCursor(const bool& enable);
+	std::string GetCurrentTooltip() const;
+
+	const std::string& GetCurrentCursor() const { return queuedCursorName; }
+	float GetCurrentCursorScale() const { return cursorScale; }
+
+	void ToggleHwCursor(bool enable);
 
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -73,70 +84,84 @@ public:
 private:
 	void SetCursor(const std::string& cmdName, const bool forceRebind = false);
 
-	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
+	void DrawScrollCursor(GL::RenderDataBufferC* buffer);
+	void DrawFPSCursor(GL::RenderDataBufferC* buffer);
 
-	void DrawScrollCursor();
-	void DrawFPSCursor();
-
+	static void GetSelectionBoxCoeff(
+		const float3& pos1,
+		const float3& dir1,
+		const float3& pos2,
+		const float3& dir2,
+		float2& topright,
+		float2& bttmleft
+	);
 
 public:
-	int lastx;
-	int lasty;
-	int activeButtonIdx;
-	int activeCursorIdx;
+	int lastx = -1;
+	int lasty = -1;
+	int activeButtonIdx = -1;
+	int activeCursorIdx = -1;
 
-	bool locked;
-	/// Stores if the mouse was locked or not before going into direct control,
-	/// so we can restore it when we return to normal.
-	bool wasLocked;
-	bool offscreen;
+	/// true if movement is locked, i.e. during MMB-scroll or in FPS-mode
+	bool locked = false;
+	/// stores if mouse was locked before going into FPS-mode,
+	/// so we can restore it when we return to normal control
+	bool wasLocked = false;
+	bool offscreen = false;
+	bool mmbScroll = false;
 
 private:
-	bool hide;
-	bool hwHide;
-	bool hardwareCursor;
-	bool invertMouse;
+	bool hideCursor = true;
+	bool hwHideCursor = true;
+	bool hardwareCursor = false;
+	bool invertMouse = false;
+	bool ignoreMove = false;
 
-	float cursorScale;
-	float dragScrollThreshold;
+	float cursorScale = 1.0f;
 
-	float scrollx;
-	float scrolly;
+	float scrollx = 0.0f;
+	float scrolly = 0.0f;
 
 public:
-	float doubleClickTime;
-	float scrollWheelSpeed;
-
 	/// locked mouse indicator size
-	float crossSize;
-	float crossAlpha;
-	float crossMoveScale;
+	float crossSize = 0.0f;
+	float crossAlpha = 0.0f;
+	float crossMoveScale = 0.0f;
+
+	float doubleClickTime = 0.0f;
+	float scrollWheelSpeed = 0.0f;
+	float dragScrollThreshold = 0.0f;
+
+	int dragSelectionThreshold = 0;
+	int dragBoxCommandThreshold = 0;
+	int dragCircleCommandThreshold = 0;
+	int dragFrontCommandThreshold = 0;
 
 
 	struct ButtonPressEvt {
-		bool pressed;
-		bool chorded;
-		int x;
-		int y;
+		bool pressed = false;
+		bool chorded = false;
+		int x = 0;
+		int y = 0;
 		float3 camPos;
 		float3 dir;
-		float time;
-		float lastRelease;
-		int movement;
+		float time = 0.0f;
+		float lastRelease = -20.0f;
+		int movement = 0;
 	};
 
 	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
 	float3 dir;
 
 private:
-	std::string newCursor; /// cursor changes are delayed
-	std::string cursorText; /// current cursor name
+	std::string queuedCursorName; /// cursor changes are delayed until Update
+	std::string activeCursorName; /// current cursor name
 
 	std::vector<CMouseCursor> loadedCursors;
 	spring::unordered_map<std::string, size_t> cursorFileMap;
 	spring::unordered_map<std::string, size_t> cursorCommandMap;
 
-	const CUnit* lastClicked;
+	const CUnit* lastClicked = nullptr;
 };
 
 extern CMouseHandler* mouse;

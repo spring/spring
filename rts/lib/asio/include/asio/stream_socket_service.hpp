@@ -2,7 +2,7 @@
 // stream_socket_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,11 +16,14 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include "asio/detail/config.hpp"
+
+#if defined(ASIO_ENABLE_OLD_SERVICES)
+
 #include <cstddef>
 #include "asio/async_result.hpp"
 #include "asio/detail/type_traits.hpp"
 #include "asio/error.hpp"
-#include "asio/io_service.hpp"
+#include "asio/io_context.hpp"
 
 #if defined(ASIO_WINDOWS_RUNTIME)
 # include "asio/detail/winrt_ssocket_service.hpp"
@@ -38,7 +41,7 @@ namespace asio {
 template <typename Protocol>
 class stream_socket_service
 #if defined(GENERATING_DOCUMENTATION)
-  : public asio::io_service::service
+  : public asio::io_context::service
 #else
   : public asio::detail::service_base<stream_socket_service<Protocol> >
 #endif
@@ -46,7 +49,7 @@ class stream_socket_service
 public:
 #if defined(GENERATING_DOCUMENTATION)
   /// The unique service identifier.
-  static asio::io_service::id id;
+  static asio::io_context::id id;
 #endif
 
   /// The protocol type.
@@ -73,13 +76,6 @@ public:
   typedef typename service_impl_type::implementation_type implementation_type;
 #endif
 
-  /// (Deprecated: Use native_handle_type.) The native socket type.
-#if defined(GENERATING_DOCUMENTATION)
-  typedef implementation_defined native_type;
-#else
-  typedef typename service_impl_type::native_handle_type native_type;
-#endif
-
   /// The native socket type.
 #if defined(GENERATING_DOCUMENTATION)
   typedef implementation_defined native_handle_type;
@@ -87,11 +83,11 @@ public:
   typedef typename service_impl_type::native_handle_type native_handle_type;
 #endif
 
-  /// Construct a new stream socket service for the specified io_service.
-  explicit stream_socket_service(asio::io_service& io_service)
+  /// Construct a new stream socket service for the specified io_context.
+  explicit stream_socket_service(asio::io_context& io_context)
     : asio::detail::service_base<
-        stream_socket_service<Protocol> >(io_service),
-      service_impl_(io_service)
+        stream_socket_service<Protocol> >(io_context),
+      service_impl_(io_context)
   {
   }
 
@@ -117,17 +113,21 @@ public:
     service_impl_.move_assign(impl, other_service.service_impl_, other_impl);
   }
 
+  // All socket services have access to each other's implementations.
+  template <typename Protocol1> friend class stream_socket_service;
+
   /// Move-construct a new stream socket implementation from another protocol
   /// type.
   template <typename Protocol1>
   void converting_move_construct(implementation_type& impl,
+      stream_socket_service<Protocol1>& other_service,
       typename stream_socket_service<
         Protocol1>::implementation_type& other_impl,
       typename enable_if<is_convertible<
         Protocol1, Protocol>::value>::type* = 0)
   {
     service_impl_.template converting_move_construct<Protocol1>(
-        impl, other_impl);
+        impl, other_service.service_impl_, other_impl);
   }
 #endif // defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
@@ -138,22 +138,23 @@ public:
   }
 
   /// Open a stream socket.
-  asio::error_code open(implementation_type& impl,
+  ASIO_SYNC_OP_VOID open(implementation_type& impl,
       const protocol_type& protocol, asio::error_code& ec)
   {
     if (protocol.type() == ASIO_OS_DEF(SOCK_STREAM))
       service_impl_.open(impl, protocol, ec);
     else
       ec = asio::error::invalid_argument;
-    return ec;
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Assign an existing native socket to a stream socket.
-  asio::error_code assign(implementation_type& impl,
+  ASIO_SYNC_OP_VOID assign(implementation_type& impl,
       const protocol_type& protocol, const native_handle_type& native_socket,
       asio::error_code& ec)
   {
-    return service_impl_.assign(impl, protocol, native_socket, ec);
+    service_impl_.assign(impl, protocol, native_socket, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Determine whether the socket is open.
@@ -163,16 +164,18 @@ public:
   }
 
   /// Close a stream socket implementation.
-  asio::error_code close(implementation_type& impl,
+  ASIO_SYNC_OP_VOID close(implementation_type& impl,
       asio::error_code& ec)
   {
-    return service_impl_.close(impl, ec);
+    service_impl_.close(impl, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
-  /// (Deprecated: Use native_handle().) Get the native socket implementation.
-  native_type native(implementation_type& impl)
+  /// Release ownership of the underlying socket.
+  native_handle_type release(implementation_type& impl,
+      asio::error_code& ec)
   {
-    return service_impl_.native_handle(impl);
+    return service_impl_.release(impl, ec);
   }
 
   /// Get the native socket implementation.
@@ -182,10 +185,11 @@ public:
   }
 
   /// Cancel all asynchronous operations associated with the socket.
-  asio::error_code cancel(implementation_type& impl,
+  ASIO_SYNC_OP_VOID cancel(implementation_type& impl,
       asio::error_code& ec)
   {
-    return service_impl_.cancel(impl, ec);
+    service_impl_.cancel(impl, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Determine whether the socket is at the out-of-band data mark.
@@ -203,17 +207,19 @@ public:
   }
 
   /// Bind the stream socket to the specified local endpoint.
-  asio::error_code bind(implementation_type& impl,
+  ASIO_SYNC_OP_VOID bind(implementation_type& impl,
       const endpoint_type& endpoint, asio::error_code& ec)
   {
-    return service_impl_.bind(impl, endpoint, ec);
+    service_impl_.bind(impl, endpoint, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Connect the stream socket to the specified endpoint.
-  asio::error_code connect(implementation_type& impl,
+  ASIO_SYNC_OP_VOID connect(implementation_type& impl,
       const endpoint_type& peer_endpoint, asio::error_code& ec)
   {
-    return service_impl_.connect(impl, peer_endpoint, ec);
+    service_impl_.connect(impl, peer_endpoint, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Start an asynchronous connect.
@@ -224,37 +230,39 @@ public:
       const endpoint_type& peer_endpoint,
       ASIO_MOVE_ARG(ConnectHandler) handler)
   {
-    detail::async_result_init<
-      ConnectHandler, void (asio::error_code)> init(
-        ASIO_MOVE_CAST(ConnectHandler)(handler));
+    async_completion<ConnectHandler,
+      void (asio::error_code)> init(handler);
 
-    service_impl_.async_connect(impl, peer_endpoint, init.handler);
+    service_impl_.async_connect(impl, peer_endpoint, init.completion_handler);
 
     return init.result.get();
   }
 
   /// Set a socket option.
   template <typename SettableSocketOption>
-  asio::error_code set_option(implementation_type& impl,
+  ASIO_SYNC_OP_VOID set_option(implementation_type& impl,
       const SettableSocketOption& option, asio::error_code& ec)
   {
-    return service_impl_.set_option(impl, option, ec);
+    service_impl_.set_option(impl, option, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Get a socket option.
   template <typename GettableSocketOption>
-  asio::error_code get_option(const implementation_type& impl,
+  ASIO_SYNC_OP_VOID get_option(const implementation_type& impl,
       GettableSocketOption& option, asio::error_code& ec) const
   {
-    return service_impl_.get_option(impl, option, ec);
+    service_impl_.get_option(impl, option, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Perform an IO control command on the socket.
   template <typename IoControlCommand>
-  asio::error_code io_control(implementation_type& impl,
+  ASIO_SYNC_OP_VOID io_control(implementation_type& impl,
       IoControlCommand& command, asio::error_code& ec)
   {
-    return service_impl_.io_control(impl, command, ec);
+    service_impl_.io_control(impl, command, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Gets the non-blocking mode of the socket.
@@ -264,10 +272,11 @@ public:
   }
 
   /// Sets the non-blocking mode of the socket.
-  asio::error_code non_blocking(implementation_type& impl,
+  ASIO_SYNC_OP_VOID non_blocking(implementation_type& impl,
       bool mode, asio::error_code& ec)
   {
-    return service_impl_.non_blocking(impl, mode, ec);
+    service_impl_.non_blocking(impl, mode, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Gets the non-blocking mode of the native socket implementation.
@@ -277,10 +286,11 @@ public:
   }
 
   /// Sets the non-blocking mode of the native socket implementation.
-  asio::error_code native_non_blocking(implementation_type& impl,
+  ASIO_SYNC_OP_VOID native_non_blocking(implementation_type& impl,
       bool mode, asio::error_code& ec)
   {
-    return service_impl_.native_non_blocking(impl, mode, ec);
+    service_impl_.native_non_blocking(impl, mode, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
   }
 
   /// Get the local endpoint.
@@ -298,10 +308,36 @@ public:
   }
 
   /// Disable sends or receives on the socket.
-  asio::error_code shutdown(implementation_type& impl,
+  ASIO_SYNC_OP_VOID shutdown(implementation_type& impl,
       socket_base::shutdown_type what, asio::error_code& ec)
   {
-    return service_impl_.shutdown(impl, what, ec);
+    service_impl_.shutdown(impl, what, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
+  }
+
+  /// Wait for the socket to become ready to read, ready to write, or to have
+  /// pending error conditions.
+  ASIO_SYNC_OP_VOID wait(implementation_type& impl,
+      socket_base::wait_type w, asio::error_code& ec)
+  {
+    service_impl_.wait(impl, w, ec);
+    ASIO_SYNC_OP_VOID_RETURN(ec);
+  }
+
+  /// Asynchronously wait for the socket to become ready to read, ready to
+  /// write, or to have pending error conditions.
+  template <typename WaitHandler>
+  ASIO_INITFN_RESULT_TYPE(WaitHandler,
+      void (asio::error_code))
+  async_wait(implementation_type& impl, socket_base::wait_type w,
+      ASIO_MOVE_ARG(WaitHandler) handler)
+  {
+    async_completion<WaitHandler,
+      void (asio::error_code)> init(handler);
+
+    service_impl_.async_wait(impl, w, init.completion_handler);
+
+    return init.result.get();
   }
 
   /// Send the given data to the peer.
@@ -322,11 +358,10 @@ public:
       socket_base::message_flags flags,
       ASIO_MOVE_ARG(WriteHandler) handler)
   {
-    detail::async_result_init<
-      WriteHandler, void (asio::error_code, std::size_t)> init(
-        ASIO_MOVE_CAST(WriteHandler)(handler));
+    async_completion<WriteHandler,
+      void (asio::error_code, std::size_t)> init(handler);
 
-    service_impl_.async_send(impl, buffers, flags, init.handler);
+    service_impl_.async_send(impl, buffers, flags, init.completion_handler);
 
     return init.result.get();
   }
@@ -349,20 +384,19 @@ public:
       socket_base::message_flags flags,
       ASIO_MOVE_ARG(ReadHandler) handler)
   {
-    detail::async_result_init<
-      ReadHandler, void (asio::error_code, std::size_t)> init(
-        ASIO_MOVE_CAST(ReadHandler)(handler));
+    async_completion<ReadHandler,
+      void (asio::error_code, std::size_t)> init(handler);
 
-    service_impl_.async_receive(impl, buffers, flags, init.handler);
+    service_impl_.async_receive(impl, buffers, flags, init.completion_handler);
 
     return init.result.get();
   }
 
 private:
   // Destroy all user-defined handler objects owned by the service.
-  void shutdown_service()
+  void shutdown()
   {
-    service_impl_.shutdown_service();
+    service_impl_.shutdown();
   }
 
   // The platform-specific implementation.
@@ -372,5 +406,7 @@ private:
 } // namespace asio
 
 #include "asio/detail/pop_options.hpp"
+
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
 
 #endif // ASIO_STREAM_SOCKET_SERVICE_HPP

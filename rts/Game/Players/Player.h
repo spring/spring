@@ -21,7 +21,7 @@ class CUnit;
 class CPlayer : public PlayerBase
 {
 public:
-	CR_DECLARE(CPlayer)
+	CR_DECLARE_DERIVED(CPlayer)
 
 	enum {
 		PLAYER_RDYSTATE_UPDATED = 0,
@@ -31,7 +31,6 @@ public:
 	};
 
 	CPlayer();
-	virtual ~CPlayer(){}
 
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());
@@ -50,16 +49,16 @@ public:
 	void StopControllingUnit();
 
 public:
-	bool active;
+	bool active = false;
 
-	int playerNum;
+	int playerNum = -1;
 
 	/**
 	 * Contains either the current ping of the player to the game host,
 	 * or the value of the pathign flag.
 	 * @see PATHING_FLAG
 	 */
-	int ping;
+	int ping = 0;
 
 	PlayerStatistics currentStats;
 	FPSUnitController fpsController;

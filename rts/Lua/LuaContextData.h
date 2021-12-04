@@ -3,14 +3,18 @@
 #ifndef LUA_CONTEXT_DATA_H
 #define LUA_CONTEXT_DATA_H
 
+#include "Lua/LuaAllocState.h"
+#include "Lua/LuaGarbageCollectCtrl.h"
 #include "LuaMemPool.h"
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
-#include "LuaDisplayLists.h"
+
+#include "Rendering/GL/MatrixStateTracker.h"
 #endif
+
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
@@ -41,6 +45,7 @@ public:
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam)
 
+	, allocState{{0}, {0}, {0}, {0}}
 	{}
 
 	~luaContextData() {
@@ -65,7 +70,6 @@ public:
 		textures.Clear();
 		fbos.Clear();
 		rbos.Clear();
-		displayLists.Clear();
 		#endif
 	}
 
@@ -92,6 +96,9 @@ public:
 	int readAllyTeam;
 	int selectTeam;
 
+	SLuaAllocState allocState;
+	SLuaGarbageCollectCtrl gcCtrl;
+
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 	// NOTE:
 	//   engine and unitsync will not agree on sizeof(luaContextData)
@@ -102,7 +109,6 @@ public:
 	LuaTextures textures;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
-	CLuaDisplayLists displayLists;
 
 	GLMatrixStateTracker glMatrixTracker;
 #endif

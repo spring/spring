@@ -1,0 +1,11 @@
+[Unit]
+Description=Buildbot stacktrace translator
+
+[Service]
+Type=simple
+User=buildbot
+WorkingDirectory=/home/buildbot/spring/buildbot/stacktrace_translator
+ExecStart=/usr/bin/python3 /home/buildbot/spring/buildbot/stacktrace_translator/stacktrace_translator.py
+
+[Install]
+WantedBy=multi-user.target

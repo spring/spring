@@ -27,8 +27,12 @@ ADD_SUBDIRECTORY(gflags)
 # sadly still manual changes are needed!
 
 set(DISABLED_ASSIMP_FORMATS "")
-foreach(var AMF AC ASE ASSBIN ASSXML B3D BVH DXF CSM HMP IRRMESH IRR LWS MD2 MD3 MD5 MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB IFC XGL FBX Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X X3D GLTF 3MF)
+foreach(var AMF AC ASE ASSBIN ASSXML B3D BVH DXF CSM HMP IRRMESH IRR LWS MD2 MD3 MD5 MDC MDL MMD NFF NDO OFF OGRE OPENGEX PLY MS3D COB IFC XGL FBX Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X X3D GLTF 3MF)
 	list(APPEND DISABLED_ASSIMP_FORMATS "ASSIMP_BUILD_${var}_IMPORTER")
+endforeach()
+set(ENABLED_ASSIMP_FORMATS "")
+foreach(var 3DS COLLADA LWO OBJ BLEND)
+	list(APPEND ENABLED_ASSIMP_FORMATS "ASSIMP_BUILD_${var}_IMPORTER")
 endforeach()
 
 foreach(var
@@ -45,6 +49,12 @@ foreach(var
 	set("${var}" OFF CACHE STRING "forced off by spring build env" FORCE)
 endforeach()
 
+foreach(var
+		${ENABLED_ASSIMP_FORMATS}
+	)
+	set("${var}" ON CACHE STRING "forced on by spring build env" FORCE)
+endforeach()
+
 foreach(var ASSIMP_BUILD_STATIC_LIB ASSIMP_NO_EXPORT)
 	message(STATUS "Forcing assimp option ${var} to on")
 	set("${var}" ON CACHE STRING "forced on by spring build env" FORCE)
@@ -53,10 +63,20 @@ endforeach()
 ADD_SUBDIRECTORY(assimp)
 target_compile_definitions(assimp PRIVATE -DASSIMP_BUILD_NO_OWN_ZLIB)
 
-if    (NOT HEADLESS_SYSTEM)
+# hide assimp compile warnings with g++
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	include(CheckCXXCompilerFlag)
+	check_cxx_compiler_flag(-Wno-class-memaccess CXX_SUPPORT_NO_CLASS_MEMACCESS)
+	set(flagstoadd "")
 
-	if    (USE_LIBSQUISH)
-		ADD_SUBDIRECTORY(rg-etc1)
-		ADD_SUBDIRECTORY(squish)
-	endif (USE_LIBSQUISH)
-endif (NOT HEADLESS_SYSTEM)
+	if(CXX_SUPPORT_NO_CLASS_MEMACCESS)
+		set(flagstoadd "${flagstoadd} -Wno-class-memaccess")
+	endif()
+	check_cxx_compiler_flag(-Wno-tautological-compare CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
+	if(CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
+		set(flagstoadd "${flagstoadd} -Wno-tautological-compare")
+	endif()
+	set_target_properties(assimp PROPERTIES COMPILE_FLAGS ${flagstoadd})
+
+endif()
+

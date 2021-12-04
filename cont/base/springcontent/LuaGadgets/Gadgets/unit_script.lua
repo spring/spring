@@ -243,7 +243,7 @@ local function RunOnError(thread)
 	if fun then
 		local good, err = pcall(fun, err)
 		if (not good) then
-			Spring.Log(section, LOG.ERROR, "error in error handler: " .. err)
+			Spring.Log(section, LOG.ERROR, "error in error handler: " .. tostring(err))
 		end
 	end
 end

@@ -1,29 +1,30 @@
 # Spring supplied CMake build file
 
-Set(MINIZIP_FIND_QUIETLY TRUE)
+set(MINIZIP_FIND_QUIETLY TRUE)
 FIND_PACKAGE_STATIC(MiniZip)
 
-If     (MINIZIP_FOUND)
+if     (MINIZIP_FOUND)
 	# Use the system supplied MiniZip library
-	Message(STATUS "Using minizip library: ${MINIZIP_LIBRARY}")
+	message(STATUS "Using minizip library: ${MINIZIP_LIBRARY}")
 
-	SetGlobal(SPRING_MINIZIP_INCLUDE_DIR "${MINIZIP_INCLUDE_DIR}")
-	SetGlobal(SPRING_MINIZIP_LIBRARY "${MINIZIP_LIBRARY}")
-Else   (MINIZIP_FOUND)
+	set_global(SPRING_MINIZIP_INCLUDE_DIR "${MINIZIP_INCLUDE_DIR}")
+	set_global(SPRING_MINIZIP_LIBRARY "${MINIZIP_LIBRARY}")
+else   (MINIZIP_FOUND)
 	# Build our own minizip library
-	SET(miniZipSources
+	set(miniZipSources
 			"unzip"
 			"zip"
 			"ioapi"
 		)
 
 	add_definitions(-DNOCRYPT -DNOUNCRYPT)
-	FIND_PACKAGE(ZLIB REQUIRED)
+	find_package(ZLIB REQUIRED)
 
-	ADD_LIBRARY(minizip STATIC EXCLUDE_FROM_ALL ${miniZipSources})
-	TARGET_LINK_LIBRARIES(minizip ${ZLIB_LIBRARY})
-	SET_TARGET_PROPERTIES(minizip PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
+	add_library(minizip STATIC EXCLUDE_FROM_ALL ${miniZipSources})
+	target_link_libraries(minizip ${ZLIB_LIBRARY})
+	include_directories(${ZLIB_INCLUDE_DIR})
+	set_target_properties(minizip PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
-	SetGlobal(SPRING_MINIZIP_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/rts/lib")
-	SetGlobal(SPRING_MINIZIP_LIBRARY minizip)
-EndIf  (MINIZIP_FOUND)
+	set_global(SPRING_MINIZIP_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/rts/lib")
+	set_global(SPRING_MINIZIP_LIBRARY minizip)
+endif  (MINIZIP_FOUND)

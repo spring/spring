@@ -12,33 +12,35 @@ public:
 	COverheadController();
 	~COverheadController();
 
-	const std::string GetName() const { return "ta"; }
+	const std::string GetName() const override { return "ta"; }
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override;
+	void MouseMove(float3 move) override;
+	void ScreenEdgeMove(float3 move) override;
+	void MouseWheelMove(float move) override;
 
-	void Update();
-	float3 GetPos() const;
-	void SetPos(const float3& newPos);
+	void Update() override;
+	float3 GetPos() const override { return (pos - dir * height); }
+	void SetPos(const float3& newPos) override;
 
-	float3 SwitchFrom() const;
-	void SwitchTo(const int oldCam, const bool showText);
+	float3 SwitchFrom() const override { return pos; }
+	void SwitchTo(const int oldCam, const bool showText) override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
-
-	bool flipped;
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
 	void ConfigNotify(const std::string& key, const std::string& value);
 	void ConfigUpdate();
 
+public:
+	bool flipped;
 private:
+	bool changeAltHeight;
+
 	float middleClickScrollSpeed;
 	float height;
 	float oldAltHeight;
-	bool changeAltHeight;
+
 	float maxHeight;
 	float tiltSpeed;
 	float angle;

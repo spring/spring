@@ -15,7 +15,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -29,10 +29,11 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
@@ -224,16 +225,7 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	//	return;
 	//}
 
-	if (!GLEW_ARB_depth_clamp)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
-
-	if (!GLEW_ARB_vertex_array_object)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_vertex_array_object");
-
-	if (!globalRendering->haveGLSL)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GLSL");
-
-	if (!dynamic_cast<CSMFReadMap*>(readMap))
+	if (dynamic_cast<CSMFReadMap*>(readMap) == nullptr)
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
 	if (static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0)
@@ -241,11 +233,12 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 
 	DetectMaxDecals();
 	LoadShaders();
-	if (!decalShader->IsValid()) {
+	if (!decalShader->IsValid())
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
-	}
 
 	glGenTextures(1, &depthTex);
+	bboxArray.Generate();
+
 	CreateBoundingBoxVBOs();
 	CreateStructureVBOs();
 	SunChanged();
@@ -272,10 +265,11 @@ CDecalsDrawerGL4::~CDecalsDrawerGL4()
 
 	glDeleteTextures(1, &depthTex);
 	glDeleteTextures(1, &atlasTex);
+	bboxArray.Delete();
 
 	shaderHandler->ReleaseProgramObjects("[DecalsDrawerGL4]");
-	decalShader = NULL;
 
+	decalShader = nullptr;
 	decalDrawer = nullptr;
 }
 
@@ -314,11 +308,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	const int userWanted = decalLevel * 512;
 
 	// detect if SSBO is needed and available
-	if (userWanted > maxDecalsUBO) {
-		if (GLEW_ARB_shader_storage_buffer_object) {
-			useSSBO = true;
-		}
-	}
+	useSSBO = (userWanted > maxDecalsUBO && GLEW_ARB_shader_storage_buffer_object);
 
 	// now calc the actual max usable
 	maxDecals      = (useSSBO) ? maxDecalsUBO : maxDecalsSSBO;
@@ -345,7 +335,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 
 void CDecalsDrawerGL4::LoadShaders()
 {
-	decalShader = shaderHandler->CreateProgramObject("[DecalsDrawerGL4]", "DecalShader", false);
+	decalShader = shaderHandler->CreateProgramObject("[DecalsDrawerGL4]", "DecalShader");
 
 	decalShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/DecalsVertGL4.glsl", "", GL_VERTEX_SHADER));
 	decalShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/DecalsFragGL4.glsl", "", GL_FRAGMENT_SHADER));
@@ -360,7 +350,6 @@ void CDecalsDrawerGL4::LoadShaders()
 		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
-
 	decalShader->Disable();
 	decalShader->Validate();
 }
@@ -370,7 +359,7 @@ static STex LoadTexture(const std::string& name)
 {
 	std::string fileName = name;
 
-	if (FileSystem::GetExtension(fileName) == "")
+	if (FileSystem::GetExtension(fileName).empty())
 		fileName += ".bmp";
 
 	std::string fullName = fileName;
@@ -412,8 +401,8 @@ static STex LoadTexture(const std::string& name)
 
 static inline void GetBuildingDecals(spring::unordered_map<std::string, STex>& textures)
 {
-	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
-		SolidObjectDecalDef& decalDef = unitDef.decalDef;
+	for (const UnitDef& unitDef: unitDefHandler->GetUnitDefsVec()) {
+		const SolidObjectDecalDef& decalDef = unitDef.decalDef;
 
 		if (!decalDef.useGroundDecal)
 			continue;
@@ -471,19 +460,20 @@ static inline void GetFallbacks(spring::unordered_map<std::string, STex>& textur
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
 	spring::unordered_map<std::string, STex> textures;
+
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
 	GetFallbacks(textures);
 
 	CQuadtreeAtlasAlloc atlas;
-	atlas.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
+	atlas.SetNonPowerOfTwo(true);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		if (it->second.id == 0)
+	for (const auto& texture: textures) {
+		if (texture.second.id == 0)
 			continue;
 
 		const float maxSize = 1024; //512;
-		int2 size = it->second.size;
+		int2 size = texture.second.size;
 		if (size.x > maxSize) {
 			size.y = size.y * (maxSize / size.x);
 			size.x = maxSize;
@@ -493,7 +483,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			size.y = maxSize;
 		}
 
-		atlas.AddEntry(it->first, size);
+		atlas.AddEntry(texture.first, size);
 	}
 	/*bool success =*/ atlas.Allocate();
 
@@ -520,43 +510,55 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		return;
 	}
 
-	glViewport(0, 0, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
-	glSpringMatrix2dProj(atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
+	const int2 atlasSize = atlas.GetAtlasSize();
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
-	glClear(GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->ViewPort(0, 0, atlasSize.x, atlasSize.y);
+
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ZERO);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_ZERO);
+	glAttribStatePtr->DisableDepthTest();
 
-	CVertexArray va;
-	for (auto& p: textures) {
-		if (p.second.id == 0)
-			continue;
 
-		const float4 texCoords = atlas.GetTexCoords(p.first);
-		const float4 absCoords = atlas.GetEntry(p.first);
-		atlasTexs[p.first] = SAtlasTex(texCoords);
+	{
+		GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+		Shader::IProgramObject* shader = buffer->GetShader();
 
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glBindTexture(GL_TEXTURE_2D, p.second.id);
+		assert(!decalShader->IsBound());
+		shader->Enable();
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, atlasSize.x, 0.0f, atlasSize.y, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
 
-		va.Initialize();
-		va.AddVertex2dT(absCoords.x,   absCoords.y, 0.0f, 0.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f); //FIXME why +1?
-		va.AddVertex2dT(absCoords.x,   absCoords.w+1, 0.0f, 1.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f); //FIXME why +1?
-		va.DrawArray2dT(GL_TRIANGLE_STRIP);
+		for (auto& p: textures) {
+			if (p.second.id == 0)
+				continue;
 
-		glDeleteTextures(1, &p.second.id);
+			const float4 texCoords = atlas.GetTexCoords(p.first);
+			const float4 absCoords = atlas.GetEntry(p.first);
+			atlasTexs[p.first] = SAtlasTex(texCoords);
+
+			glBindTexture(GL_TEXTURE_2D, p.second.id);
+
+			// NB: TC, but z=0 to emulate 2DTC
+			buffer->SafeAppend({{absCoords.x       , absCoords.y       , 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+			buffer->SafeAppend({{absCoords.z + 1.0f, absCoords.y       , 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // FIXME: why +1?
+			buffer->SafeAppend({{absCoords.x       , absCoords.w + 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+			buffer->SafeAppend({{absCoords.z + 1.0f, absCoords.w + 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // FIXME: why +1?
+			buffer->Submit(GL_TRIANGLE_STRIP);
+
+			glDeleteTextures(1, &p.second.id);
+		}
+
+		shader->Disable();
 	}
 
+
 	fb.Unbind();
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, atlasTex);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -568,7 +570,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 {
-	float boxverts[] = {
+	constexpr float vertices[] = {
 		-1.0f, -1.0f, -1.0f,
 		-1.0f,  1.0f, -1.0f,
 		 1.0f, -1.0f, -1.0f,
@@ -579,7 +581,7 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 		-1.0f, -1.0f,  1.0f,
 		-1.0f,  1.0f,  1.0f,
 	};
-	GLubyte indices[] = {
+	constexpr GLubyte indices[] = {
 		0, 1, 2,  3, 2, 1, // back
 		2, 3, 4,  5, 4, 3, // right
 		4, 5, 6,  7, 6, 5, // front
@@ -589,12 +591,21 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 	};
 
 	// upload
-	vboVertices.Bind(GL_ARRAY_BUFFER);
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboVertices.New(sizeof(boxverts), GL_STATIC_DRAW, &boxverts[0]);
-	vboIndices.New(sizeof(indices), GL_STATIC_DRAW, &indices[0]);
-	vboVertices.Unbind();
-	vboIndices.Unbind();
+	bboxArray.Bind();
+	bboxVerts.Bind(GL_ARRAY_BUFFER);
+	bboxIndcs.Bind(GL_ELEMENT_ARRAY_BUFFER);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), VA_TYPE_OFFSET(float, 0));
+
+	bboxVerts.New(sizeof(vertices), GL_STATIC_DRAW, &vertices[0]);
+	bboxIndcs.New(sizeof(indices), GL_STATIC_DRAW, &indices[0]);
+
+	bboxArray.Unbind();
+	bboxVerts.Unbind();
+	bboxIndcs.Unbind();
+
+	glDisableVertexAttribArray(0);
 }
 
 
@@ -648,7 +659,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 void CDecalsDrawerGL4::ViewResize()
 {
 	decalShader->Enable();
-	decalShader->SetUniform("invScreenSize", 1.f / globalRendering->viewSizeX, 1.f / globalRendering->viewSizeY);
+	decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
 	decalShader->Disable();
 
 	glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -656,7 +667,7 @@ void CDecalsDrawerGL4::ViewResize()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
 
@@ -672,18 +683,19 @@ void CDecalsDrawerGL4::SunChanged()
 	//FIXME
 	if (uniformBlockSize != sizeof(SGLSLGroundLighting))
 		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u " _STPF_, uniformBlockSize, sizeof(SGLSLGroundLighting));
+
 	assert(uniformBlockSize == sizeof(SGLSLGroundLighting));
 
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
 	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
-		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
+		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*) uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
 		uboGroundLightingData->ambientColor  = sunLighting->groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->diffuseColor  = sunLighting->groundDiffuseColor  * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = sky->GetLight()->GetLightDir();
 		uboGroundLightingData->fogColor      = sky->fogColor;
-		uboGroundLightingData->fogEnd        = globalRendering->viewRange * sky->fogEnd;
-		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (sky->fogEnd - sky->fogStart));
+		uboGroundLightingData->fogEnd        = camera->GetFarPlaneDist() * sky->fogEnd;
+		uboGroundLightingData->fogScale      = 1.0f / (camera->GetFarPlaneDist() * (sky->fogEnd - sky->fogStart));
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId());
@@ -715,7 +727,7 @@ bool CDecalsDrawerGL4::AnyDecalsInView() const
 
 void CDecalsDrawerGL4::Draw()
 {
-	trackHandler.Draw();
+	trackHandler.Draw(nullptr);
 
 	if (!GetDrawDecals())
 		return;
@@ -758,55 +770,55 @@ void CDecalsDrawerGL4::Draw()
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	glDepthMask(GL_FALSE);
-	glEnable(GL_DEPTH_CLAMP);
-	//glEnable(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_LESS, 1.0f);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_SRC_ALPHA);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_FRONT);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableDepthClamp();
+	// glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableDepthTest();
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+
+	const CMatrix44f& viewProjMat    = camera->GetViewProjectionMatrix();
+	      CMatrix44f  viewProjMatInv = camera->GetViewProjectionMatrixInverse();
+
+	const std::array<GLuint, 5> textures = {
+		atlasTex,
+		static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture(),
+		shadowHandler.GetShadowTextureID(),
+		infoTextureHandler->GetCurrentInfoTexture(),
+		depthTex
+	};
+
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
 		decalShader->SetUniform3v("camDir", &camera->GetDir()[0]);
 
-		CMatrix44f vpi = camera->GetViewProjectionMatrixInverse();
-		vpi.Translate(-OnesVector);
-		vpi.Scale(OnesVector * 2.f);
-		decalShader->SetUniformMatrix4x4("viewProjMatrix", false, camera->GetViewProjectionMatrix().m);
-		decalShader->SetUniformMatrix4x4("viewProjMatrixInv", false, vpi.m);
+		viewProjMatInv.Translate(-OnesVector);
+		viewProjMatInv.Scale(OnesVector * 2.0f);
 
-	const std::array<GLuint,5> textures = {
-		atlasTex,
-		static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture(),
-		shadowHandler->GetShadowTextureID(),
-		infoTextureHandler->GetCurrentInfoTexture(),
-		depthTex
-	};
+		decalShader->SetUniformMatrix4x4("viewProjMatrix", false, viewProjMat.m);
+		decalShader->SetUniformMatrix4x4("viewProjMatrixInv", false, viewProjMatInv.m);
+
 	glSpringBindTextures(0, textures.size(), &textures[0]);
 
-	if (shadowHandler->ShadowsLoaded()) {
-		CMatrix44f sm = shadowHandler->GetShadowMatrix();
-		sm.GetPos() += float3(0.5f, 0.5f, 0.0f);
-		decalShader->SetUniformMatrix4x4("shadowMatrix", false, sm.m);
+	if (shadowHandler.ShadowsLoaded()) {
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowViewMatrixRaw());
 		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);
 	}
 
 	// Draw
 	DrawDecals();
 
-	glDisable(GL_DEPTH_CLAMP);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableDepthClamp();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableBlendMask();
 
 	decalShader->Disable();
 	//if (setTimerQuery) drawTimerQuery.Stop();
@@ -815,14 +827,9 @@ void CDecalsDrawerGL4::Draw()
 
 void CDecalsDrawerGL4::DrawDecals()
 {
-	vboVertices.Bind(GL_ARRAY_BUFFER);
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vboVertices.GetPtr());
-			glDrawElementsInstanced(GL_TRIANGLES, vboIndices.GetSize(), GL_UNSIGNED_BYTE, vboIndices.GetPtr(), groups.size());
-		glDisableClientState(GL_VERTEX_ARRAY);
-	vboIndices.Unbind();
-	vboVertices.Unbind();
+	bboxArray.Bind();
+	glDrawElementsInstanced(GL_TRIANGLES, bboxIndcs.GetSize(), GL_UNSIGNED_BYTE, bboxIndcs.GetPtr(), groups.size());
+	bboxArray.Unbind();
 }
 
 
@@ -834,7 +841,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 	uboDecalGroups.Bind(GL_UNIFORM_BUFFER);
 		GLubyte* uboData = uboDecalGroups.MapBuffer(0, sizeof(SDecalGroup) * groups.size());
-		SDecalGroup* uboScarsData = (SDecalGroup*)uboData;
+		SDecalGroup* uboScarsData = (SDecalGroup*) uboData;
 		memcpy(uboScarsData, &groups[0], sizeof(SDecalGroup) * groups.size());
 		uboDecalGroups.UnmapBuffer();
 	uboDecalGroups.Unbind();
@@ -843,9 +850,11 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 	uboDecalsStructures.Bind(GL_UNIFORM_BUFFER);
 		for (int idx: decalsToUpdate) {
-			Decal& d = decals[idx];
+			const Decal& d = decals[idx];
+
 			GLubyte* uboData = uboDecalsStructures.MapBuffer(sizeof(SGLSLDecal) * idx, sizeof(SGLSLDecal) * 1);
-			SGLSLDecal* uboScarsData = (SGLSLDecal*)uboData;
+			SGLSLDecal* uboScarsData = (SGLSLDecal*) uboData;
+
 			uboScarsData[0].pos        = d.pos;
 			uboScarsData[0].alpha      = d.alpha;
 			uboScarsData[0].size       = float2(1.0f / d.size.x, 1.0f / d.size.y);
@@ -867,7 +876,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 void CDecalsDrawerGL4::Update()
 {
-	SCOPED_TIMER("Update::Update::DecalsDrawerGL4");
+	SCOPED_TIMER("Update::DecalsDrawerGL4");
 	UpdateOverlap();
 	OptimizeGroups();
 	UpdateDecalsVBO();
@@ -882,8 +891,7 @@ void CDecalsDrawerGL4::GameFrame(int n)
 		Decal& d = decals[idx];
 		assert((d.owner == nullptr) && (d.type == Decal::BUILDING));
 
-		d.alpha -= d.alphaFalloff;
-		if (d.alpha > 0.f) {
+		if ((d.alpha -= d.alphaFalloff) > 0.0f) {
 			decalsToUpdate.push_back(idx);
 		} else {
 			FreeDecal(idx);
@@ -1097,25 +1105,29 @@ void CDecalsDrawerGL4::OptimizeGroups()
 }
 
 
-static void DRAW_DECAL(CVertexArray* va, const CDecalsDrawerGL4::Decal* d)
+static void DRAW_DECAL(const CDecalsDrawerGL4::Decal* d, GL::RenderDataBufferTC* rdb)
 {
 	CMatrix44f m;
 	m.Translate(d->pos.x, d->pos.z, 0.0f);
 	m.RotateZ(d->rot * math::DEG_TO_RAD);
+
 	float2 dsize = d->size;
 	// make sure it is at least 1x1 pixels!
 	dsize.x = std::max(dsize.x, std::ceil( float(mapDims.mapx * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
 	dsize.y = std::max(dsize.y, std::ceil( float(mapDims.mapy * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
+
 	const float3 ds1 = float3(dsize.x,  dsize.y, 0.0f);
 	const float3 ds2 = float3(dsize.x, -dsize.y, 0.0f);
-	auto f3tof2 = [](float3 f3) { return *(float2*)&f3; };
-	const float4 tc = d->texOffsets;
+	const float4 tc  = d->texOffsets;
+	const SColor  c  = {1.0f, 1.0f, 1.0f, 1.0f};
 
-	va->EnlargeArrays(4, 0, VA_SIZE_2DT);
-	va->AddVertexQ2dT(f3tof2(m * (-ds1)), float2(tc[0], tc[1]));
-	va->AddVertexQ2dT(f3tof2(m * ( ds2)), float2(tc[2], tc[1]));
-	va->AddVertexQ2dT(f3tof2(m * ( ds1)), float2(tc[2], tc[3]));
-	va->AddVertexQ2dT(f3tof2(m * (-ds2)), float2(tc[0], tc[3]));
+	rdb->SafeAppend({m * -ds1, tc[0], tc[1], c}); // bl
+	rdb->SafeAppend({m *  ds2, tc[2], tc[1], c}); // br
+	rdb->SafeAppend({m *  ds1, tc[2], tc[3], c}); // tr
+
+	rdb->SafeAppend({m *  ds1, tc[2], tc[3], c}); // tr
+	rdb->SafeAppend({m * -ds2, tc[0], tc[3], c}); // tl
+	rdb->SafeAppend({m * -ds1, tc[0], tc[1], c}); // bl
 }
 
 
@@ -1132,44 +1144,54 @@ void CDecalsDrawerGL4::UpdateOverlap()
 		return; // early-exit before GL stuff is done
 
 	fboOverlap.Bind();
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glAttribStatePtr->PushBits(GL_VIEWPORT_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	glViewport(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
-	glSpringMatrix2dProj(mapDims.mapx * SQUARE_SIZE, mapDims.mapy * SQUARE_SIZE);
+	glAttribStatePtr->ViewPort(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
 
-	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, atlasTex); glEnable(GL_TEXTURE_2D);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, atlasTex);
 
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.0f);
-	glEnable(GL_STENCIL_TEST);
-	glStencilMask(0xFF);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableStencilTest();
+	glAttribStatePtr->StencilMask(0xFF);
 
 
-	// either initialize or check queries
-	switch (overlapStage) {
-		case 0: {
-			UpdateOverlap_Initialize();
-			overlapStage = 1;
-		} break;
-		case 1: {
-			candidatesForOverlap = UpdateOverlap_CheckQueries();
-		} break;
-		default: overlapStage = 0;
+	{
+		GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+		Shader::IProgramObject* shader = buffer->GetShader();
+
+		assert(!decalShader->IsBound());
+		shader->Enable();
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
+
+
+		// either initialize or check queries
+		switch (overlapStage) {
+			case 0: {
+				UpdateOverlap_Initialize(buffer);
+				overlapStage = 1;
+			} break;
+			case 1: {
+				candidatesForOverlap = UpdateOverlap_CheckQueries(buffer);
+			} break;
+			default: overlapStage = 0;
+		}
+
+		// generate queries for next frame/call
+		if (candidatesForOverlap.empty()) {
+			assert(waitingOverlapGlQueries.empty());
+			overlapStage = 0;
+		} else {
+			UpdateOverlap_GenerateQueries(candidatesForOverlap, buffer);
+		}
+
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+		shader->Disable();
 	}
 
-	// generate queries for next frame/call
-	if (candidatesForOverlap.empty()) {
-		assert(waitingOverlapGlQueries.empty());
-		overlapStage = 0;
-	} else {
-		UpdateOverlap_GenerateQueries(candidatesForOverlap);
-	}
-
-
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	//fboOverlap.Unbind();
 }
 
@@ -1251,48 +1273,48 @@ std::vector<int> CDecalsDrawerGL4::CandidatesForOverlap() const
 }
 
 
-void CDecalsDrawerGL4::UpdateOverlap_Initialize()
+void CDecalsDrawerGL4::UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb)
 {
-	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT);
-	//glClearColor(0.0f, 0.5f, 0.0f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->ClearStencil(0);
+	glAttribStatePtr->Clear(GL_STENCIL_BUFFER_BIT);
+	// glAttribStatePtr->ClearColor(0.0f, 0.5f, 0.0f, 1.0f);
+	// glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
-	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-	glStencilOp(GL_INCR_WRAP, GL_INCR_WRAP, GL_INCR_WRAP);
+	glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0xFF);
+	glAttribStatePtr->StencilOper(GL_INCR_WRAP, GL_INCR_WRAP, GL_INCR_WRAP);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	for (Decal& d: decals) {
-		DRAW_DECAL(va, &d);
+	{
+		for (const Decal& d: decals) {
+			DRAW_DECAL(&d, rdb);
+		}
+
+		rdb->Submit(GL_TRIANGLES);
 	}
-	va->DrawArray2dT(GL_QUADS);
 
-	/*const size_t datasize = 4 * OVERLAP_TEST_TEXTURE_SIZE * OVERLAP_TEST_TEXTURE_SIZE;
-	unsigned char* img = new unsigned char[datasize];
-	memset(img, 0, datasize);
-	glReadPixels(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_BYTE, img);
-	CBitmap bitmap(img, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
-	bitmap.Save("decals.png", true);
-	delete[] img;*/
+	#if 0
+	{
+		CBitmap bitmap;
+		bitmap.Alloc(OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE, 4);
+		glReadPixels(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+		bitmap.Save("decals.png", true);
+	}
+	#endif
 }
 
 
-void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap)
+void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap, GL::RenderDataBufferTC* rdb)
 {
-	glStencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glAttribStatePtr->StencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
+	glAttribStatePtr->StencilOper(GL_KEEP, GL_KEEP, GL_KEEP);
 
-	CVertexArray* va = GetVertexArray();
+
 	for (int i: candidatesForOverlap) {
-		Decal& d0 = decals[i];
 		GLuint q;
 		glGenQueries(1, &q);
 		glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, q);
 
-		va->Initialize();
-		DRAW_DECAL(va, &d0);
-		va->DrawArray2dT(GL_QUADS);
+		DRAW_DECAL(&decals[i], rdb);
+		rdb->Submit(GL_TRIANGLES);
 
 		glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
 		waitingOverlapGlQueries.emplace_back(i, q);
@@ -1300,7 +1322,7 @@ void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& can
 }
 
 
-std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries()
+std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries(GL::RenderDataBufferTC* rdb)
 {
 	// query the results of the last issued test (if any pixels were rendered for the decal)
 	std::vector<int> candidatesForRemoval;
@@ -1309,9 +1331,11 @@ std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries()
 		GLint rendered = GL_FALSE;
 		glGetQueryObjectiv(p.second, GL_QUERY_RESULT, &rendered);
 		glDeleteQueries(1, &p.second);
-		if (rendered == GL_FALSE) {
-			candidatesForRemoval.push_back(p.first);
-		}
+
+		if (rendered != GL_FALSE)
+			continue;
+
+		candidatesForRemoval.push_back(p.first);
 	}
 	waitingOverlapGlQueries.clear();
 
@@ -1321,38 +1345,47 @@ std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries()
 		return candidatesForRemoval;
 	}
 
+
 	//FIXME comment
 	auto sortBeginIt = candidatesForRemoval.begin();
 	auto sortEndIt = candidatesForRemoval.end();
+
 	while (sortBeginIt != sortEndIt) {
-		std::sort(sortBeginIt, sortEndIt, [&](const int& idx1, const int& idx2){
+		std::sort(sortBeginIt, sortEndIt, [&](const int& idx1, const int& idx2) {
 			return decals[idx1].generation < decals[idx2].generation;
 		});
-		sortEndIt = std::partition(sortBeginIt+1, sortEndIt, [&](const int& idx){
+		sortEndIt = std::partition(sortBeginIt+1, sortEndIt, [&](const int& idx) {
 			return !Overlap(decals[*sortBeginIt], decals[idx]);
 		});
 		++sortBeginIt;
 	}
+
 	auto eraseIt = sortEndIt;
 
+
 	// free one decal (+ remove it from the overlap texture)
-	int freed = 0;
-	CVertexArray* va = GetVertexArray();
-	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-	glStencilOp(GL_DECR_WRAP, GL_DECR_WRAP, GL_DECR_WRAP);
-	va->Initialize();
+	int numFreedDecals = 0;
+
+	glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0xFF);
+	glAttribStatePtr->StencilOper(GL_DECR_WRAP, GL_DECR_WRAP, GL_DECR_WRAP);
+
+
 	for (auto it = candidatesForRemoval.begin(); it != eraseIt; ++it) {
 		const int curIndex = *it;
-		const Decal& d = decals[curIndex];
-		DRAW_DECAL(va, &d);
+
+		DRAW_DECAL(&decals[curIndex], rdb);
 		FreeDecal(curIndex);
-		freed++;
+
+		numFreedDecals++;
 	}
-	va->DrawArray2dT(GL_QUADS);
+
+	rdb->Submit(GL_TRIANGLES);
+
+
 	candidatesForRemoval.erase(candidatesForRemoval.begin(), eraseIt);
 
 	//FIXME
-	LOG_L(L_ERROR, "Query freed: %i of %i (decals:%i groups:%i)", freed, int(candidatesForRemoval.size()), int(decals.size() - freeIds.size()), int(groups.size()));
+	LOG_L(L_ERROR, "Query freed: %i of %i (decals:%i groups:%i)", numFreedDecals, int(candidatesForRemoval.size()), int(decals.size() - freeIds.size()), int(groups.size()));
 
 	// overlap texture changed, so need to retest the others
 	return candidatesForRemoval;
@@ -1506,9 +1539,9 @@ static inline bool HasGroundDecalDef(const CSolidObject* object)
 
 static inline bool ExplosionInAirLos(const CExplosionParams& event)
 {
-	const auto proj = projectileHandler->GetProjectileBySyncedID(event.projectileID);
-	if (proj) {
-		if (teamHandler->ValidAllyTeam(proj->GetAllyteamID()) && teamHandler->AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
+	const auto proj = projectileHandler.GetProjectileBySyncedID(event.projectileID);
+	if (proj != nullptr) {
+		if (teamHandler.ValidAllyTeam(proj->GetAllyteamID()) && teamHandler.AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
 			return true;
 	}
 

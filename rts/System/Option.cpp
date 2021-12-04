@@ -13,13 +13,13 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 
-#include <assert.h>
+#include <cassert>
 
 static const char* Option_badKeyChars = " =;\r\n\t";
 
 std::string option_getDefString(const Option& option) {
 
-	std::string def = "";
+	std::string def;
 
 	switch (option.typeCode) {
 		case opt_bool:
@@ -173,8 +173,8 @@ static void option_parseOptionsInternal(
 		throw content_error("root table invalid");
 	}
 
-	std::set<std::string>* myOptionsSet = NULL;
-	if (optionsSet == NULL) {
+	std::set<std::string>* myOptionsSet = nullptr;
+	if (optionsSet == nullptr) {
 		myOptionsSet = new std::set<std::string>();
 	} else {
 		myOptionsSet = optionsSet;
@@ -189,9 +189,9 @@ static void option_parseOptionsInternal(
 					index, luaSourceDesc.c_str(), err.what());
 		}
 	}
-	if (optionsSet == NULL) {
+	if (optionsSet == nullptr) {
 		delete myOptionsSet;
-		myOptionsSet = NULL;
+		myOptionsSet = nullptr;
 	}
 }
 
@@ -253,8 +253,8 @@ void option_parseMapOptions(
 		throw content_error("root table invalid");
 	}
 
-	std::set<std::string>* myOptionsSet = NULL;
-	if (optionsSet == NULL) {
+	std::set<std::string>* myOptionsSet = nullptr;
+	if (optionsSet == nullptr) {
 		myOptionsSet = new std::set<std::string>();
 	} else {
 		myOptionsSet = optionsSet;
@@ -270,9 +270,9 @@ void option_parseMapOptions(
 					index, fileName.c_str(), mapName.c_str(), err.what());
 		}
 	}
-	if (optionsSet == NULL) {
+	if (optionsSet == nullptr) {
 		delete myOptionsSet;
-		myOptionsSet = NULL;
+		myOptionsSet = nullptr;
 	}
 }
 

@@ -3,15 +3,14 @@
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED_POOL(CBeamLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -86,14 +85,17 @@ void CBeamLaserProjectile::Update()
 			edgeColEnd[i]   *= decay;
 		}
 
-		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
 	}
 
 	UpdateInterception();
 }
 
-void CBeamLaserProjectile::Draw(CVertexArray* va)
+void CBeamLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
+	if (thickness <= 0.0)
+		return;
+
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
@@ -108,76 +110,120 @@ void CBeamLaserProjectile::Draw(CVertexArray* va)
 
 	const float3& pos1 = startPos;
 	const float3& pos2 = targetPos;
-
-	va->EnlargeArrays(32, 0, VA_SIZE_TC);
+	const float3& camR = camera->GetRight();
+	const float3& camU = camera->GetUp();
 
 	#define WT1 weaponDef->visuals.texture1
 	#define WT2 weaponDef->visuals.texture2
 	#define WT3 weaponDef->visuals.texture3
 
 	if ((midPos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
-		va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
-		va->AddVertexQTC(pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);
-		va->AddVertexQTC(pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart);
-		va->AddVertexQTC(pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart);
-		va->AddVertexQTC(pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart);
+		{
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart});
+			va->SafeAppend({pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart});
+			va->SafeAppend({pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart});
 
-		va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart);
-		va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd);
-		va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd);
-		va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart);
-		va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd);
-		va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd);
+			va->SafeAppend({pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart});
+			va->SafeAppend({pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart});
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart});
+		}
+		{
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart});
+			va->SafeAppend({pos1 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart});
+			va->SafeAppend({pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart});
 
-		va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
-		va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
-		va->AddVertexQTC(pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);
-		va->AddVertexQTC(pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart);
-		va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart);
-		va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart);
-		va->AddVertexQTC(pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart);
-		va->AddVertexQTC(pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart);
+			va->SafeAppend({pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart});
+			va->SafeAppend({pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart});
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart});
+		}
+		{
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart});
+			va->SafeAppend({pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart});
+			va->SafeAppend({pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd});
+
+			va->SafeAppend({pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd});
+			va->SafeAppend({pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd});
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart});
+		}
+		{
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart});
+			va->SafeAppend({pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart});
+			va->SafeAppend({pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd});
+
+			va->SafeAppend({pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd});
+			va->SafeAppend({pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd});
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart});
+		}
+		{
+			va->SafeAppend({pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart});
+			va->SafeAppend({pos2 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart});
+			va->SafeAppend({pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart});
+
+			va->SafeAppend({pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart});
+			va->SafeAppend({pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart});
+			va->SafeAppend({pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart});
+		}
+		{
+			va->SafeAppend({pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart});
+			va->SafeAppend({pos2 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart});
+			va->SafeAppend({pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart});
+
+			va->SafeAppend({pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart});
+			va->SafeAppend({pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart});
+			va->SafeAppend({pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart});
+		}
 	} else {
-		va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart);
-		va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd);
-		va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd);
-		va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart);
-		va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd);
-		va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd);
+		{
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart});
+			va->SafeAppend({pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart});
+			va->SafeAppend({pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd});
+
+			va->SafeAppend({pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd});
+			va->SafeAppend({pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd});
+			va->SafeAppend({pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart});
+		}
+		{
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart});
+			va->SafeAppend({pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart});
+			va->SafeAppend({pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd});
+
+			va->SafeAppend({pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd});
+			va->SafeAppend({pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd});
+			va->SafeAppend({pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart});
+		}
 	}
 
-	// draw flare
-	va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart);
-	va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart);
-	va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart);
-	va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart);
 
-	va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart);
-	va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart);
-	va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart);
-	va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart);
+	{
+		// draw flare
+		va->SafeAppend({pos1 - camR * flareEdgeSize - camU * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart});
+		va->SafeAppend({pos1 + camR * flareEdgeSize - camU * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart});
+		va->SafeAppend({pos1 + camR * flareEdgeSize + camU * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart});
+
+		va->SafeAppend({pos1 + camR * flareEdgeSize + camU * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart});
+		va->SafeAppend({pos1 - camR * flareEdgeSize + camU * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart});
+		va->SafeAppend({pos1 - camR * flareEdgeSize - camU * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart});
+	}
+	{
+		va->SafeAppend({pos1 - camR * flareCoreSize - camU * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart});
+		va->SafeAppend({pos1 + camR * flareCoreSize - camU * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart});
+		va->SafeAppend({pos1 + camR * flareCoreSize + camU * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart});
+
+		va->SafeAppend({pos1 + camR * flareCoreSize + camU * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart});
+		va->SafeAppend({pos1 - camR * flareCoreSize + camU * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart});
+		va->SafeAppend({pos1 - camR * flareCoreSize - camU * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart});
+	}
 
 	#undef WT3
 	#undef WT2
 	#undef WT1
 }
 
-void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CBeamLaserProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
 	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
 
-	lines.AddVertexQC(startPos, color);
-	lines.AddVertexQC(targetPos, color);
+	va->SafeAppend({ startPos, color});
+	va->SafeAppend({targetPos, color});
 }
 
-int CBeamLaserProjectile::GetProjectilesCount() const
-{
-	return 8;
-}

@@ -15,13 +15,12 @@ fi
 
 if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
 	echo "Please set /proc/sys/kernel/core_pattern to core"
-	exit 1
 fi
 
-if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
-	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
-	exit 1
-fi
+#if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
+#	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
+#	exit 1
+#fi
 
 echo "Env: GAME=$GAME MAP=$MAP AI=$AI AIVER=$AIVER"
 
@@ -38,8 +37,8 @@ fi
 
 # limit to 1.5GB RAM
 #ulimit -v 1500000
-# max 5 min cpu time
-ulimit -t 300
+# max 10 min cpu time
+ulimit -t 600
 
 # delete path cache
 rm -rf ~/.config/spring/cache/

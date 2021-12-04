@@ -16,22 +16,22 @@ struct Command;
 class CFactoryCAI : public CCommandAI
 {
 public:
-	CR_DECLARE(CFactoryCAI)
+	CR_DECLARE_DERIVED(CFactoryCAI)
 
 	CFactoryCAI(CUnit* owner);
 	CFactoryCAI();
 
-	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
-	void SlowUpdate();
+	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature) override;
+	void SlowUpdate() override;
 
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
 
 	void InsertBuildCommand(CCommandQueue::iterator& it, const Command& c);
 	bool RemoveBuildCommand(CCommandQueue::iterator& it);
 
 	void DecreaseQueueCount(const Command& c, int& buildOption);
 	void FactoryFinishBuild(const Command& command);
-	void ExecuteStop(Command& c);
+	void ExecuteStop(Command& c) override;
 
 	CCommandQueue newUnitCommands;
 

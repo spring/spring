@@ -3,6 +3,7 @@
 #ifndef PATH_FLOWMAP_HDR
 #define PATH_FLOWMAP_HDR
 
+#include <array>
 #include <vector>
 
 #include "System/type2.h"
@@ -14,19 +15,22 @@ class CSolidObject;
 class PathFlowMap {
 public:
 	struct FlowCell {
-		FlowCell(): numObjects(0) {}
-
 		float3 flowVector;
 		float3 cellCenter; // WS
 
-		unsigned int numObjects;
+		unsigned int numObjects = 0;
 	};
 
 	static PathFlowMap* GetInstance();
 	static void FreeInstance(PathFlowMap*);
 
-	PathFlowMap(unsigned int scalex, unsigned int scalez);
-	~PathFlowMap();
+	void Init(unsigned int scalex, unsigned int scalez);
+	void Kill() {
+		buffers[fBufferIdx].clear();
+		buffers[bBufferIdx].clear();
+		indices[fBufferIdx].clear();
+		indices[bBufferIdx].clear();
+	}
 
 	void Update();
 	void AddFlow(const CSolidObject*);
@@ -47,14 +51,14 @@ private:
 	std::vector<FlowCell> buffers[2];
 	spring::unordered_set<unsigned int> indices[2];
 
-	std::vector<float3> pathOptDirs;
+	std::array<float3, 16> pathOptDirs;
 
-	unsigned int fBufferIdx;
-	unsigned int bBufferIdx;
-	unsigned int xscale, xsize, xfact;
-	unsigned int zscale, zsize, zfact;
+	unsigned int fBufferIdx = 0;
+	unsigned int bBufferIdx = 0;
+	unsigned int xscale = 0, xsize = 0, xfact = 0;
+	unsigned int zscale = 0, zsize = 0, zfact = 0;
 
-	float maxFlow[2];
+	float maxFlow[2] = {0.0f, 0.0f};
 };
 
 #endif

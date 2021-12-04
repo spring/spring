@@ -6,10 +6,12 @@
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
+#include "Lua/LuaAllocState.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaMemPool.h"
 
-#include "System/myMath.h"
+#include "System/GlobalRNG.h"
+#include "System/SpringMath.h"
 
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include "System/UnorderedMap.hpp"
@@ -23,6 +25,56 @@
 #error liblua should be built only once!
 #endif
 
+#ifndef __archBits__
+#error __archBits__ undefined
+#endif
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+// Custom (Unsynced) Random Number Generator
+
+static CGlobalUnsyncedRNG lguRNG;
+
+int spring_lua_unsynced_rand(lua_State* L) {
+	const lua_Number r = lguRNG.NextFloat();
+
+	switch (lua_gettop(L)) {
+		case 0: {
+			lua_pushnumber(L, r);
+		} break;
+		case 1: {
+			const int l = 1;
+			const int u = luaL_checkint(L, 1);
+
+			luaL_argcheck(L, 1 <= u, 1, "[spring_lua_unsynced_rand(1, upper)] empty interval");
+			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
+		} break;
+		case 2: {
+			const int l = luaL_checkint(L, 1);
+			const int u = luaL_checkint(L, 2);
+
+			luaL_argcheck(L, l <= u, 2, "[spring_lua_unsynced_rand(lower, upper)] empty interval");
+			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
+		} break;
+		default: {
+			return luaL_error(L, "[spring_lua_unsynced_rand] wrong number of arguments");
+		} break;
+	}
+
+	return 1;
+}
+
+int spring_lua_unsynced_srand(lua_State* L) {
+	if (L == nullptr) {
+		lguRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&L)); // startup
+	} else {
+		lguRNG.Seed(luaL_checkint(L, 1));
+	}
+
+	return 0;
+}
 
 
 
@@ -57,7 +109,6 @@ void LuaCreateMutex(lua_State* L)
 	mutexes[L] = mutex;
 #endif
 }
-
 
 void LuaDestroyMutex(lua_State* L)
 {
@@ -116,7 +167,6 @@ void LuaMutexLock(lua_State* L)
 #endif
 }
 
-
 void LuaMutexUnlock(lua_State* L)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
@@ -155,41 +205,47 @@ void LuaMutexYield(lua_State* L)
 }
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////
 //
 
-const char* spring_lua_getHandleName(const CLuaHandle* h) {
+static const char* spring_lua_get_handle_name(const CLuaHandle* h) {
 	return ((h != nullptr)? (h->GetName()).c_str(): "<null>");
 }
 
-const char* spring_lua_getHandleName(lua_State* L)
+const char* spring_lua_get_handle_name(lua_State* L)
 {
 	const luaContextData* lcd = GetLuaContextData(L);
 
 	if (lcd != nullptr)
-		return (spring_lua_getHandleName(lcd->owner));
+		return (spring_lua_get_handle_name(lcd->owner));
 
 	return "";
 }
 
 
 
+
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
-static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
-static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
+static constexpr const char* LUA_OOM_FMT_STR = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={" _STPF_ "," _STPF_ "}bytes\n";
+static constexpr uint64_t MAX_ALLOC_BYTES[] = {
+	 768u * (1024u * 1024u), // spring32
+	1536u * (1024u * 1024u), // spring64
+};
 
 // tracks allocations across all states
-static SLuaAllocState gLuaAllocState = {};
+static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
 static SLuaAllocError gLuaAllocError = {};
 
 void spring_lua_alloc_log_error(const luaContextData* lcd)
 {
 	const CLuaHandle* lho = lcd->owner;
 
-	const char* lhn = spring_lua_getHandleName(lho);
-	const char* fmt = maxAllocFmtStr;
+	const char* lhn = spring_lua_get_handle_name(lho);
+	const char* fmt = LUA_OOM_FMT_STR;
 
 	SLuaAllocState& s = gLuaAllocState;
 	SLuaAllocError& e = gLuaAllocError;
@@ -198,16 +254,19 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 		e.msgPtr = &e.msgBuf[0];
 
 	// append to buffer until it fills up or get_error is called
-	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), maxAllocedBytes);
+	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, s.allocedBytes.load(), MAX_ALLOC_BYTES[__archBits__ == 64]);
 }
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	luaContextData* lcd = static_cast<luaContextData*>(ud);
+	SLuaAllocState* las = &lcd->allocState;
 	LuaMemPool* lmp = lcd->memPool;
 
 	gLuaAllocState.allocedBytes -= osize;
 	gLuaAllocState.allocedBytes += nsize;
+	las->allocedBytes -= osize;
+	las->allocedBytes += nsize;
 
 	if (nsize == 0) {
 		// deallocation; must return NULL
@@ -215,7 +274,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > maxAllocedBytes)) {
+	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > MAX_ALLOC_BYTES[__archBits__ == 64])) {
 		// (re)allocation
 		// better kill Lua than whole engine; instant desync if synced handle
 		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
@@ -232,6 +291,8 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 
 	gLuaAllocState.numLuaAllocs += 1;
 	gLuaAllocState.luaAllocTime += (t1 - t0).toMicroSecsi();
+	las->numLuaAllocs += 1;
+	las->luaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
 }
@@ -247,6 +308,14 @@ void spring_lua_alloc_get_stats(SLuaAllocState* state)
 #else
 	state->numLuaStates.store(LuaMemPool::GetPoolCount());
 #endif
+}
+
+bool spring_lua_alloc_skip_gc(float gcLoadMult)
+{
+	// randomly skip a GC cycle with probability 1 - (weighted memory load ratio)
+	const float rawLoadRatio = float(gLuaAllocState.allocedBytes.load()) / float(MAX_ALLOC_BYTES[__archBits__ == 64]);
+	const float modLoadRatio = gcLoadMult * rawLoadRatio;
+	return (lguRNG.NextFloat() > modLoadRatio);
 }
 
 bool spring_lua_alloc_get_error(SLuaAllocError* error)
@@ -277,7 +346,7 @@ void spring_lua_alloc_update_stats(int clearStatsFrame)
 ////// Custom synced float to string
 //////////////////////////////////////////////////////////
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 static inline int sprintf64(char* dst, std::int64_t x) { return sprintf(dst, "%I64d", x); }
@@ -289,12 +358,12 @@ static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%
 
 // excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
 // int numbers in that range are 100% exact, and don't suffer float precision issues
-static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
-static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
+// static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
+// static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
 static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {
-	1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10
+	{1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10}
 };
 
 
@@ -302,7 +371,6 @@ static constexpr inline double Pow10d(unsigned i)
 {
 	return (i < v.size()) ? v[i] : std::pow(double(10), i);
 }
-
 
 static const inline int FastLog10(const float f)
 {
@@ -336,19 +404,18 @@ static constexpr inline int GetDigitsInStdNotation(const int log10)
 
 
 
-static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false)
+static inline int PrintIntPart(char* buf, float f, const bool roundingCarryBit = false)
 {
-#ifdef WIN32
-	if (f < (std::numeric_limits<int>::max() - carrierBit)) {
-		return sprintf(buf, "%d", int(f) + carrierBit);
+#ifdef _WIN32
+	if (f < (std::numeric_limits<int>::max() - roundingCarryBit)) {
+		return sprintf(buf, "%d", int(f) + roundingCarryBit);
 	} else
 #endif
-	if (f < (SPRING_INT64_MAX - carrierBit))
-		return sprintf64(buf, std::int64_t(f) + carrierBit); // much faster than printing a float!
+	if (f < (SPRING_INT64_MAX - roundingCarryBit))
+		return sprintf64(buf, std::int64_t(f) + roundingCarryBit); // much faster than printing a float!
 
-	return sprintf(buf, "%1.0f", f + carrierBit);
+	return sprintf(buf, "%1.0f", f + roundingCarryBit);
 }
-
 
 static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 {
@@ -360,37 +427,42 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 	//     Also performance seems to be unaffected by switching the FPU mode.
 	streflop::streflop_init<streflop::Double>();
 
-	const auto old = buf;
+	const char* old = buf;
+	char s[16];
 
 	assert(digits <= 15);
 	assert(digits <= std::numeric_limits<std::int64_t>::digits10);
+
 	const std::int64_t i = double(f) * Pow10d(digits) + 0.5;
-	char s[16];
 	const int len = sprintf64(s, i);
+
 	if (len < digits) {
 		memset(buf, '0', digits - len);
 		buf += digits - len;
 	}
+
 	memcpy(buf, s, len);
 	buf += len;
 
 	// removing trailing zeros
 	precision = std::max(1, precision);
-	while (buf[-1] == '0' && (buf - old) > precision) --buf;
+	while (buf[-1] == '0' && (buf - old) > precision)
+		--buf;
 	buf[0] = '\0';
 
 	streflop::streflop_init<streflop::Simple>();
+	assert((buf - old) >= 1);
 	return (buf - old);
 }
 
 
-static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotation, int nDigits, bool scienceNotation, int precision)
+static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotation, int nDigits, int precision, bool useScientificNot)
 {
 	// We handle here the case when rounding in the
 	// fract part carries into the integer part.
 	// We don't handle the fract rounding itself!
 	// fDigits excludes the dot when precision is < 0
-	const int iDigits = mix(1, charsInStdNotation, (!scienceNotation && log10 >= 0));
+	const int iDigits = mix(1, charsInStdNotation, (!useScientificNot && log10 >= 0));
 	const int fDigits = mix(std::max(0, nDigits - (iDigits + 1)), precision, (precision >= 0));
 
 	// check fractional part against the rounding limit
@@ -417,17 +489,21 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	int x = f;
 	if (float(x) == f) {
 		sprintf(buf, "%i", x);
+
 		if (precision > 0) {
 			char* endBuf = strchr(buf, '\0');
-			*endBuf = '.'; ++endBuf;
+			*endBuf = '.';
+			++endBuf;
 			memset(endBuf, '0', precision);
 			endBuf[precision] = '\0';
 		}
+
 		return;
 	}
 
 
 	int nDigits = MAX_DIGITS;
+
 	if (std::signbit(f)) { // use signbit() cause < doesn't work with nans
 		f = -f;
 		buf[0] = '-';
@@ -447,43 +523,43 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	int e10 = 0;
 	const int log10 = FastLog10(f);
 	const int charsInStdNotation = GetDigitsInStdNotation(log10);
+
 	if ((charsInStdNotation > nDigits) && (precision == -1)) {
-		e10 = log10;
 		nDigits -= 4; // space needed for "e+01"
-		f *= std::pow(10.0f, -e10);
+		f *= std::pow(10.0f, -(e10 = log10));
 	}
 
 	float truncF;
 	float fractF = std::modf(f, &truncF);
 
-	const bool scienceNotation = (e10 != 0);
-	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
+	const bool useScientificNot = (e10 != 0);
+	const bool roundingCarryBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, precision, useScientificNot);
 
-	int iDigits = PrintIntPart(buf, truncF, carrierBit);
-	if (scienceNotation) {
-		if (iDigits == 2) {
-			iDigits = 1;
-			e10 += 1;
-			assert(fractF == 0);
-		}
+	int iDigits = PrintIntPart(buf, truncF, roundingCarryBit);
+
+	if (useScientificNot) {
+		assert(iDigits != 2 || fractF == 0.0f);
+
+		e10 += (iDigits == 2);
+		iDigits = mix(iDigits, 1, iDigits == 2);
+
 		assert(iDigits == 1);
 	}
+
 	nDigits -= iDigits;
+	nDigits = mix(nDigits, precision + 1, precision >= 0); // add 1 for dot if precision is positive
 	buf += iDigits;
 
-	if (precision >= 0)
-		nDigits = precision + 1; //+1 for dot
-	if ((nDigits > 1) && (scienceNotation || fractF != 0 || precision > 0)) {
+	if ((nDigits > 1) && (useScientificNot || fractF != 0 || precision > 0)) {
 		buf[0] = '.';
+
 		++buf;
 		--nDigits;
 
-		const int fDigits = PrintFractPart(buf, fractF, nDigits, precision);
-		assert(fDigits >= 1);
-		buf += fDigits;
+		buf += PrintFractPart(buf, fractF, nDigits, precision);
 	}
 
-	if (!scienceNotation)
+	if (!useScientificNot)
 		return;
 
 	sprintf(buf, "e%+02d", e10);
@@ -496,13 +572,12 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 		return spring_lua_ftoa(f, buf);
 
 	// handles `%(sign)(width)(.precision)f`, i.e. %+10.2f
-
 	char bufC[128];
 	char* buf2 = bufC;
 
-	// sign
+	// insert sign; f might be NaN so check with signbit()
 	if (fmt[0] == '+' || fmt[0] == ' ') {
-		if (!std::signbit(f)) { // use signbit() cause < doesn't work with nans
+		if (!std::signbit(f)) {
 			buf2[0] = fmt[0];
 			++buf2;
 		}
@@ -515,10 +590,10 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 	// precision
 	int precision = -1;
 	const char* dotPos = strchr(fmt, '.');
-	if (dotPos != nullptr) {
-		fmt = dotPos + 1;
-		precision = Clamp(atoi(fmt), 0, 15);
-	}
+
+	if (dotPos != nullptr)
+		precision = Clamp(atoi(fmt = dotPos + 1), 0, 15);
+
 
 	// convert the float
 	spring_lua_ftoa(f, buf2, precision);
@@ -527,10 +602,10 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 	const int len = strlen(bufC);
 	if (len < width) {
 		memset(buf, ' ', width - len);
-		buf += width - len;
+		buf += (width - len);
 	}
 
 	// copy the float string into dst
-	memcpy(buf, bufC, len+1);
+	memcpy(buf, bufC, len + 1);
 }
 

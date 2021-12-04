@@ -31,16 +31,26 @@ public:
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.2);
 		SetSize(0.4, 0.7);
+		// SetDepth(-0.5f);
 
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
+
 		list = new agui::List(modWindowLayout);
 		list->FinishSelection.connect(std::bind(&ListSelectWnd::SelectButton, this));
+		list->SetDepth(this->depth);
+
 		agui::HorizontalLayout* buttons = new agui::HorizontalLayout(modWindowLayout);
 		buttons->SetSize(0.0f, 0.04f, true);
+		buttons->SetDepth(this->depth);
+
 		agui::Button* select = new agui::Button("Select", buttons);
 		select->Clicked.connect(std::bind(&ListSelectWnd::SelectButton, this));
+		select->SetDepth(this->depth);
+
 		agui::Button* cancel = new agui::Button("Close", buttons);
 		cancel->Clicked.connect(std::bind(&ListSelectWnd::CancelButton, this));
+		cancel->SetDepth(this->depth);
+
 		GeometryChange();
 	}
 
@@ -62,6 +72,7 @@ private:
 class SelectionWidget : public agui::GuiElement
 {
 public:
+	static const std::string NoDemoSelect;
 	static const std::string NoModSelect;
 	static const std::string NoMapSelect;
 	static const std::string NoScriptSelect;
@@ -70,14 +81,17 @@ public:
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
 
+	void ShowDemoList(const std::function<void(const std::string&)>& demoSelectedCB);
 	void ShowModList();
 	void ShowMapList();
 	void ShowScriptList();
 
+	void SelectDemo(const std::string&);
 	void SelectMod(const std::string&);
 	void SelectScript(const std::string&);
 	void SelectMap(const std::string&);
 
+	std::string userDemo;
 	std::string userScript;
 	std::string userMap;
 	std::string userMod;
@@ -89,12 +103,17 @@ private:
 
 
 	agui::Button* mod;
-	agui::TextElement* modT;
 	agui::Button* map;
-	agui::TextElement* mapT;
 	agui::Button* script;
+
+	agui::TextElement* modT;
+	agui::TextElement* mapT;
 	agui::TextElement* scriptT;
+
 	ListSelectWnd* curSelect;
+
+	std::function<void(const std::string&)> demoSelectedCB;
+
 	std::vector<std::string> availableScripts;
 };
 

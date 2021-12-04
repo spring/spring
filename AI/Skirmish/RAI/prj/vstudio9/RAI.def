@@ -1,5 +1,0 @@
-EXPORTS
-	getLevelOfSupportFor
-	init
-	release
-	handleEvent

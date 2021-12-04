@@ -5,7 +5,7 @@
 
 #ifndef M_PI
     #define M_PI       3.14159265358979323846
-#endif 
+#endif
 
 namespace math {
 	static constexpr float    PI  = 3.14159265358979323846f;
@@ -22,6 +22,7 @@ namespace math {
 	static constexpr float NEGHALFPI = -HALFPI;
 
 	static constexpr float SQRT2 = 1.41421356237f;
+	static constexpr float HALFSQRT2 = SQRT2 * 0.5f;
 
 	static constexpr float RAD_TO_DEG = 57.29577951308232f;       // sic (360 / (2*PI) is not a constexpr)
 	static constexpr float DEG_TO_RAD =  0.017453292519943295f;   // sic ((2*PI) / 360 is not a constexpr)

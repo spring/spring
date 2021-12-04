@@ -19,7 +19,7 @@
 
 
 #undef PI
-#define PI math::PI //SPRING(3.14159265358979323846)
+//SPRING #define PI 3.14159265358979323846
 #define RADIANS_PER_DEGREE math::DEG_TO_RAD //SPRING(PI/180.0)
 
 
@@ -194,6 +194,7 @@ static int math_max (lua_State *L) {
 
 
 static int math_random (lua_State *L) {
+  #ifndef LUA_USER_H
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
   lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
@@ -218,11 +219,18 @@ static int math_random (lua_State *L) {
     default: return luaL_error(L, "wrong number of arguments");
   }
   return 1;
+  #else
+  return (spring_lua_unsynced_rand(L)); // SPRING
+  #endif
 }
 
 static int math_randomseed (lua_State *L) {
+  #ifndef LUA_USER_H
   srand(luaL_checkint(L, 1));
   return 0;
+  #else
+  return (spring_lua_unsynced_srand(L)); // SPRING
+  #endif
 }
 
 
@@ -264,8 +272,10 @@ static const luaL_Reg mathlib[] = {
 */
 LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
-  lua_pushnumber(L, PI);
+  lua_pushnumber(L, math::PI);
   lua_setfield(L, -2, "pi");
+  lua_pushnumber(L, math::TWOPI);
+  lua_setfield(L, -2, "tau");
 #if STREFLOP_ENABLED
   lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else

@@ -14,29 +14,29 @@ class AAirMoveType;
 class CAirCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CAirCAI)
+	CR_DECLARE_DERIVED(CAirCAI)
 	CAirCAI(CUnit* owner);
 	CAirCAI();
 
-	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
-	void SlowUpdate();
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
+	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature) override;
+	void SlowUpdate() override;
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
 	void AddUnit(CUnit* unit);
-	void FinishCommand();
-	void BuggerOff(const float3& pos, float radius);
+	void FinishCommand() override;
+	void BuggerOff(const float3& pos, float radius) override;
 //	void StopMove();
 
-	void ExecuteGuard(Command& c);
+	void ExecuteGuard(Command& c) override;
 	void ExecuteAreaAttack(Command& c);
-	void ExecuteAttack(Command& c);
-	void ExecuteFight(Command& c);
-	void ExecuteMove(Command& c);
+	void ExecuteAttack(Command& c) override;
+	void ExecuteFight(Command& c) override;
+	void ExecuteMove(Command& c) override;
 
-	bool IsValidTarget(const CUnit* enemy) const;
+	bool IsValidTarget(const CUnit* enemy, CWeapon* weapon) const override;
 
 private:
 	bool AirAutoGenerateTarget(AAirMoveType*);
-	bool SelectNewAreaAttackTargetOrPos(const Command& ac);
+	bool SelectNewAreaAttackTargetOrPos(const Command& ac) override;
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}

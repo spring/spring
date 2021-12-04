@@ -46,7 +46,7 @@ static std::string GET_TEXT(int pos, const std::vector<unsigned char>& fileBuf, 
 }
 
 
-static void READ_3DOBJECT(C3DOParser::_3DObject& o, const std::vector<unsigned char>& fileBuf, int& curOffset)
+static void READ_3DOBJECT(TA3DO::_3DObject& o, const std::vector<unsigned char>& fileBuf, int& curOffset)
 {
 	unsigned int __tmp;
 	unsigned short __isize = sizeof(unsigned int);
@@ -92,7 +92,7 @@ static void READ_VERTEX(float3& v, const std::vector<unsigned char>& fileBuf, in
 }
 
 
-static void READ_PRIMITIVE(C3DOParser::_Primitive& p, const std::vector<unsigned char>& fileBuf, int& curOffset)
+static void READ_PRIMITIVE(TA3DO::_Primitive& p, const std::vector<unsigned char>& fileBuf, int& curOffset)
 {
 	unsigned int __tmp;
 	unsigned short __isize = sizeof(unsigned int);
@@ -122,21 +122,37 @@ static void READ_PRIMITIVE(C3DOParser::_Primitive& p, const std::vector<unsigned
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-C3DOParser::C3DOParser()
+void C3DOParser::Init()
 {
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
 
 	while (!parser.Eof()) {
-		teamtex.insert(StringToLower(parser.GetCleanLine()));
+		teamTextures.insert(StringToLower(parser.GetCleanLine()));
 	}
+
+	numPoolPieces = 0;
+}
+
+void C3DOParser::Kill()
+{
+	teamTextures.clear();
+	LOG_L(L_INFO, "[3DOParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
 }
 
 
 S3DModel C3DOParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
-	std::vector<unsigned char> fileBuf;
+	std::vector<uint8_t> fileBuf;
 
 	if (!file.FileExists())
 		throw content_error("[3DOParser] could not find model-file " + name);
@@ -154,11 +170,11 @@ S3DModel C3DOParser::Load(const std::string& name)
 		model.name = name;
 		model.type = MODELTYPE_3DO;
 		model.textureType = 0;
-		model.numPieces  = 0;
+		model.numPieces   = 0;
 		model.mins = DEF_MIN_SIZE;
 		model.maxs = DEF_MAX_SIZE;
 
-	model.FlattenPieceTree(LoadPiece(&model, 0, nullptr, &model.numPieces, fileBuf));
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf, 0));
 
 	// set after the extrema are known
 	model.radius = model.CalcDrawRadius();
@@ -169,10 +185,12 @@ S3DModel C3DOParser::Load(const std::string& name)
 }
 
 
-void C3DOParser::GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf)
+void S3DOPiece::GetVertices(const TA3DO::_3DObject* o, const std::vector<unsigned char>& fileBuf)
 {
 	int curOffset = o->OffsetToVertexArray;
-	object->vertexPos.resize(o->NumberOfVertices);
+
+	verts.clear();
+	verts.resize(o->NumberOfVertices);
 
 	for (int a = 0; a < o->NumberOfVertices; a++) {
 		float3 v;
@@ -180,12 +198,12 @@ void C3DOParser::GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<
 		v *= SCALE_FACTOR_3DO;
 		v.z = -v.z;
 
-		object->vertexPos[a] = v;
+		verts[a] = v;
 	}
 }
 
 
-bool C3DOParser::IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face)
+bool S3DOPiece::IsBasePlate(const S3DOPrimitive* face) const
 {
 	if (!(face->primNormal.dot(-UpVector) > 0.99f))
 		return false;
@@ -193,58 +211,67 @@ bool C3DOParser::IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face)
 	if (face->indices.size() != 4)
 		return false;
 
-	const float3 s1 = obj->vertexPos[face->indices[0]] - obj->vertexPos[face->indices[1]];
-	const float3 s2 = obj->vertexPos[face->indices[1]] - obj->vertexPos[face->indices[2]];
+	const float3 s1 = verts[face->indices[0]] - verts[face->indices[1]];
+	const float3 s2 = verts[face->indices[1]] - verts[face->indices[2]];
 
-	if (s1.SqLength()<900 || s2.SqLength()<900)
+	if (s1.SqLength() < 900.0f || s2.SqLength() < 900.0f)
 		return false;
 
-	for(int vi: face->indices) {
-		if (obj->vertexPos[vi].y > 0) {
+	for (int vi: face->indices) {
+		if (verts[vi].y > 0.0f)
 			return false;
-		}
 	}
 
 	return true;
 }
 
 
-C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const
-{
+C3DOTextureHandler::UnitTexture* S3DOPiece::GetTexture(
+	const TA3DO::_Primitive* p,
+	const std::vector<unsigned char>& fileBuf,
+	const spring::unordered_set<std::string>& teamTextures
+) const {
 	std::string texName;
 
 	if (p->OffsetToTextureName != 0) {
 		int unused;
 		texName = std::move(StringToLower(GET_TEXT(p->OffsetToTextureName, fileBuf, unused)));
 
-		if (teamtex.find(texName) == teamtex.end()) {
+		if (teamTextures.find(texName) == teamTextures.end()) {
 			texName += "00";
 		}
 	} else {
 		texName = "ta_color" + IntToString(p->PaletteEntry, "%i");
 	}
 
-	auto tex = texturehandler3DO->Get3DOTexture(texName);
+	auto tex = textureHandler3DO.Get3DOTexture(texName);
 	if (tex != nullptr)
 		return tex;
 
-	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"", __func__, texName.c_str(), obj->name.c_str());
+	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"", __func__, texName.c_str(), name.c_str());
 
 	// assign a dummy texture (the entire atlas)
-	return texturehandler3DO->Get3DOTexture("___dummy___");
+	return textureHandler3DO.Get3DOTexture("___dummy___");
 }
 
 
-void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf)
-{
+void S3DOPiece::GetPrimitives(
+	const S3DModel* model,
+	int pos,
+	int num,
+	int excludePrim,
+	const std::vector<unsigned char>& fileBuf,
+	const spring::unordered_set<std::string>& teamTextures
+) {
 	spring::unordered_map<int, int> prevHashes;
+	std::vector<int> sortedVerts;
 
 	for (int a = 0; a < num; a++) {
 		if (a == excludePrim)
 			continue;
 
-		_Primitive p;
-		int curOffset = pos + a * sizeof(_Primitive);
+		TA3DO::_Primitive p;
+		int curOffset = pos + a * sizeof(p);
 		READ_PRIMITIVE(p, fileBuf, curOffset);
 
 		if (p.NumberOfVertexIndexes < 3)
@@ -256,74 +283,103 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 
 		// load vertex indices list
 		curOffset = p.OffsetToVertexIndexArray;
-		for (int b=0; b<p.NumberOfVertexIndexes; b++) {
+
+		for (int b = 0; b < p.NumberOfVertexIndexes; b++) {
 			std::uint16_t w;
-			STREAM_READ(&w,2, fileBuf, curOffset);
+			STREAM_READ(&w, 2, fileBuf, curOffset);
 			swabWordInPlace(w);
 			sp.indices[b] = w;
 		}
 
 		// find texture
-		sp.texture = GetTexture(obj, &p, fileBuf);
+		sp.texture = GetTexture(&p, fileBuf, teamTextures);
 
 		// set the primitive-normal
-		const float3 v0v1 = (obj->vertexPos[sp.indices[1]] - obj->vertexPos[sp.indices[0]]);
-		const float3 v0v2 = (obj->vertexPos[sp.indices[2]] - obj->vertexPos[sp.indices[0]]);
+		const float3 v0v1 = (verts[sp.indices[1]] - verts[sp.indices[0]]);
+		const float3 v0v2 = (verts[sp.indices[2]] - verts[sp.indices[0]]);
 		sp.primNormal = (-v0v1.cross(v0v2)).SafeANormalize();
 
-		// some 3dos got multiple baseplates a.k.a. `selection primitive`
-		// it's not meant to be rendered, so hide it
-		if (IsBasePlate(obj, &sp))
+		sp.pieceIndex = model->numPieces - 1;
+
+		// some 3DO's have multiple baseplates (selection primitives)
+		// which are not meant to be rendered, so hide them
+		if (IsBasePlate(&sp))
 			continue;
 
 		// 3do has often duplicated faces (with equal geometry)
 		// with different textures (e.g. for animations and other effects)
 		// we don't support those, only render the last one
-		std::vector<int> orderVert = sp.indices;
-		std::sort(orderVert.begin(), orderVert.end());
-		const int vertHash = HsiehHash(&orderVert[0], orderVert.size() * sizeof(orderVert[0]), 0x123456);
+		sortedVerts.clear();
+		sortedVerts.resize(sp.indices.size());
 
-		auto phi = prevHashes.find(vertHash);
+		std::copy(sp.indices.begin(), sp.indices.end(), sortedVerts.begin());
+		std::sort(sortedVerts.begin(), sortedVerts.end());
+
+		const int vertHash = HsiehHash(&sortedVerts[0], sortedVerts.size() * sizeof(sortedVerts[0]), 0x123456);
+
+		const auto phi = prevHashes.find(vertHash);
 		if (phi != prevHashes.end()) {
-			obj->prims[phi->second] = sp;
+			prims[phi->second] = sp;
 			continue;
 		}
-		prevHashes[vertHash] = obj->prims.size();
-		obj->prims.push_back(sp);
+
+		prevHashes[vertHash] = prims.size();
+		prims.push_back(sp);
 	}
 }
 
 
-S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf)
+S3DOPiece* C3DOParser::AllocPiece()
 {
-	(*numobj)++;
+	std::lock_guard<spring::mutex> lock(poolMutex);
 
-	_3DObject me;
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
+}
+
+S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, const std::vector<uint8_t>& buf, int pos)
+{
+	if ((pos + sizeof(TA3DO::_3DObject)) > buf.size())
+		throw content_error("[3DOParser] corrupted piece for model-file " + model->name);
+
+	model->numPieces++;
+
+	TA3DO::_3DObject me;
 	int curOffset = pos;
-	READ_3DOBJECT(me, fileBuf, curOffset);
+	READ_3DOBJECT(me, buf, curOffset);
 
-	std::string s = GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset);
-	StringToLowerInPlace(s);
+	S3DOPiece* piece = AllocPiece();
 
-	S3DOPiece* piece = new S3DOPiece();
-		piece->name = s;
-		piece->parent = parent;
-		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
-		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
-		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
-		piece->goffset = piece->offset + ((parent != nullptr)? parent->goffset: ZeroVector);
+	piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, buf, curOffset)));
+	piece->parent = parent;
+	piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
+	piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
+	piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
 
-	GetVertexes(&me, piece, fileBuf);
-	GetPrimitives(piece, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf);
+	piece->SetGlobalOffset(CMatrix44f::Identity());
+	piece->GetVertices(&me, buf);
+	piece->GetPrimitives(model, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), buf, teamTextures);
+
 	piece->CalcNormals();
 	piece->SetMinMaxExtends();
+	piece->GenTriangleGeometry();
 
-	switch (piece->vertexPos.size()) {
-		case 0: { piece->emitDir = FwdVector; } break;
-		case 1: { piece->emitDir = piece->vertexPos[0]; } break;
+	switch (piece->verts.size()) {
+		case 0: { piece->emitDir =    FwdVector   ; } break;
+		case 1: { piece->emitDir = piece->verts[0]; } break;
 		default: {
-			piece->emitPos = piece->vertexPos[0];
-			piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
+			piece->emitPos = piece->verts[0];
+			piece->emitDir = piece->verts[1] - piece->verts[0];
 		} break;
 	}
 
@@ -333,21 +389,17 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	if (me.OffsetToChildObject > 0)
-		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj, fileBuf));
+		piece->children.push_back(LoadPiece(model, piece, buf, me.OffsetToChildObject));
 
 	if (me.OffsetToSiblingObject > 0)
-		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj, fileBuf));
+		parent->children.push_back(LoadPiece(model, parent, buf, me.OffsetToSiblingObject));
 
 	return piece;
 }
 
 
-void S3DOPiece::UploadGeometryVBOs()
+void S3DOPiece::GenTriangleGeometry()
 {
-	// cannot use HasGeometryData because vboIndices is still empty
-	if (prims.empty())
-		return;
-
 	std::vector<unsigned int>& indices = vertexIndices;
 	std::vector<S3DOVertex>& vertices = vertexAttribs;
 
@@ -358,107 +410,58 @@ void S3DOPiece::UploadGeometryVBOs()
 	// trianglize all input
 	for (const S3DOPrimitive& ps: prims) {
 		C3DOTextureHandler::UnitTexture* tex = ps.texture;
+		S3DOVertex vtx;
 
-		if (ps.indices.size() == 4) {
-			// quad
-			indices.push_back(vertices.size() + 0);
-			indices.push_back(vertices.size() + 1);
-			indices.push_back(vertices.size() + 2);
-			indices.push_back(vertices.size() + 0);
-			indices.push_back(vertices.size() + 2);
-			indices.push_back(vertices.size() + 3);
-			vertices.emplace_back(vertexPos[ps.indices[0]], ps.vnormals[0], float2(tex->xstart, tex->ystart));
-			vertices.emplace_back(vertexPos[ps.indices[1]], ps.vnormals[1], float2(tex->xend,   tex->ystart));
-			vertices.emplace_back(vertexPos[ps.indices[2]], ps.vnormals[2], float2(tex->xend,   tex->yend));
-			vertices.emplace_back(vertexPos[ps.indices[3]], ps.vnormals[3], float2(tex->xstart, tex->yend));
-		} else if (ps.indices.size() == 3) {
-			// triangle
-			indices.push_back(vertices.size() + 0);
-			indices.push_back(vertices.size() + 1);
-			indices.push_back(vertices.size() + 2);
-			vertices.emplace_back(vertexPos[ps.indices[0]], ps.vnormals[0], float2(tex->xstart, tex->ystart));
-			vertices.emplace_back(vertexPos[ps.indices[1]], ps.vnormals[1], float2(tex->xend,   tex->ystart));
-			vertices.emplace_back(vertexPos[ps.indices[2]], ps.vnormals[2], float2(tex->xend,   tex->yend));
-		} else if (ps.indices.size() >= 3) {
-			// fan
-			for (int i = 2; i < ps.indices.size(); ++i) {
+		switch (ps.indices.size()) {
+			case 0: {} break;
+			case 1: {} break;
+			case 2: {} break;
+			case 4: {
+				// quad
 				indices.push_back(vertices.size() + 0);
-				indices.push_back(vertices.size() + i - 1);
-				indices.push_back(vertices.size() + i - 0);
-			}
-			for (int i = 0; i < ps.indices.size(); ++i) {
-				vertices.emplace_back(vertexPos[ps.indices[i]], ps.vnormals[i], float2(tex->xstart, tex->ystart));
-			}
+				indices.push_back(vertices.size() + 1);
+				indices.push_back(vertices.size() + 2);
+				indices.push_back(vertices.size() + 0);
+				indices.push_back(vertices.size() + 2);
+				indices.push_back(vertices.size() + 3);
+
+				vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend  ), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[3]], ps.vnormals[3], float3{}, float3{}, float2(tex->xstart, tex->yend  ), float2{}, ps.pieceIndex);
+			} break;
+			case 3: {
+				// triangle
+				indices.push_back(vertices.size() + 0);
+				indices.push_back(vertices.size() + 1);
+				indices.push_back(vertices.size() + 2);
+
+				vertices.emplace_back(verts[ps.indices[0]], ps.vnormals[0], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[1]], ps.vnormals[1], float3{}, float3{}, float2(tex->xend,   tex->ystart), float2{}, ps.pieceIndex);
+				vertices.emplace_back(verts[ps.indices[2]], ps.vnormals[2], float3{}, float3{}, float2(tex->xend,   tex->yend  ), float2{}, ps.pieceIndex);
+			} break;
+			default: {
+				// fan
+				for (int i = 2; i < ps.indices.size(); ++i) {
+					indices.push_back(vertices.size() + 0);
+					indices.push_back(vertices.size() + i - 1);
+					indices.push_back(vertices.size() + i - 0);
+				}
+				for (int i = 0; i < ps.indices.size(); ++i) {
+					vertices.emplace_back(verts[ps.indices[i]], ps.vnormals[i], float3{}, float3{}, float2(tex->xstart, tex->ystart), float2{}, ps.pieceIndex);
+				}
+			} break;
 		}
 	}
-
-
-	//FIXME share 1 VBO for ALL models
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.New(vertices.size() * sizeof(S3DOVertex), GL_STATIC_DRAW, &vertices[0]);
-	vboAttributes.Unbind();
-
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(indices.size() * sizeof(unsigned), GL_STATIC_DRAW, &indices[0]);
-	vboIndices.Unbind();
-
-	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
-	// vertices.clear();
-	// indices.clear();
 }
 
-
-void S3DOPiece::BindVertexAttribVBOs() const
-{
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(S3DOVertex), vboAttributes.GetPtr(offsetof(S3DOVertex, pos)));
-
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(S3DOVertex), vboAttributes.GetPtr(offsetof(S3DOVertex, normal)));
-
-		glClientActiveTexture(GL_TEXTURE1);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(S3DOVertex), vboAttributes.GetPtr(offsetof(S3DOVertex, texCoord)));
-
-		glClientActiveTexture(GL_TEXTURE0);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(S3DOVertex), vboAttributes.GetPtr(offsetof(S3DOVertex, texCoord)));
-	vboAttributes.Unbind();
-}
-
-
-void S3DOPiece::UnbindVertexAttribVBOs() const
-{
-	glClientActiveTexture(GL_TEXTURE1);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE0);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-
-void S3DOPiece::DrawForList() const
-{
-	if (!HasGeometryData())
-		return;
-
-	BindVertexAttribVBOs();
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	glDrawRangeElements(GL_TRIANGLES, 0, (vboAttributes.GetSize() - 1) / sizeof(S3DOVertex), vboIndices.GetSize() / sizeof(unsigned), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
-	UnbindVertexAttribVBOs();
-}
 
 
 void S3DOPiece::CalcNormals()
 {
 	// generate for each vertex a list of faces that share it
 	std::vector<std::vector<int>> vertexToFaceIdx;
-	vertexToFaceIdx.resize(vertexPos.size());
+	vertexToFaceIdx.resize(verts.size());
 	for (int i = 0; i < prims.size(); ++i) {
 		for (auto& idx: prims[i].indices) {
 			vertexToFaceIdx[idx].push_back(i);
@@ -495,8 +498,9 @@ void S3DOPiece::CalcNormals()
 
 void S3DOPiece::SetMinMaxExtends()
 {
-	for (float3 vp: vertexPos) {
+	for (const float3 vp: verts) {
 		mins = float3::min(mins, vp);
 		maxs = float3::max(maxs, vp);
 	}
 }
+

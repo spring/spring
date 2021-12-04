@@ -91,7 +91,7 @@ protected:
 
 class DynDamageArray : public DamageArray
 {
-	CR_DECLARE(DynDamageArray)
+	CR_DECLARE_DERIVED(DynDamageArray)
 
 public:
 	DynDamageArray(float damage = 1.0f);

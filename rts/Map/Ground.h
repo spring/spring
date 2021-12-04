@@ -4,8 +4,8 @@
 #define GROUND_H
 
 #include "System/float3.h"
-#include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "System/type2.h"
+
 
 class CGround
 {
@@ -39,7 +39,9 @@ public:
 	static float LineGroundCol(const float3 pos, const float3 dir, float len, bool synced = true);
 	static float LinePlaneCol(const float3 pos, const float3 dir, float len, float hgt);
 	static float LineGroundWaterCol(const float3 pos, const float3 dir, float len, bool testWater, bool synced = true);
-	static float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic);
+
+	static float TrajectoryGroundCol(const float3& trajStartPos, const float3& trajTargetDir, float length, float linCoeff, float qdrCoeff);
+	static float SimTrajectoryGroundColDist(const float3& startPos, const float3& trajStartDir, const float3& acc, const float2& args);
 
 	static int GetSquare(const float3& pos);
 };

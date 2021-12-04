@@ -9,90 +9,73 @@
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
 
-CR_BIND(CGroup, (0, NULL))
+CR_BIND(CGroup, (0, 0))
 CR_REG_METADATA(CGroup, (
 	CR_MEMBER(id),
+	CR_MEMBER(ghIndex),
 	CR_MEMBER(units),
-	CR_MEMBER(handler),
+
 	CR_POSTLOAD(PostLoad)
 ))
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CGroup::CGroup(int id, CGroupHandler* groupHandler)
-		: id(id)
-		, handler(groupHandler)
-{
-}
-
-CGroup::~CGroup()
-{
-	// should not have any units left, but just to be sure
-	ClearUnits();
-}
-
 
 
 void CGroup::PostLoad()
 {
-	assert(unitHandler != nullptr);
+	while (!units.empty()) {
+		CUnit* unit = unitHandler.GetUnit(*units.begin());
 
-	auto unitBackup = units;
-
-	for (const int unitID: unitBackup) {
-		CUnit* unit = unitHandler->GetUnit(unitID);
 		units.erase(unit->id);
-		unit->group = nullptr;
+		uiGroupHandlers[ghIndex].SetUnitGroup(unit->id, nullptr);
 	}
 }
 
 bool CGroup::AddUnit(CUnit* unit)
 {
 	units.insert(unit->id);
-	handler->PushGroupChange(id);
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 	return true;
 }
 
 void CGroup::RemoveUnit(CUnit* unit)
 {
 	units.erase(unit->id);
-	handler->PushGroupChange(id);
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 }
 
 void CGroup::RemoveIfEmptySpecialGroup()
 {
-	if (units.empty()
-			&& (id >= CGroupHandler::FIRST_SPECIAL_GROUP)
-			/*&& (handler == grouphandler)*/
-			&& (handler->team == gu->myTeam)) // HACK so Global AI groups do not get erased DEPRECATED
-	{
-		handler->RemoveGroup(this);
-	}
-}
+	if (!units.empty())
+		return;
 
-void CGroup::Update()
-{
-	RemoveIfEmptySpecialGroup();
+	if (id < CGroupHandler::FIRST_SPECIAL_GROUP)
+		return;
+
+	//HACK so Global AI groups do not get erased DEPRECATED
+	if (uiGroupHandlers[ghIndex].GetTeam() != gu->myTeam)
+		return;
+
+	uiGroupHandlers[ghIndex].RemoveGroup(this);
 }
 
 void CGroup::ClearUnits()
 {
+	assert(!uiGroupHandlers.empty());
+
 	while (!units.empty()) {
-		CUnit* unit = unitHandler->GetUnit(*units.begin());
-		unit->SetGroup(0);
+		CUnit* unit = unitHandler.GetUnit(*units.begin());
+		unit->SetGroup(nullptr);
 	}
-	handler->PushGroupChange(id);
+
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 }
 
 float3 CGroup::CalculateCenter() const
 {
-	float3 center = ZeroVector;
+	float3 center;
 
 	if (!units.empty()) {
 		for (const int unitID: units) {
-			center += (unitHandler->GetUnit(unitID))->pos;
+			center += (unitHandler.GetUnit(unitID))->pos;
 		}
 		center /= units.size();
 	}

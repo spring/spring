@@ -5,6 +5,7 @@
 
 #include "RawPacket.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <cstring>
@@ -19,6 +20,7 @@ public:
 	UnpackPacketException(const std::string& what) : std::runtime_error(what) {}
 };
 
+
 class UnpackPacket
 {
 public:
@@ -27,37 +29,39 @@ public:
 	template <typename T>
 	void operator>>(T& t)
 	{
-		if ((pos + sizeof(T)) > pckt->length) {
+		if ((pos + sizeof(T)) > pckt->length)
 			throw UnpackPacketException("Unpack failure (type)");
-		}
-		t = *reinterpret_cast<T*>(pckt->data + pos);
+
+		std::memcpy(reinterpret_cast<void*>(&t), pckt->data + pos, sizeof(T));
 		pos += sizeof(T);
 	}
 
-	template <typename element>
-	void operator>>(std::vector<element>& vec)
+	template <typename T>
+	void operator>>(std::vector<T>& vec)
 	{
-		if ((pckt->length - pos) < (vec.size() * sizeof(element))) {
+		const size_t size = vec.size() * sizeof(T);
+
+		if ((pckt->length - pos) < size)
 			throw UnpackPacketException("Unpack failure (vector)");
-		}
-		const size_t toCopy = vec.size() * sizeof(element);
-		std::memcpy((void*)(&vec[0]), pckt->data + pos, toCopy);
-		pos += toCopy;
+
+		std::memcpy(reinterpret_cast<void*>(&vec[0]), pckt->data + pos, size);
+		pos += size;
 	}
 
 	void operator>>(std::string& text)
 	{
-		int i = pos;
-		for (; i < pckt->length; ++i) {
-			if (pckt->data[i] == '\0') {
-				break;
-			}
-		}
-		if (i >= pckt->length) {
+		const auto beg = pckt->data + pos;
+		const auto end = pckt->data + pckt->length;
+		const auto  it = std::find(beg, end, 0);
+
+		// for strings, require a null-term to have been added during packing
+		if (it == end)
 			throw UnpackPacketException("Unpack failure (string)");
-		}
-		text = std::string((char*)(pckt->data + pos));
-		pos += text.size() + 1;
+
+		text.clear();
+		text.assign(reinterpret_cast<const char*>(beg), it - beg);
+
+		pos += (text.size() + 1);
 	}
 
 private:

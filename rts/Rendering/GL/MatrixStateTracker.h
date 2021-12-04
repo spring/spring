@@ -144,9 +144,9 @@ public:
 			if (error == 0){ \
 				LOG_L(L_ERROR, "%s: OpenGL stack check error, matrix mode = %s, depth = %d, please make sure to pop all matrices before end", errsrc, #glMode, matrixData.modeName); \
 			} \
-			glMatrixMode(glMode); \
+			GL::MatrixMode(glMode); \
 			for (int p = 0; p < matrixData.modeName; ++p) { \
-				glPopMatrix(); \
+				GL::PopMatrix(); \
 			} \
 			matrixData.modeName = 0;\
 		}
@@ -157,7 +157,7 @@ public:
 
 #undef CHECK_MODE
 
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_MODELVIEW);
 	}
 };
 

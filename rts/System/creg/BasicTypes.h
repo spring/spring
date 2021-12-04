@@ -4,137 +4,70 @@
 #define CR_BASIC_TYPES_H
 
 namespace creg {
-	// vector,deque container
-	template<typename T>
-	class DynamicArrayType : public IType
+	class ObjectPointerBaseType : public IType
 	{
 	public:
-		typedef typename T::iterator iterator;
-		typedef typename T::value_type ElemT;
+		Class* objClass;
 
-		std::shared_ptr<IType> elemType;
+		ObjectPointerBaseType(Class* cls, size_t size)
+			: IType(size), objClass(cls) { }
+		~ObjectPointerBaseType() { }
 
-		DynamicArrayType(std::shared_ptr<IType> et)
-			: elemType(et) {}
-		~DynamicArrayType() {}
-
-		void Serialize(ISerializer* s, void* inst) {
-			T& ct = *(T*)inst;
-			if (s->IsWriting()) {
-				int size = (int)ct.size();
-				s->SerializeInt(&size, sizeof(int));
-				for (int a = 0; a < size; a++) {
-					elemType->Serialize(s, &ct[a]);
-				}
-			} else {
-				ct.clear();
-				int size;
-				s->SerializeInt(&size, sizeof(int));
-				ct.resize(size);
-				for (int a = 0; a < size; a++) {
-					elemType->Serialize(s, &ct[a]);
-				}
-			}
-		}
-		std::string GetName() const { return elemType->GetName() + "[]"; }
-		size_t GetSize() const { return sizeof(T); }
+		std::string GetName() const override;
 	};
 
 	class StaticArrayBaseType : public IType
 	{
 	public:
-		std::shared_ptr<IType> elemType;
-		int size, elemSize;
+		std::unique_ptr<IType> elemType;
 
-		StaticArrayBaseType(std::shared_ptr<IType> et, int Size, int ElemSize)
-			: elemType(et), size(Size), elemSize(ElemSize) {}
-		~StaticArrayBaseType() {}
+		StaticArrayBaseType(std::unique_ptr<IType> et, size_t size)
+			: IType(size), elemType(std::move(et)) { }
+		~StaticArrayBaseType() { }
 
-		std::string GetName() const;
-		size_t GetSize() const { return size * elemSize; }
+		std::string GetName() const override;
 	};
 
-	template<typename T, int Size>
-	class StaticArrayType : public StaticArrayBaseType
+	class DynamicArrayBaseType : public IType
 	{
 	public:
-		typedef T ArrayType[Size];
-		StaticArrayType(std::shared_ptr<IType> et)
-			: StaticArrayBaseType(et, Size, sizeof(ArrayType)/Size) {}
-		void Serialize(ISerializer* s, void* instance)
-		{
-			T* array = (T*)instance;
-			for (int a = 0; a < Size; a++)
-				elemType->Serialize(s, &array[a]);
-		}
-	};
+		std::unique_ptr<IType> elemType;
 
-	template<typename T>
-	class BitArrayType : public IType
-	{
-	public:
-		std::shared_ptr<IType> elemType;
+		DynamicArrayBaseType(std::unique_ptr<IType> et, size_t size)
+			: IType(size), elemType(std::move(et)) { }
+		~DynamicArrayBaseType() { }
 
-		BitArrayType(std::shared_ptr<IType> et)
-			: elemType(et) {}
-		~BitArrayType() {}
-
-		void Serialize(ISerializer* s, void* inst) {
-			T* ct = (T*)inst;
-			if (s->IsWriting()) {
-				int size = (int)ct->size();
-				s->SerializeInt(&size, sizeof(int));
-				for (int a = 0; a < size; a++) {
-					bool b = (*ct)[a];
-					elemType->Serialize(s, &b);
-				}
-			} else {
-				int size;
-				s->SerializeInt(&size, sizeof(int));
-				ct->resize(size);
-				for (int a = 0; a < size; a++) {
-					bool b;
-					elemType->Serialize(s, &b);
-					(*ct)[a] = b;
-				}
-			}
-		}
-		std::string GetName() const { return elemType->GetName() + "[]"; }
-		size_t GetSize() const { return sizeof(T); }
+		std::string GetName() const override;
 	};
 
 	class IgnoredType : public IType
 	{
 	public:
-		int size;
-		IgnoredType(int Size) {size=Size;}
+		IgnoredType(int size) : IType(size) { }
 		~IgnoredType() {}
 
-		void Serialize(ISerializer* s, void* instance)
+		void Serialize(ISerializer* s, void* instance) override
 		{
 			for (int a=0;a<size;a++) {
 				char c=0;
 				s->Serialize(&c,1);
 			}
 		}
-		std::string GetName() const
+		std::string GetName() const override
 		{
 			return "ignored";
 		}
-		size_t GetSize() const { return size; }
 	};
 
 	class BasicType : public IType
 	{
 	public:
-		BasicType(const BasicTypeID ID, const size_t size_) : size(size_), id(ID) {}
+		BasicType(BasicTypeID ID, size_t size) : IType(size), id(ID) {}
 		~BasicType() {}
 
-		void Serialize(ISerializer* s, void* instance);
-		std::string GetName() const;
-		size_t GetSize() const;
+		void Serialize(ISerializer* s, void* instance) override;
+		std::string GetName() const override;
 
-		size_t size;
 		BasicTypeID id;
 	};
 }

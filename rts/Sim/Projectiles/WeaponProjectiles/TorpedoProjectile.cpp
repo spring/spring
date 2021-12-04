@@ -7,22 +7,19 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
-#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
-
-CR_BIND_DERIVED_POOL(CTorpedoProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -56,11 +53,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
 	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
-
-#ifdef TRACE_SYNC
-	tracefile << "New projectile: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
-#endif
 }
 
 
@@ -134,7 +126,7 @@ void CTorpedoProjectile::Update()
 				CWorldObject::SetVelocity(targetHitVel);
 			}
 
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
+			explGenHandler.GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
 		} else {
 			if (!luaMoveCtrl) {
 				// must update dir and speed.w here
@@ -168,7 +160,7 @@ void CTorpedoProjectile::Update()
 
 
 
-void CTorpedoProjectile::Draw(CVertexArray* va)
+void CTorpedoProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	// do not draw if a 3D model has been defined for us
 	if (model != nullptr)
@@ -179,53 +171,83 @@ void CTorpedoProjectile::Draw(CVertexArray* va)
 	if (r.SqLength() < 0.001f)
 		r = RgtVector;
 
-	r.Normalize();
-	const float3 u = dir.cross(r);
+	const float3 u = dir.cross(r.Normalize());
 	const float h = 12;
 	const float w = 2;
 	const SColor col(60, 60, 100, 255);
 
-	va->EnlargeArrays(32, 0, VA_SIZE_TC);
+	{
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
 
-	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
 
-	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
 
-	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
 
-	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+	}
 
+	{
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+	}
 }
 

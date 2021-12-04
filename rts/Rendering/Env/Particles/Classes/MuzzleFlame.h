@@ -13,10 +13,10 @@ public:
 	CMuzzleFlame() { }
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return (numSmoke * 2); }
 
 private:
 	float size;

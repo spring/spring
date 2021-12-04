@@ -19,11 +19,11 @@ public:
 	CSimpleParticleSystem();
 	virtual ~CSimpleParticleSystem() { particles.clear(); }
 
-	virtual void Draw(CVertexArray* va) override;
+	virtual void Draw(GL::RenderDataBufferTC* va) const override;
 	virtual void Update() override;
 	virtual void Init(const CUnit* owner, const float3& offset) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return numParticles; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
@@ -80,7 +80,7 @@ class CSphereParticleSpawner : public CSimpleParticleSystem
 public:
 	CSphereParticleSpawner() {}
 
-	void Draw(CVertexArray* va) override {}
+	void Draw(GL::RenderDataBufferTC* va) const override {}
 	void Update() override {}
 	void Init(const CUnit* owner, const float3& offset) override;
 

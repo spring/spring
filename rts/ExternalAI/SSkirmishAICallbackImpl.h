@@ -233,16 +233,6 @@ EXPORT(const char*      ) skirmishAiCallback_UnitDef_getName(int skirmishAIId, i
 
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getHumanName(int skirmishAIId, int unitDefId);
 
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getFileName(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getAiHint(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getCobId(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getTechLevel(int skirmishAIId, int unitDefId);
-
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getGaia(int skirmishAIId, int unitDefId);
-
 EXPORT(float            ) skirmishAiCallback_UnitDef_getUpkeep(int skirmishAIId, int unitDefId, int resourceId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getResourceMake(int skirmishAIId, int unitDefId, int resourceId);
@@ -342,8 +332,6 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isStrafeToAttack(int skirmi
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMinCollisionSpeed(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getSlideTolerance(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxSlope(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxHeightDif(int skirmishAIId, int unitDefId);
 
@@ -459,11 +447,11 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getWantedHeight(int skirmis
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getVerticalSpeed(int skirmishAIId, int unitDefId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToCrash(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isHoverAttack(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAirStrafe(int skirmishAIId, int unitDefId);
+
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getDlHoverFactor(int skirmishAIId, int unitDefId);
 
@@ -545,8 +533,6 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isFeature(int skirmishAIId,
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isHideDamage(int skirmishAIId, int unitDefId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isCommander(int skirmishAIId, int unitDefId);
-
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isShowPlayerName(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToResurrect(int skirmishAIId, int unitDefId);
@@ -589,16 +575,6 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToLoopbackAttack(int 
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isLevelGround(int skirmishAIId, int unitDefId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isUseBuildingGroundDecal(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getBuildingDecalType(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getBuildingDecalSizeX(int skirmishAIId, int unitDefId);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_getBuildingDecalSizeY(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed(int skirmishAIId, int unitDefId);
-
 EXPORT(int              ) skirmishAiCallback_UnitDef_getMaxThisUnit(int skirmishAIId, int unitDefId);
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_getDecoyDef(int skirmishAIId, int unitDefId);
@@ -634,14 +610,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int sk
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getMaxSpeed(int skirmishAIId, int unitDefId);
-
-EXPORT(short            ) skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getMaxBreaking(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAIId, int unitDefId);
 
@@ -748,6 +716,12 @@ EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getParams(int
 
 EXPORT(float            ) skirmishAiCallback_Unit_getHealth(int skirmishAIId, int unitId);
 
+EXPORT(float            ) skirmishAiCallback_Unit_getParalyzeDamage(int skirmishAIId, int unitId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_getCaptureProgress(int skirmishAIId, int unitId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_getBuildProgress(int skirmishAIId, int unitId);
+
 EXPORT(float            ) skirmishAiCallback_Unit_getSpeed(int skirmishAIId, int unitId);
 
 EXPORT(float            ) skirmishAiCallback_Unit_getPower(int skirmishAIId, int unitId);
@@ -844,8 +818,6 @@ EXPORT(const char*      ) skirmishAiCallback_Mod_getVersion(int skirmishAIId);
 EXPORT(const char*      ) skirmishAiCallback_Mod_getMutator(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Mod_getDescription(int skirmishAIId);
-
-EXPORT(bool             ) skirmishAiCallback_Mod_getAllowTeamColors(int skirmishAIId);
 
 EXPORT(bool             ) skirmishAiCallback_Mod_getConstructionDecay(int skirmishAIId);
 
@@ -1007,8 +979,6 @@ EXPORT(const char*      ) skirmishAiCallback_FeatureDef_getName(int skirmishAIId
 
 EXPORT(const char*      ) skirmishAiCallback_FeatureDef_getDescription(int skirmishAIId, int featureDefId);
 
-EXPORT(const char*      ) skirmishAiCallback_FeatureDef_getFileName(int skirmishAIId, int featureDefId);
-
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getContainedResource(int skirmishAIId, int featureDefId, int resourceId);
 
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getMaxHealth(int skirmishAIId, int featureDefId);
@@ -1083,10 +1053,6 @@ EXPORT(const char*      ) skirmishAiCallback_WeaponDef_getName(int skirmishAIId,
 EXPORT(const char*      ) skirmishAiCallback_WeaponDef_getType(int skirmishAIId, int weaponDefId);
 
 EXPORT(const char*      ) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId, int weaponDefId);
-
-EXPORT(const char*      ) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId);
-
-EXPORT(const char*      ) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId);
 
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getRange(int skirmishAIId, int weaponDefId);
 
@@ -1205,21 +1171,9 @@ EXPORT(float            ) skirmishAiCallback_WeaponDef_getStockpileTime(int skir
 
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getIntensity(int skirmishAIId, int weaponDefId);
 
-EXPORT(float            ) skirmishAiCallback_WeaponDef_getThickness(int skirmishAIId, int weaponDefId);
-
-EXPORT(float            ) skirmishAiCallback_WeaponDef_getLaserFlareSize(int skirmishAIId, int weaponDefId);
-
-EXPORT(float            ) skirmishAiCallback_WeaponDef_getCoreThickness(int skirmishAIId, int weaponDefId);
-
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getDuration(int skirmishAIId, int weaponDefId);
 
-EXPORT(int              ) skirmishAiCallback_WeaponDef_getLodDistance(int skirmishAIId, int weaponDefId);
-
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getFalloffRate(int skirmishAIId, int weaponDefId);
-
-EXPORT(int              ) skirmishAiCallback_WeaponDef_getGraphicsType(int skirmishAIId, int weaponDefId);
-
-EXPORT(bool             ) skirmishAiCallback_WeaponDef_isSoundTrigger(int skirmishAIId, int weaponDefId);
 
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isSelfExplode(int skirmishAIId, int weaponDefId);
 
@@ -1353,8 +1307,11 @@ EXPORT(bool             ) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int ski
 } // extern "C"
 #endif
 
+
+
 #if defined __cplusplus && !defined BUILDING_AI
 struct SSkirmishAICallback;
+class CSkirmishAIWrapper;
 class CAICallback;
 class CAICheats;
 
@@ -1362,16 +1319,20 @@ class CAICheats;
 
 /**
  * Create the C Skirmish AI callback instance for a specific AI.
- * @see skirmishAiCallback_release
+ * @see skirmishAiCallback_Release
  */
-SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int skirmishAIId, int teamId, CAICallback* aiCallback, CAICheats* aiCheats);
+SSkirmishAICallback* skirmishAiCallback_GetInstance(CSkirmishAIWrapper* ai);
 
 /**
  * Releases the C Skirmish AI callback instance for a specific AI.
  * @see skirmishAiCallback_getInstanceFor
  */
-void skirmishAiCallback_release(int skirmishAIId);
+void skirmishAiCallback_Release(const CSkirmishAIWrapper* ai);
+
+void skirmishAiCallback_BlockOrders(const CSkirmishAIWrapper* ai);
 
 #endif // defined __cplusplus && !defined BUILDING_AI
+
+
 
 #endif // S_SKIRMISH_AI_CALLBACK_IMPL_H

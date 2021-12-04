@@ -3,6 +3,7 @@
 #ifndef GROUND_FLASH_H
 #define GROUND_FLASH_H
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Sim/Projectiles/ExpGenSpawnable.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/Color.h"
@@ -10,21 +11,20 @@
 struct AtlasedTexture;
 struct GroundFlashInfo;
 class CColorMap;
-class CVertexArray;
 
 class CGroundFlash : public CExpGenSpawnable
 {
 public:
-	CR_DECLARE(CGroundFlash)
+	CR_DECLARE_DERIVED(CGroundFlash)
 
 	CGroundFlash(const float3& _pos);
 	CGroundFlash();
 
 	virtual ~CGroundFlash() {}
-	virtual void Draw(CVertexArray* va) {}
+	virtual void Draw(GL::RenderDataBufferTC* va) const {}
 	/// @return false when it should be deleted
 	virtual bool Update() { return false; }
-	virtual void Init(const CUnit* owner, const float3& offset) {}
+	virtual void Init(const CUnit* owner, const float3& offset) override {}
 
 	float3 CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const;
 
@@ -58,7 +58,7 @@ public:
 
 	void InitCommon(const float3& _pos, const float3& _color);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -94,7 +94,7 @@ public:
 	CSimpleGroundFlash();
 
 	void Init(const CUnit* owner, const float3& offset) override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -132,7 +132,7 @@ public:
 		const float3& _color
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	/// @return false when it should be deleted
 	bool Update() override;
 

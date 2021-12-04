@@ -9,13 +9,10 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 int CSolidObject::deletingRefID = -1;
 
-const float CSolidObject::DEFAULT_MASS = 1e5f;
-const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
-const float CSolidObject::MAXIMUM_MASS = 1e6f;
 
 CR_BIND_DERIVED_INTERFACE(CSolidObject, CWorldObject)
 CR_REG_METADATA(CSolidObject,
@@ -28,6 +25,8 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
+	CR_MEMBER(yardOpen),
+
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
@@ -46,15 +45,14 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
-	CR_MEMBER(tempNum),
-	CR_MEMBER(lastHitPieceFrame),
+	CR_MEMBER(pieceHitFrames),
 
 	CR_MEMBER(moveDef),
 
 	CR_MEMBER(localModel),
 	CR_MEMBER(collisionVolume),
 	CR_MEMBER(selectionVolume), // unsynced, could also be ignored
-	CR_MEMBER(lastHitPiece),
+	CR_MEMBER(hitModelPieces),
 
 	CR_IGNORED(groundDecal), // loaded from render*Created
 
@@ -73,69 +71,12 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
-	CR_MEMBER(yardOpen),
 
 	CR_MEMBER(buildFacing),
 	CR_MEMBER(modParams),
 
 	CR_POSTLOAD(PostLoad)
-
 ))
-
-
-CSolidObject::CSolidObject():
-	health(0.0f),
-	maxHealth(1.0f),
-
-	mass(DEFAULT_MASS),
-	crushResistance(0.0f),
-
-	crushable(false),
-	immobile(false),
-	blockEnemyPushing(true),
-	blockHeightChanges(false),
-
-	noDraw(false),
-	luaDraw(false),
-	noSelect(false),
-
-	xsize(1),
-	zsize(1),
-	footprint(1, 1),
-
-	heading(0),
-
-	// objects start out non-blocking but fully collidable
-	// SolidObjectDef::collidable controls only the SO-bit
-	physicalState(PhysicalState(PSTATE_BIT_ONGROUND)),
-	collidableState(CollidableState(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS)),
-
-	team(0),
-	allyteam(0),
-
-	tempNum(0),
-	lastHitPieceFrame(-1),
-
-	moveDef(nullptr),
-
-	lastHitPiece(nullptr),
-	groundDecal(nullptr),
-
-	frontdir( FwdVector),
-	rightdir(-RgtVector),
-	updir(UpVector),
-
-	midPos(pos),
-	mapPos(GetMapPos()),
-
-	dragScales(OnesVector),
-
-	blockMap(nullptr),
-	yardOpen(false),
-	buildFacing(0)
-{
-}
 
 
 void CSolidObject::PostLoad()
@@ -249,7 +190,7 @@ void CSolidObject::UnBlock()
 	if (!IsBlocking())
 		return;
 
-	groundBlockingObjectMap->RemoveGroundBlockingObject(this);
+	groundBlockingObjectMap.RemoveGroundBlockingObject(this);
 	assert(!IsBlocking());
 }
 
@@ -267,16 +208,69 @@ void CSolidObject::Block()
 	UnBlock();
 
 	// only block when `touching` the ground
-	if ((pos.y - radius) <= CGround::GetHeightAboveWater(pos.x, pos.z)) {
-		groundBlockingObjectMap->AddGroundBlockingObject(this);
+	if (FootPrintOnGround()) {
+		groundBlockingObjectMap.AddGroundBlockingObject(this);
 		assert(IsBlocking());
 	}
+}
+
+bool CSolidObject::FootPrintOnGround() const {
+	const     float sdist = std::max(radius, CalcFootPrintMinExteriorRadius());
+
+	#if 0
+	constexpr float scale = SQUARE_SIZE * 0.5f;
+	float3 p = pos;
+
+	{
+		// middle; AboveWater means floating structures still block
+		// by itself can fail on steep slopes for units with high slope tolerance, as will IsOnGround()
+		// must sample at least the footprint corners or alternatively use the exterior bounding-sphere
+		// radius
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+
+	{
+		// top-left
+		p = pos + float3{-xsize * scale, 0.0f, -zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// top-right
+		p = pos + float3{+xsize * scale, 0.0f, -zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// bottom-right
+		p = pos + float3{+xsize * scale, 0.0f, +zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// bottom-left
+		p = pos + float3{-xsize * scale, 0.0f, +zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+
+	return false;
+	#else
+	return ((pos.y - sdist) <= CGround::GetHeightAboveWater(pos.x, pos.z));
+	#endif
 }
 
 
 YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 {
-	if (!blockMap)
+	const YardMapStatus* blockMap = GetBlockMap();
+
+	if (blockMap == nullptr)
 		return YARDMAP_OPEN;
 
 	const int hxsize = footprint.x >> 1;
@@ -297,8 +291,8 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		// use old fixed space (4 facing dirs & ints for unit positions)
 
 		// form the rotated axis vectors
-		static const float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
-		static const float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
+		static constexpr float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
+		static constexpr float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
 
 		// get used axis vectors
 		frontv = fronts[buildFacing];
@@ -388,41 +382,13 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 	return dragAccelVec;
 }
 
-float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const
+float3 CSolidObject::GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const
 {
-	// NOTE:
-	//   for aircraft IsOnGround is already factored into useGroundNormal
-	//   for ground-units the situation is more complicated because 1) it
-	//   depends on the 'upright' tag and 2) ships and hovercraft are not
-	//   "on the ground" all the time ('ground' is the ocean floor, *not*
-	//   the water surface) and neither are tanks / bots due to impulses,
-	//   gravity, ...
-	//
-	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
-	const float3 wn =                              UpVector  * (1 - useGroundNormal);
+	const float3 groundUp = CGround::GetSmoothNormal(pos.x, pos.z);
+	const float3 objectUp = mix(UpVector, float3{updir}, useObjectNormal);
+	const float3 wantedUp = mix(objectUp,      groundUp, useGroundNormal);
 
-	if (moveDef == nullptr) {
-		// aircraft cannot use updir reliably or their
-		// coordinate-system would degenerate too much
-		// over time without periodic re-ortho'ing
-		return (gn + UpVector * (1 - useGroundNormal));
-	}
-
-	// not an aircraft if we get here, prevent pitch changes
-	// if(f) the object is neither on the ground nor in water
-	// for whatever reason (GMT also prevents heading changes)
-	if (!IsInAir()) {
-		switch (moveDef->speedModClass) {
-			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
-			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
-
-			case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-			case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-		}
-	}
-
-	// prefer to keep local up-vector as long as possible
-	return updir;
+	return wantedUp;
 }
 
 
@@ -435,17 +401,16 @@ void CSolidObject::SetDirVectorsEuler(const float3 angles)
 	// whenever these angles are retrieved, the handedness is converted again
 	SetDirVectors(matrix.RotateEulerXYZ(angles));
 	SetHeadingFromDirection();
+	SetFacingFromHeading();
 	UpdateMidAndAimPos();
 }
 
-void CSolidObject::SetHeadingFromDirection()
-{
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-}
+void CSolidObject::SetHeadingFromDirection() { heading = GetHeadingFromVector(frontdir.x, frontdir.z); }
+void CSolidObject::SetFacingFromHeading() { buildFacing = GetFacingFromHeading(heading); }
 
-void CSolidObject::UpdateDirVectors(bool useGroundNormal)
+void CSolidObject::UpdateDirVectors(bool useGroundNormal, bool useObjectNormal)
 {
-	updir    = GetWantedUpDir(useGroundNormal);
+	updir    = GetWantedUpDir(useGroundNormal, useObjectNormal);
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);
@@ -478,11 +443,15 @@ void CSolidObject::ForcedSpin(const float3& newDir)
 void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed)
 {
 	UpdateVoidState(false);
+	DoDamage(DamageArray(health + 1.0f), impulse, killer, crushed? -DAMAGE_EXTSOURCE_CRUSHED: -DAMAGE_EXTSOURCE_KILLED, -1);
+}
 
-	if (crushed) {
-		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_CRUSHED, -1);
-	} else {
-		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_KILLED, -1);
-	}
+
+
+float CSolidObject::CalcFootPrintMinExteriorRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
+float CSolidObject::CalcFootPrintMaxInteriorRadius(float scale) const { return ((std::max(xsize, zsize) * 0.5f * SQUARE_SIZE) * scale); }
+float CSolidObject::CalcFootPrintAxisStretchFactor() const
+{
+	return (std::abs(xsize - zsize) * 1.0f / (xsize + zsize));
 }
 

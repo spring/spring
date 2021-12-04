@@ -52,18 +52,15 @@ public:
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
-	bool UseAdvShading() const { return advShading; }
 	bool WireFrameMode() const { return wireframe; }
-
-	bool& UseAdvShadingRef() { return advShading; }
 	bool& WireFrameModeRef() { return wireframe; }
 
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
 public:
-	float LODScaleReflection;
-	float LODScaleRefraction;
-	float LODScaleTerrainReflection;
+	float LODScaleReflection = 1.0f;
+	float LODScaleRefraction = 1.0f;
+	float LODScaleTerrainReflection = 1.0f;
 
 	float spPolygonOffsetScale = 10.0f;
 	float spPolygonOffsetUnits = 10000.0f;
@@ -77,14 +74,15 @@ public:
 	static const int losColorScale = 10000;
 
 protected:
-	CBaseGroundTextures* groundTextures;
+	CBaseGroundTextures* groundTextures = nullptr;
 
-	bool drawForward;
-	bool drawDeferred;
-	bool drawMapEdges;
+	bool drawForward = true;
+	bool drawDeferred = false;
+	bool drawMapEdges = true;
+	bool drawWaterPlane = false;
+	bool postDeferredEvents = false;
 
-	bool wireframe;
-	bool advShading;
+	bool wireframe = false;
 };
 
 #endif // _BASE_GROUND_DRAWER_H

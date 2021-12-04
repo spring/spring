@@ -108,22 +108,22 @@ namespace creg {
 		void SavePackage(std::ostream* s, void* rootObj, Class* cls);
 
 		/** @see ISerializer::IsWriting */
-		bool IsWriting();
+		bool IsWriting() override;
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr(void** ptr, Class* cls);
+		void SerializeObjectPtr(void** ptr, Class* cls) override;
 
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance(void* inst, Class* cls);
+		void SerializeObjectInstance(void* inst, Class* cls) override;
 
 		/** @see ISerializer::Serialize */
-		void Serialize(void* data, int byteSize);
+		void Serialize(void* data, int byteSize) override;
 
 		/** @see ISerializer::SerializeInt */
-		void SerializeInt(void* data, int byteSize);
+		void SerializeInt(void* data, int byteSize) override;
 
 		/** Empty function, only applies to loading */
-		void AddPostLoadCallback(void (*cb)(void* d), void* d) {}
+		void AddPostLoadCallback(void (*cb)(void* d), void* d) override {}
 	};
 
 	/** Input stream serializer
@@ -163,22 +163,22 @@ namespace creg {
 		~CInputStreamSerializer();
 
 		/** @see ISerializer::IsWriting */
-		bool IsWriting();
+		bool IsWriting() override;
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr(void** ptr, Class* cls);
+		void SerializeObjectPtr(void** ptr, Class* cls) override;
 
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance(void* inst, Class* cls);
+		void SerializeObjectInstance(void* inst, Class* cls) override;
 
 		/** @see ISerializer::Serialize */
-		void Serialize(void* data, int byteSize);
+		void Serialize(void* data, int byteSize) override;
 
 		/** @see ISerializer::SerializeInt */
-		void SerializeInt(void* data, int byteSize);
+		void SerializeInt(void* data, int byteSize) override;
 
 		/** @see ISerializer::AddPostLoadCallback */
-		void AddPostLoadCallback(void (*cb)(void* userdata), void* userdata);
+		void AddPostLoadCallback(void (*cb)(void* userdata), void* userdata) override;
 
 		/** Load a package that is saved by CInputStreamSerializer
 		 * @param s the input stream to read from
