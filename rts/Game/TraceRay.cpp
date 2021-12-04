@@ -13,12 +13,11 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 #include <algorithm>
 #include <vector>
@@ -41,7 +40,6 @@ inline static bool TestConeHelper(
 	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
-
 	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
 	const float  coneSize = cvRelDst * spread + 1.0f;
 
@@ -51,17 +49,17 @@ inline static bool TestConeHelper(
 
 	bool ret = false;
 
-	if (obj->GetBlockingMapID() < unitHandler.MaxUnits()) {
+	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		// obj is a unit
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	} else {
 		// obj is a feature
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawDebugTraceRay) {
+	if (globalRendering->drawdebugtraceray) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -115,7 +113,6 @@ inline static bool TestTrajectoryConeHelper(
 	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
-
 	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
 	const float  coneSize = cvRelDst * spread + baseSize;
 
@@ -128,18 +125,18 @@ inline static bool TestTrajectoryConeHelper(
 
 	bool ret = false;
 
-	if (obj->GetBlockingMapID() < unitHandler.MaxUnits()) {
+	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		// first test the muzzle-position, then the impact-position
 		// (if neither is inside obstacle's CV, the weapon can fire)
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	} else {
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
-		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	}
 
 
-	if (globalRendering->drawDebugTraceRay) {
+	if (globalRendering->drawdebugtraceray) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects
@@ -206,7 +203,7 @@ float TraceRay(
 		CollisionQuery cq;
 
 		QuadFieldQuery qfQuery;
-		quadField.GetQuadsOnRay(qfQuery, pos, dir, traceLength);
+		quadField->GetQuadsOnRay(qfQuery, pos, dir, traceLength);
 
 		// locally point somewhere non-NULL; we cannot pass hitColQuery
 		// to DetectHit directly because each call resets it internally
@@ -216,7 +213,7 @@ float TraceRay(
 		// feature intersection
 		if (scanForFeatures) {
 			for (const int quadIdx: *qfQuery.quads) {
-				const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (CFeature* f: quad.features) {
 					// NOTE:
@@ -244,7 +241,7 @@ float TraceRay(
 		// unit intersection
 		if (scanForAnyUnits) {
 			for (const int quadIdx: *qfQuery.quads) {
-				const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (CUnit* u: quad.units) {
 					if (u == owner)
@@ -312,10 +309,10 @@ void TraceRayShields(
 	CollisionQuery cq;
 
 	QuadFieldQuery qfQuery;
-	quadField.GetQuadsOnRay(qfQuery, start, dir, length);
+	quadField->GetQuadsOnRay(qfQuery, start, dir, length);
 
 	for (const int quadIdx: *qfQuery.quads) {
-		const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		for (CPlasmaRepulser* r: quad.repulsers) {
 			if (!r->CanIntercept(emitter->weaponDef->interceptedByShieldType, emitter->owner->allyteam))
@@ -378,25 +375,23 @@ float GuiTraceRay(
 	CollisionQuery cq;
 
 	QuadFieldQuery qfQuery;
-	quadField.GetQuadsOnRay(qfQuery, start, dir, length);
+	quadField->GetQuadsOnRay(qfQuery, start, dir, length);
 
 	for (const int quadIdx: *qfQuery.quads) {
-		const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
 		for (const CUnit* u: quad.units) {
-			const bool unitIsEnemy = !teamHandler.Ally(u->allyteam, gu->myAllyTeam);
+			const bool unitIsEnemy = !teamHandler->Ally(u->allyteam, gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && losHandler->InRadar(u, gu->myAllyTeam));
 			const bool unitInSight = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 
 			if (u == exclude)
 				continue;
-			#if 0
 			// test this bit only in synced traces, rely on noSelect here
-			if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+			if (false && !u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
-			#endif
 			if (u->noSelect)
 				continue;
 			if (!unitVisible)
@@ -436,11 +431,9 @@ float GuiTraceRay(
 		for (const CFeature* f: quad.features) {
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			#if 0
 			// test this bit only in synced traces, rely on noSelect here
-			if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+			if (false && !f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
-			#endif
 			if (f->noSelect)
 				continue;
 
@@ -486,7 +479,7 @@ bool TestCone(
 	CUnit* owner
 ) {
 	QuadFieldQuery qfQuery;
-	quadField.GetQuadsOnRay(qfQuery, from, dir, length);
+	quadField->GetQuadsOnRay(qfQuery, from, dir, length);
 
 	if (qfQuery.quads->empty())
 		return true;
@@ -496,7 +489,7 @@ bool TestCone(
 	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
 	for (const int quadIdx: *qfQuery.quads) {
-		const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		if (scanForAllies) {
 			for (const CUnit* u: quad.teamUnits[allyteam]) {
@@ -552,7 +545,7 @@ bool TestTrajectoryCone(
 	CUnit* owner
 ) {
 	QuadFieldQuery qfQuery;
-	quadField.GetQuadsOnRay(qfQuery, from, dir, length);
+	quadField->GetQuadsOnRay(qfQuery, from, dir, length);
 
 	if (qfQuery.quads->empty())
 		return true;
@@ -562,7 +555,7 @@ bool TestTrajectoryCone(
 	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
 	for (const int quadIdx: *qfQuery.quads) {
-		const CQuadField::Quad& quad = quadField.GetQuad(quadIdx);
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// friendly units in this quad
 		if (scanForAllies) {

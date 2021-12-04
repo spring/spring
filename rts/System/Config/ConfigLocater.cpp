@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _WIN32
+#ifndef WIN32
 	#include <unistd.h>
 	#include <sys/stat.h>
 	#include <sys/types.h>
@@ -9,7 +9,7 @@
 	#include <direct.h>
 	#include <windows.h>
 #endif
-#include <cstdlib>
+#include <stdlib.h>
 
 #include "ConfigLocater.h"
 #include "Game/GameVersion.h"

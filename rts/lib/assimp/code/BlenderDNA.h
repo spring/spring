@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -47,11 +46,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCLUDED_AI_BLEND_DNA_H
 
 #include "BaseImporter.h"
+#include "TinyFormatter.h"
 #include "StreamReader.h"
 #include <assimp/DefaultLogger.hpp>
 #include <stdint.h>
 #include <memory>
-#include <map>
+
 
 // enable verbose log output. really verbose, so be careful.
 #ifdef ASSIMP_BUILD_DEBUG
@@ -253,7 +253,10 @@ public:
      *  a compiler complain is the result.
      *  @param dest Destination value to be written
      *  @param db File database, including input stream. */
-    template <typename T> void Convert (T& dest, const FileDatabase& db) const;
+    template <typename T> inline void Convert (T& dest,
+        const FileDatabase& db) const;
+
+
 
     // --------------------------------------------------------
     // generic converter

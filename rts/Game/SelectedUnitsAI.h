@@ -5,57 +5,50 @@
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
-
-#include <vector>
+#include <map>
+#include <set>
 
 class CUnit;
 
 
-/// handles giving commands to the currently selected group of units.
+/// Handling commands given to the currently  selected group of units.
 class CSelectedUnitsHandlerAI {
 public:
-	bool GiveCommandNet(Command& c, int playerNum);
+	/* set<int> selUnits;
+
+	void AddUnit(int unit); (And include update() in game.cpp to call every frame)
+	void RemoveUnit(int unit);
+	*/
+
+	CSelectedUnitsHandlerAI();
+	void GiveCommandNet(Command& c, int player);
+
+	float3 centerPos;
+	float3 rightPos;
+	int sumLength;
+	float avgLength;
+	float frontLength;
+	float addSpace;
 
 private:
-	void CalculateGroupData(int playerNum, bool queueing);
-	void MakeFormationFrontOrder(Command* c, int playerNum);
-	void CreateUnitOrder(std::vector< std::pair<float, int> >& out, int playerNum);
-
-	float3 MoveToPos(float3 nextCornerPos, float3 dir, const CUnit* unit, Command* command, std::vector<std::pair<int, Command> >* frontcmds, bool* newline);
-
-	void SetUnitWantedMaxSpeedNet(CUnit* unit);
-	void SetUnitGroupWantedMaxSpeedNet(CUnit* unit);
-
-	bool SelectAttackNet(const Command& cmd, int playerNum);
-	void SelectCircleUnits(const float3& pos, float radius, int playerNum, std::vector<int>& units);
-	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int playerNum, std::vector<int>& units);
-
+	void CalculateGroupData(int player, bool queueing);
+	void MakeFrontMove(Command* c, int player);
+	void CreateUnitOrder(std::multimap<float, int>& out, int player);
+	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command, std::vector<std::pair<int, Command> >* frontcmds, bool* newline);
+	void AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options);
+	void AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options);
+	void SelectAttack(const Command& cmd, int player);
+	void SelectCircleUnits(const float3& pos, float radius, int player, std::vector<int>& units);
+	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int player, std::vector<int>& units);
 	float3 LastQueuePosition(const CUnit* unit);
 
-private:
-	float3 groupCenterCoor;
-	float3 formationCenterPos;
-	float3 formationRightPos;
+	float3 minCoor, maxCoor, centerCoor;
+	float minMaxSpeed;
 
-	float groupSumLength = 0.0f;
-	float groupAvgLength = 0.0f;
-	float groupFrontLength = 0.0f;
-	float groupAddedSpace = 0.0f;
-	float groupMinMaxSpeed = 0.0f;
-	float groupColumnDist = 64.0f;
-
-	int formationNumColumns = 0;
-
-
-	std::vector< std::pair<float, int> > sortedUnitPairs; // <priority, unitID>
-	std::vector< std::pair<float, std::vector<int>> > sortedUnitGroups;
-	std::vector< std::pair<int, Command> > frontMoveCommands;
-
-	std::vector<size_t> mixedUnitIDs;
-	std::vector<size_t> mixedGroupSizes;
-
-
-	std::vector<int> targetUnitIDs;
+	float3 frontDir;
+	float3 sideDir;
+	float columnDist;
+	int numColumns;
 };
 
 extern CSelectedUnitsHandlerAI selectedUnitsAI;

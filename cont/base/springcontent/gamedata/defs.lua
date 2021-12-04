@@ -41,8 +41,6 @@ Spring.TimeCheck('[defs.lua] loading all *Defs tables:', function()
   DEFS.weaponDefs  = LoadDefs('weaponDefs')
   DEFS.armorDefs   = LoadDefs('armorDefs')
   DEFS.moveDefs    = LoadDefs('moveDefs')
-
-  LoadDefs('defs_post') -- misc cross-def postprocessing
 end)
 
 

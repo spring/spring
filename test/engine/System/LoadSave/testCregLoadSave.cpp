@@ -8,8 +8,8 @@
 #include <vector>
 #include <stdio.h>
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE CregLoadSave
+#include <boost/test/unit_test.hpp>
 
 
 
@@ -154,7 +154,7 @@ static bool test_creg_pointers(TestObj* obj)
 
 
 
-TEST_CASE("CregLoadSave")
+BOOST_AUTO_TEST_CASE( BOOST_TEST_MODULE )
 {
 	// save state
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
@@ -164,12 +164,9 @@ TEST_CASE("CregLoadSave")
 	TestObj* root = (TestObj*)loadtest(&ss);
 
 	// test it
-	INFO("test root obj");
-	CHECK(dynamic_cast<TestObj*>(root));
-	INFO("test class members");
-	CHECK(test_creg_members(root));
-	INFO("test class pointers");
-	CHECK(test_creg_pointers(root));
+	BOOST_CHECK_MESSAGE(dynamic_cast<TestObj*>(root), "test root obj");
+	BOOST_CHECK_MESSAGE(test_creg_members(root),      "test class members");
+	BOOST_CHECK_MESSAGE(test_creg_pointers(root),     "test class pointers");
 
 	delete root;
 }

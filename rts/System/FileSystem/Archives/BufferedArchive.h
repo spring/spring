@@ -3,8 +3,10 @@
 #ifndef _BUFFERED_ARCHIVE_H
 #define _BUFFERED_ARCHIVE_H
 
-#include "IArchive.h"
+#include <map>
 #include "System/Threading/SpringThreading.h"
+
+#include "IArchive.h"
 
 /**
  * Provides a helper implementation for archive types that can only uncompress
@@ -13,46 +15,39 @@
 class CBufferedArchive : public IArchive
 {
 public:
-	CBufferedArchive(const std::string& name, bool cached = true): IArchive(name) {
-		noCache = !cached;
-	}
+	CBufferedArchive(const std::string& name, bool cache = true);
+	virtual ~CBufferedArchive() {}
 
-	virtual ~CBufferedArchive();
-
-	virtual int GetType() const override { return ARCHIVE_TYPE_BUF; }
-
-	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
 
 protected:
-	virtual int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
+	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
+
+	spring::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 
 	struct FileBuffer {
-		FileBuffer() = default;
+		FileBuffer(): populated(false), exists(false) {}
 		FileBuffer(const FileBuffer& fb) = delete;
 		FileBuffer(FileBuffer&& fb) { *this = std::move(fb); }
 
 		FileBuffer& operator = (const FileBuffer& fb) = delete;
-		FileBuffer& operator = (FileBuffer&& fb) = default;
+		FileBuffer& operator = (FileBuffer&& fb) {
+			populated = fb.populated;
+			exists = fb.exists;
 
-		bool populated = false; // files may be empty (0 bytes)
-		bool exists = false;
+			data = std::move(fb.data);
+			return *this;
+		}
 
+		bool populated; // files may be empty (0 bytes)
+		bool exists;
 		std::vector<std::uint8_t> data;
 	};
 
-	// indexed by file-id
-	std::vector<FileBuffer> fileCache;
-	// neither 7zip (.sd7) nor minizip (.sdz) are thread-safe
-	// zlib (used to extract pool archive .gz entries) should
-	// not need this, but currently each buffered GetFileImpl
-	// call is protected
-	static spring::mutex archiveLock;
+	std::vector<FileBuffer> cache; // cache[fileId]
 
 private:
-	uint32_t cacheSize = 0;
-	uint32_t fileCount = 0;
-
-	bool noCache = false;
+	bool caching;
 };
 
 #endif // _BUFFERED_ARCHIVE_H

@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef STRING_UTIL_H
-#define STRING_UTIL_H
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <algorithm>
-#include <cstring>
+#include <cassert>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -29,36 +29,9 @@
 	struct _UTIL_CONCAT(doOnce, __LINE__) { _UTIL_CONCAT(doOnce, __LINE__)() { code; } }; static _UTIL_CONCAT(doOnce, __LINE__) _UTIL_CONCAT(doOnceVar, __LINE__);
 
 
-static inline const char* StrCaseStr(const char* str, const char* sub) {
-	const char* pos = nullptr;
-
-	char lcstr[32768];
-	char lcsub[32768];
-
-	if (str == nullptr)
-		return nullptr;
-	if (sub == nullptr)
-		return nullptr;
-
-	std::strncpy(lcstr, str, sizeof(lcstr) - 1);
-	std::strncpy(lcsub, sub, sizeof(lcsub) - 1);
-	std::transform(lcstr, lcstr + sizeof(lcstr), lcstr, (int (*)(int)) tolower);
-	std::transform(lcsub, lcsub + sizeof(lcsub), lcsub, (int (*)(int)) tolower);
-
-	if ((pos = std::strstr(lcstr, lcsub)) == nullptr)
-		return nullptr;
-
-	return (str + (pos - lcstr));
-}
-
-
-static inline void StringToLower(const char* in, char* out, size_t len) {
-	std::transform(in, in + len, out, (int (*)(int)) tolower);
-}
-
 static inline void StringToLowerInPlace(std::string& s)
 {
-	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int)) tolower);
+	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
 }
 
 static inline std::string StringToLower(std::string s)

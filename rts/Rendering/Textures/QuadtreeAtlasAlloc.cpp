@@ -19,10 +19,10 @@ struct QuadTreeNode {
 		memset(children, 0, 4 * sizeof(QuadTreeNode*));
 	}
 	~QuadTreeNode() {
-		for (auto& child: children) {
-			if (child != nullptr) {
-				delete child;
-				child = nullptr;
+		for (int i = 0; i < 4; ++i) {
+			if (children[i]) {
+				delete children[i];
+				children[i] = NULL;
 			}
 		}
 	}
@@ -40,9 +40,9 @@ struct QuadTreeNode {
 
 	int GetMinSize() {
 		int minsize = size;
-		for (const auto& child: children) {
-			if (child != nullptr) {
-				minsize = std::min(minsize, child->GetMinSize());
+		for (int i = 0; i < 4; ++i) {
+			if (children[i]) {
+				minsize = std::min(minsize, children[i]->GetMinSize());
 			}
 		}
 		return minsize;
@@ -59,10 +59,10 @@ struct QuadTreeNode {
 QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 {
 	if (used)
-		return nullptr;
+		return NULL;
 
 	if ((size < xsize) || (size < ysize))
-		return nullptr;
+		return NULL;
 
 	const bool xfit = ((size >> 1) < xsize);
 	const bool yfit = ((size >> 1) < ysize);
@@ -90,7 +90,7 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 			used = true;
 			return this;
 		} else {
-			return nullptr; //FIXME dynamic x/y quadnode size?
+			return NULL; //FIXME dynamic x/y quadnode size?
 		}
 	}
 
@@ -100,13 +100,13 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 		if (subnode) return subnode;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
 
 CQuadtreeAtlasAlloc::CQuadtreeAtlasAlloc()
 {
-	root = nullptr;
+	root = NULL;
 }
 
 
@@ -163,14 +163,14 @@ bool CQuadtreeAtlasAlloc::Allocate()
 	std::vector<SAtlasEntry*> sortedEntries;
 	sortedEntries.reserve(entries.size());
 
-	for (auto& entry: entries) {
-		sortedEntries.push_back(&entry.second);
+	for (auto it = entries.begin(); it != entries.end(); ++it) {
+		sortedEntries.push_back(&it->second);
 	}
 
 	std::sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
 
-	for (const auto& item: sortedEntries) {
-		SAtlasEntry& entry = *item;
+	for (auto it = sortedEntries.begin(); it != sortedEntries.end(); ++it) {
+		SAtlasEntry& entry = **it;
 		QuadTreeNode* node = FindPosInQuadTree(entry.size.x, entry.size.y);
 
 		if (node == nullptr) {

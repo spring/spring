@@ -3,7 +3,9 @@
 #ifndef PATH_FINDER_H
 #define PATH_FINDER_H
 
+#include <list>
 #include <vector>
+#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
@@ -17,20 +19,19 @@ class CPathFinderDef;
 
 class CPathFinder: public IPathFinder {
 public:
+	CPathFinder(bool threadSafe = true);
+
 	static void InitStatic();
 
-	CPathFinder() = default; // defer Init
-	CPathFinder(bool threadSafe) { Init(threadSafe); }
-
-	void Init(bool threadSafe);
-	void Kill() { IPathFinder::Kill(); }
+	static const   int2* GetDirectionVectorsTable2D();
+	static const float3* GetDirectionVectorsTable3D();
 
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
 protected:
 	/// Performs the actual search.
-	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner) override;
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner) override;
+	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 
 	/**
 	 * Test the availability and value of a square,
@@ -44,14 +45,14 @@ protected:
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod
-	) override;
+	);
 	/**
 	 * Recreates the path found by pathfinder.
 	 * Starting at goalSquare and tracking backwards.
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const override;
+	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
 
 	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
@@ -59,7 +60,7 @@ protected:
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) const override {
+	) const {
 		// only cache in Estimator! (cause of flow & heatmapping etc.)
 		return dummyCacheItem;
 	}
@@ -72,7 +73,7 @@ protected:
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) override { }
+	) { }
 
 private:
 	void TestNeighborSquares(

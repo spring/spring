@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -41,9 +40,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef INCLUDED_AI_STRINGUTILS_H
 #define INCLUDED_AI_STRINGUTILS_H
 
+#include <cstdarg>
+#include <string.h>
+#include <stdio.h>
 #include <sstream>
-#include <stdarg.h>
-#include <cstdlib>
+#include <string>
 
 ///	@fn		ai_snprintf
 ///	@brief	The portable version of the function snprintf ( C99 standard ), which works on visual studio compilers 2013 and earlier.
@@ -102,7 +103,7 @@ float ai_strtof( const char *begin, const char *end ) {
         std::string token( begin, len );
         val = static_cast< float >( ::atof( token.c_str() ) );
     }
-
+    
     return val;
 }
 

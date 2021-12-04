@@ -21,7 +21,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS = "(,)|(\\()|(\\);)";
+	FS = "(,)|(\\()|(\\)\\;)";
 
 	# Used by other scripts
 	JAVA_MODE = 1;
@@ -492,7 +492,7 @@ function canDeleteDocumentation() {
 		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
-		if (match(funcSoFar, /;$/)) {
+		if (match(funcSoFar, /\;$/)) {
 			# function ends in this line
 			wrappFunction(funcSoFar, commentEolTot);
 			isMultiLineFunc = 0;
@@ -512,7 +512,7 @@ function canDeleteDocumentation() {
 	# remove possible comment at end of line: // fu bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
-	if (match(funcStartLine, /;$/)) {
+	if (match(funcStartLine, /\;$/)) {
 		# function ends in this line
 		wrappFunction(funcStartLine, commentEolTot);
 	} else {

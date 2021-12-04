@@ -6,7 +6,7 @@
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/Threading/ThreadPool.h"
 
 
@@ -61,89 +61,60 @@ void setSurfaceSquareFunc(SurfaceSquareFunc func)
 
 
 
-
-static constexpr float (*weaponRangeFuncs[])(const CWeapon*, const WeaponDef*, float, float) = {
-	CWeapon::GetStaticRange2D,
-	CWeapon::GetLiveRange2D,
-};
-
-static void glBallisticCircle(const CWeapon* weapon, const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params)
+/*
+ *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
+ */
+void glBallisticCircle(const float3& center, const float radius,
+                       const CWeapon* weapon,
+                       unsigned int resolution, float slope)
 {
-	constexpr int resDiv = 50;
-
+	int rdiv = 50;
+	resolution *= 2;
+	rdiv *= 1;
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
-
-	const float radius = params.x;
-	const float slope = params.y;
-
-	const float wdHeightMod = weaponDef->heightmod;
-	const float wdProjGravity = mix(params.z, -weaponDef->myGravity, weaponDef->myGravity != 0.0f);
+	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = math::TWOPI * (float)i / (float)resolution;
-
-		const float sinR = fastmath::sin(radians);
-		const float cosR = fastmath::cos(radians);
-
-		float maxWeaponRange = radius;
-
+		float rad = radius;
+		float sinR = fastmath::sin(radians);
+		float cosR = fastmath::cos(radians);
 		float3 pos;
-		pos.x = center.x + (sinR * maxWeaponRange);
-		pos.z = center.z + (cosR * maxWeaponRange);
+		pos.x = center.x + (sinR * rad);
+		pos.z = center.z + (cosR * rad);
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-
-		float posHeightDelta = (pos.y - center.y) * 0.5f;
-		float posWeaponRange = weaponRangeFuncs[weapon != nullptr](weapon, weaponDef, posHeightDelta * wdHeightMod, wdProjGravity);
-		float rangeIncrement = (maxWeaponRange -= (posHeightDelta * slope)) * 0.5f;
-		float ydiff = 0.0f;
-
-		// "binary search" for the maximum positional range per angle, accounting for terrain height
-		for (int j = 0; j < resDiv && (std::fabs(posWeaponRange - maxWeaponRange) + ydiff) > (0.01f * maxWeaponRange); j++) {
-			if (posWeaponRange > maxWeaponRange) {
-				maxWeaponRange += rangeIncrement;
+		float heightDiff = (pos.y - center.y) * 0.5f;
+		rad -= heightDiff * slope;
+		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
+		float adjustment = rad * 0.5f;
+		float ydiff = 0;
+		for(int j = 0; j < rdiv && std::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
+			if (adjRadius > rad) {
+				rad += adjustment;
 			} else {
-				// overshot, reduce step-size
-				maxWeaponRange -= rangeIncrement;
-				rangeIncrement *= 0.5f;
+				rad -= adjustment;
+				adjustment /= 2;
 			}
-
-			pos.x = center.x + (sinR * maxWeaponRange);
-			pos.z = center.z + (cosR * maxWeaponRange);
-
-			const float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
+			pos.x = center.x + (sinR * rad);
+			pos.z = center.z + (cosR * rad);
+			float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 			ydiff = std::fabs(pos.y - newY);
 			pos.y = newY;
-
-			posHeightDelta = pos.y - center.y;
-			posWeaponRange = weaponRangeFuncs[weapon != nullptr](weapon, weaponDef, posHeightDelta * wdHeightMod, wdProjGravity);
+			heightDiff = (pos.y - center.y);
+			adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		}
-
-		pos.x = center.x + (sinR * posWeaponRange);
-		pos.z = center.z + (cosR * posWeaponRange);
+		pos.x = center.x + (sinR * adjRadius);
+		pos.z = center.z + (cosR * adjRadius);
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
 
 		vertices[i] = pos;
 	});
 
 	va->DrawArray0(GL_LINE_LOOP);
-}
-
-
-/*
- *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
- */
-void glBallisticCircle(const CWeapon* weapon, unsigned int resolution, const float3& center, const float3& params)
-{
-	glBallisticCircle(weapon, weapon->weaponDef, resolution, center, params);
-}
-
-void glBallisticCircle(const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params)
-{
-	glBallisticCircle(nullptr, weaponDef, resolution, center, params);
 }
 
 
@@ -187,16 +158,16 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 /******************************************************************************/
 
 void glWireCube(unsigned int* listID) {
-	static constexpr float3 vertices[8] = {
-		{ 0.5f,  0.5f,  0.5f},
-		{ 0.5f, -0.5f,  0.5f},
-		{-0.5f, -0.5f,  0.5f},
-		{-0.5f,  0.5f,  0.5f},
+	static const float3 vertices[8] = {
+		float3( 0.5f,  0.5f,  0.5f),
+		float3( 0.5f, -0.5f,  0.5f),
+		float3(-0.5f, -0.5f,  0.5f),
+		float3(-0.5f,  0.5f,  0.5f),
 
-		{ 0.5f,  0.5f, -0.5f},
-		{ 0.5f, -0.5f, -0.5f},
-		{-0.5f, -0.5f, -0.5f},
-		{-0.5f,  0.5f, -0.5f},
+		float3( 0.5f,  0.5f, -0.5f),
+		float3( 0.5f, -0.5f, -0.5f),
+		float3(-0.5f, -0.5f, -0.5f),
+		float3(-0.5f,  0.5f, -0.5f),
 	};
 
 	if ((*listID) != 0) {

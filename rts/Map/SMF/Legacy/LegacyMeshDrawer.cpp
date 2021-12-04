@@ -2,7 +2,6 @@
 
 #include "LegacyMeshDrawer.h"
 #include "Game/Camera.h"
-#include "Game/CameraHandler.h"
 #include "Map/SMF/SMFReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -11,15 +10,10 @@
 #include "Rendering/GL/VertexArray.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/StringUtil.h"
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)
-
-static inline float GetVisibleVertexHeight(int idx) {
-	return readMap->GetCornerHeightMapUnsynced()[idx];
-}
-
 
 CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
@@ -29,6 +23,11 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	//, waterDrawn(false)
 {
 }
+
+CLegacyMeshDrawer::~CLegacyMeshDrawer()
+{
+}
+
 
 
 
@@ -78,15 +77,15 @@ void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, i
 {
 	int xt0, xt1;
 
-	const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
-	const CCamera::FrustumLine* posLines = cam->GetPosFrustumLines();
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
-	for (int idx = 0, cnt = negLines[4].sign; idx < cnt; idx++) {
-		const CCamera::FrustumLine& fl = negLines[idx];
-		const float xtf = fl.base + fl.dir * y;
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
+	for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
+		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
-		xt1 = (int)(xtf + fl.dir * lod);
+		xt1 = (int)(xtf + fli->dir * lod);
 
 		if (xt0 > xt1)
 			xt0 = xt1;
@@ -96,12 +95,10 @@ void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, i
 		if (xt0 > xs)
 			xs = xt0;
 	}
-	for (int idx = 0, cnt = posLines[4].sign; idx < cnt; idx++) {
-		const CCamera::FrustumLine& fl = posLines[idx];
-		const float xtf = fl.base + fl.dir * y;
-
+	for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
+		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
-		xt1 = (int)(xtf + fl.dir * lod);
+		xt1 = (int)(xtf + fli->dir * lod);
 
 		if (xt0 < xt1)
 			xt0 = xt1;
@@ -133,14 +130,14 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	//! only process the necessary big squares in the x direction
 	const int bigSquareSizeY = bty * smfReadMap->bigSquareSize;
 
-	const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
-	const CCamera::FrustumLine* posLines = cam->GetPosFrustumLines();
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
-	for (int idx = 0, cnt = negLines[4].sign; idx < cnt; idx++) {
-		const CCamera::FrustumLine& fl = negLines[idx];
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
-		x0 = fl.base + fl.dir * bigSquareSizeY;
-		x1 = x0 + fl.dir * smfReadMap->bigSquareSize;
+	for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
+		x0 = fli->base + fli->dir * bigSquareSizeY;
+		x1 = x0 + fli->dir * smfReadMap->bigSquareSize;
 
 		if (x0 > x1)
 			x0 = x1;
@@ -150,11 +147,9 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 		if (x0 > sx)
 			sx = (int) x0;
 	}
-	for (int idx = 0, cnt = posLines[4].sign; idx < cnt; idx++) {
-		const CCamera::FrustumLine& fl = posLines[idx];
-
-		x0 = fl.base + fl.dir * bigSquareSizeY + smfReadMap->bigSquareSize;
-		x1 = x0 + fl.dir * smfReadMap->bigSquareSize;
+	for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
+		x0 = fli->base + fli->dir * bigSquareSizeY + smfReadMap->bigSquareSize;
+		x1 = x0 + fli->dir * smfReadMap->bigSquareSize;
 
 		if (x0 < x1)
 			x0 = x1;
@@ -554,7 +549,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 	viewRadius += (viewRadius & 1);
 
 	// Compute count of LODs needed/visible
-	neededLod   = std::max(1, int((camera->GetFarPlaneDist() * 0.125f) / viewRadius) << 1);
+	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
 	neededLod   = std::min(neededLod, std::min(mapDims.mapx, mapDims.mapy));
 }
 
@@ -568,8 +563,8 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	UpdateLODParams(drawPass);
 
-	CCamera* cam = CCameraHandler::GetActiveCamera();
-	cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	CCamera* cam = CCamera::GetActiveCamera();
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	const int camBigTexY = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
 

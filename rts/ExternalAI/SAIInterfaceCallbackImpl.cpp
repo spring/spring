@@ -2,12 +2,14 @@
 
 #include <cstdio>
 
+using std::sprintf;
+
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
-#include "ExternalAI/AILibraryManager.h"
+#include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/AIInterfaceLibraryInfo.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"     // for ABI version
@@ -22,7 +24,7 @@
 #include "System/Log/ILog.h"
 
 #include <vector>
-#include <cstdlib> // malloc(), calloc(), free()
+#include <stdlib.h> // malloc(), calloc(), free()
 #include <sstream> // ostringstream
 #include <cstring>
 
@@ -125,7 +127,7 @@ EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValueByKey(int inter
 }
 
 EXPORT(int) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId) {
-	return teamHandler.ActiveTeams();
+	return teamHandler->ActiveTeams();
 }
 
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
@@ -145,20 +147,20 @@ EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(
 ) {
 	const char* value = "";
 
-	const SkirmishAIKey aiKey(shortName, version);
+	SkirmishAIKey aiKey(shortName, version);
 
-	const AILibraryManager::T_skirmishAIInfos& skirmishInfos = AILibraryManager::GetInstance()->GetSkirmishAIInfos();
-	const AILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+	const IAILibraryManager::T_skirmishAIInfos& skirmishInfos = IAILibraryManager::GetInstance()->GetSkirmishAIInfos();
+	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
 
-	if (inf == skirmishInfos.end())
-		return value;
+	if (inf != skirmishInfos.end()) {
+		const std::string& valueStr = (inf->second).GetInfo(key);
 
-	const std::string& valueStr = (inf->second).GetInfo(key);
+		if (valueStr != "") {
+			value = valueStr.c_str();
+		}
+	}
 
-	if (valueStr.empty())
-		return value;
-
-	return (valueStr.c_str());
+	return value;
 }
 
 EXPORT(void) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg) {
@@ -307,7 +309,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 	// fill up writeableDataDirs until interfaceId index is in there
 	// if it is not yet
 	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)interfaceId; ++wdd)
-		writeableDataDirs.emplace_back("");
+		writeableDataDirs.push_back("");
 
 	if (writeableDataDirs[interfaceId].empty()) {
 		char tmpRes[1024];
@@ -318,14 +320,14 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		writeableDataDirs[interfaceId] = tmpRes;
 
 		if (!exists) {
-			char errorMsg[1086];
+			char errorMsg[1024];
 
 			SNPRINTF(errorMsg, sizeof(errorMsg),
 				"Unable to create writable data-dir for interface %i: %s",
 				interfaceId, tmpRes);
 
 			aiInterfaceCallback_Log_exception(interfaceId, errorMsg, 1, true);
-			return nullptr;
+			return NULL;
 		}
 	}
 

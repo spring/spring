@@ -8,23 +8,18 @@
 class IMapDamage
 {
 public:
-	static IMapDamage* InitMapDamage();
-	static void FreeMapDamage(IMapDamage*);
+	static IMapDamage* GetMapDamage();
 
 public:
+	IMapDamage();
 	virtual ~IMapDamage() {}
 
 	virtual void Explosion(const float3& pos, float strength, float radius) = 0;
 	virtual void RecalcArea(int x1, int x2, int y1, int y2) = 0;
-	virtual void TerrainTypeHardnessChanged(int ttIndex) {}
-	virtual void TerrainTypeSpeedModChanged(int ttIndex) {}
+	virtual void Update() {}
 
-	virtual void Init() = 0;
-	virtual void Update() = 0;
-
-	virtual bool Disabled() const = 0;
-
-	float mapHardness = 0.0f;
+	bool disabled;
+	float mapHardness;
 };
 
 extern IMapDamage* mapDamage;

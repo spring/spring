@@ -1,3 +1,1 @@
 SpringData = @SpringDataDirInSource@
-FontFile = @FontFile@
-SmallFontFile = @SmallFontFile@

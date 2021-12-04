@@ -45,7 +45,7 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return true;
 	}
 
-	const CTeam* mt = teamHandler.Team(gu->myTeam);
+	const CTeam* mt = teamHandler->Team(gu->myTeam);
 	const float3* sp = nullptr;
 
 	// player did not set a startpos yet, so do not let
@@ -81,7 +81,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if ((showReadyBox && InBox(mx, my, readyBox)) || !gs->PreSimFrame())
 		return (!Ready(false));
 
-	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * camera->GetFarPlaneDist() * 1.4f, false);
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);
 
 	if (dist < 0.0f)
 		return true;

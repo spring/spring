@@ -20,7 +20,6 @@ public:
 public:
 	virtual void Draw() = 0;
 
-	virtual void AddSolidObject(CSolidObject* object) = 0;
 	virtual void ForceRemoveSolidObject(CSolidObject* object) = 0;
 
 	//FIXME move to eventhandler?
@@ -43,8 +42,6 @@ class NullGroundDecalDrawer: public IGroundDecalDrawer
 {
 public:
 	void Draw() override {}
-
-	void AddSolidObject(CSolidObject* object) override {}
 	void ForceRemoveSolidObject(CSolidObject* object) override {}
 
 	void GhostDestroyed(GhostSolidObject* gb) override {}

@@ -24,7 +24,7 @@ std::vector<std::uint8_t> ClientData::GetCompressed()
 	clientDataStream << SpringVersion::GetFull() << std::endl;
 	clientDataStream << SpringVersion::GetBuildEnvironment() << std::endl;
 	clientDataStream << SpringVersion::GetCompiler() << std::endl;
-	clientDataStream << Platform::GetOSVersionStr() << std::endl;
+	clientDataStream << Platform::GetOS() << std::endl;
 	clientDataStream << Platform::GetWordSizeStr() << std::endl;
 
 	const std::string& clientData = clientDataStream.str();
@@ -37,6 +37,6 @@ std::string ClientData::GetUncompressed(const std::vector<std::uint8_t>& compres
 	std::vector<std::uint8_t> buffer{zlib::inflate(compressed)};
 	std::string cdata{buffer.begin(), buffer.end()};
 
-	return cdata;
+	return (std::move(cdata));
 }
 

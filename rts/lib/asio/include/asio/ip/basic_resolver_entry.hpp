@@ -2,7 +2,7 @@
 // ip/basic_resolver_entry.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,6 @@
 
 #include "asio/detail/config.hpp"
 #include <string>
-#include "asio/detail/string_view.hpp"
 
 #include "asio/detail/push_options.hpp"
 
@@ -50,10 +49,10 @@ public:
 
   /// Construct with specified endpoint, host name and service name.
   basic_resolver_entry(const endpoint_type& ep,
-      ASIO_STRING_VIEW_PARAM host, ASIO_STRING_VIEW_PARAM service)
+      const std::string& host, const std::string& service)
     : endpoint_(ep),
-      host_name_(static_cast<std::string>(host)),
-      service_name_(static_cast<std::string>(service))
+      host_name_(host),
+      service_name_(service)
   {
   }
 
@@ -75,28 +74,10 @@ public:
     return host_name_;
   }
 
-  /// Get the host name associated with the entry.
-  template <class Allocator>
-  std::basic_string<char, std::char_traits<char>, Allocator> host_name(
-      const Allocator& alloc = Allocator()) const
-  {
-    return std::basic_string<char, std::char_traits<char>, Allocator>(
-        host_name_.c_str(), alloc);
-  }
-
   /// Get the service name associated with the entry.
   std::string service_name() const
   {
     return service_name_;
-  }
-
-  /// Get the service name associated with the entry.
-  template <class Allocator>
-  std::basic_string<char, std::char_traits<char>, Allocator> service_name(
-      const Allocator& alloc = Allocator()) const
-  {
-    return std::basic_string<char, std::char_traits<char>, Allocator>(
-        service_name_.c_str(), alloc);
   }
 
 private:

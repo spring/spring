@@ -15,10 +15,11 @@ namespace creg
 	class ObjectInstanceType : public IType
 	{
 	public:
-		ObjectInstanceType(Class* objc, size_t size) : IType(size), objectClass(objc) {}
+		ObjectInstanceType(Class* objc) : objectClass(objc) {}
 		~ObjectInstanceType() {}
 		void Serialize(ISerializer* s, void* instance);
 		std::string GetName() const;
+		size_t GetSize() const;
 
 		Class* objectClass;
 	};
@@ -26,8 +27,9 @@ namespace creg
 	class StringType : public DynamicArrayType<std::string>
 	{
 	public:
-		StringType() { }
+		StringType(std::shared_ptr<IType> charType);
 		std::string GetName() const;
+		size_t GetSize() const;
 	};
 
 }

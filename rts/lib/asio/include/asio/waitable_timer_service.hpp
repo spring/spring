@@ -2,7 +2,7 @@
 // waitable_timer_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,14 +16,11 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include "asio/detail/config.hpp"
-
-#if defined(ASIO_ENABLE_OLD_SERVICES)
-
 #include <cstddef>
 #include "asio/async_result.hpp"
 #include "asio/detail/chrono_time_traits.hpp"
 #include "asio/detail/deadline_timer_service.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 #include "asio/wait_traits.hpp"
 
 #include "asio/detail/push_options.hpp"
@@ -35,7 +32,7 @@ template <typename Clock,
     typename WaitTraits = asio::wait_traits<Clock> >
 class waitable_timer_service
 #if defined(GENERATING_DOCUMENTATION)
-  : public asio::io_context::service
+  : public asio::io_service::service
 #else
   : public asio::detail::service_base<
       waitable_timer_service<Clock, WaitTraits> >
@@ -44,7 +41,7 @@ class waitable_timer_service
 public:
 #if defined(GENERATING_DOCUMENTATION)
   /// The unique service identifier.
-  static asio::io_context::id id;
+  static asio::io_service::id id;
 #endif
 
   /// The clock type.
@@ -72,11 +69,11 @@ public:
   typedef typename service_impl_type::implementation_type implementation_type;
 #endif
 
-  /// Construct a new timer service for the specified io_context.
-  explicit waitable_timer_service(asio::io_context& io_context)
+  /// Construct a new timer service for the specified io_service.
+  explicit waitable_timer_service(asio::io_service& io_service)
     : asio::detail::service_base<
-        waitable_timer_service<Clock, WaitTraits> >(io_context),
-      service_impl_(io_context)
+        waitable_timer_service<Clock, WaitTraits> >(io_service),
+      service_impl_(io_service)
   {
   }
 
@@ -92,23 +89,6 @@ public:
     service_impl_.destroy(impl);
   }
 
-#if defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
-  /// Move-construct a new timer implementation.
-  void move_construct(implementation_type& impl,
-      implementation_type& other_impl)
-  {
-    service_impl_.move_construct(impl, other_impl);
-  }
-
-  /// Move-assign from another timer implementation.
-  void move_assign(implementation_type& impl,
-      waitable_timer_service& other_service,
-      implementation_type& other_impl)
-  {
-    service_impl_.move_assign(impl, other_service.service_impl_, other_impl);
-  }
-#endif // defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
-
   /// Cancel any asynchronous wait operations associated with the timer.
   std::size_t cancel(implementation_type& impl, asio::error_code& ec)
   {
@@ -122,19 +102,10 @@ public:
     return service_impl_.cancel_one(impl, ec);
   }
 
-#if !defined(ASIO_NO_DEPRECATED)
-  /// (Deprecated: Use expiry().) Get the expiry time for the timer as an
-  /// absolute time.
+  /// Get the expiry time for the timer as an absolute time.
   time_point expires_at(const implementation_type& impl) const
   {
-    return service_impl_.expiry(impl);
-  }
-#endif // !defined(ASIO_NO_DEPRECATED)
-
-  /// Get the expiry time for the timer as an absolute time.
-  time_point expiry(const implementation_type& impl) const
-  {
-    return service_impl_.expiry(impl);
+    return service_impl_.expires_at(impl);
   }
 
   /// Set the expiry time for the timer as an absolute time.
@@ -144,30 +115,18 @@ public:
     return service_impl_.expires_at(impl, expiry_time, ec);
   }
 
-  /// Set the expiry time for the timer relative to now.
-  std::size_t expires_after(implementation_type& impl,
-      const duration& expiry_time, asio::error_code& ec)
-  {
-    return service_impl_.expires_after(impl, expiry_time, ec);
-  }
-
-#if !defined(ASIO_NO_DEPRECATED)
-  /// (Deprecated: Use expiry().) Get the expiry time for the timer relative to
-  /// now.
+  /// Get the expiry time for the timer relative to now.
   duration expires_from_now(const implementation_type& impl) const
   {
-    typedef detail::chrono_time_traits<Clock, WaitTraits> traits;
-    return traits::subtract(service_impl_.expiry(impl), traits::now());
+    return service_impl_.expires_from_now(impl);
   }
 
-  /// (Deprecated: Use expires_after().) Set the expiry time for the timer
-  /// relative to now.
+  /// Set the expiry time for the timer relative to now.
   std::size_t expires_from_now(implementation_type& impl,
       const duration& expiry_time, asio::error_code& ec)
   {
-    return service_impl_.expires_after(impl, expiry_time, ec);
+    return service_impl_.expires_from_now(impl, expiry_time, ec);
   }
-#endif // !defined(ASIO_NO_DEPRECATED)
 
   // Perform a blocking wait on the timer.
   void wait(implementation_type& impl, asio::error_code& ec)
@@ -182,19 +141,20 @@ public:
   async_wait(implementation_type& impl,
       ASIO_MOVE_ARG(WaitHandler) handler)
   {
-    async_completion<WaitHandler,
-      void (asio::error_code)> init(handler);
+    detail::async_result_init<
+      WaitHandler, void (asio::error_code)> init(
+        ASIO_MOVE_CAST(WaitHandler)(handler));
 
-    service_impl_.async_wait(impl, init.completion_handler);
+    service_impl_.async_wait(impl, init.handler);
 
     return init.result.get();
   }
 
 private:
   // Destroy all user-defined handler objects owned by the service.
-  void shutdown()
+  void shutdown_service()
   {
-    service_impl_.shutdown();
+    service_impl_.shutdown_service();
   }
 
   // The platform-specific implementation.
@@ -204,7 +164,5 @@ private:
 } // namespace asio
 
 #include "asio/detail/pop_options.hpp"
-
-#endif // defined(ASIO_ENABLE_OLD_SERVICES)
 
 #endif // ASIO_WAITABLE_TIMER_SERVICE_HPP

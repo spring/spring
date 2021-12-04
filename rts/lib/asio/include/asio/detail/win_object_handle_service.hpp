@@ -2,7 +2,7 @@
 // detail/win_object_handle_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2011 Boris Schaeling (boris@highscore.de)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -20,19 +20,18 @@
 
 #if defined(ASIO_HAS_WINDOWS_OBJECT_HANDLE)
 
+#include "asio/detail/addressof.hpp"
 #include "asio/detail/handler_alloc_helpers.hpp"
-#include "asio/detail/memory.hpp"
 #include "asio/detail/wait_handler.hpp"
 #include "asio/error.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 
 #include "asio/detail/push_options.hpp"
 
 namespace asio {
 namespace detail {
 
-class win_object_handle_service :
-  public service_base<win_object_handle_service>
+class win_object_handle_service
 {
 public:
   // The native type of an object handle.
@@ -80,10 +79,10 @@ public:
 
   // Constructor.
   ASIO_DECL win_object_handle_service(
-      asio::io_context& io_context);
+      asio::io_service& io_service);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown();
+  ASIO_DECL void shutdown_service();
 
   // Construct a new handle implementation.
   ASIO_DECL void construct(implementation_type& impl);
@@ -135,11 +134,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef wait_handler<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(handler);
 
-    ASIO_HANDLER_CREATION((io_context_.context(), *p.p, "object_handle",
-          &impl, reinterpret_cast<uintmax_t>(impl.wait_handle_), "async_wait"));
+    ASIO_HANDLER_CREATION((p.p, "object_handle", &impl, "async_wait"));
 
     start_wait_op(impl, p.p);
     p.v = p.p = 0;
@@ -157,8 +156,8 @@ private:
   static ASIO_DECL VOID CALLBACK wait_callback(
       PVOID param, BOOLEAN timeout);
 
-  // The io_context implementation used to post completions.
-  io_context_impl& io_context_;
+  // The io_service implementation used to post completions.
+  io_service_impl& io_service_;
 
   // Mutex to protect access to internal state.
   mutex mutex_;

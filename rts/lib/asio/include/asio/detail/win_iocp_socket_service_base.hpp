@@ -2,7 +2,7 @@
 // detail/win_iocp_socket_service_base.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,28 +20,27 @@
 #if defined(ASIO_HAS_IOCP)
 
 #include "asio/error.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 #include "asio/socket_base.hpp"
+#include "asio/detail/addressof.hpp"
 #include "asio/detail/bind_handler.hpp"
 #include "asio/detail/buffer_sequence_adapter.hpp"
 #include "asio/detail/fenced_block.hpp"
 #include "asio/detail/handler_alloc_helpers.hpp"
 #include "asio/detail/handler_invoke_helpers.hpp"
-#include "asio/detail/memory.hpp"
 #include "asio/detail/mutex.hpp"
 #include "asio/detail/operation.hpp"
+#include "asio/detail/reactor.hpp"
 #include "asio/detail/reactor_op.hpp"
-#include "asio/detail/select_reactor.hpp"
 #include "asio/detail/socket_holder.hpp"
 #include "asio/detail/socket_ops.hpp"
 #include "asio/detail/socket_types.hpp"
-#include "asio/detail/win_iocp_io_context.hpp"
+#include "asio/detail/win_iocp_io_service.hpp"
 #include "asio/detail/win_iocp_null_buffers_op.hpp"
 #include "asio/detail/win_iocp_socket_connect_op.hpp"
 #include "asio/detail/win_iocp_socket_send_op.hpp"
 #include "asio/detail/win_iocp_socket_recv_op.hpp"
 #include "asio/detail/win_iocp_socket_recvmsg_op.hpp"
-#include "asio/detail/win_iocp_wait_op.hpp"
 
 #include "asio/detail/push_options.hpp"
 
@@ -69,7 +68,7 @@ public:
     socket_ops::shared_cancel_token_type cancel_token_;
 
     // Per-descriptor data used by the reactor.
-    select_reactor::per_descriptor_data reactor_data_;
+    reactor::per_descriptor_data reactor_data_;
 
 #if defined(ASIO_ENABLE_CANCELIO)
     // The ID of the thread from which it is safe to cancel asynchronous
@@ -86,10 +85,10 @@ public:
 
   // Constructor.
   ASIO_DECL win_iocp_socket_service_base(
-      asio::io_context& io_context);
+      asio::io_service& io_service);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void base_shutdown();
+  ASIO_DECL void shutdown_service();
 
   // Construct a new socket implementation.
   ASIO_DECL void construct(base_implementation_type& impl);
@@ -114,10 +113,6 @@ public:
 
   // Destroy a socket implementation.
   ASIO_DECL asio::error_code close(
-      base_implementation_type& impl, asio::error_code& ec);
-
-  // Release ownership of the socket.
-  ASIO_DECL socket_type release(
       base_implementation_type& impl, asio::error_code& ec);
 
   // Cancel all operations associated with the socket.
@@ -184,66 +179,12 @@ public:
     return ec;
   }
 
-  // Wait for the socket to become ready to read, ready to write, or to have
-  // pending error conditions.
-  asio::error_code wait(base_implementation_type& impl,
-      socket_base::wait_type w, asio::error_code& ec)
+  // Disable sends or receives on the socket.
+  asio::error_code shutdown(base_implementation_type& impl,
+      socket_base::shutdown_type what, asio::error_code& ec)
   {
-    switch (w)
-    {
-    case socket_base::wait_read:
-      socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
-      break;
-    case socket_base::wait_write:
-      socket_ops::poll_write(impl.socket_, impl.state_, -1, ec);
-      break;
-    case socket_base::wait_error:
-      socket_ops::poll_error(impl.socket_, impl.state_, -1, ec);
-      break;
-    default:
-      ec = asio::error::invalid_argument;
-      break;
-    }
-
+    socket_ops::shutdown(impl.socket_, what, ec);
     return ec;
-  }
-
-  // Asynchronously wait for the socket to become ready to read, ready to
-  // write, or to have pending error conditions.
-  template <typename Handler>
-  void async_wait(base_implementation_type& impl,
-      socket_base::wait_type w, Handler& handler)
-  {
-    bool is_continuation =
-      asio_handler_cont_helpers::is_continuation(handler);
-
-    // Allocate and construct an operation to wrap the handler.
-    typedef win_iocp_wait_op<Handler> op;
-    typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
-    p.p = new (p.v) op(impl.cancel_token_, handler);
-
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_wait"));
-
-    switch (w)
-    {
-      case socket_base::wait_read:
-        start_null_buffers_receive_op(impl, 0, p.p);
-        break;
-      case socket_base::wait_write:
-        start_reactor_op(impl, select_reactor::write_op, p.p);
-        break;
-      case socket_base::wait_error:
-        start_reactor_op(impl, select_reactor::except_op, p.p);
-        break;
-      default:
-        p.p->ec_ = asio::error::invalid_argument;
-        iocp_service_.post_immediate_completion(p.p, is_continuation);
-        break;
-    }
-
-    p.v = p.p = 0;
   }
 
   // Send the given data to the peer. Returns the number of bytes sent.
@@ -264,7 +205,7 @@ public:
       socket_base::message_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_write(impl.socket_, impl.state_, -1, ec);
+    socket_ops::poll_write(impl.socket_, impl.state_, ec);
 
     return 0;
   }
@@ -279,11 +220,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_socket_send_op<ConstBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.cancel_token_, buffers, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_send"));
+    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_send"));
 
     buffer_sequence_adapter<asio::const_buffer,
         ConstBufferSequence> bufs(buffers);
@@ -302,13 +243,14 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.cancel_token_, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_send(null_buffers)"));
+    ASIO_HANDLER_CREATION((p.p, "socket",
+          &impl, "async_send(null_buffers)"));
 
-    start_reactor_op(impl, select_reactor::write_op, p.p);
+    start_reactor_op(impl, reactor::write_op, p.p);
     p.v = p.p = 0;
   }
 
@@ -330,7 +272,7 @@ public:
       socket_base::message_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
+    socket_ops::poll_read(impl.socket_, impl.state_, ec);
 
     return 0;
   }
@@ -345,11 +287,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_socket_recv_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.state_, impl.cancel_token_, buffers, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_receive"));
+    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_receive"));
 
     buffer_sequence_adapter<asio::mutable_buffer,
         MutableBufferSequence> bufs(buffers);
@@ -368,11 +310,12 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.cancel_token_, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_receive(null_buffers)"));
+    ASIO_HANDLER_CREATION((p.p, "socket",
+          &impl, "async_receive(null_buffers)"));
 
     start_null_buffers_receive_op(impl, flags, p.p);
     p.v = p.p = 0;
@@ -399,7 +342,7 @@ public:
       socket_base::message_flags& out_flags, asio::error_code& ec)
   {
     // Wait for socket to become ready.
-    socket_ops::poll_read(impl.socket_, impl.state_, -1, ec);
+    socket_ops::poll_read(impl.socket_, impl.state_, ec);
 
     // Clear out_flags, since we cannot give it any other sensible value when
     // performing a null_buffers operation.
@@ -418,11 +361,12 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_socket_recvmsg_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.cancel_token_, buffers, out_flags, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_receive_with_flags"));
+    ASIO_HANDLER_CREATION((p.p, "socket",
+          &impl, "async_receive_with_flags"));
 
     buffer_sequence_adapter<asio::mutable_buffer,
         MutableBufferSequence> bufs(buffers);
@@ -440,11 +384,12 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_null_buffers_op<Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      op::ptr::allocate(handler), 0 };
+      asio_handler_alloc_helpers::allocate(
+        sizeof(op), handler), 0 };
     p.p = new (p.v) op(impl.cancel_token_, handler);
 
-    ASIO_HANDLER_CREATION((io_context_, *p.p, "socket",
-          &impl, impl.socket_, "async_receive_with_flags(null_buffers)"));
+    ASIO_HANDLER_CREATION((p.p, "socket", &impl,
+          "async_receive_with_flags(null_buffers)"));
 
     // Reset out_flags since it can be given no sensible value at this time.
     out_flags = 0;
@@ -518,9 +463,9 @@ protected:
       base_implementation_type& impl);
 
   // Helper function to get the reactor. If no reactor has been created yet, a
-  // new one is obtained from the io_context and a pointer to it is cached in
+  // new one is obtained from the io_service and a pointer to it is cached in
   // this service.
-  ASIO_DECL select_reactor& get_reactor();
+  ASIO_DECL reactor& get_reactor();
 
   // The type of a ConnectEx function pointer, as old SDKs may not provide it.
   typedef BOOL (PASCAL *connect_ex_fn)(SOCKET,
@@ -531,15 +476,6 @@ protected:
   // cached. Returns a null pointer if ConnectEx is not available.
   ASIO_DECL connect_ex_fn get_connect_ex(
       base_implementation_type& impl, int type);
-
-  // The type of a NtSetInformationFile function pointer.
-  typedef LONG (NTAPI *nt_set_info_fn)(HANDLE, ULONG_PTR*, void*, ULONG, ULONG);
-
-  // Helper function to get the NtSetInformationFile function pointer. If no
-  // NtSetInformationFile pointer has been obtained yet, one is obtained using
-  // GetProcAddress and the pointer is cached. Returns a null pointer if
-  // NtSetInformationFile is not available.
-  ASIO_DECL nt_set_info_fn get_nt_set_info();
 
   // Helper function to emulate InterlockedCompareExchangePointer functionality
   // for:
@@ -553,22 +489,19 @@ protected:
   // - platform SDKs where MSVC's /Wp64 option causes spurious warnings.
   ASIO_DECL void* interlocked_exchange_pointer(void** dest, void* val);
 
-  // The io_context used to obtain the reactor, if required.
-  asio::io_context& io_context_;
+  // The io_service used to obtain the reactor, if required.
+  asio::io_service& io_service_;
 
   // The IOCP service used for running asynchronous operations and dispatching
   // handlers.
-  win_iocp_io_context& iocp_service_;
+  win_iocp_io_service& iocp_service_;
 
   // The reactor used for performing connect operations. This object is created
   // only if needed.
-  select_reactor* reactor_;
+  reactor* reactor_;
 
   // Pointer to ConnectEx implementation.
   void* connect_ex_;
-
-  // Pointer to NtSetInformationFile implementation.
-  void* nt_set_info_;
 
   // Mutex to protect access to the linked list of implementations. 
   asio::detail::mutex mutex_;

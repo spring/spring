@@ -7,9 +7,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, )
+CR_BIND_DERIVED_POOL(CMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(size),
@@ -21,7 +22,7 @@ CR_REG_METADATA(CMuzzleFlame,(
 
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
-	CProjectile(pos, speed, nullptr, false, false, false),
+	CProjectile(pos, speed, NULL, false, false, false),
 	size(size),
 	age(0)
 {
@@ -58,9 +59,9 @@ void CMuzzleFlame::Draw(CVertexArray* va)
 	va->EnlargeArrays(numSmoke * 8, 0, VA_SIZE_TC);
 
 	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-		const int tex = a % projectileDrawer->NumSmokeTextures();
-		// float xmod = 0.125f + (float(int(tex % 6))) / 16.0f;
-		// float ymod =                (int(tex / 6))  / 16.0f;
+		int tex = a % projectileDrawer->smoketex.size();
+		//float xmod=0.125f+(float(int(tex%6)))/16;
+		//float ymod=(int(tex/6))/16.0f;
 
 		float drawsize = modAge * 3;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4f);
@@ -71,7 +72,7 @@ void CMuzzleFlame::Draw(CVertexArray* va)
 		col[2] = (unsigned char) (180 * alpha * fade);
 		col[3] = (unsigned char) (255 * alpha * fade);
 
-		#define st projectileDrawer->GetSmokeTexture(tex)
+		#define st projectileDrawer->smoketex[tex]
 		va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col);
 		va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col);
 		va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col);

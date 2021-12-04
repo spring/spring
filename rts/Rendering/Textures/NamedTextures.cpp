@@ -46,8 +46,8 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		for (const auto& item: texInfoMap) {
-			const size_t texIdx = item.second;
+		for (auto it = texInfoMap.cbegin(); it != texInfoMap.cend(); ++it) {
+			const size_t texIdx = it->second;
 			const GLuint texID = texInfoVec[texIdx].id;
 
 			if (shutdown || !texInfoVec[texIdx].persist) {
@@ -55,7 +55,7 @@ namespace CNamedTextures {
 				// always recycle non-persistent textures
 				freeIndices.push_back(texIdx);
 			} else {
-				tempMap[item.first] = item.second;
+				tempMap[it->first] = it->second;
 			}
 		}
 
@@ -133,7 +133,7 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		// strip off the qualifiers
+		//! strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;
 		bool clamped = false;
@@ -201,7 +201,7 @@ namespace CNamedTextures {
 			}
 		}
 
-		// get the image
+		//! get the image
 		CBitmap bitmap;
 		TexInfo texInfo;
 
@@ -222,7 +222,7 @@ namespace CNamedTextures {
 			const int xbits = count_bits_set(bitmap.xsize);
 			const int ybits = count_bits_set(bitmap.ysize);
 
-			// make the texture
+			//! make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (clamped) {
@@ -352,7 +352,7 @@ namespace CNamedTextures {
 	}
 
 	const TexInfo* GetInfo(size_t texIdx) { return &texInfoVec[texIdx]; }
-	const TexInfo* GetInfo(const std::string& texName, bool forceLoad, bool persist, bool secondaryGLContext)
+	const TexInfo* GetInfo(const std::string& texName, bool forceLoad, bool persist)
 	{
 		if (texName.empty())
 			return nullptr;
@@ -370,7 +370,7 @@ namespace CNamedTextures {
 			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
 
 			if (inListCompile) {
-				GenInsertTex(texName, {}, true, secondaryGLContext, false, persist);
+				GenInsertTex(texName, {}, true, false, false, persist);
 			} else {
 				GenLoadTex(texName);
 			}

@@ -16,6 +16,7 @@ class CLogOutput
 {
 public:
 	CLogOutput();
+	~CLogOutput();
 
 	/**
 	 * @brief set the log file
@@ -55,7 +56,6 @@ public:
 	/**
 	 * Log()s system informations (CPU, 32/64bit, gcc/boost version, ...)
 	 */
-	static void LogSectionInfo();
 	static void LogSystemInfo();
 	static void LogConfigInfo();
 	static void LogExceptionInfo(const char* src, const char* msg);

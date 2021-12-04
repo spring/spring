@@ -11,14 +11,14 @@ class CAdvSky : public ISky
 {
 public:
 	CAdvSky();
-	~CAdvSky();
+	virtual ~CAdvSky();
 
-	void Update() override;
-	void Draw() override;
-	void DrawSun() override;
+	void Update();
+	void Draw();
+	void DrawSun();
 
-	void UpdateSunDir() override;
-	void UpdateSkyTexture() override;
+	void UpdateSunDir();
+	void UpdateSkyTexture();
 
 private:
 	void CreateSkyDomeList();
@@ -30,8 +30,8 @@ private:
 	void CreateRandDetailMatrix(unsigned char* matrix,int size);
 	void CreateClouds();
 	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
-	void UpdateTexPartDot3(int x, int y, uint8_t (*texp)[4]);
-	void UpdateTexPart(int x, int y, uint8_t (*texp)[4]);
+	void UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]);
+	void UpdateTexPart(int x, int y, unsigned char (*texp)[4]);
 	void UpdateSkyDir();
 	float3 GetDirFromTexCoord(float x, float y);
 	float GetTexCoordFromDir(const float3& dir);
@@ -44,55 +44,53 @@ protected:
 	float3 skydir1; // right
 	float3 skydir2; // up
 
-	GLuint cdtex = 0;
+	GLuint cdtex;
+
+	unsigned int cloudFP;
+
+	bool drawFlare;
+
 	GLuint detailTextures[12];
+	bool cloudDetailDown[5];
 
-	unsigned int skyTex = 0;
-	unsigned int skyDot3Tex = 0;
-	unsigned int cloudDot3Tex = 0;
-	unsigned int sunTex = 0;
-	unsigned int sunFlareTex = 0;
+	unsigned char* cloudTexMem;
 
-	unsigned int skyTexUpdateIter = 0;
+	unsigned int skyTex;
+	unsigned int skyDot3Tex;
+	unsigned int cloudDot3Tex;
+	unsigned int sunTex;
+	unsigned int sunFlareTex;
 
-	unsigned int skyDomeList = 0;
-	unsigned int sunFlareList = 0;
+	unsigned char (* skytexpart)[4];
+	unsigned int skyTexUpdateIter;
 
-	unsigned int cloudFP = 0;
+	unsigned int skyDomeList;
+	unsigned int sunFlareList;
 
-	float skyAngle = 0.0f;
+	float skyAngle;
 
-	float domeHeight = 0.0f;
-	float domeWidth = 0.0f;
-	float minDomeDist = 100000.0f;
+	float domeheight;
+	float domeWidth;
 
-	float sunTexCoordX = 0.0f;
-	float sunTexCoordY = 0.0f;
+	float sunTexCoordX;
+	float sunTexCoordY;
 
-	int*** randMatrix = nullptr;
-	int** rawClouds = nullptr;
-	int*** blendMatrix = nullptr;
+	int*** randMatrix;
+	int** rawClouds;
+	int*** blendMatrix;
 
-	uint8_t skytexpart[512][4];
-	uint8_t cloudThickness[CLOUD_SIZE * CLOUD_SIZE + 1];
-	uint8_t cloudTexMem[CLOUD_SIZE * CLOUD_SIZE * 4];
-
-	// temporaries
-	uint8_t skytex [512][512][4];
-	uint8_t skytex2[256][256][4];
+	unsigned char* cloudThickness;
 
 	float covers[4][32];
-	int oldCoverBaseX = -5;
-	int oldCoverBaseY =  0;
+	int oldCoverBaseX;
+	int oldCoverBaseY;
 
 	unsigned char alphaTransform[1024];
 	unsigned char thicknessTransform[1024];
-
 	bool cloudDown[10];
-	bool cloudDetailDown[5];
 
 	int ydif[CLOUD_SIZE];
-	int updatecounter = 0;
+	int updatecounter;
 };
 
 #endif // ADV_SKY_H

@@ -6,30 +6,33 @@
 
 class GlobalConfig {
 public:
-	void Init();
+	GlobalConfig();
 
-public:
+	static void Instantiate();
+
+	static void Deallocate();
+
 	/**
 	 * @brief network loss factor
 	 *
 	 * Network loss factor, a higher factor will reconfigure the protocol
 	 * to resend data more frequently, i.e. waste bandwidth to reduce lag
 	 */
-	int networkLossFactor = 0;
+	int networkLossFactor;
 
 	/**
 	 * @brief initial network timeout
 	 *
 	 * Network timeout in seconds, effective before the game has started
 	 */
-	int initialNetworkTimeout = 30;
+	int initialNetworkTimeout;
 
 	/**
 	 * @brief network timeout
 	 *
 	 * Network timeout in seconds, effective after the game has started
 	 */
-	int networkTimeout = 120;
+	int networkTimeout;
 
 	/**
 	 * @brief reconnect timeout
@@ -37,51 +40,49 @@ public:
 	 * Network timeout in seconds after which a player is allowed to reconnect
 	 * with a different IP.
 	 */
-	int reconnectTimeout = 15;
+	int reconnectTimeout;
 
 	/**
 	 * @brief MTU
 	 *
 	 * Maximum size of network packets to send
 	 */
-	unsigned mtu = 1400;
-
+	unsigned mtu;
 
 	/**
 	 * @brief linkBandwidth
 	 *
 	 * Maximum outgoing bandwidth from server in bytes, per user
 	 */
-	int linkOutgoingBandwidth = 64 * 1024;
+	int linkOutgoingBandwidth;
 
 	/**
 	 * @brief linkIncomingSustainedBandwidth
 	 *
 	 * Maximum incoming sustained bandwidth to server in bytes, per user
 	 */
-	int linkIncomingSustainedBandwidth = 2;
+	int linkIncomingSustainedBandwidth;
 
 	/**
 	 * @brief linkIncomingPeakBandwidth
 	 *
 	 * Maximum peak incoming bandwidth to server in bytes, per user
 	 */
-	int linkIncomingPeakBandwidth = 32;
+	int linkIncomingPeakBandwidth;
 
 	/**
 	 * @brief linkIncomingMaxPacketRate
 	 *
 	 * Maximum number of incoming packets to server, per user and second
 	 */
-	int linkIncomingMaxPacketRate = 64;
+	int linkIncomingMaxPacketRate;
 
 	/**
 	 * @brief linkIncomingMaxWaitingPackets
 	 *
 	 * Maximum number of queued incoming packets to server, per user
 	 */
-	int linkIncomingMaxWaitingPackets = 512;
-
+	int linkIncomingMaxWaitingPackets;
 
 	/**
 	 * @brief useNetMessageSmoothingBuffer
@@ -90,22 +91,14 @@ public:
 	 * messages for smoothing network jitter at the cost of increased
 	 * latency (running further behind the server)
 	 */
-	bool useNetMessageSmoothingBuffer = true;
+	bool useNetMessageSmoothingBuffer;
 
 	/**
 	 * @brief luaWritableConfigFile
 	 *
 	 * Allows Lua to write to springsettings/springrc file
 	 */
-	bool luaWritableConfigFile = false;
-
-	/**
-	 * @brief vfsCacheArchiveFiles
-	 *
-	 * Whether the VFS should cache (BufferedArchive) files in memory
-	 */
-	bool vfsCacheArchiveFiles = true;
-
+	bool luaWritableConfigFile;
 
 	/**
 	 * @brief teamHighlight
@@ -113,9 +106,9 @@ public:
 	 * Team highlighting for teams that are uncontrolled or have connection
 	 * problems.
 	 */
-	int teamHighlight = 1;
+	int teamHighlight;
 };
 
-extern GlobalConfig globalConfig;
+extern GlobalConfig* globalConfig;
 
 #endif // _GLOBAL_CONFIG_H

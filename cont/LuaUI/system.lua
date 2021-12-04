@@ -30,6 +30,7 @@ if (System == nil) then
     Engine = Engine,
     Platform = Platform,
     Game = Game,
+    LuaLobby = LuaLobby,
     gl = gl,
     GL = GL,
     CMD = CMD,

@@ -10,7 +10,7 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 {
 	LuaPushNamedString(L, "gpu", globalRenderingInfo.gpuName);
 	LuaPushNamedString(L, "gpuVendor", globalRenderingInfo.gpuVendor);
-	LuaPushNamedNumber(L, "gpuMemorySize", globalRenderingInfo.gpuMemorySize.x);
+	LuaPushNamedNumber(L, "gpuMemorySize", globalRendering->gpuMemorySize);
 	LuaPushNamedString(L, "glVersionShort", globalRenderingInfo.glVersionShort);
 	LuaPushNamedString(L, "glslVersionShort", globalRenderingInfo.glslVersionShort);
 
@@ -29,20 +29,13 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 
 	LuaPushNamedBool(L, "glSupportNonPowerOfTwoTex", globalRendering->supportNonPowerOfTwoTex);
 	LuaPushNamedBool(L, "glSupportTextureQueryLOD" , globalRendering->supportTextureQueryLOD);
-	LuaPushNamedBool(L, "glSupportMSAAFrameBuffer" , globalRendering->supportMSAAFrameBuffer);
 	LuaPushNamedBool(L, "glSupport24bitDepthBuffer", globalRendering->support24bitDepthBuffer);
 	LuaPushNamedBool(L, "glSupportRestartPrimitive", globalRendering->supportRestartPrimitive);
 	LuaPushNamedBool(L, "glSupportClipSpaceControl", globalRendering->supportClipSpaceControl);
 	LuaPushNamedBool(L, "glSupportFragDepthLayout" , globalRendering->supportFragDepthLayout);
-	LuaPushNamedBool(L, "glSupportSeamlessCubeMaps", globalRendering->supportSeamlessCubeMaps);
 
-	LuaPushNamedString(L, "osName", Platform::GetOSNameStr());
-	LuaPushNamedString(L, "osVersion", Platform::GetOSVersionStr());
-	LuaPushNamedString(L, "osFamily", Platform::GetOSFamilyStr());
-	LuaPushNamedString(L, "hwConfig", Platform::GetHardwareStr());
-
-	LuaPushNamedString(L, "sysInfoHash", Platform::GetSysInfoHash());
-	LuaPushNamedString(L, "macAddrHash", Platform::GetMacAddrHash());
+	LuaPushNamedString(L, "osName", Platform::GetOS());
+	LuaPushNamedString(L, "osFamily", Platform::GetOSFamily());
 
 	return true;
 }

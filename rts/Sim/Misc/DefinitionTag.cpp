@@ -15,57 +15,57 @@ using std::cout;
  * @brief Log an error about a DefTagMetaData
  */
 #define LOG_VAR(data, fmt, ...) \
-	LOG_L(L_ERROR, "%s:%d: " fmt, (data)->GetDeclarationFile().Get().c_str(), (data)->GetDeclarationLine().Get(), ## __VA_ARGS__) \
+	LOG_L(L_ERROR, "%s:%d: " fmt, data->GetDeclarationFile().Get().c_str(), data->GetDeclarationLine().Get(), ## __VA_ARGS__) \
 
 
-DefType::DefType(const char* n): name(n) {
-	metaDataMem.fill(0);
-	defInitFuncs.fill(nullptr);
-	tagMetaData.fill(nullptr);
+DefType::~DefType() {
+	for (const DefTagMetaData* md: tags)
+		delete md;
+}
+
+std::vector<const DefType*>& DefType::GetTypes()
+{
+	static std::vector<const DefType*> tagtypes;
+	return tagtypes;
+}
+
+
+DefType::DefType(const std::string& n) : name(n), luaTable(NULL) {
 	GetTypes().push_back(this);
 }
 
 
-void DefType::AddTagMetaData(const DefTagMetaData* data)
+void DefType::AddMetaData(const DefTagMetaData* data)
 {
 	const auto key = data->GetInternalName();
-
-	const auto tend = tagMetaData.begin() + tagMetaDataCnt;
-	const auto pred = [&](const DefTagMetaData* md) { return (key == md->GetInternalName()); };
-	const auto iter = std::find_if(tagMetaData.begin(), tend, pred);
-
-	if (iter != tend) {
-		LOG_VAR(data, "Duplicate config variable declaration \"%s\"", key.c_str());
-		LOG_VAR(*iter, "  Previously declared here");
-		assert(false);
-		return;
-	}
-	if (tagMetaDataCnt >= tagMetaData.size()) {
-		LOG_VAR(data, "Too many config-variable metadata instances");
-		return;
+	for (const DefTagMetaData* md: tags) {
+		if (key == md->GetInternalName()) {
+			LOG_VAR(data, "Duplicate config variable declaration \"%s\"", key.c_str());
+			LOG_VAR(md,   "  Previously declared here");
+			assert(false);
+			return;
+		}
 	}
 
-	tagMetaData[tagMetaDataCnt++] = data;
+	tags.push_back(data);
 }
 
 
 const DefTagMetaData* DefType::GetMetaDataByInternalKey(const string& key)
 {
-	const auto tend = tagMetaData.begin() + tagMetaDataCnt;
-	const auto pred = [&](const DefTagMetaData* md) { return (key == md->GetInternalName()); };
-	const auto iter = std::find_if(tagMetaData.begin(), tend, pred);
-
-	return ((iter == tend)? nullptr: *iter);
+	for (const DefTagMetaData* md: tags) {
+		if (key == md->GetInternalName()) {
+			return md;
+		}
+	}
+	return nullptr;
 }
 
 
 const DefTagMetaData* DefType::GetMetaDataByExternalKey(const string& key)
 {
 	const std::string lkey = StringToLower(key);
-
-	for (unsigned int i = 0; i < tagMetaDataCnt; i++) {
-		const DefTagMetaData* md = tagMetaData[i];
-
+	for (const DefTagMetaData* md: tags) {
 		if (md->GetExternalName().IsSet()) {
 			if (lkey == StringToLower(md->GetExternalName().Get()))
 				return md;
@@ -77,7 +77,6 @@ const DefTagMetaData* DefType::GetMetaDataByExternalKey(const string& key)
 		if (lkey == StringToLower(md->GetFallbackName().Get()))
 			return md;
 	}
-
 	return nullptr;
 }
 
@@ -100,11 +99,11 @@ std::string DefTagMetaData::GetTypeName(const std::type_info& typeInfo)
 /**
  * @brief Call Quote if type is not bool, float or int.
  */
-static inline std::string Quote(const std::string& type, const std::string& value)
+static inline string Quote(const string& type, const string& value)
 {
-	if (type == "std::string")
+	if (type == "std::string") {
 		return Quote(value);
-
+	}
 	return value;
 }
 
@@ -123,39 +122,39 @@ static std::ostream& operator<< (std::ostream& out, const DefTagMetaData* d)
 
 #define KV(key, value) out << INDENT << Quote(#key) << ": " << (value) << ",\n"
 
-	if (d->GetDeclarationFile().IsSet())
+	if (d->GetDeclarationFile().IsSet()) {
 		KV(declarationFile, Quote(d->GetDeclarationFile().Get()));
-
-	if (d->GetDeclarationLine().IsSet())
+	}
+	if (d->GetDeclarationLine().IsSet()) {
 		KV(declarationLine, d->GetDeclarationLine().Get());
-
-	if (d->GetExternalName().IsSet())
+	}
+	if (d->GetExternalName().IsSet()) {
 		KV(internalName, Quote(d->GetInternalName()));
-
-	if (d->GetFallbackName().IsSet())
+	}
+	if (d->GetFallbackName().IsSet()) {
 		KV(fallbackName, Quote(d->GetFallbackName().Get()));
-
-	if (d->GetDescription().IsSet())
+	}
+	if (d->GetDescription().IsSet()) {
 		KV(description, Quote(d->GetDescription().Get()));
-
-	if (d->GetDefaultValue().IsSet())
+	}
+	if (d->GetDefaultValue().IsSet()) {
 		KV(defaultValue, Quote(tname, d->GetDefaultValue().ToString()));
-
-	if (d->GetMinimumValue().IsSet())
+	}
+	if (d->GetMinimumValue().IsSet()) {
 		KV(minimumValue, Quote(tname, d->GetMinimumValue().ToString()));
-
-	if (d->GetMaximumValue().IsSet())
+	}
+	if (d->GetMaximumValue().IsSet()) {
 		KV(maximumValue, Quote(tname, d->GetMaximumValue().ToString()));
-
-	if (d->GetScaleValue().IsSet())
+	}
+	if (d->GetScaleValue().IsSet()) {
 		KV(scaleValue, Quote(tname, d->GetScaleValue().ToString()));
-
-	if (d->GetScaleValueStr().IsSet())
+	}
+	if (d->GetScaleValueStr().IsSet()) {
 		KV(scaleValueString, Quote(d->GetScaleValueStr().ToString()));
-
-	if (d->GetTagFunctionStr().IsSet())
+	}
+	if (d->GetTagFunctionStr().IsSet()) {
 		KV(tagFunction, Quote(d->GetTagFunctionStr().ToString()));
-
+	}
 	// Type is required.
 	// Easiest to do this last because of the trailing comma that isn't there.
 	out << INDENT << Quote("type") << ": " << Quote(tname) << "\n";
@@ -180,14 +179,11 @@ void DefType::OutputMetaDataMap() const
 	cout << "{\n";
 
 	bool first = true;
-
-	for (unsigned int i = 0; i < tagMetaDataCnt; i++) {
-		const DefTagMetaData* md = tagMetaData[i];
-
-		if (!first)
+	for (auto metaData: tags) {
+		if (!first) {
 			cout << ",\n";
-
-		cout << md;
+		}
+		cout << metaData;
 		first = false;
 	}
 
@@ -200,9 +196,9 @@ void DefType::OutputTagMap()
 
 	bool first = true;
 	for (const DefType* defType: GetTypes()) {
-		if (!first)
+		if (!first) {
 			cout << ",\n";
-
+		}
 		cout << "  " << Quote(defType->GetName()) << ": ";
 		defType->OutputMetaDataMap();
 		first = false;
@@ -214,7 +210,7 @@ void DefType::OutputTagMap()
 
 void DefType::CheckType(const DefTagMetaData* meta, const std::type_info& want)
 {
-	assert(meta != nullptr);
+	assert(meta);
 	if (meta->GetTypeInfo() != want)
 		LOG_L(L_ERROR, "DEFTAG \"%s\" defined with wrong typevalue \"%s\" should be \"%s\"", meta->GetKey().c_str(), DefTagMetaData::GetTypeName(meta->GetTypeInfo()).c_str(), DefTagMetaData::GetTypeName(want).c_str());
 	assert(meta->GetTypeInfo() == want);
@@ -225,10 +221,8 @@ void DefType::ReportUnknownTags(const std::string& instanceName, const LuaTable&
 {
 	std::vector<std::string> keys;
 	luaTable.GetKeys(keys);
-
 	for (const std::string& tag: keys) {
 		const DefTagMetaData* meta = GetMetaDataByExternalKey(pre + tag);
-
 		if (meta != nullptr)
 			continue;
 
@@ -237,7 +231,7 @@ void DefType::ReportUnknownTags(const std::string& instanceName, const LuaTable&
 			continue;
 		}
 
-		LOG_L(L_WARNING, "%s: Unknown tag \"%s%s\" in \"%s\"", name, pre.c_str(), tag.c_str(), instanceName.c_str());
+		LOG_L(L_WARNING, "%s: Unknown tag \"%s%s\" in \"%s\"", name.c_str(), pre.c_str(), tag.c_str(), instanceName.c_str());
 	}
 }
 
@@ -246,8 +240,8 @@ void DefType::Load(void* instance, const LuaTable& luaTable)
 {
 	this->luaTable = &luaTable;
 
-	for (unsigned int i = 0; i < defInitFuncCnt; i++) {
-		defInitFuncs[i](instance);
+	for (const DefInitializer& init: inits) {
+		init(instance);
 	}
 
 	this->luaTable = nullptr;

@@ -6,9 +6,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/creg/DefTypes.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CGenericParticleProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -28,8 +28,8 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	: CProjectile(pos, speed, owner, false, false, false)
 
 	, gravity(ZeroVector)
-	, texture(nullptr)
-	, colorMap(nullptr)
+	, texture(NULL)
+	, colorMap(NULL)
 	, directional(false)
 	, life(0.0f)
 	, decayrate(0.0f)

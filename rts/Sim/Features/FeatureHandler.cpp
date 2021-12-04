@@ -1,12 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "FeatureHandler.h"
-#include "Feature.h"
+
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
 #include "FeatureMemPool.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/creg/STL_Set.h"
@@ -28,30 +29,24 @@ CR_REG_METADATA(CFeatureHandler, (
 
 FeatureMemPool featureMemPool;
 
-CFeatureHandler featureHandler;
+CFeatureHandler* featureHandler = nullptr;
 
 
-void CFeatureHandler::Init() {
+CFeatureHandler::CFeatureHandler() {
 	features.resize(MAX_FEATURES, nullptr);
-	activeFeatureIDs.reserve(MAX_FEATURES); // internal table size must be constant
-	featureMemPool.reserve(128);
+	activeFeatureIDs.reserve(MAX_FEATURES);
 
-	idPool.Clear();
-	idPool.Expand(0, MAX_FEATURES);
+	featureMemPool.reserve(128);
+	idPool.Expand(0, features.size());
 }
 
-void CFeatureHandler::Kill() {
+CFeatureHandler::~CFeatureHandler() {
 	for (const int featureID: activeFeatureIDs) {
 		featureMemPool.free(features[featureID]);
 	}
 
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	featureMemPool.clear();
-
-	activeFeatureIDs.clear();
-	deletedFeatureIDs.clear();
-	features.clear();
-	updateFeatures.clear();
 }
 
 
@@ -74,9 +69,8 @@ void CFeatureHandler::LoadFeaturesFromMap()
 			continue;
 
 		FeatureLoadParams params = {
-			nullptr,
-			nullptr,
 			def,
+			nullptr,
 
 			float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 			ZeroVector,
@@ -157,19 +151,19 @@ CFeature* CFeatureHandler::CreateWreckage(const FeatureLoadParams& cparams)
 	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return nullptr;
 
-	if (fd->modelName.empty())
-		return nullptr;
+	if (!fd->modelName.empty()) {
+		FeatureLoadParams params = cparams;
 
-	FeatureLoadParams params = cparams;
+		params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
+		params.featureDef = fd;
 
-	params.parentObj = cparams.parentObj;
-	params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
-	params.featureDef = fd;
+		// for the CreateWreckage call, params.smokeTime acts as a multiplier
+		params.smokeTime = fd->smokeTime * cparams.smokeTime;
 
-	// for the CreateWreckage call, params.smokeTime acts as a multiplier
-	params.smokeTime = fd->smokeTime * cparams.smokeTime;
+		return (LoadFeature(params));
+	}
 
-	return (LoadFeature(params));
+	return nullptr;
 }
 
 
@@ -258,10 +252,10 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 	const float3 maxs(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE);
 
 	QuadFieldQuery qfQuery;
-	quadField.GetQuadsRectangle(qfQuery, mins, maxs);
+	quadField->GetQuadsRectangle(qfQuery, mins, maxs);
 
 	for (const int qi: *qfQuery.quads) {
-		for (CFeature* f: quadField.GetQuad(qi).features) {
+		for (CFeature* f: quadField->GetQuad(qi).features) {
 			// put this feature back in the update-queue
 			SetFeatureUpdateable(f);
 		}

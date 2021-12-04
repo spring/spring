@@ -5,67 +5,49 @@
 
 #include "MapDamage.h"
 
+#include <deque>
 #include <vector>
+
+class CUnit;
 
 class CBasicMapDamage : public IMapDamage
 {
 public:
-	void Explosion(const float3& pos, float strength, float radius) override;
-	void RecalcArea(int x1, int x2, int y1, int y2) override;
-	void TerrainTypeHardnessChanged(int ttIndex) override;
-	void TerrainTypeSpeedModChanged(int ttIndex) override;
+	CBasicMapDamage();
 
-	void Init() override;
-	void Update() override;
-
-	bool Disabled() const override { return false; }
+	void Explosion(const float3& pos, float strength, float radius);
+	void RecalcArea(int x1, int x2, int y1, int y2);
+	void Update();
 
 private:
-	void SetExplosionSquare(float v) {
-		explosionSquaresPool[explSquaresPoolIdx] = v;
-
-		explSquaresPoolIdx += 1;
-		explSquaresPoolIdx %= explosionSquaresPool.size();
-	}
-
 	struct ExploBuilding {
 		/**
 		 * Searching for building pointers inside these on DependentDied
 		 * could be messy, so we use the id.
 		 */
 		int id;
-
-		// how much to move the building and the ground below it
+		/// How much to move the building and the ground below it.
 		float dif;
-
-		int tx1, tx2;
-		int tz1, tz2;
+		int tx1, tx2, tz1, tz2;
 	};
 
 	struct Explo {
 		float3 pos;
 
-		float strength = 0.0f;
-		float radius = 0.0f;
+		float strength;
+		float radius;
 
-		int ttl = 0;
-		int x1 = 0, x2 = 0;
-		int y1 = 0, y2 = 0;
+		int ttl;
+		int x1, x2, y1, y2;
 
-		// index (into explosionSquaresPool) of first square touched by us
-		unsigned int idx = 0;
-
+		std::vector<float> squares;
 		std::vector<ExploBuilding> buildings;
 	};
 
-	std::vector<float> explosionSquaresPool;
-	std::vector<Explo> explosionUpdateQueue;
+	std::deque<Explo> explosions;
 
-	static constexpr unsigned int CRATER_TABLE_SIZE = 200;
-	static constexpr unsigned int EXPLOSION_LIFETIME = 10;
-
-	unsigned int explSquaresPoolIdx = 0;
-	unsigned int explUpdateQueueIdx = 0;
+	static const unsigned int CRATER_TABLE_SIZE = 200;
+	static const unsigned int EXPLOSION_LIFETIME = 10;
 
 	float craterTable[CRATER_TABLE_SIZE + 1];
 	float rawHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];

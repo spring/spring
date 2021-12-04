@@ -3,11 +3,10 @@
 #ifndef MOVEDEF_HANDLER_H
 #define MOVEDEF_HANDLER_H
 
-#include <array>
+#include <vector>
 #include <string>
 
 #include "System/float3.h"
-#include "System/type2.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 
@@ -20,23 +19,18 @@ struct MoveDef {
 	CR_DECLARE_STRUCT(MoveDef)
 
 	MoveDef();
-	MoveDef(const LuaTable& moveDefTable);
-	MoveDef(const MoveDef& moveDef) = delete;
-	MoveDef(MoveDef&& moveDef) = default;
+	MoveDef(const LuaTable& moveDefTable, int moveDefID);
 
-	MoveDef& operator = (const MoveDef& moveDef) = delete;
-	MoveDef& operator = (MoveDef&& moveDef) = default;
-
-	bool TestMoveSquareRange(
+	bool TestMoveSquare(
 		const CSolidObject* collider,
-		const float3 rangeMins,
-		const float3 rangeMaxs,
+		const int xTestMoveSqr,
+		const int zTestMoveSqr,
 		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedModPtr = nullptr,
-		int* maxBlockBitPtr = nullptr
+		float* minSpeedMod = nullptr,
+		int* maxBlockBit = nullptr
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
@@ -45,24 +39,15 @@ struct MoveDef {
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedModPtr = nullptr,
-		int* maxBlockBitPtr = nullptr
-	) const {
-		return (TestMoveSquareRange(collider, testMovePos, testMovePos, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedModPtr, maxBlockBitPtr));
-	}
+		float* minSpeedMod = nullptr,
+		int* maxBlockBit = nullptr
+	) const;
 
 	// aircraft and buildings defer to UnitDef::floatOnWater
 	bool FloatOnWater() const { return (speedModClass == MoveDef::Hover || speedModClass == MoveDef::Ship); }
 
-	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
-
-	float CalcFootPrintMinExteriorRadius(float scale = 1.0f) const; // radius minimally bounding the footprint
-	float CalcFootPrintMaxInteriorRadius(float scale = 1.0f) const; // radius maximally bounded by the footprint
-	float CalcFootPrintAxisStretchFactor() const; // 0 for square-shaped footprints, 1 for (impossible) line-shaped footprints
-
-	float GetDepthMod(float height) const;
-
-	unsigned int CalcCheckSum() const;
+	float GetDepthMod(const float height) const;
+	unsigned int GetCheckSum() const;
 
 	static float GetDefaultMinWaterDepth() { return -1e6f; }
 	static float GetDefaultMaxWaterDepth() { return +1e6f; }
@@ -99,22 +84,20 @@ struct MoveDef {
 	std::string name;
 
 #pragma pack(push, 1)
-	SpeedModClass speedModClass = MoveDef::Tank;
-	TerrainClass terrainClass = MoveDef::Mixed;
-
-	unsigned int pathType = 0;
+	SpeedModClass speedModClass;
+	TerrainClass terrainClass;
 
 	/// of the footprint
-	int xsize = 0, xsizeh = 0;
-	int zsize = 0, zsizeh = 0;
+	int xsize, xsizeh;
+	int zsize, zsizeh;
 
 	/// minWaterDepth for ships, maxWaterDepth otherwise
 	/// controls movement and (un-)loading constraints
-	float depth = 0.0f;
+	float depth;
 	float depthModParams[DEPTHMOD_NUM_PARAMS];
-	float maxSlope = 1.0f;
-	float slopeMod = 0.0f;
-	float crushStrength = 0.0f;
+	float maxSlope;
+	float slopeMod;
+	float crushStrength;
 
 	// PF speedmod-multipliers for squares blocked by mobile units
 	// (which can respectively be "idle" == non-moving and have no
@@ -124,30 +107,34 @@ struct MoveDef {
 	//     member start on an 8-byte boundary for 64-bit platforms
 	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS + 1];
 
-	/// heatmap path-cost modifier
-	float heatMod = 0.05f;
-	float flowMod = 1.0f;
+	unsigned int pathType;
+	/// number of UnitDef types that refer to this MoveDef class
+	unsigned int udRefCount;
 
-	/// heat produced by a path per tick
-	int heatProduced = 30;
+	/// heatmap path-cost modifier
+	float heatMod;
+	float flowMod;
+
+	/// heat produced by a path
+	int heatProduced;
 
 	/// do we stick to the ground when in water?
-	bool followGround = true;
+	bool followGround;
 	/// are we supposed to be a purely sub-surface ship?
-	bool isSubmarine = false;
+	bool subMarine;
 
 	/// do we try to pathfind around squares blocked by mobile units?
 	///
 	/// this also serves as a padding byte for alignment so compiler
 	/// does not insert it (GetCheckSum would need to skip such bytes
 	/// otherwise, since they are never initialized)
-	bool avoidMobilesOnPath = true;
-	bool allowTerrainCollisions = true;
-	bool allowRawMovement = false;
+	bool avoidMobilesOnPath;
+	bool allowTerrainCollisions;
+	bool allowRawMovement;
 
 	/// do we leave heat and avoid any left by others?
-	bool heatMapping = true;
-	bool flowMapping = true;
+	bool heatMapping;
+	bool flowMapping;
 #pragma pack(pop)
 };
 
@@ -158,29 +145,22 @@ class MoveDefHandler
 {
 	CR_DECLARE_STRUCT(MoveDefHandler)
 public:
-	void Init(LuaParser* defsParser);
-	void Kill() {
-		nameMap.clear(); // never iterated
-
-		mdCounter = 0;
-		mdChecksum = 0;
-	}
+	MoveDefHandler(LuaParser* defsParser);
 
 	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return &moveDefs[pathType]; }
 	MoveDef* GetMoveDefByName(const std::string& name);
 
-	unsigned int GetNumMoveDefs() const { return mdCounter; }
-	unsigned int GetCheckSum() const { return mdChecksum; }
+	unsigned int GetNumMoveDefs() const { return moveDefs.size(); }
+	unsigned int GetCheckSum() const { return checksum; }
 
 private:
-	std::array<MoveDef, 256> moveDefs;
-	spring::unordered_map<unsigned int, int> nameMap;
+	std::vector<MoveDef> moveDefs;
+	spring::unordered_map<std::string, int> moveDefNames;
 
-	unsigned int mdCounter = 0;
-	unsigned int mdChecksum = 0;
+	unsigned int checksum;
 };
 
-extern MoveDefHandler moveDefHandler;
+extern MoveDefHandler* moveDefHandler;
 
 #endif // MOVEDEF_HANDLER_H
 

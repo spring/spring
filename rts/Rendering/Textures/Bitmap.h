@@ -15,56 +15,43 @@
 struct SDL_Surface;
 
 
-class CBitmap {
+class CBitmap
+{
 public:
-	CBitmap() = default;
-	CBitmap(const uint8_t* data, int xsize, int ysize, int channels = 4);
+	CBitmap();
+	CBitmap(const unsigned char* data, int xsize, int ysize, int channels = 4);
 	CBitmap(const CBitmap& bmp): CBitmap() { *this = bmp; }
 	CBitmap(CBitmap&& bmp): CBitmap() { *this = std::move(bmp); }
 	CBitmap& operator=(const CBitmap& bmp);
-	CBitmap& operator=(CBitmap&& bmp) noexcept;
+	CBitmap& operator=(CBitmap&& bmp);
 
 	~CBitmap();
-
-	CBitmap CanvasResize(const int newx, const int newy, const bool center = true) const;
-	CBitmap CreateRescaled(int newx, int newy) const;
-
-	static void InitPool(size_t size);
 
 	void Alloc(int w, int h, int c);
 	void Alloc(int w, int h) { Alloc(w, h, channels); }
 	void AllocDummy(const SColor fill = SColor(255, 0, 0, 255));
 
 	/// Load data from a file on the VFS
-	bool Load(std::string const& filename, uint8_t defaultAlpha = 255);
+	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
+	bool Save(std::string const& filename, bool opaque = true, bool logged = false) const;
+	bool SaveFloat(std::string const& filename) const;
 
-	bool Save(const std::string& filename, bool opaque = true, bool logged = false) const;
-	bool SaveGrayScale(const std::string& filename) const;
-	bool SaveFloat(const std::string& filename) const;
+	bool Empty() const { return (mem.empty()); }
 
-	bool Empty() const { return (memIdx == size_t(-1)); } // implies size=0
+	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateMipMapTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, true)); }
+	unsigned int CreateAnisoTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, false)); }
+	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, bool mipmaps = false) const;
 
-	unsigned int CreateTexture(float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
-	unsigned int CreateMipMapTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, true)); }
-	unsigned int CreateAnisoTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, false)); }
-	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
-
-	void CreateAlpha(uint8_t red, uint8_t green, uint8_t blue);
-	void SetTransparent(const SColor& c, const SColor trans = SColor(0, 0, 0, 0));
+	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
+	void SetTransparent(const SColor& c, const SColor trans = SColor(0,0,0,0));
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
-	void Fill(const SColor& c);
 
 	void CopySubImage(const CBitmap& src, int x, int y);
-
-	void ReverseYAxis();
-	void InvertColors();
-	void InvertAlpha();
-	void MakeGrayScale();
-	void Tint(const float tint[3]);
 
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
@@ -74,29 +61,36 @@ public:
 	 */
 	SDL_Surface* CreateSDLSurface();
 
-	const uint8_t* GetRawMem() const;
-	      uint8_t* GetRawMem()      ;
+	const unsigned char* GetRawMem() const { return (mem.data()); }
+	      unsigned char* GetRawMem()       { return (mem.data()); }
 
-	size_t GetMemSize() const { return (xsize * ysize * channels); }
+	size_t GetMemSize() const { return mem.size(); }
 
-private:
-	// managed by pool
-	size_t memIdx = size_t(-1);
 
-public:
-	int32_t xsize = 0;
-	int32_t ysize = 0;
-	int32_t channels = 4;
+	int32_t xsize;
+	int32_t ysize;
+	int32_t channels;
+	uint64_t memIndx;
 
 	#ifndef BITMAP_NO_OPENGL
-	// GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
-	// not set to anything until Load is called
-	int32_t textype = 0;
+	int32_t textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
 
-	nv_dds::CDDSImage ddsimage;
-	#endif
+	nv_dds::CDDSImage* ddsimage;
+	#endif // !BITMAP_NO_OPENGL
 
-	bool compressed = false;
+	bool compressed;
+
+private:
+	std::vector<unsigned char> mem;
+
+public:
+	CBitmap CanvasResize(const int newx, const int newy, const bool center = true) const;
+	CBitmap CreateRescaled(int newx, int newy) const;
+	void ReverseYAxis();
+	void InvertColors();
+	void InvertAlpha();
+	void MakeGrayScale();
+	void Tint(const float tint[3]);
 };
 
 #endif // _BITMAP_H

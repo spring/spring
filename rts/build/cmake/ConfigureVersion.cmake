@@ -16,45 +16,48 @@
 #	)
 #
 
-cmake_minimum_required(VERSION 2.6)
+Cmake_Minimum_Required(VERSION 2.6)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
+List(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
-include(UtilVersion)
+Include(UtilVersion)
 
 
 
 # Fetch through git or from the VERSION file
-fetch_spring_version(${SOURCE_ROOT} SPRING_ENGINE)
-parse_spring_version(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
+FetchSpringVersion(${SOURCE_ROOT} SPRING_ENGINE)
+ParseSpringVersion(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
 
 # We define these, so it may be used in the to-be-configured files
-set(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
-if     ("${SPRING_VERSION_ENGINE}" MATCHES "^${VERSION_REGEX_RELEASE}$")
-	set(SPRING_VERSION_ENGINE_RELEASE 1)
-else   ()
-	set(SPRING_VERSION_ENGINE_RELEASE 0)
-endif  ()
+Set(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
+If     ("${SPRING_VERSION_ENGINE}" MATCHES "^${VERSION_REGEX_RELEASE}$")
+	Set(SPRING_VERSION_ENGINE_RELEASE 1)
+Else   ()
+	Set(SPRING_VERSION_ENGINE_RELEASE 0)
+EndIf  ()
 
 # This is supplied by -DVERSION_ADDITIONAL="abc"
-set(SPRING_VERSION_ENGINE_ADDITIONAL "${VERSION_ADDITIONAL}")
+Set(SPRING_VERSION_ENGINE_ADDITIONAL "${VERSION_ADDITIONAL}")
 
 
 
-message("Spring engine version: ${SPRING_ENGINE_VERSION} (${SPRING_VERSION_ENGINE_ADDITIONAL})")
+Message("Spring engine version: ${SPRING_ENGINE_VERSION} (${SPRING_VERSION_ENGINE_ADDITIONAL})")
 
 
 
-file(MAKE_DIRECTORY "${GENERATE_DIR}/src-generated/engine/System")
-configure_file(
+File(MAKE_DIRECTORY "${GENERATE_DIR}/src-generated/engine/System")
+Configure_File(
 		"${SOURCE_ROOT}/rts/System/VersionGenerated.h.template"
 		"${GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
 		@ONLY
 	)
 
-file(MAKE_DIRECTORY "${GENERATE_DIR}")
-configure_file(
+File(MAKE_DIRECTORY "${GENERATE_DIR}")
+Configure_File(
 		"${SOURCE_ROOT}/VERSION.template"
 		"${GENERATE_DIR}/VERSION"
 		@ONLY
 	)
+
+
+

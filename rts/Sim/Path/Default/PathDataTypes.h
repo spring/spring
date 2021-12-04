@@ -42,15 +42,7 @@ struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 
 struct PathNodeBuffer {
 public:
-	PathNodeBuffer() { Clear(); }
-
-	void Clear() {
-		for (unsigned int i = 0; i < MAX_SEARCHED_NODES; i++) {
-			buffer[i] = {};
-		}
-
-		SetSize(0);
-	}
+	PathNodeBuffer(): idx(0) {}
 
 	void SetSize(unsigned int i) { idx = i; }
 	unsigned int GetSize() const { return idx; }
@@ -60,7 +52,7 @@ public:
 
 private:
 	/// index of the most recently added node
-	unsigned int idx = 0;
+	unsigned int idx;
 
 	PathNode buffer[MAX_SEARCHED_NODES];
 };

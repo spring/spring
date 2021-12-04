@@ -61,16 +61,14 @@ void CEventHandler::AddClient(CEventClient* ec)
 {
 	ListInsert(handles, ec);
 
-	for (const auto& element: eventMap) {
-		const EventInfo& ei = element.second;
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
+		const EventInfo& ei = it->second;
 
-		if (!ei.HasPropBit(MANAGED_BIT))
-			continue;
-
-		if (!ec->WantsEvent(element.first))
-			continue;
-
-		InsertEvent(ec, element.first);
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			if (ec->WantsEvent(it->first)) {
+				InsertEvent(ec, it->first);
+			}
+		}
 	}
 }
 
@@ -81,13 +79,11 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 
 	ListRemove(handles, ec);
 
-	for (const auto& element: eventMap) {
-		const EventInfo& ei = element.second;
-
-		if (!ei.HasPropBit(MANAGED_BIT))
-			continue;
-
-		RemoveEvent(ec, element.first);
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
+		const EventInfo& ei = it->second;
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			RemoveEvent(ec, it->first);
+		}
 	}
 }
 
@@ -99,8 +95,8 @@ void CEventHandler::GetEventList(std::vector<std::string>& list) const
 {
 	list.clear();
 
-	for (const auto& element: eventMap) {
-		list.push_back(element.first);
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
+		list.push_back(it->first);
 	}
 }
 
@@ -179,12 +175,9 @@ void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 		if (ec == ecIt)
 			return; // already in the list
 
-		if (ec->GetOrder() < ecIt->GetOrder()) {
-			ecList.insert(it, ec);
-			return;
-		}
-		// should not happen
-		if ((ec->GetOrder() == ecIt->GetOrder()) && (ec->GetName() < ecIt->GetName())) {
+		if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
+		         ((ec->GetOrder() == ecIt->GetOrder()) &&
+		          (ec->GetName()  <  ecIt->GetName()))) { // should not happen
 			ecList.insert(it, ec);
 			return;
 		}
@@ -193,163 +186,133 @@ void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 	ecList.push_back(ec);
 }
 
+
 void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 {
-	const auto ecIt = std::find(ecList.begin(), ecList.end(), ec);
-
-	// erase does not accept end()
-	if (ecIt == ecList.end())
-		return;
-
-	ecList.erase(ecIt);
+	// FIXME: efficient, hardly
+	EventClientList newList;
+	newList.reserve(ecList.size());
+	for (size_t i = 0; i < ecList.size(); i++) {
+		if (ec != ecList[i]) {
+			newList.push_back(ecList[i]);
+		}
+	}
+	ecList.swap(newList);
 }
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-template<typename T, typename F, typename... A> bool ControlIterateDefTrue(T& list, const F& func, A&&... args) {
-	bool result = true;
-
-	for (size_t i = 0; i < list.size(); ) {
-		CEventClient* ec = list[i];
-
-		result &= (ec->*func)(std::forward<A>(args)...);
-
-		// the call-in may remove itself from the list
-		i += (i < list.size() && ec == list[i]);
-	}
-
+#define CONTROL_ITERATE_DEF_TRUE(name, ...)                        \
+	bool result = true;                                            \
+                                                                   \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		result &= ec->name(__VA_ARGS__);                           \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
+			++i; /* the call-in may remove itself from the list */ \
+	}                                                              \
+                                                                   \
 	return result;
-}
 
-template<typename T, typename F, typename... A> bool ControlIterateDefFalse(T& list, const F& func, A&&... args) {
-	bool result = false;
-
-	for (size_t i = 0; i < list.size(); ) {
-		CEventClient* ec = list[i];
-
-		result |= (ec->*func)(std::forward<A>(args)...);
-
-		// the call-in may remove itself from the list
-		i += (i < list.size() && ec == list[i]);
-	}
-
+#define CONTROL_ITERATE_DEF_FALSE(name, ...)                       \
+	bool result = false;                                           \
+                                                                   \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		result |= ec->name(__VA_ARGS__);                           \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
+			++i; /* the call-in may remove itself from the list */ \
+	}                                                              \
+                                                                   \
 	return result;
-}
-
 
 
 bool CEventHandler::CommandFallback(const CUnit* unit, const Command& cmd)
 {
-	return ControlIterateDefTrue(listCommandFallback, &CEventClient::CommandFallback, unit, cmd);
+	CONTROL_ITERATE_DEF_TRUE(CommandFallback, unit, cmd)
 }
 
 
-bool CEventHandler::AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua)
+bool CEventHandler::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced)
 {
-	return ControlIterateDefTrue(listAllowCommand, &CEventClient::AllowCommand, unit, cmd, playerNum, fromSynced, fromLua);
+	CONTROL_ITERATE_DEF_TRUE(AllowCommand, unit, cmd, fromSynced)
 }
 
 
 bool CEventHandler::AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo)
 {
-	return ControlIterateDefTrue(listAllowUnitCreation, &CEventClient::AllowUnitCreation, unitDef, builder, buildInfo);
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitCreation, unitDef, builder, buildInfo)
 }
+
 
 bool CEventHandler::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 {
-	return ControlIterateDefTrue(listAllowUnitTransfer, &CEventClient::AllowUnitTransfer, unit, newTeam, capture);
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitTransfer, unit, newTeam, capture)
 }
+
 
 bool CEventHandler::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part)
 {
-	return ControlIterateDefTrue(listAllowUnitBuildStep, &CEventClient::AllowUnitBuildStep, builder, unit, part);
-}
-
-bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
-{
-	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);
-}
-
-bool CEventHandler::AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed)
-{
-	return ControlIterateDefTrue(listAllowUnitTransportLoad, &CEventClient::AllowUnitTransportLoad, transporter, transportee, loadPos, allowed);
-}
-
-bool CEventHandler::AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed)
-{
-	return ControlIterateDefTrue(listAllowUnitTransportUnload, &CEventClient::AllowUnitTransportUnload, transporter, transportee, unloadPos, allowed);
-}
-
-bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
-{
-	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy);
-}
-
-bool CEventHandler::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)
-{
-	return ControlIterateDefTrue(listAllowUnitDecloak, &CEventClient::AllowUnitDecloak, unit, object, weapon);
-}
-
-bool CEventHandler::AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed)
-{
-	return ControlIterateDefTrue(listAllowUnitKamikaze, &CEventClient::AllowUnitKamikaze, unit, target, allowed);
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitBuildStep, builder, unit, part)
 }
 
 
 bool CEventHandler::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos)
 {
-	return ControlIterateDefTrue(listAllowFeatureCreation, &CEventClient::AllowFeatureCreation, featureDef, allyTeamID, pos);
+	CONTROL_ITERATE_DEF_TRUE(AllowFeatureCreation, featureDef, allyTeamID, pos)
 }
 
 
 bool CEventHandler::AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part)
 {
-	return ControlIterateDefTrue(listAllowFeatureBuildStep, &CEventClient::AllowFeatureBuildStep, builder, feature, part);
+	CONTROL_ITERATE_DEF_TRUE(AllowFeatureBuildStep, builder, feature, part)
 }
 
 
 bool CEventHandler::AllowResourceLevel(int teamID, const std::string& type, float level)
 {
-	return ControlIterateDefTrue(listAllowResourceLevel, &CEventClient::AllowResourceLevel, teamID, type, level);
+	CONTROL_ITERATE_DEF_TRUE(AllowResourceLevel, teamID, type, level)
 }
 
 
-bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount)
+bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const std::string& type, float amount)
 {
-	return ControlIterateDefTrue(listAllowResourceTransfer, &CEventClient::AllowResourceTransfer, oldTeam, newTeam, type, amount);
+	CONTROL_ITERATE_DEF_TRUE(AllowResourceTransfer, oldTeam, newTeam, type, amount)
 }
 
 
 bool CEventHandler::AllowDirectUnitControl(int playerID, const CUnit* unit)
 {
-	return ControlIterateDefTrue(listAllowDirectUnitControl, &CEventClient::AllowDirectUnitControl, playerID, unit);
+	CONTROL_ITERATE_DEF_TRUE(AllowDirectUnitControl, playerID, unit)
 }
 
 
 bool CEventHandler::AllowBuilderHoldFire(const CUnit* unit, int action)
 {
-	return ControlIterateDefTrue(listAllowBuilderHoldFire, &CEventClient::AllowBuilderHoldFire, unit, action);
+	CONTROL_ITERATE_DEF_TRUE(AllowBuilderHoldFire, unit, action)
 }
 
 
 bool CEventHandler::AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
-	return ControlIterateDefTrue(listAllowStartPosition, &CEventClient::AllowStartPosition, playerID, teamID, readyState, clampedPos, rawPickPos);
+	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, teamID, readyState, clampedPos, rawPickPos)
 }
 
 
 
 bool CEventHandler::TerraformComplete(const CUnit* unit, const CUnit* build)
 {
-	return ControlIterateDefFalse(listTerraformComplete, &CEventClient::TerraformComplete, unit, build);
+	CONTROL_ITERATE_DEF_FALSE(TerraformComplete, unit, build)
 }
 
 
 bool CEventHandler::MoveCtrlNotify(const CUnit* unit, int data)
 {
-	return ControlIterateDefFalse(listMoveCtrlNotify, &CEventClient::MoveCtrlNotify, unit, data);
+	CONTROL_ITERATE_DEF_FALSE(MoveCtrlNotify, unit, data)
 }
 
 
@@ -362,8 +325,8 @@ int CEventHandler::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int 
 
 		result = std::max(result, ec->AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID));
 
-		// the call-in may remove itself from the list
-		i += (i < listAllowWeaponTargetCheck.size() && ec == listAllowWeaponTargetCheck[i]);
+		if (i < listAllowWeaponTargetCheck.size() && ec == listAllowWeaponTargetCheck[i])
+			++i; /* the call-in may remove itself from the list */
 	}
 
 	return result;
@@ -377,12 +340,13 @@ bool CEventHandler::AllowWeaponTarget(
 	unsigned int attackerWeaponDefID,
 	float* targetPriority
 ) {
-	return ControlIterateDefTrue(listAllowWeaponTarget, &CEventClient::AllowWeaponTarget, attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, targetPriority);
+	CONTROL_ITERATE_DEF_TRUE(AllowWeaponTarget, attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, targetPriority)
 }
+
 
 bool CEventHandler::AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget)
 {
-	return ControlIterateDefTrue(listAllowWeaponInterceptTarget, &CEventClient::AllowWeaponInterceptTarget, interceptorUnit, interceptorWeapon, interceptorTarget);
+	CONTROL_ITERATE_DEF_TRUE(AllowWeaponInterceptTarget, interceptorUnit, interceptorWeapon, interceptorTarget)
 }
 
 
@@ -396,7 +360,7 @@ bool CEventHandler::UnitPreDamaged(
 	float* newDamage,
 	float* impulseMult
 ) {
-	return ControlIterateDefFalse(listUnitPreDamaged, &CEventClient::UnitPreDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer, newDamage, impulseMult);
+	CONTROL_ITERATE_DEF_FALSE(UnitPreDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer, newDamage, impulseMult)
 }
 
 
@@ -409,7 +373,7 @@ bool CEventHandler::FeaturePreDamaged(
 	float* newDamage,
 	float* impulseMult
 ) {
-	return ControlIterateDefFalse(listFeaturePreDamaged, &CEventClient::FeaturePreDamaged, feature, attacker, damage, weaponDefID, projectileID, newDamage, impulseMult);
+	CONTROL_ITERATE_DEF_FALSE(FeaturePreDamaged, feature, attacker, damage, weaponDefID, projectileID, newDamage, impulseMult)
 }
 
 
@@ -423,22 +387,19 @@ bool CEventHandler::ShieldPreDamaged(
 	const float3& startPos,
 	const float3& hitPos
 ) {
-	return ControlIterateDefFalse(listShieldPreDamaged, &CEventClient::ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier, startPos, hitPos);
+	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier, startPos, hitPos)
 }
 
 
 bool CEventHandler::SyncedActionFallback(const std::string& line, int playerID)
 {
-	for (size_t i = 0; i < listSyncedActionFallback.size(); ) {
+	for (int i = 0; i < listSyncedActionFallback.size(); ) {
 		CEventClient* ec = listSyncedActionFallback[i];
-
 		if (ec->SyncedActionFallback(line, playerID))
 			return true;
-
-		// the call-in may remove itself from the list
-		i += (i < listSyncedActionFallback.size() && ec == listSyncedActionFallback[i]);
+		if (i < listSyncedActionFallback.size() && ec == listSyncedActionFallback[i])
+			++i; /* the call-in may remove itself from the list */
 	}
-
 	return false;
 }
 
@@ -446,21 +407,14 @@ bool CEventHandler::SyncedActionFallback(const std::string& line, int playerID)
 /******************************************************************************/
 /******************************************************************************/
 
-template<typename T, typename F, typename... A> void IterateEventClientList(T& list, const F& func, A&&... args) {
-	for (size_t i = 0; i < list.size(); ) {
-		CEventClient* ec = list[i];
-
-		(ec->*func)(std::forward<A>(args)...);
-
-		// the call-in may remove itself from the list
-		i += (i < list.size() && ec == list[i]);
+#define ITERATE_EVENTCLIENTLIST(name, ...)                         \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		ec->name(__VA_ARGS__);                                     \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
+			++i; /* the call-in may remove itself from the list */ \
 	}
-}
-
-// not usable: "pasting "::" and "Save" does not give a valid preprocessing token"
-// #define ITERATE_EVENTCLIENTLIST(func, ...) IterateEventClientList(list ## func, &CEventClient:: ## func, __VA_ARGS__)
-#define ITERATE_EVENTCLIENTLIST_NA(func) IterateEventClientList(list ## func, &CEventClient::func)
-#define ITERATE_EVENTCLIENTLIST(func, ...) IterateEventClientList(list ## func, &CEventClient::func, __VA_ARGS__)
 
 
 void CEventHandler::Save(zipFile archive)
@@ -468,41 +422,36 @@ void CEventHandler::Save(zipFile archive)
 	ITERATE_EVENTCLIENTLIST(Save, archive);
 }
 
-void CEventHandler::Load(IArchive* archive)
-{
-	ITERATE_EVENTCLIENTLIST(Load, archive);
-}
-
 
 void CEventHandler::GamePreload()
 {
-	ITERATE_EVENTCLIENTLIST_NA(GamePreload);
+	ITERATE_EVENTCLIENTLIST(GamePreload);
 }
+
 
 void CEventHandler::GameStart()
 {
-	ITERATE_EVENTCLIENTLIST_NA(GameStart);
+	ITERATE_EVENTCLIENTLIST(GameStart);
 }
+
 
 void CEventHandler::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
 	ITERATE_EVENTCLIENTLIST(GameOver, winningAllyTeams);
 }
 
+
 void CEventHandler::GamePaused(int playerID, bool paused)
 {
 	ITERATE_EVENTCLIENTLIST(GamePaused, playerID, paused);
 }
+
 
 void CEventHandler::GameFrame(int gameFrame)
 {
 	ITERATE_EVENTCLIENTLIST(GameFrame, gameFrame);
 }
 
-void CEventHandler::GameProgress(int gameFrame)
-{
-	ITERATE_EVENTCLIENTLIST(GameProgress, gameFrame);
-}
 
 void CEventHandler::GameID(const unsigned char* gameID, unsigned int numBytes)
 {
@@ -515,6 +464,7 @@ void CEventHandler::TeamDied(int teamID)
 	ITERATE_EVENTCLIENTLIST(TeamDied, teamID);
 }
 
+
 void CEventHandler::TeamChanged(int teamID)
 {
 	ITERATE_EVENTCLIENTLIST(TeamChanged, teamID);
@@ -526,10 +476,12 @@ void CEventHandler::PlayerChanged(int playerID)
 	ITERATE_EVENTCLIENTLIST(PlayerChanged, playerID);
 }
 
+
 void CEventHandler::PlayerAdded(int playerID)
 {
 	ITERATE_EVENTCLIENTLIST(PlayerAdded, playerID);
 }
+
 
 void CEventHandler::PlayerRemoved(int playerID, int reason)
 {
@@ -555,37 +507,45 @@ void CEventHandler::UnitHarvestStorageFull(const CUnit* unit)
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::CollectGarbage(bool forced)
+void CEventHandler::CollectGarbage()
 {
-	ITERATE_EVENTCLIENTLIST(CollectGarbage, forced);
+	ITERATE_EVENTCLIENTLIST(CollectGarbage);
 }
+
 
 void CEventHandler::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end)
 {
 	ITERATE_EVENTCLIENTLIST(DbgTimingInfo, type, start, end);
 }
 
-void CEventHandler::Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime)
+
+void CEventHandler::Load(IArchive* archive)
 {
-	ITERATE_EVENTCLIENTLIST(Pong, pingTag, pktSendTime, pktRecvTime);
+	ITERATE_EVENTCLIENTLIST(Load, archive);
 }
 
 
 void CEventHandler::Update()
 {
-	ITERATE_EVENTCLIENTLIST_NA(Update);
+	ITERATE_EVENTCLIENTLIST(Update);
 }
 
 
 
 void CEventHandler::SunChanged()
 {
-	ITERATE_EVENTCLIENTLIST_NA(SunChanged);
+	ITERATE_EVENTCLIENTLIST(SunChanged);
 }
 
 void CEventHandler::ViewResize()
 {
-	ITERATE_EVENTCLIENTLIST_NA(ViewResize);
+	ITERATE_EVENTCLIENTLIST(ViewResize);
+}
+
+
+void CEventHandler::GameProgress(int gameFrame)
+{
+	ITERATE_EVENTCLIENTLIST(GameProgress, gameFrame);
 }
 
 
@@ -610,7 +570,6 @@ void CEventHandler::ViewResize()
 		LuaOpenGL::DisableDraw ## name ();                                  \
   }
 
-
 DRAW_CALLIN(Genesis)
 DRAW_CALLIN(World)
 DRAW_CALLIN(WorldPreUnit)
@@ -619,7 +578,6 @@ DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
 DRAW_CALLIN(GroundPreForward)
-DRAW_CALLIN(GroundPostForward)
 DRAW_CALLIN(GroundPreDeferred)
 DRAW_CALLIN(GroundPostDeferred)
 DRAW_CALLIN(UnitsPostDeferred)
@@ -631,82 +589,72 @@ DRAW_CALLIN(InMiniMap)
 DRAW_CALLIN(InMiniMapBackground)
 
 
-#define DRAW_ENTITY_CALLIN(name, args, args2)                                 \
-	bool CEventHandler:: Draw ## name args                                    \
-	{                                                                         \
-		bool skipEngineDrawing = false;                                       \
-                                                                              \
-		for (size_t i = 0; i < listDraw ## name.size(); ) {                   \
-			CEventClient* ec = listDraw ## name [i];                          \
-			skipEngineDrawing |= ec-> Draw ## name args2 ;                    \
-                                                                              \
-			i += (i < listDraw ## name.size() && ec == listDraw ## name [i]); \
-		}                                                                     \
-                                                                              \
-		return skipEngineDrawing;                                             \
+#define DRAW_ENTITY_CALLIN(name, args, args2)                               \
+	bool CEventHandler:: Draw ## name args                                  \
+	{                                                                       \
+		bool skipEngineDrawing = false;                                     \
+                                                                            \
+		for (size_t i = 0; i < listDraw ## name.size(); ) {                 \
+			CEventClient* ec = listDraw ## name [i];                        \
+			skipEngineDrawing |= ec-> Draw ## name args2 ;                  \
+                                                                            \
+			if (i < listDraw ## name.size() && ec == listDraw ## name [i])  \
+				++i;                                                        \
+		}                                                                   \
+                                                                            \
+		return skipEngineDrawing;                                           \
   }
-
 
 DRAW_ENTITY_CALLIN(Unit, (const CUnit* unit), (unit))
 DRAW_ENTITY_CALLIN(Feature, (const CFeature* feature), (feature))
 DRAW_ENTITY_CALLIN(Shield, (const CUnit* unit, const CWeapon* weapon), (unit, weapon))
 DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
-DRAW_ENTITY_CALLIN(Material, (const LuaMaterial* material), (material))
 
 /******************************************************************************/
 /******************************************************************************/
 
-template<typename T, typename F, typename... A> bool ControlReverseIterateDefTrue(T& list, const F& func, A&&... args) {
-	for (size_t i = 0; i < list.size(); i++) {
-		CEventClient* ec = list[list.size() - 1 - i];
-
-		if ((ec->*func)(std::forward<A>(args)...))
-			return true;
+#define CONTROL_REVERSE_ITERATE_DEF_TRUE(name, ...)                \
+	for (size_t i = 0; i < list##name.size(); ++i) {               \
+		CEventClient* ec = list##name[list##name.size() - 1 - i];  \
+                                                                   \
+		if (ec->name(__VA_ARGS__))                                 \
+			return true;                                           \
 	}
 
-	return false;
-}
-
-template<typename T, typename F, typename... A> std::string ControlReverseIterateDefString(T& list, const F& func, A&&... args) {
-	for (size_t i = 0; i < list.size(); i++) {
-		CEventClient* ec = list[list.size() - 1 - i];
-
-		std::string str = std::move((ec->*func)(std::forward<A>(args)...));
-
-		if (str.empty())
-			continue;
-
-		return str;
+#define CONTROL_REVERSE_ITERATE_STRING(name, ...)                  \
+	for (size_t i = 0; i < list##name.size(); ++i) {               \
+		CEventClient* ec = list##name[list##name.size() - 1 - i];  \
+		const std::string& str = ec->name(__VA_ARGS__);            \
+                                                                   \
+		if (!str.empty())                                          \
+			return str;                                            \
 	}
-
-	return {};
-}
 
 bool CEventHandler::CommandNotify(const Command& cmd)
 {
-	return ControlReverseIterateDefTrue(listCommandNotify, &CEventClient::CommandNotify, cmd);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(CommandNotify, cmd)
+	return false;
 }
 
 
 bool CEventHandler::KeyPress(int key, bool isRepeat)
 {
-	return ControlReverseIterateDefTrue(listKeyPress, &CEventClient::KeyPress, key, isRepeat);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(KeyPress, key, isRepeat)
+	return false;
 }
+
 
 bool CEventHandler::KeyRelease(int key)
 {
-	return ControlReverseIterateDefTrue(listKeyRelease, &CEventClient::KeyRelease, key);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(KeyRelease, key)
+	return false;
 }
 
 
 bool CEventHandler::TextInput(const std::string& utf8)
 {
-	return ControlReverseIterateDefTrue(listTextInput, &CEventClient::TextInput, utf8);
-}
-
-bool CEventHandler::TextEditing(const std::string& utf8, unsigned int start, unsigned int length)
-{
-	return ControlReverseIterateDefTrue(listTextEditing, &CEventClient::TextEditing, utf8, start, length);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(TextInput, utf8)
+	return false;
 }
 
 
@@ -726,6 +674,7 @@ bool CEventHandler::MousePress(int x, int y, int button)
 	return false;
 }
 
+
 void CEventHandler::MouseRelease(int x, int y, int button)
 {
 	if (mouseOwner == nullptr)
@@ -744,26 +693,29 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }
 
+
 bool CEventHandler::MouseWheel(bool up, float value)
 {
-	return ControlReverseIterateDefTrue(listMouseWheel, &CEventClient::MouseWheel, up, value);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(MouseWheel, up, value)
+	return false;
 }
 
+bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
+{
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(JoystickEvent, event, val1, val2)
+	return false;
+}
 
 bool CEventHandler::IsAbove(int x, int y)
 {
-	return ControlReverseIterateDefTrue(listIsAbove, &CEventClient::IsAbove, x, y);
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(IsAbove, x, y)
+	return false;
 }
-
 
 std::string CEventHandler::GetTooltip(int x, int y)
 {
-	return ControlReverseIterateDefString(listGetTooltip, &CEventClient::GetTooltip, x, y);
-}
-
-std::string CEventHandler::WorldTooltip(const CUnit* unit, const CFeature* feature, const float3* groundPos)
-{
-	return ControlReverseIterateDefString(listWorldTooltip, &CEventClient::WorldTooltip, unit, feature, groundPos);
+	CONTROL_REVERSE_ITERATE_STRING(GetTooltip, x, y)
+	return "";
 }
 
 
@@ -791,14 +743,12 @@ bool CEventHandler::GroupChanged(int groupID)
 
 
 
-bool CEventHandler::GameSetup(
-	const std::string& state,
-	bool& ready,
-	const std::vector< std::pair<int, std::string> >& playerStates
-) {
-	return ControlReverseIterateDefTrue(listGameSetup, &CEventClient::GameSetup, state, ready, playerStates);
+bool CEventHandler::GameSetup(const std::string& state, bool& ready,
+                                  const std::vector< std::pair<int, std::string> >& playerStates)
+{
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(GameSetup, state, ready, playerStates)
+	return false;
 }
-
 
 void CEventHandler::DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType)
 {
@@ -825,15 +775,21 @@ void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
 	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
 }
 
+std::string CEventHandler::WorldTooltip(const CUnit* unit,
+                                   const CFeature* feature,
+                                   const float3* groundPos)
+{
+	CONTROL_REVERSE_ITERATE_STRING(WorldTooltip, unit, feature, groundPos)
+	return "";
+}
 
-bool CEventHandler::MapDrawCmd(
-	int playerID,
-	int type,
-	const float3* pos0,
-	const float3* pos1,
-	const std::string* label
-) {
-	return ControlReverseIterateDefTrue(listMapDrawCmd, &CEventClient::MapDrawCmd, playerID, type, pos0, pos1, label);
+
+bool CEventHandler::MapDrawCmd(int playerID, int type,
+                               const float3* pos0, const float3* pos1,
+                               const std::string* label)
+{
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(MapDrawCmd, playerID, type, pos0, pos1, label)
+	return false;
 }
 
 
@@ -844,3 +800,4 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
+

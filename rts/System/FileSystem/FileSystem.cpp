@@ -10,9 +10,8 @@
 #include "System/Platform/Win/win32.h"
 #include "System/StringUtil.h"
 
-#include "System/SpringRegex.h"
+#include <boost/regex.hpp>
 
-#include <unistd.h>
 #ifdef _WIN32
 #include <io.h>
 #endif
@@ -40,7 +39,7 @@
 std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 {
 	std::string regex;
-	regex.reserve(glob.size() << 1);
+	regex.reserve(glob.size()<<1);
 	int braces = 0;
 	for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i) {
 		char c = *i;
@@ -73,7 +72,7 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 				if (braces > 0) {
 					regex += '|';
 				} else {
-					QUOTE(c, regex);
+					QUOTE(c,regex);
 				}
 				break;
 			case '\\':
@@ -83,10 +82,10 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 					LOG_L(L_WARNING, "%s: pattern ends with backslash\n%s", __FUNCTION__, glob.c_str());
 				}
 #endif
-				QUOTE(*i, regex);
+				QUOTE(*i,regex);
 				break;
 			default:
-				QUOTE(c, regex);
+				QUOTE(c,regex);
 				break;
 		}
 	}
@@ -118,16 +117,18 @@ bool FileSystem::FileExists(std::string file)
 
 size_t FileSystem::GetFileSize(std::string file)
 {
-	if (!CheckFile(file))
+	if (!CheckFile(file)) {
 		return 0;
+	}
 
 	return FileSystemAbstraction::GetFileSize(FileSystem::GetNormalizedPath(file));
 }
 
 bool FileSystem::CreateDirectory(std::string dir)
 {
-	if (!CheckFile(dir))
+	if (!CheckFile(dir)) {
 		return false;
+	}
 
 	ForwardSlashes(dir);
 	size_t prev_slash = 0, slash;
@@ -144,16 +145,16 @@ bool FileSystem::CreateDirectory(std::string dir)
 
 bool FileSystem::TouchFile(std::string filePath)
 {
-	if (!CheckFile(filePath))
+	if (!CheckFile(filePath)) {
 		return false;
+	}
 
-	// check for read access
-	if (access(filePath.c_str(), R_OK) == 0)
+	if (access(filePath.c_str(), R_OK) == 0) { // check for read access
 		return true;
+	}
 
 	FILE* f = fopen(filePath.c_str(), "a+b");
-	if (f == nullptr)
-		return false;
+	if (!f) return false;
 	fclose(f);
 	return (access(filePath.c_str(), R_OK) == 0); // check for read access
 }
@@ -163,32 +164,29 @@ bool FileSystem::TouchFile(std::string filePath)
 
 std::string FileSystem::GetDirectory(const std::string& path)
 {
-	const size_t s = path.find_last_of("\\/");
-
-	if (s != std::string::npos)
+	size_t s = path.find_last_of("\\/");
+	if (s != std::string::npos) {
 		return path.substr(0, s + 1);
-
+	}
 	return ""; // XXX return "./"? (a short test caused a crash because CFileHandler used in Lua couldn't find a file in the base-dir)
 }
 
 std::string FileSystem::GetFilename(const std::string& path)
 {
-	const size_t s = path.find_last_of("\\/");
-
-	if (s != std::string::npos)
+	size_t s = path.find_last_of("\\/");
+	if (s != std::string::npos) {
 		return path.substr(s + 1);
-
+	}
 	return path;
 }
 
 std::string FileSystem::GetBasename(const std::string& path)
 {
 	std::string fn = GetFilename(path);
-	const size_t dot = fn.find_last_of('.');
-
-	if (dot != std::string::npos)
+	size_t dot = fn.find_last_of('.');
+	if (dot != std::string::npos) {
 		return fn.substr(0, dot);
-
+	}
 	return fn;
 }
 
@@ -196,7 +194,7 @@ std::string FileSystem::GetExtension(const std::string& path)
 {
 	const std::string fileName = GetFilename(path);
 	size_t l = fileName.length();
-//#ifdef _WIN32
+//#ifdef WIN32
 	//! windows eats dots and spaces at the end of filenames
 	while (l > 0) {
 		const char prevChar = fileName[l-1];
@@ -207,10 +205,10 @@ std::string FileSystem::GetExtension(const std::string& path)
 		}
 	}
 //#endif
-	const size_t dot = fileName.rfind('.', l);
-
-	if (dot != std::string::npos)
+	size_t dot = fileName.rfind('.', l);
+	if (dot != std::string::npos) {
 		return StringToLower(fileName.substr(dot + 1));
+	}
 
 	return "";
 }
@@ -221,24 +219,9 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 	std::string normalizedPath = StringReplace(path, "\\", "/"); // convert to POSIX path separators
 
 	normalizedPath = StringReplace(normalizedPath, "/./", "/");
-
-	try {
-		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
-	} catch (const spring::regex_error& e) {
-		LOG_L(L_WARNING, "[%s][1] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
-	}
-
-	try {
-		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[^/]+[/][.]{2}"), {""});
-	} catch (const spring::regex_error& e) {
-		LOG_L(L_WARNING, "[%s][2] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
-	}
-
-	try {
-		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
-	} catch (const spring::regex_error& e) {
-		LOG_L(L_WARNING, "[%s][3] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
-	}
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[^/]+[/][.]{2}"), "");
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
 
 	return normalizedPath; // maybe use FixSlashes here
 }
@@ -246,16 +229,22 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 std::string& FileSystem::FixSlashes(std::string& path)
 {
 	const char sep = GetNativePathSeparator();
-	const auto P = [](const char c) { return (c == '/' || c == '\\'); };
-
-	std::replace_if(std::begin(path), std::end(path), P, sep);
+	for (size_t i = 0; i < path.size(); ++i) {
+		if (path[i] == '/' || path[i] == '\\') {
+			path[i] = sep;
+		}
+	}
 
 	return path;
 }
 
 std::string& FileSystem::ForwardSlashes(std::string& path)
 {
-	std::replace(std::begin(path), std::end(path), '\\', '/');
+	for (size_t i = 0; i < path.size(); ++i) {
+		if (path[i] == '\\') {
+			path[i] = '/';
+		}
+	}
 
 	return path;
 }
@@ -273,8 +262,9 @@ bool FileSystem::CheckFile(const std::string& file)
 
 bool FileSystem::Remove(std::string file)
 {
-	if (!CheckFile(file))
+	if (!CheckFile(file)) {
 		return false;
+	}
 
 	return FileSystem::DeleteFile(FileSystem::GetNormalizedPath(file));
 }

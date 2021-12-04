@@ -2,7 +2,7 @@
 // detail/null_socket_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -21,7 +21,7 @@
 
 #include "asio/buffer.hpp"
 #include "asio/error.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 #include "asio/socket_base.hpp"
 #include "asio/detail/bind_handler.hpp"
 
@@ -31,8 +31,7 @@ namespace asio {
 namespace detail {
 
 template <typename Protocol>
-class null_socket_service :
-  public service_base<null_socket_service<Protocol> >
+class null_socket_service
 {
 public:
   // The protocol type.
@@ -50,14 +49,13 @@ public:
   };
 
   // Constructor.
-  null_socket_service(asio::io_context& io_context)
-    : service_base<null_socket_service<Protocol> >(io_context),
-      io_context_(io_context)
+  null_socket_service(asio::io_service& io_service)
+    : io_service_(io_service)
   {
   }
 
   // Destroy all user-defined handler objects owned by the service.
-  void shutdown()
+  void shutdown_service()
   {
   }
 
@@ -80,7 +78,6 @@ public:
   // Move-construct a new socket implementation from another protocol type.
   template <typename Protocol1>
   void converting_move_construct(implementation_type&,
-      null_socket_service<Protocol1>&,
       typename null_socket_service<Protocol1>::implementation_type&)
   {
   }
@@ -118,14 +115,6 @@ public:
   {
     ec = asio::error::operation_not_supported;
     return ec;
-  }
-
-  // Release ownership of the socket.
-  native_handle_type release(implementation_type&,
-      asio::error_code& ec)
-  {
-    ec = asio::error::operation_not_supported;
-    return 0;
   }
 
   // Get the native socket representation.
@@ -278,7 +267,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Start an asynchronous wait until data can be sent without blocking.
@@ -288,7 +277,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Receive some data from the peer. Returns the number of bytes received.
@@ -316,7 +305,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Wait until data can be received without blocking.
@@ -326,7 +315,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Receive some data with associated flags. Returns the number of bytes
@@ -358,7 +347,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Wait until data can be received without blocking.
@@ -369,7 +358,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Send a datagram to the specified endpoint. Returns the number of bytes
@@ -401,7 +390,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Start an asynchronous wait until data can be sent without blocking.
@@ -411,7 +400,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Receive a datagram with the endpoint of the sender. Returns the number of
@@ -444,7 +433,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Wait until data can be received without blocking.
@@ -455,7 +444,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_context_.post(detail::bind_handler(handler, ec, bytes_transferred));
+    io_service_.post(detail::bind_handler(handler, ec, bytes_transferred));
   }
 
   // Accept a new connection.
@@ -474,7 +463,7 @@ public:
       endpoint_type*, Handler& handler)
   {
     asio::error_code ec = asio::error::operation_not_supported;
-    io_context_.post(detail::bind_handler(handler, ec));
+    io_service_.post(detail::bind_handler(handler, ec));
   }
 
   // Connect the socket to the specified endpoint.
@@ -491,11 +480,11 @@ public:
       const endpoint_type&, Handler& handler)
   {
     asio::error_code ec = asio::error::operation_not_supported;
-    io_context_.post(detail::bind_handler(handler, ec));
+    io_service_.post(detail::bind_handler(handler, ec));
   }
 
 private:
-  asio::io_context& io_context_;
+  asio::io_service& io_service_;
 };
 
 } // namespace detail

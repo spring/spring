@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include <SDL.h>
-#if (!defined(HEADLESS) && !defined(_WIN32) && !defined(__APPLE__))
+#if (!defined(HEADLESS) && !defined(WIN32) && !defined(__APPLE__))
 // need this for glXQueryCurrentRendererIntegerMESA (glxext)
 #include <GL/glxew.h>
 #endif
@@ -146,8 +146,8 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
-	static const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
-	static const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
+	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
+	static           const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
 
 	if (qcriProcAddr == nullptr)
 		return false;

@@ -6,9 +6,11 @@
 class CWorldDrawer
 {
 public:
-	void InitPre() const;
-	void InitPost() const;
-	void Kill();
+	CWorldDrawer();
+	~CWorldDrawer();
+
+	void LoadPre() const;
+	void LoadPost() const;
 
 	void Update(bool newSimFrame);
 	void Draw() const;
@@ -23,7 +25,7 @@ private:
 	void DrawBelowWaterOverlay() const;
 
 private:
-	unsigned int numUpdates = 0;
+	unsigned int numUpdates;
 };
 
 #endif // _WORLD_DRAWER_H

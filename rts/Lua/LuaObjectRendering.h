@@ -39,14 +39,9 @@ private:
 	static int SetMaterial(lua_State* L);
 	static int SetMaterialLastLOD(lua_State* L);
 	static int SetMaterialDisplayLists(lua_State* L);
-	static int SetDeferredMaterialUniform(lua_State* L);
-	static int SetForwardMaterialUniform(lua_State* L);
-	static int ClearDeferredMaterialUniform(lua_State* L);
-	static int ClearForwardMaterialUniform(lua_State* L);
 
 	static int SetUnitLuaDraw(lua_State* L);
 	static int SetFeatureLuaDraw(lua_State* L);
-	static int SetProjectileLuaDraw(lua_State* L);
 
 	static int Debug(lua_State* L);
 
@@ -76,16 +71,10 @@ public:
 		PUSH_FUNCTION(SetMaterialLastLOD);
 		PUSH_FUNCTION(SetMaterialDisplayLists);
 
-		PUSH_FUNCTION(SetDeferredMaterialUniform);
-		PUSH_FUNCTION(SetForwardMaterialUniform);
-		PUSH_FUNCTION(ClearDeferredMaterialUniform);
-		PUSH_FUNCTION(ClearForwardMaterialUniform);
-
 		PUSH_FUNCTION(SetPieceList);
 
 		PUSH_FUNCTION(SetUnitLuaDraw);
 		PUSH_FUNCTION(SetFeatureLuaDraw);
-		PUSH_FUNCTION(SetProjectileLuaDraw);
 
 		PUSH_FUNCTION(Debug);
 
@@ -154,32 +143,6 @@ private:
 		return ret;
 	}
 
-	static int SetDeferredMaterialUniform(lua_State* L) {
-		LuaObjectRenderingImpl::PushObjectType(T);
-		const int ret = LuaObjectRenderingImpl::SetDeferredMaterialUniform(L);
-		LuaObjectRenderingImpl::PopObjectType();
-		return ret;
-	}
-	static int SetForwardMaterialUniform(lua_State* L) {
-		LuaObjectRenderingImpl::PushObjectType(T);
-		const int ret = LuaObjectRenderingImpl::SetForwardMaterialUniform(L);
-		LuaObjectRenderingImpl::PopObjectType();
-		return ret;
-	}
-
-	static int ClearDeferredMaterialUniform(lua_State* L) {
-		LuaObjectRenderingImpl::PushObjectType(T);
-		const int ret = LuaObjectRenderingImpl::ClearDeferredMaterialUniform(L);
-		LuaObjectRenderingImpl::PopObjectType();
-		return ret;
-	}
-	static int ClearForwardMaterialUniform(lua_State* L) {
-		LuaObjectRenderingImpl::PushObjectType(T);
-		const int ret = LuaObjectRenderingImpl::ClearForwardMaterialUniform(L);
-		LuaObjectRenderingImpl::PopObjectType();
-		return ret;
-	}
-
 
 	static int SetUnitLuaDraw(lua_State* L) {
 		if (T != LUAOBJ_UNIT)
@@ -192,10 +155,6 @@ private:
 			return 0;
 
 		return (LuaObjectRenderingImpl::SetFeatureLuaDraw(L));
-	}
-	// NB: value of T is not relevant here, slightly foreign callout
-	static int SetProjectileLuaDraw(lua_State* L) {
-		return (LuaObjectRenderingImpl::SetProjectileLuaDraw(L));
 	}
 
 

@@ -12,16 +12,16 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "Net/Protocol/NetProtocol.h"
 
 #include <SDL_mouse.h>
 
 
 FPSUnitController::FPSUnitController()
-	: targetUnit(nullptr)
-	, controllee(nullptr)
-	, controller(nullptr)
+	: targetUnit(NULL)
+	, controllee(NULL)
+	, controller(NULL)
 	, viewDir(FwdVector)
 	, targetPos(FwdVector)
 	, targetDist(1000.0f)

@@ -18,65 +18,67 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
 #include "System/StringUtil.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
-
-static constexpr float ROLLOFF_FACTOR = 5.0f;
-static constexpr float REFERENCE_DIST = 200.0f;
-
-
-// used to adjust the pitch to the GameSpeed (optional)
+float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0f;
-
-// reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 float CSoundSource::heightRolloffModifier = 1.0f;
-
+static const float ROLLOFF_FACTOR = 5.0f;
 
 CSoundSource::CSoundSource()
-	: curChannel(nullptr)
-	, curVolume(1.0f)
+	: curPlaying(nullptr)
+	, curChannel(nullptr)
+	, curVolume(1.f)
 	, loopStop(1e9)
 	, in3D(false)
 	, efxEnabled(false)
 	, efxUpdates(0)
-	, curHeightRolloffModifier(1.0f)
+	, curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
 
 	if (!CheckError("CSoundSource::CSoundSource")) {
 		id = 0;
 	} else {
-		alSourcef(id, AL_REFERENCE_DISTANCE, REFERENCE_DIST * ELMOS_TO_METERS);
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 		CheckError("CSoundSource::CSoundSource");
 	}
-
-	curPlayingItem = {0,  0, 0,  0.0f, 0.0f};
 }
 
+CSoundSource::~CSoundSource()
+{
+	if (efxEnabled) {
+		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
+	}
+
+	Stop();
+	alDeleteSources(1, &id);
+	CheckError("CSoundSource::~CSoundSource");
+}
 
 void CSoundSource::Update()
 {
-	if (asyncPlayItem.id != 0) {
-		// Sound::Update() holds mutex, soundItems can not be accessed concurrently
-		Play(asyncPlayItem.channel, sound->GetSoundItem(asyncPlayItem.id), asyncPlayItem.position, asyncPlayItem.velocity, asyncPlayItem.volume, asyncPlayItem.relative);
-		asyncPlayItem = AsyncSoundItemData();
+	if (asyncPlay.buffer != nullptr) {
+		Play(asyncPlay.channel, asyncPlay.buffer, asyncPlay.pos, asyncPlay.velocity, asyncPlay.volume, asyncPlay.relative);
+		asyncPlay = AsyncSoundItemData();
 	}
 
-	if (curPlayingItem.id != 0) {
-		if (in3D && (efxEnabled != efx.Enabled())) {
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx.Enabled()) ? efx.GetAirAbsorptionFactor() : 0);
-			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx.Enabled()) ? efx.sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
-			alSourcei(id, AL_DIRECT_FILTER, (efx.Enabled()) ? efx.sfxFilter : AL_FILTER_NULL);
-			efxEnabled = efx.Enabled();
-			efxUpdates = efx.updates;
+	if (curPlaying != nullptr) {
+		if (in3D && (efxEnabled != efx->enabled)) {
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
+			efxEnabled = efx->enabled;
+			efxUpdates = efx->updates;
 		}
 
 		if (heightRolloffModifier != curHeightRolloffModifier) {
 			curHeightRolloffModifier = heightRolloffModifier;
-			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlayingItem.rolloff * heightRolloffModifier);
+			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlaying->rolloff * heightRolloffModifier);
 		}
 
-		if (!IsPlaying(true) || ((curPlayingItem.loopTime > 0) && (spring_gettime() > loopStop)))
+		if (!IsPlaying(true) || ((curPlaying->loopTime > 0) && (spring_gettime() > loopStop)))
 			Stop();
 	}
 
@@ -89,39 +91,26 @@ void CSoundSource::Update()
 		}
 	}
 
-	if (efxEnabled && (efxUpdates != efx.updates)) {
-		// airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
-		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx.GetAirAbsorptionFactor());
-		alSourcei(id, AL_DIRECT_FILTER, efx.sfxFilter);
-		efxUpdates = efx.updates;
+	if (efxEnabled && (efxUpdates != efx->updates)) {
+		//! airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
+		alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
+		efxUpdates = efx->updates;
 	}
 }
-
-void CSoundSource::Delete()
-{
-	if (efxEnabled) {
-		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
-		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
-	}
-
-	Stop();
-	alDeleteSources(1, &id);
-	CheckError("CSoundSource::Delete");
-}
-
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (asyncPlayItem.id != 0)
-		return asyncPlayItem.priority;
+	if (asyncPlay.buffer != nullptr)
+		return asyncPlay.buffer->GetPriority();
 
 	if (curStream.Valid())
 		return INT_MAX;
 
-	if (curPlayingItem.id == 0)
+	if (curPlaying == nullptr)
 		return INT_MIN;
 
-	return (curPlayingItem.priority);
+	return (curPlaying->GetPriority());
 }
 
 bool CSoundSource::IsPlaying(const bool checkOpenAl) const
@@ -129,13 +118,14 @@ bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 	if (curStream.Valid())
 		return true;
 
-	if (asyncPlayItem.id != 0)
+	if (asyncPlay.buffer != nullptr)
 		return true;
 
-	if (curPlayingItem.id == 0)
+	if (curPlaying == nullptr)
 		return false;
 
-	// calling OpenAL has a high chance of generating a L2 cache miss, avoid if possible
+	// Calling OpenAL does a 100% chance for a L2 cache miss
+	// and so is very slow.
 	if (!checkOpenAl)
 		return true;
 
@@ -146,32 +136,18 @@ bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 	return (state == AL_PLAYING);
 }
 
-
 void CSoundSource::Stop()
 {
 	alSourceStop(id);
-
-	{
-		SoundItem* item = nullptr;
-
-		// callers marked * are mutex-guarded
-		//   ::Delete via ~CSoundSource via CSound::Kill
-		//   ::Play via ::Update (*)
-		//   ::PlayStream via AudioChannel::StreamPlay (*)
-		//   ::StreamStop via AudioChannel::StreamStop (*)
-		//   AudioChannel::FindSourceAndPlay (*)
-		if (sound != nullptr)
-			item = sound->GetSoundItem(curPlayingItem.id);
-		if (item != nullptr)
-			item->StopPlay();
-
-		curPlayingItem = {};
+	if (curPlaying != nullptr) {
+		curPlaying->StopPlay();
+		curPlaying = nullptr;
 	}
 
 	if (curStream.Valid())
 		curStream.Stop();
 
-	if (curChannel != nullptr) {
+	if (curChannel) {
 		IAudioChannel* oldChannel = curChannel;
 		curChannel = nullptr;
 		oldChannel->SoundSourceFinished(this);
@@ -187,24 +163,17 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	if (!item->PlayNow())
 		return;
 
-	const SoundBuffer& itemBuffer = SoundBuffer::GetById(item->GetSoundBufferID());
-
 	Stop();
-
 	curVolume = volume;
-	curPlayingItem = {item->soundItemID,  item->loopTime, item->priority,  item->GetGain(), item->rolloff};
+	curPlaying = item;
 	curChannel = channel;
-
-	alSourcei(id, AL_BUFFER, itemBuffer.GetId());
+	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, volume * item->GetGain() * channel->volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
-
 	velocity *= item->dopplerScale * ELMOS_TO_METERS;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
-
 	loopStop = spring_gettime() + spring_msecs(item->loopTime);
-
 	if (relative || !item->in3D) {
 		in3D = false;
 		if (efxEnabled) {
@@ -216,92 +185,83 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
 		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * ELMOS_TO_METERS);
 #ifdef __APPLE__
-		alSourcef(id, AL_REFERENCE_DISTANCE, REFERENCE_DIST * ELMOS_TO_METERS);
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 #endif
 	} else {
-		if (itemBuffer.GetChannels() > 1)
-			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.", itemBuffer.GetFilename().c_str());
-
-		in3D = true;
-		if (efx.Enabled()) {
-			efxEnabled = true;
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx.GetAirAbsorptionFactor());
-			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx.sfxSlot, 0, AL_FILTER_NULL);
-			alSourcei(id, AL_DIRECT_FILTER, efx.sfxFilter);
-			efxUpdates = efx.updates;
+		if (item->buffer->GetChannels() > 1) {
+			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.",
+					item->buffer->GetFilename().c_str());
 		}
 
+		in3D = true;
+		if (efx->enabled) {
+			efxEnabled = true;
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
+			efxUpdates = efx->updates;
+		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		pos *= ELMOS_TO_METERS;
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		curHeightRolloffModifier = heightRolloffModifier;
 		alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier);
-
-
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
-		// Max distance is too small by default on my Mac...
+		//! Max distance is too small by default on my Mac...
 		ALfloat gain = channel->volume * item->GetGain() * volume;
 		if (gain > 1.0f) {
-			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
-			const ALint model = alGetInteger(AL_DISTANCE_MODEL);
-			const ALfloat rolloff = ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier;
-			const ALfloat refDist = REFERENCE_DIST * ELMOS_TO_METERS;
-
+			//! OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
+			ALint model = alGetInteger(AL_DISTANCE_MODEL);
+			ALfloat rolloff = ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier;
+			ALfloat ref = referenceDistance * ELMOS_TO_METERS;
 			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
-				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * refDist / rolloff) + refDist);
+				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
 				alSourcef(id, AL_ROLLOFF_FACTOR, (gain + rolloff - 1.0f) / gain);
 				alSourcef(id, AL_GAIN, 1.0f);
 			}
 		} else {
-			alSourcef(id, AL_REFERENCE_DISTANCE, REFERENCE_DIST * ELMOS_TO_METERS);
+			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 		}
 #endif
-
 	}
 	alSourcePlay(id);
 
-	if (itemBuffer.GetId() == 0)
-		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), itemBuffer.GetFilename().c_str());
+	if (item->buffer->GetId() == 0)
+		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
 
 	CheckError("CSoundSource::Play");
 }
 
 
-void CSoundSource::PlayAsync(IAudioChannel* channel, size_t id, float3 pos, float3 velocity, float volume, float priority, bool relative)
+void CSoundSource::PlayAsync(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative)
 {
-	asyncPlayItem.channel  = channel;
-	asyncPlayItem.id       = id;
-
-	asyncPlayItem.position = pos;
-	asyncPlayItem.velocity = velocity;
-
-	asyncPlayItem.volume   = volume;
-	asyncPlayItem.priority = priority;
-
-	asyncPlayItem.relative = relative;
+	asyncPlay.channel  = channel;
+	asyncPlay.buffer   = buffer;
+	asyncPlay.pos      = pos;
+	asyncPlay.velocity = velocity;
+	asyncPlay.volume   = volume;
+	asyncPlay.relative = relative;
 }
 
 
 void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, float volume)
 {
-	// stop any current playback
+	//! stop any current playback
 	Stop();
 
 	if (!curStream.Valid())
 		curStream = COggStream(id);
 
-	// OpenAL params
+	//! setup OpenAL params
 	curChannel = channel;
 	curVolume = volume;
 	in3D = false;
-
 	if (efxEnabled) {
 		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
 		efxEnabled = false;
 	}
-
 	alSource3f(id, AL_POSITION,       0.0f, 0.0f, 0.0f);
 	alSourcef(id, AL_GAIN,            volume);
 	alSourcef(id, AL_PITCH,           globalPitch);
@@ -319,10 +279,8 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 
 void CSoundSource::StreamStop()
 {
-	if (!curStream.Valid())
-		return;
-
-	Stop();
+	if (curStream.Valid())
+		Stop();
 }
 
 void CSoundSource::StreamPause()
@@ -355,8 +313,8 @@ void CSoundSource::UpdateVolume()
 		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
 		return;
 	}
-	if (curPlayingItem.id != 0) {
-		alSourcef(id, AL_GAIN, curVolume * curPlayingItem.rndGain * curChannel->volume);
+	if (curPlaying != nullptr) {
+		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * curChannel->volume);
 		return;
 	}
 }

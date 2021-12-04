@@ -5,6 +5,7 @@
 
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 
 #include <vector>
 
@@ -68,9 +69,10 @@ protected:
 	};
 
 	std::vector<unsigned char> winners;
-	std::vector<Stat> stats;
 
-	GLuint graphTex = 0;
+	std::vector<Stat> stats;
+	GLuint graphTex;
+	CBitmap bm;
 };
 
 #endif // _END_GAME_BOX_H_

@@ -5,7 +5,7 @@
 
 #include <map>
 
-#include "IArchiveFactory.h"
+#include "ArchiveFactory.h"
 #include "IArchive.h"
 
 
@@ -30,19 +30,17 @@ class CDirArchive : public IArchive
 {
 public:
 	CDirArchive(const std::string& archiveName);
+	virtual ~CDirArchive();
 
-	int GetType() const override { return ARCHIVE_TYPE_SDD; }
+	virtual bool IsOpen();
 
-	bool IsOpen() override { return true; }
-
-	unsigned int NumFiles() const override { return (searchFiles.size()); }
-	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
-	const std::string& GetOrigFileName(unsigned int fid) const { return searchFiles[fid]; }
+	virtual unsigned int NumFiles() const;
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
 
 private:
 	/// "ExampleArchive.sdd/"
-	const std::string dirName;
+	std::string dirName;
 
 	std::vector<std::string> searchFiles;
 };

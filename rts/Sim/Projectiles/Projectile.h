@@ -10,6 +10,7 @@
 #endif
 
 #include "ExpGenSpawnable.h"
+#include "ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/type2.h"
 
@@ -58,10 +59,9 @@ public:
 	void SetVelocityAndSpeed(const float3& vel) override {
 		CWorldObject::SetVelocityAndSpeed(vel);
 
-		if (speed.w <= 0.0f)
-			return;
-
-		dir = speed / speed.w;
+		if (speed.w > 0.0f) {
+			dir = speed / speed.w;
+		}
 	}
 
 	void SetDirectionAndSpeed(const float3& _dir, float _spd) {
@@ -80,10 +80,8 @@ public:
 
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
-	unsigned int GetRenderIndex() const { return renderIndex; }
 
-	void SetCustomExpGenID(unsigned int id) { cegID = id; }
-	void SetRenderIndex(unsigned int idx) { renderIndex = idx; }
+	void SetCustomExplosionGeneratorID(unsigned int id) { cegID = id; }
 
 	// UNSYNCED ONLY
 	CMatrix44f GetTransformMatrix(bool offsetPos) const;
@@ -93,43 +91,40 @@ public:
 
 
 public:
-	bool synced = false;           // is this projectile part of the simulation?
-	bool weapon = false;           // is this a weapon projectile? (true implies synced true)
-	bool piece = false;            // is this a piece projectile? (true implies synced true)
-	bool hitscan = false;          // is this a hit-scan projectile?
+	bool synced;  ///< is this projectile part of the simulation?
+	bool weapon;  ///< is this a weapon projectile? (true implies synced true)
+	bool piece;   ///< is this a piece projectile? (true implies synced true)
+	bool hitscan; ///< is this a hit-scan projectile?
 
-	bool luaDraw = false;          // whether the DrawProjectile callin is enabled for us
-	bool luaMoveCtrl = false;
-	bool checkCol = true;
-	bool ignoreWater = false;
+	bool luaMoveCtrl;
+	bool checkCol;
+	bool ignoreWater;
+	bool deleteMe;
+	bool callEvent; //do we need to call the ProjectileCreated event
 
-	bool createMe =  true;
-	bool deleteMe = false;
+	bool castShadow;
+	bool drawSorted;
 
-	bool castShadow = false;
-	bool drawSorted = true;
-
-	float3 dir;                    // set via Init()
+	float3 dir;
 	float3 drawPos;
 
-	float myrange = 0.0f;          // used by WeaponProjectile::TraveledRange
-	float mygravity = 0.0f;
+	float mygravity;
 
-	float sortDist = 0.0f;         // distance used for z-sorting when rendering
-	float sortDistOffset = 0.0f;   // an offset used for z-sorting
+	float sortDist; ///< distance used for z-sorting when rendering
+	float sortDistOffset; ///< an offset used for z-sorting
+
+	int tempNum;
 
 protected:
-	unsigned int ownerID = -1u;
-	unsigned int teamID = -1u;
-	int allyteamID = -1;
-	unsigned int cegID = -1u;
+	unsigned int ownerID;
+	unsigned int teamID;
+	int allyteamID;
+	unsigned int cegID;
 
-	unsigned int projectileType = -1u;
-	unsigned int collisionFlags = 0;
-	unsigned int renderIndex = -1u;
+	unsigned int projectileType;
+	unsigned int collisionFlags;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
-
 public:
 	std::vector<int> quads;
 };

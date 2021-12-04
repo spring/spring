@@ -20,15 +20,17 @@ namespace us {
 	#include "../tools/unitsync/unitsync_api.h"
 };
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE UnitSync
+#include <boost/test/unit_test.hpp>
 
+
+using std::string;
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-static void PrintMapInfo(const std::string& mapName)
+static void PrintMapInfo(const string& mapName)
 {
 	/*const int map_count = us::GetMapCount();
 	int mapidx = -1;
@@ -126,7 +128,7 @@ static void DisplayOptions(int optionCount)
 
 static bool TestLuaParser()
 {
-	const std::string source =
+	const string source =
 	"for k, v in pairs(Test) do\n"
 	"  print('LUA Test Table:  '..tostring(k)..' = '..tostring(v))\n"
 	"end\n"
@@ -180,7 +182,7 @@ static bool TestLuaParser()
 
 	const int strCount = us::lpGetStrKeyListCount();
 	for (int i = 0; i < strCount; i++) {
-		const std::string key = us::lpGetStrKeyListEntry(i);
+		const string key = us::lpGetStrKeyListEntry(i);
 		const char* str  = us::lpGetStrKeyStrVal(key.c_str(), "");
 		const float num  = us::lpGetStrKeyFloatVal(key.c_str(), 666.666f);
 		LOG("  str-key = '%s', val = '%s'  (%f)", key.c_str(), str, num);
@@ -219,13 +221,11 @@ static bool TestLuaParser()
 /******************************************************************************/
 /******************************************************************************/
 
-#define CHECK_ERROR_MESSAGE(s) if ((s = us::GetNextError()) != nullptr) { FAIL_CHECK(s); }
-
 static std::string GetGameName(int gameidx)
 {
 	const int infocount = us::GetPrimaryModInfoCount(gameidx);
-	const char* errmsg = us::GetNextError();
-	CHECK_ERROR_MESSAGE(errmsg);
+	const char* errmsg;
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	for (int i=0; i<infocount; i++) {
 		const std::string key = us::GetInfoKey(i);
 		if (key == "name") {
@@ -235,19 +235,17 @@ static std::string GetGameName(int gameidx)
 	return "";
 }
 
-TEST_CASE("UnitSync")
+BOOST_AUTO_TEST_CASE( UnitSync )
 {
-
 	const char* errmsg;
+
 	// PreInit tests
 	us::SetSpringConfigFile("/tmp/foo.cfg");
-	CHECK(us::GetWritableDataDirectory() == nullptr);
-	if ((errmsg = us::GetNextError()) == nullptr) {
-		FAIL_CHECK("No error on GetWritableDataDirectory before init"); // there's an error cause we called GetWritableDataDirectory() before Init()!
-	}
+	BOOST_CHECK(us::GetWritableDataDirectory() == NULL);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
 
 	// Check if unitsync function IsSpringReleaseVersion matches VersionGenerated.h
-	CHECK(us::IsSpringReleaseVersion() == (SPRING_VERSION_ENGINE_RELEASE == 1));
+	BOOST_CHECK(us::IsSpringReleaseVersion() == (SPRING_VERSION_ENGINE_RELEASE == 1));
 
 	// Init Unitsync
 	/*LOG("ArchiveScanner: ");
@@ -255,45 +253,39 @@ TEST_CASE("UnitSync")
 	while (fut.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
 		LOG("still scanning");
 	}
-	INFO("us::Init(false, 0) != 0");
-	CHECK(fut.get() != 0);*/
+	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");*/
 	us::SetSpringConfigFile(""); //reset to default config file
-	CHECK(us::Init(false, 0) != 0);
-	CHECK_ERROR_MESSAGE(errmsg);
+	BOOST_CHECK(us::Init(false, 0) != 0);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
 	// Lua
-	CHECK(TestLuaParser());
+	BOOST_CHECK(TestLuaParser());
 
 	// Select random Game & Map
 	const int mapcount = us::GetMapCount() - 1;
 	const int gamecount = us::GetPrimaryModCount() - 1;
 	const int mapidx = 1;
 	const int gameidx = 1;
-//	CHECK(gamecount>0);
-//	CHECK(mapcount>0);
+//	BOOST_CHECK(gamecount>0);
+//	BOOST_CHECK(mapcount>0);
 
 	for (int i=0; i<gamecount; i++) {
 		const std::string name = GetGameName(i);
-		INFO(i);
-		CHECK(!name.empty());
+		BOOST_CHECK_MESSAGE(!name.empty(), i);
 		const int primaryModIndex = us::GetPrimaryModIndex(name.c_str());
 		const size_t hash = us::GetPrimaryModChecksum(i);
-		CHECK(hash != 0);
-		INFO(name << ": " << primaryModIndex << "!=" << i);
-		CHECK(primaryModIndex == i);
-		INFO(name);
-		CHECK(hash == us::GetPrimaryModChecksumFromName(name.c_str()));
-		CHECK_ERROR_MESSAGE(errmsg);
+		BOOST_CHECK(hash != 0);
+		BOOST_CHECK_MESSAGE(primaryModIndex == i, name << ": " << primaryModIndex << "!=" << i);
+		BOOST_CHECK_MESSAGE(hash == us::GetPrimaryModChecksumFromName(name.c_str()), name.c_str());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	}
 	for (int i=0; i<mapcount; i++) {
 		const std::string name = us::GetMapName(i);
-		INFO(i);
-		CHECK(!name.empty());
+		BOOST_CHECK_MESSAGE(!name.empty(), i);
 		const size_t hash = us::GetMapChecksum(i);
-		CHECK(hash != 0);
-		INFO(name);
-		CHECK(hash == us::GetMapChecksumFromName(name.c_str()));
-		CHECK_ERROR_MESSAGE(errmsg);
+		BOOST_CHECK(hash != 0);
+		BOOST_CHECK_MESSAGE(hash == us::GetMapChecksumFromName(name.c_str()), name.c_str());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	}
 //	while (i > 0 && !us::GetMapName(i)) --i;
 //	while (j > 0 && !us::GetPrimaryModName(j)) --j;
@@ -302,53 +294,51 @@ TEST_CASE("UnitSync")
 	if (gamecount > 0 && mapcount > 0) {
 		const std::string map = us::GetMapName(mapidx);
 		const std::string game = GetGameName(gameidx);
-		CHECK_ERROR_MESSAGE(errmsg);
-		CHECK(!map.empty());
-		CHECK(!game.empty());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+		BOOST_CHECK(!map.empty());
+		BOOST_CHECK(!game.empty());
 
-	//	CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
-	//	CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
+	//	BOOST_CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
+	//	BOOST_CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
 
 		// map info
 		PrintMapInfo(map);
 
 		// load the mod archives
 		us::AddAllArchives(game.c_str());
-		CHECK_ERROR_MESSAGE(errmsg);
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
 		// unit names
-		CHECK(us::ProcessUnits() == 0);
-		CHECK_ERROR_MESSAGE(errmsg);
-		CHECK(us::GetUnitCount() >= 1);
-		CHECK(us::GetSideCount() >= 1);
+		BOOST_CHECK(us::ProcessUnits() == 0);
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+		BOOST_CHECK(us::GetUnitCount() >= 1);
+		BOOST_CHECK(us::GetSideCount() >= 1);
 	}
 
 	// VFS
-	CHECK(us::InitDirListVFS(NULL, NULL, NULL) == 0);
+	BOOST_CHECK(us::InitDirListVFS(NULL, NULL, NULL) == 0);
 	char buf[512];
 	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND FILE:  %s", buf);
 	}
-	CHECK(us::InitSubDirsVFS(NULL, NULL, NULL) == 0);
+	BOOST_CHECK(us::InitSubDirsVFS(NULL, NULL, NULL) == 0);
 	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND DIR:  %s", buf);
 	}
 
 	// Check Config Interface
-	CHECK(us::GetSpringConfigFile() != nullptr);
+	BOOST_CHECK(us::GetSpringConfigFile() != NULL);
 	us::SetSpringConfigInt("_unitsync_test", 1);
-	CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1);
+	BOOST_CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1);
 	us::DeleteSpringConfigKey("_unitsync_test");
-	CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1e9);
+	BOOST_CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1e9);
 
 	// DeInit Unitsync
-	CHECK_ERROR_MESSAGE(errmsg);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	us::UnInit();
-	CHECK_ERROR_MESSAGE(errmsg);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
 	// Check if VFS is deinit'ed
-	CHECK(us::GetWritableDataDirectory() == nullptr);
-	if ((errmsg = us::GetNextError()) == nullptr) {
-		FAIL_CHECK("No error on GetWritableDataDirectory before init"); // there's an error cause we called GetWritableDataDirectory() after UnInit()!
-	}
+	BOOST_CHECK(us::GetWritableDataDirectory() == NULL);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg);
 }

@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -142,34 +141,12 @@ AI_FORCE_INLINE aiVector3t<TReal>& aiVector3t<TReal>::operator *= (const aiMatri
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE TReal aiVector3t<TReal>::operator[](unsigned int i) const {
-//    return *(&x + i);
-    switch (i) {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        default:
-            break;
-    }
-    return x;
+    return *(&x + i);
 }
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE TReal& aiVector3t<TReal>::operator[](unsigned int i) {
-//    return *(&x + i);
-    switch (i) {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        default:
-            break;
-    }
-    return x;
+    return *(&x + i);
 }
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>

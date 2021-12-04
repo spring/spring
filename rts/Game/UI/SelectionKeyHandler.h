@@ -3,18 +3,14 @@
 #ifndef SELECTION_KEY_HANDLER_H
 #define SELECTION_KEY_HANDLER_H
 
+#include "InputReceiver.h"
 #include <vector>
 
-#include "InputReceiver.h"
-
-class CUnit;
-class CSelectionKeyHandler : public CInputReceiver {
+class CSelectionKeyHandler : public CInputReceiver
+{
 public:
-	void Init() {
-		numDoSelects = 0;
-		selectNumber = 0;
-	}
-	void Kill() { selection.clear(); }
+	CSelectionKeyHandler(): selectNumber(0) {}
+
 	void DoSelection(std::string selectString);
 
 private:
@@ -29,14 +25,10 @@ private:
 	 */
 	static std::string ReadDelimiter(std::string& str);
 
-private:
-	int numDoSelects = 0;
 	/// used to go through all possible units when selecting only a few
-	int selectNumber = 0;
-
-	std::vector<CUnit*> selection;
+	int selectNumber;
 };
 
-extern CSelectionKeyHandler selectionKeys;
+extern CSelectionKeyHandler* selectionKeys;
 
 #endif /* SELECTION_KEY_HANDLER_H */

@@ -135,10 +135,8 @@ static void ParseShaderTable(
 static void LoadTextures(Shader::IProgramObject* program, const LuaTable* root)
 {
 	const LuaTable& textures = root->SubTable("textures");
-	std::vector<std::pair<int, std::string>> data;
-
-	data.reserve(8);
-	textures.GetPairs(data);
+	spring::unordered_map<int, std::string> data;
+	textures.GetMap(data);
 
 	for (const auto& p: data) {
 		program->AddTextureBinding(p.first, p.second);
@@ -160,9 +158,8 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 	p.SetLowerCppKeys(false);
 
 	p.GetTable("Spring");
-	p.AddFunc("GetConfigInt",     LuaUnsyncedRead::GetConfigInt);
-	p.AddFunc("GetConfigFloat",   LuaUnsyncedRead::GetConfigFloat);
-	p.AddFunc("GetConfigString",  LuaUnsyncedRead::GetConfigString);
+	p.AddFunc("GetConfigInt",     LuaUnsyncedCtrl::GetConfigInt);
+	p.AddFunc("GetConfigString",  LuaUnsyncedCtrl::GetConfigString);
 	p.AddFunc("GetLosViewColors", LuaUnsyncedRead::GetLosViewColors);
 	p.EndTable();
 

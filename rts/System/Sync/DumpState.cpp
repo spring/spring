@@ -21,7 +21,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -97,9 +96,9 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		return;
 
 	// we only care about the synced projectile data here
-	const std::vector<CUnit*>& activeUnits = unitHandler.GetActiveUnits();
-	const auto& activeFeatureIDs = featureHandler.GetActiveFeatureIDs();
-	const ProjectileContainer& projectiles = projectileHandler.projectileContainers[true];
+	const std::vector<CUnit*>& activeUnits = unitHandler->GetActiveUnits();
+	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+	const ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
 	file << "\tunits: " << activeUnits.size() << "\n";
@@ -126,10 +125,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const float3& zdir = u->frontdir;
 
 		file << "\t\tunitID: " << u->id << " (name: " << u->unitDef->name << ")\n";
-		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << ">\n";
-		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << ">\n";
-		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << ">\n";
+		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << "\n";
+		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << "\n";
+		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << "\n";
+		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << "\n";
 		file << "\t\t\theading: " << int(u->heading) << ", mapSquare: " << u->mapSquare << "\n";
 		file << "\t\t\thealth: " << u->health << ", experience: " << u->experience << "\n";
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
@@ -181,10 +180,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 		for (const Command& c: cq) {
 			file << "\t\t\t\t\tcommandID: " << c.GetID() << "\n";
-			file << "\t\t\t\t\ttag: " << c.GetTag() << ", options: " << c.GetOpts() << "\n";
-			file << "\t\t\t\t\tparams: " << c.GetNumParams() << "\n";
+			file << "\t\t\t\t\ttag: " << c.tag << ", options: " << c.options << "\n";
+			file << "\t\t\t\t\tparams: " << c.GetParamsCount() << "\n";
 
-			for (unsigned int n = 0; n < c.GetNumParams(); n++) {
+			for (unsigned int n = 0; n < c.GetParamsCount(); n++) {
 				file << "\t\t\t\t\t\t" << c.GetParam(n) << "\n";
 			}
 		}
@@ -210,7 +209,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 	#ifdef DUMP_FEATURE_DATA
 	for (const int featureID: activeFeatureIDs) {
-		const CFeature* f = featureHandler.GetFeature(featureID);
+		const CFeature* f = featureHandler->GetFeature(featureID);
 
 		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
@@ -231,11 +230,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tteams: " << teamHandler.ActiveTeams() << "\n";
+	file << "\tteams: " << teamHandler->ActiveTeams() << "\n";
 
 	#ifdef DUMP_TEAM_DATA
-	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
-		const CTeam* t = teamHandler.Team(a);
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		const CTeam* t = teamHandler->Team(a);
 
 		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
 		file << "\t\t\tmetal: " << float(t->res.metal) << ", energy: " << float(t->res.energy) << "\n";
@@ -245,10 +244,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tallyteams: " << teamHandler.ActiveAllyTeams() << "\n";
+	file << "\tallyteams: " << teamHandler->ActiveAllyTeams() << "\n";
 
 	#ifdef DUMP_ALLYTEAM_DATA
-	for (int a = 0; a < teamHandler.ActiveAllyTeams(); ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		file << "\t\tallyteamID: " << a << ", LOS-map:" << "\n";
 
 		for (int y = 0; y < losHandler->losSizeY; ++y) {

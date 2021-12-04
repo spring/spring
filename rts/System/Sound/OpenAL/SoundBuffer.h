@@ -5,6 +5,7 @@
 
 #include <al.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <cinttypes>
@@ -15,72 +16,67 @@
 /**
  * @brief A buffer holding a sound
  *
- * One of these will be created for each {wav,ogg} sound-file loaded.
- * All buffers are generated on demand and released when a game ends,
- * and can be shared among multiple SoundItem instances.
+ * One of this will be created for each wav-file used.
+ * They are loaded on demand and unloaded when game ends.
+ * They can be shared among multiple SoundItem
  */
 class SoundBuffer : spring::noncopyable
 {
 public:
 	/// Construct an "empty" buffer
 	/// can be played, but you won't hear anything
-	SoundBuffer() = default;
-	SoundBuffer(SoundBuffer&& sb) { *this = std::move(sb); }
-	~SoundBuffer() { Release(); }
+	SoundBuffer();
+	~SoundBuffer();
 
-	SoundBuffer& operator = (SoundBuffer&& sb) {
-		filename = std::move(sb.filename);
-		id = sb.id;
-		sb.id = 0;
-		channels = sb.channels;
-		length = sb.length;
-		return *this;
-	}
+	bool LoadWAV(const std::string& file, std::vector<std::uint8_t> buffer);
+	bool LoadVorbis(const std::string& file, std::vector<std::uint8_t> buffer);
 
-	bool LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer);
-	bool LoadVorbis(const std::string& file, const std::vector<std::uint8_t>& buffer);
-	bool Release();
+	const std::string& GetFilename() const
+	{
+		return filename;
+	};
 
-	const std::string& GetFilename() const { return filename; }
+	ALuint GetId() const
+	{
+		return id;
+	};
 
-	ALuint GetId() const { return id; }
-	ALuint GetChannels() const { return channels; }
-	ALfloat GetLength() const { return length; }
+	ALuint GetChannels() const
+	{
+		return channels;
+	};
+
+	ALfloat GetLength() const
+	{
+		return length;
+	};
 
 	int BufferSize() const;
 
-	static void Initialise() {
-		buffers.reserve(256);
-		buffers.emplace_back(); // empty ("zero") buffer
-	}
-	static void Deinitialise() {
-		bufferMap.clear();
-		buffers.clear();
-	}
+	static void Initialise();
+	static void Deinitialise();
 
 	static size_t GetId(const std::string& name);
-	static SoundBuffer& GetById(const size_t id);
+	static std::shared_ptr<SoundBuffer> GetById(const size_t id);
 
-	static size_t Count() { return buffers.size(); }
+	static size_t Count();
 	static size_t AllocedSize();
 
-	static size_t Insert(SoundBuffer&& buffer);
-
+	static size_t Insert(std::shared_ptr<SoundBuffer> buffer);
 private:
 	bool AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate);
 
 	std::string filename;
-
-	ALuint id = 0;
-	ALuint channels = 0;
-	ALfloat length = 0.0f;
+	ALuint id;
+	ALuint channels;
+	ALfloat length;
 
 	typedef spring::unsynced_map<std::string, size_t> bufferMapT;
-	typedef std::vector<SoundBuffer> bufferVecT;
+	typedef std::vector< std::shared_ptr<SoundBuffer> > bufferVecT;
 
-	static bufferMapT bufferMap; // filename, index into ::buffers
+	static bufferMapT bufferMap; // filename, index into Buffers
 	static bufferVecT buffers;
 };
 
-#endif
 
+#endif

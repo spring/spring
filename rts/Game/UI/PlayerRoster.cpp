@@ -96,7 +96,7 @@ const char* PlayerRoster::GetSortName() const
 }
 
 
-const std::vector<int>& PlayerRoster::GetIndices(bool includePathingFlag, bool callerBlockResort)
+const std::vector<int>& PlayerRoster::GetIndices(int* activePlayerCount, bool includePathingFlag, bool callerBlockResort)
 {
 	// if Disabled, compareFunc is a dummy so the indices are left alone
 	// assert(compareType != Disabled);
@@ -105,9 +105,9 @@ const std::vector<int>& PlayerRoster::GetIndices(bool includePathingFlag, bool c
 	// or make PlayerRoster an EventClient and listen for Player* events
 	// caller should ensure not to block resorting if a player joins and
 	// another quits in between calls
-	if (playerIndices.size() != playerHandler.ActivePlayers()) {
+	if (playerIndices.size() != playerHandler->ActivePlayers()) {
 		playerIndices.clear();
-		playerIndices.resize(playerHandler.ActivePlayers(), 0);
+		playerIndices.resize(playerHandler->ActivePlayers(), 0);
 	}
 
 	if (!callerBlockResort) {
@@ -117,7 +117,27 @@ const std::vector<int>& PlayerRoster::GetIndices(bool includePathingFlag, bool c
 		std::sort(playerIndices.begin(), playerIndices.end(), [&](int aIdx, int bIdx) { return (compareFunc(aIdx, bIdx) <= 0); });
 	}
 
-	// caller should do filtering for active players
+	if (activePlayerCount == nullptr)
+		return playerIndices;
+
+
+	// set the count of active players
+	int& c = *activePlayerCount;
+
+	for (c = 0; c < playerHandler->ActivePlayers(); c++) {
+		assert(playerHandler->IsValidPlayer(playerIndices[c]));
+
+		const CPlayer* p = playerHandler->Player(playerIndices[c]);
+
+		if (p->active)
+			continue;
+
+		if (!gs->PreSimFrame())
+			break;
+		if (!includePathingFlag || p->ping != PATHING_FLAG)
+			break;
+	}
+
 	return playerIndices;
 }
 
@@ -147,8 +167,8 @@ static inline int CompareBasics(const CPlayer* a, const CPlayer* b)
 
 static int CompareAllies(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler.Player(aIdx);
-	const CPlayer* b = playerHandler.Player(bIdx);
+	const CPlayer* a = playerHandler->Player(aIdx);
+	const CPlayer* b = playerHandler->Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -171,8 +191,8 @@ static int CompareAllies(const int aIdx, const int bIdx)
 	if ((aTeam != myTeam) && (bTeam == myTeam)) return +1;
 
 	// my allies first
-	const int aAlly = teamHandler.AllyTeam(aTeam);
-	const int bAlly = teamHandler.AllyTeam(bTeam);
+	const int aAlly = teamHandler->AllyTeam(aTeam);
+	const int bAlly = teamHandler->AllyTeam(bTeam);
 	const int myATeam = gu->myAllyTeam;
 	if ((aAlly == myATeam) && (bAlly != myATeam)) return -1;
 	if ((aAlly != myATeam) && (bAlly == myATeam)) return +1;
@@ -194,8 +214,8 @@ static int CompareAllies(const int aIdx, const int bIdx)
 
 static int CompareTeamIDs(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler.Player(aIdx);
-	const CPlayer* b = playerHandler.Player(bIdx);
+	const CPlayer* a = playerHandler->Player(aIdx);
+	const CPlayer* b = playerHandler->Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -216,8 +236,8 @@ static int CompareTeamIDs(const int aIdx, const int bIdx)
 
 static int ComparePlayerNames(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler.Player(aIdx);
-	const CPlayer* b = playerHandler.Player(bIdx);
+	const CPlayer* a = playerHandler->Player(aIdx);
+	const CPlayer* b = playerHandler->Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -231,8 +251,8 @@ static int ComparePlayerNames(const int aIdx, const int bIdx)
 
 static int ComparePlayerCPUs(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler.Player(aIdx);
-	const CPlayer* b = playerHandler.Player(bIdx);
+	const CPlayer* a = playerHandler->Player(aIdx);
+	const CPlayer* b = playerHandler->Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -247,8 +267,8 @@ static int ComparePlayerCPUs(const int aIdx, const int bIdx)
 
 static int ComparePlayerPings(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler.Player(aIdx);
-	const CPlayer* b = playerHandler.Player(bIdx);
+	const CPlayer* a = playerHandler->Player(aIdx);
+	const CPlayer* b = playerHandler->Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)

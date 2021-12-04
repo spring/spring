@@ -4,7 +4,6 @@
 
 #include "LuaUnitScript.h"
 
-#include "CobDefines.h"
 #include "CobInstance.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
@@ -12,65 +11,14 @@
 #include "LuaScriptNames.h"
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
-#include "Lua/LuaGaia.h"
 #include "Lua/LuaHandleSynced.h"
-#include "Lua/LuaRules.h"
 #include "Lua/LuaUtils.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
-
-CR_BIND_DERIVED(CLuaUnitScript, CUnitScript, )
-
-CR_REG_METADATA(CLuaUnitScript, (
-	CR_IGNORED(handle),
-	CR_IGNORED(L),
-	CR_MEMBER(scriptIndex),
-	CR_MEMBER(scriptNames),
-	CR_IGNORED(inKilled),
-	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
-))
-
-void CLuaUnitScript::PostLoad()
-{
-	if (unit == nullptr)
-		return;
-
-	pieces.reserve(unit->localModel.pieces.size());
-
-	for (auto& p: unit->localModel.pieces) {
-		pieces.push_back(&p);
-	}
-
-	L = handle->GetLuaState();
-
-	hasSetSFXOccupy  = scriptIndex[LUAFN_SetSFXOccupy ] != LUA_NOREF;
-	hasRockUnit      = scriptIndex[LUAFN_RockUnit     ] != LUA_NOREF;
-	hasStartBuilding = scriptIndex[LUAFN_StartBuilding] != LUA_NOREF;
-}
-
-
-void CLuaUnitScript::Serialize(creg::ISerializer* s) {
-	bool isLuaGaia;
-	if (s->IsWriting()) {
-		isLuaGaia = luaGaia != nullptr && handle == &luaGaia->syncedLuaHandle;
-		const bool isLuaRules = luaRules != nullptr && handle == &luaRules->syncedLuaHandle;
-		assert(isLuaGaia || isLuaRules);
-	}
-	s->SerializeInt(&isLuaGaia, sizeof(isLuaGaia));
-	if (!s->IsWriting()) {
-		CSplitLuaHandle* slh = isLuaGaia ? (CSplitLuaHandle*) luaGaia : (CSplitLuaHandle*) luaRules;
-		assert(slh != nullptr);
-		handle = &slh->syncedLuaHandle;
-		L = handle->GetLuaState();
-	}
-}
-
 
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)
 {
@@ -235,18 +183,16 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit)
+	: CNullUnitScript(unit)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
+	, scriptIndex(LUAFN_Last, LUA_NOREF)
+	, inKilled(false)
 {
-	scriptIndex.fill(LUA_NOREF);
-	scriptNames.reserve(scriptIndex.size());
-	pieces.reserve(unit->localModel.pieces.size());
-
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
 		const std::string& fname = lua_tostring(L, -2);
 		const int r = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		scriptNames.insert(fname, r);
+		scriptNames.insert(std::pair<std::string, int>(fname, r));
 		UpdateCallIn(fname, r);
 	}
 	for (auto& p: unit->localModel.pieces) {
@@ -272,7 +218,7 @@ CLuaUnitScript::~CLuaUnitScript()
 
 void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 {
-	for (CUnit* u: unitHandler.GetActiveUnits()) {
+	for (CUnit* u: unitHandler->GetActiveUnits()) {
 		CUnitScript* script = u->script;
 		CLuaUnitScript* luaScript = dynamic_cast<CLuaUnitScript*>(script);
 
@@ -321,7 +267,7 @@ int CLuaUnitScript::UpdateCallIn()
 	else {
 		// adding new callIn
 		r = luaL_ref(L, LUA_REGISTRYINDEX);
-		scriptNames.insert(fname, r);
+		scriptNames.insert(std::pair<std::string, int>(fname, r));
 	}
 
 	UpdateCallIn(fname, r);
@@ -635,14 +581,12 @@ void CLuaUnitScript::ExtractionRateChanged(float speed)
 }
 
 
-
-void CLuaUnitScript::WorldRockUnit(const float3& rockDir) { RockUnit(unit->GetObjectSpaceVec(rockDir)); }
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
 	Call(LUAFN_RockUnit, rockDir.x, rockDir.z);
 }
 
-void CLuaUnitScript::WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) { HitByWeapon(unit->GetObjectSpaceVec(hitDir), weaponDefId, inoutDamage); }
+
 void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	const int fn = LUAFN_HitByWeapon;
@@ -864,14 +808,17 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 
 void CLuaUnitScript::AnimFinished(AnimType type, int piece, int axis)
 {
-	Call((type == AMove)? LUAFN_MoveFinished : LUAFN_TurnFinished, piece + 1, axis + 1);
+	const int fn = (type == AMove ? LUAFN_MoveFinished : LUAFN_TurnFinished);
+
+	Call(fn, piece + 1, axis + 1);
 }
 
 
 void CLuaUnitScript::RawCall(int functionId)
 {
-	if (functionId < 0)
+	if (functionId < 0) {
 		return;
+	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 1);
@@ -884,12 +831,10 @@ void CLuaUnitScript::RawCall(int functionId)
 std::string CLuaUnitScript::GetScriptName(int functionId) const
 {
 	// only for error messages, so speed doesn't matter
-	const auto pred = [functionId](const decltype(scriptNames)::value_type& p) { return (functionId == p.second); };
-	const auto iter = std::find_if(scriptNames.begin(), scriptNames.end(), pred);
-
-	if (iter != scriptNames.end())
-		return iter->first;
-
+	auto it = scriptNames.begin();
+	for (; it != scriptNames.end(); ++it) {
+		if (it->second == functionId) return it->first;
+	}
 	return ("<unnamed: " + IntToString(functionId) + ">");
 }
 
@@ -1009,7 +954,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	if (!lua_israwnumber(L, index))
 		luaL_error(L, "%s(): Bad unitID", caller);
 
-	CUnit* u = unitHandler.GetUnit(lua_toint(L, index));
+	CUnit* u = unitHandler->GetUnit(lua_toint(L, index));
 
 	if (u == nullptr)
 		luaL_error(L, "%s(): Bad unitID: %d", caller, lua_toint(L, index));
@@ -1250,7 +1195,7 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int type = lua_isnumber(L, 2)? luaL_checkint(L, 2): (explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2)) | SFX_GLOBAL);
+	const int type = luaL_checkint(L, 2);
 
 	activeScript->EmitSfx(type, piece);
 	return 0;

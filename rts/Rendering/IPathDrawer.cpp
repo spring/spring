@@ -12,15 +12,16 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 
-IPathDrawer* pathDrawer = nullptr;
+IPathDrawer* pathDrawer = NULL;
 
 IPathDrawer* IPathDrawer::GetInstance() {
-	if (pathDrawer == nullptr) {
-		if (dynamic_cast<QTPFS::PathManager*>(pathManager) != nullptr)
+	if (pathDrawer == NULL) {
+		if (dynamic_cast<QTPFS::PathManager*>(pathManager) != NULL) {
 			return (pathDrawer = new QTPFSPathDrawer());
-
-		if (dynamic_cast<CPathManager*>(pathManager) != nullptr)
+		}
+		if (dynamic_cast<CPathManager*>(pathManager) != NULL) {
 			return (pathDrawer = new DefaultPathDrawer());
+		}
 
 		pathDrawer = new IPathDrawer();
 	}
@@ -31,7 +32,7 @@ IPathDrawer* IPathDrawer::GetInstance() {
 void IPathDrawer::FreeInstance(IPathDrawer* pd) {
 	assert(pd == pathDrawer);
 	delete pd;
-	pathDrawer = nullptr;
+	pathDrawer = NULL;
 }
 
 
@@ -48,7 +49,7 @@ const MoveDef* IPathDrawer::GetSelectedMoveDef() {
 	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 
 	if (!unitSet.empty()) {
-		const CUnit* unit = unitHandler.GetUnit(*unitSet.begin());
+		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
 		md = unit->moveDef;
 	}
 

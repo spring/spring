@@ -6,7 +6,7 @@
 # * DEPS_AI_ALL
 #
 # Functions and macros defined in this file:
-# * ai_message
+# * AIMessage
 #
 
 add_definitions(-DBUILDING_AI)
@@ -54,28 +54,28 @@ set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
 # Display messages on configure, which AIs are found
 set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
-make_global(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
+MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
 
 
 # Print a message, but only if we are allowed to speak.
-macro    (ai_message type msg)
+macro    (AIMessage type msg)
 	if    (NOT AI_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif (NOT AI_FIND_QUIETLY)
-endmacro (ai_message type msg)
+endmacro (AIMessage type msg)
 
 
 find_package(AWK)
 
 # CUtils has to come first, because the Interfaces use it too
-add_subdirectory(Wrappers/CUtils)
-add_subdirectory(Interfaces)
-add_subdirectory(Wrappers)
-add_subdirectory(Skirmish)
+Add_Subdirectory(Wrappers/CUtils)
+Add_Subdirectory(Interfaces)
+Add_Subdirectory(Wrappers)
+Add_Subdirectory(Skirmish)
 
 set(DEPS_AI_ALL
 		${DEPS_AI_INTERFACES}
 		${DEPS_AI_WRAPPERS}
 		${DEPS_AI_SKIRMISH}
 	)
-make_global(DEPS_AI_ALL)
+MakeGlobal(DEPS_AI_ALL)

@@ -3,6 +3,7 @@
 #include "IModelParser.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
+#include "OBJParser.h"
 #include "AssParser.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -19,75 +20,56 @@
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 
-CModelLoader modelLoader;
-
-static C3DOParser g3DOParser;
-static CS3OParser gS3OParser;
-static CAssParser gAssParser;
-
-
-static bool CheckAssimpWhitelist(const char* aiExt) {
-	constexpr std::array<const char*, 5> whitelist = {
-		"3ds"  , // 3DSMax
-		"dae"  , // Collada
-		"lwo"  , // LightWave
-		"obj"  ,
-		"blend", // Blender
-	};
-
-	const auto pred = [&aiExt](const char* wlExt) { return (strcmp(aiExt, wlExt) == 0); };
-	const auto iter = std::find_if(whitelist.begin(), whitelist.end(), pred);
-
-	return (iter != whitelist.end());
-}
-
-static void RegisterModelFormats(CModelLoader::FormatMap& formats) {
-	// file-extension should be lowercase
-	formats.insert("3do", MODELTYPE_3DO);
-	formats.insert("s3o", MODELTYPE_S3O);
+static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
+	spring::unordered_set<std::string> whitelist;
 
 	std::string extension;
 	std::string extensions;
 	std::string enabledExtensions;
 
+	whitelist.insert("3ds"  ); // 3DSMax
+	whitelist.insert("dae"  ); // Collada
+	whitelist.insert("lwo"  ); // LightWave
+	whitelist.insert("blend"); // Blender
+
 	Assimp::Importer importer;
 	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
 	importer.GetExtensionList(extensions);
+
 	// do not ignore the last extension
-	extensions.append(";");
+	extensions += ";";
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
 
 	// split the list, strip off the "*." extension prefixes
-	while ((nxtIdx = extensions.find(';', curIdx)) != std::string::npos) {
+	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
 		extension = extension.substr(extension.find("*.") + 2);
 		extension = StringToLower(extension);
 
 		curIdx = nxtIdx + 1;
 
-		if (!CheckAssimpWhitelist(extension.c_str()))
+		if (whitelist.find(extension) == whitelist.end())
 			continue;
 		if (formats.find(extension) != formats.end())
 			continue;
 
-		formats.insert(extension, MODELTYPE_ASS);
-		enabledExtensions.append("*." + extension + ";");
+		formats[extension] = MODELTYPE_ASS;
+		enabledExtensions += "*." + extension + ";";
 	}
 
-	LOG("[%s] supported (Assimp) model formats: %s", __func__, enabledExtensions.c_str());
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
-static S3DModel CreateDummyModel(unsigned int id)
+static S3DModel CreateDummyModel()
 {
 	// create a crash-dummy
 	S3DModel model;
-	model.id = id;
 	model.type = MODELTYPE_3DO;
 	model.numPieces = 1;
 	// give it one empty piece
-	model.AddPiece(g3DOParser.AllocPiece());
+	model.AddPiece(new S3DOPiece());
 	model.GetRootPiece()->SetCollisionVolume(CollisionVolume('b', 'z', -UpVector, ZeroVector));
 	return model;
 }
@@ -110,7 +92,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 			const char* modelName = model->name.c_str();
 			const char* pieceName = modelPiece->name.c_str();
 
-			LOG_L(L_DEBUG, formatStr, __func__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+			LOG_L(L_DEBUG, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
 		}
 	}
 
@@ -120,33 +102,27 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 }
 
 
-
 void CModelLoader::Init()
 {
-	RegisterModelFormats(formats);
-	InitParsers();
+	// file-extension should be lowercase
+	formats["3do"] = MODELTYPE_3DO;
+	formats["s3o"] = MODELTYPE_S3O;
+	formats["obj"] = MODELTYPE_OBJ;
 
-	models.clear();
-	models.resize(MAX_MODEL_OBJECTS);
+	parsers[MODELTYPE_3DO] = new C3DOParser();
+	parsers[MODELTYPE_S3O] = new CS3OParser();
+	parsers[MODELTYPE_OBJ] = new COBJParser();
+	parsers[MODELTYPE_ASS] = new CAssParser();
 
-	// dummy first model, legitimate model IDs start at 1
-	models[0] = std::move(CreateDummyModel(numModels = 0));
-}
+	// FIXME: unify the metadata formats of CAssParser and COBJParser
+	RegisterAssimpModelFormats(formats);
 
-void CModelLoader::InitParsers()
-{
-	parsers[MODELTYPE_3DO] = &g3DOParser;
-	parsers[MODELTYPE_S3O] = &gS3OParser;
-	parsers[MODELTYPE_ASS] = &gAssParser;
-
-	for (IModelParser* p: parsers) {
-		p->Init();
-	}
+	// dummy first model, model IDs start at 1
+	models.emplace_back();
 }
 
 void CModelLoader::Kill()
 {
-	LogErrors();
 	KillModels();
 	KillParsers();
 
@@ -156,20 +132,26 @@ void CModelLoader::Kill()
 
 void CModelLoader::KillModels()
 {
-	for (unsigned int i = 0; i < numModels; i++) {
-		models[i].DeletePieces();
+	for (unsigned int n = 1; n < models.size(); n++) {
+		models[n].DeletePieces();
 	}
+
+	models.clear();
 }
 
 void CModelLoader::KillParsers()
 {
-	for (IModelParser* p: parsers) {
-		p->Kill();
+	for (auto& p: parsers) {
+		spring::SafeDelete(p.second);
 	}
 
-	parsers[MODELTYPE_3DO] = nullptr;
-	parsers[MODELTYPE_S3O] = nullptr;
-	parsers[MODELTYPE_ASS] = nullptr;
+	parsers.clear();
+}
+
+CModelLoader& CModelLoader::GetInstance()
+{
+	static CModelLoader instance;
+	return instance;
 }
 
 
@@ -178,70 +160,42 @@ std::string CModelLoader::FindModelPath(std::string name) const
 {
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
-	if (name.empty())
-		return name;
+	if (!name.empty()) {
+		const std::string vfsPath = "objects3d/";
+		const std::string& fileExt = FileSystem::GetExtension(name);
 
-	const std::string vfsPath = "objects3d/";
-	const std::string& fileExt = FileSystem::GetExtension(name);
+		if (fileExt.empty()) {
+			for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
+				const std::string& formatExt = it->first;
 
-	if (fileExt.empty()) {
-		for (const auto& format: formats) {
-			const std::string& formatExt = format.first;
+				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
+					name += ("." + formatExt); break;
+				}
+			}
+		}
 
-			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
-				name.append("." + formatExt);
-				break;
+		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
+			if (name.find(vfsPath) == std::string::npos) {
+				return (FindModelPath(vfsPath + name));
 			}
 		}
 	}
 
-	if (CFileHandler::FileExists(name, SPRING_VFS_ZIP))
-		return name;
-
-	if (name.find(vfsPath) != std::string::npos)
-		return name;
-
-	return (FindModelPath(vfsPath + name));
+	return name;
 }
 
 
 void CModelLoader::PreloadModel(const std::string& modelName)
 {
-	assert(Threading::IsMainThread());
-
 	if (!ThreadPool::HasThreads())
 		return;
 
-	// if already in cache, thread just returns early
-	// not spawning the thread at all would be better but still
-	// requires locking around cache.find(...) since some other
-	// preload worker might be down in CreateModel modifying it
-	// at the same time
+	if (cache.find(StringToLower(modelName)) != cache.end())
+		return;
+
 	ThreadPool::Enqueue([modelName]() {
 		modelLoader.LoadModel(modelName, true);
 	});
-}
-
-void CModelLoader::LogErrors()
-{
-	assert(Threading::IsMainThread());
-
-	if (errors.empty())
-		return;
-
-	// block any preload threads from modifying <errors>
-	// doing the empty-check outside lock should be fine
-	std::lock_guard<spring::mutex> lock(mutex);
-
-	for (const auto& pair: errors) {
-		char buf[1024];
-
-		SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", pair.first.c_str(), pair.second.c_str());
-		LOG_L(L_ERROR, "%s", buf);
-		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
-	}
-
-	errors.clear();
 }
 
 
@@ -251,24 +205,22 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 	if (name.empty())
 		return nullptr;
 
-	std::string  path;
-	std::string* refs[2] = {&name, &path};
+	std::lock_guard<spring::mutex> lock(mutex);
 
 	StringToLowerInPlace(name);
 
-	{
-		std::lock_guard<spring::mutex> lock(mutex);
+	std::string  path;
+	std::string* refs[2] = {&name, &path};
 
-		// search in cache first
-		for (const auto& ref: refs) {
-			S3DModel* cachedModel = LoadCachedModel(*ref, preload);
+	// search in cache first
+	for (unsigned int n = 0; n < 2; n++) {
+		S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
 
-			if (cachedModel != nullptr)
-				return cachedModel;
+		if (cachedModel != nullptr)
+			return cachedModel;
 
-			// expensive, delay until needed
-			path = FindModelPath(name);
-		}
+		// expensive, delay until needed
+		path = FindModelPath(name);
 	}
 
 	// not found in cache, create the model and cache it
@@ -277,7 +229,6 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 
 S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 {
-	// caller has lock
 	const auto ci = cache.find(name);
 
 	if (ci == cache.end())
@@ -299,37 +250,25 @@ S3DModel* CModelLoader::CreateModel(
 	bool preload
 ) {
 	S3DModel model = std::move(ParseModel(name, path));
-	S3DModel* pmodel = &models[0];
 
-	{
-		assert(model.numPieces != 0);
-		assert(model.GetRootPiece() != nullptr);
+	if (model.numPieces == 0)
+		model = std::move(CreateDummyModel());
 
-		model.SetPieceMatrices();
+	assert(model.GetRootPiece() != nullptr);
+	model.SetPieceMatrices();
 
-		if (!preload)
-			CreateLists(&model);
-	}
-	{
-		std::lock_guard<spring::mutex> lock(mutex);
+	if (!preload)
+		CreateLists(&model);
 
-		// discard loaded model and return dummy if at limit
-		if (numModels >= MAX_MODEL_OBJECTS) {
-			errors.emplace_back(name, "numModels >= MAX_MODEL_OBJECTS");
-			return pmodel;
-		}
+	// add (parsed or dummy) model to cache
+	model.id = models.size();
 
-		// NB: id depends on thread order, can not be used in synced code
-		pmodel = &models[model.id = ++numModels];
+	cache[name] = model.id;
+	cache[path] = model.id;
 
-		// add (parsed or dummy) model to cache
-		cache[name] = model.id;
-		cache[path] = model.id;
-
-		*pmodel = std::move(model);
-	}
-
-	return pmodel;
+	models.emplace_back();
+	models.back() = std::move(model);
+	return &models[model.id];
 }
 
 
@@ -349,20 +288,20 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 	S3DModel model;
 	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
 
-	if (parser == nullptr) {
-		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
-		return (CreateDummyModel(0));
-	}
+	if (parser != nullptr) {
+		try {
+			model = std::move(parser->Load(path));
+		} catch (const content_error& ex) {
+			char buf[1024];
 
-	try {
-		model = std::move(parser->Load(path));
-	} catch (const content_error& ex) {
-		{
-			std::lock_guard<spring::mutex> lock(mutex);
-			errors.emplace_back(name, ex.what());
+			SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			LOG_L(L_ERROR, "%s", buf);
+			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
+
+			model.numPieces = 0;
 		}
-
-		model = std::move(CreateDummyModel(0));
+	} else {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
 	}
 
 	return model;
@@ -386,10 +325,12 @@ void CModelLoader::CreateLists(S3DModel* model) {
 		return;
 
 	// make sure textures (already preloaded) are fully loaded
-	textureHandlerS3O.LoadTexture(model);
+	texturehandlerS3O->LoadTexture(model);
 
 	// warn about models with bad normals (they break lighting)
 	// skip for 3DO's since those have auto-calculated normals
 	CheckPieceNormals(model, rootPiece);
 }
 
+/******************************************************************************/
+/******************************************************************************/

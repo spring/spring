@@ -3,12 +3,13 @@
 
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
-#include "System/SpringMath.h"
+#include "Sim/Units/CommandAI/Command.h"
+#include "System/myMath.h"
 #include "System/float3.h"
 
 
 BuildInfo::BuildInfo()
-	: def(nullptr)
+	: def(NULL)
 	, pos(ZeroVector)
 	, buildFacing(FACING_SOUTH)
 {}
@@ -33,6 +34,7 @@ int BuildInfo::CreateCommandID() const
 
 void BuildInfo::AddCommandParams(Command& cmd) const
 {
+	cmd.params.reserve(cmd.params.size() + 4);
 	cmd.PushPos(pos);
 	cmd.PushParam((float) buildFacing);
 }
@@ -40,7 +42,7 @@ void BuildInfo::AddCommandParams(Command& cmd) const
 
 bool BuildInfo::Parse(const Command& c)
 {
-	if (c.GetNumParams() < 3)
+	if (c.params.size() < 3)
 		return false;
 
 	// FIXME:
@@ -58,8 +60,8 @@ bool BuildInfo::Parse(const Command& c)
 	def = unitDefHandler->GetUnitDefByID(-c.GetID());
 	buildFacing = FACING_SOUTH;
 
-	if (c.GetNumParams() == 4)
-		buildFacing = std::abs(int(c.GetParam(3))) % NUM_FACINGS;
+	if (c.params.size() == 4)
+		buildFacing = std::abs(int(c.params[3])) % NUM_FACINGS;
 
 	return true;
 }

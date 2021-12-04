@@ -5,26 +5,21 @@
 
 namespace icon {
 	class CIconData;
-	class CIconHandler;
 	class CIcon {
 		friend class CIconHandler;
 
 		public:
 			CIcon();
-			CIcon(unsigned int idx);
+			CIcon(CIconData* data);
 			CIcon(const CIcon& ic);
-
 			CIcon& operator=(const CIcon& ic);
-
 			~CIcon();
 
-			void UnRefData(CIconHandler* ih);
-
-			const CIconData* operator->()  const;
-			const CIconData* GetIconData() const;
+			const CIconData* operator->()  const { return data; }
+			const CIconData* GetIconData() const { return data; }
 
 		private:
-			unsigned int dataIdx = 0;
+			CIconData* data;
 	};
 }
 

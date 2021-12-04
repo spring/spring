@@ -21,4 +21,6 @@ namespace Threading {
 	);
 }
 
+int gettid ();
+
 #endif // THREADSIGNALHANDLER_H

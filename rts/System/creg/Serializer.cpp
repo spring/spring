@@ -16,12 +16,12 @@
 
 #include <algorithm>
 #include <fstream>
-#include <cassert>
+#include <assert.h>
 #include <stdexcept>
 #include <map>
 #include <vector>
 #include <string>
-#include <cstring>
+#include <string.h>
 #include <cinttypes>
 
 using namespace creg;
@@ -38,12 +38,12 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_CREG_SERIALIZER)
 struct PackageHeader
 {
 	char magic[4];
-	int objDataOffset = 0;
-	int objTableOffset = 0;
-	int numObjects = 0;
-	int objClassRefOffset = 0; // a class ref is: zero-term class string + checksum DWORD
-	int numObjClassRefs = 0;
-	unsigned int metadataChecksum = 0;
+	int objDataOffset;
+	int objTableOffset;
+	int numObjects;
+	int objClassRefOffset; // a class ref is: zero-term class string + checksum DWORD
+	int numObjClassRefs;
+	unsigned int metadataChecksum;
 
 	void SwapBytes()
 	{
@@ -54,7 +54,13 @@ struct PackageHeader
 		swabDWordInPlace(numObjects);
 		swabDWordInPlace(metadataChecksum);
 	}
-	PackageHeader()
+	PackageHeader():
+		objDataOffset(0),
+		objTableOffset(0),
+		numObjects(0),
+		objClassRefOffset(0),
+		numObjClassRefs(0),
+		metadataChecksum(0)
 	{
 		magic[0] = 0;
 		magic[1] = 0;
@@ -129,10 +135,10 @@ bool COutputStreamSerializer::IsWriting()
 
 COutputStreamSerializer::ObjectRef* COutputStreamSerializer::FindObjectRef(void* inst, creg::Class* objClass, bool isEmbedded)
 {
-	std::vector<ObjectRef*>& refs = ptrToId[inst];
-	for (auto& obj: refs) {
-		if (obj->isThisObject(inst, objClass, isEmbedded))
-			return obj;
+	std::vector<ObjectRef*>* refs = &(ptrToId[inst]);
+	for (std::vector<ObjectRef*>::iterator i = refs->begin(); i != refs->end(); ++i) {
+		if ((*i)->isThisObject(inst, objClass, isEmbedded))
+			return *i;
 	}
 	return nullptr;
 }
@@ -159,13 +165,13 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 		om.memberId = a;
 		void* memberAddr = ((char*)ptr) + m->offset;
 		unsigned mstart = stream->tellp();
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s", c->name, m->name, m->type->GetName().c_str());
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s", c->name.c_str(), m->name, m->type->GetName().c_str());
 		m->type->Serialize(this, memberAddr);
 		unsigned mend = stream->tellp();
 		om.size = mend - mstart;
 		omg.members.push_back(om);
 		omg.size += om.size;
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s size:%d", c->name, m->name, m->type->GetName().c_str(), om.size);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s size:%d", c->name.c_str(), m->name, m->type->GetName().c_str(), om.size);
 	}
 
 
@@ -198,11 +204,11 @@ void COutputStreamSerializer::SerializeObjectInstance(void* inst, creg::Class* o
 		obj = &objects.back();
 		ptrToId[inst].push_back(obj);
 	} else if (obj->isEmbedded) {
-		throw std::string("Reserialization of embedded object (") + objClass->name + ")";
+		throw "Reserialization of embedded object (" + objClass->name + ")";
 	} else {
 		std::vector<ObjectRef*>::iterator it = std::find(pendingObjects.begin(), pendingObjects.end(), obj);
 		if (it == pendingObjects.end()) {
-			throw std::string("Object pointer was serialized (") + objClass->name + ")";
+			throw "Object pointer was serialized (" + objClass->name + ")";
 		} else {
 			pendingObjects.erase(it);
 		}
@@ -224,7 +230,7 @@ void COutputStreamSerializer::SerializeObjectPtr(void** ptr, creg::Class* objCla
 		int id;
 		ObjectRef* obj = FindObjectRef(*ptr, objClass, false);
 		if (!obj) {
-			objects.emplace_back(*ptr, objects.size(), false, objClass);
+			objects.push_back(ObjectRef(*ptr, objects.size(), false, objClass));
 			obj = &objects.back();
 			ptrToId[*ptr].push_back(obj);
 			pendingObjects.push_back(obj);
@@ -279,12 +285,12 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	ph.objDataOffset = (int)stream->tellp();
 
 	// Insert dummy object with id 0
-	objects.emplace_back(nullptr, 0, true, nullptr);
+	objects.push_back(ObjectRef(0, 0, true, 0));
 	ObjectRef* obj = &objects.back();
 	obj->classIndex = 0;
 
 	// Insert the first object that will provide references to everything
-	objects.emplace_back(rootObj, objects.size(), false, rootObjClass);
+	objects.push_back(ObjectRef(rootObj, objects.size(), false, rootObjClass));
 	obj = &objects.back();
 	ptrToId[rootObj].push_back(obj);
 	pendingObjects.push_back(obj);
@@ -295,7 +301,9 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		const std::vector<ObjectRef*> po = pendingObjects;
 		pendingObjects.clear();
 
-		for (ObjectRef* obj: po) {
+		for (std::vector<ObjectRef*>::const_iterator i = po.begin(); i != po.end(); ++i)
+		{
+			ObjectRef* obj = *i;
 			SerializeObject(obj->class_, obj->ptr, obj);
 			//LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s size:%i", obj->class_->name.c_str(), sz);
 		}
@@ -328,11 +336,9 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	if (LOG_IS_ENABLED(L_DEBUG)) {
 		for (auto &it: classSizes) {
 			LOG_L(L_DEBUG, "%30s %10u %10u",
-					it.first->name,
+					it.first->name.c_str(),
 					classCounts[it.first],
 					it.second);
-			it.second = 0;
-			classCounts[it.first] = 0;
 		}
 	}
 
@@ -340,8 +346,8 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	// Write the class references & calc their checksum
 	ph.numObjClassRefs = classRefs.size();
 	ph.objClassRefOffset = (int)stream->tellp();
-	for (auto& classRef: classRefs) {
-		Class* c = classRef->class_;
+	for (uint a = 0; a < classRefs.size(); a++) {
+		creg::Class* c =  classRefs[a]->class_;
 		WriteZStr(*stream, c->name);
 	};
 
@@ -353,14 +359,44 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		char isEmbedded = oRef.isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
 		stream->write((char*)&isEmbedded, sizeof(char));
-		if (!isEmbedded && oRef.class_ != nullptr && oRef.class_->HasGetSize())
-			WriteVarSizeUInt(stream, oRef.class_->CallGetSizeProc(oRef.ptr));
+
+		char mgcnt = oRef.memberGroups.size();
+		WriteVarSizeUInt(stream, mgcnt);
+
+		std::vector<COutputStreamSerializer::ObjectMemberGroup>::iterator j;
+		for (j = oRef.memberGroups.begin(); j != oRef.memberGroups.end(); ++j) {
+			std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(j->membersClass);
+			if (cr == classMap.end()) throw "Cannot find member class ref";
+			int cid = cr->second.index;
+			WriteVarSizeUInt(stream, cid);
+
+			unsigned int mcnt = j->members.size();
+			WriteVarSizeUInt(stream, mcnt);
+
+			bool hasSerializerMember = false;
+			char groupFlags = 0;
+			if (!j->members.empty() && (j->members.back().memberId == -1)) {
+				groupFlags |= 0x01;
+				hasSerializerMember = true;
+			}
+			stream->write((char*)&groupFlags, sizeof(char));
+
+			int midx = 0;
+			std::vector<COutputStreamSerializer::ObjectMember>::iterator k;
+			for (k = j->members.begin(); k != j->members.end(); ++k, ++midx) {
+				if ((k->memberId != midx) && (!hasSerializerMember || k != (j->members.end() - 1))) {
+					throw "Invalid member id";
+				}
+				WriteVarSizeUInt(stream, k->size);
+			}
+		}
 	}
 
 	// Calculate a checksum for metadata verification
 	ph.metadataChecksum = 0;
-	for (auto& classRef: classRefs) {
-		Class* c = classRef->class_;
+	for (uint a = 0; a < classRefs.size(); a++)
+	{
+		Class* c = classRefs[a]->class_;
 		c->CalculateChecksum(ph.metadataChecksum);
 	}
 
@@ -378,7 +414,6 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	ptrToId.clear();
 	pendingObjects.clear();
 	objects.clear();
-	classSizes.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -386,7 +421,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 //-------------------------------------------------------------------------
 
 CInputStreamSerializer::CInputStreamSerializer()
-	: stream(nullptr)
+	: stream(NULL)
 {
 }
 
@@ -418,7 +453,7 @@ void CInputStreamSerializer::SerializeObject(Class* c, void* ptr)
 		const unsigned oldPos = stream->tellg();
 		void* memberAddr = ((char*)ptr) + m->offset;
 		m->type->Serialize(this, memberAddr);
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s::%s type:%s size:%u", c->name, m->name, m->type->GetName().c_str(), unsigned(stream->tellg()) - oldPos);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s::%s type:%s size:%u", c->name.c_str(), m->name, m->type->GetName().c_str(), unsigned(stream->tellg()) - oldPos);
 	}
 
 	if (c->HasSerialize()) {
@@ -465,7 +500,7 @@ void CInputStreamSerializer::SerializeObjectPtr(void** ptr, creg::Class* cls)
 			unfixedPointers.push_back(ufp);
 		}
 	} else {
-		*ptr = nullptr;
+		*ptr = NULL;
 	}
 }
 
@@ -502,7 +537,7 @@ void CallPostLoad(creg::Class* c, creg::Class* oc, void* obj)
 		CallPostLoad(c->base(), oc, obj);
 
 	if (c->HasPostLoad()) {
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name, c->name);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());
 		c->CallPostLoadProc(obj);
 	}
 }
@@ -514,89 +549,93 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	stream = s;
 	s->read((char*)&ph, sizeof(PackageHeader));
 
-	if (memcmp(ph.magic, CREG_PACKAGE_FILE_ID, 4) != 0)
-		throw content_error("Incorrect object package file ID");
+	if (memcmp(ph.magic, CREG_PACKAGE_FILE_ID, 4))
+		throw std::runtime_error("Incorrect object package file ID");
 
 	// Load references
 	classRefs.resize(ph.numObjClassRefs);
 	s->seekg(ph.objClassRefOffset);
-
-	for (int a = 0; a < ph.numObjClassRefs; a++) {
-		const std::string className = ReadZStr(*s);
-
-		if ((classRefs[a] = System::GetClass(className)) == nullptr)
-			throw content_error("Package file contains reference to unknown class " + className);
-	}
-
+	for (int a = 0; a < ph.numObjClassRefs; a++)
 	{
-		// Calculate metadata checksum and compare with stored checksum
-		unsigned int checksum = 0;
-
-		for (const auto& classRef: classRefs)
-			classRef->CalculateChecksum(checksum);
-
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Checksum: %X (savegame: %X)\n", checksum, ph.metadataChecksum);
-
-		if (checksum != ph.metadataChecksum)
-			throw content_error("Metadata checksum error: Package file was saved with a different version");
+		const std::string className = ReadZStr(*s);
+		creg::Class* class_ = System::GetClass(className);
+		if (!class_)
+			throw std::runtime_error("Package file contains reference to unknown class " + className);
+		classRefs[a] = class_;
 	}
+
+	// Calculate metadata checksum and compare with stored checksum
+	unsigned int checksum = 0;
+	for (uint a = 0; a < classRefs.size(); a++)
+		classRefs[a]->CalculateChecksum(checksum);
+	LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Checksum: %X (savegame: %X)\n", checksum, ph.metadataChecksum);
+	if (checksum != ph.metadataChecksum)
+		throw std::runtime_error("Metadata checksum error: Package file was saved with a different version");
 
 	// Create all non-embedded objects
 	s->seekg(ph.objTableOffset);
 	objects.resize(ph.numObjects);
-
-	for (int a = 0; a < ph.numObjects; a++) {
+	for (int a = 0; a < ph.numObjects; a++)
+	{
 		unsigned int classRefIndex;
 		char isEmbedded;
-
+		unsigned int mgcnt;
 		ReadVarSizeUInt(stream, &classRefIndex);
 		stream->read((char*)&isEmbedded, sizeof(char));
-		Class* c = classRefs[classRefIndex];
+		ReadVarSizeUInt(stream, &mgcnt);
 
-		objects[a].obj = nullptr;
-
-		if (!isEmbedded) {
-			size_t size = c->size;
-
-			if (c->HasGetSize())
+		for (unsigned int b = 0; b < mgcnt; b++) {
+			unsigned int cid, mcnt;
+			char groupFlags;
+			ReadVarSizeUInt(stream, &cid);
+			ReadVarSizeUInt(stream, &mcnt);
+			stream->read((char*)&groupFlags, sizeof(char));
+			for (unsigned int c = 0; c < mcnt; c++) {
+				unsigned int size;
 				ReadVarSizeUInt(stream, &size);
-
-			// Allocate and construct
-			objects[a].obj = c->CreateInstance(size);
+			}
 		}
 
+		objects[a].obj = NULL;
+		if (!isEmbedded) {
+			// Allocate and construct
+			ClassBinder* binder = classRefs[classRefIndex]->binder;
+			void* inst = binder->class_.CreateInstance();
+			objects[a].obj = inst;
+		}
 		objects[a].isEmbedded = !!isEmbedded;
 		objects[a].classRef = classRefIndex;
 	}
 
-	const int endOffset = s->tellg();
+	int endOffset = s->tellg();
 
 	// Read the object data using serialization
 	s->seekg(ph.objDataOffset);
-	for (const auto& object: objects) {
-		if (object.isEmbedded)
-			continue;
-
-		creg::Class* cls = classRefs[object.classRef];
-		SerializeObject(cls, object.obj);
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name, cls->size);
+	for (uint a = 0; a < objects.size(); a++)
+	{
+		if (!objects[a].isEmbedded) {
+			creg::Class* cls = classRefs[objects[a].classRef];
+			SerializeObject(cls, objects[a].obj);
+			LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name.c_str(), cls->size);
+		}
 	}
 
 	// Fix pointers to embedded objects
-	for (const auto& unfixedPointer: unfixedPointers) {
-		*unfixedPointer.ptrAddr = objects[unfixedPointer.objID].obj;
+	for (uint a = 0; a < unfixedPointers.size(); a++) {
+		void* p = objects[unfixedPointers[a].objID].obj;
+		*unfixedPointers[a].ptrAddr = p;
 	}
 
-	// Run all registered PostLoad callbacks
-	for (const auto& callback: callbacks) {
-		callback.cb(callback.userdata);
+	// Run all registered post load callbacks
+	for (uint a = 0; a < callbacks.size(); a++) {
+		callbacks[a].cb(callbacks[a].userdata);
 	}
 
-	// Run PostLoad functions on `all` objects (exclude root object)
-	for (const StoredObject& o: objects) {
-		creg::Class* oc = classRefs[o.classRef];
+	// Run post load functions on `all` objects (exclude root object)
+	for (uint a = 1; a < objects.size(); a++) {
+		StoredObject& o = objects[a];
+		creg::Class* oc = classRefs[objects[a].classRef];
 		creg::Class* c = oc;
-
 		CallPostLoad(c, oc, o.obj);
 	}
 
@@ -609,9 +648,9 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 			int(objects.size()), int(classRefs.size()));
 
 	s->seekg(endOffset);
-
 	unfixedPointers.clear();
 	objects.clear();
 }
 
-ISerializer::~ISerializer() = default;
+ISerializer::~ISerializer() {
+}

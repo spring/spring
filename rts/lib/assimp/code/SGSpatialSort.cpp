@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -48,6 +47,7 @@ the 3ds loader handling smooth groups correctly  */
 
 using namespace Assimp;
 
+
 // ------------------------------------------------------------------------------------------------
 SGSpatialSort::SGSpatialSort()
 {
@@ -88,11 +88,12 @@ void SGSpatialSort::FindPositions( const aiVector3D& pPosition,
     float dist = pPosition * mPlaneNormal;
     float minDist = dist - pRadius, maxDist = dist + pRadius;
 
-    // clear the array
-    poResults.clear();
+    // clear the array in this strange fashion because a simple clear() would also deallocate
+    // the array which we want to avoid
+    poResults.erase( poResults.begin(), poResults.end());
 
     // quick check for positions outside the range
-    if( mPositions.empty() )
+    if( mPositions.size() == 0)
         return;
     if( maxDist < mPositions.front().mDistance)
         return;

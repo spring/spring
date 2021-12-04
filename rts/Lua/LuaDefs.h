@@ -85,45 +85,30 @@ namespace {
 
 
 
-#define DECL_LOAD_HANDLER(HandlerType, handlerInst)         \
+#define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
 	bool HandlerType::LoadHandler() {                       \
-		std::lock_guard<spring::mutex> lk(m_singleton);     \
+		{                                                   \
+			std::lock_guard<spring::mutex> lk(m_singleton); \
                                                             \
-		if (handlerInst != nullptr)                         \
-			return (handlerInst->IsValid());                \
-		if (!HandlerType::CanLoadHandler())                 \
-			return false;                                   \
+			if (HandlerInstance != nullptr)                 \
+				return (HandlerInstance->IsValid());        \
+			if (!HandlerType::CanLoadHandler())             \
+				return false;                               \
                                                             \
-		if (!(handlerInst = new HandlerType())->IsValid())  \
-			return false;                                   \
-                                                            \
-		return (handlerInst->CollectGarbage(true), true);   \
+			HandlerInstance = new HandlerType();            \
+			return (HandlerInstance->IsValid());            \
+		}                                                   \
 	}
 
-#define DECL_LOAD_SPLIT_HANDLER(HandlerType, handlerInst)             \
-	bool HandlerType::LoadHandler(bool onlySynced) {                  \
-		std::lock_guard<spring::mutex> lk(m_singleton);               \
-                                                                      \
-		if (handlerInst != nullptr)                                   \
-			return (handlerInst->IsValid());                          \
-		if (!HandlerType::CanLoadHandler())                           \
-			return false;                                             \
-                                                                      \
-		if (!(handlerInst = new HandlerType(onlySynced))->IsValid())  \
-			return false;                                             \
-                                                                      \
-		return (handlerInst->CollectGarbage(true), true);             \
-	}
-
-#define DECL_FREE_HANDLER(HandlerType, handlerInst)      \
+#define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
 	bool HandlerType::FreeHandler() {                    \
 		std::lock_guard<spring::mutex> lk(m_singleton);  \
                                                          \
-		if (handlerInst == nullptr)                      \
+		if (HandlerInstance == nullptr)                  \
 			return false;                                \
                                                          \
-		HandlerType* inst = handlerInst;                 \
-		handlerInst = nullptr;                           \
+		auto* inst = HandlerInstance;                    \
+		HandlerInstance = NULL;                          \
 		inst->KillLua(true);                             \
 		delete inst;                                     \
 		return true;                                     \

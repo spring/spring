@@ -13,7 +13,7 @@
 #include "System/creg/STL_List.h"
 
 
-CInMapDrawModel* inMapDrawerModel = nullptr;
+CInMapDrawModel* inMapDrawerModel = NULL;
 
 const size_t CInMapDrawModel::DRAW_QUAD_SIZE = 32;
 
@@ -42,10 +42,10 @@ CInMapDrawModel::CInMapDrawModel()
 
 bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) const
 {
-	const int allyTeam = teamHandler.AllyTeam(teamID);
+	const int allyTeam = teamHandler->AllyTeam(teamID);
 
-	const bool alliedAB = teamHandler.Ally(allyTeam, gu->myAllyTeam);
-	const bool alliedBA = teamHandler.Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
 
 	return (gu->spectating || drawAllMarks || (!spectator && alliedAB && alliedBA));
 }
@@ -53,10 +53,10 @@ bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) con
 
 bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 {
-	const int  allyTeam  = teamHandler.AllyTeam(sender->team);
+	const int  allyTeam  = teamHandler->AllyTeam(sender->team);
 
-	const bool alliedAB = teamHandler.Ally(allyTeam, gu->myAllyTeam);
-	const bool alliedBA = teamHandler.Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
 	const bool alliedMsg = alliedAB && alliedBA;
 
 	// if we are playing and the guy sending the message is
@@ -68,12 +68,12 @@ bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 
 bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label, int playerID)
 {
-	if (!playerHandler.IsValidPlayer(playerID)) {
+	if (!playerHandler->IsValidPlayer(playerID)) {
 		return false;
 	}
 
 	// GotNetMsg() alreadys checks validity of playerID
-	const CPlayer* sender = playerHandler.Player(playerID);
+	const CPlayer* sender = playerHandler->Player(playerID);
 	const bool allowed = AllowedMsg(sender);
 
 	float3 pos = constPos;
@@ -82,7 +82,7 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, nullptr, &label))
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label))
 		return false;
 
 
@@ -103,11 +103,11 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, int playerID)
 {
-	if (!playerHandler.IsValidPlayer(playerID)) {
+	if (!playerHandler->IsValidPlayer(playerID)) {
 		return false;
 	}
 
-	const CPlayer* sender = playerHandler.Player(playerID);
+	const CPlayer* sender = playerHandler->Player(playerID);
 
 	float3 pos1 = constPos1;
 	float3 pos2 = constPos2;
@@ -116,7 +116,7 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 	pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 2.0f;
 	pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, nullptr)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return false;
 	}
 
@@ -135,16 +135,16 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 
 void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 {
-	if (!playerHandler.IsValidPlayer(playerID))
+	if (!playerHandler->IsValidPlayer(playerID))
 		return;
 
-	const CPlayer* sender = playerHandler.Player(playerID);
+	const CPlayer* sender = playerHandler->Player(playerID);
 
 	float3 pos = constPos;
 	pos.ClampInBounds();
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, nullptr, nullptr)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 
@@ -188,9 +188,9 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 
 void CInMapDrawModel::EraseAll()
 {
-	for (auto& drawQuad: drawQuads) {
-		drawQuad.points.clear();
-		drawQuad.lines.clear();
+	for (size_t n = 0; n < drawQuads.size(); n++) {
+		drawQuads[n].points.clear();
+		drawQuads[n].lines.clear();
 	}
 	numPoints = 0;
 	numLines = 0;

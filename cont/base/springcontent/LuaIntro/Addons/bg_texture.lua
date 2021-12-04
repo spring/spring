@@ -15,17 +15,11 @@ end
 ------------------------------------------
 
 local loadscreens = VFS.DirList("bitmaps/loadpictures/")
-local backgroundTexture
-if #loadscreens ~= 0 then
-	backgroundTexture = loadscreens[ math.random(#loadscreens) ]
-end
+local backgroundTexture = loadscreens[ math.random(#loadscreens) ]
 local aspectRatio
 
 
 function addon.DrawLoadScreen()
-	if backgroundTexture == nil then
-		return
-	end
 	local loadProgress = SG.GetLoadProgress()
 
 	if not aspectRatio then
@@ -57,8 +51,5 @@ function addon.DrawLoadScreen()
 end
 
 function addon.Shutdown()
-	if backgroundTexture == nil then
-		return
-	end
 	gl.DeleteTexture(backgroundTexture)
 end

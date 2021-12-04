@@ -4,7 +4,6 @@
 #define SKY_BOX_H
 
 #include <string>
-
 #include "ISky.h"
 #include "Map/MapTexture.h"
 
@@ -14,14 +13,14 @@ public:
 	CSkyBox(const std::string& texture);
 	~CSkyBox();
 
-	void Update() override {}
-	void UpdateSunDir() override {}
-	void UpdateSkyTexture() override {}
+	void Update() {}
+	void UpdateSunDir() {}
+	void UpdateSkyTexture() {}
 
 	void Draw();
 	void DrawSun() {}
 
-	void SetLuaTexture(const MapTextureData& td) override
+	void SetLuaTexture(const MapTextureData& td)
 	{
 		skyTex.SetLuaTexture(td);
 	}

@@ -10,7 +10,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 using std::max;
 using std::min;
@@ -44,9 +44,10 @@ CFreeController::CFreeController()
 {
 	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
 	pos -= (dir * 1000.0f);
-
-	camera->SetDir(dir);
-	rot = camera->GetRot();
+	if (camera) {
+		camera->SetDir(dir);
+		rot = camera->GetRot();
+	}
 
 	enabled     = configHandler->GetBool("CamFreeEnabled");
 	invertAlt   = configHandler->GetBool("CamFreeInvertAlt");
@@ -277,6 +278,8 @@ void CFreeController::KeyMove(float3 move)
 	else {
 		avel.y += (aspeed * -qx); // spin
 	}
+
+	return;
 }
 
 
@@ -317,8 +320,8 @@ void CFreeController::MouseWheelMove(float move)
 	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
 	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
-	KeyInput::SetKeyModState(KMOD_CTRL, false);
-	KeyInput::SetKeyModState(KMOD_SHIFT, true);
+	KeyInput::SetKeyModState(KMOD_CTRL, 0);
+	KeyInput::SetKeyModState(KMOD_SHIFT, 1);
 
 	KeyMove(float3(0.0f, move, 0.0f));
 
@@ -359,15 +362,15 @@ float3 CFreeController::SwitchFrom() const
 {
 	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
 	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
-	return {x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z};
+	return float3(x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z);
 }
 
 
 void CFreeController::SwitchTo(const int oldCam, const bool showText)
 {
-	if (showText)
+	if (showText) {
 		LOG("Switching to Free style camera");
-
+	}
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;
 }

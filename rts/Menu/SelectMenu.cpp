@@ -10,7 +10,6 @@
 #include "SelectionWidget.h"
 #include "System/AIScriptHandler.h"
 #include "Game/ClientSetup.h"
-#include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
 #include "Rendering/Fonts/glFont.h"
@@ -45,9 +44,11 @@ CONFIG(std::string, address).defaultValue("").description("Last Ip/hostname used
 CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
 CONFIG(std::string, MenuArchive).defaultValue("Spring Bitmaps").description("Archive name for the default Menu.");
 
-class ConnectWindow : public agui::Window {
+class ConnectWindow : public agui::Window
+{
 public:
-	ConnectWindow() : agui::Window("Connect to server") {
+	ConnectWindow() : agui::Window("Connect to server")
+	{
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -71,7 +72,8 @@ public:
 	agui::LineEdit* address;
 
 private:
-	void Finish(bool connect) {
+	void Finish(bool connect)
+	{
 		if (connect)
 			Connect.emit(address->GetContent());
 		else
@@ -79,9 +81,11 @@ private:
 	};
 };
 
-class SettingsWindow : public agui::Window {
+class SettingsWindow : public agui::Window
+{
 public:
-	SettingsWindow(std::string &name) : agui::Window(name) {
+	SettingsWindow(std::string &name) : agui::Window(name)
+	{
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -106,7 +110,8 @@ public:
 	agui::LineEdit* value;
 
 private:
-	void Finish(bool set) {
+	void Finish(bool set)
+	{
 		if (set)
 			OK.emit(title + " = " + value->GetContent());
 		else
@@ -114,54 +119,44 @@ private:
 	};
 };
 
-
-
-
 SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
-: GuiElement(nullptr)
+: GuiElement(NULL)
 , clientSetup(setup)
-, conWindow(nullptr)
-, settingsWindow(nullptr)
-, curSelect(nullptr)
+, conWindow(NULL)
+, settingsWindow(NULL)
+, curSelect(NULL)
 {
-	SetPos(0, 0);
-	SetSize(1, 1);
+	SetPos(0,0);
+	SetSize(1,1);
 	agui::gui->AddElement(this, true);
 
 	{ // GUI stuff
-		agui::Picture* background = new agui::Picture(this);
-
+		agui::Picture* background = new agui::Picture(this);;
 		{
-			// can not conflict with LuaMenu archive, just keep in VFS if it was not already
-			vfsHandler->SetName("SelMenuVFS");
-			vfsHandler->AddArchiveIf(configHandler->GetString("MenuArchive"), false);
-			vfsHandler->SetName("SpringVFS");
-
-			//TODO: select by resolution / aspect ratio with fallback image
+			const std::string archiveName = configHandler->GetString("MenuArchive");
+			vfsHandler->AddArchive(archiveName, false);
 			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
-
-			if (!files.empty())
-				background->Load(files[ guRNG.NextInt(files.size()) ]);
+			if (!files.empty()) {
+				//TODO: select by resolution / aspect ratio with fallback image
+				background->Load(files[guRNG.NextInt(files.size())]);
+			}
+			vfsHandler->RemoveArchive(archiveName);
 		}
-
 		selw = new SelectionWidget(this);
 		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
-		/*agui::TextElement* title = */new agui::TextElement("Spring " + SpringVersion::GetFull(), menu); // will be deleted in menu
-		Button* testGame = new Button("Test Game", menu);
-		testGame->Clicked.connect(std::bind(&SelectMenu::Single, this));
-
-		Button* playDemo = new Button("Play Demo", menu);
-		playDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
+		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
+		Button* single = new Button("Test the Game", menu);
+		single->Clicked.connect(std::bind(&SelectMenu::Single, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
-		Button* editsettings = new Button("Edit Settings", menu);
+		Button* editsettings = new Button("Edit settings", menu);
 		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
 
-		Button* directConnect = new Button("Direct Connect", menu);
-		directConnect->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
+		Button* direct = new Button("Direct connect", menu);
+		direct->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
 
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(std::bind(&SelectMenu::Quit, this));
@@ -187,50 +182,23 @@ bool SelectMenu::Draw()
 	return true;
 }
 
-
-void SelectMenu::Demo()
-{
-	const std::function<void(const std::string&)> demoSelectedCB = [&](const std::string& userDemo) {
-		if (pregame != nullptr)
-			return;
-
-		clientSetup->isHost = true;
-		clientSetup->myPlayerName += " (spec)";
-		clientSetup->demoFile = userDemo;
-
-		pregame = new CPreGame(clientSetup);
-		pregame->LoadDemoFile(clientSetup->demoFile);
-		return (agui::gui->RmElement(this));
-	};
-
-	if (selw->userDemo == SelectionWidget::NoDemoSelect) {
-		selw->ShowDemoList(demoSelectedCB);
-		return;
-	}
-}
-
 void SelectMenu::Single()
 {
 	if (selw->userMod == SelectionWidget::NoModSelect) {
 		selw->ShowModList();
-		return;
-	}
-	if (selw->userMap == SelectionWidget::NoMapSelect) {
+	} else if (selw->userMap == SelectionWidget::NoMapSelect) {
 		selw->ShowMapList();
-		return;
-	}
-	if (selw->userScript == SelectionWidget::NoScriptSelect) {
+	} else if (selw->userScript == SelectionWidget::NoScriptSelect) {
 		selw->ShowScriptList();
-		return;
 	}
-
-	if (pregame == nullptr) {
+	else if (pregame == NULL) {
 		// in case of double-click
-		if (selw->userScript == SelectionWidget::SandboxAI)
+		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
+		}
 
 		pregame = new CPreGame(clientSetup);
-		pregame->LoadSetupScript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
+		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
 		return (agui::gui->RmElement(this));
 	}
 }
@@ -252,53 +220,51 @@ void SelectMenu::ShowConnectWindow(bool show)
 	else if (!show && conWindow)
 	{
 		agui::gui->RmElement(conWindow);
-		conWindow = nullptr;
+		conWindow = NULL;
 	}
 }
 
 void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 {
-	if (show) {
-		if (settingsWindow) {
+	if (show)
+	{
+		if(settingsWindow) {
 			agui::gui->RmElement(settingsWindow);
-			settingsWindow = nullptr;
+			settingsWindow = NULL;
 		}
 		settingsWindow = new SettingsWindow(name);
 		settingsWindow->OK.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, std::placeholders::_1));
 		settingsWindow->WantClose.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
 	}
-	else if (!show && settingsWindow) {
+	else if (!show && settingsWindow)
+	{
 		agui::gui->RmElement(settingsWindow);
-		settingsWindow = nullptr;
-		const size_t p = name.find(" = ");
-		if (p != std::string::npos) {
-			configHandler->SetString(name.substr(0, p), name.substr(p + 3));
+		settingsWindow = NULL;
+		size_t p = name.find(" = ");
+		if(p != std::string::npos) {
+			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
 			ShowSettingsList();
 		}
-		if (curSelect != nullptr)
+		if(curSelect)
 			curSelect->list->SetFocus(true);
 	}
 }
 
 void SelectMenu::ShowSettingsList()
 {
-	if (curSelect == nullptr) {
+	if (!curSelect) {
 		curSelect = new ListSelectWnd("Select setting");
 		curSelect->Selected.connect(std::bind(&SelectMenu::SelectSetting, this, std::placeholders::_1));
 		curSelect->WantClose.connect(std::bind(&SelectMenu::CleanWindow, this));
 	}
 	curSelect->list->RemoveAllItems();
-
+	const std::map<std::string, std::string> &data = configHandler->GetData();
 	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
-	const std::map<std::string, std::string>& data = configHandler->GetData();
 	const DataSorted dataSorted(data.begin(), data.end());
-
-	for (const auto& item: dataSorted)
-		curSelect->list->AddItem(item.first + " = " + item.second, "");
-
-	if (data.find(userSetting) != data.end())
+	for(DataSorted::const_iterator iter = dataSorted.begin(); iter != dataSorted.end(); ++iter)
+		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
+	if(data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
-
 	curSelect->list->RefreshQuery();
 }
 
@@ -315,7 +281,7 @@ void SelectMenu::CleanWindow() {
 	if (curSelect) {
 		ShowSettingsWindow(false, "");
 		agui::gui->RmElement(curSelect);
-		curSelect = nullptr;
+		curSelect = NULL;
 	}
 }
 

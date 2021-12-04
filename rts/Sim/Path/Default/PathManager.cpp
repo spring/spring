@@ -16,10 +16,6 @@
 #include "System/TimeProfiler.h"
 
 
-static CPathFinder    gMaxResPF;
-static CPathEstimator gMedResPE;
-static CPathEstimator gLowResPE;
-
 
 CPathManager::CPathManager()
 : maxResPF(nullptr)
@@ -36,6 +32,9 @@ CPathManager::CPathManager()
 	pathHeatMap = PathHeatMap::GetInstance();
 
 	pathMap.reserve(1024);
+	pcMemPool.clear();
+	peMemPool.clear();
+	pfMemPool.clear();
 
 	// PathNode::nodePos is an ushort2, PathNode::nodeNum is an int
 	// therefore the maximum map size is limited to 64k*64k squares
@@ -44,47 +43,28 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	// Finalize is not called in case of forced exit
-	if (maxResPF != nullptr) {
-		lowResPE->Kill();
-		medResPE->Kill();
-		maxResPF->Kill();
-
-		maxResPF = nullptr;
-		medResPE = nullptr;
-		lowResPE = nullptr;
-	}
+	peMemPool.free(lowResPE);
+	peMemPool.free(medResPE);
+	pfMemPool.free(maxResPF);
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
 	IPathFinder::KillStatic();
 }
 
-
-void CPathManager::RemoveCacheFiles()
-{
-	medResPE->RemoveCacheFile("pe" , mapInfo->map.name);
-	lowResPE->RemoveCacheFile("pe2", mapInfo->map.name);
-}
-
-
-std::uint32_t CPathManager::GetPathCheckSum() const {
-	assert(IsFinalized());
-	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
-}
-
 std::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		maxResPF = &gMaxResPF;
-		medResPE = &gMedResPE;
-		lowResPE = &gLowResPE;
-
 		// maxResPF only runs on the main thread, so can be unsafe
-		maxResPF->Init(false);
-		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe" , mapInfo->map.name);
-		lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+		maxResPF = pfMemPool.alloc<CPathFinder>(false);
+		medResPE = peMemPool.alloc<CPathEstimator>(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		lowResPE = peMemPool.alloc<CPathEstimator>(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+
+		// make cached path data checksum part of synced state
+		// so that when any client has a corrupted / incorrect
+		// cache it desyncs from the start, not minutes later
+		{ SyncedUint tmp(GetPathCheckSum()); }
 	}
 
 	const spring_time dt = spring_gettime() - t0;
@@ -370,7 +350,7 @@ unsigned int CPathManager::RequestPath(
 
 	// Create an estimator definition.
 	goalRadius = std::max<float>(goalRadius, PATH_NODE_SPACING * SQUARE_SIZE); //FIXME do on a per PE & PF level?
-	assert(moveDef == moveDefHandler.GetMoveDefByPathType(moveDef->pathType));
+	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
 	MultiPath newPath = MultiPath(moveDef, startPos, goalPos, goalRadius);
 	newPath.finalGoal = goalPos;
@@ -573,20 +553,20 @@ float3 CPathManager::NextWayPoint(
 		// OR we are stuck on an impassable square
 		if (maxResPath.path.empty()) {
 			if (lowResPath.path.empty() && medResPath.path.empty()) {
-				if (multiPath->searchResult == IPath::Ok)
-					waypoint = multiPath->finalGoal;
-
-				// [else]
-				// reached in the CantGetCloser case for any max-res searches
-				// that start within their goal radius (ie. have no waypoints)
-				// RequestPath always puts startPos into maxResPath to handle
-				// this so waypoint will have been set to it (during previous
-				// iteration) if we end up here
+				if (multiPath->searchResult == IPath::Ok) {
+					waypoint = multiPath->finalGoal; break;
+				} else {
+					// reached in the CantGetCloser case for any max-res searches
+					// that start within their goal radius (ie. have no waypoints)
+					// RequestPath always puts startPos into maxResPath to handle
+					// this so waypoint will have been set to it (during previous
+					// iteration) if we end up here
+					break;
+				}
 			} else {
 				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
+				break;
 			}
-
-			break;
 		} else {
 			waypoint = maxResPath.path.back();
 			maxResPath.path.pop_back();
@@ -717,6 +697,13 @@ void CPathManager::GetPathWayPoints(
 	for (IPath::path_list_type::const_reverse_iterator pvi = lowResPoints.rbegin(); pvi != lowResPoints.rend(); ++pvi) {
 		points.push_back(*pvi);
 	}
+}
+
+
+
+std::uint32_t CPathManager::GetPathCheckSum() const {
+	assert(IsFinalized());
+	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
 

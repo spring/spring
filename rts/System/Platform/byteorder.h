@@ -83,7 +83,7 @@
 	// swabFloat(w) do not swab
 
 #else
-	// _WIN32
+	// WIN32
 
 	// do not swab
 

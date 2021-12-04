@@ -12,17 +12,11 @@
 #define UNPACKZ(xz) ((signed short)((std::uint32_t)(xz) & 0xffff))
 
 
-// most callins only need two args, some three or four
-// QueryLandingPads is unbounded (in principle) but 16
-// should generally be enough
-static constexpr unsigned int MAX_COB_ARGS = 16;
-
-static constexpr   int COBSCALE      = 65536;
-static constexpr   int COBSCALE_HALF = COBSCALE / 2;
-static constexpr float COBSCALE_INV  = 1.0f / COBSCALE;
-
-static const float RAD2TAANG = COBSCALE_HALF / math::PI;
-static const float TAANG2RAD = math::PI / COBSCALE_HALF;
+static const int COBSCALE = 65536;
+static const int COBSCALEHALF = COBSCALE / 2;
+static const float CORDDIV   = 1.0f / COBSCALE;
+static const float RAD2TAANG = COBSCALEHALF / math::PI;
+static const float TAANG2RAD = math::PI / COBSCALEHALF;
 
 
 class CCobThread;
@@ -39,37 +33,24 @@ public:
 protected:
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	int RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int RealCall(int functionId, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 
 	void ShowScriptError(const std::string& msg) override;
 
 public:
-	CCobFile* cobFile;
-
+	CCobFile* script;
 	std::vector<int> staticVars;
-	std::vector<int> threadIDs;
+	std::vector<CCobThread *> threads;
+	const CCobFile* GetScriptAddr() const { return script; }
 
 public:
-	// creg only
-	CCobInstance(): CUnitScript(nullptr), cobFile(nullptr) {}
-	CCobInstance(CCobFile* cob, CUnit* unit): CUnitScript(unit), cobFile(cob) { Init(); }
-	~CCobInstance();
+	//creg only
+	CCobInstance();
+	CCobInstance(CCobFile *script, CUnit *unit);
+	virtual ~CCobInstance();
 
 	void Init();
 	void PostLoad();
-
-	void AddThreadID(int threadID) { threadIDs.push_back(threadID); }
-	bool RemoveThreadID(int threadID)
-	{
-		const auto it = std::find(threadIDs.begin(), threadIDs.end(), threadID);
-
-		if (it == threadIDs.end())
-			return false;
-
-		threadIDs.erase(it);
-		return true;
-	}
-
 
 	// takes COBFN_* constant as argument
 	bool HasFunction(int id) const;
@@ -78,24 +59,22 @@ public:
 	bool HasTargetWeight(int weaponNum) const override;
 
 	// call overloads, they all call RealCall
-	int Call(const std::string& fname);
-	int Call(const std::string& fname, int arg1);
-	int Call(const std::string& fname, std::array<int, 1 + MAX_COB_ARGS>& args);
-	int Call(const std::string& fname, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int Call(const std::string &fname);
+	int Call(const std::string &fname, int arg1);
+	int Call(const std::string &fname, std::vector<int> &args);
+	int Call(const std::string &fname, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
-	int Call(int id, std::array<int, 1 + MAX_COB_ARGS>& args);
+	int Call(int id, std::vector<int> &args);
 	int Call(int id, int arg1);
-	int Call(int id, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int Call(int id, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take the raw function number
-	int RawCall(int fn, std::array<int, 1 + MAX_COB_ARGS>& args);
+	int RawCall(int fn, std::vector<int> &args);
 
 	void ThreadCallback(ThreadCallbackType type, int retCode, int cbParam);
 	// returns function number as expected by RawCall, but not Call
 	// returns -1 if the function does not exist
 	int GetFunctionId(const std::string& fname) const;
-
-	const CCobFile* GetFile() const { return cobFile; }
 
 	// used by CCobThread
 	void Signal(int signal);
@@ -121,13 +100,13 @@ public:
 		// COBWTF
 		if (axis == 0)
 			destination = -destination;
-		CUnitScript::Move(piece, axis, speed * COBSCALE_INV, destination * COBSCALE_INV);
+		CUnitScript::Move(piece, axis, speed * CORDDIV, destination * CORDDIV);
 	}
 	void MoveNow(int piece, int axis, int destination) {
 		// COBWTF
 		if (axis == 0)
 			destination = -destination;
-		CUnitScript::MoveNow(piece, axis, destination * COBSCALE_INV);
+		CUnitScript::MoveNow(piece, axis, destination * CORDDIV);
 	}
 	void TurnNow(int piece, int axis, int destination) {
 		// COBWTF

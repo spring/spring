@@ -17,6 +17,7 @@ namespace netcode
 class CConnection
 {
 public:
+	CConnection();
 	virtual ~CConnection() {}
 
 	/**
@@ -62,7 +63,6 @@ public:
 	virtual bool NeedsReconnect() = 0;
 
 	unsigned int GetDataReceived() const { return dataRecv; }
-	unsigned int GetNumQueuedPings() const { return numPings; }
 	virtual unsigned int GetPacketQueueSize() const { return 0; }
 
 	virtual std::string Statistics() const = 0;
@@ -78,9 +78,8 @@ public:
 	virtual void Update() {}
 
 protected:
-	unsigned int dataSent = 0;
-	unsigned int dataRecv = 0;
-	unsigned int numPings = 0;
+	unsigned dataSent;
+	unsigned dataRecv;
 };
 
 } // namespace netcode

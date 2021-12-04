@@ -6,22 +6,24 @@
 #include <string>
 
 /**
- * Utility class, which helps in tagging a directory as being cache only,
+ * Utility class, which helps in tagging a directory as beeing cache only,
  * by saving a certain, well defiend file in this dir.
  * This tag can be used when creating backups for example,
- * where backups would exclude dirs tagged with this method.
+ * where the software creating backups could automatically exclude dirs
+ * tagged with this method.
  * The file used as a tag:
  * name:    "CACHEDIR.TAG"
  * content: "Signature: 8a477f597d28d172789f06886806bc55"
  *
- * This is following a convention described here (DEAD LINKS):
+ * This is following a convention described here:
  * http://www.brynosaurus.com/cachedir/
  * and defined here:
  * http://www.brynosaurus.com/cachedir/spec.html
  */
 class CacheDir {
-	CacheDir() = delete;
-	CacheDir(const CacheDir&) = delete;
+private:
+	// we do not want instances of this class
+	CacheDir() {};
 
 public:
 	static const std::string tagFile_name;
@@ -30,7 +32,7 @@ public:
 	static const std::string defaultAdditionalText;
 
 	/**
-	 * Checks if the dir is marked as a cache dir.
+	 * Checks if a dir is marked as beeing a cache dir.
 	 * @return true if the dir exists and is tagged as cache dir, false otherwise
 	 */
 	static bool IsCacheDir(const std::string& dir);
@@ -52,7 +54,7 @@ private:
 	/**
 	 * Checks if the specified files content starts with the first content_size
 	 * chars of content.
-	 * @param filePath the file which content to compare to
+	 * @param filePath the file whichs content to compare to
 	 * @param content the chars to compare to
 	 * @param content_size how many chars to compare
 	 * @return true if the this is a cache tag file, false otherwise

@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-set(sources_engine_Rendering
+SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/AVIGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugColVolDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugDrawerAI.cpp"
@@ -92,7 +92,9 @@ set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssIO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/IModelParser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Models/OBJParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/S3OParser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Models/ModelRenderContainer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Screenshot.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/GLSLCopyState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/LuaShaderContainer.cpp"

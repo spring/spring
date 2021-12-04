@@ -3,46 +3,45 @@
 #ifndef KEYCODES_H
 #define KEYCODES_H
 
-#include <cstdio>
+#include <stdio.h>
 #include <string>
-#include <vector>
+#include <map>
+#include <set>
 
 class CKeyCodes {
-public:
-	void Reset();
+	public:
+		CKeyCodes();
+		void Reset();
 
-	int GetCode(const std::string& name) const;
+		int GetCode(const std::string& name) const;
 
-	std::string GetName(int code) const;
-	std::string GetDefaultName(int code) const;
+		std::string GetName(int code) const;
+		std::string GetDefaultName(int code) const;
 
-	bool AddKeySymbol(const std::string& name, int code);
+		bool AddKeySymbol(const std::string& name, int code);
 
-	static bool IsModifier(int code);
-	       bool IsPrintable(int code) const;
+		static bool IsModifier(int code);
+		       bool IsPrintable(int code);
 
-	void PrintNameToCode() const;
-	void PrintCodeToName() const;
+		void PrintNameToCode() const;
+		void PrintCodeToName() const;
 
-	void SaveUserKeySymbols(FILE* file) const;
+		void SaveUserKeySymbols(FILE* file) const;
 
-public:
-	static bool IsValidLabel(const std::string& label);
+	public:
+		static bool IsValidLabel(const std::string& label);
 
-protected:
-	void AddPair(const std::string& name, const int code, const bool printable = false);
+	protected:
+		void AddPair(const std::string& name, const int code, const bool printable = false);
 
-protected:
-	typedef std::pair<std::string, int> NameCodePair;
-	typedef std::pair<int, std::string> CodeNamePair;
-
-	std::vector<NameCodePair> nameToCode;
-	std::vector<CodeNamePair> codeToName;
-	std::vector<NameCodePair> defaultNameToCode;
-	std::vector<CodeNamePair> defaultCodeToName;
-	std::vector<         int> printableCodes;
+	protected:
+		std::map<std::string, int> nameToCode;
+		std::map<int, std::string> codeToName;
+		std::map<std::string, int> defaultNameToCode;
+		std::map<int, std::string> defaultCodeToName;
+		std::set<int> printableCodes;
 };
 
-extern CKeyCodes keyCodes;
+extern CKeyCodes* keyCodes;
 
 #endif /* KEYCODES_H */

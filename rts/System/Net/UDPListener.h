@@ -13,6 +13,7 @@
 namespace netcode
 {
 class UDPConnection;
+typedef std::shared_ptr<asio::ip::udp::socket> SocketPtr;
 
 /**
  * @brief Class for handling Connections on an UDPSocket
@@ -46,7 +47,7 @@ public:
 	 *         the default value "" results in the v6 any address "::",
 	 *         or the v4 equivalent "0.0.0.0", if v6 is no supported
 	 */
-	static std::string TryBindSocket(int port, std::shared_ptr<asio::ip::udp::socket>& sock, const std::string& ip = "");
+	static std::string TryBindSocket(int port, SocketPtr* socket, const std::string& ip = "");
 
 	/**
 	 * @brief Run this from time to time
@@ -56,23 +57,23 @@ public:
 	void Update();
 
 	/**
-	 * Set if we are accepting new connections
-	 * or drop all data from unconnected addresses.
-	 */
-	void SetAcceptingConnections(const bool enable) { acceptNewConnections = enable; }
-	bool IsAcceptingConnections() const { return acceptNewConnections; }
-	bool HasIncomingConnections() const { return (!waiting.empty()); }
-
-	/**
 	 * @brief Initiate a connection
 	 * Make a new connection to ip:port. It will be pushed back in conn.
 	 */
 	std::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip, const unsigned port);
 
-	std::weak_ptr<UDPConnection> PreviewConnection() { return (waiting.front()); }
+	/**
+	 * Set if we are accepting new connections
+	 * or drop all data from unconnected addresses.
+	 */
+	void SetAcceptingConnections(const bool enable);
+	bool IsAcceptingConnections() const;
+	bool HasIncomingConnections() const;
+
+	std::weak_ptr<UDPConnection> PreviewConnection();
 	std::shared_ptr<UDPConnection> AcceptConnection();
 
-	void RejectConnection() { waiting.pop(); }
+	void RejectConnection();
 	void UpdateConnections(); // Updates connections when the endpoint has been reconnected
 
 private:
@@ -82,10 +83,9 @@ private:
 	 */
 	bool acceptNewConnections;
 
-	/// socket being listened on
-	std::shared_ptr<asio::ip::udp::socket> socket;
-
-	std::vector<std::uint8_t> recvBuffer;
+	/// Our socket
+	/// typedef std::shared_ptr<asio::ip::udp::socket> SocketPtr;
+	SocketPtr mySocket;
 
 	/// all connections
 	std::map< asio::ip::udp::endpoint, std::weak_ptr<UDPConnection> > connMap;

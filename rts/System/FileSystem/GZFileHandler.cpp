@@ -22,13 +22,13 @@
 
 //We must call Open from here since in the CFileHandler ctor
 //virtual functions aren't called.
-CGZFileHandler::CGZFileHandler(const char* fileName, const char* modes)
+CGZFileHandler::CGZFileHandler(const char* fileName, const char* modes) : CFileHandler()
 {
 	Open(fileName, modes);
 }
 
 
-CGZFileHandler::CGZFileHandler(const std::string& fileName, const std::string& modes)
+CGZFileHandler::CGZFileHandler(const std::string& fileName, const std::string& modes): CFileHandler()
 {
 	Open(fileName, modes);
 }

@@ -3,6 +3,9 @@
 #ifndef _FEATURE_H
 #define _FEATURE_H
 
+#include <vector>
+#include <list>
+#include <string>
 #include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"
@@ -17,6 +20,7 @@ struct FeatureLoadParams;
 class CUnit;
 struct UnitDef;
 class DamageArray;
+class CFireProjectile;
 
 
 
@@ -101,59 +105,58 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	void SetDrawFlag(int f) { drawFlag = f; }
-
 	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final { return transMatrix[synced]; }
-	const CMatrix44f& GetTransformMatrixRef(bool synced = false) const { return transMatrix[synced]; }
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final { return transMatrix[synced]; }
+	const CMatrix44f& GetTransformMatrixRef(const bool synced = false) const { return transMatrix[synced]; }
 
 private:
-	void PostLoad();
-
 	static int ChunkNumber(float f);
 
 public:
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
-	 * Basically, once a corpse has been a little bit reclaimed,
+	 * Basically, once a corspe has been a little bit reclaimed,
 	 * if they start rezzing, then they cannot reclaim again
 	 * until the corpse has been fully 'repaired'.
 	 */
-	bool isRepairingBeforeResurrect = false;
-	bool inUpdateQue = false;
-	bool deleteMe = false;
-	bool alphaFade = true; // unsynced
+	bool isRepairingBeforeResurrect;
+	bool inUpdateQue;
+	bool deleteMe;
+	bool alphaFade; // unsynced
 
-	float drawAlpha = 1.0f; // unsynced
-	float resurrectProgress = 0.0f;
-	float reclaimTime = 0.0f;
-	float reclaimLeft = 1.0f;
+	float drawAlpha; // unsynced
+	float resurrectProgress;
+	float reclaimTime;
+	float reclaimLeft;
 
-	int lastReclaimFrame = 0;
-	int fireTime = 0;
-	int smokeTime = 0;
+	SResourcePack resources;
 
-	int drawQuad = -1; /// which drawQuad we are part of (unsynced)
-	int drawFlag = -2; /// one of FD_*_FLAG (unsynced)
+	int lastReclaimFrame;
+	int fireTime;
+	int smokeTime;
 
-	SResourcePack defResources = {0.0f, 1.0f};
-	SResourcePack resources = {0.0f, 1.0f};
+	int drawQuad; /// which drawQuad we are part of (unsynced)
+	int drawFlag; /// one of FD_*_FLAG (unsynced)
+
+	const FeatureDef* def;
+	const UnitDef* udef; /// type of unit this feature should be resurrected to
 
 	MoveCtrl moveCtrl;
 
-	const FeatureDef* def = nullptr;
-	const UnitDef* udef = nullptr; /// type of unit this feature should be resurrected to
+	CFireProjectile* myFire;
 
 	/// object on top of us if we are a geothermal vent
-	CSolidObject* solidOnTop = nullptr;
+	CSolidObject* solidOnTop;
 
 
 private:
+	void PostLoad();
+
 	// [0] := unsynced, [1] := synced
 	CMatrix44f transMatrix[2];
 };

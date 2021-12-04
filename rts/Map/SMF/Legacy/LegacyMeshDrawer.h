@@ -20,6 +20,7 @@ class CLegacyMeshDrawer : public IMeshDrawer
 {
 public:
 	CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
+	~CLegacyMeshDrawer();
 
 	void Update() {}
 

@@ -2,6 +2,7 @@
 
 #include "SkirmishAILibrary.h"
 
+#include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/AIInterfaceKey.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -14,19 +15,19 @@ CSkirmishAILibrary::CSkirmishAILibrary(
 	const SSkirmishAILibrary& ai,
 	const SkirmishAIKey& key
 ):
-	aiLib(ai),
-	aiKey(key)
+	sSAI(ai),
+	key(key)
 {
-	if (aiLib.handleEvent != nullptr)
-		return;
-
-	const char* fmt = "AI-library %s-%s (using interface %s-%s) has no handleEvent function";
-	const char* ksn = (aiKey.GetShortName()).c_str();
-	const char* kv  = (aiKey.GetVersion()).c_str();
-	const char* isn = (aiKey.GetInterface().GetShortName()).c_str();
-	const char* iv  = (aiKey.GetInterface().GetVersion()).c_str();
-
-	LOG_L(L_ERROR, fmt, ksn, kv, isn, iv);
+	if (sSAI.handleEvent == nullptr) {
+		LOG_L(L_ERROR,
+			"Fetched AI library %s-%s has no handleEvent function"
+			" available. It is therefore illegal and will not be used."
+			" This usually indicates a problem in the used AI Interface"
+			" library (%s-%s).",
+			key.GetShortName().c_str(), key.GetVersion().c_str(),
+			key.GetInterface().GetShortName().c_str(),
+			key.GetInterface().GetVersion().c_str());
+	}
 }
 
 
@@ -36,14 +37,14 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
 	const int engineVersionNumber,
 	const AIInterfaceKey& interfaceKey
 ) const {
-	if (aiLib.getLevelOfSupportFor != nullptr) {
-		const char* ksn = aiKey.GetShortName().c_str();
-		const char* kv  = aiKey.GetVersion().c_str();
+	if (sSAI.getLevelOfSupportFor != nullptr) {
+		const char* ksn = key.GetShortName().c_str();
+		const char* kv  = key.GetVersion().c_str();
 		const char* ev  = engineVersionString.c_str();
 		const char* isn = interfaceKey.GetShortName().c_str();
 		const char* iv  = interfaceKey.GetVersion().c_str();
 
-		return aiLib.getLevelOfSupportFor(ksn, kv, ev, engineVersionNumber, isn, iv);
+		return sSAI.getLevelOfSupportFor(ksn, kv, ev, engineVersionNumber, isn, iv);
 	}
 
 	return LOS_Unknown;
@@ -51,13 +52,15 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
 
 bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const
 {
-	if (aiLib.init == nullptr)
+	if (sSAI.init == nullptr)
 		return true;
 
-	const int ret = aiLib.init(skirmishAIId, c_callback);
+	const int ret = sSAI.init(skirmishAIId, c_callback);
 
 	if (ret == 0)
 		return true;
+
+	skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 
 	// init failed
 	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
@@ -69,10 +72,10 @@ bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_cal
 
 bool CSkirmishAILibrary::Release(int skirmishAIId) const
 {
-	if (aiLib.release == nullptr)
+	if (sSAI.release == nullptr)
 		return true;
 
-	const int ret = aiLib.release(skirmishAIId);
+	const int ret = sSAI.release(skirmishAIId);
 
 	if (ret == 0)
 		return true;
@@ -88,7 +91,7 @@ bool CSkirmishAILibrary::Release(int skirmishAIId) const
 int CSkirmishAILibrary::HandleEvent(int skirmishAIId, int topic, const void* data) const
 {
 	skirmishAIHandler.SetCurrentAIID(skirmishAIId);
-	const int ret = aiLib.handleEvent(skirmishAIId, topic, data);
+	const int ret = sSAI.handleEvent(skirmishAIId, topic, data);
 	skirmishAIHandler.SetCurrentAIID(MAX_AIS);
 
 	if (ret == 0)

@@ -6,44 +6,24 @@
 #include "VFSHandler.h"
 #include "System/LogOutput.h"
 #include "System/SafeUtil.h"
-#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Misc.h"
-#include "System/Platform/Watchdog.h"
 
 #ifdef UNITSYNC
-void ErrorMessageBox(const char*, const char*, unsigned int) { throw; } // pass to US
-#endif
-
-#if (!defined(UNITSYNC) && !defined(DEDICATED))
-static void SetupThreadReg() {
-	Threading::SetFileSysThread();
-	Watchdog::RegisterThread(WDT_VFSI);
-}
-static void ClearThreadReg() {
-	Watchdog::DeregisterThread(WDT_VFSI);
-}
-#else
-static void SetupThreadReg() {}
-static void ClearThreadReg() {}
+void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
 #endif
 
 
-std::atomic<bool> FileSystemInitializer::initSuccess = {false};
-std::atomic<bool> FileSystemInitializer::initFailure = {false};
+volatile bool FileSystemInitializer::initSuccess = false;
+volatile bool FileSystemInitializer::initFailure = false;
 
-void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const std::string& configName, const bool safemode)
+void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const bool safemode)
 {
 	dataDirLocater.LocateDataDirs();
 	dataDirLocater.ChangeCwdToWriteDir();
 
 	ConfigHandler::Instantiate(configSource, safemode);
-
-	if (configName.empty())
-		return;
-
-	configHandler->SetString("name", StringReplace(configName, " ", "_"));
 }
 
 
@@ -61,8 +41,6 @@ bool FileSystemInitializer::Initialize()
 	if (initSuccess)
 		return true;
 
-	SetupThreadReg();
-
 	try {
 		Platform::SetOrigCWD();
 
@@ -70,7 +48,7 @@ bool FileSystemInitializer::Initialize()
 		dataDirLocater.Check();
 
 		archiveScanner = new CArchiveScanner();
-		CVFSHandler::SetGlobalInstance(new CVFSHandler("SpringVFS"));
+		vfsHandler = new CVFSHandler();
 
 		initSuccess = true;
 	} catch (const std::exception& ex) {
@@ -80,15 +58,14 @@ bool FileSystemInitializer::Initialize()
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
+		Cleanup(false);
 		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
 	} catch (...) {
 		initFailure = true;
 
+		Cleanup(false);
 		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
 	}
-
-	// in case of an exception, ErrorMessageBox takes care of this
-	ClearThreadReg();
 
 	return (initSuccess && !initFailure);
 }
@@ -97,7 +74,7 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 {
 	if (initSuccess) {
 		spring::SafeDelete(archiveScanner);
-		CVFSHandler::FreeGlobalInstance();
+		spring::SafeDelete(vfsHandler);
 
 		initSuccess = false;
 		initFailure = false;
@@ -111,9 +88,7 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 void FileSystemInitializer::Reload()
 {
 	// repopulated by PreGame, etc
-	// stash mod and map archives which may be requested again
-	// useful since reloading the same game is the common case
-	vfsHandler->UnMapArchives(true);
+	vfsHandler->DeleteArchives();
 	archiveScanner->Reload();
 }
 

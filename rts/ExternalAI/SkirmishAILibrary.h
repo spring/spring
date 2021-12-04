@@ -19,7 +19,7 @@ public:
 	CSkirmishAILibrary() {}
 	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
 
-	const SkirmishAIKey& GetKey() const { return aiKey; }
+	SkirmishAIKey GetKey() const { return key; }
 
 	/**
 	 * Level of Support for a specific engine version and ai interface.
@@ -36,8 +36,8 @@ public:
 	int HandleEvent(int skirmishAIId, int topic, const void* data) const;
 
 private:
-	SSkirmishAILibrary aiLib;
-	SkirmishAIKey aiKey;
+	SSkirmishAILibrary sSAI;
+	SkirmishAIKey key;
 };
 
 #endif // SKIRMISH_AI_LIBRARY_H

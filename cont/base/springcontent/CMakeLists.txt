@@ -10,19 +10,25 @@ set(FILES
 	shaders/GLSL/ShadowGenVertProg.glsl
 	shaders/GLSL/ShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
+	shaders/GLSL/terrainCommon.glsl
 	shaders/GLSL/SMFFragProg.glsl
 	shaders/GLSL/GrassFragProg.glsl
 	shaders/GLSL/GroundDecalsFragProg.glsl
+	shaders/GLSL/terrainSimpleCopyFS.glsl
 	shaders/GLSL/ModelVertProg.glsl
+	shaders/GLSL/terrainFragmentShader.glsl
 	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg.glsl
 	shaders/GLSL/bumpWaterFS.glsl
-	shaders/GLSL/bumpWaterVS.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
 	shaders/GLSL/GrassVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
+	shaders/GLSL/terrainSimpleCopyVS.glsl
+	shaders/GLSL/terrainVertexShader.glsl
+	shaders/GLSL/bumpWaterVS.glsl
+	shaders/ARB/groundshadow.vp
 	shaders/ARB/waterDynWave2.vp
 	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp
@@ -72,7 +78,6 @@ set(FILES
 	gamedata/parse_tdf.lua
 	gamedata/weapondefs.lua
 	gamedata/defs.lua
-	gamedata/defs_post.lua
 	gamedata/weapondefs_post.lua
 	gamedata/modrules.lua
 	gamedata/resources.lua
@@ -182,5 +187,5 @@ set(FILES
 	LuaIntro/Addons/bg_texture.lua
 )
 
-create_base_content_archive("base" "springcontent.sdz" "${FILES}")
+CreateBaseContentArchive("base" "springcontent.sdz" "${FILES}")
 

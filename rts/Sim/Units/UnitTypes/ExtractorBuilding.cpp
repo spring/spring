@@ -7,14 +7,16 @@
 #include "ExtractorBuilding.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
+#include "System/Sync/SyncTracer.h"
 #include "System/ContainerUtil.h"
 
 
-CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
+CR_BIND_DERIVED_POOL(CExtractorBuilding, CBuilding, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
 	CR_MEMBER(extractionDepth),
@@ -35,7 +37,10 @@ float CExtractorBuilding::maxExtractionRange = 0.0f;
 
 CExtractorBuilding::~CExtractorBuilding()
 {
-	ResetExtraction();
+	// if uh == NULL then all pointers to units should be considered dangling pointers
+	if (unitHandler != nullptr) {
+		ResetExtraction();
+	}
 }
 
 /* resets the metalMap and notifies the neighbours */
@@ -43,7 +48,7 @@ void CExtractorBuilding::ResetExtraction()
 {
 	// undo the extraction-area
 	for (auto si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
-		metalMap.RemoveExtraction(si->x, si->z, si->extractionDepth);
+		readMap->metalMap->RemoveExtraction(si->x, si->z, si->extractionDepth);
 	}
 
 	metalAreaOfControl.clear();
@@ -74,7 +79,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 
 	// find any neighbouring extractors
 	QuadFieldQuery qfQuery;
-	quadField.GetUnits(qfQuery, pos, extractionRange + maxExtractionRange);
+	quadField->GetUnits(qfQuery, pos, extractionRange + maxExtractionRange);
 
 	for (CUnit* u: *qfQuery.units) {
 		if (u == this)
@@ -113,9 +118,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 				msqr.x = x;
 				msqr.z = z;
 				// extraction is done in a cylinder of height <depth>
-				msqr.extractionDepth = metalMap.RequestExtraction(x, z, depth);
+				msqr.extractionDepth = readMap->metalMap->RequestExtraction(x, z, depth);
 				metalAreaOfControl.push_back(msqr);
-				metalExtract += msqr.extractionDepth * metalMap.GetMetalAmount(msqr.x, msqr.z);
+				metalExtract += msqr.extractionDepth * readMap->metalMap->GetMetalAmount(msqr.x, msqr.z);
 			}
 		}
 	}
@@ -145,12 +150,14 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 {
 	metalExtract = 0;
 
+	CMetalMap* metalMap = readMap->metalMap;
+
 	for (MetalSquareOfControl& msqr: metalAreaOfControl) {
-		metalMap.RemoveExtraction(msqr.x, msqr.z, msqr.extractionDepth);
+		metalMap->RemoveExtraction(msqr.x, msqr.z, msqr.extractionDepth);
 
 		// extraction is done in a cylinder
-		msqr.extractionDepth = metalMap.RequestExtraction(msqr.x, msqr.z, extractionDepth);
-		metalExtract += (msqr.extractionDepth * metalMap.GetMetalAmount(msqr.x, msqr.z));
+		msqr.extractionDepth = metalMap->RequestExtraction(msqr.x, msqr.z, extractionDepth);
+		metalExtract += msqr.extractionDepth * metalMap->GetMetalAmount(msqr.x, msqr.z);
 	}
 
 	// set the new rotation-speed

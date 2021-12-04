@@ -7,7 +7,7 @@
 //#include "ExternalAI/SkirmishAIKey.h"
 #include "System/Exceptions.h"
 
-#include <cassert>
+#include <assert.h>
 
 //CR_BIND(CLuaAIImplHandler,);
 //
@@ -22,69 +22,82 @@ CLuaAIImplHandler& CLuaAIImplHandler::GetInstance()
 	return mySingleton;
 }
 
-CLuaAIImplHandler::InfoItemVector CLuaAIImplHandler::LoadInfoItems()
+CLuaAIImplHandler::CLuaAIImplHandler()
 {
-	InfoItemVector luaAIInfos;
+}
+
+CLuaAIImplHandler::~CLuaAIImplHandler()
+{
+}
+
+std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
+
+	std::vector< std::vector<InfoItem> > luaAIInfos;
 
 	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-
-	// It is not an error if the mod does not come with Lua AIs.
-	if (!luaParser.Execute())
+	if (!luaParser.Execute()) {
+		// It is not an error if the mod does not come with Lua AIs.
 		return luaAIInfos;
+	}
 
 	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid())
+	if (!root.IsValid()) {
 		throw content_error("root table invalid");
+	}
 
 	for (int i = 1; root.KeyExists(i); i++) {
-		std::string shortName = root.GetString(i, "");
+		std::string shortName;
 		std::string description;
-		std::string version;
-
-		// Lua AIs can be specified in two different formats, string (name) or table (name & desc)
+		// Lua AIs can be specified in two different formats:
+		shortName = root.GetString(i, "");
 		if (!shortName.empty()) {
-			description = "(please see game description, forum or homepage)";
+			// ... string format (name)
+
+			description = "(please see mod description, forum or homepage)";
 		} else {
+			// ... table format  (name & desc)
+
 			const LuaTable& optTbl = root.SubTable(i);
-
-			if (!optTbl.IsValid())
+			if (!optTbl.IsValid()) {
 				continue;
-
+			}
 			shortName = optTbl.GetString("name", "");
-			if (shortName.empty())
+			if (shortName.empty()) {
 				continue;
+			}
 
 			description = optTbl.GetString("desc", shortName);
-			version = optTbl.GetString("version", "<not-versioned>");
 		}
 
-		luaAIInfos.emplace_back();
-		auto& aiInfo = luaAIInfos.back();
+		struct InfoItem ii;
+		std::vector<InfoItem> aiInfo;
 
-		InfoItem ii;
 		ii.key = SKIRMISH_AI_PROPERTY_SHORT_NAME;
 		ii.valueType = INFO_VALUE_TYPE_STRING;
 		ii.valueTypeString = shortName;
-		ii.desc = "short name of this Lua Skirmish AI";
-		aiInfo[0] = ii;
+		ii.desc = "the short name of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_VERSION;
 		ii.valueType = INFO_VALUE_TYPE_STRING;
-		ii.valueTypeString = version;
-		ii.desc = "version of this Lua Skirmish AI, normally defined by the game's version";
-		aiInfo[1] = ii;
+		ii.valueTypeString = "<not-versioned>";
+		ii.desc = "Lua Skirmish AIs do not have a version, "
+				"because they are fully defined by the mods version already.";
+		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_NAME;
 		ii.valueType = INFO_VALUE_TYPE_STRING;
-		ii.valueTypeString = shortName + " (game-specific AI)";
-		ii.desc = "human-readable name of this Lua Skirmish AI";
-		aiInfo[2] = ii;
+		ii.valueTypeString = shortName + " (Mod specific AI)";
+		ii.desc = "the human readable name of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_DESCRIPTION;
 		ii.valueType = INFO_VALUE_TYPE_STRING;
 		ii.valueTypeString = description;
-		ii.desc = "short description of this Lua Skirmish AI";
-		aiInfo[3] = ii;
+		ii.desc = "a short description of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
+
+		luaAIInfos.push_back(aiInfo);
 	}
 
 	return luaAIInfos;

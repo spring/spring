@@ -96,13 +96,14 @@ void CMetalExtractionTexture::Update()
 	if (!fbo.IsValid() || !shader->IsValid())
 		return;
 
-	CInfoTexture* infoTex = infoTextureHandler->GetInfoTexture("los");
-
-	assert(metalMap.GetSizeX() == texSize.x && metalMap.GetSizeZ() == texSize.y);
+	const      CMetalMap* metalMap        = readMap->metalMap;
+	const          float* extractDepthMap = metalMap->GetExtractionMap();
+//	const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
+	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
 
 	// upload raw data to gpu
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, metalMap.GetExtractionMap());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, extractDepthMap);
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
@@ -110,7 +111,7 @@ void CMetalExtractionTexture::Update()
 	glViewport(0,0, texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-	glBindTexture(GL_TEXTURE_2D, infoTex->GetTexture());
+	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
 	glBegin(GL_QUADS);
 		glVertex2f(-1.f, -1.f);
 		glVertex2f(-1.f, +1.f);

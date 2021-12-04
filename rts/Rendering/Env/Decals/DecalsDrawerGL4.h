@@ -54,9 +54,7 @@
 		void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override {}
 		int CreateLuaDecal() { return 0;}
 		const std::vector<Decal>& GetAllDecals() const { return decals; }
-
-		const Decal& GetDecalByIdx(unsigned idx) const { assert(false); static Decal tmp; return tmp; }
-		      Decal& GetDecalByIdx(unsigned idx)       { assert(false); static Decal tmp; return tmp; }
+		Decal& GetDecalByIdx(unsigned idx) { assert(false); static Decal tmp; return tmp; }
 	private:
 		std::vector<Decal> decals;
 	};
@@ -79,10 +77,7 @@ public:
 	//FIXME make eventClient!!!
 	void GhostDestroyed(GhostSolidObject* gb) override;
 	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override;
-
-	void AddSolidObject(CSolidObject* object) override { /*TODO*/ }
 	void ForceRemoveSolidObject(CSolidObject* object) override;
-
 	void OnDecalLevelChanged() override;
 
 	void ExplosionOccurred(const CExplosionParams&) override;
@@ -189,10 +184,12 @@ public:
 
 	Decal& GetDecalOwnedBy(const void* owner);
 	const std::vector<Decal>& GetAllDecals() const { return decals; }
-
-	const Decal& GetDecalByIdx(unsigned idx) const { return ((idx < decals.size())? decals[idx]: decals.front()); }
-	      Decal& GetDecalByIdx(unsigned idx)       { return ((idx < decals.size())? decals[idx]: decals.front()); }
-
+	Decal& GetDecalByIdx(unsigned idx) {
+		if (idx < decals.size()) {
+			return decals[idx];
+		}
+		return decals.front();
+	}
 
 private:
 	void AddExplosion(float3 pos, float damage, float radius);

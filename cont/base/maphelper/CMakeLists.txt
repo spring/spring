@@ -10,5 +10,5 @@ set(FILES
 	maphelper/mapinfo.lua
 )
 
-create_base_content_archive("base" "maphelper.sdz" "${FILES}")
+CreateBaseContentArchive("base" "maphelper.sdz" "${FILES}")
 

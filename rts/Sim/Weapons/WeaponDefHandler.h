@@ -17,28 +17,15 @@ class LuaTable;
 class CWeaponDefHandler : CommonDefHandler
 {
 public:
-	void Init(LuaParser* defsParser);
-	void Kill() {
-		weaponDefsVector.clear();
-		weaponDefIDs.clear(); // never iterated
-	}
+	CWeaponDefHandler(LuaParser* defsParser);
 
-	bool IsValidWeaponDefID(const int id) const {
-		return (id >= 0) && (static_cast<size_t>(id) < weaponDefsVector.size());
-	}
+	// NOTE: safe with unordered_map after ctor
+	const WeaponDef* GetWeaponDef(std::string weaponname) const;
+	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
-	// id=0 *is* a valid WeaponDef, hence no -1
-	unsigned int NumWeaponDefs() const { return (weaponDefsVector.size()); }
-
-	// NOTE: safe with unordered_map after Init
-	const WeaponDef* GetWeaponDef(std::string wdName) const;
-	const WeaponDef* GetWeaponDefByID(int id) const;
-
-	const std::vector<WeaponDef>& GetWeaponDefsVec() const { return weaponDefsVector; }
-
-private:
-	std::vector<WeaponDef> weaponDefsVector;
-	spring::unordered_map<std::string, int> weaponDefIDs;
+public:
+	std::vector<WeaponDef> weaponDefs;
+	spring::unordered_map<std::string, int> weaponID;
 };
 
 

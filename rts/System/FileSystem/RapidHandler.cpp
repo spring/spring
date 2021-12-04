@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 
 #include <zlib.h>
-#include <cstring> //strnlen
+#include <string.h> //strnlen
 
 static const int bufsize = 4096;
 
@@ -60,13 +60,13 @@ template <typename Lambda>
 static bool GetRapidEntry(const std::string& file, RapidEntry* re, Lambda p)
 {
 	gzFile in = gzopen(file.c_str(), "rb");
-	if (in == nullptr) {
+	if (in == NULL) {
 		LOG_L(L_ERROR, "couldn't open %s", file.c_str());
 		return false;
 	}
 
 	char buf[bufsize];
-	while (gzgets(in, buf, bufsize) != nullptr) {
+	while (gzgets(in, buf, bufsize) != NULL) {
 		size_t len = strnlen(buf, bufsize);
 		if (len <= 2) continue; //line to short/invalid, skip
 		if (buf[len-1] == '\n') len--;
@@ -87,7 +87,8 @@ static bool GetRapidEntry(const std::string& file, RapidEntry* re, Lambda p)
 
 std::string GetRapidPackageFromTag(const std::string& tag)
 {
-	for (const std::string& file: dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE)) {
+	const auto files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
+	for (const std::string file: files) {
 		RapidEntry re;
 		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetTag() == tag; }))
 			return re.GetName();
@@ -97,7 +98,8 @@ std::string GetRapidPackageFromTag(const std::string& tag)
 
 std::string GetRapidTagFromPackage(const std::string& pkg)
 {
-	for (const std::string& file: dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE)) {
+	const auto files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
+	for (const std::string file: files) {
 		RapidEntry re;
 		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetPackageHash() == pkg; }))
 			return re.GetTag();

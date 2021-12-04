@@ -7,20 +7,43 @@
 
 class CAIScriptHandler
 {
+private:
+	struct CScript {
+		std::string name;
+
+		CScript(const std::string& n): name(n) {}
+		virtual ~CScript() {}
+	};
+
+	struct CSkirmishAIScript : CScript {
+		SkirmishAIData aiData;
+
+		CSkirmishAIScript(const SkirmishAIData& data):
+			CScript("Player vs. AI: " + data.shortName + " " + data.version),
+			aiData(data)
+		{
+		}
+	};
+
 public:
-	typedef std::vector< std::pair<std::string, SkirmishAIData> > ScriptMap;
+	typedef std::vector<std::string> ScriptList;
+	typedef std::map<std::string, CScript*> ScriptMap;
 
 	static CAIScriptHandler& Instance();
 
 	bool IsSkirmishAITestScript(const std::string& scriptName) const;
-
 	const SkirmishAIData& GetSkirmishAIData(const std::string& scriptName) const;
-	const ScriptMap& GetScriptMap() const { return scriptMap; }
+
+	const ScriptList& GetScriptList() const { return scriptNames; }
 
 private:
-	CAIScriptHandler();
+	void Add(CScript* script);
 
-	ScriptMap scriptMap;
+	CAIScriptHandler();
+	~CAIScriptHandler();
+
+	ScriptMap scripts;
+	ScriptList scriptNames;
 };
 
 #endif /* SCRIPTHANDLER_H_ */

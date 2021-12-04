@@ -62,7 +62,7 @@ public:
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
 	bool HasScheduledBounce() const { return bounced; }
-	bool TraveledRange() const { return ((pos - startPos).SqLength() > (myrange * myrange)); }
+	bool TraveledRange() const;
 
 	const DynDamageArray* damages;
 

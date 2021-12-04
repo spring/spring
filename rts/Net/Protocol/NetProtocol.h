@@ -3,15 +3,12 @@
 #ifndef NET_PROTOCOL_H
 #define NET_PROTOCOL_H
 
-#include <atomic>
 #include <string>
+#include <memory>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
-#include "System/Threading/SpringThreading.h"
 
-class ClientSetup;
 class CDemoRecorder;
-
 namespace netcode
 {
 	class RawPacket;
@@ -35,7 +32,7 @@ public:
 	/**
 	 * @brief Initialise in client mode (remote server)
 	*/
-	void InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion, const std::string& clientPlatform);
+	void InitClient(const char* server, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
 
 	/**
 	 * @brief Initialise in client mode (local server)
@@ -45,7 +42,7 @@ public:
 	/// Are we still connected (or did the connection time-out)?
 	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
-	void AttemptReconnect(const std::string& myVersion, const std::string& myPlatform);
+	void AttemptReconnect(const std::string& myVersion);
 
 	bool NeedsReconnect();
 
@@ -102,25 +99,17 @@ public:
 
 	void KeepUpdating(bool b) { keepUpdating = b; }
 
-	void SetDemoRecorder(CDemoRecorder&& r);
-	void ResetDemoRecorder();
-
-	netcode::CConnection* GetServerConnection() { return serverConnPtr; }
-	CDemoRecorder* GetDemoRecorder() { return demoRecordPtr; }
+	void SetDemoRecorder(CDemoRecorder* r);
+	CDemoRecorder* GetDemoRecorder() const;
 
 	unsigned int GetNumWaitingServerPackets() const;
-	unsigned int GetNumWaitingPingPackets() const;
+
 
 private:
-	std::atomic<bool> keepUpdating;
+	volatile bool keepUpdating;
 
-	spring::spinlock serverConnMutex;
-
-	uint8_t serverConnMem[1024];
-	uint8_t demoRecordMem[ 512];
-
-	netcode::CConnection* serverConnPtr = nullptr;
-	CDemoRecorder* demoRecordPtr = nullptr;
+	std::unique_ptr<netcode::CConnection> serverConn;
+	std::unique_ptr<CDemoRecorder> demoRecorder;
 
 	std::string userName;
 	std::string userPasswd;

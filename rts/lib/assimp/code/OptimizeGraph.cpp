@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -49,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "OptimizeGraph.h"
 #include "ProcessHelper.h"
-#include <assimp/SceneCombiner.h>
+#include "SceneCombiner.h"
 #include "Exceptional.h"
 #include <stdio.h>
 
@@ -231,7 +230,7 @@ void OptimizeGraphProcess::CollectNewChildren(aiNode* nd, std::list<aiNode*>& no
         else nd->mChildren = NULL;
     }
 
-    nd->mNumChildren = static_cast<unsigned int>(child_nodes.size());
+    nd->mNumChildren = child_nodes.size();
 
     aiNode** tmp = nd->mChildren;
     for (std::list<aiNode*>::iterator it = child_nodes.begin(); it != child_nodes.end(); ++it) {
@@ -239,7 +238,7 @@ void OptimizeGraphProcess::CollectNewChildren(aiNode* nd, std::list<aiNode*>& no
         node->mParent = nd;
     }
 
-    nodes_out += static_cast<unsigned int>(child_nodes.size());
+    nodes_out += child_nodes.size();
 }
 
 // ------------------------------------------------------------------------------------------------

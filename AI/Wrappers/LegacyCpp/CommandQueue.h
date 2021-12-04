@@ -121,21 +121,22 @@ inline int springLegacyAI::CCommandQueue::GetNextTag()
 inline void springLegacyAI::CCommandQueue::push_back(const Command& cmd)
 {
 	queue.push_back(cmd);
-	queue.back().SetTag(GetNextTag());
+	queue.back().tag = GetNextTag();
 }
 
 
 inline void springLegacyAI::CCommandQueue::push_front(const Command& cmd)
 {
 	queue.push_front(cmd);
-	queue.front().SetTag(GetNextTag());
+	queue.front().tag = GetNextTag();
 }
 
 
-inline springLegacyAI::CCommandQueue::iterator springLegacyAI::CCommandQueue::insert(iterator pos, const Command& cmd)
+inline springLegacyAI::CCommandQueue::iterator springLegacyAI::CCommandQueue::insert(
+		iterator pos, const Command& cmd)
 {
 	Command tmpCmd = cmd;
-	tmpCmd.SetTag(GetNextTag());
+	tmpCmd.tag = GetNextTag();
 	return queue.insert(pos, tmpCmd);
 }
 

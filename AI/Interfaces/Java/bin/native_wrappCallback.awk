@@ -25,7 +25,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS = "(,)|(\\()|(\\);)";
+	FS = "(,)|(\\()|(\\)\\;)";
 
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
@@ -188,7 +188,7 @@ function wrappFunction(funcDef, commentEolTot) {
 	doParse = 1; # add a function in case you want to exclude some
 
 	if (doParse) {
-		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\);)");
+		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
 		# because the empty part after ");" would count as part as well
 		size_funcParts--;
 		retType_c   = trim(funcParts[1]);
@@ -252,7 +252,7 @@ function canDeleteDocumentation() {
 		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
-		if (match(funcSoFar, /;$/)) {
+		if (match(funcSoFar, /\;$/)) {
 			# function ends in this line
 			wrappFunction(funcSoFar, commentEolTot);
 			isMultiLineFunc = 0;
@@ -272,7 +272,7 @@ function canDeleteDocumentation() {
 	# remove possible comment at end of line: //$ foo bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
-	if (match(funcStartLine, /;$/)) {
+	if (match(funcStartLine, /\;$/)) {
 		# function ends in this line
 		wrappFunction(funcStartLine, commentEolTot);
 	} else {

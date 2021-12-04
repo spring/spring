@@ -37,11 +37,11 @@ std::string StringStrip(const std::string& str, const std::string& chars)
 	std::string ret;
 	ret.reserve(str.size());
 
-	for (const char c: str) {
-		if (chars.find(c) != std::string::npos)
+	for (size_t n = 0; n < str.size(); n++) {
+		if (chars.find(str[n]) != std::string::npos)
 			continue;
 
-		ret.push_back(c);
+		ret.push_back(str[n]);
 	}
 
 	return ret;
@@ -259,7 +259,7 @@ std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned l
 		deflData.clear();
 	}
 
-	return deflData;
+	return (std::move(deflData));
 }
 
 std::vector<std::uint8_t> zlib::inflate(const std::vector<std::uint8_t>& deflData) { return (zlib::inflate(deflData.data(), deflData.size())); }
@@ -286,6 +286,6 @@ std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, unsigned l
 	inflData.resize(rawSize);
 	inflData.shrink_to_fit();
 
-	return inflData;
+	return (std::move(inflData));
 }
 #endif //UNITSYNC

@@ -5,6 +5,10 @@
 #include "System/StringUtil.h"
 #include <iostream>
 
+using std::cout;
+using std::map;
+using std::string;
+
 /**
  * @brief Log an error about a ConfigVariableMetaData
  */
@@ -37,7 +41,7 @@ void ConfigVariable::AddMetaData(const ConfigVariableMetaData* data)
 	}
 }
 
-const ConfigVariableMetaData* ConfigVariable::GetMetaData(const std::string& key)
+const ConfigVariableMetaData* ConfigVariable::GetMetaData(const string& key)
 {
 	const MetaDataMap& vars = GetMetaDataMap();
 	MetaDataMap::const_iterator pos = vars.find(key);
@@ -46,7 +50,7 @@ const ConfigVariableMetaData* ConfigVariable::GetMetaData(const std::string& key
 		return pos->second;
 	}
 	else {
-		return nullptr;
+		return NULL;
 	}
 }
 
@@ -60,7 +64,7 @@ CONFIG(std::string, test)
 /**
  * @brief Call Quote if type is not bool, float or int.
  */
-static inline std::string Quote(const std::string& type, const std::string& value)
+static inline string Quote(const string& type, const string& value)
 {
 	if (type == "bool" || type == "float" || type == "int") {
 		return value;
@@ -133,15 +137,15 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
  */
 void ConfigVariable::OutputMetaDataMap()
 {
-	std::cout << "{\n";
+	cout << "{\n";
 
 	const MetaDataMap& mdm = GetMetaDataMap();
 	for (MetaDataMap::const_iterator it = mdm.begin(); it != mdm.end(); ++it) {
 		if (it != mdm.begin()) {
-			std::cout << ",\n";
+			cout << ",\n";
 		}
-		std::cout << it->second;
+		cout << it->second;
 	}
 
-	std::cout << "\n}\n";
+	cout << "\n}\n";
 }

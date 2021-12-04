@@ -6,8 +6,6 @@
 #include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <functional>
-
 //note the cast to CExpGenSpawnable that should deal with all kinds of inheritance
 #define offsetof_expgen(type, member) (size_t)(((char*)&((type *)0xe7707e77)->member) - ((char*)(static_cast<CExpGenSpawnable*>((type *)0xe7707e77))))
 #define sizeof_expgen(type, member) sizeof(((type *)0xe7707e77)->member)
@@ -64,7 +62,7 @@ struct SExpGenSpawnableMemberInfo
 
 #define CHECK_MEMBER_INFO_PTR(t, member, callback) \
 	static_assert(std::is_same<decltype(callback("")), decltype(member)>::value, "Member and callback type mismatch"); \
-	SET_MEMBER_INFO(memberInfo, MEMBER_HASH(member), offsetof_expgen(t, member), sizeof_expgen(t, member), 1, SExpGenSpawnableMemberInfo::TYPE_PTR, [](const std::string& s) { return (void *) callback(s.c_str()); } );
+	SET_MEMBER_INFO(memberInfo, MEMBER_HASH(member), offsetof_expgen(t, member), sizeof_expgen(t, member), 1, SExpGenSpawnableMemberInfo::TYPE_PTR, [](const std::string& s) { return (void *) callback(s); } );
 
 #define CHECK_MEMBER_INFO_BOOL(type, member) CHECK_MEMBER_INFO_INT(type, member)
 #define CHECK_MEMBER_INFO_SCOLOR(type, member) CHECK_MEMBER_INFO_INT(type, member.i)

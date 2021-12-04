@@ -43,27 +43,26 @@ class LuaMatRef {
 
 	friend class LuaMatHandler;
 
-public:
-	LuaMatRef() = default;
-	LuaMatRef(const LuaMatRef&);
-	LuaMatRef& operator=(const LuaMatRef&);
-	~LuaMatRef();
+	public:
+		LuaMatRef() : bin(nullptr) {}
+		LuaMatRef(const LuaMatRef&);
+		LuaMatRef& operator=(const LuaMatRef&);
+		~LuaMatRef();
 
-	void Reset();
+		void Reset();
 
-	void AddUnit(CSolidObject*);
-	void AddFeature(CSolidObject*);
+		void AddUnit(CSolidObject*);
+		void AddFeature(CSolidObject*);
 
-	bool IsActive() const { return (bin != nullptr); }
+		inline bool IsActive() const { return (bin != nullptr); }
 
-	const LuaMatBin* GetBin() const { return bin; }
-	      LuaMatBin* GetBin()       { return bin; }
+		inline const LuaMatBin* GetBin() const { return bin; }
 
-private:
-	LuaMatRef(LuaMatBin* _bin);
-
-private:
-	LuaMatBin* bin = nullptr; // can be NULL
+	private:
+		LuaMatRef(LuaMatBin* _bin);
+		
+	private:
+		LuaMatBin* bin; // can be NULL
 };
 
 
@@ -71,14 +70,19 @@ private:
 
 class LuaObjectLODMaterial {
 	public:
+		LuaObjectLODMaterial()
+		: preDisplayList(0),
+		  postDisplayList(0)
+		{}
+
 		inline bool IsActive() const { return matref.IsActive(); }
 
 		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
 		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
 
 	public:
-		GLuint preDisplayList = 0;
-		GLuint postDisplayList = 0;
+		GLuint preDisplayList;
+		GLuint postDisplayList;
 
 		LuaMatRef matref;
 };
@@ -88,6 +92,8 @@ class LuaObjectLODMaterial {
 
 class LuaObjectMaterial {
 	public:
+		LuaObjectMaterial() : lodCount(0), lastLOD(0) {}
+
 		bool SetLODCount(unsigned int count);
 		bool SetLastLOD(unsigned int count);
 
@@ -116,8 +122,8 @@ class LuaObjectMaterial {
 		}
 
 	private:
-		unsigned int lodCount = 0;
-		unsigned int lastLOD = 0;
+		unsigned int lodCount;
+		unsigned int lastLOD;
 		std::vector<LuaObjectLODMaterial> lodMats;
 };
 
@@ -126,6 +132,11 @@ class LuaObjectMaterial {
 
 struct LuaObjectMaterialData {
 public:
+	LuaObjectMaterialData() {
+		lodCount = 0;
+		currentLOD = 0;
+	}
+
 	bool Enabled() const { return (lodCount > 0); }
 	bool ValidLOD(unsigned int lod) const { return (lod < lodCount); }
 
@@ -151,13 +162,16 @@ public:
 	}
 
 	unsigned int CalcCurrentLOD(LuaObjType objType, float lodDist, unsigned int lastLOD) const {
-		if (lastLOD >= lodCount)
+		if (lastLOD == 0)
 			return 0;
 
 		// positive values only!
 		const float lpp = std::max(0.0f, lodDist * GLOBAL_LOD_FACTORS[objType]);
 
-		for (/* no-op */; (lastLOD != 0 && lpp <= lodLengths[lastLOD]); lastLOD--) {
+		for (/* no-op */; lastLOD != 0; lastLOD--) {
+			if (lpp > lodLengths[lastLOD]) {
+				break;
+			}
 		}
 
 		return lastLOD;
@@ -179,12 +193,12 @@ public:
 
 		lodLengths.resize(lodCount = count);
 
-		for (unsigned int i = oldCount; i < lodCount; i++) {
+		for (unsigned int i = oldCount; i < count; i++) {
 			lodLengths[i] = -1.0f;
 		}
 
 		for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-			luaMats[m].SetLODCount(lodCount);
+			luaMats[m].SetLODCount(count);
 		}
 	}
 
@@ -225,9 +239,9 @@ private:
 
 	// equal to lodLengths.size(); if non-zero, then at least
 	// one LOD-level has been assigned a custom Lua material
-	unsigned int lodCount = 0;
+	unsigned int lodCount;
 	// which LuaObjectLODMaterial should be used
-	unsigned int currentLOD = 0;
+	unsigned int currentLOD;
 
 	// length-per-pixel; see CalcCurrentLOD
 	std::vector<float> lodLengths;

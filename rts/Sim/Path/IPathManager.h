@@ -15,15 +15,15 @@ class CSolidObject;
 
 class IPathManager {
 public:
-	static IPathManager* GetInstance(int type);
+	static IPathManager* GetInstance(unsigned int type);
 	static void FreeInstance(IPathManager*);
 
 	virtual ~IPathManager() {}
 
-	virtual std::int32_t GetPathFinderType() const { return NOPFS_TYPE; }
-	virtual std::uint32_t GetPathCheckSum() const { return 0; }
+	virtual unsigned int GetPathFinderType() const = 0;
+	virtual std::uint32_t GetPathCheckSum() const = 0;
 
-	virtual std::int64_t Finalize() { return 0; }
+	virtual std::int64_t Finalize() = 0;
 
 	/**
 	 * returns if a path was changed after RequestPath returned its pathID
@@ -32,9 +32,8 @@ public:
 	 */
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
-	virtual void RemoveCacheFiles() {}
 	virtual void Update() {}
-	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
+	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) = 0;
 
 	/**
 	 * When a path is no longer used, call this function to release it from
@@ -42,7 +41,7 @@ public:
 	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 */
-	virtual void DeletePath(unsigned int pathID) {}
+	virtual void DeletePath(unsigned int pathID) = 0;
 
 	/**
 	 * Returns the next waypoint of the path.
@@ -76,9 +75,7 @@ public:
 		float3 callerPos,
 		float radius,
 		bool synced
-	) {
-		return -OnesVector;
-	}
+	) = 0;
 
 
 	/**
@@ -101,8 +98,7 @@ public:
 		unsigned int pathID,
 		std::vector<float3>& points,
 		std::vector<int>& starts
-	) const {
-	}
+	) const = 0;
 
 
 	/**
@@ -140,9 +136,7 @@ public:
 		float3 goalPos,
 		float goalRadius,
 		bool synced
-	) {
-		return 0;
-	}
+	) = 0;
 
 	/**
 	 * Whenever there are any changes in the terrain
@@ -162,12 +156,12 @@ public:
 	 *     affected by the changes.
 	 * @param type see @TerrainChangeTypes
 	 */
-	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type) {}
+	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type) = 0;
 
 	virtual bool SetNodeExtraCosts(const float* costs, unsigned int sizex, unsigned int sizez, bool synced) { return false; }
 	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) { return false; }
 	virtual float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const { return 0.0f; }
-	virtual const float* GetNodeExtraCosts(bool synced) const { return nullptr; }
+	virtual const float* GetNodeExtraCosts(bool synced) const { return NULL; }
 
 	virtual int2 GetNumQueuedUpdates() const { return (int2(0, 0)); }
 };

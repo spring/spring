@@ -3,6 +3,8 @@
 #ifndef IPATH_FINDER_H
 #define IPATH_FINDER_H
 
+#include <list>
+#include <queue>
 #include <cstdlib>
 
 #include "IPath.h"
@@ -17,10 +19,8 @@ class CSolidObject;
 
 class IPathFinder {
 public:
-	virtual ~IPathFinder() {}
-
-	void Init(unsigned int BLOCK_SIZE);
-	void Kill();
+	IPathFinder(unsigned int BLOCK_SIZE);
+	virtual ~IPathFinder();
 
 	static void InitStatic();
 	static void KillStatic();
@@ -123,23 +123,26 @@ protected:
 	) = 0;
 
 public:
+	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
+	static int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];
+
 	// if larger than 1, this IPF is an estimator
-	unsigned int BLOCK_SIZE = 0;
-	unsigned int BLOCK_PIXEL_SIZE = 0;
+	const unsigned int BLOCK_SIZE;
+	const unsigned int BLOCK_PIXEL_SIZE;
 
 	int2 nbrOfBlocks;
 	int2 mStartBlock;
 
-	unsigned int mStartBlockIdx = 0;
-	unsigned int mGoalBlockIdx = 0; // set during each search as the square closest to the goal
+	unsigned int mStartBlockIdx;
+	unsigned int mGoalBlockIdx; // set during each search as the square closest to the goal
 
 	// heuristic value of goalSquareIdx
-	float mGoalHeuristic = 0.0f;
+	float mGoalHeuristic;
 
-	unsigned int maxBlocksToBeSearched = 0;
-	unsigned int testedBlocks = 0;
+	unsigned int maxBlocksToBeSearched;
+	unsigned int testedBlocks;
 
-	unsigned int instanceIndex = 0;
+	unsigned int instanceIndex;
 
 	PathNodeBuffer openBlockBuffer;
 	PathNodeStateBuffer blockStates;

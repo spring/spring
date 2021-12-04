@@ -3,6 +3,7 @@
 #include "BeamLaser.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
@@ -15,13 +16,13 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 #include <vector>
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, )
+CR_BIND_DERIVED_POOL(CBeamLaser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
@@ -136,8 +137,12 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 float CBeamLaser::GetPredictedImpactTime(float3 p) const
 {
-	// beamburst tracks the target during the burst so there's no need to lead
-	return (salvoSize * 0.5f * (1 - weaponDef->beamburst));
+	if (!weaponDef->beamburst) {
+		return salvoSize / 2;
+	} else {
+		// beamburst tracks the target during the burst so there's no need to lead
+		return 0;
+	}
 }
 
 void CBeamLaser::UpdateSweep()
@@ -172,8 +177,8 @@ void CBeamLaser::UpdateSweep()
 	if (reloadStatus > gs->frameNum)
 		return;
 
-	if (teamHandler.Team(owner->team)->res.metal < weaponDef->metalcost) { return; }
-	if (teamHandler.Team(owner->team)->res.energy < weaponDef->energycost) { return; }
+	if (teamHandler->Team(owner->team)->res.metal < weaponDef->metalcost) { return; }
+	if (teamHandler->Team(owner->team)->res.energy < weaponDef->energycost) { return; }
 
 	owner->UseEnergy(weaponDef->energycost / salvoSize);
 	owner->UseMetal(weaponDef->metalcost / salvoSize);
@@ -260,7 +265,15 @@ void CBeamLaser::FireImpl(const bool scriptCall)
 void CBeamLaser::FireInternal(float3 curDir)
 {
 	float actualRange = range;
-	float rangeMod = 1.0f - (0.05f * owner->UnderFirstPersonControl());
+	float rangeMod = 1.0f;
+
+	if (!owner->unitDef->IsImmobileUnit()) {
+		// help units fire while chasing
+		rangeMod = 1.3f;
+	}
+	if (owner->UnderFirstPersonControl()) {
+		rangeMod = 0.95f;
+	}
 
 	bool tryAgain = true;
 	bool doDamage = true;
@@ -303,7 +316,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
-		if (hitUnit != nullptr && teamHandler.AlliedTeams(hitUnit->team, owner->team)) {
+		if (hitUnit != nullptr && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
 			if (sweepFireState.IsSweepFiring() && !sweepFireState.DamageAllies()) {
 				doDamage = false; break;
 			}
@@ -374,11 +387,12 @@ void CBeamLaser::FireInternal(float3 curDir)
 	if (!doDamage)
 		return;
 
-	if (hitUnit != nullptr) {
+	if (hitUnit != NULL) {
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
-		// FIXME? still assumes spherical CV's
-		actualRange += (hitUnit->radius * weaponDef->targetBorder * (weaponDef->targetBorder > 0.0f));
+		if (weaponDef->targetBorder > 0.0f) {
+			actualRange += (hitUnit->radius * weaponDef->targetBorder);
+		}
 	}
 
 	if (curLength < maxLength) {

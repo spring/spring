@@ -2,14 +2,21 @@
 
 #include "System/float4.h"
 #include "System/creg/creg_cond.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 CR_BIND(float4, )
 CR_REG_METADATA(float4, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
 
-// ensure that we use a continuous block of memory
-// (required for passing to gl functions)
-static_assert(sizeof(float4) == 4 * sizeof(float), "");
+float4::float4(): float3(), w(0.0f)
+{
+	// x, y and z are default to 0.0f in float3()
+
+	// ensure that we use a continuous block of memory
+	// (required for passing to gl functions)
+	assert(&y == &x + 1);
+	assert(&z == &y + 1);
+	assert(&w == &z + 1);
+}
 
 bool float4::operator == (const float4& f) const
 {

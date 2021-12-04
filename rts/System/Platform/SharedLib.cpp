@@ -26,14 +26,14 @@
  */
 SharedLib* SharedLib::Instantiate(const char* fileName)
 {
-	SharedLib* lib = nullptr;
+	SharedLib* lib = NULL;
 
 	lib = new SL_IMPL_CLS(fileName);
 
-	if (lib == nullptr || lib->LoadFailed()) {
+	if (lib == NULL || lib->LoadFailed()) {
 		// loading failed
 		delete lib;
-		lib = nullptr;
+		lib = NULL;
 	}
 
 	return lib;
@@ -74,7 +74,9 @@ void SharedLib::reportError(const char* errorMsg, const char* fileName, int line
 #endif // defined BUILDING_AI
 }
 
-SharedLib::~SharedLib() = default; // subclasses will call Unload in their destructors.
+SharedLib::~SharedLib() {
+	// subclasses will call Unload in their destructors.
+}
 
 #undef SL_IMPL_CLS
 #undef SL_IMPL_EXT

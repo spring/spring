@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -43,10 +42,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  @brief Implementation of some blender modifiers (i.e subdivision, mirror).
  */
 
-#ifndef ASSIMP_BUILD_NO_BLEND_IMPORTER
 
+#ifndef ASSIMP_BUILD_NO_BLEND_IMPORTER
 #include "BlenderModifier.h"
-#include <assimp/SceneCombiner.h>
+#include "SceneCombiner.h"
 #include "Subdivision.h"
 #include <assimp/scene.h>
 #include <memory>
@@ -266,7 +265,7 @@ void  BlenderModifier_Mirror :: DoIt(aiNode& out, ConversionData& conv_data,  co
 
     std::copy(out.mMeshes,out.mMeshes+out.mNumMeshes,nind);
     std::transform(out.mMeshes,out.mMeshes+out.mNumMeshes,nind+out.mNumMeshes,
-        [&out](unsigned int n) { return out.mNumMeshes + n; });
+        std::bind1st(std::plus< unsigned int >(),out.mNumMeshes));
 
     delete[] out.mMeshes;
     out.mMeshes = nind;
@@ -310,9 +309,7 @@ void  BlenderModifier_Subdivision :: DoIt(aiNode& out, ConversionData& conv_data
 
     std::unique_ptr<Subdivider> subd(Subdivider::Create(algo));
     ai_assert(subd);
-    if ( conv_data.meshes->empty() ) {
-        return;
-    }
+
     aiMesh** const meshes = &conv_data.meshes[conv_data.meshes->size() - out.mNumMeshes];
     std::unique_ptr<aiMesh*[]> tempmeshes(new aiMesh*[out.mNumMeshes]());
 

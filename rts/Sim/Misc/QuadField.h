@@ -3,11 +3,10 @@
 #ifndef QUAD_FIELD_H
 #define QUAD_FIELD_H
 
-#include <algorithm>
 #include <array>
 #include <vector>
-
 #include "System/Misc/NonCopyable.h"
+
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 #include "System/type2.h"
@@ -20,55 +19,45 @@ class CPlasmaRepulser;
 struct QuadFieldQuery;
 
 template<typename T>
-class QueryVectorCache {
+class ExclusiveVectors {
 public:
-	typedef std::pair<bool, std::vector<T>> PairType;
-
-	std::vector<T>* ReserveVector(size_t base = 0, size_t capa = 1024) {
-		const auto pred = [](const PairType& p) { return (!p.first); };
-		const auto iter = std::find_if(vectors.begin() + base, vectors.end(), pred);
-
-		if (iter != vectors.end()) {
-			iter->first = true;
-			iter->second.clear();
-			iter->second.reserve(capa);
-			return &iter->second;
+	// There should at most be 2 concurrent users of each vector type
+	// using 3 to be safe, increase this number if the assertions below
+	// fail
+	static constexpr int MAX_CONCURRENT_VECTORS = 3;
+	ExclusiveVectors() {
+		for (auto& v: vectors){
+			v.first = false;
 		}
+	}
+	std::vector<T>* GetVector() {
+		for (auto& v: vectors){
+			if (v.first)
+				continue;
 
+			v.first = true;
+			v.second.clear();
+			return &v.second;
+		}
 		assert(false);
 		return nullptr;
 	}
 
-	void ReserveAll(size_t capa) {
-		for (size_t i = 0; i < vectors.size(); ++i) {
-			ReserveVector(i, capa);
-		}
-	}
-
-	void ReleaseVector(const std::vector<T>* released) {
+	void ReleaseVector(std::vector<T>* released) {
 		if (released == nullptr)
 			return;
 
-		const auto pred = [&](const PairType& p) { return (&p.second == released); };
-		const auto iter = std::find_if(vectors.begin(), vectors.end(), pred);
+		for (auto& v: vectors){
+			if (&v.second != released)
+				continue;
 
-		if (iter == vectors.end()) {
-			assert(false);
+			v.first = false;
 			return;
 		}
+		assert(false);
+	}
 
-		iter->first = false;
-	}
-	void ReleaseAll() {
-		for (auto& pair: vectors) {
-			ReleaseVector(&pair.second);
-		}
-	}
-private:
-	// There should at most be 2 concurrent users of each vector type
-	// using 3 to be safe, increase this number if the assertions below
-	// fail
-	std::array<PairType, 3> vectors = {{{false, {}}, {false, {}}, {false, {}}}};
+	std::array<std::pair<bool, std::vector<T>>, MAX_CONCURRENT_VECTORS> vectors;
 };
 
 
@@ -80,17 +69,16 @@ class CQuadField : spring::noncopyable
 
 public:
 
-	/*
-	needed to support dynamic resizing (not used yet)
-	in large games the average loading factor (number of objects per quad)
-	can grow too large to maintain amortized constant performance so more
-	quads are needed
+/*
+needed to support dynamic resizing (not used yet)
+      in large games the average loading factor (number of objects per quad)
+      can grow too large to maintain amortized constant performance so more
+      quads are needed
+*/
+//	static void Resize(int quad_size);
 
-	static void Resize(int quadSize);
-	*/
-
-	void Init(int2 mapDims, int quadSize);
-	void Kill();
+	CQuadField(int2 mapDims, int quad_size);
+	~CQuadField();
 
 	void GetQuads(QuadFieldQuery& qfq, float3 pos, float radius);
 	void GetQuadsRectangle(QuadFieldQuery& qfq, const float3& mins, const float3& maxs);
@@ -150,10 +138,6 @@ public:
 		const unsigned int collisionStateBits = 0xFFFFFFFF
 	);
 
-
-	bool InsertUnitIf(CUnit* unit, const float3& wpos);
-	bool RemoveUnitIf(CUnit* unit, const float3& wpos);
-
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
@@ -174,43 +158,15 @@ public:
 	void ReleaseVector(std::vector<int>* v          ) { tempQuads.ReleaseVector(v); }
 
 	struct Quad {
-	public:
 		CR_DECLARE_STRUCT(Quad)
-
-		Quad() = default;
-		Quad(const Quad& q) = delete;
-		Quad(Quad&& q) { *this = std::move(q); }
-
-		Quad& operator = (const Quad& q) = delete;
-		Quad& operator = (Quad&& q) {
-			units = std::move(q.units);
-			teamUnits = std::move(q.teamUnits);
-			features = std::move(q.features);
-			projectiles = std::move(q.projectiles);
-			repulsers = std::move(q.repulsers);
-			return *this;
-		}
-
-		void PostLoad();
-		void Resize(int numAllyTeams) { teamUnits.resize(numAllyTeams); }
-		void Clear() {
-			units.clear();
-			// reuse inner vectors when reloading
-			// teamUnits.clear();
-			for (auto& v: teamUnits) {
-				v.clear();
-			}
-			features.clear();
-			projectiles.clear();
-			repulsers.clear();
-		}
-
-	public:
+		Quad();
 		std::vector<CUnit*> units;
 		std::vector< std::vector<CUnit*> > teamUnits;
 		std::vector<CFeature*> features;
 		std::vector<CProjectile*> projectiles;
 		std::vector<CPlasmaRepulser*> repulsers;
+
+		void PostLoad();
 	};
 
 	const Quad& GetQuad(unsigned i) const {
@@ -229,9 +185,17 @@ public:
 	int GetQuadSizeX() const { return quadSizeX; }
 	int GetQuadSizeZ() const { return quadSizeZ; }
 
-	constexpr static unsigned int BASE_QUAD_SIZE = 128;
+	const static unsigned int BASE_QUAD_SIZE =  128;
 
 private:
+	// optimized functions, somewhat less userfriendly
+	//
+	// when calling these, <begQuad> and <endQuad> are both expected
+	// to point to the *start* of an array of int's of size at least
+	// numQuadsX * numQuadsZ (eg. tempQuads) -- GetQuadsOnRay ensures
+	// this by itself, for GetQuads the callers take care of it
+	//
+
 	int2 WorldPosToQuadField(const float3 p) const;
 	int WorldPosToQuadFieldIdx(const float3 p) const;
 
@@ -239,13 +203,11 @@ private:
 	std::vector<Quad> baseQuads;
 
 	// preallocated vectors for Get*Exact functions
-	QueryVectorCache<CUnit*> tempUnits;
-	QueryVectorCache<CFeature*> tempFeatures;
-	QueryVectorCache<CProjectile*> tempProjectiles;
-	QueryVectorCache<CSolidObject*> tempSolids;
-	QueryVectorCache<int> tempQuads;
-
-	float2 invQuadSize;
+	ExclusiveVectors<CUnit*> tempUnits;
+	ExclusiveVectors<CFeature*> tempFeatures;
+	ExclusiveVectors<CProjectile*> tempProjectiles;
+	ExclusiveVectors<CSolidObject*> tempSolids;
+	ExclusiveVectors<int> tempQuads;
 
 	int numQuadsX;
 	int numQuadsZ;
@@ -254,24 +216,21 @@ private:
 	int quadSizeZ;
 };
 
-extern CQuadField quadField;
-
+extern CQuadField* quadField;
 
 struct QuadFieldQuery {
 	~QuadFieldQuery() {
-		quadField.ReleaseVector(units);
-		quadField.ReleaseVector(features);
-		quadField.ReleaseVector(projectiles);
-		quadField.ReleaseVector(solids);
-		quadField.ReleaseVector(quads);
+		quadField->ReleaseVector(units);
+		quadField->ReleaseVector(features);
+		quadField->ReleaseVector(projectiles);
+		quadField->ReleaseVector(solids);
+		quadField->ReleaseVector(quads);
 	}
-
 	std::vector<CUnit*>* units = nullptr;
 	std::vector<CFeature*>* features = nullptr;
 	std::vector<CProjectile*>* projectiles = nullptr;
 	std::vector<CSolidObject*>* solids = nullptr;
 	std::vector<int>* quads = nullptr;
 };
-
 
 #endif /* QUAD_FIELD_H */

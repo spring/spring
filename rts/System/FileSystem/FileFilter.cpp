@@ -3,10 +3,10 @@
 #include "FileFilter.h"
 
 
-#include "System/SpringRegex.h"
+#include <boost/regex.hpp>
 
-#include <climits>
-#include <cctype>
+#include <limits.h>
+#include <ctype.h>
 #include <sstream>
 #include <vector>
 
@@ -17,17 +17,17 @@ using std::vector;
 class CFileFilter : public IFileFilter
 {
 public:
-	void AddRule(const string& rule) override;
-	bool Match(const string& filename) const override;
+	void AddRule(const string& rule);
+	bool Match(const string& filename) const;
 
 private:
 	string glob_to_regex(const string& glob);
 
 	struct Rule {
-		Rule() = default;
+		Rule() : negate(false) {}
 		string glob;
-		spring::regex regex;
-		bool negate = false;
+		boost::regex regex;
+		bool negate;
 	};
 
 	vector<Rule> rules;
@@ -108,8 +108,8 @@ void CFileFilter::AddRule(const string& rule)
 		}
 	}
 	r.glob = rule.substr(p, 1 + q - p);
-	r.regex = spring::regex(glob_to_regex(r.glob)
-		, spring::regex::icase);
+	r.regex = boost::regex(glob_to_regex(r.glob)
+		, boost::regex::icase | boost::regex::no_escape_in_lists);
 	rules.push_back(r);
 	//printf("added %s%s: %s\n", r.negate ? "!" : "", r.glob.c_str(), r.regex.expression());
 }
@@ -119,9 +119,9 @@ void CFileFilter::AddRule(const string& rule)
 bool CFileFilter::Match(const string& filename) const
 {
 	bool match = false;
-	for (const auto& rule: rules) {
-		if (spring::regex_search(filename, rule.regex))
-			match = !rule.negate;
+	for (vector<Rule>::const_iterator it = rules.begin(); it != rules.end(); ++it) {
+		if (boost::regex_search(filename, it->regex))
+			match = !it->negate;
 	}
 	return match;
 }

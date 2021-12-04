@@ -20,7 +20,6 @@ struct GlobalRenderingInfo {
 	char glslVersionShort[256];
 
 	int2 glContextVersion;
-	int2 gpuMemorySize;
 
 	SDL_version sdlVersionCompiled;
 	SDL_version sdlVersionLinked;

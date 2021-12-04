@@ -4,7 +4,7 @@
 
 #include "ThreadPool.h"
 #include "System/Exceptions.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #if (!defined(UNITSYNC) && !defined(UNIT_TEST))
 	#include "System/OffscreenGLContext.h"
 #endif
@@ -141,7 +141,7 @@ bool HasThreads() { return !workerThreads[false].empty(); }
 static bool DoTask(int tid, bool async)
 {
 	#ifndef UNIT_TEST
-	SCOPED_MT_TIMER("ThreadPool::RunTask");
+	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 	#endif
 
 	ITaskGroup* tg = nullptr;
@@ -251,7 +251,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 
 	{
 		#ifndef UNIT_TEST
-		SCOPED_MT_TIMER("ThreadPool::WaitFor");
+		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		#endif
 
 		assert(!taskGroup->IsAsyncTask());
@@ -500,29 +500,11 @@ void SetThreadCount(int wantedNumThreads)
 		#endif
 	}
 
-
-	#if (!defined(UNITSYNC) && !defined(UNIT_TEST))
-	if (wantedNumThreads != 0) {
-		CTimeProfiler::RegisterTimer("ThreadPool::AddTask");
-		CTimeProfiler::RegisterTimer("ThreadPool::RunTask");
-		CTimeProfiler::RegisterTimer("ThreadPool::WaitFor");
-	}
-	#endif
-
 	if (curNumThreads < wtdNumThreads) {
 		SpawnThreads(wtdNumThreads, curNumThreads);
 	} else {
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
-
-	#if (!defined(UNITSYNC) && !defined(UNIT_TEST))
-	if (wantedNumThreads == 0) {
-		CTimeProfiler::UnRegisterTimer("ThreadPool::AddTask");
-		CTimeProfiler::UnRegisterTimer("ThreadPool::RunTask");
-		CTimeProfiler::UnRegisterTimer("ThreadPool::WaitFor");
-	}
-	#endif
-
 
 	#ifdef USE_TASK_STATS_TRACKING
 	if (workerThreads[false].empty()) {
@@ -645,7 +627,7 @@ void AddExtJob(spring::thread&& t) {
 }
 
 void AddExtJob(std::future<void>&& f) {
-	#ifndef _WIN32
+	#ifndef WIN32
 	for (auto& ef: extFutures) {
 		// find a future whose (void) result is already available, without blocking
 		// FIXME: does not currently (august 2017) compile on Windows mingw buildbots

@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -130,9 +129,9 @@ void LimitBoneWeightsProcess::ProcessMesh( aiMesh* pMesh)
         std::stable_sort( vit->begin(), vit->end());
 
         // now kill everything beyond the maximum count
-        unsigned int m = static_cast<unsigned int>(vit->size());
+        unsigned int m = vit->size();
         vit->erase( vit->begin() + mMaxWeights, vit->end());
-        removed += static_cast<unsigned int>(m-vit->size());
+        removed += m-vit->size();
 
         // and renormalize the weights
         float sum = 0.0f;

@@ -289,8 +289,8 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 		const unsigned char cmd_opt = sAICallback->Unit_CurrentCommand_getOptions(skirmishAIId, unitId, c);
 
 		Command command(cmd_id, cmd_opt);
-		command.SetTag(sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c));
-		command.SetTimeOut(sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c));
+		command.tag     = sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c);
+		command.timeOut = sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c);
 
 		std::vector<float> params(sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, nullptr, 0));
 
@@ -298,7 +298,7 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 			const int numParams = sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
 
 			for (int p = 0; p < numParams; p++) {
-				command.PushParam(params[p]);
+				command.params.push_back(params[p]);
 			}
 		}
 
@@ -312,6 +312,10 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 
 int springLegacyAI::CAIAICallback::GetMaxUnits() {
 	return sAICallback->Unit_getMax(skirmishAIId);
+}
+
+int springLegacyAI::CAIAICallback::GetUnitAiHint(int unitId) {
+	return sAICallback->Unit_getAiHint(skirmishAIId, unitId);
 }
 
 int springLegacyAI::CAIAICallback::GetUnitTeam(int unitId) {
@@ -420,9 +424,13 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 
 		unitDef->name = sAICallback->UnitDef_getName(skirmishAIId, unitDefId);
 		unitDef->humanName = sAICallback->UnitDef_getHumanName(skirmishAIId, unitDefId);
+		unitDef->filename = sAICallback->UnitDef_getFileName(skirmishAIId, unitDefId);
 		//unitDef->id = sAICallback->UnitDef_getId(skirmishAIId, unitDefId);
 		unitDef->id = unitDefId;
-
+		unitDef->aihint = sAICallback->UnitDef_getAiHint(skirmishAIId, unitDefId);
+		unitDef->cobID = sAICallback->UnitDef_getCobId(skirmishAIId, unitDefId);
+		unitDef->techLevel = sAICallback->UnitDef_getTechLevel(skirmishAIId, unitDefId);
+		unitDef->gaia = sAICallback->UnitDef_getGaia(skirmishAIId, unitDefId);
 		unitDef->metalUpkeep = sAICallback->UnitDef_getUpkeep(skirmishAIId, unitDefId, METAL_RES_IDENT);
 		unitDef->energyUpkeep = sAICallback->UnitDef_getUpkeep(skirmishAIId, unitDefId, ENERGY_RES_IDENT);
 		unitDef->metalMake = sAICallback->UnitDef_getResourceMake(skirmishAIId, unitDefId, METAL_RES_IDENT);
@@ -473,6 +481,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->strafeToAttack = sAICallback->UnitDef_isStrafeToAttack(skirmishAIId, unitDefId);
 		unitDef->minCollisionSpeed = sAICallback->UnitDef_getMinCollisionSpeed(skirmishAIId, unitDefId);
 		unitDef->slideTolerance = sAICallback->UnitDef_getSlideTolerance(skirmishAIId, unitDefId);
+		unitDef->maxSlope = sAICallback->UnitDef_getMaxSlope(skirmishAIId, unitDefId);
 		unitDef->maxHeightDif = sAICallback->UnitDef_getMaxHeightDif(skirmishAIId, unitDefId);
 		unitDef->minWaterDepth = sAICallback->UnitDef_getMinWaterDepth(skirmishAIId, unitDefId);
 		unitDef->waterline = sAICallback->UnitDef_getWaterline(skirmishAIId, unitDefId);
@@ -488,6 +497,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->flankingBonusMobilityAdd = sAICallback->UnitDef_FlankingBonus_getMobilityAdd(skirmishAIId, unitDefId);
 
 		unitDef->maxWeaponRange = sAICallback->UnitDef_getMaxWeaponRange(skirmishAIId, unitDefId);
+		unitDef->type = sAICallback->UnitDef_getType(skirmishAIId, unitDefId);
 		unitDef->tooltip = sAICallback->UnitDef_getTooltip(skirmishAIId, unitDefId);
 		unitDef->wreckName = sAICallback->UnitDef_getWreckName(skirmishAIId, unitDefId);
 		unitDef->deathExplosion = sAICallback->UnitDef_getDeathExplosion(skirmishAIId, unitDefId);
@@ -523,6 +533,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->moveState = sAICallback->UnitDef_getMoveState(skirmishAIId, unitDefId);
 		unitDef->wingDrag = sAICallback->UnitDef_getWingDrag(skirmishAIId, unitDefId);
 		unitDef->wingAngle = sAICallback->UnitDef_getWingAngle(skirmishAIId, unitDefId);
+		unitDef->drag = sAICallback->UnitDef_getDrag(skirmishAIId, unitDefId);
 		unitDef->frontToSpeed = sAICallback->UnitDef_getFrontToSpeed(skirmishAIId, unitDefId);
 		unitDef->speedToFront = sAICallback->UnitDef_getSpeedToFront(skirmishAIId, unitDefId);
 		unitDef->myGravity = sAICallback->UnitDef_getMyGravity(skirmishAIId, unitDefId);
@@ -531,10 +542,9 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->turnRadius = sAICallback->UnitDef_getTurnRadius(skirmishAIId, unitDefId);
 		unitDef->wantedHeight = sAICallback->UnitDef_getWantedHeight(skirmishAIId, unitDefId);
 		unitDef->verticalSpeed = sAICallback->UnitDef_getVerticalSpeed(skirmishAIId, unitDefId);
-
+		unitDef->canCrash = sAICallback->UnitDef_isAbleToCrash(skirmishAIId, unitDefId);
 		unitDef->hoverAttack = sAICallback->UnitDef_isHoverAttack(skirmishAIId, unitDefId);
 		unitDef->airStrafe = sAICallback->UnitDef_isAirStrafe(skirmishAIId, unitDefId);
-
 		unitDef->dlHoverFactor = sAICallback->UnitDef_getDlHoverFactor(skirmishAIId, unitDefId);
 		unitDef->maxAcc = sAICallback->UnitDef_getMaxAcceleration(skirmishAIId, unitDefId);
 		unitDef->maxDec = sAICallback->UnitDef_getMaxDeceleration(skirmishAIId, unitDefId);
@@ -562,7 +572,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 
 		unitDef->xsize = sAICallback->UnitDef_getXSize(skirmishAIId, unitDefId);
 		unitDef->zsize = sAICallback->UnitDef_getZSize(skirmishAIId, unitDefId);
-
+		unitDef->buildangle = sAICallback->UnitDef_getBuildAngle(skirmishAIId, unitDefId);
 		unitDef->loadingRadius = sAICallback->UnitDef_getLoadingRadius(skirmishAIId, unitDefId);
 		unitDef->unloadSpread = sAICallback->UnitDef_getUnloadSpread(skirmishAIId, unitDefId);
 		unitDef->transportCapacity = sAICallback->UnitDef_getTransportCapacity(skirmishAIId, unitDefId);
@@ -592,11 +602,18 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->needGeo = sAICallback->UnitDef_isNeedGeo(skirmishAIId, unitDefId);
 		unitDef->isFeature = sAICallback->UnitDef_isFeature(skirmishAIId, unitDefId);
 		unitDef->hideDamage = sAICallback->UnitDef_isHideDamage(skirmishAIId, unitDefId);
+		unitDef->isCommander = sAICallback->UnitDef_isCommander(skirmishAIId, unitDefId);
 		unitDef->showPlayerName = sAICallback->UnitDef_isShowPlayerName(skirmishAIId, unitDefId);
 		unitDef->canResurrect = sAICallback->UnitDef_isAbleToResurrect(skirmishAIId, unitDefId);
 		unitDef->canCapture = sAICallback->UnitDef_isAbleToCapture(skirmishAIId, unitDefId);
 		unitDef->highTrajectoryType = sAICallback->UnitDef_getHighTrajectoryType(skirmishAIId, unitDefId);
 		unitDef->noChaseCategory = sAICallback->UnitDef_getNoChaseCategory(skirmishAIId, unitDefId);
+		unitDef->leaveTracks = sAICallback->UnitDef_isLeaveTracks(skirmishAIId, unitDefId);
+		unitDef->trackWidth = sAICallback->UnitDef_getTrackWidth(skirmishAIId, unitDefId);
+		unitDef->trackOffset = sAICallback->UnitDef_getTrackOffset(skirmishAIId, unitDefId);
+		unitDef->trackStrength = sAICallback->UnitDef_getTrackStrength(skirmishAIId, unitDefId);
+		unitDef->trackStretch = sAICallback->UnitDef_getTrackStretch(skirmishAIId, unitDefId);
+		unitDef->trackType = sAICallback->UnitDef_getTrackType(skirmishAIId, unitDefId);
 		unitDef->canDropFlare = sAICallback->UnitDef_isAbleToDropFlare(skirmishAIId, unitDefId);
 		unitDef->flareReloadTime = sAICallback->UnitDef_getFlareReloadTime(skirmishAIId, unitDefId);
 		unitDef->flareEfficiency = sAICallback->UnitDef_getFlareEfficiency(skirmishAIId, unitDefId);
@@ -610,7 +627,11 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->smoothAnim = false;
 		unitDef->canLoopbackAttack = sAICallback->UnitDef_isAbleToLoopbackAttack(skirmishAIId, unitDefId);
 		unitDef->levelGround = sAICallback->UnitDef_isLevelGround(skirmishAIId, unitDefId);
-
+		unitDef->useBuildingGroundDecal = sAICallback->UnitDef_isUseBuildingGroundDecal(skirmishAIId, unitDefId);
+		unitDef->buildingDecalType = sAICallback->UnitDef_getBuildingDecalType(skirmishAIId, unitDefId);
+		unitDef->buildingDecalSizeX = sAICallback->UnitDef_getBuildingDecalSizeX(skirmishAIId, unitDefId);
+		unitDef->buildingDecalSizeY = sAICallback->UnitDef_getBuildingDecalSizeY(skirmishAIId, unitDefId);
+		unitDef->buildingDecalDecaySpeed = sAICallback->UnitDef_getBuildingDecalDecaySpeed(skirmishAIId, unitDefId);
 		unitDef->isFirePlatform = sAICallback->UnitDef_isFirePlatform(skirmishAIId, unitDefId);
 		unitDef->maxThisUnit = sAICallback->UnitDef_getMaxThisUnit(skirmishAIId, unitDefId);
 		//unitDef->decoyDef = sAICallback->UnitDef_getDecoyDefId(skirmishAIId, unitDefId);
@@ -645,6 +666,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 
 		if (sAICallback->UnitDef_isMoveDataAvailable(skirmishAIId, unitDefId)) {
 			unitDef->movedata = new MoveData();
+			unitDef->movedata->maxAcceleration = sAICallback->UnitDef_MoveData_getMaxAcceleration(skirmishAIId, unitDefId);
+			unitDef->movedata->maxBreaking = sAICallback->UnitDef_MoveData_getMaxBreaking(skirmishAIId, unitDefId);
+			unitDef->movedata->maxSpeed = sAICallback->UnitDef_MoveData_getMaxSpeed(skirmishAIId, unitDefId);
+			unitDef->movedata->maxTurnRate = sAICallback->UnitDef_MoveData_getMaxTurnRate(skirmishAIId, unitDefId);
 
 			unitDef->movedata->xsize = sAICallback->UnitDef_MoveData_getXSize(skirmishAIId, unitDefId);
 			unitDef->movedata->zsize = sAICallback->UnitDef_MoveData_getZSize(skirmishAIId, unitDefId);
@@ -657,6 +682,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			};
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
+			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);
 			unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getSpeedModClass(skirmishAIId, unitDefId);
 			unitDef->movedata->terrainClass = (enum MoveData::TerrainClass) sAICallback->UnitDef_MoveData_getTerrainClass(skirmishAIId, unitDefId);
 
@@ -1120,6 +1146,7 @@ const springLegacyAI::FeatureDef* springLegacyAI::CAIAICallback::GetFeatureDefBy
 
 		featureDef->myName = sAICallback->FeatureDef_getName(skirmishAIId, featureDefId);
 		featureDef->description = sAICallback->FeatureDef_getDescription(skirmishAIId, featureDefId);
+		featureDef->filename = sAICallback->FeatureDef_getFileName(skirmishAIId, featureDefId);
 		//featureDef->id = sAICallback->FeatureDef_getId(skirmishAIId, featureDefId);
 		featureDef->id = featureDefId;
 		featureDef->metal = sAICallback->FeatureDef_getContainedResource(skirmishAIId, featureDefId, METAL_RES_IDENT);
@@ -1139,6 +1166,7 @@ const springLegacyAI::FeatureDef* springLegacyAI::CAIAICallback::GetFeatureDefBy
 		featureDef->floating = sAICallback->FeatureDef_isFloating(skirmishAIId, featureDefId);
 		featureDef->noSelect = sAICallback->FeatureDef_isNoSelect(skirmishAIId, featureDefId);
 		featureDef->geoThermal = sAICallback->FeatureDef_isGeoThermal(skirmishAIId, featureDefId);
+		featureDef->deathFeature = sAICallback->FeatureDef_getDeathFeature(skirmishAIId, featureDefId);
 		featureDef->xsize = sAICallback->FeatureDef_getXSize(skirmishAIId, featureDefId);
 		featureDef->zsize = sAICallback->FeatureDef_getZSize(skirmishAIId, featureDefId);
 
@@ -1228,6 +1256,8 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 		weaponDef->name = sAICallback->WeaponDef_getName(skirmishAIId, weaponDefId);
 		weaponDef->type = sAICallback->WeaponDef_getType(skirmishAIId, weaponDefId);
 		weaponDef->description = sAICallback->WeaponDef_getDescription(skirmishAIId, weaponDefId);
+		weaponDef->filename = sAICallback->WeaponDef_getFileName(skirmishAIId, weaponDefId);
+		weaponDef->cegTag = sAICallback->WeaponDef_getCegTag(skirmishAIId, weaponDefId);
 		weaponDef->range = sAICallback->WeaponDef_getRange(skirmishAIId, weaponDefId);
 		weaponDef->heightmod = sAICallback->WeaponDef_getHeightMod(skirmishAIId, weaponDefId);
 		weaponDef->accuracy = sAICallback->WeaponDef_getAccuracy(skirmishAIId, weaponDefId);
@@ -1284,8 +1314,14 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 		weaponDef->coverageRange = sAICallback->WeaponDef_getCoverageRange(skirmishAIId, weaponDefId);
 		weaponDef->stockpileTime = sAICallback->WeaponDef_getStockpileTime(skirmishAIId, weaponDefId);
 		weaponDef->intensity = sAICallback->WeaponDef_getIntensity(skirmishAIId, weaponDefId);
+		weaponDef->thickness = sAICallback->WeaponDef_getThickness(skirmishAIId, weaponDefId);
+		weaponDef->laserflaresize = sAICallback->WeaponDef_getLaserFlareSize(skirmishAIId, weaponDefId);
+		weaponDef->corethickness = sAICallback->WeaponDef_getCoreThickness(skirmishAIId, weaponDefId);
 		weaponDef->duration = sAICallback->WeaponDef_getDuration(skirmishAIId, weaponDefId);
+		weaponDef->lodDistance = sAICallback->WeaponDef_getLodDistance(skirmishAIId, weaponDefId);
 		weaponDef->falloffRate = sAICallback->WeaponDef_getFalloffRate(skirmishAIId, weaponDefId);
+		weaponDef->graphicsType = sAICallback->WeaponDef_getGraphicsType(skirmishAIId, weaponDefId);
+		weaponDef->soundTrigger = sAICallback->WeaponDef_isSoundTrigger(skirmishAIId, weaponDefId);
 		weaponDef->selfExplode = sAICallback->WeaponDef_isSelfExplode(skirmishAIId, weaponDefId);
 		weaponDef->gravityAffected = sAICallback->WeaponDef_isGravityAffected(skirmishAIId, weaponDefId);
 		weaponDef->highTrajectory = sAICallback->WeaponDef_getHighTrajectory(skirmishAIId, weaponDefId);

@@ -40,9 +40,9 @@ public:
 	CPreGame(std::shared_ptr<ClientSetup> setup);
 	virtual ~CPreGame();
 
-	void LoadSetupScript(const std::string& script);
-	void LoadDemoFile(const std::string& demo);
-	void LoadSaveFile(const std::string& save);
+	void LoadSetupscript(const std::string& script);
+	void LoadDemo(const std::string& demo);
+	void LoadSavefile(const std::string& save, bool usecreg);
 
 	bool Draw() override;
 	bool Update() override;
@@ -50,9 +50,7 @@ public:
 	int KeyPressed(int k, bool isRepeat) override;
 
 private:
-	void AddMapArchivesToVFS(const CGameSetup* setup);
-	void AddModArchivesToVFS(const CGameSetup* setup);
-
+	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);
 	void StartServer(const std::string& setupscript);
 	void StartServerForDemo(const std::string& demoName);
 
@@ -64,7 +62,6 @@ private:
 
 	void GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet);
 
-private:
 	/**
 	@brief GameData we received from server
 
@@ -73,8 +70,8 @@ private:
 	std::shared_ptr<GameData> gameData;
 	std::shared_ptr<ClientSetup> clientSetup;
 
-	std::string modFileName;
-	ILoadSaveHandler* saveFileHandler;
+	std::string modArchive;
+	ILoadSaveHandler* savefile;
 
 	spring_time connectTimer;
 

@@ -167,21 +167,16 @@ DO_ONCE(CreateBindingTypeMap)
 
 static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
-	GLsizei numUniforms = 0;
-	GLsizei maxUniformNameLength = 0;
-
+	GLsizei numUniforms, maxUniformNameLength = 0;
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
-	char name[Shader::UniformState::NAME_BUF_LEN];
-
 	if (maxUniformNameLength <= 0)
-		return;
-	if (maxUniformNameLength >= sizeof(name))
 		return;
 
 	glUseProgram(newProgID);
 
+	std::string name(maxUniformNameLength, 0);
 	for (int i = 0; i < numUniforms; ++i) {
 		GLsizei nameLength = 0;
 		GLint size = 0;
@@ -192,40 +187,34 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 		if (nameLength == 0)
 			continue;
 
-		// oldLoc is only used when we don't have data in our own state tracker
-		const GLint newLoc = glGetUniformLocation(newProgID, name);
-		      GLint oldLoc = -1;
+		      GLint oldLoc = -1; // only use when we don't got data in our own state tracker
+		const GLint newLoc = glGetUniformLocation(newProgID, &name[0]);
 
 		if (newLoc < 0)
 			continue;
 
-		// try to find old data for the uniform either in the old shader itself or in our own state tracker
-		const size_t hash = hashString(name);
-		const auto hashIt = uniformStates->find(hash);
-
-		Shader::UniformState* oldUniformState = nullptr;
-
-		if (hashIt != uniformStates->end()) {
-			oldUniformState = &hashIt->second;
+		// Try to find old data for the uniform either in the old shader itself or in our own state tracker
+		const size_t hash = hashString(&name[0]);
+		auto it = uniformStates->find(hash);
+		Shader::UniformState* oldUniformState = NULL;
+		if (it != uniformStates->end()) {
+			oldUniformState = &it->second;
 		} else {
-			// uniform not found in state tracker, try to read it from old shader object
-			const auto pair = uniformStates->emplace(hash, name);
-			const auto iter = pair.first;
-
-			oldUniformState = &iter->second;
+			// Uniform not found in state tracker, try to read it from old shader object
+			oldUniformState = &(uniformStates->emplace(hash, name).first->second);
 		}
-
 		oldUniformState->SetLocation(newLoc);
 
-		// check if we have data we can use to initialize the uniform
-		if (!oldUniformState->IsInitialized()) {
+		// Check if we got data we can use to initialize the uniform
+		if (oldUniformState->IsUninit()) {
 			if (oldProgID == 0) {
 				oldLoc = -1;
 				continue;
 			}
+			oldLoc = glGetUniformLocation(oldProgID, &name[0]);
 
-			// no old data found, so we cannot initialize the uniform
-			if ((oldLoc = glGetUniformLocation(oldProgID, name)) < 0)
+			// No old data found, so we cannot initialize the uniform
+			if (oldLoc < 0)
 				continue;
 
 			//FIXME read data from old shader & save data in _new_ uniformState?
@@ -279,7 +268,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 			} break;
 
 			default:
-				LOG_L(L_WARNING, "Unknown GLSL uniform \"%s\" has unknown vartype \"%X\"", name, type);
+				LOG_L(L_WARNING, "Unknown GLSL uniform \"%s\" has unknown vartype \"%X\"", name.c_str(), type);
 		}
 	}
 

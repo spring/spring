@@ -3,8 +3,8 @@
 #ifndef FLARE_PROJECTILE_H
 #define FLARE_PROJECTILE_H
 
-#include <array>
 #include "Projectile.h"
+#include <vector>
 
 class CFlareProjectile : public CProjectile
 {
@@ -12,24 +12,21 @@ class CFlareProjectile : public CProjectile
 
 public:
 	CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame);
+	~CFlareProjectile();
 
 	void Update() override;
 	void Draw(CVertexArray* va) override;
 
-	int GetProjectilesCount() const override { return (subProjPos.size()); }
+	int GetProjectilesCount() const override;
 
 public:
 	int activateFrame;
 	int deathFrame;
 
-	unsigned int numSubProjs;
-	unsigned int maxSubProjs;
-	unsigned int lastSubProj;
-
-	// position and velocity for each sub-salvo particle
-	std::array<float3, 16> subProjPos;
-	std::array<float3, 16> subProjVel;
-
+	int numSub;
+	int lastSub;
+	std::vector<float3> subPos;
+	std::vector<float3> subSpeed;
 	float alphaFalloff;
 
 private:

@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdio>
+#include <stdio.h>
 
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -27,7 +27,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_KEY_BINDINGS)
 CONFIG(int, KeyChainTimeout).defaultValue(750).minimumValue(0).description("Timeout in milliseconds waiting for a key chain shortcut.");
 
 
-CKeyBindings keyBindings;
+CKeyBindings* keyBindings = nullptr;
 
 
 struct DefaultBinding {
@@ -253,19 +253,12 @@ static const DefaultBinding defaultBindings[] = {
 // CKeyBindings
 //
 
-void CKeyBindings::Init()
+CKeyBindings::CKeyBindings()
+	: fakeMetaKey(1)
+	, buildHotkeyMap(true)
+	, debugEnabled(false)
+	, keyChainTimeout(750)
 {
-	fakeMetaKey = -1;
-	keyChainTimeout = 750;
-
-	buildHotkeyMap = true;
-	debugEnabled = false;
-
-
-	bindings.reserve(32);
-	hotkeys.reserve(32);
-
-	statefulCommands.reserve(16);
 	statefulCommands.insert("drawinmap");
 	statefulCommands.insert("moveforward");
 	statefulCommands.insert("moveback");
@@ -279,27 +272,23 @@ void CKeyBindings::Init()
 	RegisterAction("bind");
 	RegisterAction("unbind");
 	RegisterAction("unbindall");
-	RegisterAction("unbindaction");
 	RegisterAction("unbindkeyset");
-	RegisterAction("fakemeta");
+	RegisterAction("unbindaction");
 	RegisterAction("keydebug");
+	RegisterAction("fakemeta");
 	RegisterAction("keyload");
 	RegisterAction("keyreload");
 	RegisterAction("keysave");
+	RegisterAction("keyprint");
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
-	RegisterAction("keyprint");
-	SortRegisteredActions();
 
 	configHandler->NotifyOnChange(this, {"KeyChainTimeout"});
 }
 
-void CKeyBindings::Kill()
-{
-	bindings.clear();
-	hotkeys.clear();
-	statefulCommands.clear();
 
+CKeyBindings::~CKeyBindings()
+{
 	configHandler->RemoveObserver(this);
 }
 
@@ -309,27 +298,22 @@ void CKeyBindings::Kill()
 const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
 {
 	static const ActionList empty;
-	static ActionList merged; //FIXME switch to thread_local (?)
-
 	const ActionList* alPtr = &empty;
 
 	if (ks.AnyMod()) {
-		const auto it = bindings.find(ks);
-
-		if (it != bindings.end())
+		KeyMap::const_iterator it = bindings.find(ks);
+		if (it != bindings.end()) {
 			alPtr = &(it->second);
-
-	} else {
+		}
+	}
+	else {
 		// have to check for an AnyMod keyset as well as the normal one
 		CKeySet anyMod = ks;
 		anyMod.SetAnyBit();
-
-		const auto nit = bindings.find(ks);
-		const auto ait = bindings.find(anyMod);
-
+		KeyMap::const_iterator nit = bindings.find(ks);
+		KeyMap::const_iterator ait = bindings.find(anyMod);
 		const bool haveNormal = (nit != bindings.end());
 		const bool haveAnyMod = (ait != bindings.end());
-
 		if (haveNormal && !haveAnyMod) {
 			alPtr = &(nit->second);
 		}
@@ -338,6 +322,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 		}
 		else if (haveNormal && haveAnyMod) {
 			// combine the two lists (normal first)
+			static ActionList merged; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
 			merged = nit->second;
 			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
@@ -346,7 +331,6 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 
 	if (debugEnabled) {
 		LOG("GetActions: hex=0x%02X acii=\"%s\":", ks.Key(), ks.GetString(false).c_str());
-
 		if (alPtr != &empty) {
 			int i = 1;
 			for (const auto& a: *alPtr) {
@@ -380,7 +364,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeyChain& kc)
 
 const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& action) const
 {
-	const auto it = hotkeys.find(action);
+	ActionMap::const_iterator it = hotkeys.find(action);
 	if (it == hotkeys.end()) {
 		static HotkeyList empty;
 		return empty;
@@ -434,7 +418,7 @@ static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = 
 	if ((nextpos != std::string::npos) && ParseKeyChain(keystr, kc, nextpos))
 		return true;
 
-	keystr.replace(cpos, 1, IntToString(keyCodes.GetCode(","), "%#x"));
+	keystr.replace(cpos, 1, IntToString(keyCodes->GetCode(","), "%#x"));
 	return ParseKeyChain(keystr, kc, cpos);
 }
 
@@ -455,11 +439,11 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 	CKeySet& ks = action.keyChain.back();
 
 	// Try to be safe, force AnyMod mode for stateful commands
-	if (statefulCommands.find(action.command) != statefulCommands.end())
+	if (statefulCommands.find(action.command) != statefulCommands.end()) {
 		ks.SetAnyBit();
+	}
 
-	const auto it = bindings.find(ks);
-
+	KeyMap::iterator it = bindings.find(ks);
 	if (it == bindings.end()) {
 		// create new keyset entry and push it command
 		ActionList& al = bindings[ks];
@@ -493,18 +477,16 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
 		return false;
 	}
+	bool success = false;
 
-	const auto it = bindings.find(ks);
-
-	if (it == bindings.end())
-		return false;
-
-	ActionList& al = it->second;
-	const bool success = RemoveCommandFromList(al, command);
-
-	if (al.empty())
-		bindings.erase(it);
-
+	KeyMap::iterator it = bindings.find(ks);
+	if (it != bindings.end()) {
+		ActionList& al = it->second;
+		success = RemoveCommandFromList(al, command);
+		if (al.empty()) {
+			bindings.erase(it);
+		}
+	}
 	return success;
 }
 
@@ -516,14 +498,15 @@ bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 		LOG_L(L_WARNING, "UnBindKeyset: could not parse key: %s", keystr.c_str());
 		return false;
 	}
+	bool success = false;
 
-	const auto it = bindings.find(ks);
+	KeyMap::iterator it = bindings.find(ks);
+	if (it != bindings.end()) {
+		bindings.erase(it);
+		success = true;
+	}
 
-	if (it == bindings.end())
-		return false;
-
-	bindings.erase(it);
-	return true;
+	return success;
 }
 
 
@@ -531,21 +514,18 @@ bool CKeyBindings::UnBindAction(const std::string& command)
 {
 	bool success = false;
 
-	auto it = bindings.begin();
-
+	KeyMap::iterator it = bindings.begin();
 	while (it != bindings.end()) {
 		ActionList& al = it->second;
-
-		if (RemoveCommandFromList(al, command))
+		if (RemoveCommandFromList(al, command)) {
 			success = true;
-
+		}
 		if (al.empty()) {
 			it = bindings.erase(it);
 		} else {
 			++it;
 		}
 	}
-
 	return success;
 }
 
@@ -573,7 +553,7 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 		LOG_L(L_WARNING, "AddKeySymbol: could not parse key: %s", code.c_str());
 		return false;
 	}
-	if (!keyCodes.AddKeySymbol(keysym, ks.Key())) {
+	if (!keyCodes->AddKeySymbol(keysym, ks.Key())) {
 		LOG_L(L_WARNING, "AddKeySymbol: could not add: %s", keysym.c_str());
 		return false;
 	}
@@ -584,9 +564,7 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& command)
 {
 	bool success = false;
-
-	auto it = al.begin();
-
+	ActionList::iterator it = al.begin();
 	while (it != al.end()) {
 		if (it->command == command) {
 			it = al.erase(it);
@@ -595,7 +573,6 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 			++it;
 		}
 	}
-
 	return success;
 }
 
@@ -611,7 +588,6 @@ void CKeyBindings::ConfigNotify(const std::string& key, const std::string& value
 void CKeyBindings::LoadDefaults()
 {
 	SetFakeMetaKey("space");
-
 	for (const auto& b: defaultBindings) {
 		Bind(b.key, b.action);
 	}
@@ -638,10 +614,10 @@ void CKeyBindings::PushAction(const Action& action)
 		Print();
 	}
 	else if (action.command == "keysyms") {
-		keyCodes.PrintNameToCode(); //TODO move to CKeyCodes?
+		keyCodes->PrintNameToCode(); //TODO move to CKeyCodes?
 	}
 	else if (action.command == "keycodes") {
-		keyCodes.PrintCodeToName(); //TODO move to CKeyCodes?
+		keyCodes->PrintCodeToName(); //TODO move to CKeyCodes?
 	}
 	else {
 		ExecuteCommand(action.rawline);
@@ -652,9 +628,9 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 {
 	const std::vector<std::string> words = CSimpleParser::Tokenize(line, 2);
 
-	if (words.empty())
+	if (words.empty()) {
 		return false;
-
+	}
 	const std::string command = StringToLower(words[0]);
 
 	if (command == "keydebug") {
@@ -686,15 +662,16 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	}
 	else if (command == "unbindall") {
 		bindings.clear();
-		keyCodes.Reset();
+		keyCodes->Reset();
 		Bind("enter", "chat"); // bare minimum
 	}
 	else {
 		return false;
 	}
 
-	if (buildHotkeyMap)
+	if (buildHotkeyMap) {
 		BuildHotkeyMap();
+	}
 
 	return false;
 }
@@ -708,7 +685,8 @@ bool CKeyBindings::Load(const std::string& filename)
 	LoadDefaults();
 
 	while (!parser.Eof()) {
-		ExecuteCommand(parser.GetCleanLine());
+		const std::string line = parser.GetCleanLine();
+		ExecuteCommand(line);
 	}
 
 	BuildHotkeyMap();
@@ -724,7 +702,7 @@ void CKeyBindings::BuildHotkeyMap()
 
 	for (const auto& p: bindings) {
 		for (const Action& action: p.second) {
-			HotkeyList& hl = hotkeys[action.command + (action.extra.empty() ? "" : " " + action.extra)];
+			HotkeyList& hl = hotkeys[action.command + ((action.extra == "") ? "" : " " + action.extra)];
 			hl.insert(action.boundWith);
 		}
 	}
@@ -763,35 +741,36 @@ bool CKeyBindings::FileSave(FILE* out) const
 	fprintf(out, "\n");
 
 	// save the user defined key symbols
-	keyCodes.SaveUserKeySymbols(out);
+	keyCodes->SaveUserKeySymbols(out);
 
 	// save the fake meta key (if it has been defined)
-	if (fakeMetaKey >= 0)
-		fprintf(out, "fakemeta  %s\n\n", keyCodes.GetName(fakeMetaKey).c_str());
+	if (fakeMetaKey >= 0) {
+		fprintf(out, "fakemeta  %s\n\n", keyCodes->GetName(fakeMetaKey).c_str());
+	}
 
 	// save the bindings
 	for (const auto& p: bindings) {
 		const ActionList& al = p.second;
-
 		for (const Action& action: al) {
 			std::string comment;
-
 			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
 				const std::string unitName = action.command.substr(10);
 				const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
-
-				if (unitDef != nullptr)
+				if (unitDef) {
 					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
+				}
 			}
-
 			if (comment.empty()) {
-				fprintf(out, "bind %18s  %s\n", action.boundWith.c_str(), action.rawline.c_str());
+				fprintf(out, "bind %18s  %s\n",
+					action.boundWith.c_str(),
+					action.rawline.c_str());
 			} else {
-				fprintf(out, "bind %18s  %-20s%s\n", action.boundWith.c_str(), action.rawline.c_str(), comment.c_str());
+				fprintf(out, "bind %18s  %-20s%s\n",
+					action.boundWith.c_str(),
+					action.rawline.c_str(), comment.c_str());
 			}
 		}
 	}
-
 	return true;
 }
 

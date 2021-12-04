@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -92,17 +91,8 @@ namespace Blender {
 //   value for the field.
 //
 
-// warn if field is missing, substitute default value
-#ifdef WARN
-#  undef WARN
-#endif
-#define WARN 
-
-// fail the import if the field does not exist
-#ifdef FAIL
-#  undef FAIL
-#endif
-#define FAIL 
+#define WARN // warn if field is missing, substitute default value
+#define FAIL // fail the import if the field does not exist
 
 struct Object;
 struct MTex;
@@ -617,17 +607,6 @@ struct Object : ElemBase  {
     std::shared_ptr<ElemBase> data FAIL;
 
     ListBase modifiers;
-
-    Object()
-    : ElemBase()
-    , type( Type_EMPTY )
-    , parent( nullptr )
-    , track()
-    , proxy()
-    , proxy_from()
-    , data() {
-        // empty
-    }
 };
 
 
@@ -636,15 +615,6 @@ struct Base : ElemBase {
     Base* prev WARN;
     std::shared_ptr<Base> next WARN;
     std::shared_ptr<Object> object WARN;
-
-    Base() 
-    : ElemBase()
-    , prev( nullptr )
-    , next()
-    , object() {
-        // empty
-        // empty
-    }
 };
 
 // -------------------------------------------------------------------------------
@@ -656,15 +626,8 @@ struct Scene : ElemBase {
     std::shared_ptr<Base> basact WARN;
 
     ListBase base;
-
-    Scene()
-    : ElemBase()
-    , camera()
-    , world()
-    , basact() {
-        // empty
-    }
 };
+
 
 // -------------------------------------------------------------------------------
 struct Image : ElemBase {
@@ -692,11 +655,6 @@ struct Image : ElemBase {
     short animspeed;
 
     short gen_x, gen_y, gen_type;
-    
-    Image()
-    : ElemBase() {
-        // empty
-    }
 };
 
 // -------------------------------------------------------------------------------
@@ -784,14 +742,6 @@ struct Tex : ElemBase {
     //VoxelData *vd;
 
     //char use_nodes;
-
-    Tex()
-    : ElemBase()
-    , imaflag( ImageFlags_INTERPOL )
-    , type( Type_CLOUDS )
-    , ima() {
-        // empty
-    }
 };
 
 // -------------------------------------------------------------------------------
@@ -880,13 +830,9 @@ struct MTex : ElemBase {
     //float lifefac, sizefac, ivelfac, pvelfac;
     //float shadowfac;
     //float zenupfac, zendownfac, blendfac;
-
-    MTex()
-    : ElemBase() {
-        // empty
-    }
 };
 
-}
+
+    }
 }
 #endif

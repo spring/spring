@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -40,13 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /** @file Importer.h mostly internal stuff for use by #Assimp::Importer */
-#pragma once
 #ifndef INCLUDED_AI_IMPORTER_H
 #define INCLUDED_AI_IMPORTER_H
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 #include <assimp/matrix4x4.h>
 
 struct aiScene;
@@ -135,11 +133,12 @@ struct BatchData;
  *  could, this has not yet been implemented at the moment).
  *
  *  @note The class may not be used by more than one thread*/
-class ASSIMP_API BatchLoader
+class BatchLoader
 {
     // friend of Importer
 
 public:
+
     //! @cond never
     // -------------------------------------------------------------------
     /** Wraps a full list of configuration properties for an importer.
@@ -163,29 +162,15 @@ public:
     //! @endcond
 
 public:
+
+
     // -------------------------------------------------------------------
     /** Construct a batch loader from a given IO system to be used
-     *  to access external files 
-     */
-    explicit BatchLoader(IOSystem* pIO, bool validate = false );
-
-    // -------------------------------------------------------------------
-    /** The class destructor.
-     */
+     *  to access external files */
+    explicit BatchLoader(IOSystem* pIO);
     ~BatchLoader();
 
-    // -------------------------------------------------------------------
-    /** Sets the validation step. True for enable validation during postprocess.
-     *  @param  enable  True for validation.
-     */
-    void setValidation( bool enabled );
-    
-    // -------------------------------------------------------------------
-    /** Returns the current validation step.
-     *  @return The current validation step.
-     */
-    bool getValidation() const;
-    
+
     // -------------------------------------------------------------------
     /** Add a new file to the list of files to be loaded.
      *  @param file File to be loaded
@@ -200,6 +185,7 @@ public:
         const PropertyMap* map = NULL
         );
 
+
     // -------------------------------------------------------------------
     /** Get an imported scene.
      *  This polls the import from the internal request list.
@@ -213,16 +199,20 @@ public:
         unsigned int which
         );
 
+
     // -------------------------------------------------------------------
     /** Waits until all scenes have been loaded. This returns
      *  immediately if no scenes are queued.*/
     void LoadAll();
 
 private:
+
     // No need to have that in the public API ...
-    BatchData *m_data;
+    BatchData* data;
 };
 
-} // Namespace Assimp
+}
 
-#endif // INCLUDED_AI_IMPORTER_H
+
+
+#endif

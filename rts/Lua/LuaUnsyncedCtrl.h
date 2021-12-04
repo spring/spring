@@ -15,7 +15,6 @@ class LuaUnsyncedCtrl {
 		static bool PushEntries(lua_State* L);
 
 	public:
-		static int Ping(lua_State* L);
 		static int Echo(lua_State* L);
 		static int Log(lua_State* L);
 		static int SendMessage(lua_State* L);
@@ -56,7 +55,6 @@ class LuaUnsyncedCtrl {
 		static int SetDrawGroundDeferred(lua_State* L);
 		static int SetDrawModelsDeferred(lua_State* L);
 		static int SetVideoCapturingMode(lua_State* L);
-		static int SetVideoCapturingTimeOffset(lua_State* L);
 
 		static int SetWaterParams(lua_State* L);
 		static int SetSoundEffectParams(lua_State* L);
@@ -91,8 +89,11 @@ class LuaUnsyncedCtrl {
 
 //FIXME		static int SetShockFrontFactors(lua_State* L);
 
+		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
+		static int GetConfigFloat(lua_State* L);
 		static int SetConfigFloat(lua_State* L);
+		static int GetConfigString(lua_State* L);
 		static int SetConfigString(lua_State* L);
 
 		static int CreateDir(lua_State* L);
@@ -163,11 +164,9 @@ class LuaUnsyncedCtrl {
 		static int SetLogSectionFilterLevel(lua_State* L);
 
 		static int ClearWatchDogTimer(lua_State* L);
-		static int GarbageCollectCtrl(lua_State* L);
 
 		static int PreloadUnitDefModel(lua_State* L);
 		static int PreloadFeatureDefModel(lua_State* L);
-		static int PreloadSoundItem(lua_State* L);
 
 		static int CreateDecal(lua_State* L);
 		static int DestroyDecal(lua_State* L);
@@ -176,10 +175,6 @@ class LuaUnsyncedCtrl {
 		static int SetDecalRotation(lua_State* L);
 		static int SetDecalTexture(lua_State* L);
 		static int SetDecalAlpha(lua_State* L);
-
-		static int SDLSetTextInputRect(lua_State* L);
-		static int SDLStartTextInput(lua_State* L);
-		static int SDLStopTextInput(lua_State* L);
 };
 
 #endif /* LUA_UNSYNCED_CTRL_H */

@@ -36,7 +36,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
@@ -74,9 +73,25 @@ CMiniMap* minimap = nullptr;
 
 CMiniMap::CMiniMap()
 	: CInputReceiver(BACK)
+	, fullProxy(false)
+	, proxyMode(false)
+	, selecting(false)
+	, maxspect(false)
+	, maximized(false)
+	, minimized(false)
+	, mouseLook(false)
+	, mouseMove(false)
+	, mouseResize(false)
+	, slaveDrawMode(false)
+	, showButtons(false)
+	, useIcons(true)
 	, myColor(0.2f, 0.9f, 0.2f, 1.0f)
 	, allyColor(0.3f, 0.3f, 0.9f, 1.0f)
 	, enemyColor(0.9f, 0.2f, 0.2f, 1.0f)
+	, renderToTexture(true)
+	, multisampledFBO(false)
+	, minimapTex(0)
+	, lastClicked(nullptr)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
@@ -204,18 +219,21 @@ void CMiniMap::ParseGeometry(const string& geostr)
 
 void CMiniMap::ToggleMaximized(bool _maxspect)
 {
-	if ((maximized = !maximized)) {
-		// stash current geometry
-		oldPos = curPos;
-		oldDim = curDim;
-		maxspect = _maxspect;
+	if (maximized) {
+		curPos.x = oldPos.x;
+		curPos.y = oldPos.y;
+		curDim.x = oldDim.x;
+		curDim.y = oldDim.y;
 	} else {
-		// restore previous geometry
-		curPos = oldPos;
-		curDim = oldDim;
+		oldPos.x = curPos.x;
+		oldPos.y = curPos.y;
+		oldDim.x = curDim.x;
+		oldDim.y = curDim.y;
+		maxspect = _maxspect;
+		SetMaximizedGeometry();
 	}
 
-	// needed for SetMaximizedGeometry
+	maximized = !maximized;
 	UpdateGeometry();
 }
 
@@ -227,22 +245,21 @@ void CMiniMap::SetMaximizedGeometry()
 		curDim.x = curDim.y;
 		curPos.x = (globalRendering->viewSizeX - globalRendering->viewSizeY) / 2;
 		curPos.y = 0;
-		return;
-	}
-
-	const float  mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
-	const float viewRatio = globalRendering->aspectRatio;
-
-	if (mapRatio > viewRatio) {
-		curPos.x = 0;
-		curDim.x = globalRendering->viewSizeX;
-		curDim.y = globalRendering->viewSizeX / mapRatio;
-		curPos.y = (globalRendering->viewSizeY - curDim.y) / 2;
 	} else {
-		curPos.y = 0;
-		curDim.y = globalRendering->viewSizeY;
-		curDim.x = globalRendering->viewSizeY * mapRatio;
-		curPos.x = (globalRendering->viewSizeX - curDim.x) / 2;
+		const float mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
+		const float viewRatio = globalRendering->aspectRatio;
+
+		if (mapRatio > viewRatio) {
+			curPos.x = 0;
+			curDim.x = globalRendering->viewSizeX;
+			curDim.y = globalRendering->viewSizeX / mapRatio;
+			curPos.y = (globalRendering->viewSizeY - curDim.y) / 2;
+		} else {
+			curPos.y = 0;
+			curDim.y = globalRendering->viewSizeY;
+			curDim.x = globalRendering->viewSizeY * mapRatio;
+			curPos.x = (globalRendering->viewSizeX - curDim.x) / 2;
+		}
 	}
 }
 
@@ -284,79 +301,61 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	if (words.empty())
 		return;
 
-	switch (hashStringLower(words[0].c_str())) {
-		case hashString("fullproxy"): {
-			fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
-		} break;
-		case hashString("icons"): {
-			useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
-		} break;
-		case hashString("unitexp"): {
-			if (words.size() >= 2)
-				unitExponent = atof(words[1].c_str());
+	const std::string command = StringToLower(words[0]);
 
-			UpdateGeometry();
-		} break;
-		case hashString("unitsize"): {
-			if (words.size() >= 2)
-				unitBaseSize = atof(words[1].c_str());
+	if (command == "fullproxy") {
+		fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
+	}
+	else if (command == "icons") {
+		useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
+	}
+	else if (command == "unitexp") {
+		if (words.size() >= 2)
+			unitExponent = atof(words[1].c_str());
 
-			unitBaseSize = std::max(0.0f, unitBaseSize);
-			UpdateGeometry();
-		} break;
-		case hashString("drawcommands"): {
-			if (words.size() >= 2) {
-				drawCommands = std::max(0, atoi(words[1].c_str()));
-			} else {
-				drawCommands = (drawCommands > 0) ? 0 : 1;
-			}
-		} break;
-		case hashString("drawprojectiles"): {
-			drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
-		} break;
-		case hashString("simplecolors"): {
-			simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
-		} break;
+		UpdateGeometry();
+	}
+	else if (command == "unitsize") {
+		if (words.size() >= 2)
+			unitBaseSize = atof(words[1].c_str());
 
-		// the following commands can not be used in dualscreen mode
-		case hashString("geo"):
-		case hashString("geometry"): {
-			if (globalRendering->dualScreenMode)
-				return;
-			if (words.size() < 2)
-				return;
+		unitBaseSize = std::max(0.0f, unitBaseSize);
+		UpdateGeometry();
+	}
+	else if (command == "drawcommands") {
+		if (words.size() >= 2) {
+			drawCommands = std::max(0, atoi(words[1].c_str()));
+		} else {
+			drawCommands = (drawCommands > 0) ? 0 : 1;
+		}
+	}
+	else if (command == "drawprojectiles") {
+		drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
+	}
+	else if (command == "simplecolors") {
+		simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
+	}
 
-			ParseGeometry(words[1]);
-			UpdateGeometry();
-		} break;
+	// the following commands can not be used in dualscreen mode
+	if (globalRendering->dualScreenMode)
+		return;
 
-		case hashString("min"):
-		case hashString("minimize"): {
-			if (globalRendering->dualScreenMode)
-				return;
+	if ((command == "geo") || (command == "geometry")) {
+		if (words.size() < 2)
+			return;
 
-			minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
-		} break;
-
-		case hashString("max"):
-		case hashString("maximize"):
-		case hashString("maxspect"): {
-			if (globalRendering->dualScreenMode)
-				return;
-
-			const bool   isMaximized = maximized;
-			const bool wantMaximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !isMaximized;
-
-			if (isMaximized != wantMaximized)
-				ToggleMaximized(StrCaseStr(words[0].c_str(), "maxspect") == 0);
-		} break;
-
-		case hashString("mouseevents"): {
-			mouseEvents = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !mouseEvents;
-		} break;
-
-		default: {
-		} break;
+		ParseGeometry(words[1]);
+		UpdateGeometry();
+	}
+	else if ((command == "min") || (command == "minimize")) {
+		minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
+	}
+	else if ((command == "max") ||
+	         (command == "maximize") || (command == "maxspect")) {
+		const bool newMax = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !maximized;
+		if (newMax != maximized) {
+			ToggleMaximized(command == "maxspect");
+		}
 	}
 }
 
@@ -364,8 +363,10 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 void CMiniMap::SetGeometry(int px, int py, int sx, int sy)
 {
-	curPos = {px, py};
-	curDim = {sx, sy};
+	curPos.x = px;
+	curPos.y = py;
+	curDim.x = sx;
+	curDim.y = sy;
 
 	UpdateGeometry();
 }
@@ -401,7 +402,7 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(curDim.y);
 	const float mapx = float(mapDims.mapx * SQUARE_SIZE);
 	const float mapy = float(mapDims.mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / math::pow((200.0f * 200.0f), unitExponent);
+	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
 	const float dpr  = ref * math::pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
@@ -414,49 +415,37 @@ void CMiniMap::UpdateGeometry()
 	mapBox.ymin = globalRendering->viewSizeY - (curPos.y + curDim.y);
 	mapBox.ymax = mapBox.ymin + curDim.y - 1;
 
-	// FIXME:
-	//   also need to make sure we can leave maximized-mode when !maxspect (in
-	//   which case the buttons should be drawn on top of map, not outside it)
-	if (!maximized || maxspect) {
-		// work right (resizeBox) to left (minimizeBox)
+	if (!maximized) {
+		// right to left
 		resizeBox.xmax   = mapBox.xmax;
 		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
-
 		moveBox.xmax     = resizeBox.xmax   - buttonSize;
 		moveBox.xmin     = resizeBox.xmin   - buttonSize;
-
 		maximizeBox.xmax = moveBox.xmax     - buttonSize;
 		maximizeBox.xmin = moveBox.xmin     - buttonSize;
-
 		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
 		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
-
 		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
 		const int ymax = ymin + (buttonSize - 1);
 		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
 		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
-
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = mapBox.xmax;
 		buttonBox.ymin = ymin - 3;
 		buttonBox.ymax = ymax;
 	} else {
-		// work left to right
+		// left to right
 		minimizeBox.xmin = mapBox.xmin;
 		minimizeBox.xmax = minimizeBox.xmin + (buttonSize - 1);
-
 		maximizeBox.xmin = minimizeBox.xmin + buttonSize;
 		maximizeBox.xmax = minimizeBox.xmax + buttonSize;
-
 		// dead buttons
-		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin =  0;
+		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin = 0;
 		resizeBox.xmax = resizeBox.ymax = moveBox.xmax = moveBox.ymax = -1;
-
 		const int ymin = mapBox.ymin;
 		const int ymax = ymin + (buttonSize - 1);
 		maximizeBox.ymin = minimizeBox.ymin = ymin;
 		maximizeBox.ymax = minimizeBox.ymax = ymax;
-
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = maximizeBox.xmax;
 		buttonBox.ymin = ymin - 3;
@@ -487,15 +476,15 @@ void CMiniMap::SelectUnits(int x, int y)
 
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-	if (fullProxy && (bp.movement > mouse->dragSelectionThreshold)) {
+	if (fullProxy && (bp.movement > 4)) {
 		// use a selection box
-		const float3 newMapPos = GetMapPosition(x, y);
-		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
+		const float3 newPos = GetMapPosition(x, y);
+		const float3 oldPos = GetMapPosition(bp.x, bp.y);
 
-		const float xmin = std::min(oldMapPos.x, newMapPos.x);
-		const float xmax = std::max(oldMapPos.x, newMapPos.x);
-		const float zmin = std::min(oldMapPos.z, newMapPos.z);
-		const float zmax = std::max(oldMapPos.z, newMapPos.z);
+		const float xmin = std::min(oldPos.x, newPos.x);
+		const float xmax = std::max(oldPos.x, newPos.x);
+		const float zmin = std::min(oldPos.z, newPos.z);
+		const float zmax = std::max(oldPos.z, newPos.z);
 
 		const float4  planeRight(-RgtVector,  xmin);
 		const float4   planeLeft( RgtVector, -xmax);
@@ -524,9 +513,6 @@ void CMiniMap::SelectUnits(int x, int y)
 
 bool CMiniMap::MousePress(int x, int y, int button)
 {
-	if (!mouseEvents)
-		return false;
-
 	if (minimized) {
 		if ((x < buttonSize) && (y < buttonSize)) {
 			minimized = false;
@@ -591,9 +577,6 @@ bool CMiniMap::MousePress(int x, int y, int button)
 
 void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	// if Press is not handled, should never get Move
-	assert(mouseEvents);
-
 	if (mouseMove) {
 		curPos.x += dx;
 		curPos.y -= dy;
@@ -642,9 +625,6 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CMiniMap::MouseRelease(int x, int y, int button)
 {
-	// if Press is not handled, should never get Release
-	assert(mouseEvents);
-
 	if (mouseMove || mouseResize || mouseLook) {
 		mouseMove = false;
 		mouseResize = false;
@@ -911,7 +891,7 @@ void CMiniMap::Update()
 	fbo.Bind();
 	UpdateTextureCache();
 
-	// gets done in CGame
+	// no need, gets done in CGame
 	// fbo.Unbind();
 }
 
@@ -941,7 +921,7 @@ void CMiniMap::ResizeTextureCache()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 	if (multisampledFBO) {
 		// resolve FBO with attached final texture target
@@ -982,8 +962,7 @@ void CMiniMap::UpdateTextureCache()
 			glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
-
-			DrawForReal(false, true, false);
+			DrawForReal(false, true);
 
 		curPos = tmpPos;
 	}
@@ -1012,6 +991,7 @@ void CMiniMap::Draw()
 	if (slaveDrawMode)
 		return;
 
+	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
 	// Draw Border
 	{
 		glEnable(GL_BLEND);
@@ -1031,28 +1011,27 @@ void CMiniMap::Draw()
 		}
 
 		// draw the frameborder
-		if (!globalRendering->dualScreenMode)
+		if (!globalRendering->dualScreenMode && !maximized) {
 			DrawFrame();
+		}
 
 		glPopAttrib();
 	}
 
-	// draw minimap itself
-	DrawForReal(true, false, false);
+	// Draw Minimap itself
+	DrawForReal(true);
 }
 
 
-void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall)
+void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 {
 	if (minimized)
 		return;
 
 	glActiveTexture(GL_TEXTURE0);
 
-	if (!updateTex) {
-		RenderCachedTexture(useNormalizedCoors);
+	if ((!updateTex) && RenderCachedTexture(useGeom))
 		return;
-	}
 
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -1063,7 +1042,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (useNormalizedCoors) {
+	if (useGeom) {
 		glPushMatrix();
 
 		// switch to normalized minimap coords
@@ -1097,7 +1076,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	DrawUnitIcons();
 	DrawWorldStuff();
 
-	if (useNormalizedCoors)
+	if (useGeom)
 		glPopMatrix();
 
 	glPopAttrib();
@@ -1117,7 +1096,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 
 	// Finish
 	// Reset of GL state
-	if (useNormalizedCoors && globalRendering->dualScreenMode)
+	if (useGeom && globalRendering->dualScreenMode)
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	// disable ClipPlanes
@@ -1153,26 +1132,23 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
-		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
-		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+		// CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-		cam->CalcFrustumLines(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
-		cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
+		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
-		const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
+		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
+		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
 
-		for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
-			const CCamera::FrustumLine& fl = negLines[idx];
-
-			if (fl.minz >= fl.maxz)
-				continue;
-
-			va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
-			va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
+		for (auto& fl: negSides) {
+			if (fl.minz < fl.maxz) {
+				va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
+				va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
+			}
 		}
 
 		glLineWidth(2.5f);
@@ -1189,9 +1165,9 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	// selection box
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-	if (selecting && fullProxy && (bp.movement > mouse->dragSelectionThreshold)) {
-		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
-		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
+	if (selecting && fullProxy && (bp.movement > 4)) {
+		const float3 oldPos = GetMapPosition(bp.x, bp.y);
+		const float3 newPos = GetMapPosition(mouse->lastx, mouse->lasty);
 		glColor4fv(cmdColors.mouseBox);
 		//glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
 		//            (GLenum)cmdColors.MouseBoxBlendDst());
@@ -1200,10 +1176,10 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertexQ2d0(oldMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, newMapPos.z);
-			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
+			va->AddVertexQ2d0(oldPos.x, oldPos.z);
+			va->AddVertexQ2d0(newPos.x, oldPos.z);
+			va->AddVertexQ2d0(newPos.x, newPos.z);
+			va->AddVertexQ2d0(oldPos.x, newPos.z);
 		va->DrawArray2d0(GL_LINE_LOOP);
 
 		glLineWidth(1.0f);
@@ -1436,7 +1412,7 @@ void CMiniMap::DrawNotes()
 
 
 
-bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
+bool CMiniMap::RenderCachedTexture(bool useGeom)
 {
 	if (!renderToTexture)
 		return false;
@@ -1446,14 +1422,9 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
-	if (useNormalizedCoors) {
+	if (useGeom) {
 		glPushMatrix();
-
-		if (globalRendering->dualScreenMode)
-			glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
-		else
-			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-
+		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
 		glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
 	}
 
@@ -1470,12 +1441,8 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 
 	DrawCameraFrustumAndMouseSelection();
 
-	if (useNormalizedCoors) {
-		if (globalRendering->dualScreenMode)
-			glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
+	if (useGeom)
 		glPopMatrix();
-	}
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1535,7 +1502,7 @@ void CMiniMap::DrawUnitRanges() const
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	for (const int unitID: selUnits) {
-		const CUnit* unit = unitHandler.GetUnit(unitID);
+		const CUnit* unit = unitHandler->GetUnit(unitID);
 
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
@@ -1652,4 +1619,3 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 
 
 /******************************************************************************/
-

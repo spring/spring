@@ -21,13 +21,6 @@ public:
 	static void CreateInstance();
 	static void FreeInstance();
 
-	void Init() { AddResources(); }
-	void Kill() {
-		resourceDescriptions.clear();
-		resourceMapAnalyzers.clear();
-	}
-
-	void PostLoad() { AddResources(); }
 	void AddResources();
 
 	/**
@@ -109,14 +102,20 @@ public:
 	int GetMetalId() const { return metalResourceId; }
 	int GetEnergyId() const { return energyResourceId; }
 
-	bool IsValidId(int resourceId) const { return (static_cast<size_t>(resourceId) < GetNumResources()); }
+	bool IsValidId(int resourceId) const;
+
+	void PostLoad() { AddResources(); }
 
 private:
+	static CResourceHandler* instance;
+
+	CResourceHandler() { AddResources(); }
+
 	std::vector<CResourceDescription> resourceDescriptions;
 	std::vector<CResourceMapAnalyzer> resourceMapAnalyzers;
 
-	int metalResourceId = -1;
-	int energyResourceId = -1;
+	int metalResourceId;
+	int energyResourceId;
 };
 
 #define resourceHandler CResourceHandler::GetInstance()

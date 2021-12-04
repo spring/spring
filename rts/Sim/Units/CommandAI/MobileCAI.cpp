@@ -7,14 +7,12 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
-#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -22,12 +20,20 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Log/ILog.h"
-#include "System/EventHandler.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/StringUtil.h"
 #include <assert.h>
 
 #define AUTO_GENERATE_ATTACK_ORDERS 1
+#define BUGGER_OFF_TTL 200
+#define MAX_CLOSE_IN_RETRY_TICKS 30
+#define MAX_USERGOAL_TOLERANCE_DIST 100.0f
+
+#define AIRTRANSPORT_DOCKING_RADIUS 16
+#define AIRTRANSPORT_DOCKING_ANGLE 50
+#define UNLOAD_LAND 0
+#define UNLOAD_DROP 1
+#define UNLOAD_LANDFLOOD 2
 
 // MobileCAI is not always assigned to aircraft
 static AAirMoveType* GetAirMoveType(const CUnit* owner) {
@@ -39,18 +45,6 @@ static AAirMoveType* GetAirMoveType(const CUnit* owner) {
 	return static_cast<AAirMoveType*>(owner->moveType);
 }
 
-static float CalcTargetRadius(const CUnit* targetUnit, float minRadius, float radiusMult) {
-	if (targetUnit->unitDef->IsImmobileUnit()) {
-		const float fpSqRadius = (Square(targetUnit->xsize) + Square(targetUnit->zsize));
-		const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
-
-		// 2 * SQUARE_SIZE is a buffer to make sure SetGoal stays on pathable ground
-		return (std::max(minRadius * radiusMult, fpRadius + 2 * SQUARE_SIZE));
-	}
-
-	return (minRadius * radiusMult);
-}
-
 
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , )
@@ -58,36 +52,42 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(lastBuggerGoalPos),
 	CR_MEMBER(lastUserGoal),
 
-	CR_MEMBER(commandPos1),
-	CR_MEMBER(commandPos2),
-	CR_MEMBER(buggerOffPos),
+	CR_MEMBER(lastIdleCheck),
+	CR_MEMBER(tempOrder),
 
+	CR_MEMBER(lastPC),
+
+	CR_MEMBER(lastBuggerOffTime),
+	CR_MEMBER(buggerOffPos),
 	CR_MEMBER(buggerOffRadius),
+
 	CR_MEMBER(repairBelowHealth),
 
-	CR_MEMBER(tempOrder),
-	CR_MEMBER(slowGuard),
-	CR_MEMBER(moveDir),
+	CR_MEMBER(commandPos1),
+	CR_MEMBER(commandPos2),
+
+	CR_MEMBER(lastCloseInTry),
 
 	CR_MEMBER(cancelDistance),
-
-	CR_MEMBER(lastCommandFrame),
-	CR_MEMBER(lastCloseInTry),
-	CR_MEMBER(lastBuggerOffTime),
-	CR_MEMBER(numNonMovingCalls),
-	CR_MEMBER(lastIdleCheck)
+	CR_MEMBER(slowGuard),
+	CR_MEMBER(moveDir)
 ))
 
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
-
-	lastBuggerGoalPos(-XZVector),
+	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(ZeroVector),
-
-	buggerOffRadius(0.0f),
-	repairBelowHealth(0.0f),
-
+	lastIdleCheck(0),
 	tempOrder(false),
+	lastPC(-1),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
+	buggerOffPos(ZeroVector),
+	buggerOffRadius(0),
+	repairBelowHealth(0.0f),
+	commandPos1(ZeroVector),
+	commandPos2(ZeroVector),
+	cancelDistance(1024),
+	lastCloseInTry(-1),
 	slowGuard(false),
 	moveDir(gsRNG.NextFloat() > 0.5f)
 {}
@@ -95,14 +95,19 @@ CMobileCAI::CMobileCAI():
 
 CMobileCAI::CMobileCAI(CUnit* owner):
 	CCommandAI(owner),
-
-	lastBuggerGoalPos(-XZVector),
+	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(owner->pos),
-
-	buggerOffRadius(0.0f),
-	repairBelowHealth(0.0f),
-
+	lastIdleCheck(0),
 	tempOrder(false),
+	lastPC(-1),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
+	buggerOffPos(ZeroVector),
+	buggerOffRadius(0),
+	repairBelowHealth(0.0f),
+	commandPos1(ZeroVector),
+	commandPos2(ZeroVector),
+	cancelDistance(1024),
+	lastCloseInTry(-1),
 	slowGuard(false),
 	moveDir(gsRNG.NextFloat() > 0.5f)
 {
@@ -120,7 +125,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
-		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canmove) {
@@ -135,7 +140,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.params.push_back("1000000"); // max distance
-		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canPatrol) {
@@ -148,7 +153,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order the unit to patrol to one or more waypoints";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canFight) {
@@ -161,7 +166,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order the unit to take action while moving to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canGuard) {
@@ -174,7 +179,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order a unit to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canfly) {
@@ -196,7 +201,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("LandAt 30");
 			c.params.push_back("LandAt 50");
 			c.params.push_back("LandAt 80");
-			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
 			SCommandDescription c;
@@ -214,7 +219,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("1");
 			c.params.push_back(" Fly ");
 			c.params.push_back("Land");
-			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
@@ -229,7 +234,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Load units";
 			c.tooltip   = c.name + ": Sets the transport to load a unit or units within an area";
 			c.mouseicon = c.name;
-			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
 			SCommandDescription c;
@@ -241,7 +246,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Unload units";
 			c.tooltip   = c.name + ": Sets the transport to unload units in an area";
 			c.mouseicon = c.name;
-			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
@@ -250,7 +255,10 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 CMobileCAI::~CMobileCAI()
 {
-	SetTransportee(nullptr);
+	// if uh == NULL then all pointers to units should be considered dangling
+	if (unitHandler != nullptr) {
+		SetTransportee(nullptr);
+	}
 }
 
 
@@ -263,10 +271,10 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		AAirMoveType* airMT = GetAirMoveType(owner);
 
 		if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
-			if (c.GetNumParams() == 0)
+			if (c.params.empty())
 				return;
 
-			switch ((int) c.GetParam(0)) {
+			switch ((int) c.params[0]) {
 				case 0: { repairBelowHealth = 0.0f; break; }
 				case 1: { repairBelowHealth = 0.3f; break; }
 				case 2: { repairBelowHealth = 0.5f; break; }
@@ -286,11 +294,14 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		if (c.GetID() == CMD_IDLEMODE) {
-			if (c.GetNumParams() == 0)
+			if (c.params.empty())
 				return;
 
 			// toggle between the "land" and "fly" idle-modes
-			airMT->autoLand = (int(c.GetParam(0)) == 1);
+			switch ((int) c.params[0]) {
+				case 0: { airMT->autoLand = false; break; }
+				case 1: { airMT->autoLand = true; break; }
+			}
 
 			if (!airMT->owner->beingBuilt) {
 				if (!airMT->autoLand)
@@ -312,11 +323,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 	}
 
-	// directly issued queueing commands always cancel temporary (i.e. auto-generated attack) orders
-	const bool directCmd = ((c.GetOpts() & SHIFT_KEY) == 0);
-	const bool queingCmd = (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end());
-
-	if (directCmd && queingCmd) {
+	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		tempOrder = false;
 
 		SetTransportee(nullptr);
@@ -332,7 +339,8 @@ void CMobileCAI::SlowUpdate()
 	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 
-	if (!commandQue.empty() && commandQue.front().GetTimeOut() < gs->frameNum) {
+
+	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMoveAndFinishCommand();
 		return;
 	}
@@ -341,11 +349,16 @@ void CMobileCAI::SlowUpdate()
 		MobileAutoGenerateTarget();
 
 		// the attack order could terminate directly and thus cause a loop
-		if (commandQue.empty() || (commandQue.front()).GetID() == CMD_ATTACK)
+		if (commandQue.empty() || (commandQue.front()).GetID() == CMD_ATTACK) {
 			return;
+		}
 	}
 
-	// when slow-guarding, regulate speed through {Start,Stop}SlowGuard
+	if (!slowGuard) {
+		// when slow-guarding, regulate speed through {Start,Stop}SlowGuard
+		SlowUpdateMaxSpeed();
+	}
+
 	Execute();
 }
 
@@ -355,46 +368,47 @@ void CMobileCAI::SlowUpdate()
 void CMobileCAI::Execute()
 {
 	Command& c = commandQue.front();
-
 	switch (c.GetID()) {
-		case CMD_MOVE:      { ExecuteMove(c);     return; }
-		case CMD_PATROL:    { ExecutePatrol(c);   return; }
-		case CMD_FIGHT:     { ExecuteFight(c);    return; }
-		case CMD_GUARD:     { ExecuteGuard(c);    return; }
-		case CMD_LOAD_ONTO: { ExecuteLoadOnto(c); return; }
+		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c);	return; }
+		case CMD_MOVE:                 { ExecuteMove(c);				return; }
+		case CMD_PATROL:               { ExecutePatrol(c);				return; }
+		case CMD_FIGHT:                { ExecuteFight(c);				return; }
+		case CMD_GUARD:                { ExecuteGuard(c);				return; }
+		case CMD_LOAD_ONTO:            { ExecuteLoadOnto(c);			return; }
 	}
-
 	if (owner->unitDef->IsTransportUnit()) {
 		switch (c.GetID()) {
-			case CMD_LOAD_UNITS:   { ExecuteLoadUnits(c);   return; }
+			case CMD_LOAD_UNITS:   { ExecuteLoadUnits(c); return; }
 			case CMD_UNLOAD_UNITS: { ExecuteUnloadUnits(c); return; }
 			case CMD_UNLOAD_UNIT:  { ExecuteUnloadUnit(c);  return; }
 		}
 	}
-
 	CCommandAI::SlowUpdate();
+}
+
+/**
+* @brief executes the set wanted max speed command
+*/
+void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
+{
+	if (repeatOrders && (commandQue.size() >= 2) &&
+			(commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED)) {
+		commandQue.push_back(commandQue.front());
+	}
+	FinishCommand();
+	SlowUpdate();
+	return;
 }
 
 /**
 * @brief executes the move command
 */
-void CMobileCAI::ExecuteMove(Command& c)
+void CMobileCAI::ExecuteMove(Command &c)
 {
-	const AMoveType* moveType = owner->moveType;
+	const float3 cmdPos = c.GetPos(0);
 
-	const float3& cmdPos = c.GetPos(0);
-	const float3& ownPos = owner->pos;
-
-	const float sqGoalDist = cmdPos.SqDistance2D(ownPos);
-
-	// this check is important to process failed orders properly
-	// NB: only works if the *non-extended* goal radius is passed
-	if (!moveType->IsMovingTowards(cmdPos, moveType->GetGoalRadius(0.0f), false))
-		SetGoal(cmdPos, ownPos);
-
-	// compare against the moveType's own (possibly extended)
-	// goal radius to determine if we can finish the command
-	if (sqGoalDist < Square(moveType->GetGoalRadius(1.0f))) {
+	const float sqDist = owner->pos.SqDistance2D(cmdPos);
+	if (sqDist < Square(SQUARE_SIZE)) {
 		if (!HasMoreMoveCommands())
 			StopMove();
 
@@ -402,74 +416,67 @@ void CMobileCAI::ExecuteMove(Command& c)
 		return;
 	}
 
-	if (moveType->progressState == AMoveType::Failed) {
+	// This check is important to process failed orders properly
+	if (!owner->moveType->IsMovingTowards(cmdPos, SQUARE_SIZE, false))
+		SetGoal(cmdPos, owner->pos);
+
+	if (owner->moveType->progressState == AMoveType::Failed) {
 		StopMoveAndFinishCommand();
 		return;
 	}
 
-	// bypass cancel-distance check for internal (BUGGER_OFF) move commands
-	// (not for internal CMD_FIGHT's created by ExecutePatrol; these should
-	// get cancelled like regular user fight-commands)
-	if (sqGoalDist >= cancelDistance || (c.IsInternalOrder() && !c.IsAttackCommand()) || !HasMoreMoveCommands())
-		return;
-
-	// fallback
-	FinishCommand();
+	if (sqDist < cancelDistance && HasMoreMoveCommands())
+		FinishCommand();
 }
 
-void CMobileCAI::ExecuteLoadOnto(Command& c) {
-	CUnit* transport = unitHandler.GetUnit(c.GetParam(0));
+void CMobileCAI::ExecuteLoadOnto(Command &c) {
+	CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
-	if (transport == nullptr) {
-		StopMoveAndFinishCommand();
-		return;
-	}
-
-	// prevent <owner> from chasing after full transports, etc
-	if (!transport->CanTransport(owner)) {
+	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
 		StopMoveAndFinishCommand();
 		return;
 	}
 
 	if (!inCommand) {
 		inCommand = true;
-		// order transport to load <owner> before resuming its own queue
-		transport->commandAI->commandQue.push_front(Command(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id));
+		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id);
+		unit->commandAI->GiveCommandReal(newCommand);
 	}
+	if (owner->GetTransporter() != nullptr) {
+		if (!commandQue.empty())
+			StopMoveAndFinishCommand();
 
-	if (owner->GetTransporter() == transport) {
-		// owner already loaded; <c> should still be in front of queue
-		assert(!commandQue.empty());
-		StopMoveAndFinishCommand();
 		return;
 	}
 
-	// owner not loaded yet, stand still or move closer
-	if ((owner->pos - transport->pos).SqLength2D() < cancelDistance) {
+	if (unit == nullptr)
+		return;
+
+	if ((owner->pos - unit->pos).SqLength2D() < cancelDistance) {
 		StopMove();
 	} else {
-		SetGoal(transport->pos, owner->pos);
+		SetGoal(unit->pos, owner->pos);
 	}
 }
 
 /**
 * @brief Executes the Patrol command c
 */
-void CMobileCAI::ExecutePatrol(Command& c)
+void CMobileCAI::ExecutePatrol(Command &c)
 {
 	assert(owner->unitDef->canPatrol);
-	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[MobileCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
+	if (c.params.size() < 3) {
+		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
-
-	Command temp(CMD_FIGHT, c.GetOpts() | INTERNAL_ORDER, c.GetPos(0));
+	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER, c.GetPos(0));
 
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
 
-	eoh->CommandFinished(*owner, Command(CMD_PATROL));
+	Command tmpC(CMD_PATROL);
+	eoh->CommandFinished(*owner, tmpC);
 	ExecuteFight(temp);
 }
 
@@ -478,16 +485,16 @@ void CMobileCAI::ExecutePatrol(Command& c)
 */
 void CMobileCAI::ExecuteFight(Command& c)
 {
-	assert(c.IsInternalOrder() || owner->unitDef->canFight);
+	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 
-	if (c.GetNumParams() == 1 && !owner->weapons.empty()) {
+	if (c.params.size() == 1 && !owner->weapons.empty()) {
 		CWeapon* w = owner->weapons.front();
 
 		if ((orderTarget != nullptr) && !w->Attack(SWeaponTarget(orderTarget, false))) {
 			CUnit* newTarget = CGameHelper::GetClosestValidTarget(owner->pos, owner->maxRange, owner->allyteam, this);
 
 			if ((newTarget != nullptr) && w->Attack(SWeaponTarget(newTarget, false))) {
-				c.SetParam(0, newTarget->id);
+				c.params[0] = newTarget->id;
 
 				inCommand = false;
 			}
@@ -501,18 +508,18 @@ void CMobileCAI::ExecuteFight(Command& c)
 		inCommand = true;
 		tempOrder = false;
 	}
-	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[MobileCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
+	if (c.params.size() < 3) {
+		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
-	if (c.GetNumParams() >= 6) {
-		if (!inCommand)
+	if (c.params.size() >= 6) {
+		if (!inCommand) {
 			commandPos1 = c.GetPos(3);
-
+		}
 	} else {
 		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
 		// rotated (only shortened) if we reach this because the previous return
-		// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64))'
+		// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
 		// condition, but is actually updated correctly if you click somewhere
 		// outside the area close to the line (for a new command).
 		commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
@@ -528,15 +535,13 @@ void CMobileCAI::ExecuteFight(Command& c)
 		commandPos2 = cmdPos;
 		lastUserGoal = commandPos2;
 	}
-	if (c.GetNumParams() >= 6)
+	if (c.params.size() >= 6) {
 		cmdPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+	}
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-
-		const float leashRadius = 100.0f * owner->moveState * owner->moveState;
-		const float searchRadius = owner->maxRange + leashRadius;
-
+		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = CGameHelper::GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 
 		if (enemy != nullptr) {
@@ -544,16 +549,17 @@ void CMobileCAI::ExecuteFight(Command& c)
 
 			// make the attack-command inherit <c>'s options
 			// NOTE: see AirCAI::ExecuteFight why we do not set INTERNAL_ORDER
-			commandQue.push_front(Command(CMD_ATTACK, c.GetOpts(), enemy->id));
+			Command c2(CMD_ATTACK, c.options, enemy->id);
+			commandQue.push_front(c2);
 
 			inCommand = false;
 			tempOrder = true;
 
-			if (lastCommandFrame == gs->frameNum)
-				return;
-
-			lastCommandFrame = gs->frameNum;
-			SlowUpdate();
+			// avoid infinite loops (?)
+			if (lastPC != gs->frameNum) {
+				lastPC = gs->frameNum;
+				SlowUpdate();
+			}
 			return;
 		}
 	}
@@ -561,8 +567,8 @@ void CMobileCAI::ExecuteFight(Command& c)
 	ExecuteMove(c);
 }
 
-bool CMobileCAI::IsValidTarget(const CUnit* enemy, CWeapon* weapon) const {
-	if (enemy == nullptr)
+bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
+	if (!enemy)
 		return false;
 
 	if (enemy == owner)
@@ -575,18 +581,15 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy, CWeapon* weapon) const {
 	if (enemy->IsNeutral())
 		return false;
 
-	// test if given weapon belonging to owner can target
-	// the enemy unit; indicates an auto-targeting context
-	if (weapon != nullptr)
-		return (weapon->TestTarget(enemy->pos, {enemy}) && (owner->moveState != MOVESTATE_HOLDPOS || weapon->TryTargetRotate(enemy, false, false)));
-
-	// test if any of owner's weapons can target the enemy unit
 	if (owner->weapons.empty())
 		return false;
 
+	// test if any weapon can target the enemy unit
 	for (CWeapon* w: owner->weapons) {
-		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) && (owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false, false)))
+		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) &&
+			(owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false, false))) {
 			return true;
+		}
 	}
 
 	return false;
@@ -595,64 +598,54 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy, CWeapon* weapon) const {
 /**
 * @brief Executes the guard command c
 */
-void CMobileCAI::ExecuteGuard(Command& c)
+void CMobileCAI::ExecuteGuard(Command &c)
 {
 	assert(owner->unitDef->canGuard);
-	assert(c.GetNumParams() != 0);
+	assert(!c.params.empty());
 
-	const CUnit* guardee = unitHandler.GetUnit(c.GetParam(0));
+	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
 
-	if (guardee == nullptr) {
-		StopMoveAndFinishCommand();
-		return;
-	}
-	if (UpdateTargetLostTimer(guardee->id) == 0) {
-		StopMoveAndFinishCommand();
-		return;
-	}
-	if (guardee->outOfMapTime > (GAME_SPEED * 5)) {
-		StopMoveAndFinishCommand();
-		return;
-	}
+	if (guardee == nullptr) { StopMoveAndFinishCommand(); return; }
+	if (UpdateTargetLostTimer(guardee->id) == 0) { StopMoveAndFinishCommand(); return; }
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { StopMoveAndFinishCommand(); return; }
 
 	const bool pushAttackCommand =
 		owner->unitDef->canAttack &&
 		(guardee->lastAttackFrame + 40 < gs->frameNum) &&
-		IsValidTarget(guardee->lastAttacker, nullptr);
+		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		commandQue.push_front(Command(CMD_ATTACK, c.GetOpts(), guardee->lastAttacker->id));
+		Command nc(CMD_ATTACK, c.options, guardee->lastAttacker->id);
+		commandQue.push_front(nc);
 
 		StopSlowGuard();
 		SlowUpdate();
-		return;
-	}
+	} else {
+		const float3 dif = (guardee->pos - owner->pos).SafeNormalize();
+		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
+		const bool resetGoal =
+			((owner->moveType->goalPos - goal).SqLength2D() > 1600.0f) ||
+			(owner->moveType->goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
-	const float3 dif = (guardee->pos - owner->pos).SafeNormalize();
-	const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
-	const bool resetGoal =
-		((owner->moveType->goalPos - goal).SqLength2D() > 1600.0f) ||
-		(owner->moveType->goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
-
-	if (resetGoal)
-		SetGoal(goal, owner->pos);
-
-	if ((goal - owner->pos).SqLength2D() < 6400.0f) {
-		StartSlowGuard(guardee->moveType->GetMaxSpeed());
-
-		if ((goal - owner->pos).SqLength2D() < 1800.0f) {
-			StopMove();
-			NonMoving();
+		if (resetGoal) {
+			SetGoal(goal, owner->pos);
 		}
 
-		return;
-	}
+		if ((goal - owner->pos).SqLength2D() < 6400.0f) {
+			StartSlowGuard(guardee->moveType->GetMaxSpeed());
 
-	StopSlowGuard();
+			if ((goal - owner->pos).SqLength2D() < 1800.0f) {
+				StopMove();
+				NonMoving();
+			}
+		} else {
+			StopSlowGuard();
+		}
+	}
 }
 
 
-void CMobileCAI::ExecuteStop(Command& c)
+void CMobileCAI::ExecuteStop(Command &c)
 {
 	StopMove();
 	return CCommandAI::ExecuteStop(c);
@@ -660,188 +653,13 @@ void CMobileCAI::ExecuteStop(Command& c)
 
 
 
-
-void CMobileCAI::ExecuteObjectAttack(Command& c)
-{
-	bool tryTargetRotate  = false;
-	bool tryTargetHeading = false;
-
-	float edgeFactor = 0.0f; // percent offset to target center
-
-	const float3 targetMidPosVec = owner->midPos - orderTarget->midPos;
-	const float3 targetErrPos = orderTarget->GetErrorPos(owner->allyteam, false);
-
-	const float targetGoalDist = targetErrPos.SqDistance2D(owner->moveType->goalPos);
-	const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
-	const float minPointingDist = std::min(1.0f * owner->losRadius, owner->maxRange * 0.9f);
-
-	// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
-	const float targetMidPosDist2D = targetMidPosVec.Length2D();
-	// const float targetMidPosMaxDist = owner->maxRange - (Square(orderTarget->speed.w) / owner->unitDef->maxAcc);
-
-	if (!owner->weapons.empty()) {
-		if (!(c.GetOpts() & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
-			StopMoveAndFinishCommand();
-			return;
-		}
-	}
-
-	// tell weapons about the ordered target-unit
-	SWeaponTarget orderTgtInfo(orderTarget);
-	orderTgtInfo.isUserTarget = (!c.IsInternalOrder());
-	orderTgtInfo.isManualFire = (c.GetID() == CMD_MANUALFIRE);
-
-	const short targetHeading = GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z);
-
-	assert(c.GetID() != CMD_MANUALFIRE || (!owner->weapons.empty() && owner->unitDef->canManualFire));
-
-	for (CWeapon* w: owner->weapons) {
-		if (c.GetID() == CMD_MANUALFIRE && !w->weaponDef->manualfire)
-			continue;
-
-		tryTargetRotate  = w->TryTargetRotate(orderTgtInfo.unit, orderTgtInfo.isUserTarget, orderTgtInfo.isManualFire);
-		tryTargetHeading = w->TryTargetHeading(targetHeading, orderTgtInfo);
-
-		edgeFactor = math::fabs(w->weaponDef->targetBorder);
-
-		if (tryTargetRotate || tryTargetHeading)
-			break;
-	}
-
-	// if w->AttackUnit() returned true then we are already
-	// in range with our biggest (?) weapon, so stop moving
-	// also make sure that we're not locked in close-in/in-range state
-	// loop due to rotates invoked by in-range or out-of-range states
-	if (tryTargetRotate) {
-		const bool canChaseTarget = (!owner->unitDef->stopToAttack) && (owner->moveState != MOVESTATE_HOLDPOS);
-		const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
-
-		if (canChaseTarget && tryTargetHeading && targetBehind && !owner->unitDef->IsHoveringAirUnit()) {
-			SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
-		} else {
-			StopMove();
-
-			if (gs->frameNum > (lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS))
-				owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
-		}
-
-		owner->AttackUnit(orderTgtInfo.unit, orderTgtInfo.isUserTarget, orderTgtInfo.isManualFire);
-		return;
-	}
-
-	// if we are on hold-position in a *temporary* order, then none of the
-	// close-in code below should run, and the attack command is cancelled
-	// (units executing an *area* fight-command and set to hold-pos should
-	// not chase any automatically assigned targets since that would allow
-	// them to be baited)
-	if (tempOrder && owner->moveState == MOVESTATE_HOLDPOS) {
-		StopMoveAndFinishCommand();
-		return;
-	}
-
-	// target is probably close enough
-	if (targetMidPosDist2D < (owner->maxRange * 0.9f)) {
-		if (owner->unitDef->IsHoveringAirUnit() || (targetMidPosVec.SqLength2D() < 1024)) {
-			StopMove();
-			owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
-			return;
-		}
-
-		// move sideways (i.e. strafe) to get a shot
-		// note that the close-enough assumption is flawed:
-		// unit may be aiming or otherwise unable to shoot
-		if (owner->unitDef->strafeToAttack) {
-			const int dirSign = Sign(int(moveDir ^= (owner->moveType->progressState == AMoveType::Failed)));
-
-			constexpr float sin = 0.6f;
-			constexpr float cos = 0.8f;
-
-			float3 goalDiff;
-			goalDiff.x = targetMidPosVec.dot(float3(cos          , 0.0f, -sin * dirSign));
-			goalDiff.z = targetMidPosVec.dot(float3(sin * dirSign, 0.0f,  cos          ));
-			goalDiff *= (targetMidPosDist2D < (owner->maxRange * 0.3f)) ? 1.0f / cos : cos;
-			goalDiff += orderTarget->pos;
-
-			SetGoal(goalDiff, owner->pos);
-		}
-
-		return;
-	}
-
-	// not a temporary order or not on hold-position; close in on target more
-	assert(!tempOrder || owner->moveState != MOVESTATE_HOLDPOS);
-
-	if (targetGoalDist > targetPosDist) {
-		const float3 norm = (targetErrPos - owner->pos).Normalize();
-
-		// if the target is outside LOS, this goes to its approximate position (errPos != pos)
-		// otherwise it will move us to the exact target position which should fix issues with
-		// low-range (mainly melee) weapons
-		SetGoal(targetErrPos - norm * CalcTargetRadius(orderTarget, orderTarget->radius, edgeFactor * 0.8f), owner->pos);
-
-		if (lastCloseInTry < (gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS))
-			lastCloseInTry = gs->frameNum;
-	}
-}
-
-void CMobileCAI::ExecuteGroundAttack(Command& c)
-{
-	const float3 attackPos = c.GetPos(0);
-	const float3 attackVec = attackPos - owner->pos;
-	const short  attackHeading = GetHeadingFromVector(attackVec.x, attackVec.z);
-	const SWeaponTarget attackTgtInfo(attackPos, !c.IsInternalOrder());
-
-	if (c.GetID() == CMD_MANUALFIRE) {
-		assert(owner->unitDef->canManualFire);
-
-		if (owner->AttackGround(attackTgtInfo.groundPos, attackTgtInfo.isUserTarget, true)) {
-			// StopMoveAndKeepPointing calls StopMove before KeepPointingTo
-			// but we want to call it *after* KeepPointingTo to prevent 4131
-			owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
-			StopMove();
-		}
-
-		return;
-	}
-
-	for (CWeapon* w: owner->weapons) {
-		// NOTE:
-		//   we call TryTargetHeading which is less restrictive than TryTarget
-		//   (eg. the former succeeds even if the unit has not already aligned
-		//   itself with <attackVec>)
-		if (!w->TryTargetHeading(attackHeading, attackTgtInfo))
-			continue;
-
-		if (owner->AttackGround(attackTgtInfo.groundPos, attackTgtInfo.isUserTarget, false)) {
-			StopMoveAndKeepPointing(attackTgtInfo.groundPos, owner->maxRange * 0.9f, true);
-			return;
-		}
-
-		// for gunships, this pitches the nose down such that
-		// TryTargetRotate (which also checks range for itself)
-		// has a bigger chance of succeeding
-		//
-		// hence it must be called as soon as we get in range
-		// and may not depend on what TryTargetRotate returns
-		// (otherwise we might never get a firing solution)
-		owner->moveType->KeepPointingTo(attackTgtInfo.groundPos, owner->maxRange * 0.9f, true);
-	}
-
-	if (attackVec.SqLength2D() >= Square(owner->maxRange * 0.9f))
-		return;
-
-	owner->AttackGround(attackTgtInfo.groundPos, attackTgtInfo.isUserTarget, false);
-	StopMoveAndKeepPointing(attackPos, owner->maxRange * 0.9f, true);
-}
-
-void CMobileCAI::ExecuteAttack(Command& c)
+void CMobileCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 
 	// limit how far away we fly based on our movestate
-	if (tempOrder && orderTarget != nullptr) {
+	if (tempOrder && orderTarget) {
 		const float3& closestPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-
 		const float curTargetDist = LinePointDist(closestPos, commandPos2, orderTarget->pos);
 		const float maxTargetDist = (owner->moveType->GetManeuverLeash() * owner->moveState + owner->maxRange);
 
@@ -850,104 +668,254 @@ void CMobileCAI::ExecuteAttack(Command& c)
 			return;
 		}
 	}
-
 	if (!inCommand) {
-		switch (c.GetNumParams()) {
-			case 0: {
-			} break;
+		if (c.params.size() == 1) {
+			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
-			case 1: {
-				CUnit* targetUnit = unitHandler.GetUnit(c.GetParam(0));
+			// check if we have valid target parameter and that we aren't attacking ourselves
+			if (targetUnit == nullptr) { StopMoveAndFinishCommand(); return; }
+			if (targetUnit == owner) { StopMoveAndFinishCommand(); return; }
+			if (targetUnit->GetTransporter() != nullptr && !modInfo.targetableTransportedUnits) {
+				StopMoveAndFinishCommand(); return;
+			}
 
-				// check if we have valid target parameter and that we aren't attacking ourselves
-				if (targetUnit == nullptr) {
-					StopMoveAndFinishCommand();
-					return;
-				}
-				if (targetUnit == owner) {
-					StopMoveAndFinishCommand();
-					return;
-				}
-				if (targetUnit->GetTransporter() != nullptr && !modInfo.targetableTransportedUnits) {
-					StopMoveAndFinishCommand();
-					return;
-				}
+			const float3 tgtErrPos = targetUnit->GetErrorPos(owner->allyteam, false);
+			const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
+			float radius = targetUnit->radius;
+			if (targetUnit->unitDef->IsImmobileUnit()){
+				//FIXME change into a function
+				const float fpSqRadius = (targetUnit->unitDef->xsize * targetUnit->unitDef->xsize + targetUnit->unitDef->zsize * targetUnit->unitDef->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+				// 2 * SQUARE_SIZE is a buffer that work to make sure it's pathable ground
+				radius = std::max(radius, fpRadius + 2 * SQUARE_SIZE);
+			}
+			// FIXME: don't call SetGoal() if target is already in range of some weapon?
+			SetGoal(tgtErrPos - tgtPosDir * radius, owner->pos);
+			SetOrderTarget(targetUnit);
+			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
-				const float3 tgtErrPos = targetUnit->GetErrorPos(owner->allyteam, false);
-				const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
+			inCommand = true;
+		}
+		else if (c.params.size() >= 3) {
+			// user gave force-fire attack command
+			SetGoal(c.GetPos(0), owner->pos);
 
-				// FIXME: don't call SetGoal() if target is already in range of some weapon?
-				SetGoal(tgtErrPos - tgtPosDir * CalcTargetRadius(targetUnit, targetUnit->radius, 1.0f), owner->pos);
-				SetOrderTarget(targetUnit);
-				owner->AttackUnit(targetUnit, !c.IsInternalOrder(), c.GetID() == CMD_MANUALFIRE);
-
-				inCommand = true;
-			} break;
-
-			case 2: {
-			} break;
-
-			default: {
-				// user gave force-fire attack command
-				SetGoal(c.GetPos(0), owner->pos);
-
-				inCommand = true;
-			} break;
+			inCommand = true;
 		}
 	}
 
 	// if our target is dead or we lost it then stop attacking
 	// NOTE: unit should actually just continue to target area!
-	if (targetDied || (c.GetNumParams() == 1 && UpdateTargetLostTimer(int(c.GetParam(0))) == 0)) {
+	if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 		// cancel keeppointingto
 		StopMoveAndFinishCommand();
 		return;
 	}
 
 
-	// user clicked on enemy unit; either stop and attack or turn/move toward it
+	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
 	if (orderTarget != nullptr) {
-		ExecuteObjectAttack(c);
-		return;
+		bool tryTargetRotate  = false;
+		bool tryTargetHeading = false;
+
+		float edgeFactor = 0.0f; // percent offset to target center
+		const float3 targetMidPosVec = owner->midPos - orderTarget->midPos;
+
+		const float3 errPos = orderTarget->GetErrorPos(owner->allyteam, false);
+
+		const float targetGoalDist = errPos.SqDistance2D(owner->moveType->goalPos);
+		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
+		const float minPointingDist = std::min(1.0f * owner->losRadius, owner->maxRange * 0.9f);
+
+		// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
+		const float targetMidPosDist2D = targetMidPosVec.Length2D();
+		// const float targetMidPosMaxDist = owner->maxRange - (Square(orderTarget->speed.w) / owner->unitDef->maxAcc);
+
+		if (!owner->weapons.empty()) {
+			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
+				StopMoveAndFinishCommand();
+				return;
+			}
+		}
+
+		SWeaponTarget trg(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+		trg.isManualFire = (c.GetID() == CMD_MANUALFIRE);
+		const short targetHead = GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z);
+
+		for (CWeapon* w: owner->weapons) {
+			if (c.GetID() == CMD_MANUALFIRE) {
+				assert(owner->unitDef->canManualFire);
+
+				if (!w->weaponDef->manualfire) {
+					continue;
+				}
+			}
+
+			tryTargetRotate  = w->TryTargetRotate(trg.unit, trg.isUserTarget, trg.isManualFire);
+			tryTargetHeading = w->TryTargetHeading(targetHead, trg);
+
+			edgeFactor = math::fabs(w->weaponDef->targetBorder);
+			if (tryTargetRotate || tryTargetHeading)
+				break;
+		}
+
+		// if w->AttackUnit() returned true then we are already
+		// in range with our biggest (?) weapon, so stop moving
+		// also make sure that we're not locked in close-in/in-range state
+		// loop due to rotates invoked by in-range or out-of-range states
+		if (tryTargetRotate) {
+			const bool canChaseTarget = owner->moveState != MOVESTATE_HOLDPOS;
+			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
+			if (canChaseTarget && tryTargetHeading && targetBehind && !owner->unitDef->IsHoveringAirUnit()) {
+				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
+			} else {
+				StopMove();
+
+				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
+					owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
+				}
+			}
+
+			owner->AttackUnit(trg.unit, trg.isUserTarget, trg.isManualFire);
+		}
+
+		// if we're on hold pos in a temporary order, then none of the close-in
+		// code below should run, and the attack command is cancelled.
+		else if (tempOrder && owner->moveState == MOVESTATE_HOLDPOS) {
+			StopMoveAndFinishCommand();
+			return;
+		}
+
+		// if ((our movetype has type HoverAirMoveType and length of 2D vector from us to target
+		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
+		// less than 1024) then we are close enough
+		else if (targetMidPosDist2D < (owner->maxRange * 0.9f)) {
+			if (owner->unitDef->IsHoveringAirUnit() || (targetMidPosVec.SqLength2D() < 1024)) {
+				StopMove();
+				owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
+			}
+			// if (((first weapon range minus first weapon length greater than distance to target)
+			// and length of 2D vector from us to target less than 90% of our maximum range)
+			// then we are close enough, but need to move sideways to get a shot.
+			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
+			else if (owner->unitDef->strafeToAttack) {
+				moveDir ^= (owner->moveType->progressState == AMoveType::Failed);
+
+				const float sin = moveDir ? 3.0/5 : -3.0/5;
+				const float cos = 4.0 / 5;
+
+				float3 goalDiff;
+				goalDiff.x = targetMidPosVec.dot(float3(cos, 0, -sin));
+				goalDiff.z = targetMidPosVec.dot(float3(sin, 0,  cos));
+				goalDiff *= (targetMidPosDist2D < (owner->maxRange * 0.3f)) ? 1/cos : cos;
+				goalDiff += orderTarget->pos;
+				SetGoal(goalDiff, owner->pos);
+			}
+		}
+
+		// if 2D distance of (target position plus attacker error vector times 128)
+		// to goal position greater than
+		// (10 plus 20% of 2D distance between attacker and target) then we need to close
+		// in on target more
+		else if (targetGoalDist > targetPosDist) {
+			// if the target isn't in LOS, go to its approximate position
+			// otherwise try to go precisely to the target
+			// this should fix issues with low range weapons (mainly melee)
+
+			const float3 norm = (errPos - owner->pos).Normalize();
+			float radius = (orderTarget->radius * edgeFactor * 0.8f);
+			if (orderTarget->unitDef->IsImmobileUnit()){
+				//FIXME change into a function
+				const float fpSqRadius = (orderTarget->unitDef->xsize * orderTarget->unitDef->xsize + orderTarget->unitDef->zsize * orderTarget->unitDef->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+				// 2 * SQUARE_SIZE is a buffer that work to make sure it's pathable ground
+				radius = std::max(radius, fpRadius + 2 * SQUARE_SIZE);
+			}
+			const float3 goal = errPos - norm * radius;
+			SetGoal(goal, owner->pos);
+
+			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
+				lastCloseInTry = gs->frameNum;
+		}
 	}
 
 	// user wants to attack the ground
-	if (c.GetNumParams() >= 3) {
-		ExecuteGroundAttack(c);
-		return;
+	else if (c.params.size() >= 3) {
+		const float3 attackPos = c.GetPos(0);
+		const float3 attackVec = attackPos - owner->pos;
+		const short  attackHead = GetHeadingFromVector(attackVec.x, attackVec.z);
+		const SWeaponTarget trg(attackPos, (c.options & INTERNAL_ORDER) == 0);
+
+		if (c.GetID() == CMD_MANUALFIRE) {
+			assert(owner->unitDef->canManualFire);
+
+			if (owner->AttackGround(trg.groundPos, trg.isUserTarget, true)) {
+				// StopMoveAndKeepPointing calls StopMove before KeepPointingTo
+				// but we want to call it *after* KeepPointingTo to prevent 4131
+				owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
+				StopMove();
+				return;
+			}
+		} else {
+			for (CWeapon* w: owner->weapons) {
+				// NOTE:
+				//   we call TryTargetHeading which is less restrictive than TryTarget
+				//   (eg. the former succeeds even if the unit has not already aligned
+				//   itself with <attackVec>)
+				if (!w->TryTargetHeading(attackHead, trg))
+					continue;
+
+				if (owner->AttackGround(trg.groundPos, trg.isUserTarget, false)) {
+					StopMoveAndKeepPointing(trg.groundPos, owner->maxRange * 0.9f, true);
+					return;
+				}
+
+				// for gunships, this pitches the nose down such that
+				// TryTargetRotate (which also checks range for itself)
+				// has a bigger chance of succeeding
+				//
+				// hence it must be called as soon as we get in range
+				// and may not depend on what TryTargetRotate returns
+				// (otherwise we might never get a firing solution)
+				owner->moveType->KeepPointingTo(trg.groundPos, owner->maxRange * 0.9f, true);
+			}
+
+			if (attackVec.SqLength2D() < Square(owner->maxRange * 0.9f)) {
+				owner->AttackGround(trg.groundPos, trg.isUserTarget, false);
+				StopMoveAndKeepPointing(attackPos, owner->maxRange * 0.9f, true);
+			}
+		}
 	}
 }
 
 
 
 
-int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature*)
+int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
-	if (pointed == nullptr)
-		return CMD_MOVE;
-
-	if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
-		if (owner->unitDef->canAttack)
-			return CMD_ATTACK;
-		if (owner->CanTransport(pointed))
-			return CMD_LOAD_UNITS;
-
-		return CMD_MOVE;
+	if (pointed) {
+		if (!teamHandler->Ally(gu->myAllyTeam,pointed->allyteam)) {
+			if (owner->unitDef->canAttack) {
+				return CMD_ATTACK;
+			} else if (owner->CanTransport(pointed)) {
+				return CMD_LOAD_UNITS;
+			}
+		} else {
+			if (owner->CanTransport(pointed)) {
+				return CMD_LOAD_UNITS;
+			} else if (pointed->CanTransport(owner)) {
+				return CMD_LOAD_ONTO;
+			} else if (owner->unitDef->canGuard) {
+				return CMD_GUARD;
+			}
+		}
 	}
-
-	if (owner->CanTransport(pointed))
-		return CMD_LOAD_UNITS;
-	if (pointed->CanTransport(owner))
-		return CMD_LOAD_ONTO;
-	if (owner->unitDef->canGuard)
-		return CMD_GUARD;
-
 	return CMD_MOVE;
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	// check if owner already has a move order to this position with the same radius
+	// already have equal move order?
 	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
@@ -957,7 +925,7 @@ void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goal
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	// check if owner already has a move order to this position with the same radius
+	// already have equal move order?
 	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
@@ -981,6 +949,12 @@ void CMobileCAI::StopMove()
 	owner->moveType->StopMoving();
 }
 
+void CMobileCAI::StopMoveAndFinishCommand()
+{
+	StopMove();
+	FinishCommand();
+}
+
 void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 {
 	StopMove();
@@ -990,80 +964,57 @@ void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
 	if (radius < 0.0f) {
-		// AttachUnit call
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}
-
 	lastBuggerOffTime = gs->frameNum;
-	// numNonMovingCalls = 0;
-
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
 }
 
 void CMobileCAI::NonMoving()
 {
-	// wait one SlowUpdate for more commands to enter the queue
-	// (so the bugger-off dir can be chosen more intelligently)
-	if (!commandQue.empty() && (++numNonMovingCalls) <= 1)
-		return;
-
 	if (owner->UsingScriptMoveType())
 		return;
 
-	if (lastBuggerOffTime <= (gs->frameNum - BUGGER_OFF_TTL))
-		return;
-
-	if (((owner->pos - buggerOffPos) * XZVector).SqLength() >= Square(buggerOffRadius * 1.5f))
-		return;
-
-	float3 buggerVec;
-	float3 buggerPos = -OnesVector;
-
-	if (HasMoreMoveCommands()) {
-		size_t i = 0;
-		size_t j = 0;
-
-		for (i =     0; (i < commandQue.size() && !commandQue[i].IsMoveCommand()); i++) {}
-		for (j = i + 1; (j < commandQue.size() && !commandQue[j].IsMoveCommand()); j++) {}
-
-		if (i < commandQue.size() && j < commandQue.size()) {
-			buggerVec = commandQue[j].GetPos(0) - commandQue[i].GetPos(0);
-			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.25f;
+	if (lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL) {
+		float3 dif = owner->pos-buggerOffPos;
+		dif.y = 0.0f;
+		float length=dif.Length();
+		if (!length) {
+			length = 0.1f;
+			dif = float3(0.1f, 0.0f, 0.0f);
 		}
+		if (length < buggerOffRadius) {
+			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
+			bool randomize = (goalPos.x == lastBuggerGoalPos.x) && (goalPos.z == lastBuggerGoalPos.z);
+			lastBuggerGoalPos.x = goalPos.x;
+			lastBuggerGoalPos.z = goalPos.z;
+			if (randomize) {
+				lastBuggerGoalPos.y += 32.0f; // gradually increase the amplitude of the random factor
+				goalPos.x += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
+				goalPos.z += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
+			}
+			else
+				lastBuggerGoalPos.y = 0.0f;
 
-		// check if buggerPos is (still) reachable; aircraft
-		// (or all units) might want to ask the GBOM instead
-		if (owner->moveDef != nullptr && !owner->moveDef->TestMoveSquare(nullptr, buggerPos, buggerVec))
-			buggerPos = -OnesVector;
-	}
-
-	if (buggerPos.x == -1.0f) {
-		// pick a random perimeter point and hope for the best
-		for (int i = 0; i < 16 && !buggerPos.IsInMap(); i++) {
-			buggerVec = gsRNG.NextVector2D();
-			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+			Command c(CMD_MOVE, goalPos);
+			//c.options = INTERNAL_ORDER;
+			c.timeOut = gs->frameNum + 40;
+			commandQue.push_front(c);
+			unimportantMove = true;
 		}
 	}
-
-	Command c(CMD_MOVE, buggerPos);
-	c.SetOpts(INTERNAL_ORDER);
-	c.SetTimeOut(gs->frameNum + BUGGER_OFF_TTL);
-	commandQue.push_front(c);
-
-	numNonMovingCalls = 0;
 }
 
 void CMobileCAI::FinishCommand()
 {
 	SetTransportee(nullptr);
 
-	if (!commandQue[0].IsInternalOrder())
+	if (!((commandQue.front()).options & INTERNAL_ORDER))
 		lastUserGoal = owner->pos;
 
 	tempOrder = false;
-
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
 
@@ -1094,18 +1045,16 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	lastIdleCheck = gs->frameNum;
 
 	if (owner->HaveTarget()) {
-		NonMoving();
-		return false;
+		NonMoving(); return false;
 	}
 	if ((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) {
-		NonMoving();
-		return false;
+		NonMoving(); return false;
 	}
 	if (owner->unitDef->IsHoveringAirUnit()) {
-		NonMoving();
-		return false;
+		NonMoving(); return false;
 	}
 
+	unimportantMove = true;
 	return false;
 }
 
@@ -1121,83 +1070,70 @@ bool CMobileCAI::GenerateAttackCmd()
 	if (owner->fireState == FIRESTATE_HOLDFIRE)
 		return false;
 
-	float  extraRadius = 200.0f * owner->moveState * owner->moveState;
-	float searchRadius = owner->maxRange + extraRadius;
-
+	const float extraRange = 200.0f * owner->moveState * owner->moveState;
+	const float maxRangeSq = Square(owner->maxRange + extraRange);
 	int newAttackTargetId = -1;
 
-	// pass bogus target-id and weapon-number s.t. script knows context and can set radius
-	if (!eventHandler.AllowWeaponTarget(owner->id, -1, -1, 0, &searchRadius))
-		return false;
-
-	const SWeaponTarget& curTarget = owner->curTarget;
-
-	const CUnit* tgt = nullptr;
-	const CWeapon* wpn = owner->weapons[0];
-
-	if (curTarget.type == Target_Unit) {
+	if (owner->curTarget.type == Target_Unit) {
 		//FIXME when is this the case (unit has target, but CAI doesn't !?)
-		const float tgtDistSq = owner->pos.SqDistance2D((tgt = curTarget.unit)->pos);
-		const float maxDistSq = Square(searchRadius);
-
-		if (tgtDistSq < maxDistSq)
-			if (eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr))
-				newAttackTargetId = tgt->id;
+		if (owner->pos.SqDistance2D(owner->curTarget.unit->pos) < maxRangeSq) {
+			newAttackTargetId = owner->curTarget.unit->id;
+		}
 	} else {
-		if ((tgt = owner->lastAttacker) != nullptr) {
-			if (owner->pos.SqDistance2D(tgt->pos) < Square(searchRadius)) {
-				const bool allowAttackerChase = !(owner->unitDef->noChaseCategory & tgt->category);
-				const bool  keepAttackingLast = (gs->frameNum < (owner->lastAttackFrame + GAME_SPEED * 7));
-				const bool allowAttackingLast = (allowAttackerChase && keepAttackingLast && eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr));
+		if (owner->lastAttacker != nullptr) {
+			const bool freshAttack = (gs->frameNum < (owner->lastAttackFrame + GAME_SPEED * 7));
+			const bool canChaseAttacker = !(owner->unitDef->noChaseCategory & owner->lastAttacker->category);
+			if (freshAttack && canChaseAttacker) {
+				const float r = owner->pos.SqDistance2D(owner->lastAttacker->pos);
 
-				if (allowAttackingLast)
-					newAttackTargetId = tgt->id;
+				if (r < maxRangeSq) {
+					newAttackTargetId = owner->lastAttacker->id;
+				}
 			}
 		}
 
-		if (newAttackTargetId < 0 && owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
-			// try getting target from weapons
+		if (newAttackTargetId < 0 &&
+		    owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)
+		) {
+			//Try getting target from weapons
 			for (CWeapon* w: owner->weapons) {
-				const SWeaponTarget& wTgt = w->GetCurrentTarget();
-
-				// no current target, and nothing to auto-target
-				if (!w->HaveTarget() && !w->AutoTarget())
-					continue;
-				// maybe a current target, but invalid type or category etc
-				if (wTgt.type != Target_Unit || !IsValidTarget(wTgt.unit, w))
-					continue;
-				if (!eventHandler.AllowWeaponTarget(owner->id, wTgt.unit->id, w->weaponNum, w->weaponDef->id, nullptr))
-					continue;
-
-				newAttackTargetId = wTgt.unit->id;
-				break;
+				if (w->HaveTarget() || w->AutoTarget()) {
+					const auto t = w->GetCurrentTarget();
+					if (t.type == Target_Unit && IsValidTarget(t.unit)) {
+						newAttackTargetId = t.unit->id;
+						break;
+					}
+				}
 			}
 
-			// get target from wherever
+			//Get target from wherever
 			if (newAttackTargetId < 0) {
-				tgt = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
+				const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
+				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
-				if (tgt != nullptr && eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr))
-					newAttackTargetId = tgt->id;
+				if (enemy != nullptr) {
+					newAttackTargetId = enemy->id;
+				}
 			}
 		}
 	}
 
-	if (newAttackTargetId < 0)
-		return false;
+	if (newAttackTargetId >= 0) {
+		Command c(CMD_ATTACK, INTERNAL_ORDER, newAttackTargetId);
+		c.timeOut = gs->frameNum + GAME_SPEED * 5;
+		commandQue.push_front(c);
 
-	Command c(CMD_ATTACK, INTERNAL_ORDER, newAttackTargetId);
-	c.SetTimeOut(gs->frameNum + GAME_SPEED * 5);
-	commandQue.push_front(c);
+		commandPos1 = owner->pos;
+		commandPos2 = owner->pos;
+		return true;
+	}
 
-	commandPos1 = owner->pos;
-	commandPos2 = owner->pos;
-	return true;
+	return false;
 }
 
 bool CMobileCAI::CanWeaponAutoTarget(const CWeapon* weapon) const {
-	// check if the weapon actually targets the unit's order-target
-	return (!tempOrder || weapon->GetCurrentTarget() != owner->curTarget);
+	return (!tempOrder) || //Check if the weapon actually targets the unit's order target
+		weapon->GetCurrentTarget() != owner->curTarget;
 }
 
 void CMobileCAI::StopSlowGuard() {
@@ -1218,25 +1154,28 @@ void CMobileCAI::StartSlowGuard(float speed) {
 
 	slowGuard = true;
 
-	if (speed <= 0.0f)
-		return;
-	if (commandQue.empty())
-		return;
-	if (owner->moveType->GetMaxSpeed() < speed)
-		return;
+	if (speed <= 0.0f) { return; }
+	if (commandQue.empty()) { return; }
+	if (owner->moveType->GetMaxSpeed() < speed) { return; }
+
+	const Command& c = (commandQue.size() > 1)? commandQue[1]: Command(CMD_STOP);
 
 	// when guarding, temporarily adopt the maximum
 	// (forward) speed of the guardee unit as our own
 	// WANTED maximum
-	owner->moveType->SetWantedMaxSpeed(speed);
+	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
+		owner->moveType->SetWantedMaxSpeed(speed);
+	}
 }
 
 
 
 void CMobileCAI::CalculateCancelDistance()
 {
+	const float tmp = owner->moveType->CalcStaticTurnRadius() + (SQUARE_SIZE << 1);
+
 	// clamp it a bit because the units don't have to turn at max speed
-	cancelDistance = Clamp(Square(owner->moveType->CalcStaticTurnRadius() + (SQUARE_SIZE << 1)), 1024.0f, 2048.0f);
+	cancelDistance = Clamp(tmp * tmp, 1024.0f, 2048.0f);
 }
 
 
@@ -1255,117 +1194,96 @@ void CMobileCAI::SetTransportee(CUnit* unit) {
 
 	SetOrderTarget(unit);
 
-	if (unit == nullptr)
-		return;
+	if (unit != nullptr) {
+		CUnit* transport = (unit->loadingTransportId == -1) ? nullptr : unitHandler->GetUnitUnsafe(unit->loadingTransportId);
 
-	CUnit* transport = (unit->loadingTransportId == -1) ? nullptr : unitHandler.GetUnitUnsafe(unit->loadingTransportId);
-
-	// if no loading transport, then assign ourselves
-	if (transport == nullptr) {
-		unit->loadingTransportId = owner->id;
-		return;
+		// let the closest transport be loadingTransportId, in case of multiple fighting transports
+		if ((transport == nullptr) || ((transport != owner) && (transport->pos.SqDistance(unit->pos) > owner->pos.SqDistance(unit->pos)))) {
+			unit->loadingTransportId = owner->id;
+		}
 	}
-
-	if (transport == owner)
-		return;
-	// let the closest transport be loadingTransportId, in case of multiple fighting transports
-	if (transport->pos.SqDistance(unit->pos) <= owner->pos.SqDistance(unit->pos))
-		return;
-
-	unit->loadingTransportId = owner->id;
 }
 
 
 void CMobileCAI::ExecuteLoadUnits(Command& c)
 {
-	switch (c.GetNumParams()) {
-		case 1: {
-			// load single unit
-			CUnit* unit = unitHandler.GetUnit(c.GetParam(0));
+	if (c.params.size() == 1) {
+		// load single unit
+		CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
-			if (unit == nullptr) {
-				StopMoveAndFinishCommand();
-				return;
-			}
+		if (unit == nullptr) {
+			StopMoveAndFinishCommand();
+			return;
+		}
 
-			if (c.IsInternalOrder()) {
-				// internally issued by MobileCAI
-				if (unit->commandAI->commandQue.empty()) {
-					if (!LoadStillValid(unit)) {
+		if (c.options & INTERNAL_ORDER) {
+			if (unit->commandAI->commandQue.empty()) {
+				if (!LoadStillValid(unit)) {
+					StopMoveAndFinishCommand();
+					return;
+				}
+			} else {
+				Command& currentUnitCommand = unit->commandAI->commandQue[0];
+
+				if ((currentUnitCommand.GetID() == CMD_LOAD_ONTO) && (currentUnitCommand.params.size() == 1) && (int(currentUnitCommand.params[0]) == owner->id)) {
+					if ((unit->moveType->progressState == AMoveType::Failed) && (owner->moveType->progressState == AMoveType::Failed)) {
+						unit->commandAI->FinishCommand();
 						StopMoveAndFinishCommand();
 						return;
 					}
-				} else {
-					const Command& currentUnitCommand = unit->commandAI->commandQue[0];
-
-					if ((currentUnitCommand.GetID() == CMD_LOAD_ONTO) && (currentUnitCommand.GetNumParams() == 1) && (int(currentUnitCommand.GetParam(0)) == owner->id)) {
-						if ((unit->moveType->progressState == AMoveType::Failed) && (owner->moveType->progressState == AMoveType::Failed)) {
-							unit->commandAI->FinishCommand();
-							StopMoveAndFinishCommand();
-							return;
-						}
-					} else if (!LoadStillValid(unit)) {
-						StopMoveAndFinishCommand();
-						return;
-					}
+				} else if (!LoadStillValid(unit)) {
+					StopMoveAndFinishCommand();
+					return;
 				}
 			}
+		}
 
-			if (inCommand) {
-				if (!owner->script->IsBusy())
-					StopMoveAndFinishCommand();
-
-				return;
-			}
-
-			if (!owner->CanTransport(unit) || !UpdateTargetLostTimer(int(c.GetParam(0)))) {
+		if (inCommand) {
+			if (!owner->script->IsBusy()) {
 				StopMoveAndFinishCommand();
-				return;
+			}
+			return;
+		}
+		if (owner->CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
+			SetTransportee(unit);
+
+			const float sqDist = unit->pos.SqDistance2D(owner->pos);
+			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
+
+			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+
+			// subtract 1 square to account for PFS/GMT inaccuracy
+			const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+			const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != nullptr && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
+
+			if (outOfRange || moveCloser) {
+				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
 
-			{
-				SetTransportee(unit);
-
-				CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-
-				const float sqUnitDist = unit->pos.SqDistance2D(owner->pos);
-				const float loadRadius = owner->unitDef->loadingRadius;
-
-				const bool inLoadingRadius = (sqUnitDist <= Square(loadRadius));
-				// subtract 1 square to account for PFS/GMT inaccuracy
-				const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(loadRadius - SQUARE_SIZE));
-				const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != nullptr && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
-
-				if (outOfRange || moveCloser)
-					SetGoal(unit->pos, owner->pos, std::min(64.0f, loadRadius));
-
-				if (inLoadingRadius) {
+			if (inLoadingRadius) {
+				if (am != nullptr) {
+					// handle air transports differently
 					float3 wantedPos = unit->pos;
+					wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, unit);
 
-					if (am != nullptr) {
-						// handle air transports differently
-						wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, unit);
+					// calls am->StartMoving() which sets forceHeading to false (and also
+					// changes aircraftState, possibly in mid-pickup) --> must check that
+					// wantedPos == goalPos using some epsilon tolerance
+					// we do not want the forceHeading change at point of pickup because
+					// am->UpdateHeading() will suddenly notice a large deltaHeading and
+					// break the DOCKING_ANGLE constraint so call am->ForceHeading() next
+					SetGoal(wantedPos, owner->pos, 1.0f);
 
-						// calls am->StartMoving() which sets forceHeading to false (and also
-						// changes aircraftState, possibly in mid-pickup) --> must check that
-						// wantedPos == goalPos using some epsilon tolerance
-						// we do not want the forceHeading change at point of pickup because
-						// am->UpdateHeading() will suddenly notice a large deltaHeading and
-						// break the DOCKING_ANGLE constraint so call am->ForceHeading() next
-						SetGoal(wantedPos, owner->pos, 1.0f);
+					am->ForceHeading(owner->GetTransporteeWantedHeading(unit));
+					am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
+					am->maxDrift = 1.0f;
 
-						am->ForceHeading(owner->GetTransporteeWantedHeading(unit));
-						am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
-						am->maxDrift = 1.0f;
+					// FIXME: kill the hardcoded constants, use the command's radius
+					const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
+					const bool b2 = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
+					const bool b3 = (owner->updir.dot(UpVector) > 0.995f);
 
-						// FIXME: kill the hardcoded constants, use the command's radius
-						const bool isInRange = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
-						const bool isAligned = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
-						const bool isUpright = (owner->updir.dot(UpVector) > 0.995f);
-
-						if (!eventHandler.AllowUnitTransportLoad(owner, unit, wantedPos, isInRange && isAligned && isUpright))
-							return;
-
+					if (b1 && b2 && b3) {
 						am->SetAllowLanding(false);
 						am->SetWantedAltitude(0.0f);
 
@@ -1374,62 +1292,58 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 						owner->AttachUnit(unit, owner->script->QueryTransport(unit));
 
 						StopMoveAndFinishCommand();
-					} else {
-						if (!eventHandler.AllowUnitTransportLoad(owner, unit, wantedPos, true))
-							return;
-
-						inCommand = true;
-
-						StopMove();
-						owner->script->TransportPickup(unit);
+						return;
 					}
+				} else {
+					inCommand = true;
 
-					return;
+					StopMove();
+					owner->script->TransportPickup(unit);
 				}
-
-				if (owner->moveType->progressState != AMoveType::Failed || sqUnitDist >= Square(200.0f))
-					return;
-
+			} else if (owner->moveType->progressState == AMoveType::Failed && sqDist < (200 * 200)) {
 				// if we're pretty close already but CGroundMoveType fails because it considers
 				// the goal clogged (with the future passenger...), just try to move to the
 				// point halfway between the transport and the passenger.
 				SetGoal((unit->pos + owner->pos) * 0.5f, owner->pos);
 			}
-		} break;
+		} else {
+			StopMoveAndFinishCommand();
+		}
+	} else if (c.params.size() == 4) { // area-load
+		if (lastPC == gs->frameNum) { // avoid infinite loops
+			return;
+		}
 
-		case 4: {
-			// area-load, avoid infinite loops
-			if (lastCommandFrame == gs->frameNum)
-				return;
+		lastPC = gs->frameNum;
 
-			lastCommandFrame = gs->frameNum;
+		const float3 pos = c.GetPos(0);
+		const float radius = c.params[3];
 
-			const float3 pos = c.GetPos(0);
-			const float radius = c.GetParam(3);
+		CUnit* unit = FindUnitToTransport(pos, radius);
 
-			CUnit* unit = FindUnitToTransport(pos, radius);
+		if (unit && owner->CanTransport(unit)) {
+			Command c2(CMD_LOAD_UNITS, c.options|INTERNAL_ORDER, unit->id);
+			commandQue.push_front(c2);
+			inCommand = false;
 
-			if (unit != nullptr && owner->CanTransport(unit)) {
-				commandQue.push_front(Command(CMD_LOAD_UNITS, c.GetOpts() | INTERNAL_ORDER, unit->id));
-				inCommand = false;
-
-				SlowUpdate();
-				return;
-			}
-
+			SlowUpdate();
+			return;
+		} else {
 			StopMoveAndFinishCommand();
 			return;
-		} break;
+		}
 	}
 }
 
 
 void CMobileCAI::ExecuteUnloadUnits(Command& c)
 {
-	if (lastCommandFrame == gs->frameNum)
+	if (lastPC == gs->frameNum) {
+		// avoid infinite loops
 		return;
+	}
 
-	lastCommandFrame = gs->frameNum;
+	lastPC = gs->frameNum;
 
 	if (owner->transportedUnits.empty()) {
 		StopMoveAndFinishCommand();
@@ -1460,17 +1374,15 @@ void CMobileCAI::ExecuteUnloadUnits(Command& c)
 void CMobileCAI::ExecuteUnloadUnit(Command& c)
 {
 	if (inCommand) {
-		if (!owner->script->IsBusy())
+		if (!owner->script->IsBusy()) {
 			StopMoveAndFinishCommand();
-
+		}
 		return;
 	}
-
 	if (owner->transportedUnits.empty()) {
 		StopMoveAndFinishCommand();
 		return;
 	}
-
 	// new methods
 	switch (owner->unitDef->transportUnloadMethod) {
 		case UNLOAD_LAND: UnloadLand(c); break;
@@ -1505,18 +1417,18 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (transportees.empty())
 				return true;
 
-			if (c.GetNumParams() == 5) {
+			if (c.GetParamsCount() == 5) {
 				if (fromSynced) {
 					// point transported buildings (...) in their wanted direction after unloading
-					for (const CUnit::TransportedUnit& tu: transportees) {
+					for (auto& tu: transportees) {
 						tu.unit->buildFacing = std::abs(int(c.GetParam(4))) % NUM_FACINGS;
 					}
 				}
 			}
 
-			if (c.GetNumParams() >= 4) {
+			if (c.GetParamsCount() >= 4) {
 				// find unload positions for transportees (WHY can this run in unsynced context?)
-				for (const CUnit::TransportedUnit& tu: transportees) {
+				for (const auto& tu: transportees) {
 					const CUnit* u = tu.unit;
 
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.GetParam(3): 0.0f;
@@ -1592,7 +1504,7 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 		// this far apart, since <units> will be non-empty if pos is closer
 		// to a previous unloadee than <spread> elmos
 		QuadFieldQuery qfQuery;
-		quadField.GetSolidsExact(qfQuery, pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		quadField->GetSolidsExact(qfQuery, pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 		if (unitDef->IsAirUnit() && (qfQuery.solids->size() > 1 || (qfQuery.solids->size() == 1 && (*qfQuery.solids)[0] != owner)))
 			continue;
@@ -1612,18 +1524,17 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 {
 	CUnit* bestUnit = nullptr;
 	float bestDist = std::numeric_limits<float>::max();
-
+	
 	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, center, radius);
-
+	quadField->GetUnitsExact(qfQuery, center, radius);
 	for (CUnit* unit: *qfQuery.units) {
 		const float dist = unit->pos.SqDistance2D(owner->pos);
 
 		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
-			const CUnit* trans = unitHandler.GetUnitUnsafe(unit->loadingTransportId);
+			const CUnit* trans = unitHandler->GetUnitUnsafe(unit->loadingTransportId);
 
 			// don't refuse to load a unit if an enemy transport is trying to at the same time
-			if ((trans != nullptr) && teamHandler.AlliedTeams(owner->team, trans->team))
+			if ((trans != nullptr) && teamHandler->AlliedTeams(owner->team, trans->team))
 				continue;
 		}
 
@@ -1656,7 +1567,7 @@ bool CMobileCAI::LoadStillValid(CUnit* unit)
 	// (ELU keeps pushing CMD_LOAD_UNITS as long as there are any
 	// units to pick up)
 	//
-	if (cmd.GetID() != CMD_LOAD_UNITS || cmd.GetNumParams() != 4)
+	if (cmd.GetID() != CMD_LOAD_UNITS || cmd.GetParamsCount() != 4)
 		return true;
 
 	const float3& cmdPos = cmd.GetPos(0);
@@ -1675,10 +1586,9 @@ bool CMobileCAI::SpotIsClear(float3 pos, CUnit* unloadee)
 	if (!owner->CanLoadUnloadAtPos(pos, unloadee))
 		return false;
 
-	const float numSquares = math::ceil(unloadee->radius / SQUARE_SIZE);
-	const float queryRadius = std::max(1.0f, numSquares) * SQUARE_SIZE;
+	const float radius = std::max(1.0f, math::ceil(unloadee->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	return (quadField.NoSolidsExact(pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
+	return (quadField->NoSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
 }
 
 
@@ -1688,19 +1598,23 @@ bool CMobileCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unloadee)
 	if (!owner->CanLoadUnloadAtPos(pos, unloadee))
 		return false;
 
-	const float numSquares = math::ceil(unloadee->radius / SQUARE_SIZE);
-	const float queryRadius = std::max(1.0f, numSquares) * SQUARE_SIZE;
+	const float radius = std::max(1.0f, math::ceil(unloadee->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
 	QuadFieldQuery qfQuery;
-	quadField.GetSolidsExact(qfQuery, pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	quadField->GetSolidsExact(qfQuery, pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 	for (auto objectsIt = qfQuery.solids->begin(); objectsIt != qfQuery.solids->end(); ++objectsIt) {
-		// check if the queried objects are actually in the transport
-		const auto pred = [&objectsIt](const CUnit::TransportedUnit& tu) { return (*objectsIt == tu.unit); };
-		const auto iter = std::find_if(owner->transportedUnits.cbegin(), owner->transportedUnits.cend(), pred);
+		// check if the units are in the transport
+		bool found = false;
 
-		if ((iter == owner->transportedUnits.cend()) && (*objectsIt != owner))
+		for (auto& tu: owner->transportedUnits) {
+			if ((found |= (*objectsIt == tu.unit)))
+				break;
+		}
+
+		if (!found && (*objectsIt != owner))
 			return false;
+
 	}
 
 	return true;
@@ -1753,7 +1667,7 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 	for (const CUnit::TransportedUnit& tu: transportees) {
 		const float3 pos = c.GetPos(0);
 
-		const float radius = c.GetParam(3);
+		const float radius = c.params[3];
 		const float spread = (tu.unit)->radius * owner->unitDef->unloadSpread;
 
 		if (FindEmptySpot(tu.unit, pos, radius, spread, unloadPos)) {
@@ -1763,7 +1677,7 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 	}
 
 	if (transportee != nullptr) {
-		Command c2(CMD_UNLOAD_UNIT, c.GetOpts() | INTERNAL_ORDER, unloadPos);
+		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, unloadPos);
 		c2.PushParam(transportee->id);
 		commandQue.push_front(c2);
 		SlowUpdate();
@@ -1783,7 +1697,7 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 
 	std::vector<float3> dropSpots;
 
-	const bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.GetParam(3)), dropSpots);
+	const bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
 
 	StopMoveAndFinishCommand();
 
@@ -1792,7 +1706,8 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 		auto di = dropSpots.rbegin();
 
 		for (; ti != transportees.end() && di != dropSpots.rend(); ++ti, ++di) {
-			commandQue.push_front(Command(CMD_UNLOAD_UNIT, c.GetOpts() | INTERNAL_ORDER, *di));
+			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, *di);
+			commandQue.push_front(c2);
 		}
 
 		SlowUpdate();
@@ -1808,8 +1723,9 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 	float3 pos = c.GetPos(0);
 	float3 found;
 
-	const float radius = c.GetParam(3);
+	const float radius = c.params[3];
 	const float dist = std::max(64.0f, owner->unitDef->loadingRadius - radius);
+
 
 	if (pos.SqDistance2D(owner->pos) > dist) {
 		SetGoal(pos, owner->pos, dist);
@@ -1819,8 +1735,12 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 	const auto& transportees = owner->transportedUnits;
 	const CUnit* transportee = transportees[0].unit;
 
-	if (FindEmptySpot(transportee, pos, radius, transportee->radius * owner->unitDef->unloadSpread, found)) {
-		commandQue.push_front(Command(CMD_UNLOAD_UNIT, c.GetOpts() | INTERNAL_ORDER, found));
+	const float spread = transportee->radius * owner->unitDef->unloadSpread;
+	const bool canUnload = FindEmptySpot(transportee, pos, radius, spread, found);
+
+	if (canUnload) {
+		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, found);
+		commandQue.push_front(c2);
 		SlowUpdate();
 		return;
 	}
@@ -1833,7 +1753,6 @@ void CMobileCAI::UnloadLand(Command& c)
 {
 	// default unload
 	CUnit* transportee = nullptr;
-	CHoverAirMoveType* am = nullptr;
 
 	float3 wantedPos = c.GetPos(0);
 
@@ -1841,14 +1760,14 @@ void CMobileCAI::UnloadLand(Command& c)
 
 	SetGoal(wantedPos, owner->pos);
 
-	if (c.GetNumParams() < 4) {
+	if (c.params.size() < 4) {
 		// unload the first transportee
 		transportee = transportees[0].unit;
 	} else {
-		const int unitID = c.GetParam(3);
+		const int unitID = c.params[3];
 
 		// unload a specific transportee
-		for (const CUnit::TransportedUnit& tu: transportees) {
+		for (auto& tu: transportees) {
 			CUnit* carried = tu.unit;
 
 			if (unitID == carried->id) {
@@ -1862,64 +1781,56 @@ void CMobileCAI::UnloadLand(Command& c)
 		}
 	}
 
-	if (wantedPos.SqDistance2D(owner->pos) >= Square(owner->unitDef->loadingRadius * 0.9f))
-		return;
+	if (wantedPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
+		CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+		wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, transportee);
 
-	wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, transportee);
+		if (am != nullptr) {
+			// handle air transports differently
+			SetGoal(wantedPos, owner->pos);
 
-	if ((am = dynamic_cast<CHoverAirMoveType*>(owner->moveType)) == nullptr) {
-		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, true))
-			return;
+			am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
+			am->ForceHeading(owner->GetTransporteeWantedHeading(transportee));
 
-		inCommand = true;
+			am->maxDrift = 1.0f;
 
-		StopMove();
-		owner->script->TransportDrop(transportee, wantedPos);
-		return;
-	}
+			// FIXME: kill the hardcoded constants, use the command's radius
+			// NOTE: 2D distance-check would mean units get dropped from air
+			const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
+			const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
+			const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
 
-	{
-		// handle air transports differently
-		SetGoal(wantedPos, owner->pos);
+			if (b1 && b2 && b3) {
+				wantedPos.y -= transportee->radius;
 
-		am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
-		am->ForceHeading(owner->GetTransporteeWantedHeading(transportee));
+				if (!SpotIsClearIgnoreSelf(wantedPos, transportee)) {
+					// chosen spot is no longer clear to land, choose a new one
+					// if a new spot cannot be found, don't unload at all
+					float3 newWantedPos;
 
-		am->maxDrift = 1.0f;
+					if (FindEmptySpot(transportee, wantedPos, std::max(16.0f * SQUARE_SIZE, transportee->radius * 4.0f), transportee->radius, newWantedPos)) {
+						c.SetPos(0, newWantedPos);
+						SetGoal(newWantedPos + UpVector * transportee->model->height, owner->pos);
+						return;
+					}
+				} else {
+					owner->DetachUnit(transportee);
 
-		// FIXME: kill the hardcoded constants, use the command's radius
-		// NOTE: 2D distance-check would mean units get dropped from air
-		const bool isInRange = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
-		const bool isAligned = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
-		const bool isUpright = (owner->updir.dot(UpVector) > 0.99f);
+					if (transportees.empty()) {
+						am->SetAllowLanding(true);
+						owner->script->EndTransport();
+					}
+				}
 
-		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, isInRange && isAligned && isUpright))
-			return;
-
-		wantedPos.y -= transportee->radius;
-
-		if (!SpotIsClearIgnoreSelf(wantedPos, transportee)) {
-			// chosen spot is no longer clear to land, choose a new one
-			// if a new spot cannot be found, don't unload at all
-			float3 newWantedPos;
-
-			if (FindEmptySpot(transportee, wantedPos, std::max(16.0f * SQUARE_SIZE, transportee->radius * 4.0f), transportee->radius, newWantedPos)) {
-				c.SetPos(0, newWantedPos);
-				SetGoal(newWantedPos + UpVector * transportee->model->height, owner->pos);
-				return;
+				// move the transport away slightly
+				SetGoal(owner->pos + owner->frontdir * 20.0f, owner->pos);
+				FinishCommand();
 			}
 		} else {
-			owner->DetachUnit(transportee);
-
-			if (transportees.empty()) {
-				am->SetAllowLanding(true);
-				owner->script->EndTransport();
-			}
+			inCommand = true;
+			StopMove();
+			owner->script->TransportDrop(transportee, wantedPos);
 		}
-
-		// move the transport away slightly
-		SetGoal(owner->pos + owner->frontdir * 20.0f, owner->pos);
-		FinishCommand();
 	}
 }
 
@@ -1970,12 +1881,12 @@ void CMobileCAI::UnloadLandFlood(Command& c)
 
 	SetGoal(wantedPos, owner->pos);
 
-	if (c.GetNumParams() < 4) {
+	if (c.params.size() < 4) {
 		transportee = transportees[0].unit;
 	} else {
-		const int unitID = c.GetParam(3);
+		const int unitID = c.params[3];
 
-		for (const CUnit::TransportedUnit& tu: transportees) {
+		for (auto& tu: transportees) {
 			CUnit* carried = tu.unit;
 
 			if (unitID == carried->id) {

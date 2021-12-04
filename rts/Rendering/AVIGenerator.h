@@ -3,7 +3,7 @@
 #ifndef AVI_GENERATOR_H
 #define AVI_GENERATOR_H
 
-#ifdef _WIN32
+#ifdef WIN32
 
 #include "System/Threading/SpringThreading.h"
 #include "System/Misc/NonCopyable.h"
@@ -108,5 +108,5 @@ private:
 	ICOpen_type ICOpen_ptr;
 };
 
-#endif /* _WIN32 */
+#endif /* WIN32 */
 #endif /* AVI_GENERATOR_H */

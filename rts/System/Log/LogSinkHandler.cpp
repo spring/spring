@@ -43,7 +43,13 @@ void LogSinkHandler::RecordLogMessage(
 	if (!sinking)
 		return;
 
-	// forward to clients (currently only InfoConsole)
+	if (section == prvSection && message == prvMessage)
+		return;
+
+	prvSection = section;
+	prvMessage = message;
+
+	// forward to clients
 	for (ILogSink* sink: sinks) {
 		sink->RecordLogMessage(level, section, message);
 	}

@@ -107,9 +107,9 @@ class CCommandQueue {
 inline int CCommandQueue::GetNextTag()
 {
 	tagCounter++;
-	if (tagCounter >= maxTagValue)
+	if (tagCounter >= maxTagValue) {
 		tagCounter = 1;
-
+	}
 	return tagCounter;
 }
 
@@ -117,21 +117,22 @@ inline int CCommandQueue::GetNextTag()
 inline void CCommandQueue::push_back(const Command& cmd)
 {
 	queue.push_back(cmd);
-	queue.back().SetTag(GetNextTag());
+	queue.back().tag = GetNextTag();
 }
 
 
 inline void CCommandQueue::push_front(const Command& cmd)
 {
 	queue.push_front(cmd);
-	queue.front().SetTag(GetNextTag());
+	queue.front().tag = GetNextTag();
 }
 
 
-inline CCommandQueue::iterator CCommandQueue::insert(iterator pos, const Command& cmd)
+inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
+                                                     const Command& cmd)
 {
 	Command tmpCmd = cmd;
-	tmpCmd.SetTag(GetNextTag());
+	tmpCmd.tag = GetNextTag();
 	return queue.insert(pos, tmpCmd);
 }
 

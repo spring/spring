@@ -7,10 +7,9 @@
 std::string CClipboard::GetContents() const
 {
 	char* text = SDL_GetClipboardText();
-
-	if (text == nullptr)
+	if (text == NULL) {
 		return "";
-
+	}
 	std::string s = text;
 	SDL_free(text);
 	return s;

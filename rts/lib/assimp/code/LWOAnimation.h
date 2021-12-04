@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -48,12 +47,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_LWO_ANIMATION_INCLUDED
 #define AI_LWO_ANIMATION_INCLUDED
 
-//
+#include <assimp/anim.h>
 #include <vector>
 #include <list>
 
 struct aiNodeAnim;
-struct aiVectorKey;
 
 namespace Assimp {
 namespace LWO {
@@ -167,6 +165,7 @@ struct Envelope
     //! Keyframes for this envelope
     std::vector<Key> keys;
 
+
     // temporary data for AnimResolver
     size_t old_first,old_last;
 };
@@ -198,7 +197,8 @@ public:
      *  @param Output tick rate, per second
      *  @note The input envelopes are possibly modified.
      */
-    AnimResolver(std::list<Envelope>& envelopes, float tick);
+    AnimResolver(std::list<Envelope>& envelopes,
+        float tick);
 
 public:
 

@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -45,9 +44,8 @@ Assimp C export interface. See Exporter.cpp for some notes.
 */
 
 #ifndef ASSIMP_BUILD_NO_EXPORT
-
 #include "CInterfaceIOWrapper.h"
-#include <assimp/SceneCombiner.h>
+#include "SceneCombiner.h"
 #include "ScenePrivate.h"
 #include <assimp/Exporter.hpp>
 
@@ -72,11 +70,11 @@ ASSIMP_API const aiExportFormatDesc* aiGetExportFormatDescription( size_t index)
     }
 
     aiExportFormatDesc *desc = new aiExportFormatDesc;
-    desc->description = new char[ strlen( orig->description ) + 1 ]();
+    desc->description = new char[ strlen( orig->description ) + 1 ];
     ::strncpy( (char*) desc->description, orig->description, strlen( orig->description ) );
-    desc->fileExtension = new char[ strlen( orig->fileExtension ) + 1 ]();
+    desc->fileExtension = new char[ strlen( orig->fileExtension ) + 1 ];
     ::strncpy( ( char* ) desc->fileExtension, orig->fileExtension, strlen( orig->fileExtension ) );
-    desc->id = new char[ strlen( orig->id ) + 1 ]();
+    desc->id = new char[ strlen( orig->id ) + 1 ];
     ::strncpy( ( char* ) desc->id, orig->id, strlen( orig->id ) );
 
     return desc;

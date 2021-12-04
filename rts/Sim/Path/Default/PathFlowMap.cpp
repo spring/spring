@@ -3,9 +3,10 @@
 #include "PathFlowMap.hpp"
 #include "PathConstants.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 #define FLOW_EPSILON         0.01f
 #define FLOW_DECAY_ENABLED   0
@@ -14,23 +15,27 @@
 #define FLOW_NGB_PROJECTION  0
 
 // not extern'ed, so static
-static PathFlowMap gPathFlowMap;
+static StaticMemPool<1, sizeof(PathFlowMap)> pfmMemPool;
+static PathFlowMap* gPathFlowMap = nullptr;
+
 
 
 PathFlowMap* PathFlowMap::GetInstance() {
-	gPathFlowMap.Init(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
-	return &gPathFlowMap;
+	if (gPathFlowMap == nullptr)
+		gPathFlowMap = pfmMemPool.alloc<PathFlowMap>(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
+
+	return gPathFlowMap;
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
-	assert(pfm == &gPathFlowMap);
-	pfm->Kill();
+	assert(pfm == gPathFlowMap);
+	pfmMemPool.free(gPathFlowMap);
 }
 
 
 
-void PathFlowMap::Init(unsigned int scalex, unsigned int scalez) {
-	// const float s = 1.0f / math::sqrt(2.0f);
+PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
+	const float s = 1.0f / math::sqrt(2.0f);
 
 	fBufferIdx = 0;
 	bBufferIdx = 1;
@@ -45,13 +50,10 @@ void PathFlowMap::Init(unsigned int scalex, unsigned int scalez) {
 	maxFlow[fBufferIdx] = 0.0f;
 	maxFlow[bBufferIdx] = 0.0f;
 
-#if 0
-	buffers[fBufferIdx].resize(xsize * zsize);
-	buffers[bBufferIdx].resize(xsize * zsize);
-	indices[fBufferIdx].reserve(xsize * zsize);
-	indices[bBufferIdx].reserve(xsize * zsize);
+	buffers[fBufferIdx].resize(xsize * zsize, FlowCell());
+	buffers[bBufferIdx].resize(xsize * zsize, FlowCell());
 
-	static_assert((PATH_DIRECTIONS << 1) == 16, "");
+	pathOptDirs.resize(PATH_DIRECTIONS << 1);
 
 	pathOptDirs[PATHOPT_LEFT                ] =  RgtVector;
 	pathOptDirs[PATHOPT_RIGHT               ] = -RgtVector;
@@ -70,13 +72,20 @@ void PathFlowMap::Init(unsigned int scalex, unsigned int scalez) {
 		buffers[fBufferIdx][n].cellCenter = p;
 		buffers[bBufferIdx][n].cellCenter = p;
 	}
-#endif
 }
 
+PathFlowMap::~PathFlowMap() {
+	buffers[fBufferIdx].clear();
+	buffers[bBufferIdx].clear();
+	indices[fBufferIdx].clear();
+	indices[bBufferIdx].clear();
+
+	pathOptDirs.clear();
+}
 
 void PathFlowMap::Update() {
 	return;
-#if 0
+/*
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 
@@ -152,18 +161,21 @@ void PathFlowMap::Update() {
 	bBufferIdx = (bBufferIdx + 1) & 1;
 
 	maxFlow[bBufferIdx] = 0.0f;
-#endif
+*/
 }
 
 void PathFlowMap::AddFlow(const CSolidObject* o) {
 	return;
-#if 0
-	if (!o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+/*
+	if (!o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 		return;
-	if (!o->pos.IsInBounds())
+	}
+	if (!o->pos.IsInBounds()) {
 		return;
-	if (!o->moveDef->flowMapping)
+	}
+	if (!o->moveDef->flowMapping) {
 		return;
+	}
 
 	// prevent self-obstruction if the unit is not moving
 	const float3& flowVec = (Square(o->speed.w) >= 1.0f)? float3(o->speed): GetVectorFromHeading(o->heading);
@@ -213,7 +225,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	#endif
 
 	maxFlow[bBufferIdx] = std::max(maxFlow[bBufferIdx], bCell.flowVector.y);
-#endif
+*/
 }
 
 
@@ -227,17 +239,17 @@ unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
 	return ZeroVector;
-#if 0
+/*
 	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	const unsigned int fCellIdx = (hmz / zscale) * xsize + (hmx / xscale);
 
 	return (fCells[fCellIdx].flowVector);
-#endif
+*/
 }
 
 float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int pathOpt) const {
 	return 0.0f;
-#if 0
+/*
 	const float3& flowVec = GetFlowVec(x, z);
 	const float3& pathDir = pathOptDirs[pathOpt];
 
@@ -245,5 +257,5 @@ float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md
 	const float flowCost = (flowVec.y * FLOW_COST_MULT) * flowScale;
 
 	return flowCost;
-#endif
+*/
 }

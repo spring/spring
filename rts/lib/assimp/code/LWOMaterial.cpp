@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -287,7 +286,7 @@ void LWOImporter::ConvertMaterial(const LWO::Surface& surf,aiMaterial* pcMat)
     {
         float fGloss;
         if (mIsLWO2)    {
-            fGloss = math::pow( surf.mGlossiness*ai_real( 10.0 )+ ai_real( 2.0 ), ai_real( 2.0 ) );
+            fGloss = math::pow( surf.mGlossiness * 10.0f + 2.0f, 2.0f);
         }
         else
         {
@@ -313,7 +312,7 @@ void LWOImporter::ConvertMaterial(const LWO::Surface& surf,aiMaterial* pcMat)
 
     // emissive color
     // luminosity is not really the same but it affects the surface in a similar way. Some scaling looks good.
-    clr.g = clr.b = clr.r = surf.mLuminosity*ai_real( 0.8 );
+    clr.g = clr.b = clr.r = surf.mLuminosity*0.8;
     pcMat->AddProperty<aiColor3D>(&clr,1,AI_MATKEY_COLOR_EMISSIVE);
 
     // opacity ... either additive or default-blended, please
@@ -455,7 +454,7 @@ void LWOImporter::FindUVChannels(LWO::Surface& surf,
                             ++extra;
                             out[next++] = i;
                         }
-                        // Bah ... seems not to be used at all. Push to end if enough space is available.
+                        // B�h ... seems not to be used at all. Push to end if enough space is available.
                         else {
                             out[extra++] = i;
                             ++num_extra;

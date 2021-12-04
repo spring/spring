@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 
-#if       defined _WIN32
+#if       defined WIN32
 #ifndef _TIMEZONE_DEFINED
 #define _TIMEZONE_DEFINED
 struct timezone {
@@ -18,9 +18,9 @@ struct timezone {
 #endif
 /// @link http://linux.die.net/man/2/gettimeofday
 int gettimeofday(struct timeval* tv, struct timezone* tz);
-#else  // defined _WIN32
+#else  // defined WIN32
 // gettimeofday() is POSIX standard -> already declared
-#endif // defined _WIN32
+#endif // defined WIN32
 
 
 /**

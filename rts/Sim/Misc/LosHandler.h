@@ -45,7 +45,7 @@ struct SLosInstance
 		, refCount(0)
 		, hashNum(-1)
 		, status(NONE)
-		, isCached(false)
+		, isCache(false)
 		, isQueuedForUpdate(false)
 		, isQueuedForTerraform(false)
 	{}
@@ -76,7 +76,7 @@ public:
 	};
 	int status;
 
-	bool isCached;
+	bool isCache;
 	bool isQueuedForUpdate;
 	bool isQueuedForTerraform;
 };
@@ -92,7 +92,7 @@ public:
  * LosInstance.
  *
  * To quickly find LosInstances that can be shared CLosHandler implements a
- * hash table (instanceHashes). Additionally, LosInstances that reach a refCount
+ * hash table (instanceHash). Additionally, LosInstances that reach a refCount
  * of 0 are not immediately deleted, but up to 500 of those are stored, in case
  * they can be reused for a future unit.
  *
@@ -124,8 +124,7 @@ public:
 		LOS_TYPE_COUNT
 	};
 
-	void Init(const int mipLevel, LosType type);
-	void Kill();
+	ILosType(const int mipLevel, LosType type);
 
 public:
 	void Update();
@@ -157,24 +156,22 @@ private:
 	float GetHeight(const CUnit* unit) const;
 
 public:
-	int   mipLevel = 0;
-	int   mipDiv = 0;
-
-	float invDiv = 0.0f;
-	int2  size;
-
-	LosType type = LOS_TYPE_LOS;
-	LosAlgoType algoType = LOS_ALGO_RAYCAST;
+	const int   mipLevel;
+	const int   divisor;
+	const float invDiv;
+	const int2  size;
+	const LosType type;
+	const LosAlgoType algoType;
+	std::vector<CLosMap> losMaps;
 
 	static size_t cacheFails;
 	static size_t cacheHits;
-	static size_t cacheRefs;
+	static size_t cacheReactivated;
 
-	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHashes;
+	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHash;
 
-	std::vector<CLosMap> losMaps;
 	std::deque<SLosInstance> instances;
-	std::vector<int> freeIDs;
+	std::deque<int> freeIDs;
 
 private:
 	struct DelayedInstance {
@@ -207,13 +204,8 @@ class CLosHandler : public CEventClient
 {
 	CR_DECLARE_STRUCT(CLosHandler)
 public:
-	CLosHandler(): CEventClient("[CLosHandler]", 271993, true) {}
-
-	static void InitStatic();
-	static void KillStatic(bool reload);
-
-	void Init();
-	void Kill();
+	CLosHandler();
+	~CLosHandler();
 
 	// the Interface
 	bool InLos(const CUnit* unit, int allyTeam) const;
@@ -301,7 +293,7 @@ public:
 	* Whether everything on the map is visible at all times to a given ALLYteam
 	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
 	*/
-	std::array<bool, MAX_TEAMS> globalLOS;
+	bool globalLOS[MAX_TEAMS];
 
 	ILosType los;
 	ILosType airLos;
@@ -313,13 +305,12 @@ public:
 
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
-	static constexpr float defBaseRadarErrorMult =  2.0f;
+	static constexpr float defBaseRadarErrorMult = 2.0f;
 
-	float baseRadarErrorSize = 0.0f;
-	float baseRadarErrorMult = 0.0f;
-
+	float baseRadarErrorSize;
+	float baseRadarErrorMult;
 	std::vector<float> radarErrorSizes;
-	std::array<ILosType*, 7> losTypes;
+	std::vector<ILosType*> losTypes;
 };
 
 

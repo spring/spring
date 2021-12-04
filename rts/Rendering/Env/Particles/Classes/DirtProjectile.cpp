@@ -11,8 +11,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CDirtProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CDirtProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CDirtProjectile,
 (
@@ -52,6 +53,7 @@ CDirtProjectile::CDirtProjectile(
 }
 
 CDirtProjectile::CDirtProjectile() :
+	CProjectile(),
 	alpha(255.0f),
 	alphaFalloff(10.0f),
 	size(10.0f),

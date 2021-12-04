@@ -2,7 +2,7 @@
 // placeholders.hpp
 // ~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -40,18 +40,8 @@ unspecified bytes_transferred;
 
 /// An argument placeholder, for use with boost::bind(), that corresponds to
 /// the iterator argument of a handler for asynchronous functions such as
-/// asio::async_connect.
-unspecified iterator;
-
-/// An argument placeholder, for use with boost::bind(), that corresponds to
-/// the results argument of a handler for asynchronous functions such as
 /// asio::basic_resolver::async_resolve.
-unspecified results;
-
-/// An argument placeholder, for use with boost::bind(), that corresponds to
-/// the results argument of a handler for asynchronous functions such as
-/// asio::async_connect.
-unspecified endpoint;
+unspecified iterator;
 
 /// An argument placeholder, for use with boost::bind(), that corresponds to
 /// the signal_number argument of a handler for asynchronous functions such as
@@ -72,16 +62,6 @@ inline boost::arg<2> bytes_transferred()
 }
 
 inline boost::arg<2> iterator()
-{
-  return boost::arg<2>();
-}
-
-inline boost::arg<2> results()
-{
-  return boost::arg<2>();
-}
-
-inline boost::arg<2> endpoint()
 {
   return boost::arg<2>();
 }
@@ -114,10 +94,6 @@ static boost::arg<2>& bytes_transferred
   = asio::placeholders::detail::placeholder<2>::get();
 static boost::arg<2>& iterator
   = asio::placeholders::detail::placeholder<2>::get();
-static boost::arg<2>& results
-  = asio::placeholders::detail::placeholder<2>::get();
-static boost::arg<2>& endpoint
-  = asio::placeholders::detail::placeholder<2>::get();
 static boost::arg<2>& signal_number
   = asio::placeholders::detail::placeholder<2>::get();
 
@@ -130,10 +106,6 @@ namespace
   boost::arg<2>& bytes_transferred
     = asio::placeholders::detail::placeholder<2>::get();
   boost::arg<2>& iterator
-    = asio::placeholders::detail::placeholder<2>::get();
-  boost::arg<2>& results
-    = asio::placeholders::detail::placeholder<2>::get();
-  boost::arg<2>& endpoint
     = asio::placeholders::detail::placeholder<2>::get();
   boost::arg<2>& signal_number
     = asio::placeholders::detail::placeholder<2>::get();

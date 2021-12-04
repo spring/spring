@@ -30,13 +30,11 @@ struct HashMapEqualTo
 template <typename KeyT, typename ValueT, typename HashT = std::hash<KeyT>, typename CompT = HashMapEqualTo<KeyT>>
 class HashMap
 {
-public:
+private:
 	using MyType = HashMap<KeyT, ValueT, HashT, CompT>;
 
 	using PairT = std::pair<KeyT, ValueT>;
 public:
-	using key_type        = KeyT;
-	using mapped_type     = ValueT;
 	using size_type       = size_t;
 	using value_type      = PairT;
 	using reference       = PairT&;
@@ -380,7 +378,7 @@ public:
 	// Same as above, but contains(key) MUST be false
 	void insert_unique(KeyT&& key, ValueT&& value)
 	{
-		assert(!contains(key));
+		DASSERT(!contains(key));
 		check_expand_need();
 		auto bucket = find_empty_bucket(key);
 		_states[bucket] = State::FILLED;

@@ -8,17 +8,9 @@
 #include "System/float4.h"
 #include <algorithm>
 
-class CWorldObject;
-
 namespace GL {
 	struct Light: public CObject {
 	public:
-		enum {
-			TRACK_TYPE_UNIT = 0,
-			TRACK_TYPE_PROJ = 1,
-			TRACK_TYPE_NONE = 2,
-		};
-
 		Light()
 			: position(0.0f, 0.0f, 1.0f, 1.0f)
 			, direction(ZeroVector)
@@ -36,7 +28,6 @@ namespace GL {
 			, fov(180.0f)
 
 			, ignoreLOS(true)
-			, localSpace(false)
 
 			, id(-1u)
 			, uid(-1u)
@@ -44,9 +35,9 @@ namespace GL {
 			, relTime(0)
 			, absTime(0)
 			, priority(0)
-			, trackType(TRACK_TYPE_NONE)
 
-			, trackObject(nullptr)
+			, trackPosition(nullptr)
+			, trackDirection(nullptr)
 		{
 		}
 
@@ -60,12 +51,15 @@ namespace GL {
 		}
 
 		// a light can only depend on one object
-		void DependentDied(CObject* o) { trackObject = nullptr; }
-
-		const CWorldObject* GetTrackObject() const { return trackObject; }
+		void DependentDied(CObject* o) {
+			trackPosition = nullptr;
+			trackDirection = nullptr;
+		}
 
 		const float4& GetPosition() const { return position; }
 		const float3& GetDirection() const { return direction; }
+		const float3* GetTrackPosition() const { return trackPosition; }
+		const float3* GetTrackDirection() const { return trackDirection; }
 		const float4& GetAmbientColor() const { return ambientColor; }
 		const float4& GetDiffuseColor() const { return diffuseColor; }
 		const float4& GetSpecularColor() const { return specularColor; }
@@ -76,13 +70,10 @@ namespace GL {
 		const float3& GetSpecularDecayRate() const { return specularDecayRate; }
 		const float3& GetDecayFunctionType() const { return decayFunctionType; }
 
-		void SetPosition(const float array[3]) { position.fromFloat3(array); } // do not touch .w
+		void SetPosition(const float array[3]) { position.fromFloat3(array); }
 		void SetDirection(const float array[3]) { direction = array; }
-		void SetTrackObject(const CWorldObject* obj) {
-			if ((trackObject = obj) != nullptr)
-				return;
-			trackType = TRACK_TYPE_NONE;
-		}
+		void SetTrackPosition(const float3* pos) { trackPosition = pos; }
+		void SetTrackDirection(const float3* dir) { trackDirection = dir; }
 		void SetAmbientColor(const float array[3]) { ambientColor.fromFloat3(array); }
 		void SetDiffuseColor(const float array[3]) { diffuseColor.fromFloat3(array); }
 		void SetSpecularColor(const float array[3]) { specularColor.fromFloat3(array); }
@@ -103,9 +94,7 @@ namespace GL {
 		void SetFOV(float f) { fov = f; }
 
 		void SetIgnoreLOS(bool b) { ignoreLOS = b; }
-		void SetLocalSpace(bool b) { localSpace = b; }
-		bool IgnoreLOS() const { return ignoreLOS; }
-		bool LocalSpace() const { return localSpace; }
+		bool GetIgnoreLOS() const { return ignoreLOS; }
 
 		unsigned int GetID() const { return id; }
 		unsigned int GetUID() const { return uid; }
@@ -113,7 +102,6 @@ namespace GL {
 		unsigned int GetRelativeTime() const { return relTime; }
 		unsigned int GetAbsoluteTime() const { return absTime; }
 		unsigned int GetPriority() const { return priority; }
-		unsigned int GetTrackType() const { return trackType; }
 
 		void SetID(unsigned int n) { id = n; }
 		void SetUID(unsigned int n) { uid = n; }
@@ -121,22 +109,25 @@ namespace GL {
 		void SetRelativeTime(unsigned int n) { relTime = n; }
 		void SetAbsoluteTime(unsigned int n) { absTime = n; }
 		void SetPriority(unsigned int n) { priority = n; }
-		void SetTrackType(unsigned int n) { trackType = n; }
 
 		void DecayColors() {
-			if (decayFunctionType.x != 0.0f) {
+			const bool expAmbientDecay  = (decayFunctionType.x != 0.0f);
+			const bool expDiffuseDecay  = (decayFunctionType.y != 0.0f);
+			const bool expSpecularDecay = (decayFunctionType.z != 0.0f);
+
+			if (expAmbientDecay) {
 				ambientColor *= ambientDecayRate;
 			} else {
 				ambientColor -= ambientDecayRate;
 			}
 
-			if (decayFunctionType.y != 0.0f) {
+			if (expDiffuseDecay) {
 				diffuseColor *= diffuseDecayRate;
 			} else {
 				diffuseColor -= diffuseDecayRate;
 			}
 
-			if (decayFunctionType.z != 0.0f) {
+			if (expSpecularDecay) {
 				specularColor *= specularDecayRate;
 			} else {
 				specularColor -= specularDecayRate;
@@ -158,13 +149,13 @@ namespace GL {
 		}
 
 	private:
-		float4 position;          // world-space (unless localSpace), w == 1 (non-directional)
-		float3 direction;         // world-space (unless localSpace)
-		float4 ambientColor;      // RGB[A]
-		float4 diffuseColor;      // RGB[A]
-		float4 specularColor;     // RGB[A]
-		float3 intensityWeight;   // x=ambientRGB, y=diffuseRGB, z=specularRGB
-		float3 attenuation;       // x=constantAtt, y=linearAtt, z=quadraticAtt
+		float4  position;         // world-space, w == 1 (non-directional)
+		float3  direction;        // world-space
+		float4  ambientColor;     // RGB[A]
+		float4  diffuseColor;     // RGB[A]
+		float4  specularColor;    // RGB[A]
+		float3  intensityWeight;  // x=ambientRGB, y=diffuseRGB, z=specularRGB
+		float3  attenuation;      // x=constantAtt, y=linearAtt, z=quadraticAtt
 
 		float3 ambientDecayRate;  // x=ambientR,  y=ambientG,  z=ambientB (per-frame decay of ambientColor)
 		float3 diffuseDecayRate;  // x=diffuseR,  y=diffuseG,  z=diffuseB (per-frame decay of diffuseColor)
@@ -175,7 +166,6 @@ namespace GL {
 		float fov;                // degrees ([0.0 - 90.0] or 180.0)
 
 		bool ignoreLOS;           // if true, we can be seen out of LOS
-		bool localSpace;          // if true, {position, direction} are relative to tracked object (when non-null)
 
 		unsigned int id;          // GL_LIGHT[id] we are bound to
 		unsigned int uid;         // LightHandler global counter
@@ -183,10 +173,9 @@ namespace GL {
 		unsigned int relTime;     // current lifetime in sim-frames
 		unsigned int absTime;     // current sim-frame this light is at
 		unsigned int priority;
-		unsigned int trackType;   // TRACK_TYPE_*
 
-		// can only be a CUnit or CProjectile
-		const CWorldObject* trackObject;
+		const float3* trackPosition;
+		const float3* trackDirection;
 	};
 }
 

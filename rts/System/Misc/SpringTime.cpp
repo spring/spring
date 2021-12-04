@@ -2,7 +2,7 @@
 
 #include "SpringTime.h"
 #include "System/MainDefines.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 #define FORCE_CHRONO_TIMERS
 
@@ -21,7 +21,7 @@
 #endif
 
 
-#if (defined(_WIN32) && !defined(FORCE_CHRONO_TIMERS))
+#if (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
 	#define USE_NATIVE_WINDOWS_CLOCK 1
 #endif
 

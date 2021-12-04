@@ -26,12 +26,6 @@ class CScriptMoveType : public AMoveType
 		void SetHeading(short heading);
 		void SetNoBlocking(bool state);
 
-		enum ScriptNotifyState {
-			HitNothing = 0,
-			HitGround = 1,
-			HitLimit = 2,
-		};
-
 	public: // null'ed virtuals
 		void StartMoving(float3, float goalRadius) override {}
 		void StartMoving(float3, float goalRadius, float speed) override {}
@@ -49,6 +43,14 @@ class CScriptMoveType : public AMoveType
 		void CheckNotify();
 
 	public:
+		int tag;
+
+		bool extrapolate;
+		bool useRelVel;
+		bool useRotVel;
+
+		float drag;
+
 		/// velocity vector
 		float3 velVec;
 		/// relative velocity (to current direction)
@@ -59,32 +61,25 @@ class CScriptMoveType : public AMoveType
 		/// angular velocity
 		float3 rotVel;
 
-		float3 mins = {-1.0e9f, -1.0e9f, -1.0e9f};
-		float3 maxs = {+1.0e9f, +1.0e9f, +1.0e9f};
+		float3 mins;
+		float3 maxs;
 
-		int tag = 0;
+		bool trackSlope;
+		bool trackGround;
+		float groundOffset;
 
-		float drag = 0.0f;
-		float groundOffset = 0.0f;
+		float gravityFactor;
+		float windFactor;
 
-		float gravityFactor = 0.0f;
-		float windFactor = 0.0f;
+		bool noBlocking;
 
-		bool extrapolate = true;
-		bool useRelVel = false;
-		bool useRotVel = false;
-
-		bool trackSlope = false;
-		bool trackGround = false;
-		bool trackLimits = false;
-
-		bool noBlocking = false;
-
-		bool groundStop = false;
-		bool limitsStop = false;
+		bool gndStop;
+		bool shotStop;
+		bool slopeStop;
+		bool collideStop;
 
 	protected:
-		ScriptNotifyState scriptNotify = HitNothing;
+		int scriptNotify;
 };
 
 #endif // SCRIPT_MOVE_TYPE_H

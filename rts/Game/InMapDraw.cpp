@@ -1,18 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_mouse.h>
-#include <SDL_keyboard.h>
+#include "SDL_mouse.h"
+#include "SDL_keyboard.h"
 
 #include "InMapDraw.h"
 
 #include "InMapDrawModel.h"
+#include "Camera.h"
+#include "Game.h"
 #include "GlobalUnsynced.h"
 #include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
-#include "Game/GameControllerTextInput.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
+#include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Net/Protocol/BaseNetProtocol.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -24,7 +27,7 @@
 #include "System/Sound/ISoundChannels.h"
 
 
-CInMapDraw* inMapDrawer = nullptr;
+CInMapDraw* inMapDrawer = NULL;
 
 /**
  * This simply makes a noice appear when a map point is placed.
@@ -34,24 +37,26 @@ CInMapDraw* inMapDrawer = nullptr;
 class CNotificationPeeper : public CEventClient
 {
 public:
-	CNotificationPeeper(): CEventClient("NotificationPeeper", 99, false)
+	CNotificationPeeper()
+		: CEventClient("NotificationPeeper", 99, false)
 	{
-		blipSoundID = sound->GetDefSoundId("MapPoint");
+		blippSound = sound->GetSoundId("MapPoint");
 	}
 
-	bool WantsEvent(const std::string& eventName) override {
+	virtual bool WantsEvent(const std::string& eventName) {
 		return (eventName == "MapDrawCmd");
 	}
 
-	bool MapDrawCmd(int playerID, int type, const float3* pos0, const float3* pos1, const std::string* label) override {
+	virtual bool MapDrawCmd(int playerID, int type, const float3* pos0, const float3* pos1, const std::string* label) {
+
 		if (type == MAPDRAW_POINT) {
-			const CPlayer* sender = playerHandler.Player(playerID);
+			const CPlayer* sender = playerHandler->Player(playerID);
 
 			// if we happen to be in drawAll mode, notify us now
 			// even if this message is not intented for our ears
 			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
 			eventHandler.LastMessagePosition(*pos0);
-			Channels::UserInterface->PlaySample(blipSoundID, *pos0);
+			Channels::UserInterface->PlaySample(blippSound, *pos0);
 			minimap->AddNotification(*pos0, OnesVector, 1.0f);
 		}
 
@@ -59,38 +64,49 @@ public:
 	}
 
 private:
-	int blipSoundID;
+	int blippSound;
 };
 
 
 CInMapDraw::CInMapDraw()
+	: drawMode(false)
+	, wantLabel(false)
+	, lastLeftClickTime(0.0f)
+	, lastDrawTime(0.0f)
+	, lastPos(OnesVector)
+	, allowSpecMapDrawing(true)
+	, allowLuaMapDrawing(true)
+	, notificationPeeper(NULL)
 {
-	static_assert(sizeof(CNotificationPeeper) < sizeof(notificationPeeperMem), "");
-	eventHandler.AddClient(new (notificationPeeperMem) CNotificationPeeper());
+	notificationPeeper = new CNotificationPeeper();
+	eventHandler.AddClient(notificationPeeper);
 }
+
 
 CInMapDraw::~CInMapDraw()
 {
-	// EC destructor calls RemoveClient
-	reinterpret_cast<CNotificationPeeper*>(notificationPeeperMem)->~CNotificationPeeper();
+	eventHandler.RemoveClient(notificationPeeper);
+	delete notificationPeeper;
+	notificationPeeper = NULL;
 }
 
 
 void CInMapDraw::MousePress(int x, int y, int button)
 {
-	const float3 pos = mouse->GetWorldMapPos();
-	if (pos.x < 0.0f)
+	float3 pos = GetMouseMapPos();
+	if (pos.x < 0)
 		return;
 
 	switch (button) {
 		case SDL_BUTTON_LEFT: {
-			if (lastLeftClickTime > (gu->gameTime - 0.3f))
+			if (lastLeftClickTime > gu->gameTime - 0.3f) {
 				PromptLabel(pos);
-
+			}
 			lastLeftClickTime = gu->gameTime;
 		} break;
-		case SDL_BUTTON_MIDDLE: {
+		case SDL_BUTTON_MIDDLE:{
 			SendPoint(pos, "", false);
+
 		} break;
 		case SDL_BUTTON_RIGHT: {
 			SendErase(pos);
@@ -111,10 +127,10 @@ void CInMapDraw::MouseRelease(int x, int y, int button)
 
 void CInMapDraw::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	const float3 pos = mouse->GetWorldMapPos();
-	if (pos.x < 0.0f)
+	float3 pos = GetMouseMapPos();
+	if (pos.x < 0) {
 		return;
-
+	}
 	if (mouse->buttons[SDL_BUTTON_LEFT].pressed && (lastDrawTime < (gu->gameTime - 0.05f))) {
 		SendLine(pos, lastPos, false);
 		lastDrawTime = gu->gameTime;
@@ -128,6 +144,17 @@ void CInMapDraw::MouseMove(int x, int y, int dx, int dy, int button)
 }
 
 
+float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
+{
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + (mouse->dir * globalRendering->viewRange * 1.4f), false);
+	if (dist < 0) {
+		return float3(-1.0f, 1.0f, -1.0f);
+	}
+	float3 pos = camera->GetPos() + (mouse->dir * dist);
+	pos.ClampInBounds();
+	return pos;
+}
+
 int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 {
 	int playerID = -1;
@@ -137,9 +164,9 @@ int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 
 		unsigned char uPlayerID;
 		pckt >> uPlayerID;
-		if (!playerHandler.IsValidPlayer(uPlayerID))
+		if (!playerHandler->IsValidPlayer(uPlayerID)) {
 			throw netcode::UnpackPacketException("Invalid player number");
-
+		}
 		playerID = uPlayerID;
 
 		unsigned char drawType;
@@ -155,10 +182,11 @@ int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 				pckt >> fromLua;
 				string label;
 				pckt >> label;
-
-				if (!fromLua || allowLuaMapDrawing)
+				if (!fromLua || allowLuaMapDrawing) {
 					inMapDrawerModel->AddPoint(pos, label, playerID);
-			} break;
+				}
+				break;
+			}
 			case MAPDRAW_LINE: {
 				short int x1, z1, x2, z2;
 				pckt >> x1;
@@ -169,20 +197,22 @@ int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 				const float3 pos2(x2, 0, z2);
 				unsigned char fromLua;
 				pckt >> fromLua;
-
-				if (!fromLua || allowLuaMapDrawing)
+				if (!fromLua || allowLuaMapDrawing) {
 					inMapDrawerModel->AddLine(pos1, pos2, playerID);
-			} break;
+				}
+				break;
+			}
 			case MAPDRAW_ERASE: {
 				short int x, z;
 				pckt >> x;
 				pckt >> z;
 				float3 pos(x, 0, z);
 				inMapDrawerModel->EraseNear(pos, playerID);
-			} break;
+				break;
+			}
 		}
 	} catch (const netcode::UnpackPacketException& ex) {
-		LOG_L(L_WARNING, "[InMapDraw::%s] exception \"%s\" unpacking packet", __func__, ex.what());
+		LOG_L(L_WARNING, "Got invalid MapDraw: %s", ex.what());
 		playerID = -1;
 	}
 
@@ -192,12 +222,14 @@ int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 
 void CInMapDraw::SetSpecMapDrawingAllowed(bool state)
 {
-	LOG("[%s] spectator map-drawing is %s", __func__, (allowSpecMapDrawing = state)? "enabled": "disabled");
+	allowSpecMapDrawing = state;
+	LOG("[%s] spectator map-drawing is %s", __FUNCTION__, allowSpecMapDrawing? "enabled": "disabled");
 }
 
 void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 {
-	LOG("[%s] Lua map-drawing is %s", __func__, (allowLuaMapDrawing = state)? "enabled": "disabled");
+	allowLuaMapDrawing = state;
+	LOG("[%s] Lua map-drawing is %s", __FUNCTION__, allowLuaMapDrawing? "enabled": "disabled");
 }
 
 
@@ -214,6 +246,7 @@ void CInMapDraw::SendPoint(const float3& pos, const std::string& label, bool fro
 	if (!gu->spectating || allowSpecMapDrawing)
 		clientNet->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
 }
+
 
 void CInMapDraw::SendLine(const float3& pos, const float3& pos2, bool fromLua)
 {
@@ -233,68 +266,67 @@ void CInMapDraw::SendWaitingInput(const std::string& label)
 void CInMapDraw::PromptLabel(const float3& pos)
 {
 	waitingPoint = pos;
+	game->userWriting = true;
 	wantLabel = true;
-
-	gameTextInput.PromptLabel();
-	SetDrawMode(false);
-	SDL_StartTextInput();
+	game->userPrompt = "Label: ";
+	game->ignoreNextChar = true;
+	inMapDrawer->SetDrawMode(false);
 }
 
 
-void CInMapDraw::GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::array<int, MAX_TEAMS>& teamIDs)
+void CInMapDraw::GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::list<int>& teamIDs)
 {
 	maxPoints = std::min(maxPoints, inMapDrawerModel->GetNumPoints());
 
 	points.clear();
 	points.reserve(maxPoints);
 
-	const auto teamIDsBeg = teamIDs.begin();
-	const auto teamIDsEnd = std::find(teamIDsBeg, teamIDs.end(), -1);
-
 	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY() && points.size() < maxPoints); y++) {
 		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX() && points.size() < maxPoints); x++) {
 			const std::vector<CInMapDrawModel::MapPoint>& quadPoints = (inMapDrawerModel->GetDrawQuad(x, y))->points;
 
 			for (auto point = quadPoints.cbegin(); (point != quadPoints.cend() && points.size() < maxPoints); ++point) {
-				if (std::find(teamIDsBeg, teamIDsEnd, point->GetTeamID()) == teamIDs.end())
-					continue;
+				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
+					if (point->GetTeamID() != *it)
+						continue;
 
-				points.emplace_back();
-
-				PointMarker& pm = points.back();
-				pm.pos   = point->GetPos();
-				pm.color = teamHandler.Team(point->GetTeamID())->color;
-				pm.label = point->GetLabel().c_str();
+					PointMarker pm;
+					pm.pos   = point->GetPos();
+					pm.color = teamHandler->Team(point->GetTeamID())->color;
+					pm.label = point->GetLabel().c_str();
+					points.push_back(pm);
+					break;
+				}
 			}
 		}
 	}
 }
 
-void CInMapDraw::GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::array<int, MAX_TEAMS>& teamIDs)
+void CInMapDraw::GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::list<int>& teamIDs)
 {
 	maxLines = std::min(maxLines, inMapDrawerModel->GetNumLines());
 
 	lines.clear();
 	lines.reserve(maxLines);
 
-	const auto teamIDsBeg = teamIDs.begin();
-	const auto teamIDsEnd = std::find(teamIDsBeg, teamIDs.end(), -1);
-
 	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY() && lines.size() < maxLines); y++) {
 		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX() && lines.size() < maxLines); x++) {
 			const std::vector<CInMapDrawModel::MapLine>& quadLines = (inMapDrawerModel->GetDrawQuad(x, y))->lines;
 
 			for (auto line = quadLines.cbegin(); (line != quadLines.cend()) && (lines.size() < maxLines); ++line) {
-				if (std::find(teamIDsBeg, teamIDsEnd, line->GetTeamID()) == teamIDs.end())
-					continue;
+				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
+					if (line->GetTeamID() != *it)
+						continue;
 
-				lines.emplace_back();
-
-				LineMarker& lm = lines.back();
-				lm.pos   = line->GetPos1();
-				lm.pos2  = line->GetPos2();
-				lm.color = teamHandler.Team(line->GetTeamID())->color;
+					LineMarker lm;
+					lm.pos   = line->GetPos1();
+					lm.pos2  = line->GetPos2();
+					lm.color = teamHandler->Team(line->GetTeamID())->color;
+					lines.push_back(lm);
+					break;
+				}
 			}
 		}
 	}
 }
+

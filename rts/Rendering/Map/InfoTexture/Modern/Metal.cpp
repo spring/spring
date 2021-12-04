@@ -27,10 +27,12 @@ CMetalTexture::CMetalTexture()
 
 void CMetalTexture::Update()
 {
-	assert(metalMap.GetSizeX() == texSize.x && metalMap.GetSizeZ() == texSize.y);
+	const     CMetalMap* metalMap = readMap->metalMap;
+	const unsigned char* extraTex = metalMap->GetDistributionMap();
+	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_UNSIGNED_BYTE, metalMap.GetDistributionMap());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_UNSIGNED_BYTE, extraTex);
 
 	metalMapChanged = false;
 }

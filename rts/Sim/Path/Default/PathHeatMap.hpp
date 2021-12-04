@@ -19,11 +19,8 @@ public:
 	static PathHeatMap* GetInstance();
 	static void FreeInstance(PathHeatMap*);
 
-	void Init(unsigned int sizex, unsigned int sizez);
-	void Kill() {
-		heatMap.clear();
-		pathSquares.clear();
-	}
+	PathHeatMap(unsigned int sizex, unsigned int sizez);
+	~PathHeatMap();
 
 	void Update() { ++heatMapOffset; }
 
@@ -44,20 +41,22 @@ public:
 
 private:
 	struct HeatCell {
-		unsigned int value = 0;
-		unsigned int ownerID = 0;
+		HeatCell(): value(0), ownerID(0) {}
+
+		unsigned int value;
+		unsigned int ownerID;
 	};
 
 
-	// resolution is hmapx*hmapy
-	std::vector<HeatCell> heatMap;
+	bool enabled;
+
+	std::vector<HeatCell> heatMap;   // resolution is hmapx*hmapy
 	std::vector<int2> pathSquares;
 
-	unsigned int xscale = 0, xsize = 0;
-	unsigned int zscale = 0, zsize = 0;
+	unsigned int xscale, xsize;
+	unsigned int zscale, zsize;
 
-	// heatmap values are relative to this
-	unsigned int heatMapOffset = 0;
+	unsigned int heatMapOffset;      // heatmap values are relative to this
 };
 
 #endif

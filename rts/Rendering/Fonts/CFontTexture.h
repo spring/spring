@@ -6,7 +6,6 @@
 #include <string>
 #include <memory>
 
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/RowAtlasAlloc.h"
 #include "System/UnorderedMap.hpp"
@@ -77,7 +76,6 @@ class CFontTexture
 {
 public:
 	static void Update();
-	static bool GenFontConfig();
 
 public:
 	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
@@ -92,16 +90,15 @@ public:
 	float GetLineHeight() const { return lineHeight; }
 	float GetDescender() const { return fontDescender; }
 	int GetTexture() const { return texture; }
-
-	const std::string& GetFamily() const { return fontFamily; }
-	const std::string& GetStyle() const { return fontStyle; }
+	const std::string& GetFamily()   const { return fontFamily; }
+	const std::string& GetStyle()    const { return fontStyle; }
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
-public:
-	void ReallocAtlases(bool pre);
 protected:
+	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 	void UpdateTexture();
+
 private:
 	void CreateTexture(const int width, const int height);
 
@@ -110,9 +107,9 @@ private:
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
 
 protected:
-	float GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl);
+	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
+	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
-protected:
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
 
 	int outlineSize;
@@ -131,25 +128,19 @@ public:
 	unsigned int textureSpaceMatrix;
 
 private:
-	int curTextureUpdate = 0;
+	CBitmap* atlasUpdate;
+	CBitmap* atlasUpdateShadow;
 #ifndef HEADLESS
-	int lastTextureUpdate = 0;
+	int lastTextureUpdate;
 	FT_Face face;
 #endif
+	int curTextureUpdate;
 
 
 	std::shared_ptr<FontFace> shFace;
 	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
-	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
-	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
-
-	std::vector<CBitmap> atlasGlyphs;
-
 	CRowAtlasAlloc atlasAlloc;
-
-	CBitmap atlasUpdate;
-	CBitmap atlasUpdateShadow;
 };
 
 #endif // CFONTTEXTURE_H

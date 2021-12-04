@@ -8,9 +8,11 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/Sync/SyncTracer.h"
 
-CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CEmgProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CEmgProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -23,7 +25,7 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 {
 	projectileType = WEAPON_EMG_PROJECTILE;
 
-	if (weaponDef != nullptr) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 
@@ -32,6 +34,11 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 	} else {
 		intensity = 0.0f;
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "New emg: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 void CEmgProjectile::Update()
@@ -42,14 +49,15 @@ void CEmgProjectile::Update()
 	checkCol &= (ttl >= 0);
 	deleteMe |= (intensity <= 0.0f);
 
-	pos += (speed * (1 - luaMoveCtrl));
-
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
 	if (ttl <= 0) {
 		// fade out over the next 10 frames at most
 		intensity -= 0.1f;
 		intensity = std::max(intensity, 0.0f);
 	} else {
-		explGenHandler.GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, nullptr, nullptr);
+		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
 	}
 
 	UpdateGroundBounce();

@@ -5,11 +5,11 @@
 # ---------------------------
 #
 # Functions and macros defined in this file:
-# * git_util_command         - Executes a git command plus arguments.
-# * git_util_hash            - Fetches the revision SHA1 hash of the current HEAD.
-# * git_util_branch          - Fetches the branch name of the current HEAD.
-# * git_util_describe        - Fetches the output of git-describe of the current HEAD.
-# * git_info                 - Retrieves a lot of info about the HEAD of a repository
+# * Git_Util_Command         - Executes a git command plus arguments.
+# * Git_Util_Hash            - Fetches the revision SHA1 hash of the current HEAD.
+# * Git_Util_Branch          - Fetches the branch name of the current HEAD.
+# * Git_Util_Describe        - Fetches the output of git-describe of the current HEAD.
+# * Git_Info                 - Retrieves a lot of info about the HEAD of a repository
 #
 
 Set(Git_FIND_QUIETLY TRUE)
@@ -18,7 +18,7 @@ Find_Package(Git)
 If    (GIT_FOUND)
 
 	# Executes a git command plus arguments.
-	Macro    (git_util_command var dir command)
+	Macro    (Git_Util_Command var dir command)
 		Set(${var})
 		Set(${var}-NOTFOUND)
 		Set(CMD_GIT ${GIT_EXECUTABLE} ${command} ${ARGN})
@@ -39,16 +39,16 @@ If    (GIT_FOUND)
 				Message(STATUS "Command \"${CMD_GIT}\" in directory ${dir} failed with output:\n\"${GIT_ERROR}\"")
 			EndIf (NOT GIT_UTIL_FIND_QUIETLY)
 		EndIf (NOT ${CMD_RET_VAL} EQUAL 0)
-	EndMacro (git_util_command)
+	EndMacro (Git_Util_Command)
 
 
 
 
 	# Fetches the revision SHA1 hash of the current HEAD.
 	# This command may fail if dir is not a git repo.
-	Macro    (git_util_hash var dir)
-		git_util_command(${var} "${dir}" rev-list -n 1 ${ARGN} HEAD)
-	EndMacro (git_util_hash)
+	Macro    (Git_Util_Hash var dir)
+		Git_Util_Command(${var} "${dir}" rev-list -n 1 ${ARGN} HEAD)
+	EndMacro (Git_Util_Hash)
 
 
 
@@ -57,9 +57,9 @@ If    (GIT_FOUND)
 	# This command may fail if dir is not a git repo.
 	# In case dir has a detached HEAD, var will be set to "HEAD",
 	# else it will be set to the branch name, eg. "master" or "develop".
-	Macro    (git_util_branch var dir)
-		git_util_command(${var} "${dir}" rev-parse --abbrev-ref ${ARGN} HEAD)
-	EndMacro (git_util_branch)
+	Macro    (Git_Util_Branch var dir)
+		Git_Util_Command(${var} "${dir}" rev-parse --abbrev-ref ${ARGN} HEAD)
+	EndMacro (Git_Util_Branch)
 
 
 
@@ -69,9 +69,9 @@ If    (GIT_FOUND)
 	# Only tags matching the given pattern (shell glob, see manual for git-tag)
 	# may be used.
 	# Example tag patterns: all tags:"*", spring-version-tags:"*.*.*"
-	Macro    (git_util_describe var dir tagPattern)
-		git_util_command(${var} "${dir}" describe --tags --abbrev=7 --always --candidates 999 --match "${tagPattern}" ${ARGN})
-	EndMacro (git_util_describe)
+	Macro    (Git_Util_Describe var dir tagPattern)
+		Git_Util_Command(${var} "${dir}" describe --tags --always --candidates 999 --match "${tagPattern}" ${ARGN})
+	EndMacro (Git_Util_Describe)
 
 
 
@@ -96,27 +96,27 @@ If    (GIT_FOUND)
 	# - ${prefix}_GIT_FILES_UNVERSIONED : number of uncommitted unversioned files
 	# - ${prefix}_GIT_FILES_CLEAN       : TRUE if there are no uncommitted modified files
 	# - ${prefix}_GIT_FILES_CLEAN_VERY  : TRUE if there are no uncommitted modified, added, deleted or unversioned files
-	Macro    (git_info dir prefix)
+	Macro    (Git_Info dir prefix)
 
 		# Fetch ${prefix}_GIT_REVISION_HASH
-		git_util_hash(${prefix}_GIT_REVISION_HASH "${dir}")
+		Git_Util_Hash(${prefix}_GIT_REVISION_HASH "${dir}")
 
 
 		# Fetch ${prefix}_GIT_REVISION_NAME
 		Set(${prefix}_GIT_REVISION_NAME)
 		Set(${prefix}_GIT_REVISION_NAME-NOTFOUND)
 		If    (${prefix}_GIT_REVISION_HASH)
-			git_util_command(${prefix}_GIT_REVISION_NAME "${dir}"
+			Git_Util_Command(${prefix}_GIT_REVISION_NAME "${dir}"
 					name-rev --name-only --tags --no-undefined --always ${${prefix}_GIT_REVISION_HASH})
 		EndIf (${prefix}_GIT_REVISION_HASH)
 
 
 		# Fetch ${prefix}_GIT_DESCRIBE
-		git_util_describe(${prefix}_GIT_DESCRIBE "${dir}" "*")
+		Git_Util_Describe(${prefix}_GIT_DESCRIBE "${dir}" "*")
 
 
 		# Fetch ${prefix}_GIT_BRANCH
-		git_util_branch(${prefix}_GIT_BRANCH "${dir}")
+		Git_Util_Branch(${prefix}_GIT_BRANCH "${dir}")
 
 
 		# Fetch ${prefix}_GIT_FILES_MODIFIED
@@ -138,7 +138,7 @@ If    (GIT_FOUND)
 		Set(${prefix}_GIT_FILES_CLEAN_VERY)
 		Set(${prefix}_GIT_FILES_CLEAN_VERY-NOTFOUND)
 
-		git_util_command(${prefix}_GIT_STATUS_OUT "${dir}" status --porcelain)
+		Git_Util_Command(${prefix}_GIT_STATUS_OUT "${dir}" status --porcelain)
 
 		If    (${prefix}_GIT_STATUS_OUT)
 			# convert the raw command output to a list like:
@@ -185,17 +185,17 @@ If    (GIT_FOUND)
 			Set(${prefix}_GIT_FILES_CLEAN-NOTFOUND       "1")
 			Set(${prefix}_GIT_FILES_CLEAN_VERY-NOTFOUND  "1")
 		EndIf (${prefix}_GIT_STATUS_OUT)
-	EndMacro (git_info)
+	EndMacro (Git_Info)
 
 
 
 
 
 	# Prints extensive git version info.
-	# @see git_info
+	# @see Git_Info
 	Macro    (Git_Print_Info dir)
 		Set(prefix Git_Print_Info_tmp_prefix_)
-		git_info(${dir} ${prefix})
+		Git_Info(${dir} ${prefix})
 		Message("  SHA1              : ${${prefix}_GIT_REVISION_HASH}")
 		Message("  revision-name     : ${${prefix}_GIT_REVISION_NAME}")
 		Message("  describe          : ${${prefix}_GIT_DESCRIBE}")
@@ -210,3 +210,4 @@ If    (GIT_FOUND)
 		Message("    very clean      : ${${prefix}_GIT_FILES_CLEAN_VERY}")
 	EndMacro (Git_Print_Info)
 EndIf (GIT_FOUND)
+

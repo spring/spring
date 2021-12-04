@@ -4,8 +4,7 @@
 #define STRAFE_AIR_MOVE_TYPE_H_
 
 #include "AAirMoveType.h"
-
-struct float4;
+#include <vector>
 
 /**
  * Air movement type definition
@@ -31,13 +30,19 @@ public:
 
 	void UpdateManeuver();
 	void UpdateAttack();
-	bool UpdateFlying(float wantedHeight, float wantedThrottle);
+	bool UpdateFlying(float wantedHeight, float engine);
 	void UpdateLanding();
-	void UpdateAirPhysics(const float4& controlInputs, const float3& thrustVector);
+	void UpdateAirPhysics(
+		float rudder,
+		float aileron,
+		float elevator,
+		float engine,
+		const float3& engineVector
+	);
 	void SetState(AircraftState state) override;
 	void UpdateTakeOff();
 
-	float3 FindLandingPos(float3 landPos);
+	float3 FindLandingPos();
 
 	void SetMaxSpeed(float speed) override;
 	float BrakingDistance(float speed, float rate) const override;
@@ -49,45 +54,43 @@ public:
 
 	void Takeoff() override;
 
-private:
-	bool HandleCollisions(bool checkCollisions);
+	int maneuverState;
+	int maneuverSubState;
 
-public:
-	int maneuverBlockTime = 0;
-	int maneuverState = MANEUVER_FLY_STRAIGHT;
-	int maneuverSubState = 0;
+	bool loopbackAttack;
+	bool isFighter;
 
-	bool loopbackAttack = false;
-	bool isFighter = false;
-
-	float wingDrag = 0.07f;
-	float wingAngle = 0.1f;
-	float invDrag = 0.995f;
+	float wingDrag;
+	float wingAngle;
+	float invDrag;
 	/// actually the invDrag of crashDrag
-	float crashDrag = 0.995f;
+	float crashDrag;
 
-	float frontToSpeed = 0.04f;
-	float speedToFront = 0.01f;
-	float myGravity = 0.8f;
+	float frontToSpeed;
+	float speedToFront;
+	float myGravity;
 
-	float maxBank = 0.55f;
-	float maxPitch = 0.35f;
-	float turnRadius = 150.0f;
+	float maxBank;
+	float maxPitch;
+	float turnRadius;
 
-	float maxAileron = 0.04f;
-	float maxElevator = 0.02f;
-	float maxRudder = 0.01f;
+	float maxAileron;
+	float maxElevator;
+	float maxRudder;
 	// fighters abort dive toward target if within this distance and climb back to normal altitude
-	float attackSafetyDistance = 0.0f;
+	float attackSafetyDistance;
 
 	/// used while landing
-	float crashAileron = 0.0f;
-	float crashElevator = 0.0f;
-	float crashRudder = 0.0f;
+	float crashAileron;
+	float crashElevator;
+	float crashRudder;
 
-	float lastRudderPos[2] = {0.0f, 0.0f};
-	float lastElevatorPos[2] = {0.0f, 0.0f};
-	float lastAileronPos[2] = {0.0f, 0.0f};
+	float lastRudderPos;
+	float lastElevatorPos;
+	float lastAileronPos;
+
+private:
+	bool HandleCollisions(bool checkCollisions);
 };
 
 #endif // _AIR_MOVE_TYPE_H_

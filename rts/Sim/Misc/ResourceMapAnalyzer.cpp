@@ -25,7 +25,7 @@ using std::fclose;
 
 #include <stdexcept>
 
-static constexpr float3 ERRORVECTOR(-1, 0, 0);
+static const float3 ERRORVECTOR(-1, 0, 0);
 static std::string CACHE_BASE("");
 
 CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
@@ -60,7 +60,7 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 
 float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* extractor) const {
 
-	const CUnit* builder = unitHandler.GetUnit(builderUnitId);
+	CUnit* builder = unitHandler->GetUnit(builderUnitId);
 
 	if (builder == nullptr) {
 		LOG_L(L_WARNING, "GetNearestSpot: Invalid unit ID: %i", builderUnitId);
@@ -79,7 +79,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 
 	for (size_t i = 0; i < vectoredSpots.size(); ++i) {
 		if (extractor != nullptr) {
-			spotCoords = CGameHelper::ClosestBuildPos(team, extractor, vectoredSpots[i], maxDivergence, 2);
+			spotCoords = CGameHelper::ClosestBuildSite(team, extractor, vectoredSpots[i], maxDivergence, 2);
 		} else {
 			spotCoords = vectoredSpots[i];
 		}
@@ -95,7 +95,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 			bool b1 = (tempScore < spotScore);
 // 			bool b2 = (numEnemies == 0);
 // 			bool b3 = (myThreat <= (ai->tm->GetAverageThreat() * 1.5));
-// 			bool b4 = (ai->unitHandler.TaskPlanExist(spotCoords, extractor));
+// 			bool b4 = (ai->unitHandler->TaskPlanExist(spotCoords, extractor));
 
 			if (b1/* && b2 && b3 && !b4*/) {
 				tempScore = spotScore;

@@ -113,5 +113,5 @@ set(FILES
 	modinfo.lua
 )
 
-create_base_content_archive("base" "cursors.sdz" "${FILES}")
+CreateBaseContentArchive("base" "cursors.sdz" "${FILES}")
 

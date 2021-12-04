@@ -19,9 +19,6 @@
 
 namespace Shader {
 	struct UniformState {
-	public:
-		static constexpr size_t NAME_BUF_LEN = 128;
-
 	private:
 		union {
 			std::int32_t i[17];
@@ -32,7 +29,7 @@ namespace Shader {
 		int location;
 
 		/// uniform name in the shader
-		char name[NAME_BUF_LEN];
+		std::string name;
 
 	#ifdef DEBUG
 		/// uniform type
@@ -40,31 +37,27 @@ namespace Shader {
 	#endif
 
 	public:
-		UniformState(const char* _name): location(-1) {
+		UniformState(const std::string& _name): location(-1), name(_name) {
 			i[0] = -0xFFFFFF;
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
 			i[3] = -0xFFFFFF;
-
-			#ifdef DEBUG
+		#ifdef DEBUG
 			type = -1;
-			#endif
-
-			memset(name, 0, sizeof(name));
-			strncpy(name, _name, sizeof(name) - 1);
+		#endif
 		}
 
 		const int* GetIntValues() const { return &i[0]; }
 		const float* GetFltValues() const { return &f[0]; }
 
 		int GetLocation() const { return location; }
-		const char* GetName() const { return name; }
+		const std::string& GetName() const { return name; }
 
 		void SetLocation(int loc) { location = loc; }
 
 		bool IsLocationValid() const;
-		bool IsInitialized() const {
-			return (i[0] != -0xFFFFFF) || (i[1] != -0xFFFFFF) || (i[2] != -0xFFFFFF) || (i[3] != -0xFFFFFF);
+		bool IsUninit() const {
+			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
 		}
 
 	public:

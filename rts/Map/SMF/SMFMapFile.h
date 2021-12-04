@@ -15,12 +15,8 @@ struct MapBitmapInfo;
 class CSMFMapFile
 {
 public:
-	CSMFMapFile(                              ): ifs("", "") {                    } // defer Open
-	CSMFMapFile(const std::string& mapFileName): ifs("", "") { Open(mapFileName); } // unitsync
-	~CSMFMapFile() { Close(); }
 
-	void Open(const std::string& mapFileName);
-	void Close();
+	CSMFMapFile(const std::string& mapFileName);
 
 	void ReadMinimap(void* data);
 	/// @return mip size
@@ -29,8 +25,8 @@ public:
 	void ReadHeightmap(float* sHeightMap, float* uHeightMap, float base, float mod);
 	void ReadFeatureInfo();
 	void ReadFeatureInfo(MapFeatureInfo* f);
-	void GetInfoMapSize(const char* name, MapBitmapInfo*) const;
-	bool ReadInfoMap(const char* name, void* data);
+	void GetInfoMapSize(const std::string& name, MapBitmapInfo*) const;
+	bool ReadInfoMap(const std::string& name, void* data);
 
 	int GetNumFeatures()     const { return featureHeader.numFeatures; }
 	int GetNumFeatureTypes() const { return featureHeader.numFeatureType; }
@@ -44,7 +40,6 @@ public:
 	 *   with SMFGroundTextures.cpp
 	 */
 	CFileHandler* GetFileHandler() { return &ifs; }
-
 	static void ReadMapTileHeader(MapTileHeader& head, CFileHandler& file);
 	static void ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file);
 
@@ -54,14 +49,12 @@ private:
 	void ReadMapFeatureHeader(MapFeatureHeader& head, CFileHandler& file);
 	void ReadMapFeatureStruct(MapFeatureStruct& head, CFileHandler& file);
 
+	SMFHeader header;
 	CFileHandler ifs;
 
-	SMFHeader header;
 	MapFeatureHeader featureHeader;
-
-	char featureTypes[16384][32];
-
-	int featureFileOffset = 0;
+	std::vector<std::string> featureTypes;
+	int featureFileOffset;
 };
 
 #endif // _SMF_MAP_FILE_H

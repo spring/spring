@@ -11,18 +11,25 @@ class CAVIGenerator;
 
 
 class AviVideoCapturing : public IVideoCapturing {
+
 	friend class IVideoCapturing;
 
+	AviVideoCapturing();
+	virtual ~AviVideoCapturing();
+
 public:
-	bool IsCapturingSupported() const override { return true; }
+	virtual bool IsCapturingSupported() const;
 
-	void StartCapturing() override;
-	void StopCapturing() override;
+	virtual bool IsCapturing() const;
+	virtual void StartCapturing();
+	virtual void StopCapturing();
 
-	void RenderFrame() override;
+	virtual void RenderFrame();
 
 private:
-	CAVIGenerator* aviGenerator = nullptr;
+
+	bool capturing;
+	CAVIGenerator* aviGenerator;
 };
 
 #endif // defined AVI_CAPTURING

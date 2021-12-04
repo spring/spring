@@ -5,23 +5,24 @@
 
 #include <string>
 #include <vector>
+#include <set>
+#include <map>
 
 #include "KeySet.h"
 #include "Game/Console.h"
 #include "Game/Action.h"
-#include "System/UnorderedMap.hpp"
-#include "System/UnorderedSet.hpp"
+
 
 
 class CKeyBindings : public CommandReceiver
 {
 	public:
 		typedef std::vector<Action> ActionList;
-		typedef spring::unsynced_set<std::string> HotkeyList;
+		typedef std::set<std::string> HotkeyList;
 
 	public:
-		void Init();
-		void Kill();
+		CKeyBindings();
+		~CKeyBindings();
 
 		bool Load(const std::string& filename);
 		bool Save(const std::string& filename) const;
@@ -34,10 +35,11 @@ class CKeyBindings : public CommandReceiver
 		virtual void PushAction(const Action&);
 		bool ExecuteCommand(const std::string& line);
 
+		int GetFakeMetaKey() const { return fakeMetaKey; }
+
 		// Receive configuration notifications (for KeyChainTimeout)
 		void ConfigNotify(const std::string& key, const std::string& value);
 
-		int GetFakeMetaKey() const { return fakeMetaKey; }
 		int GetKeyChainTimeout() const { return keyChainTimeout; }
 
 	protected:
@@ -56,31 +58,23 @@ class CKeyBindings : public CommandReceiver
 		bool FileSave(FILE* file) const;
 
 	protected:
-		struct KeySetHash {
-			uint64_t operator ()(const CKeySet& ks) const {
-				return ((ks.Key() * 6364136223846793005ull + ks.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
-			}
-		};
-
-		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
-		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
-
+		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
+		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
 		KeyMap bindings;
 		ActionMap hotkeys;
 
 		// commands that use both Up and Down key presses
-		spring::unsynced_set<std::string> statefulCommands;
+		std::set<std::string> statefulCommands;
 
+		int fakeMetaKey;
+		bool buildHotkeyMap;
 	private:
-		int fakeMetaKey = -1;
-		int keyChainTimeout = 750;
-
-		bool buildHotkeyMap = true;
-		bool debugEnabled = false;
+		bool debugEnabled;
+		int keyChainTimeout;
 };
 
 
-extern CKeyBindings keyBindings;
+extern CKeyBindings* keyBindings;
 
 
 #endif /* KEYBINDINGS_H */

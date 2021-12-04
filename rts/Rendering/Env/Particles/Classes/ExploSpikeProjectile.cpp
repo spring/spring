@@ -10,8 +10,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CExploSpikeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (
@@ -26,7 +27,8 @@ CR_REG_METADATA(CExploSpikeProjectile,
 ))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
-	: length(0.0f)
+	: CProjectile()
+	, length(0.0f)
 	, width(0.0f)
 	, alpha(0.0f)
 	, alphaDecay(0.0f)
@@ -55,16 +57,6 @@ CExploSpikeProjectile::CExploSpikeProjectile(
 
 	checkCol  = false;
 	useAirLos = true;
-
-	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
-}
-
-void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
-{
-	CProjectile::Init(owner, offset);
-
-	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
-	dir /= lengthGrowth;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
@@ -101,12 +93,21 @@ void CExploSpikeProjectile::Draw(CVertexArray* va)
 	#undef let
 }
 
+void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
+{
+	CProjectile::Init(owner, offset);
 
+	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
+	dir /= lengthGrowth;
+
+	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
+}
 
 int CExploSpikeProjectile::GetProjectilesCount() const
 {
 	return 1;
 }
+
 
 bool CExploSpikeProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {

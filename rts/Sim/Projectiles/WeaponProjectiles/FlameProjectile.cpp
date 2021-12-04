@@ -9,9 +9,10 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CFlameProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -22,18 +23,19 @@ CR_REG_METADATA(CFlameProjectile,(
 ))
 
 
-CFlameProjectile::CFlameProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
 	, curTime(0.0f)
 	, physLife(0.0f)
 	, invttl(1.0f / ttl)
 	, spread(params.spread)
 {
+
 	projectileType = WEAPON_FLAME_PROJECTILE;
 
-	if (weaponDef != nullptr) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->size * weaponDef->collisionSize, 0.0f);
-
 		drawRadius = weaponDef->size;
+
 		physLife = 1.0f / weaponDef->duration;
 	}
 }
@@ -63,11 +65,12 @@ void CFlameProjectile::Update()
 	sqRadius = radius * radius;
 	drawRadius = radius * weaponDef->collisionSize;
 
-	curTime = std::min(curTime + invttl, 1.0f);
+	curTime += invttl;
 	checkCol &= (curTime <= physLife);
+	curTime = std::min(curTime, 1.0f);
 	deleteMe |= (curTime >= 1.0f);
 
-	explGenHandler.GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
+	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
 }
 
 void CFlameProjectile::Draw(CVertexArray* va)
@@ -88,11 +91,12 @@ int CFlameProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, 
 
 	const float3 rdir = (pos - shieldPos).Normalize();
 
-	if (rdir.dot(speed) >= shieldMaxSpeed)
-		return 0;
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		SetVelocityAndSpeed(speed + (rdir * shieldForce));
+		return 2;
+	}
 
-	SetVelocityAndSpeed(speed + (rdir * shieldForce));
-	return 2;
+	return 0;
 }
 
 int CFlameProjectile::GetProjectilesCount() const

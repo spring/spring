@@ -5,11 +5,8 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <cinttypes>
-
-#include "ArchiveTypes.h"
-#include "System/Sync/SHA512.hpp"
-#include "System/UnorderedMap.hpp"
 
 /**
  * @brief Abstraction of different archive types
@@ -22,16 +19,13 @@
 class IArchive
 {
 protected:
-	IArchive(const std::string& archiveFile): archiveFile(archiveFile) {
-	}
+	IArchive(const std::string& archiveName);
 
 public:
 	virtual ~IArchive() {}
 
-	virtual int GetType() const = 0;
-
 	virtual bool IsOpen() = 0;
-	const std::string& GetArchiveFile() const { return archiveFile; }
+	const std::string& GetArchiveName() const { return archiveFile; }
 
 	/**
 	 * @return The amount of files in the archive, does not change during
@@ -122,18 +116,16 @@ public:
 	 */
 	virtual bool CheckForSolid() const { return false; }
 	/**
-	 * Fetches the (SHA512) hash of a file by its ID.
+	 * Fetches the CRC32 hash of a file by its ID.
 	 */
-	virtual bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN], std::vector<std::uint8_t>& fb);
+	virtual unsigned int GetCrc32(unsigned int fid);
 
 
 protected:
-	// Spring expects the contents of archives to be case-independent
-	// this map (which must be populated by subclass archives) is kept
-	// to allow converting back from lowercase to original case
-	spring::unordered_map<std::string, unsigned int> lcNameIndex;
+	/// must be populated by the subclass
+	std::map<std::string, unsigned int> lcNameIndex;
 
-protected:
+private:
 	/// "ExampleArchive.sdd"
 	const std::string archiveFile;
 };

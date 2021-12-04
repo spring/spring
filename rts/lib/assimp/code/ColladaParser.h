@@ -2,8 +2,7 @@
  Open Asset Import Library (assimp)
  ----------------------------------------------------------------------
 
- Copyright (c) 2006-2017, assimp team
-
+ Copyright (c) 2006-2016, assimp team
  All rights reserved.
 
  Redistribution and use of this software in source and binary forms,
@@ -50,6 +49,7 @@
 #include "ColladaHelper.h"
 #include <assimp/ai_assert.h>
 #include "TinyFormatter.h"
+#include <memory>
 
 namespace Assimp
 {
@@ -268,7 +268,8 @@ namespace Assimp
         Collada::InputType GetTypeForSemantic( const std::string& pSemantic);
 
         /** Finds the item in the given library by its reference, throws if not found */
-        template <typename Type> const Type& ResolveLibraryReference( const std::map<std::string, Type>& pLibrary, const std::string& pURL) const;
+        template <typename Type> const Type& ResolveLibraryReference(
+                                                                     const std::map<std::string, Type>& pLibrary, const std::string& pURL) const;
 
     protected:
         /** Filename, for a verbose error message */

@@ -13,9 +13,9 @@
 
 # Native Skirmish AI configuration macro
 # This will be called from native AIs at AI/Skirmish/*/CMakeLists.txt.
-macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
 	set(myDir                  "${CMAKE_CURRENT_SOURCE_DIR}")
-	get_last_path_part(dirName ${myDir})
+	GetLastPathPart(dirName ${myDir})
 	set(myName                 "${dirName}")
 	set(mySourceDirRel         "${${mySourceDirRel_var}}") # Common values are "" or "src"
 	set(additionalSources      ${${additionalSources_var}})
@@ -33,23 +33,23 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
 		# Assemble meta data
-		get_version_plus_dep_file(myVersion myVersionDepFile)
+		GetVersionPlusDepFile(myVersion myVersionDepFile)
 		set(myTarget      "${myName}")
 		set(myInstLibsDir "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
 		set(myInstDataDir "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
-		make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+		MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-		skirmish_ai_message(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 		# Create a list of all the AIs own source files
-		get_native_sources_recursive(mySources "${mySourceDir}" "${myDir}")
+		GetNativeSourcesRecursive(mySources "${mySourceDir}" "${myDir}")
 
 		# Compile the library
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources} ${myVersionDepFile})
 		set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
-		fix_lib_name(${myTarget})
+		FixLibName(${myTarget})
 
-		add_dependencies(${myTarget} generateVersionFiles)
+		Add_Dependencies(${myTarget} generateVersionFiles)
 		target_link_libraries(${myTarget} ${additionalLibraries})
 		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
@@ -60,7 +60,7 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 		# Install the library
 		install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+endmacro (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
 
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
@@ -85,25 +85,25 @@ endif (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 # Check dependencies of the interface are met
 if    (AI_TYPES_NATIVE)
-	set_global(BUILD_${myName}_AIINTERFACE TRUE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
 else  (AI_TYPES_NATIVE)
-	set_global(BUILD_${myName}_AIINTERFACE FALSE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message ("warning: C & C++ AI Interface will not be built!")
 endif (AI_TYPES_NATIVE)
 
 
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
-	get_version_plus_dep_file(myVersion myVersionDepFile)
+	GetVersionPlusDepFile(myVersion myVersionDepFile)
 	set(myTarget      "${myName}-AIInterface")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
-	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	ai_interface_message(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
-	set_global(${myName}_AIINTERFACE_VERS   ${myVersion})
-	set_global(${myName}_AIINTERFACE_TARGET ${myTarget})
+	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
+	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
 	set(mySources
 			"${mySourceDir}/Interface.cpp"
@@ -113,9 +113,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
 	set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 	target_link_libraries(${myTarget} CUtils)
-	fix_lib_name(${myTarget})
+	FixLibName(${myTarget})
 
-	add_dependencies(${myTarget} generateVersionFiles)
+	Add_Dependencies(${myTarget} generateVersionFiles)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files

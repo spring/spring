@@ -3,15 +3,15 @@
 #include <string>
 #include <cstdio>
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE TestRestriction
+#include <boost/test/unit_test.hpp>
 
 
-TEST_CASE("TestRestriction")
+BOOST_AUTO_TEST_CASE(TestRestriction)
 {
 	CLuaSocketRestrictions rest = CLuaSocketRestrictions();
 	#define CheckAccess(result, type, host, port) \
-		CHECK((result == rest.isAllowed((CLuaSocketRestrictions::RestrictType)type, host, port)));
+		BOOST_CHECK((result == rest.isAllowed((CLuaSocketRestrictions::RestrictType)type, host, port)));
 
 	for(int i=0; i<CLuaSocketRestrictions::ALL_RULES; i++) {
 		CheckAccess(false, i, "localhost", 80);

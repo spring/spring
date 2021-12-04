@@ -19,4 +19,4 @@ set(mySources
 add_library(CUtils STATIC ${mySources})
 target_link_libraries(CUtils ${CMAKE_DL_LIBS})
 
-ai_message(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")
+AIMessage(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")

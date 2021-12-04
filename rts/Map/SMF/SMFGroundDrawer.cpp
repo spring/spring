@@ -21,9 +21,8 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/FastMath.h"
-#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 static constexpr int MIN_GROUND_DETAIL[] = {                               0,   4};
 static constexpr int MAX_GROUND_DETAIL[] = {CBasicMeshDrawer::LOD_LEVELS - 1, 200};
@@ -43,7 +42,6 @@ CONFIG(int, MaxDynamicMapLights)
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
-CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
 CONFIG(int, ROAM)
@@ -57,7 +55,6 @@ CONFIG(int, ROAM)
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
 	, meshDrawer(nullptr)
-	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
 {
 	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
@@ -72,11 +69,11 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
+	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
-	postDeferredEvents = configHandler->GetBool("AllowDrawMapPostDeferredEvents");
 
 
 	// NOTE:
@@ -319,9 +316,10 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
 
-	// send event if no forward pass will follow; must be done after the unbind
-	if (!drawForward || postDeferredEvents)
+	// must be after the unbind
+	if (!drawForward) {
 		eventHandler.DrawGroundPostDeferred();
+	}
 }
 
 void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest)
@@ -352,9 +350,6 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
-
-		if (HaveLuaRenderState())
-			eventHandler.DrawGroundPostForward();
 	}
 }
 
@@ -477,7 +472,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u

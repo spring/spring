@@ -3,8 +3,6 @@
 #ifndef LUA_CONTEXT_DATA_H
 #define LUA_CONTEXT_DATA_H
 
-#include "Lua/LuaAllocState.h"
-#include "Lua/LuaGarbageCollectCtrl.h"
 #include "LuaMemPool.h"
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 #include "LuaShaders.h"
@@ -13,7 +11,6 @@
 #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
 #endif
-
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
@@ -44,7 +41,6 @@ public:
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam)
 
-	, allocState{{0}, {0}, {0}, {0}}
 	{}
 
 	~luaContextData() {
@@ -95,9 +91,6 @@ public:
 	int readTeam;
 	int readAllyTeam;
 	int selectTeam;
-
-	SLuaAllocState allocState;
-	SLuaGarbageCollectCtrl gcCtrl;
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 	// NOTE:

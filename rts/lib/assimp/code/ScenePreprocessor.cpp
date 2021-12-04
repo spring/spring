@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -167,7 +166,7 @@ void ScenePreprocessor::ProcessMesh (aiMesh* mesh)
 // ---------------------------------------------------------------------------------------------
 void ScenePreprocessor::ProcessAnimation (aiAnimation* anim)
 {
-    float first = 10e10f, last = -10e10f;
+    float first = 10e10, last = -10e10;
     for (unsigned int i = 0; i < anim->mNumChannels;++i)    {
         aiNodeAnim* channel = anim->mChannels[i];
 
@@ -177,22 +176,22 @@ void ScenePreprocessor::ProcessAnimation (aiAnimation* anim)
         if (anim->mDuration == -1.) {
 
             // Position keys
-            for (unsigned int j = 0; j < channel->mNumPositionKeys;++j) {
-                aiVectorKey& key = channel->mPositionKeys[j];
+            for (unsigned int i = 0; i < channel->mNumPositionKeys;++i) {
+                aiVectorKey& key = channel->mPositionKeys[i];
                 first = std::min (first, key.mTime);
                 last  = std::max (last,  key.mTime);
             }
 
             // Scaling keys
-            for (unsigned int j = 0; j < channel->mNumScalingKeys;++j )  {
-                aiVectorKey& key = channel->mScalingKeys[j];
+            for (unsigned int i = 0; i < channel->mNumScalingKeys;++i)  {
+                aiVectorKey& key = channel->mScalingKeys[i];
                 first = std::min (first, key.mTime);
                 last  = std::max (last,  key.mTime);
             }
 
             // Rotation keys
-            for (unsigned int j = 0; j < channel->mNumRotationKeys;++j ) {
-                aiQuatKey& key = channel->mRotationKeys[ j ];
+            for (unsigned int i = 0; i < channel->mNumRotationKeys;++i) {
+                aiQuatKey& key = channel->mRotationKeys[i];
                 first = std::min (first, key.mTime);
                 last  = std::max (last,  key.mTime);
             }

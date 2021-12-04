@@ -98,8 +98,6 @@ public:
 	void GhostDestroyed(GhostSolidObject* gb) override;
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-
-	void AddSolidObject(CSolidObject* object) override;
 	void ForceRemoveSolidObject(CSolidObject* object) override;
 	static void RemoveTrack(CUnit* unit);
 
@@ -275,7 +273,7 @@ private:
 	std::vector<int> addedScars;
 
 	// stores indices into <scars> of reserved slots, per quad
-	std::vector<std::vector<int>> scarField;
+	std::vector< std::vector<int> > scarField;
 
 
 	int scarFieldX;

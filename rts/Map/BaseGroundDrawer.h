@@ -82,7 +82,6 @@ protected:
 	bool drawForward;
 	bool drawDeferred;
 	bool drawMapEdges;
-	bool postDeferredEvents;
 
 	bool wireframe;
 	bool advShading;

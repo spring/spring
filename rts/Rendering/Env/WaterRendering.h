@@ -6,9 +6,6 @@
 #include "System/float3.h"
 #include "System/float4.h"
 
-#include <string>
-#include <vector>
-
 struct CWaterRendering {
 public:
 	void Init();

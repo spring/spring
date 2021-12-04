@@ -21,21 +21,16 @@ class ShieldSegmentCollection
 	CR_DECLARE_STRUCT(ShieldSegmentCollection)
 public:
 	// creg only
-	ShieldSegmentCollection() {}
-	ShieldSegmentCollection(CPlasmaRepulser* shield) { Init(shield); }
-	ShieldSegmentCollection(ShieldSegmentCollection&& ssc) { *this = std::move(ssc); }
-	~ShieldSegmentCollection() { Kill(); }
+	ShieldSegmentCollection() { }
+	ShieldSegmentCollection(CPlasmaRepulser*);
+	~ShieldSegmentCollection();
 
-	ShieldSegmentCollection& operator=(ShieldSegmentCollection&& ssc) noexcept;
-
-	void Init(CPlasmaRepulser*);
-	void Kill();
 	void Update();
 	void UpdateColor();
 
 	bool AllowDrawing();
 
-	const CPlasmaRepulser* GetShield() const { return shield; }
+	CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 
 	float3 GetShieldDrawPos() const;
@@ -45,19 +40,15 @@ public:
 
 	void PostLoad();
 
-public:
-	static constexpr unsigned int NUM_SEGMENTS_X = 6;
-	static constexpr unsigned int NUM_SEGMENTS_Y = 4;
-
 private:
 	bool UsingPerlinNoise() const;
 
-	const CPlasmaRepulser* shield = nullptr;
-	const AtlasedTexture* shieldTexture = nullptr;
+	CPlasmaRepulser* shield;
+	const AtlasedTexture* shieldTexture;
 
-	int lastAllowDrawFrame = -1;
-	bool allowDrawing = false;
-	float size = 0.0f;
+	int lastAllowDrawingframe;
+	bool allowDrawing;
+	float size;
 
 	SColor color;
 
@@ -79,24 +70,18 @@ public:
 		int xpart,
 		int ypart
 	);
+	~ShieldSegmentProjectile();
 
 	void Draw(CVertexArray* va) override;
 	void Update() override;
-	void PreDelete() {
-		collection = nullptr;
-		deleteMe = true;
-	}
+	void PreDelete();
 	void Reload(
 		ShieldSegmentCollection* collection,
 		const int xpart,
 		const int ypart
 	);
 
-	int GetProjectilesCount() const override { return ((NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1)); }
-
-public:
-	static constexpr unsigned int NUM_VERTICES_X = 5;
-	static constexpr unsigned int NUM_VERTICES_Y = 3;
+	int GetProjectilesCount() const override;
 
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);

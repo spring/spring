@@ -3,7 +3,6 @@
 #ifndef _GAME_SETUP_H
 #define _GAME_SETUP_H
 
-#include <functional>
 #include <string>
 #include <vector>
 
@@ -15,7 +14,6 @@
 #include "System/UnorderedSet.hpp"
 #include "System/creg/creg_cond.h"
 
-class MapParser;
 class TdfParser;
 
 class CGameSetup
@@ -24,67 +22,11 @@ class CGameSetup
 
 public:
 	CGameSetup() { ResetState(); }
-	CGameSetup(const CGameSetup& gs) = delete;
-	CGameSetup(CGameSetup&& gs) { *this = std::move(gs); }
-
-	CGameSetup& operator = (const CGameSetup& gs) = delete;
-	CGameSetup& operator = (CGameSetup&& gs) {
-		fixedAllies = gs.fixedAllies;
-		useLuaGaia = gs.useLuaGaia;
-		luaDevMode = gs.luaDevMode;
-		noHelperAIs = gs.noHelperAIs;
-
-		ghostedBuildings = gs.ghostedBuildings;
-		disableMapDamage = gs.disableMapDamage;
-
-		onlyLocal = gs.onlyLocal;
-		hostDemo = gs.hostDemo;
-		recordDemo = gs.recordDemo;
-
-		std::copy(gs.dsMapHash, gs.dsMapHash + sizeof(dsMapHash), dsMapHash);
-		std::copy(gs.dsModHash, gs.dsModHash + sizeof(dsModHash), dsModHash);
-		mapSeed = gs.mapSeed;
-
-		gameStartDelay = gs.gameStartDelay;
-
-		numDemoPlayers = gs.numDemoPlayers;
-		maxUnitsPerTeam = gs.maxUnitsPerTeam;
-
-		maxSpeed = gs.maxSpeed;
-		minSpeed = gs.minSpeed;
-
-		startPosType = gs.startPosType;
-
-		mapName = std::move(gs.mapName);
-		modName = std::move(gs.modName);
-		gameID = std::move(gs.gameID);
-
-		setupText = std::move(gs.setupText);
-		reloadScript = std::move(gs.reloadScript);
-		demoName = std::move(gs.demoName);
-
-		playerRemap = std::move(gs.playerRemap);
-		teamRemap = std::move(gs.teamRemap);
-		allyteamRemap = std::move(gs.allyteamRemap);
-
-		playerStartingData = std::move(gs.playerStartingData);
-		teamStartingData = std::move(gs.teamStartingData);
-		allyStartingData = std::move(gs.allyStartingData);
-		skirmishAIStartingData = std::move(gs.skirmishAIStartingData);
-		mutatorsList = std::move(gs.mutatorsList);
-
-		restrictedUnits = std::move(gs.restrictedUnits);
-
-		mapOptions = std::move(gs.mapOptions);
-		modOptions = std::move(gs.modOptions);
-		return *this;
-	}
 
 	static bool LoadReceivedScript(const std::string& script, bool isHost);
 	static bool LoadSavedScript(const std::string& file, const std::string& script);
-	static bool ScriptLoaded();
 
-	// these act on the global GameSetup instance
+	// these return dummy containers if the global gameSetup instance is NULL
 	static const spring::unordered_map<std::string, std::string>& GetMapOptions();
 	static const spring::unordered_map<std::string, std::string>& GetModOptions();
 	static const std::vector<PlayerBase>& GetPlayerStartingData();
@@ -92,6 +34,7 @@ public:
 	static const std::vector<AllyTeam>& GetAllyStartingData();
 
 	void ResetState();
+	void PostLoad();
 
 	bool Init(const std::string& script);
 
@@ -105,11 +48,6 @@ public:
 	 * is not known before CPreGame recieves the gamedata from the server.
 	 */
 	void LoadStartPositions(bool withoutMap = false);
-	/**
-	 * @brief Load startpositions from map
-	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
-	 */
-	void LoadStartPositionsFromMap(int numTeams, const std::function<bool(MapParser& mapParser, int teamNum)>& startPosPred);
 
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
 		const auto it = restrictedUnits.find(name);
@@ -126,9 +64,15 @@ public:
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
 	const std::vector<std::string>& GetMutatorsCont() const { return mutatorsList; }
 
-	std::string MapFileName() const;
+	const std::string MapFile() const;
 
 private:
+	/**
+	 * @brief Load startpositions from map
+	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+	 */
+	void LoadStartPositionsFromMap();
+
 	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
 	/**
 	 * @brief Load unit restrictions
@@ -177,7 +121,6 @@ public:
 
 	bool fixedAllies;
 	bool useLuaGaia;
-	bool luaDevMode;
 	bool noHelperAIs;
 
 	bool ghostedBuildings;
@@ -188,13 +131,13 @@ public:
 	bool hostDemo;
 	bool recordDemo;
 
-	uint8_t dsMapHash[64];
-	uint8_t dsModHash[64];
-	uint32_t mapSeed;
+	unsigned int mapHash;
+	unsigned int modHash;
+	unsigned int mapSeed;
 
 	/**
-	 * Number of seconds until the game starts, counting
-	 * from the moment when all players are connected and ready.
+	 * The number of seconds till the game starts,
+	 * counting from the moment when all players are connected and ready.
 	 * Default: 4 (seconds)
 	 */
 	unsigned int gameStartDelay;
@@ -212,8 +155,9 @@ public:
 	std::string gameID;
 
 	std::string setupText;
-	std::string reloadScript;
 	std::string demoName;
+	std::string saveName;
+	std::string menuName;
 
 private:
 	spring::unordered_map<int, int> playerRemap;

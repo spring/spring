@@ -10,7 +10,7 @@
 #define CLS_AI_CALLBACK PKG_AI"JniAICallback"
 
 // define path entry delimitter, used eg for the java class-path
-#ifdef _WIN32
+#ifdef WIN32
 #define ENTRY_DELIM ";"
 #else
 #define ENTRY_DELIM ":"
@@ -26,9 +26,13 @@ extern "C" {
 struct SAIInterfaceCallback;
 struct SSkirmishAICallback;
 
+bool java_preloadJNIEnv();
+
 bool java_unloadJNIEnv();
 
-bool java_initStatic(int interfaceId, const struct SAIInterfaceCallback* callback);
+bool java_initStatic(int interfaceId,
+		const struct SAIInterfaceCallback* callback);
+		
 bool java_releaseStatic();
 
 /**
@@ -44,11 +48,10 @@ bool java_releaseStatic();
  * @return  true, if the AI implementation is now loaded
  */
 bool java_initSkirmishAIClass(
-	const char* const shortName,
-	const char* const version,
-	const char* const className,
-	int teamId
-);
+		const char* const shortName,
+		const char* const version,
+		const char* const className,
+		int teamId);
 
 /**
  * Release the loaded AI specified through a class name.
@@ -60,10 +63,14 @@ bool java_initSkirmishAIClass(
  *          successfully unloaded
  */
 bool java_releaseSkirmishAIClass(const char* className);
+
 bool java_releaseAllSkirmishAIClasses();
 
-int java_skirmishAI_init(int teamId, const struct SSkirmishAICallback* callback);
+int java_skirmishAI_init(int teamId,
+		const struct SSkirmishAICallback* callback);
+
 int java_skirmishAI_release(int teamId);
+
 int java_skirmishAI_handleEvent(int teamId, int topic, const void* data);
 
 #ifdef __cplusplus

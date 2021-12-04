@@ -21,7 +21,7 @@
 #include "System/Platform/CrashHandler.h"
 #endif
 
-#ifdef _WIN32
+#ifdef WIN32
 // msvcrt doesn't have thread safe ctime_r
 # define ctime_r(tm, buf) ctime(tm)
 #endif

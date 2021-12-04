@@ -27,7 +27,7 @@ enum BitmapType {
 /** @} */
 
 
-const char* GetStr(const std::string& str);
+const char* GetStr(std::string str);
 
 #endif // _UNITSYNC_H
 

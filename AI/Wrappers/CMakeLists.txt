@@ -1,7 +1,7 @@
 ### AI Wrappers
 #
 # Functions and macros defined in this file:
-# * ai_wrapper_message
+# * AIWrapperMessage
 #
 
 #add_definitions(-DBUILDING_AI_WRAPPER)
@@ -11,23 +11,21 @@ set(AIWRAPPER_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 
 # Print a message, but only if we are allowed to speak.
-macro    (ai_wrapper_message type msg)
+macro    (AIWrapperMessage type msg)
 	if    (NOT AIWRAPPER_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif (NOT AIWRAPPER_FIND_QUIETLY)
-endmacro (ai_wrapper_message type msg)
+endmacro (AIWrapperMessage type msg)
 
 
 # Configure all AI Wrapper submodules that need processing
-get_list_of_submodules(AI_WRAPPER_DIRS)
+GetListOfSubModules(AI_WRAPPER_DIRS)
 set(DEPS_AI_WRAPPERS "")
 foreach    (aiWrapperDir ${AI_WRAPPER_DIRS})
 	# exclude CUtils here, as it was already included before
 	if    (NOT "${aiWrapperDir}" STREQUAL "CUtils")
-		add_subdirectory(${aiWrapperDir})
-		if(TARGET ${aiWrapperDir}-AIWrapper)
-			list(APPEND DEPS_AI_WRAPPERS ${aiWrapperDir}-AIWrapper)
-		endif()
+		Add_Subdirectory(${aiWrapperDir})
+		list(APPEND DEPS_AI_WRAPPERS ${aiWrapperDir}-AIWrapper)
 	endif (NOT "${aiWrapperDir}" STREQUAL "CUtils")
 endforeach (aiWrapperDir)
-make_global(DEPS_AI_WRAPPERS)
+MakeGlobal(DEPS_AI_WRAPPERS)

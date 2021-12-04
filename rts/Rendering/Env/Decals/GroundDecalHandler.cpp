@@ -27,13 +27,13 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/MemPoolTypes.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/StringUtil.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -41,7 +41,7 @@
 #define MAX_SCAR_COUNT 4096
 
 
-static FixedDynMemPool<sizeof(SolidObjectGroundDecal), 64, 1024> sogdMemPool;
+static DynMemPool<sizeof(SolidObjectGroundDecal)> sogdMemPool;
 
 static std::array<CGroundDecalHandler::Scar, MAX_SCAR_COUNT> scars;
 static std::vector<uint8_t> scarTexBuf;
@@ -91,6 +91,8 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 	LoadScarTextures();
 	LoadDecalShaders();
 }
+
+
 
 CGroundDecalHandler::~CGroundDecalHandler()
 {
@@ -442,7 +444,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		} else {
 			++i;
 
-			if (decalOwner->GetBlockingMapID() < unitHandler.MaxUnits()) {
+			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
 				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
 
 				const bool decalOwnerInCurLOS = ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS  ) != 0);
@@ -534,7 +536,6 @@ void CGroundDecalHandler::DrawScars() {
 		}
 
 		DrawGroundScar(scar);
-
 		i++;
 	}
 }
@@ -579,8 +580,8 @@ void CGroundDecalHandler::BindTextures()
 		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	}
 
-	if (shadowHandler.ShadowsLoaded()) {
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler->ShadowsLoaded()) {
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
 	}
 
@@ -615,10 +616,9 @@ void CGroundDecalHandler::KillTextures()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 
-	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler->ShadowsLoaded()) {
+		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	{
 		glActiveTexture(GL_TEXTURE1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
@@ -650,12 +650,12 @@ void CGroundDecalHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sunLighting->groundShadowDensity);
 
 		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
+		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 		glMatrixMode(GL_MODELVIEW);
 	} else {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler->GetShadowMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
 	}
 }
 
@@ -814,10 +814,8 @@ void CGroundDecalHandler::TestScarOverlaps(const Scar& scar)
 
 	for (int y = y1; y <= y2; ++y) {
 		for (int x = x1; x <= x2; ++x) {
-			auto& quad = scarField[y * scarFieldX + x];
+			auto& quad = scarField[y * scarFieldX+ x];
 
-			// The quad might change in the loop below
-			// NOLINTNEXTLINE{modernize-loop-convert}
 			for (size_t i = 0; i < quad.size(); i++) {
 				Scar& testScar = scars[ quad[i] ];
 
@@ -897,7 +895,6 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 
 
 
-void CGroundDecalHandler::AddSolidObject(CSolidObject* object) { MoveSolidObject(object, object->pos); }
 void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& pos)
 {
 	if (!GetDrawDecals())
@@ -915,19 +912,16 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 			return;
 	}
 
-	SolidObjectGroundDecal* oldDecal = object->groundDecal;
-	if (oldDecal != nullptr) {
-		oldDecal->owner = nullptr;
-		oldDecal->gbOwner = nullptr;
+	SolidObjectGroundDecal* olddecal = object->groundDecal;
+	if (olddecal != nullptr) {
+		olddecal->owner = nullptr;
+		olddecal->gbOwner = nullptr;
 	}
 
 	const int sizex = decalDef.groundDecalSizeX;
 	const int sizey = decalDef.groundDecalSizeY;
 
 	SolidObjectGroundDecal* decal = sogdMemPool.alloc<SolidObjectGroundDecal>();
-
-	if (decal == nullptr)
-		return;
 
 	decal->owner = object;
 	decal->gbOwner = nullptr;
@@ -940,9 +934,10 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->xsize = sizex << 1;
 	decal->ysize = sizey << 1;
 
-	// swap xsize and ysize if object faces East or West
-	if (object->buildFacing == FACING_EAST || object->buildFacing == FACING_WEST)
+	if (object->buildFacing == FACING_EAST || object->buildFacing == FACING_WEST) {
+		// swap xsize and ysize if object faces East or West
 		std::swap(decal->xsize, decal->ysize);
+	}
 
 	// position of top-left corner
 	decal->posx = (pos.x / SQUARE_SIZE) - (decal->xsize >> 1);
@@ -958,15 +953,15 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
 	assert(object);
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == nullptr)
+	if (decal == NULL)
 		return;
 
-	if (gb != nullptr)
+	if (gb != NULL)
 		gb->decal = decal;
 
-	decal->owner = nullptr;
+	decal->owner = NULL;
 	decal->gbOwner = gb;
-	object->groundDecal = nullptr;
+	object->groundDecal = NULL;
 }
 
 
@@ -977,12 +972,12 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 {
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == nullptr)
+	if (decal == NULL)
 		return;
 
-	decal->owner = nullptr;
+	decal->owner = NULL;
 	decal->alpha = 0.0f;
-	object->groundDecal = nullptr;
+	object->groundDecal = NULL;
 }
 
 
@@ -1016,7 +1011,7 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 
 
 void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) { RemoveSolidObject(object, gb); }
-void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { AddSolidObject(const_cast<CFeature*>(feature)); }
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
 
 void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
 	if ((event.weaponDef != nullptr) && !event.weaponDef->visuals.explosionScar)
@@ -1025,15 +1020,15 @@ void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
 	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
-void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { AddSolidObject(const_cast<CUnit*>(unit)); }
+void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
 void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 	RemoveSolidObject(const_cast<CUnit*>(unit), nullptr);
 }
 
-void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { AddSolidObject(const_cast<CFeature*>(feature)); }
+void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
 void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature) { RemoveSolidObject(const_cast<CFeature*>(feature), nullptr); }
 
 // FIXME: Add a RenderUnitLoaded event
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) { ForceRemoveSolidObject(const_cast<CUnit*>(unit)); }
-void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { AddSolidObject(const_cast<CUnit*>(unit)); }
+void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
 

@@ -30,7 +30,7 @@ public:
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	void Draw();
-	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false, bool luaCall = false);
+	void DrawForReal(bool useGeom = true, bool updateTex = false);
 	void Update();
 
 	void ConfigCommand(const std::string& command);
@@ -112,35 +112,25 @@ protected:
 	int2 oldPos;
 	int2 oldDim;
 
-	float minimapRefreshRate = 0.0f;
+	float unitBaseSize;
+	float unitExponent;
 
-	float unitBaseSize = 0.0f;
-	float unitExponent = 0.0f;
+	float unitSizeX;
+	float unitSizeY;
+	float unitSelectRadius;
 
-	float unitSizeX = 0.0f;
-	float unitSizeY = 0.0f;
-	float unitSelectRadius = 0.0f;
+	bool fullProxy;
 
-	bool fullProxy = false;
-	bool proxyMode = false;
-	bool selecting = false;
-	bool maxspect = false;
-	bool maximized = false;
-	bool minimized = false;
-	bool mouseEvents = true; // if false, MousePress is not handled
-	bool mouseLook = false;
-	bool mouseMove = false;
-	bool mouseResize = false;
+	bool proxyMode;
+	bool selecting;
+	bool maxspect;
+	bool maximized;
+	bool minimized;
+	bool mouseLook;
+	bool mouseMove;
+	bool mouseResize;
 
-	bool slaveDrawMode = false;
-	bool simpleColors = false;
-
-	bool showButtons = false;
-	bool drawProjectiles = false;
-	bool useIcons = true;
-
-	bool renderToTexture = true;
-	bool multisampledFBO = false;
+	bool slaveDrawMode;
 
 	struct IntBox {
 		bool Inside(int x, int y) const {
@@ -152,33 +142,38 @@ protected:
 		float xminTx, xmaxTx, yminTx, ymaxTx;  // texture coordinates
 	};
 
-	int lastWindowSizeX = 0;
-	int lastWindowSizeY = 0;
-
-	int buttonSize = 0;
-
-	int drawCommands = 0;
-	float cursorScale = 0.0f;
-
+	int buttonSize;
+	bool showButtons;
 	IntBox mapBox;
 	IntBox buttonBox;
 	IntBox moveBox;
 	IntBox resizeBox;
 	IntBox minimizeBox;
 	IntBox maximizeBox;
+	int lastWindowSizeX;
+	int lastWindowSizeY;
 
+	bool drawProjectiles;
+	bool useIcons;
+	int drawCommands;
+	float cursorScale;
+
+	bool simpleColors;
 	SColor myColor;
 	SColor allyColor;
 	SColor enemyColor;
 
+	bool renderToTexture;
 	FBO fbo;
 	FBO fboResolve;
-	GLuint minimapTex = 0;
+	bool multisampledFBO;
+	GLuint minimapTex;
 	int2 minimapTexSize;
+	float minimapRefreshRate;
 
 	GLuint buttonsTexture;
 	GLuint circleLists; // 8 - 256 divs
-	static constexpr int circleListsCount = 6;
+	static const int circleListsCount = 6;
 
 	struct Notification {
 		float creationTime;
@@ -187,7 +182,7 @@ protected:
 	};
 	std::deque<Notification> notes;
 
-	CUnit* lastClicked = nullptr;
+	CUnit* lastClicked;
 };
 
 

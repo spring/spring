@@ -29,11 +29,10 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
@@ -242,8 +241,9 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 
 	DetectMaxDecals();
 	LoadShaders();
-	if (!decalShader->IsValid())
+	if (!decalShader->IsValid()) {
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
+	}
 
 	glGenTextures(1, &depthTex);
 	CreateBoundingBoxVBOs();
@@ -274,8 +274,8 @@ CDecalsDrawerGL4::~CDecalsDrawerGL4()
 	glDeleteTextures(1, &atlasTex);
 
 	shaderHandler->ReleaseProgramObjects("[DecalsDrawerGL4]");
+	decalShader = NULL;
 
-	decalShader = nullptr;
 	decalDrawer = nullptr;
 }
 
@@ -360,6 +360,7 @@ void CDecalsDrawerGL4::LoadShaders()
 		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
+
 	decalShader->Disable();
 	decalShader->Validate();
 }
@@ -369,7 +370,7 @@ static STex LoadTexture(const std::string& name)
 {
 	std::string fileName = name;
 
-	if (FileSystem::GetExtension(fileName).empty())
+	if (FileSystem::GetExtension(fileName) == "")
 		fileName += ".bmp";
 
 	std::string fullName = fileName;
@@ -411,8 +412,8 @@ static STex LoadTexture(const std::string& name)
 
 static inline void GetBuildingDecals(spring::unordered_map<std::string, STex>& textures)
 {
-	for (const UnitDef& unitDef: unitDefHandler->GetUnitDefsVec()) {
-		const SolidObjectDecalDef& decalDef = unitDef.decalDef;
+	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
+		SolidObjectDecalDef& decalDef = unitDef.decalDef;
 
 		if (!decalDef.useGroundDecal)
 			continue;
@@ -470,7 +471,6 @@ static inline void GetFallbacks(spring::unordered_map<std::string, STex>& textur
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
 	spring::unordered_map<std::string, STex> textures;
-
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
 	GetFallbacks(textures);
@@ -478,12 +478,12 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	CQuadtreeAtlasAlloc atlas;
 	atlas.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
-	for (const auto& texture: textures) {
-		if (texture.second.id == 0)
+	for (auto it = textures.begin(); it != textures.end(); ++it) {
+		if (it->second.id == 0)
 			continue;
 
 		const float maxSize = 1024; //512;
-		int2 size = texture.second.size;
+		int2 size = it->second.size;
 		if (size.x > maxSize) {
 			size.y = size.y * (maxSize / size.x);
 			size.x = maxSize;
@@ -493,7 +493,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			size.y = maxSize;
 		}
 
-		atlas.AddEntry(texture.first, size);
+		atlas.AddEntry(it->first, size);
 	}
 	/*bool success =*/ atlas.Allocate();
 
@@ -672,7 +672,6 @@ void CDecalsDrawerGL4::SunChanged()
 	//FIXME
 	if (uniformBlockSize != sizeof(SGLSLGroundLighting))
 		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u " _STPF_, uniformBlockSize, sizeof(SGLSLGroundLighting));
-
 	assert(uniformBlockSize == sizeof(SGLSLGroundLighting));
 
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
@@ -683,8 +682,8 @@ void CDecalsDrawerGL4::SunChanged()
 		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = sky->GetLight()->GetLightDir();
 		uboGroundLightingData->fogColor      = sky->fogColor;
-		uboGroundLightingData->fogEnd        = camera->GetFarPlaneDist() * sky->fogEnd;
-		uboGroundLightingData->fogScale      = 1.0f / (camera->GetFarPlaneDist() * (sky->fogEnd - sky->fogStart));
+		uboGroundLightingData->fogEnd        = globalRendering->viewRange * sky->fogEnd;
+		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (sky->fogEnd - sky->fogStart));
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId());
@@ -770,7 +769,7 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_LESS, 1.0f);
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
@@ -785,16 +784,15 @@ void CDecalsDrawerGL4::Draw()
 	const std::array<GLuint,5> textures = {
 		atlasTex,
 		static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture(),
-		shadowHandler.GetShadowTextureID(),
+		shadowHandler->GetShadowTextureID(),
 		infoTextureHandler->GetCurrentInfoTexture(),
 		depthTex
 	};
 	glSpringBindTextures(0, textures.size(), &textures[0]);
 
-	if (shadowHandler.ShadowsLoaded()) {
-		CMatrix44f sm = shadowHandler.GetShadowMatrix();
+	if (shadowHandler->ShadowsLoaded()) {
+		CMatrix44f sm = shadowHandler->GetShadowMatrix();
 		sm.GetPos() += float3(0.5f, 0.5f, 0.0f);
-
 		decalShader->SetUniformMatrix4x4("shadowMatrix", false, sm.m);
 		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);
 	}
@@ -869,7 +867,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 void CDecalsDrawerGL4::Update()
 {
-	SCOPED_TIMER("Update::DecalsDrawerGL4");
+	SCOPED_TIMER("Update::Update::DecalsDrawerGL4");
 	UpdateOverlap();
 	OptimizeGroups();
 	UpdateDecalsVBO();
@@ -1508,9 +1506,9 @@ static inline bool HasGroundDecalDef(const CSolidObject* object)
 
 static inline bool ExplosionInAirLos(const CExplosionParams& event)
 {
-	const auto proj = projectileHandler.GetProjectileBySyncedID(event.projectileID);
-	if (proj != nullptr) {
-		if (teamHandler.ValidAllyTeam(proj->GetAllyteamID()) && teamHandler.AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
+	const auto proj = projectileHandler->GetProjectileBySyncedID(event.projectileID);
+	if (proj) {
+		if (teamHandler->ValidAllyTeam(proj->GetAllyteamID()) && teamHandler->AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
 			return true;
 	}
 

@@ -11,9 +11,7 @@
 class CRowAtlasAlloc : public IAtlasAllocator
 {
 public:
-	CRowAtlasAlloc() {
-		atlasSize = {256, 256};
-	}
+	CRowAtlasAlloc();
 
 	virtual bool Allocate();
 	virtual int GetMaxMipMaps() { return 0; }
@@ -32,7 +30,7 @@ private:
 	};
 
 private:
-	int nextRowPos = 0;
+	int nextRowPos;
 	std::vector<Row> imageRows;
 
 private:

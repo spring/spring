@@ -16,11 +16,7 @@ class CDamageArrayHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CDamageArrayHandler)
 
 public:
-	void Init(LuaParser* defsParser);
-	void Kill() {
-		armorDefNameIdxMap.clear(); // never iterated
-		armorDefKeys.clear();
-	}
+	CDamageArrayHandler(LuaParser* defsParser);
 
 	int GetTypeFromName(const std::string& name) const;
 	int GetNumTypes() const { return armorDefKeys.size(); }
@@ -32,6 +28,6 @@ private:
 	std::vector<std::string> armorDefKeys;
 };
 
-extern CDamageArrayHandler damageArrayHandler;
+extern CDamageArrayHandler* damageArrayHandler;
 
 #endif // _DAMAGE_ARRAY_HANDLER_H

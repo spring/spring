@@ -92,7 +92,7 @@ enum CommandTopic {
 	COMMAND_UNIT_SET_MOVE_STATE                   = 53,
 	COMMAND_UNIT_SET_BASE                         = 54,
 	COMMAND_UNIT_SELF_DESTROY                     = 55,
-	COMMAND_UNIT_SET_WANTED_MAX_SPEED             = 56, // unused
+	COMMAND_UNIT_SET_WANTED_MAX_SPEED             = 56,
 	COMMAND_UNIT_LOAD_UNITS                       = 57,
 	COMMAND_UNIT_LOAD_UNITS_AREA                  = 58,
 	COMMAND_UNIT_LOAD_ONTO                        = 59,
@@ -220,6 +220,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SSetMoveStateUnitCommand) \
 		+ sizeof(struct SSetBaseUnitCommand) \
 		+ sizeof(struct SSelfDestroyUnitCommand) \
+		+ sizeof(struct SSetWantedMaxSpeedUnitCommand) \
 		+ sizeof(struct SLoadUnitsUnitCommand) \
 		+ sizeof(struct SLoadUnitsAreaUnitCommand) \
 		+ sizeof(struct SLoadOntoUnitCommand) \
@@ -1020,6 +1021,24 @@ struct SSelfDestroyUnitCommand {
 	int timeOut;
 }; //$ COMMAND_UNIT_SELF_DESTROY Unit_selfDestruct
 
+struct SSetWantedMaxSpeedUnitCommand {
+	int unitId;
+	int groupId;
+	/// see enum UnitCommandOptions
+	short options;
+	/**
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
+	int timeOut;
+
+	float wantedMaxSpeed;
+}; //$ COMMAND_UNIT_SET_WANTED_MAX_SPEED Unit_setWantedMaxSpeed
+
 struct SLoadUnitsUnitCommand {
 	int unitId;
 	int groupId;
@@ -1580,7 +1599,7 @@ int toInternalUnitCommandTopic(int aiCmdTopic, void* sUnitCommandData);
  * Returns the C AI Interface command topic ID that corresponds
  * to the engine internal C++ unit command (topic) ID specified by
  * <code>internalUnitCmdTopic</code>.
- * @param  maxUnits  should be the value returned by unitHandler.MaxUnits()
+ * @param  maxUnits  should be the value returned by unitHandler->MaxUnits()
  *                   -> max units per team for the current game
  */
 int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);

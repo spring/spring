@@ -16,7 +16,7 @@
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 
@@ -55,7 +55,6 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetTrackSlope);
 	REGISTER_LUA_CFUNC(SetTrackGround);
-	REGISTER_LUA_CFUNC(SetTrackLimits);
 	REGISTER_LUA_CFUNC(SetGroundOffset);
 	REGISTER_LUA_CFUNC(SetGravity);
 	REGISTER_LUA_CFUNC(SetDrag);
@@ -69,7 +68,6 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetShotStop);
 	REGISTER_LUA_CFUNC(SetSlopeStop);
 	REGISTER_LUA_CFUNC(SetCollideStop);
-	REGISTER_LUA_CFUNC(SetLimitsStop);
 
 	REGISTER_LUA_CFUNC(SetAirMoveTypeData);
 	REGISTER_LUA_CFUNC(SetGroundMoveTypeData);
@@ -87,7 +85,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = unitHandler.GetUnit(luaL_checkint(L, index));
+	CUnit* unit = unitHandler->GetUnit(luaL_checkint(L, index));
 
 	if (unit == nullptr)
 		return nullptr;
@@ -118,7 +116,8 @@ static inline DerivedMoveType* ParseDerivedMoveType(lua_State* L, const char* ca
 	if (unit == nullptr)
 		return nullptr;
 
-	assert(unit->moveType != nullptr);
+	if (unit->moveType == nullptr)
+		return nullptr;
 
 	return (dynamic_cast<DerivedMoveType*>(unit->moveType));
 }
@@ -391,18 +390,6 @@ int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 }
 
 
-int LuaSyncedMoveCtrl::SetTrackLimits(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
-
-	if (moveType == nullptr)
-		return 0;
-
-	moveType->trackLimits = luaL_checkboolean(L, 2);
-	return 0;
-}
-
-
 int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 {
 	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
@@ -458,8 +445,14 @@ int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 	if (moveType == nullptr)
 		return 0;
 
-	moveType->mins = {luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)};
-	moveType->maxs = {luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7)};
+	const float3 mins(luaL_checkfloat(L, 2),
+	                  luaL_checkfloat(L, 3),
+	                  luaL_checkfloat(L, 4));
+	const float3 maxs(luaL_checkfloat(L, 5),
+	                  luaL_checkfloat(L, 6),
+	                  luaL_checkfloat(L, 7));
+	moveType->mins = mins;
+	moveType->maxs = maxs;
 	return 0;
 }
 
@@ -480,8 +473,28 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 }
 
 
-int LuaSyncedMoveCtrl::SetShotStop(lua_State* L) { return 0; }
-int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L) { return 0; }
+int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
+
+	if (moveType == nullptr)
+		return 0;
+
+	moveType->shotStop = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
+
+	if (moveType == nullptr)
+		return 0;
+
+	moveType->slopeStop = luaL_checkboolean(L, 2);
+	return 0;
+}
 
 
 int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
@@ -491,19 +504,8 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	if (moveType == nullptr)
 		return 0;
 
-	moveType->groundStop = lua_toboolean(L, 2); // FIXME
-	return 0;
-}
-
-
-int LuaSyncedMoveCtrl::SetLimitsStop(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
-
-	if (moveType == nullptr)
-		return 0;
-
-	moveType->limitsStop = lua_toboolean(L, 2);
+	moveType->gndStop = luaL_checkboolean(L, 2); // FIXME
+	moveType->collideStop = lua_toboolean(L, 2);
 	return 0;
 }
 
@@ -512,11 +514,10 @@ int LuaSyncedMoveCtrl::SetLimitsStop(lua_State* L)
 /******************************************************************************/
 /* MoveType member-value handling */
 
-template<typename ValueType>
-static bool SetMoveTypeValue(AMoveType* mt, const char* key, ValueType val)
+template<typename value_type>
+static bool SetMoveTypeValue(AMoveType* mt, const string& key, value_type value)
 {
-	// NOTE: only supports floats and bools, callee MUST reinterpret &val as float* or bool*
-	return (mt->SetMemberValue(HsiehHash(key, strlen(key), 0), &val));
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetMoveTypeValue(lua_State* L, AMoveType* moveType, int keyIdx, int valIdx)
@@ -536,14 +537,14 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 	int numAssignedValues = 0;
 
 	if (moveType == nullptr) {
-		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __func__, lua_toint(L, 1), caller);
+		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __func__, lua_tointeger(L, 1), caller);
 		return numAssignedValues;
 	}
 
 	switch (lua_gettop(L)) {
 		case 2: {
 			// two args (unitID, {"key1" = (number | bool) value1, ...})
-			constexpr int tableIdx = 2;
+			const int tableIdx = 2;
 
 			if (lua_istable(L, tableIdx)) {
 				for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
@@ -611,11 +612,19 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 
 	// parse a MoveDef by number *or* by string (mutually exclusive)
 	if (lua_isnumber(L, 2))
-		moveDef = moveDefHandler.GetMoveDefByPathType(Clamp(luaL_checkint(L, 2), 0, int(moveDefHandler.GetNumMoveDefs()) - 1));
+		moveDef = moveDefHandler->GetMoveDefByPathType(Clamp(luaL_checkint(L, 2), 0, int(moveDefHandler->GetNumMoveDefs()) - 1));
 	if (lua_isstring(L, 2))
-		moveDef = moveDefHandler.GetMoveDefByName(lua_tostring(L, 2));
+		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 2));
 
 	if (moveDef == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	if (moveDef->udRefCount == 0) {
+		// pathfinders contain optimizations that
+		// make unreferenced movedef's non-usable
+		LOG_L(L_ERROR, "SetMoveDef: Tried to use an unreferenced (:=disabled) MoveDef!");
 		lua_pushboolean(L, false);
 		return 1;
 	}

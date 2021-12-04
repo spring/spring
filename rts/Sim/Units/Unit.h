@@ -4,6 +4,7 @@
 #define UNIT_H
 
 #include <vector>
+#include <string>
 
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
@@ -27,9 +28,11 @@ struct UnitTrackStruct;
 struct UnitLoadParams;
 struct SLosInstance;
 
+
 namespace icon {
 	class CIconData;
 }
+
 
 // LOS state bits
 #define LOS_INLOS      (1 << 0)  // the unit is currently in the los of the allyteam
@@ -37,18 +40,29 @@ namespace icon {
 #define LOS_PREVLOS    (1 << 2)  // the unit has previously been in los from the allyteam
 #define LOS_CONTRADAR  (1 << 3)  // the unit has continuously been in radar since it was last inlos by the allyteam
 
-#define LOS_MASK_SHIFT 4
-
 // LOS mask bits  (masked bits are not automatically updated)
-#define LOS_INLOS_MASK     (LOS_INLOS << LOS_MASK_SHIFT)   // do not update LOS_INLOS
-#define LOS_INRADAR_MASK   (LOS_INRADAR << LOS_MASK_SHIFT)   // do not update LOS_INRADAR
-#define LOS_PREVLOS_MASK   (LOS_PREVLOS << LOS_MASK_SHIFT)  // do not update LOS_PREVLOS
-#define LOS_CONTRADAR_MASK (LOS_CONTRADAR << LOS_MASK_SHIFT)  // do not update LOS_CONTRADAR
+#define LOS_INLOS_MASK     (1 << 8)   // do not update LOS_INLOS
+#define LOS_INRADAR_MASK   (1 << 9)   // do not update LOS_INRADAR
+#define LOS_PREVLOS_MASK   (1 << 10)  // do not update LOS_PREVLOS
+#define LOS_CONTRADAR_MASK (1 << 11)  // do not update LOS_CONTRADAR
 
-#define LOS_ALL_BITS \
-	(LOS_INLOS      | LOS_INRADAR      | LOS_PREVLOS      | LOS_CONTRADAR)
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
+
+enum ScriptCloakBits { // FIXME -- not implemented
+	// always set to 0 if not enabled
+	SCRIPT_CLOAK_ENABLED          = (1 << 0),
+	SCRIPT_CLOAK_IGNORE_ENERGY    = (1 << 1),
+	SCRIPT_CLOAK_IGNORE_STUNNED   = (1 << 2),
+	SCRIPT_CLOAK_IGNORE_PROXIMITY = (1 << 3),
+	SCRIPT_CLOAK_IGNORE_BUILDING  = (1 << 4),
+	SCRIPT_CLOAK_IGNORE_RECLAIM   = (1 << 5),
+	SCRIPT_CLOAK_IGNORE_CAPTURING = (1 << 6),
+	SCRIPT_CLOAK_IGNORE_TERRAFORM = (1 << 7)
+};
+
+
+
 
 
 class CUnit : public CSolidObject
@@ -61,14 +75,12 @@ public:
 
 	static void InitStatic();
 
-	void SanityCheck() const;
-	void PreUpdate() { preFramePos = pos; }
-
 	virtual void PreInit(const UnitLoadParams& params);
 	virtual void PostInit(const CUnit* builder);
 
-	virtual void Update();
 	virtual void SlowUpdate();
+	virtual void SlowUpdateWeapons();
+	virtual void Update();
 
 	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
@@ -86,10 +98,11 @@ public:
 	int GetBlockingMapID() const { return id; }
 
 	void ChangeLos(int losRad, int airRad);
-	// negative amount=reclaim, return= true -> build power was successfully applied
+	/// negative amount=reclaim, return= true -> build power was successfully applied
 	bool AddBuildPower(CUnit* builder, float amount);
-
+	/// turn the unit on
 	void Activate();
+	/// turn the unit off
 	void Deactivate();
 
 	void ForcedMove(const float3& newPos);
@@ -98,7 +111,7 @@ public:
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
 
-	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final;
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final;
 
 	void DependentDied(CObject* o);
 
@@ -119,7 +132,7 @@ public:
 	void AddResources(const SResourcePack& res, bool useIncomeMultiplier = true);
 	bool IssueResourceOrder(SResourceOrder* order);
 
-	// push the new wind to the script
+	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 
 	void UpdateTransportees();
@@ -143,8 +156,6 @@ public:
 	float3 GetLuaErrorVector(int allyteam, bool fullRead) const { return (fullRead? ZeroVector: GetErrorVector(allyteam)); }
 	float3 GetLuaErrorPos(int allyteam, bool fullRead) const { return (midPos + GetLuaErrorVector(allyteam, fullRead)); }
 
-	float3 GetDrawDeltaPos(float dt) const { return ((pos - preFramePos) * dt); }
-
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
 	bool UsingScriptMoveType() const { return (prevMoveType != nullptr); }
@@ -154,24 +165,12 @@ public:
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
-	bool IsStunned() const { return stunned; }
 	bool IsIdle() const;
 
-	bool HaveTarget() const { return (curTarget.type != Target_None); }
-	bool CanUpdateWeapons() const {
-		return (forceUseWeapons || (allowUseWeapons && !onTempHoldFire && !isDead && !beingBuilt && !IsStunned()));
-	}
+	bool CanUpdateWeapons() const;
 
-	void SetNeutral(bool b);
 	void SetStunned(bool stun);
-
-	bool GetPosErrorBit(int at) const {
-		return (posErrorMask[at / 32] & (1 << (at % 32)));
-	}
-	void SetPosErrorBit(int at, int bit) {
-		posErrorMask[at / 32] |=  ((1 << (at % 32)) * (bit == 1));
-		posErrorMask[at / 32] &= ~((1 << (at % 32)) * (bit == 0));
-	}
+	bool IsStunned() const { return stunned; }
 
 	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
@@ -179,14 +178,8 @@ public:
 	unsigned short CalcLosStatus(int allyTeam);
 	void UpdateLosStatus(int allyTeam);
 
-	void UpdateWeapons();
-
-	void SlowUpdateWeapons();
-	void SlowUpdateKamikaze(bool scanForTargets);
-	void SlowUpdateCloak(bool stunCheck);
-
-	bool ScriptCloak();
-	bool ScriptDecloak(const CSolidObject* object, const CWeapon* weapon);
+	void SlowUpdateCloak(bool);
+	void ScriptDecloak(bool);
 	bool GetNewCloakState(bool checkStun);
 
 	enum ChangeType {
@@ -209,14 +202,14 @@ public:
 	void SetLastAttacker(CUnit* attacker);
 
 	void SetTransporter(CUnit* trans) { transporter = trans; }
-	CUnit* GetTransporter() const { return transporter; }
+	inline CUnit* GetTransporter() const { return transporter; }
 
 	bool AttachUnit(CUnit* unit, int piece, bool force = false);
 	bool CanTransport(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);
 	bool DetachUnitCore(CUnit* unit);
-	bool DetachUnitFromAir(CUnit* unit, const float3& pos); // orders <unit> to move to <pos> after detach
+	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
 
 	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = nullptr) const;
 	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = nullptr) const;
@@ -229,9 +222,10 @@ public:
 	virtual void IncomingMissile(CMissileProjectile* missile);
 
 	void TempHoldFire(int cmdID);
-	void SetHoldFire(bool b) { onTempHoldFire = b; }
+	void ReleaseTempHoldFire() { dontFire = false; }
+	bool HaveTarget() const;
 
-	// start this unit in free fall from parent unit
+	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
 	void PostLoad();
 
@@ -243,11 +237,7 @@ protected:
 public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
-	const CGroup* GetGroup() const;
-	      CGroup* GetGroup();
-
 public:
-	static void  SetEmpDeclineRate(float value) { empDeclineRate = value; }
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
@@ -266,40 +256,43 @@ public:
 		return (1.0f - (limExperience * experienceWeight));
 	}
 
+	static void SetSpawnFeature(bool b) { spawnFeature = b; }
+
 public:
-	const UnitDef* unitDef = nullptr;
+	const UnitDef* unitDef;
 
-	// Our shield weapon, NULL if we have none
-	CWeapon* shieldWeapon = nullptr;
-	// Our weapon with stockpiled ammo, NULL if we have none
-	CWeapon* stockpileWeapon = nullptr;
+	/// Our shield weapon, NULL if we have none
+	CWeapon* shieldWeapon;
+	/// Our weapon with stockpiled ammo, NULL if we have none
+	CWeapon* stockpileWeapon;
 
-	const DynDamageArray* selfdExpDamages = nullptr;
-	const DynDamageArray* deathExpDamages = nullptr;
+	const DynDamageArray* selfdExpDamages;
+	const DynDamageArray* deathExpDamages;
 
-	CUnit* soloBuilder = nullptr;
-	CUnit* lastAttacker = nullptr;
-	// transport that the unit is currently in
-	CUnit* transporter = nullptr;
+	CUnit* soloBuilder;
+	CUnit* lastAttacker;
 
-	// player who is currently FPS'ing this unit
-	CPlayer* fpsControlPlayer = nullptr;
+	/// player who is currently FPS'ing this unit
+	CPlayer* fpsControlPlayer;
 
-	AMoveType* moveType = nullptr;
-	AMoveType* prevMoveType = nullptr;
+	/// transport that the unit is currently in
+	CUnit* transporter;
 
-	CCommandAI* commandAI = nullptr;
-	CUnitScript* script = nullptr;
+	AMoveType* moveType;
+	AMoveType* prevMoveType;
 
-	// current attackee
+	CCommandAI* commandAI;
+	CUnitScript* script;
+
+	/// current attackee
 	SWeaponTarget curTarget;
 
 
 	// sufficient for the largest UnitScript (CLuaUnitScript)
-	uint8_t usMemBuffer[368];
+	uint8_t usMemBuffer[240];
 	// sufficient for the largest AMoveType (CGroundMoveType)
 	// need two buffers since ScriptMoveType might be enabled
-	uint8_t amtMemBuffer[498];
+	uint8_t amtMemBuffer[490];
 	uint8_t smtMemBuffer[370];
 	// sufficient for the largest CommandAI type (CBuilderCAI)
 	// knowing the exact CAI object size here is not required;
@@ -309,153 +302,182 @@ public:
 
 	std::vector<CWeapon*> weapons;
 
-	// which squares the unit can currently observe, per los-type
-	std::array<SLosInstance*, /*ILosType::LOS_TYPE_COUNT*/ 7> los{{nullptr}};
+	/// which squares the unit can currently observe
+	std::vector<SLosInstance*> los;
 
-	// indicates the los/radar status each allyteam has on this unit
-	// should technically be MAX_ALLYTEAMS, but #allyteams <= #teams
-	std::array<unsigned char, /*MAX_TEAMS*/ 255> losStatus{{0}};
-	// bit-mask indicating which allyteams see this unit with positional error
-	std::array<unsigned  int, /*MAX_TEAMS/32*/ 8> posErrorMask{{1}};
+	/// indicate the los/radar status the allyteam has on this unit
+	std::vector<unsigned short> losStatus;
 
-	// quads the unit is part of
+	/// quads the unit is part of
 	std::vector<int> quads;
 
 	std::vector<TransportedUnit> transportedUnits;
-	// incoming projectiles for which flares can cause retargeting
-	std::array<CMissileProjectile*, /*MAX_INCOMING_MISSILES*/ 8> incomingMissiles{{nullptr}};
+	std::vector<CMissileProjectile*> incomingMissiles;
 
 
-	// position at start of current simframe; updated by ForcedMove
-	// used as interpolation reference for drawpos since a unit can
-	// move along vectors other than its velocity
-	float3 preFramePos;
+	float3 deathSpeed;
+	float3 lastMuzzleFlameDir;
 
-	float3 lastMuzzleFlameDir = UpVector;
-	// units take less damage when attacked from this dir (encourage flanking fire)
-	float3 flankingBonusDir = RgtVector;
+	/// units takes less damage when attacked from this dir (encourage flanking fire)
+	float3 flankingBonusDir;
 
-	// used for radar inaccuracy etc
+	/// used for innacuracy with radars etc
 	float3 posErrorVector;
 	float3 posErrorDelta;
 
 
-	int featureDefID = -1; // FeatureDef id of the wreck we spawn on death
+	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
-	// indicate the relative power of the unit, used for experience calulations etc
-	float power = 100.0f;
+	/// indicate the relative power of the unit, used for experience calulations etc
+	float power;
 
-	// 0.0-1.0
-	float buildProgress = 0.0f;
-	// if (health - this) is negative the unit is stunned
-	float paralyzeDamage = 0.0f;
-	// how close this unit is to being captured
-	float captureProgress = 0.0f;
-	float experience = 0.0f;
-	// approaches 1 as experience approaches infinity
-	float limExperience = 0.0f;
+	/// 0.0-1.0
+	float buildProgress;
 
+	/// if health-this is negative the unit is stunned
+	float paralyzeDamage;
+	/// how close this unit is to being captured
+	float captureProgress;
+	float experience;
+	/// goes ->1 as experience go -> infinite
+	float limExperience;
 
-	// how much terraforming is left to do
-	float terraformLeft = 0.0f;
-	// How much reapir power has been added to this recently
-	float repairAmount = 0.0f;
+	/**
+	 * neutral allegiance, will not be automatically
+	 * fired upon unless the fireState is set to >
+	 * FIRESTATE_FIREATWILL
+	 */
+	bool neutral;
+	/// is in built (:= nanoframe)
+	bool beingBuilt;
+	/// if the updir is straight up or align to the ground vector
+	bool upright;
+	/// whether the ground below this unit has been terraformed
+	bool groundLevelled;
+	/// how much terraforming is left to do
+	float terraformLeft;
+	/// How much reapir power has been added to this recently
+	float repairAmount;
 
-	// last frame unit was attacked by other unit
-	int lastAttackFrame = -200;
-	// last time this unit fired a weapon
-	int lastFireWeapon = 0;
+	/// last frame unit was attacked by other unit
+	int lastAttackFrame;
+	/// last time this unit fired a weapon
+	int lastFireWeapon;
 
-	// if we arent built on for a while start decaying
-	int lastNanoAdd = 0;
-	int lastFlareDrop = 0;
+	/// if we arent built on for a while start decaying
+	int lastNanoAdd;
+	int lastFlareDrop;
 
-	// id of transport that the unit is about to be {un}loaded by
-	int loadingTransportId = -1;
-	int unloadingTransportId = -1;
+	/// id of transport that the unit is about to be picked up by
+	int loadingTransportId;
+	int unloadingTransportId;
 
-	int transportCapacityUsed = 0;
-	float transportMassUsed = 0.0f;
-
-
-	// the wreck level the unit will eventually create when it has died
-	int delayedWreckLevel = -1;
-
-	// how long the unit has been inactive
-	unsigned int restTime = 0;
-	unsigned int outOfMapTime = 0;
-
-	float reloadSpeed = 1.0f;
-	float maxRange = 0.0f;
-
-	// used to determine muzzle flare size
-	float lastMuzzleFlameSize = 0.0f;
-
-	int armorType = 0;
-	// what categories the unit is part of (bitfield)
-	unsigned int category = 0;
-
-	int mapSquare = -1;
-
-	// set los to this when finished building
-	int realLosRadius = 0;
-	int realAirLosRadius = 0;
-
-	int losRadius = 0;
-	int airLosRadius = 0;
-
-	int radarRadius = 0;
-	int sonarRadius = 0;
-	int jammerRadius = 0;
-	int sonarJamRadius = 0;
-	int seismicRadius = 0;
-
-	float seismicSignature = 0.0f;
-	float decloakDistance = 0.0f;
+	int transportCapacityUsed;
+	float transportMassUsed;
 
 
-	// only when the unit is active
+	/// used by constructing units
+	bool inBuildStance;
+	/// tells weapons that support it to try to use a high trajectory
+	bool useHighTrajectory;
+
+	/// used by landed gunships to block weapon Update()'s
+	bool dontUseWeapons;
+	/// used by builders to prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s
+	bool dontFire;
+
+	/// the script has finished exectuting the killed function and the unit can be deleted
+	bool deathScriptFinished;
+	/// the wreck level the unit will eventually create when it has died
+	int delayedWreckLevel;
+
+	/// how long the unit has been inactive
+	unsigned int restTime;
+	unsigned int outOfMapTime;
+
+	float reloadSpeed;
+	float maxRange;
+
+	/// used to determine muzzle flare size
+	float lastMuzzleFlameSize;
+
+	int armorType;
+	/// what categories the unit is part of (bitfield)
+	unsigned int category;
+
+	int mapSquare;
+
+	/// set los to this when finished building
+	int realLosRadius;
+	int realAirLosRadius;
+
+	int losRadius;
+	int airLosRadius;
+
+	int radarRadius;
+	int sonarRadius;
+	int jammerRadius;
+	int sonarJamRadius;
+	int seismicRadius;
+	float seismicSignature;
+	bool stealth;
+	bool sonarStealth;
+
+	/// only when the unit is active
 	SResourcePack resourcesCondUse;
 	SResourcePack resourcesCondMake;
 
-	// always applied
+	/// always applied
 	SResourcePack resourcesUncondUse;
 	SResourcePack resourcesUncondMake;
 
-	// costs per UNIT_SLOWUPDATE_RATE frames
+	/// costs per UNIT_SLOWUPDATE_RATE frames
 	SResourcePack resourcesUse;
 
-	// incomes per UNIT_SLOWUPDATE_RATE frames
+	/// incomes per UNIT_SLOWUPDATE_RATE frames
 	SResourcePack resourcesMake;
 
-	// variables used for calculating unit resource usage
+	/// variables used for calculating unit resource usage
 	SResourcePack resourcesUseI;
 	SResourcePack resourcesMakeI;
 	SResourcePack resourcesUseOld;
 	SResourcePack resourcesMakeOld;
 
-	// the amount of storage the unit contributes to the team
+	/// the amount of storage the unit contributes to the team
 	SResourcePack storage;
 
-	// per unit metal storage (gets filled on reclaim and needs then to be unloaded at some storage building -> 2nd part is lua's job)
+	/// per unit metal storage (gets filled on reclaim and needs then to be unloaded at some storage building -> 2nd part is lua's job)
 	SResourcePack harvestStorage;
 	SResourcePack harvested;
 
-	SResourcePack cost = {100.0f, 0.0f};
+	SResourcePack cost;
 
-	// how much metal the unit currently extracts from the ground
-	float metalExtract = 0.0f;
+	/// energy added each halftick
+	float energyTickMake; //FIXME???
 
-	float buildTime = 100.0f;
+	/// how much metal the unit currently extracts from the ground
+	float metalExtract;
 
-	// decaying value of how much damage the unit has taken recently (for severity of death)
-	float recentDamage = 0.0f;
+	float buildTime;
 
-	int fireState = 0;
-	int moveState = 0;
+	/// decaying value of how much damage the unit has taken recently (for severity of death)
+	float recentDamage;
 
-	// for units being dropped from transports (parachute drops)
-	float fallSpeed = 0.2f;
+	int fireState;
+	int moveState;
+
+	/// if the unit is in it's 'on'-state
+	bool activated;
+	/// prevent damage from hitting an already dead unit (causing multi wreck etc)
+	bool isDead;
+
+	/// for units being dropped from transports (parachute drops)
+	float fallSpeed;
+
+	/// total distance the unit has moved
+	float travel;
+	/// 0.0f disables travel accumulation
+	float travelPeriod;
 
 	/**
 	 * 0 = no flanking bonus
@@ -463,89 +485,65 @@ public:
 	 * 2 = unit coords, mobile
 	 * 3 = unit coords, locked
 	 */
-	int flankingBonusMode = 0;
+	int flankingBonusMode;
+	/// how much the lowest damage direction of the flanking bonus can turn upon an attack (zeroed when attacked, slowly increases)
+	float  flankingBonusMobility;
+	/// how much ability of the flanking bonus direction to move builds up each frame
+	float  flankingBonusMobilityAdd;
+	/// average factor to multiply damage by
+	float  flankingBonusAvgDamage;
+	/// (max damage - min damage) / 2
+	float  flankingBonusDifDamage;
 
-	// how much the lowest damage direction of the flanking bonus can turn upon an attack (zeroed when attacked, slowly increases)
-	float  flankingBonusMobility = 10.0f;
-	// how much ability of the flanking bonus direction to move builds up each frame
-	float  flankingBonusMobilityAdd = 0.01f;
-	// average factor to multiply damage by
-	float  flankingBonusAvgDamage = 1.4f;
-	// (max damage - min damage) / 2
-	float  flankingBonusDifDamage = 0.5f;
+	bool armoredState;
+	float armoredMultiple;
+	/// multiply all damage the unit take with this
+	float curArmorMultiple;
 
-	float armoredMultiple = 1.0f;
-	// multiply all damage the unit take with this
-	float curArmorMultiple = 1.0f;
+	int nextPosErrorUpdate;
 
-	int nextPosErrorUpdate = 1;
+	///true if the unit is currently cloaked (has enough energy etc)
+	bool isCloaked;
+	/// true if the unit currently wants to be cloaked
+	bool wantCloak;
+	/// true if a script currently wants the unit to be cloaked
+	int scriptCloak;
+	/// the minimum time between decloaking and cloaking again
+	int cloakTimeout;
+	/// the earliest frame the unit can cloak again
+	int curCloakTimeout;
+	float decloakDistance;
 
-	int lastTerrainType = -1;
-	// Used for calling setSFXoccupy which TA scripts want
-	int curTerrainType = 0;
+	int lastTerrainType;
+	/// Used for calling setSFXoccupy which TA scripts want
+	int curTerrainType;
 
-	int selfDCountdown = 0;
+	int selfDCountdown;
 
-	// the damage value passed to CEGs spawned by this unit's script
-	int cegDamage = 0;
-
-
-	// if the unit is in it's 'on'-state
-	bool activated = false;
-	// prevent damage from hitting an already dead unit (causing multi wreck etc)
-	bool isDead = false;
-
-	bool armoredState = false;
-
-	bool stealth = false;
-	bool sonarStealth = false;
-
-	// used by constructing units
-	bool inBuildStance = false;
-	// tells weapons that support it to try to use a high trajectory
-	bool useHighTrajectory = false;
-	// used by landed gunships to block weapon Update()'s, also by builders to
-	// prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s during certain
-	// commands
-	bool onTempHoldFire = false;
-
-	// Lua overrides for CanUpdateWeapons
-	bool forceUseWeapons = false;
-	bool allowUseWeapons =  true;
-
-	// signals if script has finished executing Killed and the unit can be deleted
-	bool deathScriptFinished = false;
-
-	// if true, unit will not be automatically fired upon unless attacker's fireState is set to > FIREATWILL
-	bool neutral = false;
-	// if unit is currently incompletely constructed (implies buildProgress < 1)
-	bool beingBuilt = true;
-	// if the updir is straight up or align to the ground vector
-	bool upright = true;
-	// whether the ground below this unit has been terraformed
-	bool groundLevelled = true;
-
-	// true if the unit is currently cloaked (has enough energy etc)
-	bool isCloaked = false;
-	// true if the unit currently wants to be cloaked
-	bool wantCloak = false;
+	/// the damage value passed to CEGs spawned by this unit's script
+	int cegDamage;
 
 
 	// unsynced vars
-	bool noMinimap = false;
-	bool leaveTracks = false;
+	bool noMinimap;
+	bool leaveTracks;
 
-	bool isSelected = false;
-	bool isIcon = false;
+	bool isSelected;
+	bool isIcon;
+	float iconRadius;
 
-	float iconRadius = 0.0f;
+	unsigned int lastUnitUpdate;
 
-	UnitTrackStruct* myTrack = nullptr;
-	icon::CIconData* myIcon = nullptr;
+	std::string tooltip;
+
+	CGroup* group;
+
+	UnitTrackStruct* myTrack;
+	icon::CIconData* myIcon;
 
 private:
-	// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
-	bool stunned = false;
+	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
+	bool stunned;
 
 	static float empDeclineRate;
 	static float expMultiplier;
@@ -553,6 +551,8 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
+
+	static bool spawnFeature;
 };
 
 #endif // UNIT_H

@@ -47,20 +47,35 @@ CR_REG_METADATA(LocalModel, (
 
 
 /** ****************************************************************************************************
+ * S3DModel
+ */
+void S3DModel::DeletePieces()
+{
+	assert(!pieces.empty());
+
+	for (size_t n = 0; n < pieces.size(); n++) {
+		spring::SafeDelete(pieces[n]);
+	}
+
+	pieces.clear();
+}
+
+
+
+/** ****************************************************************************************************
  * S3DModelPiece
  */
+
+S3DModelPiece::~S3DModelPiece()
+{
+	glDeleteLists(dispListID, 1);
+}
 
 void S3DModelPiece::CreateDispList()
 {
 	glNewList(dispListID = glGenLists(1), GL_COMPILE);
 	DrawForList();
 	glEndList();
-}
-
-void S3DModelPiece::DeleteDispList()
-{
-	glDeleteLists(dispListID, 1);
-	dispListID = 0;
 }
 
 void S3DModelPiece::DrawStatic() const
@@ -161,20 +176,20 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 
 	{
 		// fill the vertex index vbo
-		const size_t mapSize = indices.size() * sizeof(unsigned int);
+		const size_t isize = indices.size() * sizeof(unsigned int);
 		size_t vboPos = 0;
 
-		for (auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY)); vboMem != nullptr; vboMem = nullptr) {
-			for (ShatterPartDataPair& cp: shatterPartsBuf) {
-				S3DModelPiecePart::RenderData& rd = cp.first;
+		auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
 
-				rd.indexCount = (cp.second).size();
-				rd.vboOffset  = num * mapSize + vboPos;
+		for (ShatterPartDataPair& cp: shatterPartsBuf) {
+			S3DModelPiecePart::RenderData& rd = cp.first;
 
-				if (rd.indexCount > 0) {
-					memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
-					vboPos += (rd.indexCount * sizeof(unsigned int));
-				}
+			rd.indexCount = (cp.second).size();
+			rd.vboOffset  = num * isize + vboPos;
+
+			if (rd.indexCount > 0) {
+				memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
+				vboPos += (rd.indexCount * sizeof(unsigned int));
 			}
 		}
 
@@ -213,7 +228,7 @@ void S3DModelPiece::Shatter(float pieceChance, int modelType, int texType, int t
 	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
 	const   int2 renderParams = {texType, team};
 
-	projectileHandler.AddFlyingPiece(modelType, this, m, pos, speed, pieceParams, renderParams);
+	projectileHandler->AddFlyingPiece(modelType, this, m, pos, speed, pieceParams, renderParams);
 }
 
 
@@ -317,36 +332,52 @@ void LocalModel::UpdateBoundingVolume()
 	float3 bbMins = DEF_MIN_SIZE;
 	float3 bbMaxs = DEF_MAX_SIZE;
 
-	for (const auto& lmPiece: pieces) {
-		const CMatrix44f& matrix = lmPiece.GetModelSpaceMatrix();
-		const S3DModelPiece* piece = lmPiece.original;
+	for (unsigned int n = 0; n < pieces.size(); n++) {
+		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
+		const S3DModelPiece* piece = pieces[n].original;
 
 		// skip empty pieces or bounds will not be sensible
 		if (!piece->HasGeometryData())
 			continue;
 
-		// transform only the corners of the piece's bounding-box
-		const float3 pMins = piece->mins;
-		const float3 pMaxs = piece->maxs;
-		const float3 verts[8] = {
-			// bottom
-			float3(pMins.x,  pMins.y,  pMins.z),
-			float3(pMaxs.x,  pMins.y,  pMins.z),
-			float3(pMaxs.x,  pMins.y,  pMaxs.z),
-			float3(pMins.x,  pMins.y,  pMaxs.z),
-			// top
-			float3(pMins.x,  pMaxs.y,  pMins.z),
-			float3(pMaxs.x,  pMaxs.y,  pMins.z),
-			float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
-			float3(pMins.x,  pMaxs.y,  pMaxs.z),
-		};
+		#if 0
+		const unsigned int vcount = piece->GetVertexCount();
 
-		for (const float3& v: verts) {
-			const float3 vertex = matrix * v;
+		if (vcount >= 8) {
+		#endif
+			// transform only the corners of the piece's bounding-box
+			const float3 pMins = piece->mins;
+			const float3 pMaxs = piece->maxs;
+			const float3 verts[8] = {
+				// bottom
+				float3(pMins.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMaxs.z),
+				float3(pMins.x,  pMins.y,  pMaxs.z),
+				// top
+				float3(pMins.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
+				float3(pMins.x,  pMaxs.y,  pMaxs.z),
+			};
 
-			bbMins = float3::min(bbMins, vertex);
-			bbMaxs = float3::max(bbMaxs, vertex);
+			for (unsigned int k = 0; k < 8; k++) {
+				const float3 vertex = matrix * verts[k];
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
+		#if 0
+		} else {
+			// note: not as efficient because of branching and virtual calls
+			for (unsigned int k = 0; k < vcount; k++) {
+				const float3 vertex = matrix * piece->GetVertexPos(k);
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
 		}
+		#endif
 	}
 
 	// note: offset is relative to object->pos
@@ -410,7 +441,7 @@ void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 		dirty = false;
 		updateChildMatrices = true;
 
-		pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
+		pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	}
 
 	if (updateChildMatrices) {
@@ -421,8 +452,8 @@ void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 		}
 	}
 
-	for (auto& child : children) {
-		child->UpdateChildMatricesRec(updateChildMatrices);
+	for (unsigned int i = 0; i < children.size(); i++) {
+		children[i]->UpdateChildMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -433,7 +464,7 @@ void LocalModelPiece::UpdateParentMatricesRec() const
 
 	dirty = false;
 
-	pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
+	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	modelSpaceMat = pieceSpaceMat;
 
 	if (parent != nullptr)

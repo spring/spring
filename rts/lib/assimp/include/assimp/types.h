@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -49,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Some runtime headers
 #include <sys/types.h>
+#include "lib/streflop/streflop_cond.h"
 #include <stddef.h>
 #include <string.h>
 #include <limits.h>
@@ -110,11 +110,12 @@ extern "C" {
 
 /** Maximum dimension for strings, ASSIMP strings are zero terminated. */
 #ifdef __cplusplus
-static 
 const size_t MAXLEN = 1024;
 #else
 #   define MAXLEN 1024
 #endif
+
+#include "./Compiler/pushpack1.h"
 
 // ----------------------------------------------------------------------------------
 /** Represents a plane in a three-dimensional, euclidean space
@@ -132,7 +133,7 @@ struct aiPlane
 
     //! Plane equation
     ai_real a,b,c,d;
-}; // !struct aiPlane
+} PACK_STRUCT; // !struct aiPlane
 
 // ----------------------------------------------------------------------------------
 /** Represents a ray
@@ -150,7 +151,7 @@ struct aiRay
 
     //! Position and direction of the ray
     C_STRUCT aiVector3D pos, dir;
-}; // !struct aiRay
+} PACK_STRUCT; // !struct aiRay
 
 // ----------------------------------------------------------------------------------
 /** Represents a color in Red-Green-Blue space.
@@ -176,7 +177,11 @@ struct aiColor3D
     /** Component-wise comparison */
     // TODO: add epsilon?
     bool operator < (const aiColor3D& other) const {
-        return r < other.r || ( r == other.r && (g < other.g || (g == other.g && b < other.b ) ) );
+        return r < other.r || (
+            r == other.r && (g < other.g ||
+                (g == other.g && b < other.b)
+            )
+        );
     }
 
     /** Component-wise addition */
@@ -206,14 +211,7 @@ struct aiColor3D
 
     /** Access a specific color component */
     ai_real& operator[](unsigned int i) {
-        if ( 0 == i ) {
-            return r;
-        } else if ( 1 == i ) {
-            return g;
-        } else if ( 2 == i ) {
-            return b;
-        }
-        return r;
+        return *(&r + i);
     }
 
     /** Check whether a color is black */
@@ -226,7 +224,8 @@ struct aiColor3D
 
     //! Red, green and blue color values
     ai_real r, g, b;
-};  // !struct aiColor3D
+} PACK_STRUCT;  // !struct aiColor3D
+#include "./Compiler/poppack1.h"
 
 // ----------------------------------------------------------------------------------
 /** Represents an UTF-8 string, zero byte terminated.

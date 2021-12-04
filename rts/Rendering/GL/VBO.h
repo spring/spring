@@ -25,14 +25,6 @@ public:
 	static bool IsVBOSupported();
 	static bool IsPBOSupported();
 
-	// NOTE: if declared in global scope, user has to call these before exit
-	void Release() {
-		UnmapIf();
-		Delete();
-	}
-	void Generate() const;
-	void Delete();
-
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBindBuffer.xml
@@ -55,16 +47,7 @@ public:
 	 */
 	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
-
 	void UnmapBuffer();
-	void UnmapIf() {
-		if (!mapped)
-			return;
-
-		Bind();
-		UnmapBuffer();
-		Unbind();
-	}
 
 	GLuint GetId() const {
 		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);
@@ -75,26 +58,21 @@ public:
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
 public:
-	mutable GLuint vboId = 0;
-
-	size_t bufSize = 0; // can be smaller than memSize
-	size_t memSize = 0; // actual length of <data>; only set when !isSupported
-
-	mutable GLenum curBoundTarget = 0;
-	GLenum defTarget = GL_ARRAY_BUFFER;
-	GLenum usage = GL_STREAM_DRAW;
-	GLuint mapUnsyncedBit = 0;
+	mutable GLuint vboId;
+	size_t bufSize; // can be smaller than memSize
+	size_t memSize; // actual length of <data>; only set when !isSupported
+	mutable GLenum curBoundTarget;
+	GLenum defTarget;
+	GLenum usage;
 
 public:
-	bool isSupported = true; // if false, data is allocated in main memory
+	bool isSupported; // if false, data is allocated in main memory
+	mutable bool bound;
+	bool mapped;
+	bool nullSizeMapped; // Nvidia workaround
+	bool immutableStorage;
 
-	mutable bool bound = false;
-	bool mapped = false;
-	bool nullSizeMapped = false; // Nvidia workaround
-
-	bool immutableStorage = false;
-
-	GLubyte* data = nullptr;
+	GLubyte* data;
 };
 
 #endif /* VBO_H */

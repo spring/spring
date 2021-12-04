@@ -7,11 +7,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CLargeBeamLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -80,7 +81,7 @@ void CLargeBeamLaserProjectile::Update()
 			edgeColStart[i] = (unsigned char) (edgeColStart[i] * decay);
 		}
 
-		explGenHandler.GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
 	}
 
 	UpdateInterception();

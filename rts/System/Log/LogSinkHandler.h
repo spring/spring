@@ -4,7 +4,7 @@
 #define LOG_SINK_HANDLER_H
 
 #include <string>
-#include "System/UnorderedSet.hpp"
+#include <set>
 
 
 /**
@@ -23,6 +23,8 @@ protected:
  */
 class LogSinkHandler {
 public:
+	LogSinkHandler(): sinking(true) {}
+
 	static LogSinkHandler& GetInstance() {
 		static LogSinkHandler lsh;
 		return lsh;
@@ -50,12 +52,15 @@ public:
 	void RecordLogMessage(int level, const std::string& section, const std::string& text);
 
 private:
-	spring::unsynced_set<ILogSink*> sinks;
+	std::set<ILogSink*> sinks;
+
+	std::string prvSection;
+	std::string prvMessage;
 
 	/**
 	 * Whether log records are passed on to registered sinks, or dismissed.
 	 */
-	bool sinking = true;
+	bool sinking;
 };
 
 #define logSinkHandler (LogSinkHandler::GetInstance())

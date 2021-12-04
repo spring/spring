@@ -13,7 +13,6 @@
 #include "StarburstProjectile.h"
 #include "TorpedoProjectile.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 unsigned int WeaponProjectileFactory::LoadProjectile(const ProjectileParams& params) {

@@ -5,10 +5,9 @@
 #ifndef DEFINTION_TAG_H
 #define DEFINTION_TAG_H
 
-#include <cassert>
+#include <assert.h>
 #include "System/Misc/NonCopyable.h"
-
-#include <array>
+#include <map>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -16,7 +15,7 @@
 
 #include "Lua/LuaParser.h"
 #include "System/float3.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 // table placeholder (used for LuaTables)
 // example usage: DUMMYTAG(Defs, DefClass, table, customParams)
@@ -110,28 +109,36 @@ public:
 
 private:
 	template<typename T1, typename T2>
-	static T1 scale(T1 v, T2 a) { return v * a; }
+	static T1 scale(T1 v, T2 a)
+	{
+		return v * a;
+	}
 
-	// does not make sense for strings
-	static const std::string& scale(const std::string& v, float a) { return v; }
+	static const std::string& scale(const std::string& v, float a)
+	{
+		return v;
+	}
 
 public:
 	T GetData(const LuaTable& lt) const {
 		T defValue = defaultValue.Get();
-		if (fallbackName.IsSet())
+		if (fallbackName.IsSet()) {
 			defValue = lt.Get(fallbackName.Get(), defValue);
+		}
 
 		T data = lt.Get(GetKey(), defValue);
-		if (scaleValue.IsSet())
+		if (scaleValue.IsSet()) {
 			data = scale(data, scaleValue.Get());
-
-		if (minimumValue.IsSet())
+		}
+		if (minimumValue.IsSet()) {
 			data = argmax<T>(data, minimumValue.Get());
-		if (maximumValue.IsSet())
+		}
+		if (maximumValue.IsSet()) {
 			data = argmin<T>(data, maximumValue.Get());
-
-		if (tagFunctionPtr.IsSet())
+		}
+		if (tagFunctionPtr.IsSet()) {
 			data = tagFunctionPtr.Get()(data);
+		}
 
 		return data;
 	}
@@ -216,18 +223,14 @@ private:
 class DefType
 {
 public:
-	DefType(const char* name);
-	~DefType() {
-		for (unsigned int i = 0; i < tagMetaDataCnt; i++) {
-			tagMetaData[i]->~DefTagMetaData();
-		}
-	}
+	DefType(const std::string& name);
+	virtual ~DefType();
 
-	const char* GetName() const { return name; }
+	const std::string& GetName() const { return name; }
 
 	template<typename T> DefTagBuilder<T> AddTag(const char* name) {
-		DefTagTypedMetaData<T>* meta = AllocTagMetaData<T>(name);
-		AddTagMetaData(meta); //FIXME
+		DefTagTypedMetaData<T>* meta = new DefTagTypedMetaData<T>(name);
+		AddMetaData(meta); //FIXME
 		return DefTagBuilder<T>(meta);
 	}
 
@@ -242,12 +245,7 @@ public:
 
 	typedef void (*DefInitializer)(void*);
 	void AddInitializer(DefInitializer init) {
-		assert(defInitFuncCnt < defInitFuncs.size());
-
-		if (defInitFuncCnt >= defInitFuncs.size())
-			return;
-
-		defInitFuncs[defInitFuncCnt++] = init;
+		inits.push_back(init);
 	}
 
 	void Load(void* instance, const LuaTable& luaTable);
@@ -258,37 +256,16 @@ public:
 	static void OutputTagMap();
 
 private:
-	std::array<DefInitializer, 1024> defInitFuncs;
-	std::array<const DefTagMetaData*, 1024> tagMetaData;
-	std::array<uint8_t, 1024 * 1024 * 4> metaDataMem;
+	std::string name;
+	std::vector<DefInitializer> inits;
+	std::vector<const DefTagMetaData*> tags;
 
-	unsigned int defInitFuncCnt = 0;
-	unsigned int tagMetaDataCnt = 0;
-	unsigned int metaDataMemIdx = 0;
-
-	const char* name = nullptr;
-	const LuaTable* luaTable = nullptr;
+	const LuaTable* luaTable;
 
 private:
-	static std::vector<const DefType*>& GetTypes() {
-		static std::vector<const DefType*> tagtypes;
-		return tagtypes;
-	}
+	static std::vector<const DefType*>& GetTypes();
 
-	template<typename T> DefTagTypedMetaData<T>* AllocTagMetaData(const char* name) {
-		DefTagTypedMetaData<T>* tmd = nullptr;
-
-		if ((metaDataMemIdx + sizeof(DefTagTypedMetaData<T>)) > metaDataMem.size()) {
-			throw (std::bad_alloc());
-			return tmd;
-		}
-
-		tmd = new (&metaDataMem[metaDataMemIdx]) DefTagTypedMetaData<T>(name);
-		metaDataMemIdx += sizeof(DefTagTypedMetaData<T>);
-		return tmd;
-	}
-	void AddTagMetaData(const DefTagMetaData* data);
-
+	void AddMetaData(const DefTagMetaData* data);
 	const DefTagMetaData* GetMetaDataByInternalKey(const std::string& key);
 	const DefTagMetaData* GetMetaDataByExternalKey(const std::string& key);
 

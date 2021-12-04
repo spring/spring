@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/float3.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include <stdlib.h>
 #include <time.h>
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE Ellipsoid
+#include <boost/test/unit_test.hpp>
 
 
 static inline float3 randfloat3()
@@ -42,7 +42,7 @@ static inline float getdistSq(float x, float y, float z, float a, float b, float
 //We Fail if after half the iterations we have error > 5%
 #define FAIL_THRESHOLD 0.05f
 
-TEST_CASE("Ellipsoid")
+BOOST_AUTO_TEST_CASE( Ellipsoid )
 {
 	srand( time(NULL) );
 	unsigned failCount = 0;
@@ -87,7 +87,7 @@ TEST_CASE("Ellipsoid")
 
 
 		//Iterations
-		for (int i = 0; true; ) {
+		for (int i = 0; true; ) { 
 			const float cost = math::cos(theta);
 			const float sint = math::sin(theta);
 			const float sinp = math::sin(phi);
@@ -157,6 +157,5 @@ TEST_CASE("Ellipsoid")
 		printf("Iteration %d:\n\tError: (Mean: %f, Dev: %f, Max: %f)\n\tPercent remaining: %.3f%%\n", i, meanError, devError, maxError[i], pct);
 	}
 
-	INFO("Inaccurate ellipsoid distance approximation!");
-	CHECK(failCount < MAX_FAILS);
+	BOOST_CHECK_MESSAGE(failCount < MAX_FAILS, "Inaccurate ellipsoid distance approximation!");
 }

@@ -42,19 +42,16 @@ public:
 	enum {
 		EXPGEN_ID_INVALID  = -1u,
 		EXPGEN_ID_STANDARD =  0u,
-		EXPGEN_ID_FALLBACK =  1u,
 	};
 
-	void Init();
-	void Kill();
+	CExplosionGeneratorHandler();
+	~CExplosionGeneratorHandler();
 
 	void ParseExplosionTables();
 	void ReloadGenerators(const std::string&);
 
-	unsigned int LoadCustomGeneratorID(const char* tag) { return (LoadGeneratorID(tag, CEG_PREFIX_STRING)); }
-	unsigned int LoadGeneratorID(const char* tag, const char* pre = "");
-
-	IExplosionGenerator* LoadGenerator(const char* tag, const char* pre = "");
+	unsigned int LoadGeneratorID(const std::string& tag);
+	IExplosionGenerator* LoadGenerator(const std::string& tag);
 	IExplosionGenerator* GetGenerator(unsigned int expGenID);
 
 	bool GenExplosion(
@@ -74,14 +71,17 @@ public:
 protected:
 	ClassAliasList projectileClasses;
 
-	LuaParser* exploParser = nullptr;
-	LuaParser* aliasParser = nullptr;
-	LuaTable*  explTblRoot = nullptr;
+	LuaParser* exploParser;
+	LuaParser* aliasParser;
+	LuaTable*  explTblRoot;
 
 	std::vector<IExplosionGenerator*> explosionGenerators;
 
-	spring::unordered_map<unsigned int, unsigned int> expGenHashIdentMap; // hash->id
-	spring::unordered_map<unsigned int, std::array<char, 64>> expGenIdentNameMap; // id->name
+	spring::unordered_map<std::string, unsigned int> expGenTagIdentMap;
+	spring::unordered_map<unsigned int, std::string> expGenIdentTagMap;
+
+	typedef spring::unordered_map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
+	typedef spring::unordered_map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
 };
 
 
@@ -90,12 +90,13 @@ protected:
 // Base explosion generator class
 class IExplosionGenerator
 {
+	CR_DECLARE(IExplosionGenerator)
 public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 
-	virtual bool Load(CExplosionGeneratorHandler* handler, const char* tag) { return false; }
-	virtual bool Reload(CExplosionGeneratorHandler* handler, const char* tag) { return true; }
+	virtual bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) = 0;
+	virtual bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) { return true; }
 	virtual bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -104,7 +105,7 @@ public:
 		float gfxMod,
 		CUnit* owner,
 		CUnit* hit
-	) { return false; }
+	) = 0;
 
 	unsigned int GetGeneratorID() const { return generatorID; }
 	void SetGeneratorID(unsigned int id) { generatorID = id; }
@@ -118,10 +119,12 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
+	CR_DECLARE_DERIVED(CStdExplosionGenerator)
+
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
 
-	bool Load(CExplosionGeneratorHandler* handler, const char* tag) override { return false; }
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override { return false; }
 	bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -138,19 +141,39 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
+	CR_DECLARE_DERIVED(CCustomExplosionGenerator)
+	CR_DECLARE_SUB(ProjectileSpawnInfo)
+	CR_DECLARE_SUB(ExpGenParams)
+
 protected:
 	struct ProjectileSpawnInfo {
-		unsigned int spawnableID = 0;
+		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
 
-		/// number of projectiles spawned of this type
-		unsigned int count = 0;
-		unsigned int flags = 0;
+		ProjectileSpawnInfo()
+			: spawnableID(0)
+			, count(0)
+			, flags(0)
+		{}
+		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
+			: spawnableID(psi.spawnableID)
+			, code(psi.code)
+			, count(psi.count)
+			, flags(psi.flags)
+		{}
+
+		unsigned int spawnableID;
 
 		/// parsed explosion script code
 		std::vector<char> code;
+
+		/// number of projectiles spawned of this type
+		unsigned int count;
+		unsigned int flags;
 	};
 
 	struct ExpGenParams {
+		CR_DECLARE_STRUCT(ExpGenParams)
+
 		std::vector<ProjectileSpawnInfo> projectiles;
 
 		GroundFlashInfo groundFlash;
@@ -166,20 +189,18 @@ public:
 	static unsigned int GetFlagsFromHeight(float height, float groundHeight);
 
 	/// @throws content_error/runtime_error on errors
-	bool Load(CExplosionGeneratorHandler* handler, const char* tag) override;
-	bool Reload(CExplosionGeneratorHandler* handler, const char* tag) override;
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) override;
 	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
 
-	// spawn-flags
+
 	enum {
-		CEG_SPWF_WATER      = 1 << 0,
-		CEG_SPWF_GROUND     = 1 << 1,
-		CEG_SPWF_VOIDWATER  = 1 << 2,
-		CEG_SPWF_VOIDGROUND = 1 << 3,
-		CEG_SPWF_AIR        = 1 << 4,
-		CEG_SPWF_UNDERWATER = 1 << 5,  // TODO: UNDERVOIDWATER?
-		CEG_SPWF_UNIT       = 1 << 6,  // only execute when the explosion hits a unit
-		CEG_SPWF_NO_UNIT    = 1 << 7,  // only execute when the explosion doesn't hit a unit (environment)
+		SPW_WATER      =  1,
+		SPW_GROUND     =  2,
+		SPW_AIR        =  4,
+		SPW_UNDERWATER =  8,
+		SPW_UNIT       = 16,  // only execute when the explosion hits a unit
+		SPW_NO_UNIT    = 32,  // only execute when the explosion doesn't hit a unit (environment)
 	};
 
 	enum {
@@ -212,6 +233,6 @@ protected:
 };
 
 
-extern CExplosionGeneratorHandler explGenHandler;
+extern CExplosionGeneratorHandler* explGenHandler;
 
 #endif // EXPLOSION_GENERATOR_H

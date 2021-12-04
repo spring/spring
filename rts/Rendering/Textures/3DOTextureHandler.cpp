@@ -25,7 +25,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-C3DOTextureHandler textureHandler3DO;
+C3DOTextureHandler* texturehandler3DO = NULL;
 
 struct TexFile {
 	CBitmap tex;  ///< same format as s3o's
@@ -34,9 +34,9 @@ struct TexFile {
 };
 
 
-void C3DOTextureHandler::Init()
+C3DOTextureHandler::C3DOTextureHandler()
 {
-	std::vector<TexFile> texFiles = std::move(LoadTexFiles());
+	std::vector<TexFile> texfiles = std::move(LoadTexFiles());
 
 	// TODO: make this use TextureAtlas directly
 	CTextureAtlas atlas;
@@ -51,8 +51,8 @@ void C3DOTextureHandler::Init()
 	// default for 3DO primitives that point to non-existing textures
 	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
 
-	for (const TexFile& texFile: texFiles) {
-		atlasAlloc->AddEntry(texFile.name, int2(texFile.tex.xsize, texFile.tex.ysize));
+	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
+		atlasAlloc->AddEntry(it->name, int2(it->tex.xsize, it->tex.ysize));
 	}
 
 	const bool allocated = atlasAlloc->Allocate();
@@ -64,45 +64,41 @@ void C3DOTextureHandler::Init()
 		// textures or the textures would really not fit
 		LOG_L(L_WARNING,
 			"[%s] failed to allocate 3DO texture-atlas memory (size=%dx%d max=%dx%d)",
-			__func__,
+			__FUNCTION__,
 			curAtlasSize.x, curAtlasSize.y,
 			maxAtlasSize.x, maxAtlasSize.y
 		);
-
 		return;
+	} else {
+		assert(curAtlasSize.x <= maxAtlasSize.x);
+		assert(curAtlasSize.y <= maxAtlasSize.y);
 	}
 
-	bigTexX = curAtlasSize.x;
-	bigTexY = curAtlasSize.y;
-
-	assert(curAtlasSize.x <= maxAtlasSize.x);
-	assert(curAtlasSize.y <= maxAtlasSize.y);
-
-	std::vector<uint8_t> bigtex1(curAtlasSize.x * curAtlasSize.y * 4, 0);
-	std::vector<uint8_t> bigtex2(curAtlasSize.x * curAtlasSize.y * 4, 0);
+	unsigned char* bigtex1 = new unsigned char[curAtlasSize.x * curAtlasSize.y * 4];
+	unsigned char* bigtex2 = new unsigned char[curAtlasSize.x * curAtlasSize.y * 4];
 
 	for (int a = 0; a < (curAtlasSize.x * curAtlasSize.y); ++a) {
 		bigtex1[a*4 + 0] = 128;
 		bigtex1[a*4 + 1] = 128;
 		bigtex1[a*4 + 2] = 128;
-		bigtex1[a*4 + 3] =   0;
+		bigtex1[a*4 + 3] = 0;
 
-		bigtex2[a*4 + 0] =   0;
+		bigtex2[a*4 + 0] = 0;
 		bigtex2[a*4 + 1] = 128;
-		bigtex2[a*4 + 2] =   0;
+		bigtex2[a*4 + 2] = 0;
 		bigtex2[a*4 + 3] = 255;
 	}
 
-	for (const TexFile& texFile: texFiles) {
-		const CBitmap& curtex1 = texFile.tex;
-		const CBitmap& curtex2 = texFile.tex2;
+	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
+		CBitmap& curtex1 = it->tex;
+		CBitmap& curtex2 = it->tex2;
 
-		const size_t foundx = atlasAlloc->GetEntry(texFile.name).x;
-		const size_t foundy = atlasAlloc->GetEntry(texFile.name).y;
-		const float4 texCoords = atlasAlloc->GetTexCoords(texFile.name);
+		const size_t foundx = atlasAlloc->GetEntry(it->name).x;
+		const size_t foundy = atlasAlloc->GetEntry(it->name).y;
+		const float4 texCoords = atlasAlloc->GetTexCoords(it->name);
 
-		const uint8_t* rmem1 = curtex1.GetRawMem();
-		const uint8_t* rmem2 = curtex2.GetRawMem();
+		const unsigned char* rmem1 = curtex1.GetRawMem();
+		const unsigned char* rmem2 = curtex2.GetRawMem();
 
 		for (int y = 0; y < curtex1.ysize; ++y) {
 			for (int x = 0; x < curtex1.xsize; ++x) {
@@ -113,7 +109,7 @@ void C3DOTextureHandler::Init()
 			}
 		}
 
-		textures[texFile.name] = UnitTexture(texCoords);
+		textures[it->name] = UnitTexture(texCoords);
 	}
 
 	const int maxMipMaps = atlasAlloc->GetMaxMipMaps();
@@ -126,11 +122,10 @@ void C3DOTextureHandler::Init()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
-
 		if (maxMipMaps > 0) {
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1.data()); //FIXME disable texcompression
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1); //FIXME disable texcompression
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1.data());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
 		}
 	}
 	{
@@ -141,32 +136,29 @@ void C3DOTextureHandler::Init()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
-
 		if (maxMipMaps > 0) {
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2.data()); //FIXME disable texcompression
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2); //FIXME disable texcompression
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2.data());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
 		}
 	}
 
 	if (CTextureAtlas::GetDebug()) {
-		CBitmap tex1(bigtex1.data(), curAtlasSize.x, curAtlasSize.y);
-		CBitmap tex2(bigtex2.data(), curAtlasSize.x, curAtlasSize.y);
+		CBitmap tex1(bigtex1, curAtlasSize.x, curAtlasSize.y);
+		CBitmap tex2(bigtex2, curAtlasSize.x, curAtlasSize.y);
 
 		tex1.Save(atlas.GetName() + "-1-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
 		tex2.Save(atlas.GetName() + "-2-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
 	}
+
+	delete[] bigtex1;
+	delete[] bigtex2;
 }
 
-void C3DOTextureHandler::Kill()
+C3DOTextureHandler::~C3DOTextureHandler()
 {
 	glDeleteTextures(1, &atlas3do1);
 	glDeleteTextures(1, &atlas3do2);
-
-	atlas3do1 = 0;
-	atlas3do2 = 0;
-
-	textures.clear();
 }
 
 
@@ -186,13 +178,14 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 
 	std::vector<TexFile> texFiles;
 
-	const std::vector<std::string>& bmpFiles = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
-	      std::vector<std::string>  tgaFiles = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
+	const std::vector<std::string>& filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	      std::vector<std::string>  files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 
-	tgaFiles.insert(tgaFiles.end(), bmpFiles.begin(), bmpFiles.end());
-	texFiles.reserve(tgaFiles.size() + CTAPalette::NUM_PALETTE_ENTRIES);
+	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
+	texFiles.reserve(files.size() + CTAPalette::NUM_PALETTE_ENTRIES);
 
-	for (const std::string& s: tgaFiles) {
+	for (auto fi = files.begin(); fi != files.end(); ++fi) {
+		const std::string& s = *fi;
 		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority
@@ -208,14 +201,23 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 		}
 	}
 
-	palette.Init(paletteFile);
+	if (paletteFile.FileExists())
+		palette.Init(paletteFile);
 
 	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
 		TexFile texFile;
 		texFile.name = "ta_color" + IntToString(a, "%i");
+		texFile.tex.Alloc(1, 1);
+		texFile.tex.GetRawMem()[0] = palette[a][0];
+		texFile.tex.GetRawMem()[1] = palette[a][1];
+		texFile.tex.GetRawMem()[2] = palette[a][2];
+		texFile.tex.GetRawMem()[3] = 0; // teamcolor
 
-		texFile.tex.AllocDummy(SColor{palette[a][0], palette[a][1], palette[a][2], uint8_t(0)}); // A=team-color
-		texFile.tex2.AllocDummy(SColor{0, 30, 0, 255}); // R=self-illum, G=reflectivity
+		texFile.tex2.Alloc(1, 1);
+		texFile.tex2.GetRawMem()[0] = 0;  // self illum
+		texFile.tex2.GetRawMem()[1] = 30; // reflectivity
+		texFile.tex2.GetRawMem()[2] =  0;
+		texFile.tex2.GetRawMem()[3] = 255;
 
 		texFiles.push_back(texFile);
 	}

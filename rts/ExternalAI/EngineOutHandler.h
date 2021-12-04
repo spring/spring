@@ -3,11 +3,12 @@
 #ifndef ENGINE_OUT_HANDLER_H
 #define ENGINE_OUT_HANDLER_H
 
-#include "SkirmishAIWrapper.h"
 #include "System/Object.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-#include <array>
+#include <memory>
+
+#include <map>
 #include <vector>
 #include <string>
 
@@ -21,27 +22,18 @@ class CSkirmishAIWrapper;
 struct SSkirmishAICallback;
 
 
+void handleAIException(const char* description);
+
 class CEngineOutHandler {
 	CR_DECLARE_STRUCT(CEngineOutHandler)
 
 
 public:
 	static CEngineOutHandler* GetInstance();
+	~CEngineOutHandler();
 
 	static void Create();
 	static void Destroy();
-
-	void Init() { activeSkirmishAIs.reserve(16); }
-	void Kill() {
-		PreDestroy();
-
-		// release leftover active AI's
-		while (!activeSkirmishAIs.empty()) {
-			DestroySkirmishAI(activeSkirmishAIs.back());
-		}
-
-		activeSkirmishAIs.clear();
-	}
 
 	void PostLoad();
 	/** Called just before all the units are destroyed. */
@@ -84,21 +76,21 @@ public:
 	// Skirmish AI stuff
 	void CreateSkirmishAI(const uint8_t skirmishAIId);
 	/**
-	 * Sets a local Skirmish AI to block events.
+	 * Sets a local Skirmish AI dieing.
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
-	 * @param skirmishAIId index of the AI for which to block events
-	 * @see CSkirmishAIHandler::SetLocalKillFlag()
+	 * @param skirmishAIId index of the AI to mark as dieing
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 * @see DestroySkirmishAI()
 	 */
-	void BlockSkirmishAIEvents(const uint8_t skirmishAIId) { hostSkirmishAIs[skirmishAIId].SetBlockEvents(true); }
+	void SetSkirmishAIDieing(const uint8_t skirmishAIId);
 	/**
 	 * Destructs a local Skirmish AI for real.
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
-	 * @see BlockSkirmishAIEvents()
-	 * @see CSkirmishAIHandler::SetLocalKillFlag()
+	 * @see SetSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
 	void DestroySkirmishAI(const uint8_t skirmishAIId);
 
@@ -106,16 +98,18 @@ public:
 	void Save(std::ostream* s, const uint8_t skirmishAIId);
 
 private:
+	typedef std::vector<uint8_t> ids_t;
+	typedef std::map<uint8_t, std::unique_ptr<CSkirmishAIWrapper> > id_ai_t;
+	typedef std::map<int, ids_t> team_ais_t;
+
 	/// Contains all local Skirmish AIs, indexed by their ID
-	std::array<CSkirmishAIWrapper, MAX_AIS > hostSkirmishAIs;
+	id_ai_t hostSkirmishAIs;
 
 	/**
 	 * Array mapping team IDs to local Skirmish AI instances.
 	 * There can be multiple Skirmish AIs per team.
 	 */
-	std::array<std::vector<uint8_t>, MAX_TEAMS> teamSkirmishAIs;
-
-	std::vector<uint8_t> activeSkirmishAIs;
+	team_ais_t teamSkirmishAIs;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

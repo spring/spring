@@ -11,14 +11,12 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Threading/SpringThreading.h"
 
-class CglFont;
-
 class CLoadScreen : public CGameController
 {
 public:
-	void SetLoadMessage(const std::string& text, bool replaceLast = false);
+	void SetLoadMessage(const std::string& text, bool replace_lastline = false);
 
-	CLoadScreen(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
+	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	~CLoadScreen();
 
 	bool Init(); /// split from ctor; uses GetInstance()
@@ -29,8 +27,7 @@ public:
 	// accessed from Game::KillLua where we do not care
 	static CLoadScreen* GetInstance() { return singleton; }
 
-	static void CreateDeleteInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
-	static bool CreateInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
+	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
 	bool Draw() override;
@@ -43,22 +40,30 @@ public:
 
 
 private:
+	void RandomStartPicture(const std::string& sidePref);
+	void LoadStartPicture(const std::string& picture);
+	void UnloadStartPicture();
+
+private:
 	static CLoadScreen* singleton;
 
+	std::string oldLoadMessages;
+	std::string curLoadMessage;
+
+	std::string mapName;
+	std::string modName;
 	ILoadSaveHandler* saveFile;
 
-	std::vector< std::pair<std::string, bool> > loadMessages;
-
-	std::string mapFileName;
-	std::string modFileName;
-
 	spring::recursive_mutex mutex;
-	spring::thread netHeartbeatThread;
-	COffscreenGLThread gameLoadThread;
+	spring::thread* netHeartbeatThread;
+	COffscreenGLThread* gameLoadThread;
 
 	bool mtLoading;
+	bool showMessages;
 
-	spring_time lastDrawTime;
+	unsigned int startupTexture;
+	float aspectRatio;
+	spring_time last_draw;
 };
 
 

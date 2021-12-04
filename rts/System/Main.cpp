@@ -18,7 +18,7 @@
 #include <clocale>
 #include <cstdlib>
 
-#ifdef _WIN32
+#ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 #endif
 
@@ -51,12 +51,12 @@ int Run(int argc, char* argv[])
 #if !defined(PROFILE) && !defined(HEADLESS)
 static bool SetNvOptimusProfile(const std::string& processFileName)
 {
-#ifdef _WIN32
+#ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	// sic; on Windows execvp spawns a new process which breaks lobby state-tracking by PID
-	return (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE, false);
+	// on Windows execvp breaks lobbies (new process: new PID)
+	return (false && (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE));
 #endif
 	return false;
 }
@@ -74,21 +74,19 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
  */
 int main(int argc, char* argv[])
 {
-// PROFILE builds exit on execv, HEADLESS does not use the GPU
+// PROFILE builds exit on execv ...
+// HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
 #if !defined(PROFILE) && !defined(HEADLESS)
-#define MAX_ARGS 32
-
 	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
 		// prepare for restart
-		std::array<std::string, MAX_ARGS> args;
+		std::vector<std::string> args(argc - 1);
 
-		for (int i = 0, n = std::min(argc, MAX_ARGS); i < n; i++)
-			args[i] = argv[i];
+		for (int i = 1; i < argc; i++)
+			args[i - 1] = argv[i];
 
 		// ExecProc normally does not return; if it does the retval is an error-string
-		ErrorMessageBox(Platform::ExecuteProcess(args), "Execv error:", MBF_OK | MBF_EXCL);
+		ErrorMessageBox(Platform::ExecuteProcess(argv[0], args), "Execv error:", MBF_OK | MBF_EXCL);
 	}
-#undef MAX_ARGS
 #endif
 
 	return (Run(argc, argv));
@@ -96,7 +94,7 @@ int main(int argc, char* argv[])
 
 
 
-#ifdef _WIN32
+#ifdef WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

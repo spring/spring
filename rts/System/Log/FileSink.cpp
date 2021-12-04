@@ -11,19 +11,14 @@
 #include <cassert>
 #include <cstdio>
 #include <string>
+#include <list>
+#include <map>
 
-#include <algorithm>
-#include <vector>
 
-
-namespace log_file {
+namespace {
 	struct LogFileDetails {
-		LogFileDetails(
-			FILE* outStream = nullptr,
-			const std::string& sections = "",
-			int minLevel = LOG_LEVEL_ALL,
-			int flushLevel = LOG_LEVEL_ERROR
-		)
+		LogFileDetails(FILE* outStream = nullptr, const std::string& sections = "",
+				int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR)
 			: outStream(outStream)
 			, sections(sections)
 			, minLevel(minLevel)
@@ -47,12 +42,13 @@ namespace log_file {
 		int minLevel;
 		int flushLevel;
 	};
+	typedef std::map<std::string, LogFileDetails> logFiles_t;
 
 	/**
 	 * This is only used to check whether some code tries to access the
-	 * log-files container after it got deleted.
+	 * log-files contianer after it got deleted.
 	 */
-	bool validTracker = true;
+	bool logFilesValidTracker = true;
 
 
 	/**
@@ -60,31 +56,24 @@ namespace log_file {
 	 * and while the container is still valid (not deleted yet).
 	 */
 	struct LogFilesContainer {
-	public:
-		typedef std::pair<std::string, LogFileDetails> LogFilePair;
-		typedef std::vector<LogFilePair> LogFilesMap;
-
 		~LogFilesContainer() {
 			log_file_removeAllLogFiles();
-			validTracker = false;
+			logFilesValidTracker = false;
 		}
-		LogFilesMap& GetLogFiles() {
+		logFiles_t& GetLogFiles() {
 			return logFiles;
 		}
 
 	private:
-		std::vector< std::pair<std::string, LogFileDetails> > logFiles;
+		logFiles_t logFiles;
 	};
 
-	using LogFilePair = LogFilesContainer::LogFilePair;
-	using LogFilesMap = LogFilesContainer::LogFilesMap;
 
-
-	inline LogFilesMap& getLogFiles() {
+	inline logFiles_t& log_file_getLogFiles() {
 		static LogFilesContainer logFilesContainer;
 
-		assert(validTracker);
-		return (logFilesContainer.GetLogFiles());
+		assert(logFilesValidTracker);
+		return logFilesContainer.GetLogFiles();
 	}
 
 
@@ -108,19 +97,19 @@ namespace log_file {
 		std::string section;
 		std::string record;
 	};
-	typedef std::vector<LogRecord> logRecords_t;
+	typedef std::list<LogRecord> logRecords_t;
 
 
-	inline logRecords_t& getRecordBuffer() {
+	inline logRecords_t& log_file_getRecordBuffer() {
 		static logRecords_t buffer;
 		return buffer;
 	}
 
-	inline bool isActivelyLogging() {
-		return (!getLogFiles().empty());
+	inline bool log_file_isActivelyLogging() {
+		return (!log_file_getLogFiles().empty());
 	}
 
-	void writeToFile(FILE* outStream, const char* record, bool flush) {
+	void log_file_writeToFile(FILE* outStream, const char* record, bool flush) {
 		char framePrefix[128] = {'\0'};
 		log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
@@ -133,56 +122,47 @@ namespace log_file {
 	/**
 	 * Writes to the individual log files, if they do want to log the section.
 	 */
-	void writeToFiles(int level, const char* section, const char* record)
+	void log_file_writeToFiles(int level, const char* section, const char* record)
 	{
-		const auto& logFiles = getLogFiles();
+		const logFiles_t& logFiles = log_file_getLogFiles();
 
-		for (const auto& p: logFiles) {
-			if (!p.second.IsLogging(level, section))
-				continue;
-			if (p.second.GetOutStream() == nullptr)
-				continue;
-
-			writeToFile(p.second.GetOutStream(), record, p.second.FlushOnWrite(level));
+		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
+			if (lfi->second.IsLogging(level, section) && (lfi->second.GetOutStream() != nullptr)) {
+				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite(level));
+			}
 		}
 	}
 
 	/**
 	 * Flushes the buffers of the individual log files.
 	 */
-	void flushFiles() {
-		const auto& logFiles = getLogFiles();
+	void log_file_flushFiles() {
+		const logFiles_t& logFiles = log_file_getLogFiles();
 
-		for (const auto& p: logFiles) {
-			if (p.second.GetOutStream() == nullptr)
-				continue;
-
-			fflush(p.second.GetOutStream());
+		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
+			if (lfi->second.GetOutStream() != nullptr) {
+				fflush(lfi->second.GetOutStream());
+			}
 		}
 	}
-	/**
 
+	/**
 	 * Writes the content of the buffer to all the currently registered log
 	 * files.
 	 */
-	void writeBufferToFiles() {
-		logRecords_t& logRecords = getRecordBuffer();
+	void log_file_writeBufferToFiles() {
+		logRecords_t& logRecords = log_file_getRecordBuffer();
 
-		for (LogRecord& logRec: logRecords) {
-			writeToFiles(logRec.GetLevel(), logRec.GetSection().c_str(), logRec.GetRecord().c_str());
+		while (!logRecords.empty()) {
+			const auto lri = logRecords.begin();
+			log_file_writeToFiles(lri->GetLevel(), lri->GetSection().c_str(), lri->GetRecord().c_str());
+			logRecords.erase(lri);
 		}
-
-		logRecords.clear();
 	}
 
-	inline void writeToBuffer(int level, const std::string& section, const std::string& record)
+	inline void log_file_writeToBuffer(int level, const std::string& section, const std::string& record)
 	{
-		logRecords_t& logRecords = getRecordBuffer();
-
-		if (logRecords.empty())
-			logRecords.reserve(1024);
-
-		logRecords.emplace_back(level, section, record);
+		log_file_getRecordBuffer().push_back(LogRecord(level, section, record));
 	}
 }
 
@@ -199,75 +179,31 @@ void log_file_addLogFile(
 ) {
 	assert(filePath != nullptr);
 
-	auto& logFiles = log_file::getLogFiles();
+	logFiles_t& logFiles = log_file_getLogFiles();
 
 	const std::string sectionsStr = (sections == nullptr) ? "" : sections;
 	const std::string filePathStr = filePath;
-
-	const auto pred = [](const log_file::LogFilePair& a, const log_file::LogFilePair& b) { return (a.first < b.first); };
-	const auto iter = std::lower_bound(logFiles.begin(), logFiles.end(), log_file::LogFilePair{filePathStr, nullptr}, pred);
+	const auto lfi = logFiles.find(filePathStr);
 
 	// we are already logging to this file
-	if (iter != logFiles.end() && iter->first == filePathStr)
+	if (lfi != logFiles.end())
 		return;
 
 	FILE* tmpStream = fopen(filePath, "w");
 
 	if (tmpStream == nullptr) {
-		LOG_L(L_ERROR, "[%s] failed to open log file \"%s\" for writing", __func__, filePath);
+		LOG_L(L_ERROR, "Failed to open log file for writing: %s", filePath);
 		return;
 	}
 
-	setvbuf(tmpStream, nullptr, _IOFBF, std::min(BUFSIZ, 8192)); // limit buffer to 8kB
+	setvbuf(tmpStream, nullptr, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
 
-	logFiles.emplace_back(filePathStr, log_file::LogFileDetails(tmpStream, sectionsStr, minLevel, flushLevel));
-
-	// swap into position; only a handful of files are ever added
-	for (size_t i = logFiles.size() - 1; i > 0; i--) {
-		if (logFiles[i - 1].first < logFiles[i].first)
-			break;
-
-		std::swap(logFiles[i - 1], logFiles[i]);
-	}
-}
-
-void log_file_removeLogFile(const char* filePath) {
-	assert(filePath != nullptr);
-
-	auto& logFiles = log_file::getLogFiles();
-
-	const auto pred = [](const log_file::LogFilePair& a, const log_file::LogFilePair& b) { return (a.first < b.first); };
-	const auto iter = std::lower_bound(logFiles.begin(), logFiles.end(), log_file::LogFilePair{filePath, nullptr}, pred);
-
-	// we are not logging to this file
-	if (iter == logFiles.end() || strcmp(iter->first.c_str(), filePath) != 0)
-		return;
-
-	// turn off logging to this file
-	fclose(iter->second.GetOutStream());
-
-	// erase entry
-	for (size_t i = iter - logFiles.begin(), n = logFiles.size() - 1; i < n; i++) {
-		logFiles[i].first  = std::move(logFiles[i + 1].first );
-		logFiles[i].second = std::move(logFiles[i + 1].second);
-	}
-
-	logFiles.pop_back();
-}
-
-void log_file_removeAllLogFiles() {
-	auto& logFiles = log_file::getLogFiles();
-
-	for (auto& logFilePair: logFiles) {
-		fclose(logFilePair.second.GetOutStream());
-	}
-
-	logFiles.clear();
+	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel, flushLevel);
 }
 
 
 FILE* log_file_getLogFileStream(const char* filePath) {
-	const auto& logFiles = log_file::getLogFiles();
+	const logFiles_t& logFiles = log_file_getLogFiles();
 
 	for (const auto& p: logFiles) {
 		if (strcmp((p.first).c_str(), filePath) != 0)
@@ -280,6 +216,31 @@ FILE* log_file_getLogFileStream(const char* filePath) {
 }
 
 
+void log_file_removeLogFile(const char* filePath) {
+	assert(filePath != nullptr);
+
+	logFiles_t& logFiles = log_file_getLogFiles();
+
+	const std::string filePathStr = filePath;
+	const auto lfi = logFiles.find(filePathStr);
+
+	// we are not logging to this file
+	if (lfi == logFiles.end())
+		return;
+
+	// turn off logging to this file
+	FILE* tmpStream = lfi->second.GetOutStream();
+	logFiles.erase(lfi);
+	fclose(tmpStream);
+}
+
+void log_file_removeAllLogFiles() {
+	while (!log_file_getLogFiles().empty()) {
+		const auto lfi = log_file_getLogFiles().begin();
+		log_file_removeLogFile(lfi->first.c_str());
+	}
+}
+
 
 /**
  * @name logging_sink_file
@@ -290,25 +251,25 @@ FILE* log_file_getLogFileStream(const char* filePath) {
 /// Records a log entry
 static void log_sink_record_file(int level, const char* section, const char* record)
 {
-	if (log_file::validTracker && log_file::isActivelyLogging()) {
+	if (logFilesValidTracker && log_file_isActivelyLogging()) {
 		// write buffer to log file
-		log_file::writeBufferToFiles();
+		log_file_writeBufferToFiles();
 
 		// write current record to log file
-		log_file::writeToFiles(level, section, record);
+		log_file_writeToFiles(level, section, record);
 	} else {
 		// buffer until a log file is ready for output
-		log_file::writeToBuffer(level, section, record);
+		log_file_writeToBuffer(level, section, record);
 	}
 }
 
 /// Cleans up all log streams, by flushing them.
 static void log_sink_cleanup_file() {
-	if (!log_file::isActivelyLogging())
+	if (!log_file_isActivelyLogging())
 		return;
 
 	// flush the log buffers to files
-	log_file::flushFiles();
+	log_file_flushFiles();
 }
 
 ///@}

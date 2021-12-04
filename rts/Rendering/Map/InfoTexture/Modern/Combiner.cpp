@@ -66,20 +66,27 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 void CInfoTextureCombiner::SwitchMode(const std::string& name)
 {
 	if (name.empty()) {
+		curMode = name;
 		disabled = true;
-
-		CreateShader(curMode = "", true);
+		CreateShader("", true);
 		return;
 	}
 
 	// WTF? fully reloaded from disk on every switch?
-	// TODO: allow "info:myluainfotex"
-	switch (hashString(name.c_str())) {
-		case hashString("los"   ): { disabled = !CreateShader("shaders/GLSL/infoLOS.lua"   , true, float4(0.5f, 0.5f, 0.5f, 1.0f)); } break;
-		case hashString("metal" ): { disabled = !CreateShader("shaders/GLSL/infoMetal.lua" , true, float4(0.0f, 0.0f, 0.0f, 1.0f)); } break;
-		case hashString("height"): { disabled = !CreateShader("shaders/GLSL/infoHeight.lua"                                      ); } break;
-		case hashString("path"  ): { disabled = !CreateShader("shaders/GLSL/infoPath.lua"                                        ); } break;
-		default                  : { disabled = !CreateShader(name                                                               ); } break;
+	if (name == "los") {
+		disabled = !CreateShader("shaders/GLSL/infoLOS.lua", true, float4(0.5f, 0.5f, 0.5f, 1.0f));
+	} else
+	if (name == "metal") {
+		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true, float4(0.f, 0.f, 0.f, 1.0f));
+	} else
+	if (name == "height") {
+		disabled = !CreateShader("shaders/GLSL/infoHeight.lua");
+	} else
+	if (name == "path") {
+		disabled = !CreateShader("shaders/GLSL/infoPath.lua");
+	} else {
+		//FIXME allow "info:myluainfotex"
+		disabled = !CreateShader(name);
 	}
 
 	curMode = (disabled) ? "" : name;

@@ -6,4 +6,4 @@ set(additionalSources      "")
 set(additionalCompileFlags "")
 set(additionalLibraries    "")
 
-configure_native_skirmish_ai(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)
+ConfigureNativeSkirmishAI(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)

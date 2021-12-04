@@ -8,12 +8,11 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 
 CUnitTracker unitTracker;
@@ -24,6 +23,28 @@ const char* CUnitTracker::modeNames[TrackModeCount] = {
 	"Average",
 	"Extents"
 };
+
+
+CUnitTracker::CUnitTracker():
+	enabled(false),
+	firstUpdate(true),
+	trackMode(TrackSingle),
+	trackUnit(0),
+	timeOut(15),
+	lastFollowUnit(0),
+	lastUpdateTime(0.0f),
+	trackPos(500.0f, 100.0f, 500.0f),
+	trackDir(FwdVector),
+	smoothedRight(RgtVector),
+	oldCamDir(RgtVector),
+	oldCamPos(500.0f, 500.0f, 500.0f)
+{
+}
+
+
+CUnitTracker::~CUnitTracker()
+{
+}
 
 
 void CUnitTracker::Disable()
@@ -48,7 +69,13 @@ void CUnitTracker::IncMode()
 
 void CUnitTracker::SetMode(int mode)
 {
-	trackMode = Clamp(mode, 0, TrackModeCount - 1);
+	if (mode < 0) {
+		trackMode = 0;
+	} else if (mode >= TrackModeCount) {
+		trackMode = TrackModeCount - 1;
+	} else {
+		trackMode = mode;
+	}
 	LOG("TrackMode: %s", modeNames[trackMode]);
 }
 
@@ -61,92 +88,86 @@ void CUnitTracker::Track()
 
 	CleanTrackGroup();
 
-	if (trackedUnitIDs.empty()) {
+	if (trackGroup.empty()) {
 		if (units.empty()) {
 			Disable();
 		} else {
 			MakeTrackGroup();
-			trackUnit = *trackedUnitIDs.begin();
+			trackUnit = *trackGroup.begin();
 			enabled = true;
 		}
+	} else {
+		if (!units.empty())
+			MakeTrackGroup();
 
-		return;
-	}
-
-	if (!units.empty())
-		MakeTrackGroup();
-
-	if (trackedUnitIDs.find(trackUnit) == trackedUnitIDs.end()) {
-		trackUnit = *trackedUnitIDs.begin();
-		enabled = true;
-		return;
-	}
-
-	if (enabled) {
-		if (trackMode != TrackSingle) {
-			trackMode = TrackSingle;
-			LOG("TrackMode: %s", modeNames[TrackSingle]);
+		if (trackGroup.find(trackUnit) == trackGroup.end()) {
+			trackUnit = *trackGroup.begin();
+			enabled = true;
+		} else if (enabled) {
+			if (trackMode != TrackSingle) {
+				trackMode = TrackSingle;
+				LOG("TrackMode: %s", modeNames[TrackSingle]);
+			}
+			NextUnit();
+		} else {
+			enabled = true;
 		}
-		NextUnit();
-		return;
 	}
-
-	enabled = true;
 }
 
 
 void CUnitTracker::MakeTrackGroup()
 {
 	smoothedRight = RgtVector;
-	trackedUnitIDs.clear();
+	trackGroup.clear();
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		trackedUnitIDs.insert(unitID);
+		trackGroup.insert(unitID);
 	}
 }
 
 
 void CUnitTracker::CleanTrackGroup()
 {
-	deadUnitIDs.clear();
-	deadUnitIDs.reserve(trackedUnitIDs.size());
+	std::vector<int> deadUnitIDs;
 
-	for (const int unitID: trackedUnitIDs) {
-		if (unitHandler.GetUnitUnsafe(unitID) == nullptr)
+	deadUnitIDs.clear();
+	deadUnitIDs.reserve(trackGroup.size());
+
+	for (const int unitID: trackGroup) {
+		if (unitHandler->GetUnitUnsafe(unitID) == nullptr)
 			deadUnitIDs.push_back(unitID);
 	}
 
 	for (const int deadUnitID: deadUnitIDs) {
-		trackedUnitIDs.erase(deadUnitID);
+		trackGroup.erase(deadUnitID);
 	}
 
-	if (trackedUnitIDs.empty()) {
+	if (trackGroup.empty()) {
 		Disable();
 		return;
 	}
-
 	// reset trackUnit if it was erased above
-	if (trackedUnitIDs.find(trackUnit) != trackedUnitIDs.end())
-		return;
-
-	trackUnit = *trackedUnitIDs.begin();
+	if (trackGroup.find(trackUnit) == trackGroup.end()) {
+		trackUnit = *trackGroup.begin();
+	}
 }
 
 
 void CUnitTracker::NextUnit()
 {
-	if (trackedUnitIDs.empty())
+	if (trackGroup.empty())
 		return;
 
-	auto it = trackedUnitIDs.find(trackUnit);
+	auto it = trackGroup.find(trackUnit);
 
-	if (it == trackedUnitIDs.end()) {
-		trackUnit = *trackedUnitIDs.begin();
+	if (it == trackGroup.end()) {
+		trackUnit = *trackGroup.begin();
 		return;
 	}
 
-	if ((++it) == trackedUnitIDs.end()) {
-		trackUnit = *trackedUnitIDs.begin();
+	if ((++it) == trackGroup.end()) {
+		trackUnit = *trackGroup.begin();
 		Disable();
 	} else {
 		trackUnit = *it;
@@ -158,24 +179,24 @@ CUnit* CUnitTracker::GetTrackUnit()
 {
 	CleanTrackGroup();
 
-	if (trackedUnitIDs.empty()) {
+	if (trackGroup.empty()) {
 		Disable();
-		return nullptr;
+		return NULL;
 	}
 
-	return unitHandler.GetUnitUnsafe(trackUnit);
+	return unitHandler->GetUnitUnsafe(trackUnit);
 }
 
 
 float3 CUnitTracker::CalcAveragePos() const
 {
-	float3 p;
+	float3 p(ZeroVector);
 
-	for (const int unitID: trackedUnitIDs) {
-		p += unitHandler.GetUnitUnsafe(unitID)->drawPos;
+	for (auto it = trackGroup.cbegin(); it != trackGroup.cend(); ++it) {
+		p += unitHandler->GetUnitUnsafe(*it)->drawPos;
 	}
-
-	return (p / trackedUnitIDs.size());
+	p /= (float)trackGroup.size();
+	return p;
 }
 
 
@@ -184,14 +205,17 @@ float3 CUnitTracker::CalcExtentsPos() const
 	float3 minPos(+1e9f, +1e9f, +1e9f);
 	float3 maxPos(-1e9f, -1e9f, -1e9f);
 
-	for (const int unitID: trackedUnitIDs) {
-		const float3& p = unitHandler.GetUnitUnsafe(unitID)->drawPos;
+	for (auto it = trackGroup.cbegin(); it != trackGroup.cend(); ++it) {
+		const float3& p = unitHandler->GetUnitUnsafe(*it)->drawPos;
 
-		minPos = float3::min(minPos, p);
-		maxPos = float3::max(maxPos, p);
+		if (p.x < minPos.x) { minPos.x = p.x; }
+		if (p.y < minPos.y) { minPos.y = p.y; }
+		if (p.z < minPos.z) { minPos.z = p.z; }
+		if (p.x > maxPos.x) { maxPos.x = p.x; }
+		if (p.y > maxPos.y) { maxPos.y = p.y; }
+		if (p.z > maxPos.z) { maxPos.z = p.z; }
 	}
-
-	return ((minPos + maxPos) * 0.5f);
+	return (minPos + maxPos) / 2.0f;
 }
 
 
@@ -199,76 +223,83 @@ float3 CUnitTracker::CalcExtentsPos() const
 
 void CUnitTracker::SetCam()
 {
-	CUnit* u = GetTrackUnit();
+	if (firstUpdate) {
+		firstUpdate = false;
+	}
 
-	if (u == nullptr) {
+	CUnit* u = GetTrackUnit();
+	if (!u) {
 		Disable();
 		return;
 	}
 
-	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == nullptr) {
+	if (lastFollowUnit != 0 && unitHandler->GetUnitUnsafe(lastFollowUnit) == 0) {
 		timeOut = 1;
 		lastFollowUnit = 0;
 	}
 
 	if (timeOut > 0) {
 		// Transition between 2 targets
+		timeOut++;
 		camera->SetDir(oldCamDir);
 		camera->SetPos(oldCamPos);
-
 		if (camHandler->GetCurrentControllerNum() == CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetDir(oldCamDir);
 			camHandler->GetCurrentController().SetPos(oldCamPos);
 		}
-
-		timeOut += 1;
-		timeOut *= (timeOut <= 15);
-
+		if (timeOut > 15) {
+			timeOut = 0;
+		}
 		camHandler->UpdateTransition();
+
 	} else if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 		// non-FPS camera modes  (immediate positional tracking)
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
 				pos = CalcAveragePos();
-			} break;
+				break;
+			}
 			case TrackExtents: {
 				pos = CalcExtentsPos();
-			} break;
+				break;
+			}
 			default: {
 				pos = u->drawMidPos;
-			} break;
+				break;
+			}
 		}
-
 		camHandler->GetCurrentController().SetTrackingInfo(pos, u->radius * 2.7182818f);
 		camHandler->UpdateTransition();
+
 	} else {
 		// FPS Camera
-		const float offsetTime = gs->frameNum + globalRendering->timeOffset;
-		const float deltaTime = offsetTime - lastUpdateTime;
-		lastUpdateTime = offsetTime;
+		const float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
+		lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
-		const float3 modFrontVec = u->frontdir * u->radius * 3.0f;
-		const float3 mixRightDir = mix<float3>(u->rightdir, RgtVector, 0.75f); // NB: will be 0 if u->r == -R
-		      float3 modPlanePos = u->drawMidPos - modFrontVec;
-
-		modPlanePos.y = std::max(modPlanePos.y, CGround::GetHeightReal(modPlanePos.x, modPlanePos.z, false) + (u->radius * 2.0f));
+		float3 modPlanePos(u->drawMidPos - (u->frontdir * u->radius * 3));
+		const float minHeight = CGround::GetHeightReal(modPlanePos.x, modPlanePos.z, false) + (u->radius * 2);
+		modPlanePos.y = std::max(modPlanePos.y, minHeight);
 
 		trackPos += (modPlanePos - trackPos) * (1 - math::pow(0.95f, deltaTime));
 		trackDir += (u->frontdir - trackDir) * (1 - math::pow(0.90f, deltaTime));
-		smoothedRight = mix<float3>(smoothedRight, mixRightDir, deltaTime * 0.05f).SafeANormalize();
-
-		const float3 wantedDir = (u->drawMidPos - camera->GetPos()).SafeANormalize();
-		const float3 cameraDir = (wantedDir + trackDir.SafeANormalize()).SafeANormalize();
+		trackDir.ANormalize();
 
 		camera->SetPos(trackPos);
-		camera->SetDir(cameraDir);
+
+		float3 wantedDir = u->drawMidPos - camera->GetPos();
+		wantedDir.ANormalize();
+		wantedDir += trackDir;
+		wantedDir.ANormalize();
+		camera->SetDir(wantedDir);
 
 		CFPSController& fpsCamera = static_cast<CFPSController&>(camHandler->GetCurrentController());
 		fpsCamera.SetDir(camera->GetDir());
-		fpsCamera.SetPos(camera->GetPos());
+		fpsCamera.SetPos(trackPos);
 
-		camera->SetRotZ(std::atan2(smoothedRight.y, smoothedRight.Length2D()));
+		const float3 right = mix<float3>(smoothedRight, mix<float3>(u->rightdir, RgtVector, 0.75f), deltaTime * 0.05f).ANormalize();
+		camera->SetRotZ(std::atan2(right.y, right.Length2D()));
+		smoothedRight = right;
 
 		oldCamDir = camera->GetDir();
 		oldCamPos = camera->GetPos();

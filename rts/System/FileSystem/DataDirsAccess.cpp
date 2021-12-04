@@ -191,12 +191,12 @@ std::vector<std::string> DataDirsAccess::FindDirsInDirectSubDirs(
 bool DataDirsAccess::InReadDir(const std::string& path)
 {
 	std::string locatedFile = LocateFile(path);
-	return (!locatedFile.empty() && locatedFile != path);
+	return (locatedFile != "") && (locatedFile != path);
 }
 
 
 bool DataDirsAccess::InWriteDir(const std::string& path)
 {
 	std::string locatedFile = LocateFile(path, FileQueryFlags::WRITE);
-	return (!locatedFile.empty() && locatedFile != path);
+	return (locatedFile != "") && (locatedFile != path);
 }

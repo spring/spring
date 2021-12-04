@@ -12,6 +12,28 @@ struct WeaponDef;
 
 // parameters used to spawn weapon-projectiles
 struct ProjectileParams {
+	ProjectileParams()
+		: target(NULL)
+		, owner(NULL)
+		, model(NULL)
+		, weaponDef(NULL)
+
+		, ownerID(-1u)
+		, teamID(-1u)
+		, weaponNum(-1u)
+		, cegID(-1u)
+
+		, ttl(0)
+		, gravity(0.0f)
+		, tracking(0.0f)
+		, maxRange(0.0f)
+		, upTime(-1.0f)
+
+		, startAlpha(0.0f)
+		, endAlpha(1.0f)
+	{
+	}
+
 	float3 pos;
 	float3 end;
 	float3 speed;
@@ -19,27 +41,26 @@ struct ProjectileParams {
 	float3 error;
 
 	// unit, feature or weapon projectile to intercept
-	CWorldObject* target = nullptr;
-	CUnit* owner = nullptr;
-	S3DModel* model = nullptr;
+	CWorldObject* target;
+	CUnit* owner;
+	S3DModel* model;
 
-	const WeaponDef* weaponDef = nullptr;
+	const WeaponDef* weaponDef;
 
-	unsigned int ownerID = -1u;
-	unsigned int teamID = -1u;
-	unsigned int weaponNum = -1u;
-	unsigned int cegID = -1u;
+	unsigned int ownerID;
+	unsigned int teamID;
+	unsigned int weaponNum;
+	unsigned int cegID;
 
-	int ttl = 0;
-
-	float gravity = 0.0f;
-	float tracking = 0.0f;
-	float maxRange = 0.0f;
-	float upTime = -1.0f;
+	int ttl;
+	float gravity;
+	float tracking;
+	float maxRange;
+	float upTime;
 
 	// BeamLaser-specific junk
-	float startAlpha = 0.0f;
-	float endAlpha = 1.0f;
+	float startAlpha;
+	float endAlpha;
 };
 
 #endif

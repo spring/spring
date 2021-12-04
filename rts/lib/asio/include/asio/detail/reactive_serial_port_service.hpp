@@ -2,7 +2,7 @@
 // detail/reactive_serial_port_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -23,7 +23,7 @@
 
 #include <string>
 #include "asio/error.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 #include "asio/serial_port_base.hpp"
 #include "asio/detail/descriptor_ops.hpp"
 #include "asio/detail/reactive_descriptor_service.hpp"
@@ -34,8 +34,7 @@ namespace asio {
 namespace detail {
 
 // Extend reactive_descriptor_service to provide serial port support.
-class reactive_serial_port_service :
-  public service_base<reactive_serial_port_service>
+class reactive_serial_port_service
 {
 public:
   // The native type of a serial port.
@@ -45,10 +44,10 @@ public:
   typedef reactive_descriptor_service::implementation_type implementation_type;
 
   ASIO_DECL reactive_serial_port_service(
-      asio::io_context& io_context);
+      asio::io_service& io_service);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown();
+  ASIO_DECL void shutdown_service();
 
   // Construct a new serial port implementation.
   void construct(implementation_type& impl)
@@ -190,8 +189,8 @@ private:
   static asio::error_code store_option(const void* option,
       termios& storage, asio::error_code& ec)
   {
-    static_cast<const SettableSerialPortOption*>(option)->store(storage, ec);
-    return ec;
+    return static_cast<const SettableSerialPortOption*>(option)->store(
+        storage, ec);
   }
 
   // Helper function to set a serial port option.
@@ -208,8 +207,7 @@ private:
   static asio::error_code load_option(void* option,
       const termios& storage, asio::error_code& ec)
   {
-    static_cast<GettableSerialPortOption*>(option)->load(storage, ec);
-    return ec;
+    return static_cast<GettableSerialPortOption*>(option)->load(storage, ec);
   }
 
   // Helper function to get a serial port option.

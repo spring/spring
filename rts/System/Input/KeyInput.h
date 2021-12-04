@@ -3,7 +3,7 @@
 #ifndef KEYBOARD_INPUT_H
 #define KEYBOARD_INPUT_H
 
-#include <vector>
+#include <map>
 
 namespace KeyInput {
 	void Update(int currKeycode, int fakeMetaKey);
@@ -12,10 +12,7 @@ namespace KeyInput {
 	bool IsKeyPressed(int idx);
 	void SetKeyModState(int mod, bool pressed);
 	bool GetKeyModState(int mod);
-
-	typedef std::pair<int, bool> Key;
-
-	const std::vector<Key>& GetPressedKeys();
+	const std::map<int,bool>& GetPressedKeys();
 
 	int GetNormalizedKeySymbol(int key);
 }

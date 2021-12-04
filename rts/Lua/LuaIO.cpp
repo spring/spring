@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include <cstdio>
-#include <cerrno>
+#include <stdio.h>
+#include <errno.h>
 
 #ifndef _MSC_VER	// this header file does not exist for the microsoft compiler
  #include <unistd.h>
 #endif
 
 #include <string>
-#include <array>
+using std::string;
 
 #include "LuaIO.h"
 
@@ -25,17 +25,17 @@
 /******************************************************************************/
 /******************************************************************************/
 
-static bool IsSafePath(const std::string& path)
+static bool IsSafePath(const string& path)
 {
 	// keep searches within the Spring directory
 	if ((path[0] == '/') || (path[0] == '\\') ||
 	    ((path.size() >= 2) && (path[1] == ':'))) {
 		return false;
 	}
-	if ((path.find("..") != std::string::npos) ||
-		(path.find("springsettings.cfg") != std::string::npos) || //don't allow to change config file
-		(path.find(".springrc") != std::string::npos) ||
-		(path.find("springrc") != std::string::npos)
+	if ((path.find("..") != string::npos) ||
+		(path.find("springsettings.cfg") != string::npos) || //don't allow to change config file
+		(path.find(".springrc") != string::npos) ||
+		(path.find("springrc") != string::npos)
 	) {
 		return false;
 	}
@@ -47,36 +47,42 @@ static bool IsSafePath(const std::string& path)
 /******************************************************************************/
 /******************************************************************************/
 
-bool LuaIO::IsSimplePath(const std::string& path)
+bool LuaIO::IsSimplePath(const string& path)
 {
 	// keep searches within the Spring directory
-	if ((path[0] == '/') || (path[0] == '\\') || ((path.size() >= 2) && (path[1] == ':')))
+	if ((path[0] == '/') || (path[0] == '\\') ||
+	    ((path.size() >= 2) && (path[1] == ':'))) {
 		return false;
-
-	return (path.find("..") == std::string::npos);
+	}
+	if (path.find("..") != string::npos) {
+		return false;
+	}
+	return true;
 }
 
 
-bool LuaIO::SafeExecPath(const std::string& path)
+bool LuaIO::SafeExecPath(const string& path)
 {
 	return false; // don't allow execution of external programs, yet
 }
 
 
-bool LuaIO::SafeReadPath(const std::string& path)
+bool LuaIO::SafeReadPath(const string& path)
 {
 	return dataDirsAccess.InReadDir(path);
 }
 
 
-bool LuaIO::SafeWritePath(const std::string& path)
+bool LuaIO::SafeWritePath(const string& path)
 {
-	const std::array<std::string, 5> exeFiles = {"exe", "dll", "so", "bat", "com"};
-	const std::string ext = FileSystem::GetExtension(path);
-
-	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext) != exeFiles.end())
-		return false;
-
+	const size_t numExtensions = 5;
+	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
+	const string ext = FileSystem::GetExtension(path);
+	for (size_t i = 0; i < numExtensions; ++i)
+	{
+		if (ext == exeFiles[i])
+			return false;
+	}
 	return dataDirsAccess.InWriteDir(path);
 }
 
@@ -87,14 +93,14 @@ bool LuaIO::SafeWritePath(const std::string& path)
 FILE* LuaIO::fopen(lua_State* L, const char* path, const char* mode)
 {
 	// check the mode string
-	const std::string modeStr = StringToLower(mode);
-	if (modeStr.find_first_not_of("rwabt+") != std::string::npos) {
+	const string modeStr = StringToLower(mode);
+	if (modeStr.find_first_not_of("rwabt+") != string::npos) {
 		errno = EINVAL;
-		return nullptr;
+		return NULL;
 	}
 	if (!IsSafePath(path)) {
 		errno = EPERM; //EACCESS?
-		return nullptr;
+		return NULL;
 	}
 	return ::fopen(path, mode);
 }
@@ -103,13 +109,13 @@ FILE* LuaIO::fopen(lua_State* L, const char* path, const char* mode)
 FILE* LuaIO::popen(lua_State* L, const char* command, const char* type)
 {
 	// check the type string
-	const std::string typeStr = StringToLower(type);
-	if (typeStr.find_first_not_of("rw") != std::string::npos) {
+	const string typeStr = StringToLower(type);
+	if (typeStr.find_first_not_of("rw") != string::npos) {
 		errno = EINVAL;
-		return nullptr;
+		return NULL;
 	}
 	errno = EINVAL;
-	return nullptr;
+	return NULL;
 }
 
 

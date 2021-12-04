@@ -20,7 +20,6 @@
 using std::string;
 using std::vector;
 
-class CSolidObject;
 class CUnit;
 class CWeapon;
 class CFeature;
@@ -31,7 +30,6 @@ struct SRectangle;
 struct UnitDef;
 struct BuildInfo;
 struct FeatureDef;
-class LuaMaterial;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -131,8 +129,8 @@ class CEventClient
 		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
 
 		virtual void UnitIdle(const CUnit* unit) {}
-		virtual void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua) {}
-		virtual void UnitCmdDone(const CUnit* unit, const Command& command                                              ) {}
+		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
+		virtual void UnitCmdDone(const CUnit* unit, const Command& command) {}
 		virtual void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -165,8 +163,8 @@ class CEventClient
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
 
-		virtual bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee) { return false; }
-		virtual bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) { return false; }
+		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
+		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
 		virtual void UnitMoved(const CUnit* unit) {}
 		virtual void UnitMoveFailed(const CUnit* unit) {}
 
@@ -194,29 +192,22 @@ class CEventClient
 
 		virtual bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner) { return false; }
 
+		virtual bool CommandFallback(const CUnit* unit, const Command& cmd);
+		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
 
-		virtual bool CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
-		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) { return true; }
+		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
+		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
+		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
+		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
+		virtual bool AllowResourceLevel(int teamID, const string& type, float level);
+		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
+		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
-		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
-		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
-		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
-		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) { return true; }
-		virtual bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) { return true; }
-		virtual bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) { return true; }
-		virtual bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) { return true; }
-		virtual bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) { return true; }
-		virtual bool AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed) { return true; }
-		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) { return true; }
-		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) { return true; }
-		virtual bool AllowResourceLevel(int teamID, const string& type, float level) { return true; }
-		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount) { return true; }
-		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
-		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
-		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
-
-		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
-		virtual bool MoveCtrlNotify(const CUnit* unit, int data) { return false; }
+		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
+		virtual bool MoveCtrlNotify(const CUnit* unit, int data);
 
 		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
 		virtual bool AllowWeaponTarget(
@@ -260,7 +251,7 @@ class CEventClient
 			const float3& hitPos
 		) { return false; }
 
-		virtual bool SyncedActionFallback(const string& line, int playerID) { return false; }
+		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
 
 		/**
@@ -275,11 +266,11 @@ class CEventClient
 		virtual bool KeyPress(int key, bool isRepeat);
 		virtual bool KeyRelease(int key);
 		virtual bool TextInput(const std::string& utf8);
-		virtual bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
 		virtual bool MousePress(int x, int y, int button);
 		virtual void MouseRelease(int x, int y, int button);
 		virtual bool MouseWheel(bool up, float value);
+		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
 
 		virtual void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
 		virtual void DownloadStarted(int ID);
@@ -312,7 +303,7 @@ class CEventClient
 		                        const float3* pos1,
 		                        const std::string* label);
 
-		virtual void SunChanged();
+		virtual void SunChanged(); //FIXME add to lua
 
 		virtual void ViewResize();
 
@@ -324,7 +315,6 @@ class CEventClient
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
 		virtual void DrawGroundPreForward() {}
-		virtual void DrawGroundPostForward() {}
 		virtual void DrawGroundPreDeferred() {}
 		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
@@ -335,23 +325,22 @@ class CEventClient
 		virtual void DrawInMiniMap() {}
 		virtual void DrawInMiniMapBackground() {}
 
-		virtual bool DrawUnit(const CUnit* unit) { return false; }
-		virtual bool DrawFeature(const CFeature* feature) { return false; }
-		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
-		virtual bool DrawProjectile(const CProjectile* projectile) { return false; }
-		virtual bool DrawMaterial(const LuaMaterial* material) { return false; }
+		virtual bool DrawUnit(const CUnit* unit);
+		virtual bool DrawFeature(const CFeature* feature);
+		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon);
+		virtual bool DrawProjectile(const CProjectile* projectile);
 
 		virtual void GameProgress(int gameFrame);
 
 		virtual void DrawLoadScreen();
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
-		virtual void CollectGarbage(bool forced) {}
-		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
-		virtual void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime) {}
-		virtual void MetalMapChanged(const int x, const int z) {}
+		virtual void CollectGarbage();
+		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		virtual void MetalMapChanged(const int x, const int z);
 		/// @}
 };
 
 
 #endif /* EVENT_CLIENT_H */
+

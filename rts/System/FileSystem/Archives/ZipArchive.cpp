@@ -5,11 +5,16 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <cassert>
+#include <assert.h>
 
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
+
+CZipArchiveFactory::CZipArchiveFactory()
+	: IArchiveFactory("sdz")
+{
+}
 
 IArchive* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
@@ -17,103 +22,109 @@ IArchive* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 }
 
 
-CZipArchive::CZipArchive(const std::string& archiveName): CBufferedArchive(archiveName)
+CZipArchive::CZipArchive(const std::string& archiveName)
+	: CBufferedArchive(archiveName)
 {
-	std::lock_guard<spring::mutex> lck(archiveLock);
-
-	if ((zip = unzOpen(archiveName.c_str())) == nullptr) {
-		LOG_L(L_ERROR, "[%s] error opening \"%s\"", __func__, archiveName.c_str());
+	zip = unzOpen(archiveName.c_str());
+	if (!zip) {
+		LOG_L(L_ERROR, "Error opening \"%s\"", archiveName.c_str());
 		return;
 	}
 
-	unz_global_info64 globalZipInfo;
-
-	memset(&globalZipInfo, 0, sizeof(globalZipInfo));
-	unzGetGlobalInfo64(zip, &globalZipInfo);
-
 	// We need to map file positions to speed up opening later
-	fileEntries.reserve(globalZipInfo.number_entry);
-
-	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
+	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip))
+	{
 		unz_file_info info;
 		char fName[512];
 
-		unzGetCurrentFileInfo(zip, &info, fName, sizeof(fName), nullptr, 0, nullptr, 0);
+		unzGetCurrentFileInfo(zip, &info, fName, 512, nullptr, 0, nullptr, 0);
 
-		if (fName[0] == 0)
+		const std::string fLowerName = StringToLower(fName);
+		if (fLowerName.empty()) {
 			continue;
+		}
+		const char last = fLowerName[fLowerName.length() - 1];
+		if ((last == '/') || (last == '\\')) {
+			continue; // exclude directory names
+		}
 
-		const size_t fNameLen = strlen(fName);
-
-		// exclude directory names
-		if ((fName[fNameLen - 1] == '/') || (fName[fNameLen - 1] == '\\'))
-			continue;
-
-		FileEntry fd;
+		FileData fd;
 		unzGetFilePos(zip, &fd.fp);
-
 		fd.size = info.uncompressed_size;
 		fd.origName = fName;
 		fd.crc = info.crc;
-
-		lcNameIndex.emplace(StringToLower(fd.origName), fileEntries.size());
-		fileEntries.emplace_back(std::move(fd));
+		fileData.push_back(fd);
+		lcNameIndex[fLowerName] = fileData.size() - 1;
 	}
 }
 
 CZipArchive::~CZipArchive()
 {
-	std::lock_guard<spring::mutex> lck(archiveLock);
-
 	if (zip != nullptr) {
 		unzClose(zip);
 		zip = nullptr;
 	}
 }
 
+bool CZipArchive::IsOpen()
+{
+	return (zip != nullptr);
+}
+
+unsigned int CZipArchive::NumFiles() const
+{
+	return fileData.size();
+}
 
 void CZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 
-	name = fileEntries[fid].origName;
-	size = fileEntries[fid].size;
+	name = fileData[fid].origName;
+	size = fileData[fid].size;
 }
 
+unsigned int CZipArchive::GetCrc32(unsigned int fid)
+{
+	assert(IsFileId(fid));
+
+	return fileData[fid].crc;
+}
 
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more
 // than one file at a time
-int CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
+bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	// Prevent opening files on missing/invalid archives
-	if (zip == nullptr)
-		return -4;
-
-	// assert(archiveLock.locked());
+	if (!zip) {
+		return false;
+	}
 	assert(IsFileId(fid));
 
-	unzGoToFilePos(zip, &fileEntries[fid].fp);
+	unzGoToFilePos(zip, &fileData[fid].fp);
 
 	unz_file_info fi;
 	unzGetCurrentFileInfo(zip, &fi, nullptr, 0, nullptr, 0, nullptr, 0);
 
-	if (unzOpenCurrentFile(zip) != UNZ_OK)
-		return -3;
+	if (unzOpenCurrentFile(zip) != UNZ_OK) {
+		return false;
+	}
 
-	buffer.clear();
 	buffer.resize(fi.uncompressed_size);
 
-	int ret = 1;
+	bool ret = true;
+	if (!buffer.empty() && unzReadCurrentFile(zip, &buffer[0], fi.uncompressed_size) != fi.uncompressed_size) {
+		ret = false;
+	}
 
-	if (!buffer.empty() && unzReadCurrentFile(zip, buffer.data(), buffer.size()) != buffer.size())
-		ret -= 2;
-	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
-		ret -= 1;
+	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR) {
+		ret = false;
+	}
 
-	if (ret != 1)
+	if (!ret) {
 		buffer.clear();
+	}
 
 	return ret;
 }
-

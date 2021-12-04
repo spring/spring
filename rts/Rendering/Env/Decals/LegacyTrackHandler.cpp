@@ -18,7 +18,6 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
@@ -270,6 +269,8 @@ bool LegacyTrackHandler::GetDrawTracks() const
 
 void LegacyTrackHandler::Draw()
 {
+	SCOPED_TIMER("Draw::World::Decals::Tracks");
+
 	if (!GetDrawTracks())
 		return;
 
@@ -311,8 +312,8 @@ void LegacyTrackHandler::BindTextures()
 		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	}
 
-	if (shadowHandler.ShadowsLoaded()) {
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler->ShadowsLoaded()) {
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
 	}
 
@@ -348,10 +349,9 @@ void LegacyTrackHandler::KillTextures()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 
-	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler->ShadowsLoaded()) {
+		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	{
 		glActiveTexture(GL_TEXTURE1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
@@ -384,75 +384,66 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sunLighting->groundShadowDensity);
 
 		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
+		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 		glMatrixMode(GL_MODELVIEW);
 	} else {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler->GetShadowMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
 	}
 }
 
-
-static bool CanReceiveTracks(const float3& pos)
-{
-	// calculate typemap-index
-	const int tmz = pos.z / (SQUARE_SIZE * 2);
-	const int tmx = pos.x / (SQUARE_SIZE * 2);
-	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
-
-	const uint8_t* typeMap = readMap->GetTypeMapSynced();
-	const uint8_t  typeNum = typeMap[tmi];
-
-	return (mapInfo->terrainTypes[typeNum].receiveTracks);
-}
 
 void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 {
+	if (!unit->leaveTracks)
+		return;
+
 	const UnitDef* unitDef = unit->unitDef;
 	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
 
-	if (!unit->leaveTracks)
-		return;
 	if (!unitDef->IsGroundUnit())
 		return;
-	if (unit->IsInWater() && !unit->IsOnGround())
+
+	if (decalDef.trackDecalType < -1)
 		return;
 
-
-	// -2 := failed to load texture, do not try again
-	// -1 := texture was not loaded yet, first attempt
-	switch (decalDef.trackDecalType) {
-		case -2: {                                                                                                return; } break;
-		case -1: { const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName); } break;
-		default: {                                                                                                        } break;
+	if (decalDef.trackDecalType < 0) {
+		const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
+		if (decalDef.trackDecalType < -1)
+			return;
 	}
 
-	if (decalDef.trackDecalType < 0)
-		return;
-
-
-	if (unit->myTrack != nullptr && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
 		return;
 
 	if (!gu->spectatingFullView && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0)
 		return;
 
-	if (!CanReceiveTracks(newPos))
+	// calculate typemap-index
+	const int tmz = newPos.z / (SQUARE_SIZE * 2);
+	const int tmx = newPos.x / (SQUARE_SIZE * 2);
+	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
+
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
+	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
+
+	if (!terType.receiveTracks)
 		return;
 
-	const float trackLifeTime = GAME_SPEED * 3 * decalDef.trackDecalStrength;
+	static const int decalLevel = 3; //FIXME
+	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
 
 	if (trackLifeTime <= 0.0f)
 		return;
 
 	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
-	const float3 ofs = unit->rightdir * decalDef.trackDecalWidth * 0.5f;
+
 
 	// prepare the new part of the track; will be copied
 	TrackPart trackPart;
-	trackPart.pos1 = pos + ofs;
-	trackPart.pos2 = pos - ofs;
+	trackPart.pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
+	trackPart.pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	trackPart.pos1.y = CGround::GetHeightReal(trackPart.pos1.x, trackPart.pos1.z, false);
 	trackPart.pos2.y = CGround::GetHeightReal(trackPart.pos2.x, trackPart.pos2.z, false);
 	trackPart.creationTime = gs->frameNum;
@@ -573,5 +564,4 @@ void LegacyTrackHandler::RenderUnitDestroyed(const CUnit* unit)
 {
 	RemoveTrack(const_cast<CUnit*>(unit));
 }
-
 

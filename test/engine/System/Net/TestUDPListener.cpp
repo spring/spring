@@ -3,8 +3,8 @@
 #include "System/Log/ILog.h"
 
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE UDPListener
+#include <boost/test/unit_test.hpp>
 
 class SocketTest {
 public:
@@ -12,26 +12,20 @@ public:
 	}
 	void TestPort(int port, bool result = true)
 	{
-#ifndef NO_IPV6
-		const std::string& err = netcode::UDPListener::TryBindSocket(port, socket, "::");
-#else
-		const std::string& err = netcode::UDPListener::TryBindSocket(port, socket, "127.0.0.1");
-#endif
-		INFO(err);
-		CHECK(err.empty() == result);
+		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "::");
+		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 
 	}
 	void TestHost(const char* address, bool result = true)
 	{
-		const std::string& err = netcode::UDPListener::TryBindSocket(11111, socket, address);
-		INFO(err);
-		CHECK(err.empty() == result);
+		const std::string& err = netcode::UDPListener::TryBindSocket(11111, &socket, address);
+		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 	}
 private:
-	std::shared_ptr<asio::ip::udp::socket> socket;
+	netcode::SocketPtr socket;
 };
 
-TEST_CASE("TryBindSocket")
+BOOST_AUTO_TEST_CASE(TryBindSocket)
 {
 	SocketTest t;
 
@@ -39,9 +33,9 @@ TEST_CASE("TryBindSocket")
 	LOG("\nIP v4 & v6 addresses");
 	t.TestHost("127.0.0.1");
 	t.TestHost("0.0.0.0");
-#ifndef NO_IPV6
 	t.TestHost("::");
 	t.TestHost("::1");
+
 
 	// badly named invalid IP v6 addresses
 	LOG("\nbadly named invalid IP v6 addresses");
@@ -60,7 +54,7 @@ TEST_CASE("TryBindSocket")
 		http://tools.ietf.org/html/rfc4291 sections 2.5.5.1 and 2.5.5.2
 	*/
 	//	TestHost("224:1dff:fecf:df44/64", false);
-#endif
+
 
 	// host-names
 	LOG("\nhost-names");

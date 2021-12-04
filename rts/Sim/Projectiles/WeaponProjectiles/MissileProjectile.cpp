@@ -6,23 +6,23 @@
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
+#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Matrix44f.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CMissileProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -71,10 +71,10 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
 
-	if (model != nullptr)
+	if (model != NULL) {
 		SetRadiusAndHeight(model);
-
-	if (weaponDef != nullptr) {
+	}
+	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
 		isDancing = (weaponDef->dance > 0);
 		isWobbling = (weaponDef->wobble > 0);
@@ -91,14 +91,18 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 		}
 	}
 
-	drawRadius = radius + maxSpeed * 8.0f;
+	drawRadius = radius + maxSpeed * 8;
 	castShadow = true;
 
-	CUnit* u = dynamic_cast<CUnit*>(target);
-	if (u == nullptr)
-		return;
+#ifdef TRACE_SYNC
+	tracefile << "New missile: ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 
-	u->IncomingMissile(this);
+	CUnit* u = dynamic_cast<CUnit*>(target);
+	if (u != NULL) {
+		u->IncomingMissile(this);
+	}
 }
 
 void CMissileProjectile::Collision()
@@ -134,19 +138,42 @@ void CMissileProjectile::Update()
 
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
-			speed.w += (weaponDef->weaponacceleration * (speed.w < maxSpeed));
+			float3 targetVel;
 
-			// FIXME: should go before the targeting update?
-			// const float3 orgTargPos = targetPos;
-			// const float3 targetDir = (targetPos - pos).SafeNormalize();
-			const float3& targetVel = UpdateTargeting();
+			if (speed.w < maxSpeed)
+				speed.w += weaponDef->weaponacceleration;
+
+			if (weaponDef->tracks && target != NULL) {
+				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
+
+				if (so != nullptr) {
+					targetPos = so->aimPos;
+					targetVel = so->speed;
+
+
+					if (allyteamID != -1 && !ignoreError) {
+						const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+						if (u != nullptr)
+							targetPos = u->GetErrorPos(allyteamID, true);
+
+					}
+				} else {
+					targetPos = target->pos;
+					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
+					if (po != nullptr)
+						targetVel = po->speed;
+
+				}
+			}
+
 
 			UpdateWobble();
 			UpdateDance();
 
 			const float3 orgTargPos = targetPos;
 			const float3 targetDir = (targetPos - pos).SafeNormalize();
-			const float targetDist = pos.distance(targetPos) + 0.1f;
+			const float dist = pos.distance(targetPos) + 0.1f;
 
 			if (extraHeightTime > 0) {
 				extraHeight -= extraHeightDecay;
@@ -166,11 +193,11 @@ void CMissileProjectile::Update()
 					dir.y -= (dirDiff * ratio);
 				} else {
 					// missile is still ascending
-					dir.y -= (extraHeightDecay / targetDist);
+					dir.y -= (extraHeightDecay / dist);
 				}
 			}
 
-			const float3 targetLeadVec = targetVel * (targetDist / maxSpeed) * 0.7f;
+			const float3 targetLeadVec = targetVel * (dist / maxSpeed) * 0.7f;
 			const float3 targetLeadDir = (targetPos + targetLeadVec - pos).Normalize();
 
 			float3 targetDirDif = targetLeadDir - dir;
@@ -188,7 +215,7 @@ void CMissileProjectile::Update()
 			SetDirectionAndSpeed(dir, speed.w);
 		}
 
-		explGenHandler.GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 	} else {
 		if (weaponDef->selfExplode) {
 			Collision();
@@ -235,39 +262,6 @@ void CMissileProjectile::Update()
 	UpdateGroundBounce();
 }
 
-float3 CMissileProjectile::UpdateTargeting() {
-	float3 targetVel;
-
-	if (!weaponDef->tracks || target == nullptr)
-		return targetVel;
-
-	const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-	const CUnit* u = nullptr;
-	const CWeaponProjectile* po = nullptr;
-
-	if (so != nullptr) {
-		// track aim- or error-position for SolidObject's
-		targetPos = so->aimPos;
-		targetVel = so->speed;
-
-		if (allyteamID != -1 && !ignoreError) {
-			if ((u = dynamic_cast<const CUnit*>(so)) != nullptr)
-				targetPos = u->GetErrorPos(allyteamID, true);
-		}
-
-		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
-		return targetVel;
-	}
-
-	// track regular target base-position
-	targetPos = target->pos;
-
-	if ((po = dynamic_cast<const CWeaponProjectile*>(target)) == nullptr)
-		return targetVel;
-
-	return po->speed;
-}
-
 void CMissileProjectile::UpdateWobble() {
 	if (!isWobbling)
 		return;
@@ -279,7 +273,7 @@ void CMissileProjectile::UpdateWobble() {
 
 	float wobbleFact = weaponDef->wobble;
 
-	if (owner() != nullptr)
+	if (owner() != NULL)
 		wobbleFact *= CUnit::ExperienceScale(owner()->limExperience, weaponDef->ownerExpAccWeight);
 
 	wobbleDir += wobbleDif;
@@ -308,10 +302,9 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 	CWeaponProjectile::UpdateGroundBounce();
 
-	if (oldSpeed == speed)
-		return;
-
-	SetVelocityAndSpeed(speed);
+	if (oldSpeed != speed) {
+		SetVelocityAndSpeed(speed);
+	}
 }
 
 

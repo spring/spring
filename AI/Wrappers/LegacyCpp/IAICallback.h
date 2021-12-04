@@ -156,6 +156,11 @@ public:
 	 */
 	virtual int GetMaxUnits() = 0;
 
+	/**
+	 * Returns a number telling something about the units main function.
+	 * Note: not implemented yet!
+	 */
+	virtual int GetUnitAiHint(int unitId) = 0;
 	virtual int GetUnitTeam(int unitId) = 0;
 	virtual int GetUnitAllyTeam(int unitId) = 0;
 	/// the unit's current health

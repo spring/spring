@@ -12,8 +12,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeProjectile2, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeProjectile2,
 (
@@ -32,6 +33,7 @@ CR_REG_METADATA(CSmokeProjectile2,
 
 
 CSmokeProjectile2::CSmokeProjectile2():
+	CProjectile(),
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -68,7 +70,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
 
 	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
-	textureNum = (int)(guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
+	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
 }
 
 
@@ -86,7 +88,7 @@ void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile2::Update()
 {
 	wantedPos += speed;
-	wantedPos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
+	wantedPos += wind.GetCurrentWind() * age * 0.05f;
 
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;
@@ -124,7 +126,7 @@ void CSmokeProjectile2::Draw(CVertexArray* va)
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
-	#define st projectileDrawer->GetSmokeTexture(textureNum)
+	#define st projectileDrawer->smoketex[textureNum]
 	va->AddVertexTC(interPos - pos2, st->xstart, st->ystart, col);
 	va->AddVertexTC(interPos + pos1, st->xend,   st->ystart, col);
 	va->AddVertexTC(interPos + pos2, st->xend,   st->yend,   col);

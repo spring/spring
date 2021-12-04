@@ -3,14 +3,12 @@
 #ifndef _ARCHIVE_SCANNER_H
 #define _ARCHIVE_SCANNER_H
 
-#include <cstring> // memset
 #include <string>
 #include <deque>
+#include <map>
 #include <vector>
 
 #include "System/Info.h"
-#include "System/Sync/SHA512.hpp"
-#include "System/UnorderedMap.hpp"
 
 class IArchive;
 class IFileFilter;
@@ -46,7 +44,7 @@ public:
 	class ArchiveData
 	{
 	public:
-		ArchiveData() {}
+		ArchiveData() {};
 		ArchiveData(const LuaTable& archiveTable, bool fromCache);
 
 		/*
@@ -64,11 +62,11 @@ public:
 		std::string GetGame() const { return GetInfoValueString("game"); }               /// ex:  Total Annihilation
 		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }     /// ex:  TA
 		std::string GetDescription() const { return GetInfoValueString("description"); } /// ex:  Little units blowing up other little units
-		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf file
+		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf/sm3 file
 		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu
 		bool GetOnlyLocal() const { return GetInfoValueBool("onlyLocal"); }              /// if true spring will not listen for incoming connections
 
-		const std::vector< std::pair<std::string, InfoItem> >& GetInfo() const { return infoItems; }
+		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
 		std::vector<InfoItem> GetInfoItems() const;
 
 		const std::vector<std::string>& GetDependencies() const { return dependencies; }
@@ -83,7 +81,7 @@ public:
 		void SetInfoItemValueBool(const std::string& key, bool value);
 
 		bool IsValid(std::string& error) const;
-		bool IsEmpty() const { return infoItems.empty(); }
+		bool IsEmpty() const { return info.empty(); }
 
 		bool IsMap() const { const int mt = GetModType(); return (mt == modtype::map); }
 		bool IsGame() const { const int mt = GetModType(); return (mt == modtype::hidden || mt == modtype::primary); }
@@ -100,12 +98,12 @@ public:
 		float GetInfoValueFloat(const std::string& key) const;
 		bool GetInfoValueBool(const std::string& key) const;
 
+		InfoItem* GetInfoItem(const std::string& key);
 		const InfoItem* GetInfoItem(const std::string& key) const;
 
-		// NB: may invalidate existing references
-		InfoItem& GetAddInfoItem(const std::string& key);
+		InfoItem& EnsureInfoItem(const std::string& key);
 
-		std::vector< std::pair<std::string, InfoItem> > infoItems;
+		std::map<std::string, InfoItem> info;
 
 		std::vector<std::string> dependencies; /// Archives we depend on
 		std::vector<std::string> replaces;     /// This archive obsoletes these archives
@@ -130,65 +128,51 @@ public:
 
 public:
 	/// checksum of the given archive (without dependencies)
-	sha512::raw_digest GetArchiveSingleChecksumBytes(const std::string& name);
-	/// calculate checksum of the given archive and all its dependencies
-	sha512::raw_digest GetArchiveCompleteChecksumBytes(const std::string& name);
-
-	/// first 4 bytes of single checksum (TODO: get rid of this in unitsync)
-	uint32_t GetArchiveSingleChecksum(const std::string& name) { return *reinterpret_cast<const uint32_t*>(&GetArchiveSingleChecksumBytes(name)[0]); }
-	/// first 4 bytes of complete checksum (TODO: get rid of this in ExternalAI)
-	uint32_t GetArchiveCompleteChecksum(const std::string& name) { return *reinterpret_cast<const uint32_t*>(&GetArchiveCompleteChecksumBytes(name)[0]); }
+	unsigned int GetSingleArchiveChecksum(const std::string& name);
+	/// Calculate checksum of the given archive and all its dependencies
+	unsigned int GetArchiveCompleteChecksum(const std::string& name);
 
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
-	void CheckArchive(const std::string& name, const sha512::raw_digest& serverChecksum, sha512::raw_digest& clientChecksum);
+	void CheckArchive(const std::string& name, unsigned int hostChecksum, unsigned int& localChecksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	void ScanAllDirs();
-	void Clear();
 	void Reload();
 
-	std::string ArchiveFromName(const std::string& versionedName) const;
-	std::string NameFromArchive(const std::string& archiveName) const;
-	std::string GameHumanNameFromArchive(const std::string& archiveName) const;
-	std::string  MapHumanNameFromArchive(const std::string& archiveName) const;
-	std::string GetArchivePath(const std::string& archiveName) const;
-	std::string MapNameToMapFile(const std::string& versionedMapName) const;
-	ArchiveData GetArchiveData(const std::string& versionedName) const;
+	std::string ArchiveFromName(const std::string& s) const;
+	std::string NameFromArchive(const std::string& s) const;
+	std::string GetArchivePath(const std::string& name) const;
+	std::string MapNameToMapFile(const std::string& name) const;
+	ArchiveData GetArchiveData(const std::string& name) const;
 	ArchiveData GetArchiveDataByArchive(const std::string& archive) const;
 
 
 private:
 	struct ArchiveInfo {
-		ArchiveInfo() {
-			memset(checksum, 0, sizeof(checksum));
-		}
-
-		std::string path;             // FileSystem::GetDirectory(origName)
-		std::string origName;         // non-lowercased name
-		std::string replaced;         // if not empty, use this archive instead
-		std::string archiveDataPath;  // path to {mod,map}info.lua for .sdd's
-
+		ArchiveInfo()
+			: modified(0)
+			, checksum(0)
+			, updated(false)
+			{}
+		std::string path;
+		std::string origName;     ///< Could be useful to have the non-lowercased name around
+		std::string replaced;     ///< If not empty, use that archive instead
 		ArchiveData archiveData;
-
-		uint32_t modified = 0;
-		uint32_t modifiedArchiveData = 0;
-		uint8_t checksum[sha512::SHA_LEN];
-
-		bool updated = false;
-		bool hashed = false;
+		unsigned int modified;
+		unsigned int checksum;
+		bool updated;
 	};
 	struct BrokenArchive {
-		std::string name;         // lower-case
-		std::string path;         // FileSystem::GetDirectory(origName)
+		BrokenArchive()
+			: modified(0)
+			, updated(false)
+			{}
+		std::string path;
+		unsigned int modified;
+		bool updated;
 		std::string problem;
-
-		uint32_t modified = 0;
-		bool updated = false;
 	};
 
 private:
-	ArchiveInfo& GetAddArchiveInfo(const std::string& lcfn);
-	BrokenArchive& GetAddBrokenArchive(const std::string& lcfn);
-
 	void ScanDirs(const std::vector<std::string>& dirs);
 	void ScanDir(const std::string& curPath, std::deque<std::string>& foundArchives);
 
@@ -208,12 +192,13 @@ private:
 	IFileFilter* CreateIgnoreFilter(IArchive* ar);
 
 	/**
-	 * Get hash of the data in the specified archive.
-	 * Returns false if file could not be opened.
+	 * Get CRC of the data in the specified archive.
+	 * Returns 0 if file could not be opened.
 	 */
-	bool GetArchiveChecksum(const std::string& filename, ArchiveInfo& archiveInfo);
+	unsigned int GetCRC(const std::string& filename);
+	void ComputeChecksumForArchive(const std::string& filePath);
 
-	bool CheckCachedData(const std::string& fullName, unsigned& modified, bool doChecksum);
+	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
 
 	/**
 	 * Returns a value > 0 if the file is rated as a meta-file.
@@ -237,16 +222,11 @@ private:
 	static bool CheckCompression(const IArchive* ar, const std::string& fullName, std::string& error);
 
 private:
-	spring::unordered_map<std::string, size_t> archiveInfosIndex;
-	spring::unordered_map<std::string, size_t> brokenArchivesIndex;
+	std::map<std::string, ArchiveInfo> archiveInfos;
+	std::map<std::string, BrokenArchive> brokenArchives;
 
-	std::vector<ArchiveInfo> archiveInfos;
-	std::vector<BrokenArchive> brokenArchives;
-
+	bool isDirty;
 	std::string cachefile;
-
-	bool isDirty = false;
-	bool isInScan = false;
 };
 
 extern CArchiveScanner* archiveScanner;

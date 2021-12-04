@@ -7,26 +7,16 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/SpringMath.h"
+#include "Sim/Units/UnitMemPool.h"
+#include "System/myMath.h"
 
 
-CR_BIND_DERIVED(CBuilding, CUnit, )
-CR_REG_METADATA(CBuilding, (
-	CR_IGNORED(blockMap), // reloaded in PostLoad
-	CR_POSTLOAD(PostLoad)
-))
-
-
-void CBuilding::PostLoad()
-{
-	blockMap = unitDef->GetYardMapPtr();
-}
-
+CR_BIND_DERIVED_POOL(CBuilding, CUnit, , unitMemPool.alloc, unitMemPool.free)
+CR_REG_METADATA(CBuilding, )
 
 void CBuilding::PreInit(const UnitLoadParams& params)
 {
 	unitDef = params.unitDef;
-	blockMap = unitDef->GetYardMapPtr(); // null if empty
 	blockHeightChanges = unitDef->levelGround;
 
 	CUnit::PreInit(params);
@@ -46,7 +36,7 @@ void CBuilding::ForcedMove(const float3& newPos) {
 	// (always needs to be axis-aligned because yardmaps are not rotated)
 	heading = GetHeadingFromFacing(buildFacing);
 
-	UpdateDirVectors(false, false);
+	UpdateDirVectors(false);
 	SetVelocity(ZeroVector);
 
 	// update quadfield, etc.

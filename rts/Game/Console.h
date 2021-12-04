@@ -3,7 +3,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include <vector>
+#include <map>
 #include <string>
 
 class Action;
@@ -31,7 +31,6 @@ protected:
 	 * PushAction will be called if this command is received by the console
 	 */
 	void RegisterAction(const std::string& name);
-	void SortRegisteredActions();
 };
 
 
@@ -41,33 +40,26 @@ protected:
 class CommandConsole
 {
 public:
-	typedef std::pair<std::string, CommandReceiver*> CmdPair;
-	// typedef std::function<bool(const CmdPair& a, const CmdPair& b)> SortPred;
-
+	static CommandConsole& Instance();
+	
 	/**
 	 * @brief register a command
 	 * @param name the name of the command (e.g. "cheat")
-	 * @param rec the CommandReceiver who want to receive the command
+	 * @param rec the CommandReceiver who want to recieve the command
 	 */
-	void AddCommandReceiver(const std::string& name, CommandReceiver* rec) { commandMap.emplace_back(name, rec); }
-	void SortCommandMap();
-
-	const std::vector<CmdPair>& GetCommandMap() const { return commandMap; }
+	void AddCommandReceiver(const std::string& name, CommandReceiver* rec);
 	
 	/**
 	 * @brief Execute an action
 	 */
 	bool ExecuteAction(const Action&);
 
-	void ResetState() {
-		commandMap.clear();
-		commandMap.reserve(32);
-	}
+	void ResetState() { commandMap.clear(); }
 
 private:
-	std::vector<CmdPair> commandMap;
+	std::map<const std::string, CommandReceiver*> commandMap;
 };
 
-extern CommandConsole gameCommandConsole;
+#define commandConsole (CommandConsole::Instance())
 #endif // CONSOLE_H
 

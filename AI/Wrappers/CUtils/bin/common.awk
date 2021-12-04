@@ -223,7 +223,7 @@ function removeParamTypes(params__common) {
 			paramSoFar__common = "";
 		}
 	}
-	sub(/^,[ \t]+/, "", paramNames__common);
+	sub(/^\,[ \t]+/, "", paramNames__common);
 
 	return paramNames__common;
 }

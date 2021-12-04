@@ -3,8 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
-
+Copyright (c) 2006-2016, assimp team
 
 All rights reserved.
 
@@ -50,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "OptimizeMeshes.h"
 #include "ProcessHelper.h"
-#include <assimp/SceneCombiner.h>
+#include "SceneCombiner.h"
 #include "Exceptional.h"
 
 using namespace Assimp;
@@ -146,7 +145,7 @@ void OptimizeMeshesProcess::Execute( aiScene* pScene)
     meshes.resize( 0 );
     ai_assert(output.size() <= num_old);
 
-    mScene->mNumMeshes = static_cast<unsigned int>(output.size());
+    mScene->mNumMeshes = output.size();
     std::copy(output.begin(),output.end(),mScene->mMeshes);
 
     if (output.size() != num_old) {
@@ -181,8 +180,11 @@ void OptimizeMeshesProcess::ProcessNode( aiNode* pNode)
                     verts += mScene->mMeshes[am]->mNumVertices;
                     faces += mScene->mMeshes[am]->mNumFaces;
 
-                    pNode->mMeshes[a] = pNode->mMeshes[pNode->mNumMeshes - 1];
                     --pNode->mNumMeshes;
+                    for( unsigned int n = a; n < pNode->mNumMeshes; ++n ) {
+                        pNode->mMeshes[ n ] = pNode->mMeshes[ n + 1 ];
+                    }
+
                     --a;
                 }
             }
@@ -197,7 +199,7 @@ void OptimizeMeshesProcess::ProcessNode( aiNode* pNode)
             } else {
                 output.push_back(mScene->mMeshes[im]);
             }
-            im = static_cast<unsigned int>(output.size()-1);
+            im = output.size()-1;
         }
     }
 

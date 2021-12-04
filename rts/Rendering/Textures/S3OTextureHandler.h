@@ -35,8 +35,8 @@ public:
 		unsigned int ysize;
 	};
 
-	void Init();
-	void Kill();
+	CS3OTextureHandler();
+	~CS3OTextureHandler();
 
 	void LoadTexture(S3DModel* model);
 	void PreloadTexture(S3DModel* model, bool invertAxis = false, bool invertAlpha = false);
@@ -73,6 +73,6 @@ private:
 	std::vector<S3OTexMat> textures;
 };
 
-extern CS3OTextureHandler textureHandlerS3O;
+extern CS3OTextureHandler* texturehandlerS3O;
 
 #endif /* S3O_TEXTURE_HANDLER_H */

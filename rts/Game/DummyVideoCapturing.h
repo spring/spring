@@ -6,15 +6,20 @@
 #include "IVideoCapturing.h"
 
 class DummyVideoCapturing : public IVideoCapturing {
+
 	friend class IVideoCapturing;
 
+	DummyVideoCapturing();
+	virtual ~DummyVideoCapturing();
+
 public:
-	bool IsCapturingSupported() const override { return false; }
+	virtual bool IsCapturingSupported() const;
 
-	void StartCapturing() override;
-	void StopCapturing() override {}
+	virtual bool IsCapturing() const;
+	virtual void StartCapturing();
+	virtual void StopCapturing();
 
-	void RenderFrame() override {}
+	virtual void RenderFrame();
 };
 
 #endif // _DUMMY_VIDEO_CAPTURING_H

@@ -53,7 +53,6 @@
 uniform float frame;
 uniform vec3 eyePos;
 
-varying float eyeVertexZ;
 varying vec3 eyeVec;
 varying vec3 ligVec;
 varying vec3 worldPos;
@@ -78,26 +77,18 @@ void main()
 	gl_TexCoord[4].pq = gl_TexCoord[0].pq * 6.0 + frame * 0.37;
 
 	// SIMULATE WAVES
-	// TODO:
-	//   restrict amplitude to less than shallow water depth
-	//   decrease cycling speed of caustics when zoomed out?
-	vec4 waveVertex;
-	waveVertex.xzw = gl_Vertex.xzw;
-	waveVertex.y = 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
+	vec4 myVertex;
+	myVertex.xzw = gl_Vertex.xzw;
+	myVertex.y = 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
 
 	// COMPUTE LIGHT VECTORS
-	eyeVec = eyePos - waveVertex.xyz;
-	ligVec = normalize(SunDir * 20000.0 + MapMid - waveVertex.xyz);
+	eyeVec = eyePos - gl_Vertex.xyz;
+	ligVec = normalize(SunDir*20000.0 + MapMid - myVertex.xyz);
 
 	// FOG
-	worldPos = waveVertex.xyz;
-	gl_FogFragCoord = (gl_ModelViewMatrix * waveVertex).z;
+	worldPos = myVertex.xyz;
+	gl_FogFragCoord = (gl_ModelViewMatrix * myVertex).z;
 
-	gl_Position = gl_ModelViewProjectionMatrix * waveVertex;
-
-	#if 0
-	// distance to unperturbed vertex
-	eyeVertexZ = (gl_ModelViewMatrix * gl_Vertex).z;
-	#endif
+	// POSITION
+	gl_Position = gl_ModelViewProjectionMatrix * myVertex;
 }
-

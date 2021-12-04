@@ -25,29 +25,21 @@
 #undef GetCurrentTime
 #endif
 
-
 // server and client memory-streams
-static std::string demoStreams[2];
-static spring::mutex demoMutex;
-
+static std::unique_ptr<std::stringstream> demoStreams[2] = {nullptr, nullptr};
 
 CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo): isServerDemo(serverDemo)
 {
-	std::lock_guard<spring::mutex> lock(demoMutex);
-
 	SetStream();
 	SetName(mapName, modName);
 	SetFileHeader();
-	WriteFileHeader(false);
 
 	file = gzopen(demoName.c_str(), "wb9");
 }
 
 CDemoRecorder::~CDemoRecorder()
 {
-	if (file == nullptr)
-		return;
-
+	LOG("[%s] writing demo \"%s\"", __func__, demoName.c_str());
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
@@ -55,11 +47,13 @@ CDemoRecorder::~CDemoRecorder()
 	WriteDemoFile();
 }
 
-
 void CDemoRecorder::SetStream()
 {
-	demoStreams[isServerDemo].clear();
-	demoStreams[isServerDemo].reserve(8 * 1024 * 1024);
+	if (demoStreams[isServerDemo].get() == nullptr)
+		demoStreams[isServerDemo].reset(new std::stringstream(std::ios::binary | std::ios::out));
+
+	demoStreams[isServerDemo]->clear();
+	demoStreams[isServerDemo]->seekp(0);
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -74,32 +68,35 @@ void CDemoRecorder::SetFileHeader()
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
 	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
 	fileHeader.winningAllyTeamsSize = 0;
+
+	demoStreams[isServerDemo]->seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
 }
 
 void CDemoRecorder::WriteDemoFile()
 {
+	// using operator<<(basic_stringbuf*) requires the stream to be opened with std::ios::in
+	// stringbuf::{eback(), egptr(), gptr()} are protected so we cannot access them directly
+	// (plus data is not guaranteed to be stored contiguously) ==> the only clean OO solution
+	// that avoids str()'s copy would be to supply our own stringbuffer backend to demoStream
+	// which is slightly overdoing it
+	//
 	// zlib FAQ claims the lib is thread-safe, "however any library routines that zlib uses and
 	// any application-provided memory allocation routines must also be thread-safe. zlib's gz*
 	// functions use stdio library routines, and most of zlib's functions use the library memory
-	// allocation routines by default" (so code below should be OK)
-	// gz* should usually be finished before ctor runs again when reloading, but take no chances
-	std::string& data = demoStreams[isServerDemo];
-	std::function<void(gzFile, std::string&)> func = [](gzFile file, std::string& data) {
-		std::lock_guard<spring::mutex> lock(demoMutex);
-
+	// allocation routines by default" (should be OK)
+	std::string data = std::move(demoStreams[isServerDemo]->str());
+	std::function<void(gzFile, std::string&&)> func = [](gzFile file, std::string&& data) {
 		gzwrite(file, data.c_str(), data.size());
 		gzflush(file, Z_FINISH);
 		gzclose(file);
 	};
 
-	LOG("[DemoRecorder::%s] writing %s-demo \"%s\" (" _STPF_ " bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), data.size());
-
-	#ifndef _WIN32
+	#ifndef WIN32
 	// NOTE: can not use ThreadPool for this directly here, workers are already gone
 	// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
-	ThreadPool::AddExtJob(spring::thread(std::move(func), file, std::ref(data)));
+	ThreadPool::AddExtJob(spring::thread(std::move(func), file, std::move(data)));
 	#else
-	ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::ref(data))));
+	ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::move(data))));
 	#endif
 }
 
@@ -111,7 +108,7 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	}
 
 	fileHeader.scriptSize = length;
-	demoStreams[isServerDemo].append(text.c_str(), length);
+	demoStreams[isServerDemo]->write(text.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
@@ -121,8 +118,8 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&chunkHeader), sizeof(chunkHeader));
-	demoStreams[isServerDemo].append(reinterpret_cast<const char*>(buf), length);
+	demoStreams[isServerDemo]->write((char*) &chunkHeader, sizeof(chunkHeader));
+	demoStreams[isServerDemo]->write((char*) buf, length);
 	fileHeader.demoStreamSize += (length + sizeof(chunkHeader));
 }
 
@@ -173,7 +170,8 @@ void CDemoRecorder::InitializeStats(int numPlayers, int numTeams)
 {
 	playerStats.resize(numPlayers);
 	// must be here so WriteWinnerList works
-	teamStats.resize(fileHeader.numTeams = numTeams);
+	fileHeader.numTeams = numTeams;
+	teamStats.resize(numTeams);
 }
 
 
@@ -202,9 +200,8 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::vector<TeamStatistics>&
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
 
-	for (const auto& stat: stats) {
-		teamStats[teamNum].push_back(stat);
-	}
+	for (auto it = stats.cbegin(); it != stats.cend(); ++it)
+		teamStats[teamNum].push_back(*it);
 }
 
 
@@ -220,37 +217,45 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
+#ifdef _MSC_VER // MSVC8 behaves strange if tell/seek is called before anything has been written
+	const bool empty = (demoStreams[isServerDemo]->str() == "");
+	const unsigned int pos = empty? 0 : demoStreams[isServerDemo]->tellp();
+#else
+	const unsigned int pos = demoStreams[isServerDemo]->tellp();
+#endif
+
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
-
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
+	tmpHeader.swab(); // to little endian
 
-	// to little endian
-	tmpHeader.swab();
-
-	if (demoStreams[isServerDemo].empty()) {
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&tmpHeader), sizeof(tmpHeader));
-	} else {
-		assert(demoStreams[isServerDemo].size() >= sizeof(tmpHeader));
-		memcpy(&demoStreams[isServerDemo][0], reinterpret_cast<const char*>(&tmpHeader), sizeof(tmpHeader)); // no non-const .data() until C++17
+#ifdef _MSC_VER
+	if (!empty)
+#endif
+	{
+		demoStreams[isServerDemo]->seekp(0);
 	}
 
-	return (demoStreams[isServerDemo].size());
+
+	demoStreams[isServerDemo]->write((char*) &tmpHeader, sizeof(tmpHeader));
+	demoStreams[isServerDemo]->seekp(pos);
+
+	return pos;
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
 void CDemoRecorder::WritePlayerStats()
 {
-	const size_t pos = demoStreams[isServerDemo].size();
+	int pos = demoStreams[isServerDemo]->tellp();
 
 	for (PlayerStatistics& stats: playerStats) {
 		stats.swab();
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&stats), sizeof(PlayerStatistics));
+		demoStreams[isServerDemo]->write(reinterpret_cast<char*>(&stats), sizeof(PlayerStatistics));
 	}
 
 	fileHeader.numPlayers = playerStats.size();
-	fileHeader.playerStatSize = int(demoStreams[isServerDemo].size() - pos);
+	fileHeader.playerStatSize = (int)demoStreams[isServerDemo]->tellp() - pos;
 
 	playerStats.clear();
 }
@@ -263,38 +268,38 @@ void CDemoRecorder::WriteWinnerList()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	const size_t pos = demoStreams[isServerDemo].size();
+	const int pos = demoStreams[isServerDemo]->tellp();
 
 	// Write the array of winningAllyTeams.
-	for (size_t i = 0; i < winningAllyTeams.size(); i++) { // NOLINT{modernize-loop-convert}
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&winningAllyTeams[i]), sizeof(unsigned char));
+	for (std::vector<unsigned char>::const_iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
+		demoStreams[isServerDemo]->write((char*) &(*it), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();
 
-	fileHeader.winningAllyTeamsSize = int(demoStreams[isServerDemo].size() - pos);
+	fileHeader.winningAllyTeamsSize = int(demoStreams[isServerDemo]->tellp()) - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */
 void CDemoRecorder::WriteTeamStats()
 {
-	const size_t pos = demoStreams[isServerDemo].size();
+	int pos = demoStreams[isServerDemo]->tellp();
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector<TeamStatistics>& history: teamStats) {
 		unsigned int c = swabDWord(history.size());
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&c), sizeof(unsigned int));
+		demoStreams[isServerDemo]->write((char*)&c, sizeof(unsigned int));
 	}
 
 	// Write big array of TeamStatistics.
 	for (std::vector<TeamStatistics>& history: teamStats) {
 		for (TeamStatistics& stats: history) {
 			stats.swab();
-			demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&stats), sizeof(TeamStatistics));
+			demoStreams[isServerDemo]->write(reinterpret_cast<char*>(&stats), sizeof(TeamStatistics));
 		}
 	}
 
-	fileHeader.teamStatSize = int(demoStreams[isServerDemo].size() - pos);
+	fileHeader.teamStatSize = (int)demoStreams[isServerDemo]->tellp() - pos;
 
 	teamStats.clear();
 }

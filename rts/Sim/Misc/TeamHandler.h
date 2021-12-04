@@ -18,15 +18,11 @@ class CTeamHandler
 	CR_DECLARE_STRUCT(CTeamHandler)
 
 public:
-	void LoadFromSetup(const CGameSetup* setup);
-	void SetDefaultStartPositions(const CGameSetup* setup);
-	void ResetState() {
-		teams.clear();
-		allyTeams.clear();
+	CTeamHandler();
+	~CTeamHandler();
 
-		gaiaTeamID = -1;
-		gaiaAllyTeamID = -1;
-	}
+	void ResetState();
+	void LoadFromSetup(const CGameSetup* setup);
 
 	/**
 	 * @brief Team
@@ -148,14 +144,14 @@ private:
 	 *
 	 * gaia's team id
 	 */
-	int gaiaTeamID = -1;
+	int gaiaTeamID;
 
 	/**
 	 * @brief gaia team
 	 *
 	 * gaia's team id
 	 */
-	int gaiaAllyTeamID = -1;
+	int gaiaAllyTeamID;
 
 	/**
 	 * @brief teams
@@ -166,6 +162,6 @@ private:
 	std::vector< ::AllyTeam > allyTeams;
 };
 
-extern CTeamHandler teamHandler;
+extern CTeamHandler* teamHandler;
 
 #endif // !TEAMHANDLER_H

@@ -4,64 +4,30 @@
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
 #include "System/Exceptions.h"
-#include "System/StringHash.h"
 #include "System/Platform/byteorder.h"
 
 #include <cassert>
 #include <cstring>
 
+using std::string;
 
-static bool CheckHeader(const SMFHeader& h)
+
+CSMFMapFile::CSMFMapFile(const string& mapFileName)
+	: ifs(mapFileName), featureFileOffset(0)
 {
-	if (h.version != 1)
-		return false;
-	if (h.tilesize != 32)
-		return false;
-	if (h.texelPerSquare != 8)
-		return false;
-	if (h.squareSize != 8)
-		return false;
-
-	return (std::strcmp(h.magic, "spring map file") == 0);
-}
-
-
-void CSMFMapFile::Open(const std::string& mapFileName)
-{
-	char buf[512] = {0};
-	const char* fmts[] = {"[SMFMapFile::%s] could not open \"%s\"", "[SMFMapFile::%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)"};
-
-	memset(&       header, 0, sizeof(       header));
+	memset(&header, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));
-	memset( featureTypes , 0, sizeof(featureTypes ));
 
-	ifs.Open(mapFileName);
-
-	if (!ifs.FileExists()) {
-		snprintf(buf, sizeof(buf), fmts[0], __func__, mapFileName.c_str());
-		throw content_error(buf);
-	}
+	if (!ifs.FileExists())
+		throw content_error("Couldn't open map file " + mapFileName);
 
 	ReadMapHeader(header, ifs);
 
-	if (CheckHeader(header))
-		return;
-
-	snprintf(buf, sizeof(buf), fmts[1], __func__, mapFileName.c_str(), header.version, header.tilesize, header.texelPerSquare, header.squareSize);
-	throw content_error(buf);
+	if (strcmp(header.magic, "spring map file") != 0 ||
+	    header.version != 1 || header.tilesize != 32 ||
+	    header.texelPerSquare != 8 || header.squareSize != 8)
+		throw content_error("Incorrect map file " + mapFileName);
 }
-
-void CSMFMapFile::Close()
-{
-	ifs.Close();
-
-	memset(&       header, 0, sizeof(       header));
-	memset(&featureHeader, 0, sizeof(featureHeader));
-	memset( featureTypes , 0, sizeof(featureTypes ));
-
-	featureFileOffset = 0;
-}
-
 
 void CSMFMapFile::ReadMinimap(void* data)
 {
@@ -71,18 +37,20 @@ void CSMFMapFile::ReadMinimap(void* data)
 
 int CSMFMapFile::ReadMinimap(std::vector<std::uint8_t>& data, unsigned miplevel)
 {
-	int offset = 0;
+	int offset=0;
 	int mipsize = 1024;
-
-	for (unsigned i = 0, n = MINIMAP_NUM_MIPMAP; i < std::min(n, miplevel); i++) {
-		offset += (Square((mipsize + 3) / 4) * 8);
+	for (unsigned i = 0; i < std::min((unsigned)MINIMAP_NUM_MIPMAP, miplevel); i++)
+	{
+		const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+		offset += size;
 		mipsize >>= 1;
 	}
 
-	data.resize(Square((mipsize + 3) / 4) * 8);
+	const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+	data.resize(size);
 
 	ifs.Seek(header.minimapPtr + offset);
-	ifs.Read(data.data(), data.size());
+	ifs.Read(&data[0], size);
 	return mipsize;
 }
 
@@ -92,13 +60,12 @@ void CSMFMapFile::ReadHeightmap(unsigned short* heightmap)
 {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
-	const int len = hmx * hmy;
 
 	ifs.Seek(header.heightmapPtr);
-	ifs.Read(heightmap, len * sizeof(unsigned short));
+	ifs.Read(heightmap, hmx * hmy * sizeof(short));
 
-	for (int i = 0; i < len; ++i) {
-		swabWordInPlace(heightmap[i]);
+	for (int y = 0; y < hmx * hmy; ++y) {
+		swabWordInPlace(heightmap[y]);
 	}
 }
 
@@ -107,23 +74,19 @@ void CSMFMapFile::ReadHeightmap(float* sHeightMap, float* uHeightMap, float base
 {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
-	const int len = hmx * hmy;
-
-	unsigned short word = 0;
-
-	assert(sHeightMap != nullptr);
-
-	if (uHeightMap == nullptr)
-		uHeightMap = sHeightMap;
+	unsigned short* temphm = new unsigned short[hmx * hmy];
 
 	ifs.Seek(header.heightmapPtr);
+	ifs.Read(temphm, hmx * hmy * 2);
 
-	for (int i = 0; i < len; ++i) {
-		ifs.Read(&word, sizeof(word));
+	for (int y = 0; y < hmx * hmy; ++y) {
+		const float h = base + swabWord(temphm[y]) * mod;
 
-		sHeightMap[i] = base + swabWord(word) * mod;
-		uHeightMap[i] = sHeightMap[i];
+		if (sHeightMap != NULL) { sHeightMap[y] = h; }
+		if (uHeightMap != NULL) { uHeightMap[y] = h; }
 	}
+
+	delete[] temphm;
 }
 
 
@@ -132,26 +95,16 @@ void CSMFMapFile::ReadFeatureInfo()
 	ifs.Seek(header.featurePtr);
 	ReadMapFeatureHeader(featureHeader, ifs);
 
-	constexpr size_t S = sizeof(featureTypes   );
-	constexpr size_t K = sizeof(featureTypes[0]);
-	constexpr size_t N = S / K;
+	featureTypes.resize(featureHeader.numFeatureType);
 
-	if (featureHeader.numFeatureType > N) {
-		snprintf(featureTypes[0], S - 1, "[SMFMapFile::%s] " _STPF_ " excess feature-types defined\n", __func__, featureHeader.numFeatureType - N);
-		throw content_error(featureTypes[0]);
-	}
-
-	for (int a = 0; a < featureHeader.numFeatureType; ++a) {
-		char* featureType = featureTypes[a];
-
-		for (size_t j = 0, n = K - 1; j < n; j++) {
-			ifs.Read(&featureType[j], 1);
-
-			if (featureType[j] == 0)
-				break;
+	for(int a = 0; a < featureHeader.numFeatureType; ++a) {
+		char c;
+		ifs.Read(&c, 1);
+		while (c) {
+			featureTypes[a] += c;
+			ifs.Read(&c, 1);
 		}
 	}
-
 	featureFileOffset = ifs.GetPos();
 }
 
@@ -160,8 +113,7 @@ void CSMFMapFile::ReadFeatureInfo(MapFeatureInfo* f)
 {
 	assert(featureFileOffset != 0);
 	ifs.Seek(featureFileOffset);
-
-	for (int a = 0; a < featureHeader.numFeatures; ++a) {
+	for(int a = 0; a < featureHeader.numFeatures; ++a) {
 		MapFeatureStruct ffs;
 		ReadMapFeatureStruct(ffs, ifs);
 
@@ -175,50 +127,49 @@ void CSMFMapFile::ReadFeatureInfo(MapFeatureInfo* f)
 const char* CSMFMapFile::GetFeatureTypeName(int typeID) const
 {
 	assert(typeID >= 0 && typeID < featureHeader.numFeatureType);
-	return featureTypes[typeID];
+	return featureTypes[typeID].c_str();
 }
 
 
-void CSMFMapFile::GetInfoMapSize(const char* name, MapBitmapInfo* info) const
+void CSMFMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
 {
-	switch (hashString(name)) {
-		case hashString("height"): { *info = MapBitmapInfo(header.mapx + 1, header.mapy + 1); } break;
-		case hashString("grass" ): { *info = MapBitmapInfo(header.mapx / 4, header.mapy / 4); } break;
-		case hashString("metal" ): { *info = MapBitmapInfo(header.mapx / 2, header.mapy / 2); } break;
-		case hashString("type"  ): { *info = MapBitmapInfo(header.mapx / 2, header.mapy / 2); } break;
-		default                  : { *info = MapBitmapInfo(              0,               0); } break;
+	if (name == "height") {
+		*info = MapBitmapInfo(header.mapx + 1, header.mapy + 1);
+	}
+	else if (name == "grass") {
+		*info = MapBitmapInfo(header.mapx / 4, header.mapy / 4);
+	}
+	else if (name == "metal") {
+		*info = MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+	}
+	else if (name == "type") {
+		*info = MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+	}
+	else {
+		*info = MapBitmapInfo(0, 0);
 	}
 }
 
 
-bool CSMFMapFile::ReadInfoMap(const char* name, void* data)
+bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
 {
-	switch (hashString(name)) {
-		case hashString("height"): {
-			ReadHeightmap(reinterpret_cast<unsigned short*>(data));
-			return true;
-		} break;
-
-		case hashString("grass"): {
-			return ReadGrassMap(data);
-		} break;
-
-		case hashString("metal"): {
-			ifs.Seek(header.metalmapPtr);
-			ifs.Read(data, header.mapx / 2 * header.mapy / 2);
-			return true;
-		} break;
-
-		case hashString("type"): {
-			ifs.Seek(header.typeMapPtr);
-			ifs.Read(data, header.mapx / 2 * header.mapy / 2);
-			return true;
-		} break;
-
-		default: {
-		} break;
+	if (name == "height") {
+		ReadHeightmap((unsigned short*)data);
+		return true;
 	}
-
+	else if (name == "grass") {
+		return ReadGrassMap(data);
+	}
+	else if(name == "metal") {
+		ifs.Seek(header.metalmapPtr);
+		ifs.Read(data, header.mapx / 2 * header.mapy / 2);
+		return true;
+	}
+	else if(name == "type") {
+		ifs.Seek(header.typeMapPtr);
+		ifs.Read(data, header.mapx / 2 * header.mapy / 2);
+		return true;
+	}
 	return false;
 }
 
@@ -229,14 +180,11 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 
 	for (int a = 0; a < header.numExtraHeaders; ++a) {
 		int size;
-		int type;
-
 		ifs.Read(&size, 4);
-		ifs.Read(&type, 4);
-
 		swabDWordInPlace(size);
+		int type;
+		ifs.Read(&type, 4);
 		swabDWordInPlace(type);
-
 		if (type == MEH_Vegetation) {
 			int pos;
 			ifs.Read(&pos, 4);
@@ -246,21 +194,20 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 			/* char; no swabbing. */
 			return true; //we arent interested in other extensions anyway
 		}
-
-		// assumes we can use data as scratch memory
-		assert((size - 8) <= (header.mapx / 4 * header.mapy / 4));
-		ifs.Read(data, size - 8);
+		else {
+			// assumes we can use data as scratch memory
+			assert(size - 8 <= header.mapx / 4 * header.mapy / 4);
+			ifs.Read(data, size - 8);
+		}
 	}
-
 	return false;
 }
-
 
 /// read a float from file (endian aware)
 static float ReadFloat(CFileHandler& file)
 {
 	float __tmpfloat = 0.0f;
-	file.Read(&__tmpfloat, sizeof(float));
+	file.Read(&__tmpfloat,sizeof(float));
 	return swabFloat(__tmpfloat);
 }
 
@@ -268,15 +215,14 @@ static float ReadFloat(CFileHandler& file)
 static int ReadInt(CFileHandler& file)
 {
 	unsigned int __tmpdw = 0;
-	file.Read(&__tmpdw, sizeof(unsigned int));
+	file.Read(&__tmpdw,sizeof(unsigned int));
 	return (int)swabDWord(__tmpdw);
 }
-
 
 /// Read SMFHeader head from file
 void CSMFMapFile::ReadMapHeader(SMFHeader& head, CFileHandler& file)
 {
-	file.Read(head.magic, sizeof(head.magic));
+	file.Read(head.magic,sizeof(head.magic));
 
 	head.version = ReadInt(file);
 	head.mapid = ReadInt(file);
@@ -324,7 +270,7 @@ void CSMFMapFile::ReadMapTileHeader(MapTileHeader& head, CFileHandler& file)
 /// Read TileFileHeader head from file src
 void CSMFMapFile::ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file)
 {
-	file.Read(&head.magic, sizeof(head.magic));
+	file.Read(&head.magic,sizeof(head.magic));
 	head.version = ReadInt(file);
 	head.numTiles = ReadInt(file);
 	head.tileSize = ReadInt(file);

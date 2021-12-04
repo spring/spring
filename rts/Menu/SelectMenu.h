@@ -30,7 +30,6 @@ public:
 	bool Draw();
 
 private:
-	void Demo();
 	void Single();
 	void Settings();
 	void Multi();

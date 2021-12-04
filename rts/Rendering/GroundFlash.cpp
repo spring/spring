@@ -12,10 +12,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/creg/DefTypes.h"
-#include "System/SpringMath.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
+CR_BIND_DERIVED_POOL(CGroundFlash, CExpGenSpawnable, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),
@@ -80,7 +80,7 @@ CGroundFlash::CGroundFlash()
 	alwaysVisible = false;
 }
 
-CGroundFlash::CGroundFlash(const float3& _pos)
+CGroundFlash::CGroundFlash(const float3& _pos): CExpGenSpawnable()
 {
 	size = 0.0f;
 	depthTest = true;
@@ -159,7 +159,7 @@ CStandardGroundFlash::CStandardGroundFlash(
 	, circleAlphaDec(ttl ? circleAlpha / ttl : 0.0f)
 {
 	InitCommon(_pos, info.color);
-	projectileHandler.AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 CStandardGroundFlash::CStandardGroundFlash(
@@ -183,7 +183,7 @@ CStandardGroundFlash::CStandardGroundFlash(
 	, circleAlphaDec(ttl ? circleAlpha / ttl : 0)
 {
 	InitCommon(_pos, _color);
-	projectileHandler.AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CStandardGroundFlash::InitCommon(const float3& _pos, const float3& _color)
@@ -294,7 +294,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	side1 = (normal.cross(RgtVector)).ANormalize();
 	side2 = side1.cross(normal);
 
-	projectileHandler.AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSimpleGroundFlash::Draw(CVertexArray* va)
@@ -367,7 +367,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	side1 = (normal.cross(RgtVector)).SafeANormalize();
 	side2 = side1.cross(normal);
 
-	projectileHandler.AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSeismicGroundFlash::Draw(CVertexArray* va)

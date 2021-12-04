@@ -14,15 +14,15 @@
 #
 #  PANDOC_BIN      - will be set to the Pandoc executable (eg. pandoc.exe)
 #  PANDOC_FOUND    - TRUE if Pandoc was found
-#  pandoc_md_to_html - creates a string that may be executed on the cmd-line
+#  Pandoc_MdToHtml - creates a string that may be executed on the cmd-line
 #                    for converting a markdown file to HTML
 
-include(FindPackageHandleStandardArgs)
+Include(FindPackageHandleStandardArgs)
 
-if    (PANDOC_BIN)
+If    (PANDOC_BIN)
 	# Already in cache, be silent
-	set(Pandoc_FIND_QUIETLY TRUE)
-endif (PANDOC_BIN)
+	Set(Pandoc_FIND_QUIETLY TRUE)
+EndIf (PANDOC_BIN)
 
 find_program(PANDOC_BIN
 		NAMES pandoc
@@ -33,18 +33,18 @@ find_program(PANDOC_BIN
 
 # handle the QUIETLY and REQUIRED arguments and set PANDOC_FOUND to TRUE if
 # all listed variables are TRUE
-find_package_handle_standard_args(Pandoc DEFAULT_MSG PANDOC_BIN)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Pandoc DEFAULT_MSG PANDOC_BIN)
 
-mark_as_advanced(PANDOC_BIN)
+MARK_AS_ADVANCED(PANDOC_BIN)
 
-if    (PANDOC_FOUND)
-	macro    (pandoc_md_to_html var_command fileSrc fileDst title)
-		set("${var_command}"
+If    (PANDOC_FOUND)
+	Macro    (Pandoc_MdToHtml var_command fileSrc fileDst title)
+		Set("${var_command}"
 				"${PANDOC_BIN}"
 				--from=markdown
 				--to=html
 				-s --variable="pagetitle:${title}"
 				-o "${fileDst}"
 				"${fileSrc}")
-	endmacro (pandoc_md_to_html)
-endif (PANDOC_FOUND)
+	EndMacro (Pandoc_MdToHtml)
+EndIf (PANDOC_FOUND)

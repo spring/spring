@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <algorithm>
 
 #include "ArchiveLoader.h"
 
-#include "Archives/IArchiveFactory.h"
+#include "Archives/ArchiveFactory.h"
 #include "Archives/IArchive.h"
 #include "Archives/PoolArchive.h"
 #include "Archives/DirArchive.h"
@@ -14,71 +13,72 @@
 
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
-#include "System/Log/ILog.h"
 
-static CPoolArchiveFactory sdpArchiveFactory;
-static CDirArchiveFactory sddArchiveFactory;
-static CZipArchiveFactory sdzArchiveFactory;
-static CSevenZipArchiveFactory sd7ArchiveFactory;
-static CVirtualArchiveFactory sdvArchiveFactory;
+#include "System/SafeUtil.h"
+
 
 CArchiveLoader::CArchiveLoader()
 {
-	const auto AddFactory = [&](unsigned archiveType, IArchiveFactory& factory) {
-		archiveFactories[archiveType] = {factory.GetDefaultExtension(), &factory};
-	};
-	AddFactory(ARCHIVE_TYPE_SDP, sdpArchiveFactory);
-	AddFactory(ARCHIVE_TYPE_SDD, sddArchiveFactory);
-	AddFactory(ARCHIVE_TYPE_SDZ, sdzArchiveFactory);
-	AddFactory(ARCHIVE_TYPE_SD7, sd7ArchiveFactory);
-	AddFactory(ARCHIVE_TYPE_SDV, sdvArchiveFactory);
+	// TODO maybe move ArchiveFactory registration to some external place
+	AddFactory(new CPoolArchiveFactory());
+	AddFactory(new CDirArchiveFactory());
+	AddFactory(new CZipArchiveFactory());
+	AddFactory(new CSevenZipArchiveFactory());
+	AddFactory(new CVirtualArchiveFactory());
+}
 
-	using P = decltype(archiveFactories)::value_type;
-	std::sort(archiveFactories.begin(), archiveFactories.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+CArchiveLoader::~CArchiveLoader()
+{
+	std::map<std::string, IArchiveFactory*>::iterator afi;
+	for (afi = archiveFactories.begin(); afi != archiveFactories.end(); ++afi) {
+		spring::SafeDelete(afi->second);
+	}
 }
 
 
-const CArchiveLoader& CArchiveLoader::GetInstance()
+CArchiveLoader& CArchiveLoader::GetInstance()
 {
-	static const CArchiveLoader singleton;
+	static CArchiveLoader singleton;
 	return singleton;
 }
 
 
 bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 {
-	const std::string fileExt = FileSystem::GetExtension(fileName);
+	const std::string ext = FileSystem::GetExtension(fileName);
 
-	using P = decltype(archiveFactories)::value_type;
-
-	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
-	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
-
-	return (iter != archiveFactories.end() && iter->first == fileExt);
+	return (archiveFactories.find(ext) != archiveFactories.end());
 }
 
 
 IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::string& type) const
 {
-	IArchive* ret = nullptr;
+	IArchive* ret = NULL;
 
-	const std::string fileExt = type.empty() ? FileSystem::GetExtension(fileName) : type;
+	const std::string ext = type.empty() ? FileSystem::GetExtension(fileName) : type;
 	const std::string filePath = dataDirsAccess.LocateFile(fileName);
 
-	using P = decltype(archiveFactories)::value_type;
+	const std::map<std::string, IArchiveFactory*>::const_iterator afi
+			= archiveFactories.find(ext);
 
-	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
-	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
+	if (afi != archiveFactories.end()) {
+		ret = afi->second->CreateArchive(filePath);
+	}
 
-	if (iter != archiveFactories.end() && iter->first == fileExt)
-		ret = iter->second->CreateArchive(filePath);
-
-	if (ret != nullptr && ret->IsOpen())
+	if (ret && ret->IsOpen()) {
 		return ret;
-
-	LOG_L(L_INFO, "[ArchiveLoader::%s(name=\"%s\" type=\"%s\")] could not load or open archive %p", __func__, fileName.c_str(), type.c_str(), ret);
+	}
 
 	delete ret;
-	return nullptr;
+	return NULL;
 }
 
+
+void CArchiveLoader::AddFactory(IArchiveFactory* archiveFactory)
+{
+	assert(archiveFactory != NULL);
+	// ensure unique extensions
+	assert(archiveFactories.find(archiveFactory->GetDefaultExtension()) == archiveFactories.end());
+
+	archiveFactories[archiveFactory->GetDefaultExtension()] = archiveFactory;
+}

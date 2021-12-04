@@ -5,17 +5,18 @@
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./lua2php ...
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../../..")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../../..")
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-remove_definitions(-DUNITSYNC)
+REMOVE_DEFINITIONS(-DUNITSYNC)
 
-add_executable(lua2php EXCLUDE_FROM_ALL lua2php.cpp)
-target_link_libraries(lua2php unitsync ${CMAKE_DL_LIBS})
-add_dependencies(lua2php unitsync)
+ADD_EXECUTABLE(lua2php EXCLUDE_FROM_ALL lua2php.cpp)
+TARGET_LINK_LIBRARIES(lua2php unitsync ${CMAKE_DL_LIBS})
+ADD_DEPENDENCIES(lua2php unitsync)
 #INSTALL(TARGETS lua2php DESTINATION ${BINDIR})
 
-add_executable(unitsyncTest EXCLUDE_FROM_ALL test.cpp)
-target_link_libraries(unitsyncTest unitsync ${CMAKE_DL_LIBS})
-add_dependencies(unitsyncTest unitsync)
+ADD_EXECUTABLE(unitsyncTest EXCLUDE_FROM_ALL test.cpp)
+TARGET_LINK_LIBRARIES(unitsyncTest unitsync ${CMAKE_DL_LIBS})
+ADD_DEPENDENCIES(unitsyncTest unitsync)
 #INSTALL(TARGETS unitsyncTest DESTINATION ${BINDIR})
+

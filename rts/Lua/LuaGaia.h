@@ -4,31 +4,27 @@
 #define LUA_GAIA_H
 
 #include <string>
+using std::string;
 
 #include "LuaHandleSynced.h"
 
 
-class CLuaGaia : public CSplitLuaHandle
+class CLuaGaia : public CLuaHandleSynced
 {
 public:
 	static bool CanLoadHandler();
-	static bool ReloadHandler(bool onlySynced = false) { return (FreeHandler(), LoadFreeHandler(onlySynced)); } // NOTE the ','
-	static bool LoadFreeHandler(bool onlySynced = false) { return (LoadHandler(onlySynced) || FreeHandler()); }
+	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
 
-	static bool LoadHandler(bool onlySynced);
+	static bool LoadHandler();
 	static bool FreeHandler();
 
 protected:
-	bool AddSyncedCode(lua_State* L) override { return true; }
-	bool AddUnsyncedCode(lua_State* L) override { return true; }
-
-	std::string GetUnsyncedFileName() const;
-	std::string GetSyncedFileName() const;
-	std::string GetInitFileModes() const;
-	int GetInitSelectTeam() const;
+	bool AddSyncedCode(lua_State* L) { return true; }
+	bool AddUnsyncedCode(lua_State* L) { return true; }
 
 private:
-	CLuaGaia(bool onlySynced);
+	CLuaGaia();
 	virtual ~CLuaGaia();
 };
 

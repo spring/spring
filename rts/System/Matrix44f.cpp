@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Matrix44f.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 #include <memory.h>
 #include <algorithm>
@@ -9,6 +9,12 @@
 CR_BIND(CMatrix44f, )
 
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m))
+
+
+CMatrix44f::CMatrix44f()
+{
+	LoadIdentity();
+}
 
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
@@ -43,23 +49,30 @@ bool CMatrix44f::IsOrthoNormal() const
 	const float3& xdir = GetX();
 	const float3& ydir = GetY();
 	const float3& zdir = GetZ();
-
-	const float3 dots = {xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir)};
-	const float3 lens = {xdir.SqLength(), ydir.SqLength(), zdir.SqLength()};
-
-	constexpr float3 epsd = {float3::cmp_eps() *  8.0f, float3::cmp_eps() *  8.0f, float3::cmp_eps() *  8.0f};
-	constexpr float3 epsl = {float3::cmp_eps() * 16.0f, float3::cmp_eps() * 16.0f, float3::cmp_eps() * 16.0f};
-
-	return (dots.equals(ZeroVector, epsd)) && (lens.equals(OnesVector, epsl));
+	const float3 ortho = float3(xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir));
+	const float3 norma = float3(xdir.SqLength(), ydir.SqLength(), zdir.SqLength());
+	return (ortho == ZeroVector) && (norma == OnesVector);
 }
 
 bool CMatrix44f::IsIdentity() const
 {
-	constexpr float4 x = {1.0f, 0.0f, 0.0f, 0.0f};
-	constexpr float4 y = {0.0f, 1.0f, 0.0f, 0.0f};
-	constexpr float4 z = {0.0f, 0.0f, 1.0f, 0.0f};
-	constexpr float4 w = {0.0f, 0.0f, 0.0f, 1.0f};
-	return (col[0] == x && col[1] == y && col[2] == z && col[3] == w);
+	return
+		   (col[0] == float4(1.0f, 0.0f, 0.0f, 0.0f))
+		&& (col[1] == float4(0.0f, 1.0f, 0.0f, 0.0f))
+		&& (col[2] == float4(0.0f, 0.0f, 1.0f, 0.0f))
+		&& (col[3] == float4(0.0f, 0.0f, 0.0f, 1.0f));
+}
+
+CMatrix44f& CMatrix44f::LoadIdentity()
+{
+	m[ 0] = m[ 5] = m[10] = m[15] = 1.0f;
+
+	m[ 1] = m[ 2] = m[ 3] = 0.0f;
+	m[ 4] = m[ 6] = m[ 7] = 0.0f;
+	m[ 8] = m[ 9] = m[11] = 0.0f;
+	m[12] = m[13] = m[14] = 0.0f;
+
+	return *this;
 }
 
 
@@ -297,6 +310,8 @@ CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 __FORCE_ALIGN_STACK__
 static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
+	//SCOPED_TIMER("CMatrix44f::MM-Mul");
+
 	const __m128 m1c1 = _mm_loadu_ps(&m1.md[0][0]);
 	const __m128 m1c2 = _mm_loadu_ps(&m1.md[1][0]);
 	const __m128 m1c3 = _mm_loadu_ps(&m1.md[2][0]);
@@ -391,7 +406,7 @@ float4 CMatrix44f::operator* (const float4 v) const
 	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
-	return {fout[0], fout[1], fout[2], fout[3]};
+	return float4(fout[0], fout[1], fout[2], fout[3]);
 	#endif
 }
 
@@ -640,73 +655,5 @@ float3 CMatrix44f::GetEulerAnglesLftHand(float eps) const {
 	// (A*B*C)^T = (C^T)*(B^T)*(A^T)
 	matrix.Transpose();
 	return (matrix.GetEulerAnglesRgtHand(eps));
-}
-
-
-
-CMatrix44f CMatrix44f::PerspProj(float aspect, float thfov, float zn, float zf)
-{
-	const float t = zn * thfov;
-	const float b = -t;
-	const float l = b * aspect;
-	const float r = t * aspect;
-
-	return (PerspProj(l, r,  b, t,  zn, zf));
-}
-
-CMatrix44f CMatrix44f::PerspProj(float l, float r, float b, float t, float zn, float zf)
-{
-	CMatrix44f proj;
-	proj[ 0] = (2.0f * zn) / (r - l);
-	proj[ 1] =  0.0f;
-	proj[ 2] =  0.0f;
-	proj[ 3] =  0.0f;
-
-	proj[ 4] =  0.0f;
-	proj[ 5] = (2.0f * zn) / (t - b);
-	proj[ 6] =  0.0f;
-	proj[ 7] =  0.0f;
-
-	proj[ 8] = (r + l) / (r - l);
-	proj[ 9] = (t + b) / (t - b);
-	proj[10] = -(zf + zn) / (zf - zn);
-	proj[11] = -1.0f;
-
-	proj[12] =   0.0f;
-	proj[13] =   0.0f;
-	proj[14] = -(2.0f * zf * zn) / (zf - zn);
-	proj[15] =   0.0f;
-
-	return proj;
-}
-
-CMatrix44f CMatrix44f::OrthoProj(float l, float r, float b, float t, float zn, float zf)
-{
-	CMatrix44f proj;
-	const float tx = -(( r +  l) / ( r -  l));
-	const float ty = -(( t +  b) / ( t -  b));
-	const float tz = -((zf + zn) / (zf - zn));
-
-	proj[ 0] =  2.0f / (r - l);
-	proj[ 1] =  0.0f;
-	proj[ 2] =  0.0f;
-	proj[ 3] =  0.0f;
-
-	proj[ 4] =  0.0f;
-	proj[ 5] =  2.0f / (t - b);
-	proj[ 6] =  0.0f;
-	proj[ 7] =  0.0f;
-
-	proj[ 8] =  0.0f;
-	proj[ 9] =  0.0f;
-	proj[10] = -2.0f / (zf - zn);
-	proj[11] =  0.0f;
-
-	proj[12] = tx;
-	proj[13] = ty;
-	proj[14] = tz;
-	proj[15] = 1.0f;
-
-	return proj;
 }
 

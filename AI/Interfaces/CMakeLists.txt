@@ -1,7 +1,7 @@
 ### AI Interfaces
 #
 # Functions and macros defined in this file:
-# * ai_interface_message
+# * AIInterfaceMessage
 #
 
 add_definitions(-DBUILDING_AI_INTERFACE)
@@ -13,24 +13,22 @@ set(AIINTERFACE_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 
 # Print a message, but only if we are allowed to speak.
-macro    (ai_interface_message type msg)
+macro    (AIInterfaceMessage type msg)
 	if    (NOT AIINTERFACE_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif (NOT AIINTERFACE_FIND_QUIETLY)
-endmacro (ai_interface_message type msg)
+endmacro (AIInterfaceMessage type msg)
 
 
 # Add all AI Interface submodules
-get_list_of_submodules(AI_INTERFACE_DIRS)
+GetListOfSubModules(AI_INTERFACE_DIRS)
 set(DEPS_AI_INTERFACES "")
 foreach    (aiInterfaceDir ${AI_INTERFACE_DIRS})
 	if     (NOT "${aiInterfaceDir}" STREQUAL "Python")
-	add_subdirectory(${aiInterfaceDir})
-	if(TARGET ${aiInterfaceDir}-AIInterface)
-		list(APPEND DEPS_AI_INTERFACES ${aiInterfaceDir}-AIInterface)
-	endif()
+	Add_Subdirectory(${aiInterfaceDir})
+	list(APPEND DEPS_AI_INTERFACES ${aiInterfaceDir}-AIInterface)
 	elseif (NOT "${aiInterfaceDir}" STREQUAL "Python")
-		ai_interface_message(STATUS "Python AI Interface is not yet compatible with pureint changes -> temporarily disabled")
+		AIInterfaceMessage(STATUS "Python AI Interface is not yet compatible with pureint changes -> temporarily disabled")
 	endif  (NOT "${aiInterfaceDir}" STREQUAL "Python")
 endforeach (aiInterfaceDir)
-make_global(DEPS_AI_INTERFACES)
+MakeGlobal(DEPS_AI_INTERFACES)

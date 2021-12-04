@@ -26,18 +26,15 @@ public:
 	void ResetState() const;
 	void Draw();
 
-	void ConfigNotify(const std::string& key, const std::string& value);
-
 	virtual void Draw(float treeDistance) = 0;
 	virtual void DrawShadowPass() {}
-	virtual void Update() override = 0;
+	virtual void Update() = 0;
 
 	virtual void ResetPos(const float3& pos);
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
 	virtual void DeleteTree(int treeID, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 
-	bool GetFullRead() const override { return true; }
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "RenderFeatureCreated") ||
@@ -54,9 +51,9 @@ public:
 	bool& DrawTreesRef() { return drawTrees; }
 	bool& WireFrameModeRef() { return wireFrameMode; }
 
-	void RenderFeatureCreated(const CFeature* feature) override;
-	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
-	void RenderFeatureDestroyed(const CFeature* feature) override;
+	void RenderFeatureCreated(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void RenderFeatureDestroyed(const CFeature* feature);
 
 public:
 	struct TreeStruct {

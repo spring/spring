@@ -375,7 +375,7 @@ public:
 	// Same as above, but contains(key) MUST be false
 	void insert_unique(KeyT&& key)
 	{
-		assert(!contains(key));
+		DASSERT(!contains(key));
 		check_expand_need();
 		auto bucket = find_empty_bucket(key);
 		_states[bucket] = State::FILLED;

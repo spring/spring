@@ -1,5 +1,3 @@
-#pragma once
-
 // Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine" and the "irrXML" project.
 // For conditions of distribution and use, see copyright notice in irrlicht.h and irrXML.h
@@ -24,7 +22,6 @@
 #include <assimp/defs.h>
 
 #include "StringComparison.h"
-#include <assimp/DefaultLogger.hpp>
 
 
 #ifdef _MSC_VER
@@ -195,7 +192,7 @@ inline uint64_t strtoul10_64( const char* in, const char** out=0, unsigned int* 
     uint64_t value = 0;
 
     if ( *in < '0' || *in > '9' )
-        throw std::invalid_argument(std::string("The string \"") + in + "\" cannot be converted into a value.");
+            throw std::invalid_argument(std::string("The string \"") + in + "\" cannot be converted into a value.");
 
     bool running = true;
     while ( running )
@@ -205,12 +202,8 @@ inline uint64_t strtoul10_64( const char* in, const char** out=0, unsigned int* 
 
         const uint64_t new_value = ( value * 10 ) + ( *in - '0' );
 
-        // numeric overflow, we rely on you
-        if ( new_value < value ) {
-            DefaultLogger::get()->warn( std::string( "Converting the string \"" ) + in + "\" into a value resulted in overflow." );
-            return 0;
-        }
-            //throw std::overflow_error();
+        if (new_value < value) /* numeric overflow, we rely on you */
+            throw std::overflow_error(std::string("Converting the string \"") + in + "\" into a value resulted in overflow.");
 
         value = new_value;
 

@@ -6,15 +6,14 @@
 #include "InterceptHandler.h"
 
 #include "Map/Ground.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/float3.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 #include "System/creg/STL_Deque.h"
 
 
@@ -46,7 +45,7 @@ void CInterceptHandler::Update(bool forced) {
 
 			const int pAllyTeam = p->GetAllyteamID();
 
-			if (teamHandler.IsValidAllyTeam(pAllyTeam) && teamHandler.Ally(wOwner->allyteam, pAllyTeam))
+			if (teamHandler->IsValidAllyTeam(pAllyTeam) && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true

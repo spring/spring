@@ -6,9 +6,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CRepulseGfx, CProjectile, )
+CR_BIND_DERIVED_POOL(CRepulseGfx, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(repulsed),

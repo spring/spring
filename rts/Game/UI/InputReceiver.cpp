@@ -36,7 +36,7 @@ CInputReceiver::~CInputReceiver()
 
 void CInputReceiver::CollectGarbage()
 {
-	// remove dead receivers
+	// called once every second from CGame::Update
 	std::deque<CInputReceiver*>& prvInputReceivers = GetReceivers();
 	std::deque<CInputReceiver*> nxtInputReceivers;
 

@@ -11,8 +11,9 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CNanoProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CNanoProjectile,
 (
@@ -23,7 +24,7 @@ CR_REG_METADATA(CNanoProjectile,
 ))
 
 
-CNanoProjectile::CNanoProjectile()
+CNanoProjectile::CNanoProjectile(): CProjectile()
 {
 	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -33,7 +34,7 @@ CNanoProjectile::CNanoProjectile()
 }
 
 CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
-	: CProjectile(pos, speed, nullptr, false, false, false)
+	: CProjectile(pos, speed, NULL, false, false, false)
 	, deathFrame(gs->frameNum + lifeTime)
 	, color(c)
 {
@@ -41,12 +42,16 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawSorted = false;
 	drawRadius = 3;
 
-	projectileHandler.currentNanoParticles += 1;
+	if (projectileHandler != nullptr) {
+		projectileHandler->currentNanoParticles += 1;
+	}
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
-	projectileHandler.currentNanoParticles -= 1;
+	if (projectileHandler != nullptr) {
+		projectileHandler->currentNanoParticles -= 1;
+	}
 }
 
 

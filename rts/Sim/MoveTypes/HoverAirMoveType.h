@@ -39,8 +39,6 @@ public:
 	void UpdateCircling();
 	void UpdateHovering();
 
-	float GetGoalRadius(float s = 0.0f) const override { return (SQUARE_SIZE * SQUARE_SIZE); }
-
 	short GetWantedHeading() const { return wantedHeading; }
 	short GetForcedHeading() const { return forcedHeading; }
 
@@ -99,6 +97,8 @@ private:
 
 	/// force the aircraft to turn toward specific heading (for transports)
 	bool forceHeading;
+	/// Set to true when transporting stuff
+	bool dontLand;
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;

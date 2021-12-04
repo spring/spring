@@ -8,9 +8,14 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, )
+#ifdef TRACE_SYNC
+	#include "System/Sync/SyncTracer.h"
+#endif
+
+CR_BIND_DERIVED_POOL(CLightningProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLightningProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -37,6 +42,12 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 		displacements[d]  = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 		displacements2[d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << params.pos.x << " " << params.pos.y << " " << params.pos.z << " ";
+	tracefile << params.end.x << " " << params.end.y << " " << params.end.z << "\n";
+#endif
 }
 
 void CLightningProjectile::Update()
@@ -44,7 +55,7 @@ void CLightningProjectile::Update()
 	if (--ttl <= 0) {
 		deleteMe = true;
 	} else {
-		explGenHandler.GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, displacements[0], 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, displacements[0], 0.0f, NULL, NULL);
 	}
 
 	for (size_t d = 1; d < displacements_size; ++d) {

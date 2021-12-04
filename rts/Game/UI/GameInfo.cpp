@@ -88,7 +88,7 @@ CGameInfo::CGameInfo()
 
 	char buf[1024];
 
-	if (gameSetup->hostDemo) {
+	if (gameSetup != NULL && gameSetup->hostDemo) {
 		labels.push_back("Playback:");
 		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
 	}
@@ -108,10 +108,10 @@ CGameInfo::CGameInfo()
 	values.push_back(buf);
 
 	labels.push_back("Map Tidal:");
-	values.push_back(envResHandler.GetCurrentTidalStrength());
+	values.push_back(mapInfo->map.tidalStrength);
 
 	labels.push_back("Map Wind:");
-	sprintf(buf, "%.2f - %.2f (%.2f)", envResHandler.GetMinWindStrength(), envResHandler.GetMaxWindStrength(), envResHandler.GetAverageWindStrength());
+	sprintf(buf, "%.2f - %.2f (%.2f)", wind.GetMinWind(), wind.GetMaxWind(), (wind.GetMinWind() + wind.GetMaxWind()) * 0.5f);
 	values.push_back(buf);
 
 	labels.push_back("Map Size:");
@@ -126,10 +126,9 @@ CGameInfo::CGameInfo()
 
 	labels.push_back("PFS Name:");
 	switch (pathManager->GetPathFinderType()) {
-		case NOPFS_TYPE: { values.push_back("NOPFS"  ); } break;
-		case HAPFS_TYPE: { values.push_back("HAPFS"  ); } break;
-		case QTPFS_TYPE: { values.push_back("QTPFS"  ); } break;
-		default        : { values.push_back("UNKNOWN"); } break; // not reachable
+		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
+		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
+		default:               { values.push_back("UNKNOWN"); } break; // not reachable
 	}
 
 	labels.push_back("CHEATS:");
@@ -138,7 +137,7 @@ CGameInfo::CGameInfo()
 
 CGameInfo::~CGameInfo()
 {
-	instance = nullptr;
+	instance = NULL;
 }
 
 

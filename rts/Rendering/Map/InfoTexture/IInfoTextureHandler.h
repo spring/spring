@@ -11,7 +11,8 @@
 class CInfoTexture;
 
 
-class IInfoTextureHandler {
+class IInfoTextureHandler
+{
 public:
 	static void Create();
 

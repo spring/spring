@@ -6,8 +6,8 @@
 #include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
 
-#define CATCH_CONFIG_MAIN
-#include "lib/catch.hpp"
+#define BOOST_TEST_MODULE RotationMatrix44f
+#include <boost/test/unit_test.hpp>
 
 namespace std {
 	ostream& operator<<(ostream& s, float3 const& f) {
@@ -16,7 +16,7 @@ namespace std {
 	}
 }
 
-TEST_CASE("GetEulerAnglesRgtHand")
+BOOST_AUTO_TEST_CASE( GetEulerAnglesRgtHand )
 {
 	const std::array<float3, 5> testAngles = {
 		//Order is PYR, in degrees because it's easier to understand
@@ -40,7 +40,7 @@ TEST_CASE("GetEulerAnglesRgtHand")
 
 		const float3 resultAngles = m.GetEulerAnglesLftHand() * math::RAD_TO_DEG;
 
-		CHECK(origAngles.equals(resultAngles));
+		BOOST_CHECK_EQUAL(origAngles, resultAngles);
 	}
 }
 

@@ -32,13 +32,10 @@ class HeightMapTexture : public CEventClient
 		void Init();
 		void Kill();
 
-	private:
-		GLuint texID = 0;
-
-		int xSize = 0;
-		int ySize = 0;
-
-		PBO pbos[3];
+		GLuint texID;
+		int xSize;
+		int ySize;
+		PBO pbo;
 };
 
 extern HeightMapTexture* heightMapTexture;

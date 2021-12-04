@@ -27,8 +27,8 @@ void AudioChannel::SetVolume(float newVolume)
 
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (CSoundSource* src: curSources) {
-		src->UpdateVolume();
+	for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+		(*it)->UpdateVolume();
 	}
 
 	CheckError("AudioChannel::SetVolume");
@@ -50,8 +50,8 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
-			StreamPlay(streamQueue.front(), false);
-			streamQueue.pop_front();
+			StreamPlay(streamQueue.back(), false);
+			streamQueue.pop_back();
 		} else {
 			curStreamSrc = nullptr;
 		}
@@ -63,16 +63,16 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 
 void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
-	if (id == 0 || volume <= 0.0f)
-		return;
-
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
 		return;
 
-	// get the sound item, then find a source for it
-	const SoundItem* sndItem = sound->GetSoundItem(id);
+	if (volume <= 0.0f)
+		return;
+
+	// generate the sound item
+	SoundItem* sndItem = sound->GetSoundItem(id);
 
 	if (sndItem == nullptr) {
 		sound->numEmptyPlayRequests++;
@@ -84,13 +84,12 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		if (!relative)
 			return;
 
-		LOG("[AudioChannel::%s] maximum distance ignored for relative playback of sound-item \"%s\"", __func__, (sndItem->Name()).c_str());
+		LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
 	}
 
 	// don't spam to many sounds per frame
 	if (emitsThisFrame >= emitsPerFrame)
 		return;
-
 	emitsThisFrame++;
 
 	// check if the sound item is already played
@@ -99,15 +98,15 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 		int prio = INT_MAX;
 
-		for (CSoundSource* tmp: curSources) {
-			if (tmp->GetCurrentPriority() < prio) {
-				src  = tmp;
+		for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+			if ((*it)->GetCurrentPriority() < prio) {
+				src  = *it;
 				prio = src->GetCurrentPriority();
 			}
 		}
 
 		if (src == nullptr || prio > sndItem->GetPriority()) {
-			LOG_L(L_DEBUG, "[AudioChannel::%s] maximum concurrent playbacks reached for sound-item %s", __func__, (sndItem->Name()).c_str());
+			LOG_L(L_DEBUG, "CSound::PlaySample: Max concurrent sounds in channel reached! Dropping playback!");
 			return;
 		}
 
@@ -118,17 +117,16 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	CSoundSource* sndSource = sound->GetNextBestSource();
 
 	if (sndSource == nullptr || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
-		LOG_L(L_DEBUG, "[AudioChannel::%s] no source found for sound-item %s", __func__, (sndItem->Name()).c_str());
+		LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
 		return;
 	}
 	if (sndSource->IsPlaying())
 		sound->numAbortedPlays++;
 
 	// play the sound item
-	sndSource->PlayAsync(this, id, pos, velocity, volume, sndItem->GetPriority(), relative);
+	sndSource->PlayAsync(this, sndItem, pos, velocity, volume, relative);
 	curSources.insert(sndSource);
 }
-
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
@@ -145,24 +143,28 @@ void AudioChannel::PlaySample(size_t id, const float3& pos, const float3& veloci
 	FindSourceAndPlay(id, pos, velocity, volume, false);
 }
 
+
 void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 {
 	FindSourceAndPlay(id, obj->pos, obj->speed, volume, false);
 }
 
 
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) { PlayRandomSample(soundSet, obj->pos, obj->speed); }
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel)
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj)
 {
-	int soundIdx = -1;
+	PlayRandomSample(soundSet, obj->pos);
+}
 
-	switch (soundSet.NumSounds()) {
-		case  0: {                                         return; } break;
-		case  1: { soundIdx =                                   0; } break;
-		default: { soundIdx = guRNG.NextInt(soundSet.NumSounds()); } break;
-	}
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
+{
+	if (soundSet.sounds.empty())
+		return;
 
-	FindSourceAndPlay(soundSet.getID(soundIdx), pos, vel, soundSet.getVolume(soundIdx), false);
+	const int soundIdx = guRNG.NextInt(soundSet.sounds.size());
+	const int soundID = soundSet.getID(soundIdx);
+	const float soundVol = soundSet.getVolume(soundIdx);
+
+	PlaySample(soundID, pos, soundVol);
 }
 
 

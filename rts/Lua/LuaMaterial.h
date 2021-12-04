@@ -3,7 +3,6 @@
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
 
-#include <cstring> // strcmp
 #include <string>
 #include <vector>
 
@@ -37,7 +36,6 @@ LuaObjectMaterialData (helper to choose the current LOD) //FIXME rename
 #include "LuaOpenGLUtils.h"
 #include "LuaObjectMaterial.h" // for LuaMatRef
 #include "Rendering/GL/myGL.h"
-#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
 
@@ -49,12 +47,13 @@ class CSolidObject;
 class LuaMatShader {
 	public:
 		enum Type {
-			LUASHADER_3DO    = 0, // engine default; *must* equal MODELTYPE_3DO!
-			LUASHADER_S3O    = 1, // engine default; *must* equal MODELTYPE_S3O!
-			LUASHADER_ASS    = 2, // engine default; *must* equal MODELTYPE_ASS!
-			LUASHADER_GL     = 3, // custom Lua
-			LUASHADER_NONE   = 4,
-			LUASHADER_LAST   = 5,
+			LUASHADER_3DO  = 0, // engine default; *must* equal MODELTYPE_3DO!
+			LUASHADER_S3O  = 1, // engine default; *must* equal MODELTYPE_S3O!
+			LUASHADER_OBJ  = 2, // engine default; *must* equal MODELTYPE_OBJ!
+			LUASHADER_ASS  = 3, // engine default; *must* equal MODELTYPE_ASS!
+			LUASHADER_GL   = 4, // custom Lua
+			LUASHADER_NONE = 5,
+			LUASHADER_LAST = 6,
 		};
 		enum Pass {
 			LUASHADER_PASS_FWD = 0, // forward pass
@@ -63,150 +62,63 @@ class LuaMatShader {
 		};
 
 	public:
-		void Finalize() { openglID *= (type == LUASHADER_GL); }
+		LuaMatShader() : type(LUASHADER_NONE), openglID(0) {}
+
+		void Finalize();
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
 		void Print(const std::string& indent, bool isDeferred) const;
 
-		// only accepts custom programs
-		void SetCustomTypeFromID(unsigned int id) {
+		void SetTypeFromID(unsigned int id) {
 			if ((openglID = id) == 0) {
 				type = LuaMatShader::LUASHADER_NONE;
 			} else {
 				type = LuaMatShader::LUASHADER_GL;
 			}
 		}
-		// only accepts engine programs
-		void SetEngineTypeFromKey(const char* key) {
-			switch (hashStringLower(key)) {
-				case hashStringLower("3DO"): { type = LUASHADER_3DO ; } break;
-				case hashStringLower("S3O"): { type = LUASHADER_S3O ; } break;
-				case hashStringLower("ASS"): { type = LUASHADER_ASS ; } break;
-				default                    : { type = LUASHADER_NONE; } break;
-			}
+		void SetTypeFromKey(const std::string& key) {
+			if (key == "3do") { type = LUASHADER_3DO; return; }
+			if (key == "s3o") { type = LUASHADER_S3O; return; }
+			if (key == "obj") { type = LUASHADER_OBJ; return; }
+			if (key == "ass") { type = LUASHADER_ASS; return; }
+			type = LUASHADER_NONE;
 		}
 
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
 
-		bool operator <  (const LuaMatShader& mt) const { return (Compare(*this, mt) < 0); }
-		bool operator == (const LuaMatShader& mt) const = delete;
-		bool operator != (const LuaMatShader& mt) const = delete;
+		bool operator<(const LuaMatShader& mt) const { return (Compare(*this, mt)  < 0); }
+		bool operator==(const LuaMatShader& mt) const = delete;
+		bool operator!=(const LuaMatShader& mt) const = delete;
 
-		// both passes require a (custom or engine) shader
 		bool ValidForPass(Pass pass) const { return (pass != LUASHADER_PASS_DFR || type != LUASHADER_NONE); }
 
 		bool IsCustomType() const { return (type == LUASHADER_GL); }
 		bool IsEngineType() const { return (type >= LUASHADER_3DO && type <= LUASHADER_ASS); }
 
 	public:
-		Type type = LUASHADER_NONE;
-		GLuint openglID = 0;
+		Type type;
+		GLuint openglID;
 };
 
 
 /******************************************************************************/
 
-struct LuaMatUniform {
-	char name[32] = {0};
-	union {
-		int i[32];
-		float f[32];
-	} data;
-
-	// GL_INT or GL_FLOAT_*
-	int type = 0;
-	// number of data elements
-	int size = 0;
-
-	// -3 := empty uniform, -2 := loc not set, -1 := loc invalid
-	mutable int loc = -3;
-};
-
 struct LuaMatUniforms {
 public:
-	LuaMatUniforms() {
-		ClearObjectUniforms(LUAOBJ_UNIT   );
-		ClearObjectUniforms(LUAOBJ_FEATURE);
-	}
-
 	void Print(const std::string& indent, bool isDeferred) const;
 	void Parse(lua_State* L, const int tableIdx);
 	void AutoLink(LuaMatShader* s);
 	void Validate(LuaMatShader* s);
 
 	void Execute() const;
-	void ExecuteInstanceTeamColor(const float4& tc) const { teamColor.Execute(tc); }
-
-	bool ClearObjectUniforms(int objType) {
-		objectUniforms[objType].clear();
-		objectUniforms[objType].reserve(128);
-		return true;
-	}
-
-	bool ClearObjectUniforms(int objId, int objType) { return (objectUniforms[objType].erase(objId)); }
-	bool ClearObjectUniform(int objId, int objType, const char* name) {
-		const auto objIter = objectUniforms[objType].find(objId);
-		const auto strPred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
-		const auto locPred = [](const LuaMatUniform& a) { return (a.loc == -3); };
-
-		if (objIter == objectUniforms[objType].end())
-			return false;
-
-		auto& uniformData = objIter->second;
-		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), strPred);
-
-		if (uniformIter == uniformData.end())
-			return false;
-
-		assert(uniformIter->loc != -3);
-
-		// replace iter with last valid (locIter - 1) uniform
-		auto locIter = std::find_if(uniformIter + 1, uniformData.end(), locPred);
-
-		if ((locIter--) == uniformData.end()) {
-			*uniformIter = uniformData.back();
-			return (uniformData.back() = {}, true);
-		}
-
-		*uniformIter = *locIter;
-		return (*locIter = {}, true);
-	}
-
-	bool AddObjectUniform(int objId, int objType, const LuaMatUniform& u) {
-		const auto pred = [](const LuaMatUniform& a) { return (a.loc == -3); };
-
-		auto& uniformData = objectUniforms[objType][objId];
-		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), pred);
-
-		if (uniformIter == uniformData.end())
-			return false;
-
-		return (*uniformIter = u, true);
-	}
-
-
-	static LuaMatUniform& GetDummyObjectUniform() {
-		static LuaMatUniform u;
-		return (u = {});
-	}
-
-	LuaMatUniform& GetObjectUniform(int objId, int objType, const char* name) {
-		const auto pred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
-
-		auto& data = objectUniforms[objType][objId];
-		auto  iter = std::find_if(data.begin(), data.end(), pred);
-
-		if (iter == data.end())
-			return (GetDummyObjectUniform());
-
-		return *iter;
-	}
-
+	void ExecuteInstance(const CSolidObject* o, const float2 alpha) const;
 
 	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
 public:
 	struct IUniform {
 		static_assert(GL_INVALID_INDEX == -1, "glGetUniformLocation is defined to return -1 (GL_INVALID_INDEX) for invalid names");
+
+		IUniform(): loc(GL_INVALID_INDEX) {}
 
 		virtual bool CanExec() const = 0;
 		virtual GLenum GetType() const = 0;
@@ -215,24 +127,15 @@ public:
 		bool IsValid() const { return (loc != GL_INVALID_INDEX); }
 
 	public:
-		GLint loc = GL_INVALID_INDEX;
+		GLint loc;
 	};
 
 private:
 	template<typename Type> struct UniformMat : public IUniform {
 	public:
 		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
-		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
-		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
-
-		GLenum GetType() const { return GL_FLOAT_MAT4; }
-	};
-
-	template<typename Type> struct UniformMatArray : public IUniform {
-	public:
-		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
-		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
-		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, val.size(), GL_FALSE, val[0]); return true; }
+		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
 
 		GLenum GetType() const { return GL_FLOAT_MAT4; }
 	};
@@ -260,14 +163,15 @@ private:
 
 	template<typename Type> struct UniformInt : public IUniform {
 	public:
+		UniformInt(): cur(Type(0)), prv(Type(0)) {}
 		bool CanExec() const { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
 
 		GLenum GetType() const { return GL_INT; }
 	public:
-		Type cur = Type(0);
-		Type prv = Type(0);
+		Type cur;
+		Type prv;
 	};
 
 private:
@@ -275,9 +179,6 @@ private:
 	spring::unsynced_map<std::string, IUniform*> GetEngineNameUniformPairs();
 
 public:
-	// per-{unit,feature} custom uniforms set via LuaObjectRendering
-	spring::unsynced_map<int, std::array<LuaMatUniform, 16>> objectUniforms[2];
-
 	UniformMat<CMatrix44f> viewMatrix;
 	UniformMat<CMatrix44f> projMatrix;
 	UniformMat<CMatrix44f> viprMatrix;
@@ -288,8 +189,6 @@ public:
 	UniformMat<CMatrix44f> shadowMatrix;
 	UniformVec<float4> shadowParams;
 
-	UniformVec<float4> teamColor;
-
 	UniformVec<float3> camPos;
 	UniformVec<float3> camDir;
 	UniformVec<float3> sunDir;
@@ -297,60 +196,64 @@ public:
 
 	mutable UniformInt<         int> simFrame;
 	mutable UniformInt<unsigned int> visFrame;
+
+public:
+	UniformVec<float4> teamColor;
 };
 
 
 class LuaMaterial {
-public:
-	LuaMaterial() = default;
-	LuaMaterial(LuaMatType matType): type(matType) {}
+	public:
+		LuaMaterial(LuaMatType matType = LuaMatType(-1)):
+		  type(matType), // default invalid
+		  order(0),
+		  texCount(0),
+		  cullingMode(0),
 
-	void Parse(
-		lua_State* L,
-		const int tableIdx,
-		void(*ParseShader)(lua_State*, int, LuaMatShader&),
-		void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
-		GLuint(*ParseDisplayList)(lua_State*, int)
-	);
+		  preList(0),
+		  postList(0),
 
-	void Finalize();
-	void Execute(const LuaMaterial& prev, bool deferredPass) const;
+		  useCamera(true)
+		{}
 
-	void ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const;
-	void ExecuteInstanceTeamColor(const float4& tc, bool deferredPass) const { uniforms[deferredPass].ExecuteInstanceTeamColor(tc); }
+		void Parse(
+			lua_State* L,
+			const int tableIdx,
+			std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
+			std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
+			std::function<GLuint(lua_State*, int)> ParseDisplayList
+		);
+		void Finalize();
+		void Execute(const LuaMaterial& prev, bool deferredPass) const;
+		void ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const;
+		void Print(const std::string& indent) const;
 
-	void Print(const std::string& indent) const;
+		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
-	static int Compare(const LuaMaterial& a, const LuaMaterial& b);
+		bool operator<(const LuaMaterial& m) const { return (Compare(*this, m) < 0); }
+		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
 
-	bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
-	bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+	public:
+		static const int MAX_TEX_UNITS = 16;
 
-	bool HasDrawCall() const { return (uuid >= 0); }
+		LuaMatType type;
 
-public:
-	static constexpr int MAX_TEX_UNITS = 16;
+		int order; // for manually adjusting rendering order
+		int texCount;
 
-	// default invalid
-	LuaMatType type = LuaMatType(-1);
+		// [0] := standard, [1] := deferred
+		LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
+		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
+		LuaMatTexture  textures[MAX_TEX_UNITS];
 
-	int uuid = -1; // user-set unique ID, enables Draw callin
-	int order = 0; // for manually adjusting rendering order
-	int texCount = 0;
+		GLenum cullingMode;
 
-	// [0] := standard, [1] := deferred
-	LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
-	LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
-	LuaMatTexture  textures[MAX_TEX_UNITS];
+		GLuint preList;
+		GLuint postList;
 
-	GLenum cullingMode = 0;
+		bool useCamera;
 
-	GLuint preList = 0;
-	GLuint postList = 0;
-
-	bool useCamera = true;
-
-	static const LuaMaterial defMat;
+		static const LuaMaterial defMat;
 };
 
 

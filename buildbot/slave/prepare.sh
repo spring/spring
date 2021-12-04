@@ -27,7 +27,7 @@ CONFIG=${1:-default}
 BRANCH=${2:-develop}
 shift 2
 
-REV=$(git describe --abbrev=7 --tags)
+REV=$(git describe --tags)
 SOURCEDIR=${PWD}
 BUILDDIR=${PWD}/build/${CONFIG}
 TMP_BASE=/tmp/spring

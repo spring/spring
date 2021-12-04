@@ -2,13 +2,14 @@
 
 #include "UnitScriptFactory.h"
 
-#include "CobFileHandler.h"
+#include "CobEngine.h"
 #include "CobInstance.h"
 #include "LuaUnitScript.h"
 #include "NullUnitScript.h"
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
@@ -17,9 +18,6 @@ void CUnitScriptFactory::InitStatic()
 {
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CCobInstance   ), "");
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CNullUnitScript), "");
-
-	CCobUnitScriptNames::InitScriptNames();
-	CLuaUnitScriptNames::InitScriptNames();
 }
 
 

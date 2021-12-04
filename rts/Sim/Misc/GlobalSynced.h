@@ -11,12 +11,6 @@ class CGameSetup;
 class CTeam;
 class CPlayer;
 
-enum {
-	GODMODE_ATC_BIT = 1 << 0, // allied team control
-	GODMODE_ETC_BIT = 1 << 1, // enemy team control
-	GODMODE_MAX_VAL = GODMODE_ATC_BIT | GODMODE_ETC_BIT, // full team control
-};
-
 /**
  * @brief Global synced data
  *
@@ -28,27 +22,18 @@ class CGlobalSynced
 public:
 	CR_DECLARE_STRUCT(CGlobalSynced)
 
-	void Init() { ResetState(); }
-	void Kill();
+	CGlobalSynced();  //!< Constructor
+	~CGlobalSynced(); //!< Destructor
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
 	// Lua should never see the pre-simframe value
-	int GetLuaSimFrame() { return (frameNum * (frameNum > 0)); }
+	int GetLuaSimFrame() { return (frameNum > 0) ? frameNum : 0; }
 	int GetTempNum() { return tempNum++; }
 
 	// remains true until first SimFrame call
 	bool PreSimFrame() const { return (frameNum == -1); }
-
-private:
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum = 1;
 
 public:
 	/**
@@ -56,15 +41,7 @@ public:
 	*
 	* Stores the current frame number
 	*/
-	int frameNum = -1;
-
-	/**
-	* @brief god mode
-	*
-	* Whether god-mode is enabled, which allows all players (even spectators)
-	* to control all units.
-	*/
-	int godMode = 0;
+	int frameNum;
 
 
 	/**
@@ -75,7 +52,7 @@ public:
 	* can be up to this but is lowered if
 	* clients can't keep up (lag protection)
 	*/
-	float speedFactor = 1.0f;
+	float speedFactor;
 
 	/**
 	* @brief wanted speed factor
@@ -85,7 +62,7 @@ public:
 	* per second calculate as follow:
 	* wantedSimFPS = speedFactor * GAME_SPEED;
 	*/
-	float wantedSpeedFactor = 1.0f;
+	float wantedSpeedFactor;
 
 
 	/**
@@ -93,35 +70,52 @@ public:
 	*
 	* Holds whether the game is paused
 	*/
-	bool paused = false;
+	bool paused;
+
+	/**
+	* @brief god mode
+	*
+	* Whether god-mode is enabled, which allows all players (even spectators)
+	* to control all units.
+	*/
+	bool godMode;
 
 	/**
 	* @brief cheat enabled
 	*
 	* Whether cheating is enabled
 	*/
-	bool cheatEnabled = false;
+	bool cheatEnabled;
 
 	/**
 	* @brief disable helper AIs
 	*
 	* Whether helper AIs are allowed, including LuaUI control widgets
 	*/
-	bool noHelperAIs = false;
+	bool noHelperAIs;
 
 	/**
 	* @brief definition editing enabled
 	*
 	* Whether editing of unit-, feature- and weapon-defs through Lua is enabled.
 	*/
-	bool editDefsEnabled = false;
+	bool editDefsEnabled;
 
 	/**
 	* @brief LuaGaia control
 	*
 	* Whether or not LuaGaia is enabled
 	*/
-	bool useLuaGaia = true;
+	bool useLuaGaia;
+
+private:
+	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum;
 };
 
 

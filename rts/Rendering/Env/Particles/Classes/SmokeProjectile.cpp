@@ -12,8 +12,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CSmokeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeProjectile,
 (
@@ -30,6 +31,8 @@ CR_REG_METADATA(CSmokeProjectile,
 
 
 CSmokeProjectile::CSmokeProjectile():
+	CProjectile(),
+
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -61,7 +64,7 @@ CSmokeProjectile::CSmokeProjectile(
 	ageSpeed = 1.0f / ttl;
 	checkCol = false;
 	castShadow = true;
-	textureNum = (int) (guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
 	alwaysVisible |= (owner == nullptr);
@@ -71,7 +74,7 @@ CSmokeProjectile::CSmokeProjectile(
 
 void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	textureNum = (int) (guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
 	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
 	alwaysVisible |= (owner == nullptr);
@@ -82,7 +85,7 @@ void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile::Update()
 {
 	pos += speed;
-	pos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
+	pos += wind.GetCurrentWind() * age * 0.05f;
 	age += ageSpeed;
 	size += sizeExpansion;
 	size += ((startSize - size) * 0.2f * (size < startSize));
@@ -109,7 +112,7 @@ void CSmokeProjectile::Draw(CVertexArray* va)
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
-	#define st projectileDrawer->GetSmokeTexture(textureNum)
+	#define st projectileDrawer->smoketex[textureNum]
 	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
 	va->AddVertexTC(drawPos + pos1, st->xend,   st->ystart, col);
 	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);

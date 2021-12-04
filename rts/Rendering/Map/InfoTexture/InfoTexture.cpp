@@ -5,6 +5,7 @@
 
 CInfoTexture::CInfoTexture()
 : texture(0)
+, name()
 , texSize(0, 0)
 , texChannels(0)
 {

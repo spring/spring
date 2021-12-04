@@ -14,9 +14,16 @@
 
 
 static const char* BAD_CHARS = "\t _#";
-static const std::string DEFAULT_VALUE;
+static const std::string DEFAULT_VALUE = "";
 
-CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo) = default;
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo)
+	: info_keys(aiInfo.info_keys)
+	, info_keyLower_key(aiInfo.info_keyLower_key)
+	, info_key_value(aiInfo.info_key_value)
+	, info_key_description(aiInfo.info_key_description)
+	, options(aiInfo.options)
+{
+}
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	const std::string& aiInfoFile,
@@ -25,9 +32,10 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	std::vector<InfoItem> tmpInfo;
 	info_parseInfo(tmpInfo, aiInfoFile);
 
-	for (auto& info: tmpInfo) {
-		info_convertToStringValue(&info);
-		SetInfo(info.key, info.valueTypeString, info.desc);
+	for (auto ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
+		// TODO remove this, once we support non-string value types for Skirmish AI info
+		info_convertToStringValue(&(*ii));
+		SetInfo(ii->key, ii->valueTypeString, ii->desc);
 	}
 
 	if (!aiOptionFile.empty()) {
@@ -39,8 +47,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	const std::map<std::string, std::string>& aiInfo,
 	const std::string& aiOptionLua
 ) {
-	for (const auto& info: aiInfo) {
-		SetInfo(info.first, info.second);
+	for (auto ii = aiInfo.begin(); ii != aiInfo.end(); ++ii) {
+		SetInfo(ii->first, ii->second);
 	}
 
 	if (!aiOptionLua.empty()) {

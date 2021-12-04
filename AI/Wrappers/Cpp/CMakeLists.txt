@@ -20,9 +20,9 @@ endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	set_global(BUILD_${myName}_AIWRAPPER TRUE)
+	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
 else  (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	set_global(BUILD_${myName}_AIWRAPPER FALSE)
+	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
 	message ("warning: (New) C++ AI Wrapper will not be built!")
 endif (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
@@ -30,15 +30,15 @@ endif (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGE
 # Build
 if    (BUILD_${myName}_AIWRAPPER)
 	set(myDir        "${CMAKE_CURRENT_SOURCE_DIR}")
-	get_last_path_part(dirName ${myDir})
+	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
 	set(myGenTarget  "${myTarget}-generateSources")
-	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	ai_wrapper_message(STATUS "Found AI Wrapper: ${myTarget}")
+	AIWrapperMessage(STATUS "Found AI Wrapper: ${myTarget}")
 
-	set_global(${myName}_AIWRAPPER_TARGET      ${myTarget})
+	SetGlobal(${myName}_AIWRAPPER_TARGET      ${myTarget})
 
 
 	# Build static library
@@ -49,7 +49,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(springAIInterfaceSourceDir "${springSourceDir}/rts/ExternalAI/Interface")
 
 	set(${myName}_AIWRAPPER_INCLUDE_DIRS "${mySourceDir}" "${myGeneratedSourceDir}")
-	make_global(${myName}_AIWRAPPER_INCLUDE_DIRS)
+	MakeGlobal(${myName}_AIWRAPPER_INCLUDE_DIRS)
 
 	set(mySources
 		"${mySourceDir}/AIEvent.cpp"
@@ -269,6 +269,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myCompleteSources ${mySources} ${myGeneratedSources})
 	list(APPEND myCompleteSources ${ai_common_SRC})
 	add_library(${myTarget} STATIC ${myCompleteSources})
-	add_dependencies(${myTarget} generateVersionFiles)
+	Add_Dependencies(${myTarget} generateVersionFiles)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "${myName}")
 endif (BUILD_${myName}_AIWRAPPER)

@@ -11,12 +11,11 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/creg/DefTypes.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
+CR_BIND_DERIVED_POOL(CSimpleParticleSystem, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -65,8 +64,8 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	, particleSpeedSpread(0.0f)
 	, emitRot(0.0f)
 	, emitRotSpread(0.0f)
-	, texture(nullptr)
-	, colorMap(nullptr)
+	, texture(NULL)
+	, colorMap(NULL)
 	, directional(false)
 	, particleLife(0.0f)
 	, particleLifeSpread(0.0f)
@@ -161,11 +160,11 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == nullptr) {
+	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == nullptr) {
+	if (texture == NULL) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("simpleparticle");
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no texture specified", __FUNCTION__);
 	}
@@ -220,7 +219,7 @@ bool CSimpleParticleSystem::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo
 }
 
 
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
+CR_BIND_DERIVED_POOL(CSphereParticleSpawner, CSimpleParticleSystem, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSphereParticleSpawner, )
 
@@ -231,11 +230,11 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == nullptr) {
+	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == nullptr) {
+	if (texture == NULL) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("sphereparticle");
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no texture specified", __FUNCTION__);
 	}

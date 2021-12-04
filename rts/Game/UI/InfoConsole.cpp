@@ -1,56 +1,40 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "Rendering/GL/myGL.h"
+
 #include "InfoConsole.h"
+#include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "Rendering/Fonts/glFont.h"
 #include "System/EventHandler.h"
-#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
 
 #define border 7
 
-CONFIG(int, InfoMessageTime).defaultValue(10).description("Time until old messages disappear from the ingame console.");
+CONFIG(int, InfoMessageTime).defaultValue(10).description("Timeout till old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
 CInfoConsole* infoConsole = nullptr;
 
-static uint8_t infoConsoleMem[sizeof(CInfoConsole)];
 
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
 
+const size_t CInfoConsole::maxRawLines   = 1024;
+const size_t CInfoConsole::maxLastMsgPos = 10;
 
-
-void CInfoConsole::InitStatic() {
-	assert(infoConsole == nullptr);
-	infoConsole = new (infoConsoleMem) CInfoConsole();
-}
-
-void CInfoConsole::KillStatic() {
-	assert(infoConsole != nullptr);
-	spring::SafeDestruct(infoConsole);
-	// std::memset(infoConsoleMem, 0, sizeof(infoConsoleMem));
-	std::fill(infoConsoleMem, infoConsoleMem + sizeof(infoConsoleMem), 0);
-}
-
-
-void CInfoConsole::Init()
+CInfoConsole::CInfoConsole()
+	: CEventClient("InfoConsole", 999, false)
+	, enabled(true)
+	, lastMsgIter(lastMsgPositions.begin())
+	, newLines(0)
+	, rawId(0)
+	, fontScale(1.0f)
+	, maxLines(1)
 {
-	maxLines = 1;
-	newLines = 0;
-
-	msgPosIndx = 0;
-	numPosMsgs = 0;
-
-	rawId = 0;
 	lifetime = configHandler->GetInt("InfoMessageTime");
-
-	xpos = 0.0f;
-	ypos = 0.0f;
-	width = 0.0f;
-	height = 0.0f;
-
-	fontScale = 1.0f;
-	fontSize = fontScale * smallFont->GetSize();;
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
@@ -62,60 +46,58 @@ void CInfoConsole::Init()
 		height = 0.205f;
 	}
 
-	enabled = (width != 0.0f && height != 0.0f);
-	inited = true;
+	if (width == 0.f || height == 0.f)
+		enabled = false;
 
+	fontSize = fontScale * smallFont->GetSize();
 
 	logSinkHandler.AddSink(this);
 	eventHandler.AddClient(this);
-
-	rawLines.clear();
-	infoLines.clear();
-
-	lastMsgPositions.fill(ZeroVector);
 }
 
-void CInfoConsole::Kill()
+CInfoConsole::~CInfoConsole()
 {
 	logSinkHandler.RemoveSink(this);
 	eventHandler.RemoveClient(this);
-
-	inited = false;
 }
-
 
 void CInfoConsole::Draw()
 {
-	if (!enabled)
-		return;
-	if (smallFont == nullptr)
-		return;
+	if (!enabled) return;
+	if (!smallFont) return;
+	if (data.empty()) return;
 
-	// infoConsole exists before guiHandler does, but is never drawn during that period
-	assert(guihandler != nullptr);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	{
-		// make copies s.t. mutex is not locked during glPrint calls
-		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+	if (guihandler && !guihandler->GetOutlineFonts()) {
+		// draw a black background when not using outlined font
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
 
-		if (infoLines.empty())
-			return;
-
-		tmpInfoLines.clear();
-		tmpInfoLines.insert(tmpInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
+		glBegin(GL_TRIANGLE_STRIP);
+			glVertex3f(xpos,         ypos,          0);
+			glVertex3f(xpos + width, ypos,          0);
+			glVertex3f(xpos,         ypos - height, 0);
+			glVertex3f(xpos + width, ypos - height, 0);
+		glEnd();
 	}
 
-	smallFont->Begin();
-	smallFont->SetColors(); // default
-
-	const uint32_t fontOptions = FONT_NORM | FONT_OUTLINE;
 	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	float curX = xpos + border * globalRendering->pixelX;
 	float curY = ypos - border * globalRendering->pixelY;
 
-	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
-		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
+	smallFont->Begin();
+	smallFont->SetColors(); // default
+	int fontOptions = FONT_NORM;
+	if (guihandler && guihandler->GetOutlineFonts())
+		fontOptions |= FONT_OUTLINE;
+
+	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
+		curY -= fontHeight;
+		smallFont->glPrint(curX, curY, fontSize, fontOptions, data[i].text);
 	}
 
 	smallFont->End();
@@ -124,100 +106,98 @@ void CInfoConsole::Draw()
 
 void CInfoConsole::Update()
 {
-	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
-
-	if (infoLines.empty())
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
+	if (data.empty())
 		return;
 
 	// pop old messages after timeout
-	if (infoLines[0].timeout <= spring_gettime())
-		infoLines.pop_front();
+	if (data[0].timeout <= spring_gettime()) {
+		data.pop_front();
+	}
 
-	if (smallFont == nullptr)
+	if (!smallFont)
 		return;
 
 	// if we have more lines then we can show, remove the oldest one,
 	// and make sure the others are shown long enough
-	const float  maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
-	const float fontHeight = smallFont->GetLineHeight();
-
-	// height=0 will likely be the case on HEADLESS only
-	maxLines = (fontHeight > 0.0f)? math::floor(maxHeight / (fontSize * fontHeight)): 1;
-
-	for (size_t i = infoLines.size(); i > maxLines; i--) {
-		infoLines.pop_front();
+	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
+	maxLines = (smallFont->GetLineHeight() > 0)
+			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
+			: 1; // this will likely be the case on HEADLESS only
+	for (size_t i = data.size(); i > maxLines; i--) {
+		data.pop_front();
 	}
 }
 
 void CInfoConsole::PushNewLinesToEventHandler()
 {
+	if (newLines == 0)
+		return;
+
+	std::deque<RawLine> newRawLines;
+
 	{
-		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+		std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-		if (newLines == 0)
-			return;
-
-		const size_t lineCount = rawLines.size();
-		const size_t startLine = lineCount - std::min(lineCount, newLines);
-
-		tmpLines.clear();
-		tmpLines.reserve(lineCount - startLine);
-
-		for (size_t i = startLine; i < lineCount; i++) {
-			tmpLines.push_back(rawLines[i]);
+		const int count = (int)rawData.size();
+		const int start = count - newLines;
+		for (int i = start; i < count; i++) {
+			const RawLine& rawLine = rawData[i];
+			newRawLines.push_back(rawLine);
 		}
-
 		newLines = 0;
 	}
 
-	for (const RawLine& rawLine: tmpLines) {
+	for (std::deque<RawLine>::iterator it = newRawLines.begin(); it != newRawLines.end(); ++it) {
+		const RawLine& rawLine = (*it);
 		eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
 	}
 }
 
 
-size_t CInfoConsole::GetRawLines(std::vector<RawLine>& lines)
+int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
-	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
-
-	const size_t numNewLines = newLines;
-
-	lines.clear();
-	lines.assign(rawLines.begin(), rawLines.end());
-
-	return (newLines = 0, numNewLines);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
+	lines = rawData;
+	int tmp = newLines;
+	newLines = 0;
+	return tmp;
 }
 
 
-void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& message)
+void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& text)
 {
-	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (section == prvSection && message == prvMessage)
+	if (rawData.size() > maxRawLines)
+		rawData.pop_front();
+
+	if (newLines < maxRawLines)
+		++newLines;
+
+	rawData.emplace_back(text, section, level, rawId++);
+
+	if (!smallFont)
 		return;
 
-	newLines += (newLines < maxRawLines);
+	// !!! Warning !!!
+	// We must not remove elements from `data` here
+	// cause ::Draw() iterats that container, and it's
+	// possible that it calls LOG(), which will end
+	// in here. So if we would remove stuff here it's
+	// possible that we delete a var that is used in
+	// Draw() & co, and so we might invalidate references
+	// (e.g. of std::strings) and cause SIGFAULTs!
+	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
+	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
 
-	if (rawLines.size() > maxRawLines)
-		rawLines.pop_front();
+	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(toustring(wrappedText)));
 
-	rawLines.emplace_back(prvMessage = message, prvSection = section, level, rawId++);
-
-	if (smallFont == nullptr)
-		return;
-
-	// NOTE
-	//   do not remove elements from infoLines here, ::Draw iterates over it
-	//   and can call LOG() which will end up back in ::RecordLogMessage
-	const std::string& wrappedText = smallFont->Wrap(message, fontSize, (width * globalRendering->viewSizeX) - (2 * border));
-	const std::u8string& unicodeText = toustring(wrappedText);
-
-	for (auto& splitLine: smallFont->SplitIntoLines(unicodeText)) {
+	for (auto& line: lines) {
 		// add the line to the console
-		infoLines.emplace_back();
-
-		InfoLine& l = infoLines.back();
-		l.text    = std::move(splitLine);
+		data.emplace_back();
+		InfoLine& l = data.back();
+		l.text    = std::move(line);
 		l.timeout = spring_gettime() + spring_secs(lifetime);
 	}
 }
@@ -225,24 +205,27 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 
 void CInfoConsole::LastMessagePosition(const float3& pos)
 {
-	// reset index to head when a new msg comes in
-	msgPosIndx  = numPosMsgs % lastMsgPositions.size();
-	numPosMsgs += 1;
+	if (lastMsgPositions.size() >= maxLastMsgPos) {
+		lastMsgPositions.pop_back();
+	}
+	lastMsgPositions.push_front(pos);
 
-	lastMsgPositions[msgPosIndx] = pos;
+	// reset the iterator when a new msg comes in
+	lastMsgIter = lastMsgPositions.begin();
 }
 
 const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 {
-	if (numPosMsgs == 0)
+	if (lastMsgPositions.empty())
 		return defaultPos;
 
-	const float3& p = lastMsgPositions[msgPosIndx];
+	// advance the position
+	const float3& p = *(lastMsgIter++);
 
-	// cycle to previous position
-	msgPosIndx += (std::min(numPosMsgs, lastMsgPositions.size()) - 1);
-	msgPosIndx %= std::min(numPosMsgs, lastMsgPositions.size());
+	// wrap around
+	if (lastMsgIter == lastMsgPositions.end()) {
+		lastMsgIter = lastMsgPositions.begin();
+	}
 
 	return p;
 }
-

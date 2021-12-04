@@ -7,9 +7,10 @@
 
 //#include "System/creg/creg_cond.h"
 
-#include <array>
 #include <vector>
 #include <string>
+
+struct Info;
 
 /**
  * Handles all Lua AI implementation relevant stuff.
@@ -18,15 +19,16 @@ class CLuaAIImplHandler
 {
 //	CR_DECLARE(CLuaAIImplHandler);
 
-public:
-	typedef std::vector< std::array<InfoItem, 4> > InfoItemVector;
+	CLuaAIImplHandler();
+	~CLuaAIImplHandler();
 
+public:
 	/**
 	 * Fetcher for the singleton.
 	 */
 	static CLuaAIImplHandler& GetInstance();
 
-	InfoItemVector LoadInfoItems();
+	std::vector< std::vector<InfoItem> > LoadInfos();
 };
 
 #define luaAIImplHandler CLuaAIImplHandler::GetInstance()

@@ -7,45 +7,42 @@ extern "C" {
 }
 
 
-CRC::CRC(): crc(CRC_INIT_VAL)
+static bool crcTableInitialized;
+
+
+CRC::CRC()
 {
-	InitTable();
+	crc = CRC_INIT_VAL;
+	if (!crcTableInitialized) {
+		crcTableInitialized = true;
+		CrcGenerateTable();
+	}
 }
 
 
-uint32_t CRC::InitTable()
+unsigned int CRC::GetDigest() const
 {
-	static bool crcTableInitialized = false;
-
-	if (crcTableInitialized)
-		return 1;
-
-	CrcGenerateTable();
-
-	crcTableInitialized = true;
-	return 0;
-}
-
-uint32_t CRC::CalcDigest(const void* data, size_t size)
-{
-	return (InitTable(), CRC_GET_DIGEST(CrcUpdate(CRC_INIT_VAL, data, size)));
-}
-
-uint32_t CRC::GetDigest() const
-{
-	return CRC_GET_DIGEST(crc);
+	// make a temporary copy to get away with the const
+	unsigned int temp = crc;
+	return CRC_GET_DIGEST(temp);
 }
 
 
-CRC& CRC::Update(const void* data, size_t size)
+unsigned int CRC::GetCRC(const void* data, unsigned int size)
+{
+	return CrcUpdate(0, data, size);
+}
+
+
+CRC& CRC::Update(const void* data, unsigned int size)
 {
 	crc = CrcUpdate(crc, data, size);
 	return *this;
 }
 
-CRC& CRC::Update(uint32_t data)
+
+CRC& CRC::Update(unsigned int data)
 {
-	crc = CrcUpdate(crc, &data, sizeof(data));
+	crc = CrcUpdate(crc, &data, sizeof(unsigned));
 	return *this;
 }
-

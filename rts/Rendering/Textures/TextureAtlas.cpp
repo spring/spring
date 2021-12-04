@@ -9,39 +9,39 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
-#include "System/Config/ConfigHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
 
 #include <cstring>
 
-CONFIG(int, MaxTextureAtlasSizeX).defaultValue(2048).minimumValue(512).maximumValue(32768);
-CONFIG(int, MaxTextureAtlasSizeY).defaultValue(2048).minimumValue(512).maximumValue(32768);
-
 CR_BIND(AtlasedTexture, )
 CR_REG_METADATA(AtlasedTexture, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
+
+// texture spacing in the atlas (in pixels)
+#define TEXMARGIN 2
 
 
 static AtlasedTexture dummy;
 
-bool CTextureAtlas::debug = false;
+bool CTextureAtlas::debug;
 
 
 CTextureAtlas::CTextureAtlas(unsigned int allocType)
+	: atlasAllocator(nullptr)
+	, atlasTexID(0)
+	, initialized(false)
+	, freeTexture(true)
 {
 	switch (allocType) {
-		case ATLAS_ALLOC_LEGACY  : { atlasAllocator = new   CLegacyAtlasAlloc(); } break;
+		case ATLAS_ALLOC_LEGACY: { atlasAllocator = new CLegacyAtlasAlloc(); } break;
 		case ATLAS_ALLOC_QUADTREE: { atlasAllocator = new CQuadtreeAtlasAlloc(); } break;
-		default                  : {                              assert(false); } break;
+		default: { assert(false); } break;
 	}
 
-	// NB: maxTextureSize can be as large as 32768, resulting in a 4GB atlas
-	const int atlasSizeX = std::min(globalRendering->maxTextureSize, configHandler->GetInt("MaxTextureAtlasSizeX"));
-	const int atlasSizeY = std::min(globalRendering->maxTextureSize, configHandler->GetInt("MaxTextureAtlasSizeY"));
-
 	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
-	atlasAllocator->SetMaxSize(atlasSizeX, atlasSizeY);
+	// atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 
 	textures.reserve(256);
 	memTextures.reserve(128);
@@ -98,10 +98,8 @@ size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 
 
 	CBitmap bitmap;
-	if (!bitmap.Load(file)) {
-		bitmap.Alloc(2, 2, 4);
-		LOG_L(L_WARNING, "[TexAtlas::%s] could not load texture from file \"%s\"", __func__, file.c_str());
-	}
+	if (!bitmap.Load(file))
+		throw content_error("Could not load texture from file " + file);
 
 	// only suport RGBA for now
 	if (bitmap.channels != 4 || bitmap.compressed)
@@ -150,8 +148,8 @@ bool CTextureAtlas::CreateTexture()
 
 			const AtlasedTexture tex(texCoords);
 
-			for (const auto& name: memTex.names) {
-				textures[name] = tex;
+			for (size_t n = 0; n < memTex.names.size(); ++n) {
+				textures[memTex.names[n]] = tex;
 			}
 
 			for (int y = 0; y < memTex.ysize; ++y) {

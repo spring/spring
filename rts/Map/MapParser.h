@@ -12,29 +12,27 @@ class float3;
 
 class MapParser
 {
-public:
-	static std::string GetMapConfigName(const std::string& mapFileName);
+	public:
+		static std::string GetMapConfigName(const std::string& mapFileName);
 
-public:
-	MapParser(const std::string& mapFileName);
+	public:
+		MapParser(const std::string& mapFileName);
+		~MapParser();
 
-	// no-copy
-	MapParser(const MapParser&) = delete;
+		// no-copy
+		MapParser(const MapParser&) = delete;
 
-	LuaTable GetRoot() {
-		errorLog.clear();
-		return parser.GetRoot();
-	}
+		LuaParser* GetParser() { return parser; }
 
-	bool IsValid() const { return parser.IsValid(); }
-	bool GetStartPos(int team, float3& pos);
+		LuaTable GetRoot();
+		bool IsValid() const;
+		std::string GetErrorLog() const;
 
-	const std::string& GetErrorLog() const { return errorLog; }
+		bool GetStartPos(int team, float3& pos) const;
 
-private:
-	LuaParser parser;
-
-	std::string errorLog;
+	private:
+		LuaParser* parser;
+		mutable std::string errorLog;
 };
 
 #endif // MAP_PARSER_H

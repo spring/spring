@@ -24,9 +24,9 @@ public:
 
 public:
 
-	CSMFReadMap(const std::string& mapName);
+	CSMFReadMap(std::string mapname);
 	// note: textures are auto-deleted
-	~CSMFReadMap() { mapFile.Close(); }
+	~CSMFReadMap() {}
 
 	void UpdateShadingTexture() override;
 	void UpdateHeightMapUnsynced(const SRectangle&) override;
@@ -123,12 +123,12 @@ public:
 	void GetFeatureInfo(MapFeatureInfo* f) override; // returns all feature info in MapFeatureInfo[NumFeatures]
 	const char* GetFeatureTypeName(int typeID) override;
 
-	unsigned char* GetInfoMap(const char* name, MapBitmapInfo* bm) override;
-	void FreeInfoMap(const char* name, unsigned char* data) override;
+	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) override;
+	void FreeInfoMap(const std::string& name, unsigned char* data) override;
 
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
-	inline CSMFMapFile& GetMapFile() { return mapFile; }
+	inline CSMFMapFile& GetFile(){ return file; }
 	inline CBaseGroundDrawer* GetGroundDrawer() override;
 
 
@@ -169,9 +169,9 @@ private:
 
 public:
 	// constants
-	static constexpr int tileScale     = 4;
-	static constexpr int bigSquareSize = 32 * tileScale;
-	static constexpr int NUM_SPLAT_DETAIL_NORMALS = 4;
+	static const int tileScale     = 4;
+	static const int bigSquareSize = 32 * tileScale;
+	static const int NUM_SPLAT_DETAIL_NORMALS = 4;
 
 	// globals for SMFGround{Drawer, Textures}
 	int numBigTexX;
@@ -186,17 +186,16 @@ public:
 	int heightMapSizeX;
 
 private:
-	// note: intentionally declared static (see ReadMap)
-	static CSMFMapFile mapFile;
+	CSMFMapFile file;
+	CSMFGroundDrawer* groundDrawer;
 
+private:
+	// note: intentionally declared static (see ReadMap)
 	static std::vector<float> cornerHeightMapSynced;
 	static std::vector<float> cornerHeightMapUnsynced;
 
 	static std::vector<unsigned char> shadingTexBuffer;
 	static std::vector<unsigned char> waterHeightColors;
-
-private:
-	CSMFGroundDrawer* groundDrawer = nullptr;
 
 private:
 	MapTexture grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
@@ -221,15 +220,15 @@ private:
 	MapTexture parallaxHeightTex;
 
 private:
-	int shadingTexUpdateProgress = -1;
+	int shadingTexUpdateProgress;
 
-	float texAnisotropyLevels[2] = {0.0f, 0.0f};
+	float texAnisotropyLevels[2];
 
-	bool haveSpecularTexture           = false;
-	bool haveSplatDetailDistribTexture = false; // true if we have both splatDetailTex and splatDistrTex
-	bool haveSplatNormalDistribTexture = false; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
+	bool haveSpecularTexture;
+	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
+	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
 
-	bool shadingTexUpdateNeeded = false;
+	bool shadingTexUpdateNeeded;
 };
 
 #endif

@@ -4,9 +4,8 @@
 #define COBSCRIPTNAMES_H
 
 #include <string>
-#include <array>
+#include <vector>
 
-#include "Sim/Misc/GlobalConstants.h"
 #include "System/UnorderedMap.hpp"
 
 
@@ -56,23 +55,19 @@ enum {
 	COBFN_Shot,                      // in: 0
 	COBFN_BlockShot,                 // in: targetUnit->id or 0, out: blockShot, in: haveUserTarget
 	COBFN_TargetWeight,              // in: targetUnit->id or 0, out: targetWeight*65536
-
 	COBFN_Weapon_Last,
 	COBFN_Weapon_Funcs = COBFN_Weapon_Last - COBFN_Last,
-	COBFN_NumUnitFuncs = COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs),
 };
 
 
 class CCobUnitScriptNames
 {
 public:
-	static void InitScriptNames();
-
-	static const std::array<std::string, COBFN_NumUnitFuncs>& GetScriptNames(); // COBFN_* -> string
+	static const std::vector<std::string>& GetScriptNames(); // COBFN_* -> string
 	static const spring::unordered_map<std::string, int>& GetScriptMap(); // string -> COBFN_*
 
 	static int GetScriptNumber(const std::string& fname);
-	static const std::string& GetScriptName(unsigned int num);
+	static const std::string& GetScriptName(int num);
 };
 
 #endif

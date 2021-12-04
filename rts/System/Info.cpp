@@ -7,12 +7,12 @@
 #include "System/Log/ILog.h"
 #include "Lua/LuaParser.h"
 
-#include <cassert>
+#include <assert.h>
 
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
 std::string InfoItem::GetValueAsString(const bool convBooltoInt) const {
-	std::string stringValue;
+	std::string stringValue = "";
 
 	switch (valueType) {
 		case INFO_VALUE_TYPE_STRING: {
@@ -41,7 +41,7 @@ std::string InfoItem::GetValueAsString(const bool convBooltoInt) const {
 
 void info_convertToStringValue(InfoItem* infoItem) {
 
-	assert(infoItem != nullptr);
+	assert(infoItem != NULL);
 
 	infoItem->valueTypeString = infoItem->GetValueAsString();
 	infoItem->valueType = INFO_VALUE_TYPE_STRING;
@@ -49,7 +49,7 @@ void info_convertToStringValue(InfoItem* infoItem) {
 
 const char* info_convertTypeToString(InfoValueType infoValueType) {
 
-	const char* typeString = nullptr;
+	const char* typeString = NULL;
 
 	switch (infoValueType) {
 		case INFO_VALUE_TYPE_STRING: {
@@ -126,8 +126,8 @@ void info_parseInfo(
 		throw content_error("root table invalid");
 	}
 
-	std::set<std::string>* myInfoSet = nullptr;
-	if (infoSet == nullptr) {
+	std::set<std::string>* myInfoSet = NULL;
+	if (infoSet == NULL) {
 		myInfoSet = new std::set<std::string>();
 	} else {
 		myInfoSet = infoSet;
@@ -138,9 +138,9 @@ void info_parseInfo(
 			info.push_back(inf);
 		}
 	}
-	if (infoSet == nullptr) {
+	if (infoSet == NULL) {
 		delete myInfoSet;
-		myInfoSet = nullptr;
+		myInfoSet = NULL;
 	}
 }
 

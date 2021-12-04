@@ -10,27 +10,21 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Threading/SpringThreading.h"
 
-#include <array>
 #include <deque>
 #include <string>
+#include <list>
 
 class CInfoConsole: public CInputReceiver, public CEventClient, public ILogSink
 {
 public:
-	static void InitStatic();
-	static void KillStatic();
-
-	CInfoConsole(): CEventClient("InfoConsole", 999, false) { Init(); }
-	~CInfoConsole() { Kill(); }
-
-	void Init();
-	void Kill();
+	CInfoConsole();
+	virtual ~CInfoConsole();
 
 	void Update() override;
 	void Draw() override;
 	void PushNewLinesToEventHandler();
 
-	void RecordLogMessage(int level, const std::string& section, const std::string& message) override;
+	void RecordLogMessage(int level, const std::string& section, const std::string& text) override;
 
 	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "LastMessagePosition");
@@ -39,7 +33,12 @@ public:
 	const float3& GetMsgPos(const float3& defaultPos = ZeroVector);
 	unsigned int GetMsgPosCount() const { return lastMsgPositions.size(); }
 
+	bool enabled;
+
 public:
+	static const size_t maxLastMsgPos;
+	static const size_t maxRawLines;
+
 	struct RawLine {
 		RawLine(const std::string& text, const std::string& section, int level,
 				int id)
@@ -54,49 +53,34 @@ public:
 		int id;
 	};
 
-	size_t GetRawLines(std::vector<RawLine>& copy);
+	int GetRawLines(std::deque<RawLine>& copy);
 
 private:
-	static constexpr size_t maxMsgCount = 10;
-	static constexpr size_t maxRawLines = 1024;
-
 	struct InfoLine {
 		std::string text;
 		spring_time timeout;
 	};
 
-	std::array<float3, maxMsgCount> lastMsgPositions;
+	std::list<float3> lastMsgPositions;
+	std::list<float3>::iterator lastMsgIter;
 
-	std::vector<RawLine> tmpLines;
-	std::vector<InfoLine> tmpInfoLines;
-	std::deque<RawLine> rawLines;
-	std::deque<InfoLine> infoLines;
+	std::deque<RawLine> rawData;
+	std::deque<InfoLine> data;
 
-	std::string prvSection;
-	std::string prvMessage;
+	size_t newLines;
+	int rawId;
 
-	spring::recursive_mutex infoConsoleMutex;
+	mutable spring::recursive_mutex infoConsoleMutex;
 
-	size_t maxLines = 1;
-	size_t newLines = 0;
+	int lifetime;
+	float xpos;
+	float ypos;
+	float width;
+	float height;
+	float fontScale;
+	float fontSize;
 
-	size_t msgPosIndx = 0;
-	size_t numPosMsgs = 0;
-
-	int rawId = 0;
-	int lifetime = 0;
-
-	float xpos = 0.0f;
-	float ypos = 0.0f;
-	float width = 0.0f;
-	float height = 0.0f;
-
-	float fontScale = 1.0f;
-	float fontSize = 0.0f;
-
-public:
-	bool enabled = true;
-	bool inited = false;
+	size_t maxLines;
 };
 
 extern CInfoConsole* infoConsole;

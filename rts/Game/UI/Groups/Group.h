@@ -12,6 +12,7 @@
 
 class CUnit;
 class CFeature;
+class CGroupHandler;
 
 /**
  * Logic group of units denoted by a number.
@@ -22,20 +23,11 @@ class CGroup
 	CR_DECLARE_STRUCT(CGroup)
 
 public:
-	CGroup() = default;
-	CGroup(int _id, int _ghIndex): id(_id), ghIndex(_ghIndex) {}
-
-	CGroup(const CGroup& ) = delete;
-	CGroup(      CGroup&&) = default;
-
-	~CGroup() = default;
-
-	CGroup& operator = (const CGroup& ) = delete;
-	CGroup& operator = (      CGroup&&) = default;
-
+	CGroup(int id, CGroupHandler* groupHandler);
+	~CGroup();
 	void PostLoad();
 
-	void Update() { RemoveIfEmptySpecialGroup(); }
+	void Update();
 
 	/**
 	 * Note: Call unit.SetGroup(NULL) instead of calling this directly.
@@ -53,10 +45,11 @@ private:
 	void RemoveIfEmptySpecialGroup();
 
 public:
-	int id = -1;
-	int ghIndex = -1;
-
+	int id;
 	spring::unordered_set<int> units;
+
+private:
+	CGroupHandler* handler;
 };
 
 #endif // GROUP_H

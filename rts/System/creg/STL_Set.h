@@ -16,11 +16,12 @@ namespace creg
 	template<typename T>
 	class SetType : public IType
 	{
+		std::shared_ptr<IType> elemType;
 	public:
 		typedef typename T::iterator iterator;
 
-		SetType() : IType(sizeof(T)) { }
-		~SetType() { }
+		SetType(std::shared_ptr<IType> elemType) : elemType(elemType) {}
+		~SetType() {}
 
 		void Serialize(ISerializer* s, void* instance)
 		{
@@ -28,50 +29,50 @@ namespace creg
 			if (s->IsWriting()) {
 				int size = ct.size();
 				s->SerializeInt(&size, sizeof(int));
-				for (iterator i = ct.begin(); i != ct.end(); ++i) {
-					DeduceType<typename T::value_type>::Get()->Serialize(s,(void*) &*i);
-				}
+				for (iterator i = ct.begin(); i != ct.end(); ++i)
+					elemType->Serialize(s,(void*) &*i);
 			} else {
 				ct.clear();
 				int size;
 				s->SerializeInt(&size, sizeof(int));
 				for (int i = 0; i < size; i++) {
 					typename T::value_type v;
-					DeduceType<typename T::value_type>::Get()->Serialize(s, &v);
+					elemType->Serialize(s, &v);
 					ct.insert(v);
 				}
 			}
 		}
-		std::string GetName() const { return "set<" + DeduceType<typename T::value_type>::Get()->GetName() + ">"; }
+		std::string GetName() const { return "set<" + elemType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 	};
 
 
 	// Set type
 	template<typename T, typename C>
 	struct DeduceType<std::set<T, C> > {
-		static std::unique_ptr<IType> Get() {
-			return std::unique_ptr<IType>(new SetType<std::set<T, C> >());
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<std::set<T, C> >(DeduceType<T>::Get()));
 		}
 	};
 	// Multiset
 	template<typename T>
 	struct DeduceType<std::multiset<T> > {
-		static std::unique_ptr<IType> Get() {
-			return std::unique_ptr<IType>(new SetType<std::multiset<T> >());
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<std::multiset<T> >(DeduceType<T>::Get()));
 		}
 	};
 	// Hash set
 	template<typename T>
 	struct DeduceType<spring::unordered_set<T> > {
-		static std::unique_ptr<IType> Get() {
-			return std::unique_ptr<IType>(new SetType<spring::unordered_set<T> >());
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<spring::unordered_set<T> >(DeduceType<T>::Get()));
 		}
 	};
 	// Unsynced Hash set
 	template<typename T>
 	struct DeduceType<spring::unsynced_set<T> > {
-		static std::unique_ptr<IType> Get() {
-			return std::unique_ptr<IType>(new SetType<spring::unsynced_set<T> >());
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<spring::unsynced_set<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

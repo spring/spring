@@ -5,19 +5,19 @@
 #include <cctype>
 #include <iostream>
 #include <stdexcept>
-
 #include "WeaponDefHandler.h"
+
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
+#include "System/Log/ILog.h"
 
 
-static CWeaponDefHandler gWeaponDefHandler;
-CWeaponDefHandler* weaponDefHandler = &gWeaponDefHandler;
+CWeaponDefHandler* weaponDefHandler = nullptr;
 
 
-void CWeaponDefHandler::Init(LuaParser* defsParser)
+CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 {
 	const LuaTable& rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
 
@@ -27,36 +27,34 @@ void CWeaponDefHandler::Init(LuaParser* defsParser)
 	std::vector<std::string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	weaponDefsVector.reserve(weaponNames.size());
-	weaponDefIDs.reserve(weaponNames.size());
+	weaponDefs.reserve(weaponNames.size());
 
 	for (int wid = 0; wid < weaponNames.size(); wid++) {
 		const std::string& name = weaponNames[wid];
 		const LuaTable wdTable = rootTable.SubTable(name);
-		weaponDefsVector.emplace_back(wdTable, name, wid);
-		weaponDefIDs[name] = wid;
+		weaponDefs.emplace_back(wdTable, name, wid);
+		weaponID[name] = wid;
 	}
 }
 
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string wdName) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string weaponname) const
 {
-	StringToLowerInPlace(wdName);
+	StringToLowerInPlace(weaponname);
 
-	const auto it = weaponDefIDs.find(wdName);
-
-	if (it == weaponDefIDs.end())
+	auto ii = weaponID.find(weaponname);
+	if (ii == weaponID.end())
 		return nullptr;
 
-	return &weaponDefsVector[it->second];
+	return &weaponDefs[ii->second];
 }
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int id) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 {
-	if (!IsValidWeaponDefID(id))
+	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size()))
 		return nullptr;
 
-	return &weaponDefsVector[id];
+	return &weaponDefs[weaponDefId];
 }

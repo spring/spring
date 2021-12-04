@@ -5,8 +5,7 @@
 
 #ifdef SYNCDEBUG
 
-#include <atomic>
-#include <cassert>
+#include <assert.h>
 #include <deque>
 #include <vector>
 #include <cinttypes>
@@ -93,25 +92,24 @@ class CSyncDebugger {
 		 */
 		HistItemWithBacktrace* historybt;
 
-		unsigned historyIndex;             ///< Where are we in the history buffer?
-		std::atomic<bool> disableHistory;  ///< atomic because it is read by server thread and written by client thread.
-		bool mayEnableHistory;             ///< Is it safe already to set disableHistory = false?
-		std::uint64_t flop;                ///< Current (local) operation number.
+		unsigned historyIndex;         ///< Where are we in the history buffer?
+		volatile bool disable_history; ///< Volatile because it is read by server thread and written by client thread.
+		bool may_enable_history;       ///< Is it safe already to set disable_history = false?
+		std::uint64_t flop;          ///< Current (local) operation number.
 
 		// server thread
 
 		struct PlayerStruct
 		{
 			std::vector<unsigned> checksumResponses;
+			std::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
-			std::uint64_t remoteFlop = 0;
+			PlayerStruct() : remoteFlop(0) {}
 		};
 		typedef std::vector<PlayerStruct> PlayerVec;
 		PlayerVec players;
-
 		std::deque<unsigned> requestedBlocks;        ///< We are processing these blocks.
 		std::deque<unsigned> pendingBlocksToRequest; ///< We still need to receive these blocks (slowly emptied).
-
 		bool waitingForBlockResponse;                ///< Are we still waiting for a block response?
 
 	private:

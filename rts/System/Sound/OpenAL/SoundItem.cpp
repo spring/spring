@@ -23,7 +23,6 @@ namespace
 			stream >> t;
 			return true;
 		}
-
 		return false;
 	}
 
@@ -34,13 +33,23 @@ namespace
 	}
 }
 
-SoundItem::SoundItem(size_t itemID, size_t bufferID, const spring::unordered_map<std::string, std::string>& items)
-	: soundItemID(itemID)
-	, soundBufferID(bufferID)
+SoundItem::SoundItem(std::shared_ptr<SoundBuffer> _buffer, const spring::unordered_map<std::string, std::string>& items)
+	: buffer(_buffer)
+	, gain(1.0)
+	, gainMod(0)
+	, pitch(1.0)
+	, pitchMod(0)
+	, dopplerScale(1.0)
 	, maxDist(FLT_MAX)
+	, rolloff(1.0f)
+	, priority(0)
+	, maxConcurrent(16)
+	, currentlyPlaying(0)
+	, loopTime(0)
+	, in3D(true)
 {
 	if (!MapEntryValExtract(items, "name", name))
-		name = (SoundBuffer::GetById(bufferID)).GetFilename();
+		name = buffer->GetFilename();
 
 	MapEntryValExtract(items, "gain", gain);
 	MapEntryValExtract(items, "gainmod", gainMod);
@@ -59,12 +68,15 @@ SoundItem::SoundItem(size_t itemID, size_t bufferID, const spring::unordered_map
 
 bool SoundItem::PlayNow()
 {
-	if (maxConcurrent >= currentlyPlaying) {
+	if (maxConcurrent >= currentlyPlaying)
+	{
 		currentlyPlaying++;
 		return true;
 	}
-
-	return false;
+	else
+	{
+		return false;
+	}
 }
 
 void SoundItem::StopPlay()
@@ -75,21 +87,16 @@ void SoundItem::StopPlay()
 
 float SoundItem::GetGain() const
 {
-	float tgain = 0.0f;
-
-	if (gainMod > 0.0f)
-		tgain = (float(randnum(200)) / 100.0f - 1.0f) * gainMod;
-
-	return gain * (1.0f + tgain);
+	float tgain = 0;
+	if (gainMod > 0)
+		tgain = (float(randnum(200))/100.f - 1.f)*gainMod;
+	return gain * (1.f + tgain);
 }
 
 float SoundItem::GetPitch() const
 {
-	float tpitch = 0.0f;
-
-	if (pitchMod > 0.0f)
-		tpitch = (float(randnum(200)) / 100.0f - 1.0f) * pitchMod;
-
-	return pitch * (1.0f + tpitch);
+	float tpitch = 0;
+	if (pitchMod > 0)
+		tpitch = (float(randnum(200))/100.f - 1.f)*pitchMod;
+	return pitch * (1.f + tpitch);
 }
-

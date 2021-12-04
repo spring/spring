@@ -97,7 +97,7 @@ public:
 	void SetFreeTexture(bool b) { freeTexture = b; }
 	void SetName(const std::string& s) { name = s; }
 
-	static void SetDebug(bool b) { debug = b; }
+	static void SetDebug(bool b) { debug = true; }
 	static bool GetDebug() { return debug; }
 
 protected:
@@ -110,7 +110,7 @@ protected:
 	bool CreateTexture();
 
 protected:
-	IAtlasAllocator* atlasAllocator = nullptr;
+	IAtlasAllocator* atlasAllocator;
 
 	struct MemTex {
 	public:
@@ -147,13 +147,13 @@ protected:
 	spring::unordered_map<std::string, size_t> files;
 	spring::unordered_map<std::string, AtlasedTexture> textures;
 
-	unsigned int atlasTexID = 0;
+	unsigned int atlasTexID;
 
-	bool initialized = false;
-	bool freeTexture = true; // free texture on atlas destruction?
-
-	// set to true to write finalized texture atlas to disk
+	//! set to true to write finalized texture atlas to disk
 	static bool debug;
+
+	bool initialized;
+	bool freeTexture; //! free texture on atlas destruction?
 };
 
 #endif // TEXTURE_ATLAS_H

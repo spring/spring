@@ -4,14 +4,18 @@
 #include "Game/Camera.h"
 #include "LaserProjectile.h"
 #include "Map/Ground.h"
-#include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, )
+#ifdef TRACE_SYNC
+	#include "System/Sync/SyncTracer.h"
+#endif
+
+CR_BIND_DERIVED_POOL(CLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -28,8 +32,7 @@ CR_REG_METADATA(CLaserProjectile,(
 
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	// NB: constant, assumes |speed=dir*projectileSpeed| never changes after creation
-	, speedf(speed.w)
+	, speedf(0.0f)
 	, maxLength(0.0f)
 	, curLength(0.0f)
 	, intensity(0.0f)
@@ -40,10 +43,13 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	if (weaponDef != nullptr) {
+	// FIXME: constant, assumes |speed| never changes after creation
+	speedf = speed.w;
+
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 
-		maxLength = weaponDef->duration * (speedf * GAME_SPEED);
+		maxLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
 		intensity = weaponDef->intensity;
 		intensityFalloff = intensity * weaponDef->falloffRate;
 
@@ -56,6 +62,11 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 	}
 
 	drawRadius = maxLength;
+
+#ifdef TRACE_SYNC
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 void CLaserProjectile::Update()
@@ -76,14 +87,15 @@ void CLaserProjectile::Update()
 
 void CLaserProjectile::UpdateIntensity() {
 	if (ttl > 0) {
-		explGenHandler.GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
 		return;
 	}
 
 	if (weaponDef->laserHardStop) {
-		// bolt reached its max-range but wasn't fully extended yet
-		if (curLength < maxLength && speed != ZeroVector)
+		if (curLength < maxLength && speed != ZeroVector) {
+			// bolt reached its max-range but wasn't fully extended yet
 			stayTime = 1 + int((maxLength - curLength) / speedf);
+		}
 
 		SetVelocityAndSpeed(ZeroVector);
 	} else {
@@ -97,11 +109,15 @@ void CLaserProjectile::UpdateLength() {
 	if (speed != ZeroVector) {
 		// expand bolt to maximum length if not
 		// stopped / collided OR after hardstop
-		curLength = std::min(curLength + speedf, maxLength);
+		curLength += speedf;
+		curLength = std::min(maxLength, curLength);
 	} else {
-		// contract bolt to zero length after stayTime
-		// expires (can be immediately if not hardstop)
-		curLength = std::max(curLength - speedf * (stayTime == 0), 0.0f);
+		if (stayTime == 0) {
+			// contract bolt to zero length after stayTime
+			// expires (can be immediately if not hardstop)
+			curLength -= speedf;
+			curLength = std::max(curLength, 0.0f);
+		}
 	}
 
 	stayTime = std::max(stayTime - 1, 0);
@@ -172,8 +188,8 @@ void CLaserProjectile::Draw(CVertexArray* va)
 		return;
 
 	float3 dif(pos - camera->GetPos());
-	const float camDist = dif.LengthNormalize();
-
+	const float camDist = dif.Length();
+	dif /= camDist;
 	float3 dir1(dif.cross(dir));
 	dir1.Normalize();
 	float3 dir2(dif.cross(dir1));
@@ -198,7 +214,7 @@ void CLaserProjectile::Draw(CVertexArray* va)
 		float texStartOffset;
 		float texEndOffset;
 		if (checkCol) { // expanding or contracting?
-			texStartOffset = 0.0f;
+			texStartOffset = 0;
 			texEndOffset   = (1.0f - (curLength / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		} else {
 			texStartOffset = (-1.0f + (curLength / maxLength) + ((float)stayTime * (speedf / maxLength))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);

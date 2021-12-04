@@ -220,8 +220,9 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, ExtractModArchiveFile);
 
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigInt);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigInt);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigFloat);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigString);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigString);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, CreateDir);
@@ -242,10 +243,6 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Reload);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Quit);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Start);
-
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLSetTextInputRect);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLStartTextInput);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLStopTextInput);
 	return true;
 }
 
@@ -258,8 +255,6 @@ bool CLuaMenu::LoadLuaMenuFunctions(lua_State* L)
 
 bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 {
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetLuaMemUsage);
-
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetViewGeometry);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetWindowGeometry);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetScreenGeometry);
@@ -299,10 +294,6 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigParams);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetGameName);
-
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigInt);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigFloat);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigString);
 	return true;
 }
 

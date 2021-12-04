@@ -20,9 +20,11 @@ AIInterfaceKey::AIInterfaceKey(
 		version(version) {}
 
 
-AIInterfaceKey::AIInterfaceKey(const AIInterfaceKey& toCopy) = default;
+AIInterfaceKey::AIInterfaceKey(const AIInterfaceKey& toCopy)
+		: shortName(toCopy.shortName),
+		version(toCopy.version) {}
 
-AIInterfaceKey::~AIInterfaceKey() = default;
+AIInterfaceKey::~AIInterfaceKey() {}
 
 bool AIInterfaceKey::isEqual(const AIInterfaceKey& otherKey) const {
 
@@ -49,7 +51,7 @@ const std::string& AIInterfaceKey::GetVersion() const {
 }
 
 bool AIInterfaceKey::IsUnspecified() const {
-	return shortName.empty();
+	return shortName == "";
 }
 
 std::string AIInterfaceKey::ToString() const {

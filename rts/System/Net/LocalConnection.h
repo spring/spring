@@ -26,46 +26,43 @@ public:
 	 * @throw network_error When there already 2 instances
 	 */
 	CLocalConnection();
-	~CLocalConnection();
+	virtual ~CLocalConnection();
 
 	// START overriding CConnection
 
-	void SendData(std::shared_ptr<const RawPacket> pkt) override;
-	bool HasIncomingData() const override;
-	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const override;
-	std::shared_ptr<const RawPacket> GetData() override;
-	void DeleteBufferPacketAt(unsigned index) override;
-	void Flush(const bool forced) override {}
-	bool CheckTimeout(int seconds, bool initial) const override { return false; }
+	void SendData(std::shared_ptr<const RawPacket> packet);
+	bool HasIncomingData() const;
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
+	void DeleteBufferPacketAt(unsigned index);
+	void Flush(const bool forced) {}
+	bool CheckTimeout(int seconds, bool initial) const { return false; }
 
-	void ReconnectTo(CConnection& conn) override {}
-	bool CanReconnect() const override { return false; }
-	bool NeedsReconnect() override { return false; }
-	void Unmute() override {}
-	void Close(bool flush) override;
-	void SetLossFactor(int factor) override {}
+	void ReconnectTo(CConnection& conn) {}
+	bool CanReconnect() const { return false; }
+	bool NeedsReconnect() { return false; }
+	void Unmute() {}
+	void Close(bool flush);
+	void SetLossFactor(int factor) {}
 
-	unsigned int GetPacketQueueSize() const override;
+	unsigned int GetPacketQueueSize() const;
 
-	std::string Statistics() const override;
-	std::string GetFullAddress() const override { return "Localhost"; }
+	std::string Statistics() const;
+	std::string GetFullAddress() const;
 
 	// END overriding CConnection
 
 private:
-	static constexpr unsigned int MAX_INSTANCES = 2;
+	static std::deque< std::shared_ptr<const RawPacket> > pqueues[2];
+	static spring::mutex mutexes[2];
 
-	static std::deque< std::shared_ptr<const RawPacket> > pktQueues[MAX_INSTANCES];
-	static spring::mutex mutexes[MAX_INSTANCES];
-	static CLocalConnection* instancePtrs[MAX_INSTANCES];
-
-	unsigned int RemoteInstanceIdx() const { return ((instanceIdx + 1) % MAX_INSTANCES); }
+	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
 
 	/// we can have two instances, one in GameServer and one in NetProtocol
 	/// (first instance represents server->client and second client->server)
-	static unsigned int numInstances;
+	static unsigned int instances;
 	/// which instance we are
-	unsigned int instanceIdx;
+	unsigned int instance;
 };
 
 } // namespace netcode

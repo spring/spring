@@ -11,10 +11,10 @@
  * Instantiates the loader, attempts to dlopen the
  * shared object lazily.
  */
-SoLib::SoLib(const char* fileName) : so(nullptr)
+SoLib::SoLib(const char* fileName) : so(NULL)
 {
 	so = dlopen(fileName, RTLD_LAZY);
-	if (so == nullptr) {
+	if (so == NULL) {
 		SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::SoLib");
 	}
 }
@@ -24,14 +24,14 @@ SoLib::SoLib(const char* fileName) : so(nullptr)
  */
 void SoLib::Unload() {
 
-	if (so != nullptr) {
+	if (so != NULL) {
 		dlclose(so);
-		so = nullptr;
+		so = NULL;
 	}
 }
 
 bool SoLib::LoadFailed() {
-	return so == nullptr;
+	return so == NULL;
 }
 
 /**
@@ -47,12 +47,12 @@ SoLib::~SoLib()
  */
 void* SoLib::FindAddress(const char* symbol)
 {
-	if (so != nullptr) {
+	if (so != NULL) {
 		void* p = dlsym(so, symbol);
-		if (p == nullptr) {
+		if (p == NULL) {
 			//SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::FindAddress");
 		}
 		return p;
 	}
-	return nullptr;
+	return NULL;
 }

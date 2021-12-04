@@ -32,17 +32,17 @@ namespace QTPFS {
 
 		static void InitStatic();
 
-		std::int32_t GetPathFinderType() const override { return QTPFS_TYPE; }
-		std::uint32_t GetPathCheckSum() const override { return pfsCheckSum; }
+		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
+		std::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
-		std::int64_t Finalize() override;
+		std::int64_t Finalize();
 
-		bool PathUpdated(unsigned int pathID) override;
+		bool PathUpdated(unsigned int pathID);
 
-		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) override;
-		void Update() override;
-		void UpdatePath(const CSolidObject* owner, unsigned int pathID) override;
-		void DeletePath(unsigned int pathID) override;
+		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type);
+		void Update();
+		void UpdatePath(const CSolidObject* owner, unsigned int pathID);
+		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
 			CSolidObject* object,
@@ -51,7 +51,7 @@ namespace QTPFS {
 			float3 targetPos,
 			float radius,
 			bool synced
-		) override;
+		);
 
 		float3 NextWayPoint(
 			const CSolidObject*, // owner
@@ -60,23 +60,15 @@ namespace QTPFS {
 			float3 point,
 			float radius,
 			bool synced
-		) override;
+		);
 
 		void GetPathWayPoints(
 			unsigned int pathID,
 			std::vector<float3>& points,
 			std::vector<int>& starts
-		) const override;
+		) const;
 
-		int2 GetNumQueuedUpdates() const override;
-
-
-		const NodeLayer& GetNodeLayer(unsigned int pathType) const { return nodeLayers[pathType]; }
-		const QTNode* GetNodeTree(unsigned int pathType) const { return nodeTrees[pathType]; }
-		const PathCache& GetPathCache(unsigned int pathType) const { return pathCaches[pathType]; }
-
-		const spring::unordered_map<unsigned int, unsigned int>& GetPathTypes() const { return pathTypes; }
-		const spring::unordered_map<unsigned int, PathSearchTrace::Execution*>& GetPathTraces() const { return pathTraces; }
+		int2 GetNumQueuedUpdates() const;
 
 	private:
 		void ThreadUpdate();
@@ -145,13 +137,13 @@ namespace QTPFS {
 		bool IsFinalized() const { return (!nodeTrees.empty()); }
 
 
-		std::string GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const;
+		std::string GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const;
 		void Serialize(const std::string& cacheFileDir);
 
-		static std::vector<NodeLayer> nodeLayers;
-		static std::vector<QTNode*> nodeTrees;
-		static std::vector<PathCache> pathCaches;
-		static std::vector< std::vector<IPathSearch*> > pathSearches;
+		std::vector<NodeLayer> nodeLayers;
+		std::vector<QTNode*> nodeTrees;
+		std::vector<PathCache> pathCaches;
+		std::vector< std::vector<IPathSearch*> > pathSearches;
 
 		spring::unordered_map<unsigned int, unsigned int> pathTypes;
 		spring::unordered_map<unsigned int, PathSearchTrace::Execution*> pathTraces;
@@ -176,10 +168,10 @@ namespace QTPFS {
 		bool haveCacheDir;
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		spring::thread updateThread;
-		spring::mutex mutexThreadUpdate;
-		spring::condition_variable condThreadUpdate;
-		spring::condition_variable condThreadUpdated;
+		spring::thread* updateThread;
+		spring::mutex* mutexThreadUpdate;
+		spring::condition_variable* condThreadUpdate;
+		spring::condition_variable* condThreadUpdated;
 		#endif
 	};
 }

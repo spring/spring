@@ -15,15 +15,15 @@
 #include <cassert>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <cerrno>
-#include <cstring>
-#include "System/SpringRegex.h"
+#include <errno.h>
+#include <string.h>
+#include <boost/regex.hpp>
 
 #ifndef _WIN32
 	#include <dirent.h>
 	#include <sstream>
 	#include <unistd.h>
-	#include <ctime>
+	#include <time.h>
 #else
 	#include <windows.h>
 	#include <io.h>
@@ -54,7 +54,7 @@ std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path
 bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 {
 
-#ifdef _WIN32
+#ifdef WIN32
 	// examples: "C:\", "C:/", "C:", "c:", "D:"
 	bool isFsRoot = (p.length() >= 2 && p[1] == ':' &&
 			((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) &&
@@ -166,7 +166,7 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 	if (!FileExists(file))
 		return false;
 
-#ifdef _WIN32
+#ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
 	return (access(file.c_str(), R_OK | F_OK) == 0);
@@ -178,7 +178,7 @@ unsigned int FileSystemAbstraction::GetFileModificationTime(const std::string& f
 	struct stat info;
 
 	if (stat(file.c_str(), &info) != 0) {
-		LOG_L(L_WARNING, "[FSA::%s] error '%s' getting last modification time of file '%s'", __func__, strerror(errno), file.c_str());
+		LOG_L(L_WARNING, "Failed to get last modification time of file '%s' (error '%s')", file.c_str(), strerror(errno));
 		return 0;
 	}
 
@@ -195,8 +195,8 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 	const struct tm* clk = std::gmtime(&t);
 	const char* fmt = "%d%02d%02d%02d%02d%02d";
 
-	char buf[67];
-	SNPRINTF(buf, sizeof(buf), fmt, 1900 + clk->tm_year, clk->tm_mon + 1, clk->tm_mday, clk->tm_hour, clk->tm_min, clk->tm_sec);
+	char buf[20];
+	SNPRINTF(buf, sizeof(buf), fmt, 1900 + clk->tm_year, clk->tm_mon, clk->tm_mday, clk->tm_hour, clk->tm_min, clk->tm_sec);
 	return buf;
 }
 
@@ -216,7 +216,7 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 	//const boost::filesystem::path f(file);
 	//return f.is_absolute();
 
-#ifdef _WIN32
+#ifdef WIN32
 	return ((path.length() > 1) && (path[1] == ':'));
 #else
 	return ((path.length() > 0) && (path[0] == '/'));
@@ -253,7 +253,7 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 #endif
 
 	if (!dirCreated)
-		LOG_L(L_WARNING, "[FSA::%s] error '%s' creating directory '%s'", __func__, strerror(errno), dir.c_str());
+		LOG_L(L_WARNING, "Could not create directory %s: %s", dir.c_str(), strerror(errno));
 
 	return dirCreated;
 }
@@ -261,14 +261,14 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-#ifdef _WIN32
+#ifdef WIN32
 	if (DirExists(file)) {
 		if (!RemoveDirectory(StripTrailingSlashes(file).c_str())) {
 			LPSTR messageBuffer = nullptr;
 			FormatMessageA(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &messageBuffer, 0, nullptr);
-			LOG_L(L_WARNING, "[FSA::%s] error '%s' deleting directory '%s'", __func__, messageBuffer, file.c_str());
+			LOG_L(L_WARNING, "Could not delete directory %s: %s", file.c_str(), messageBuffer);
 			LocalFree(messageBuffer);
 			return false;
 		}
@@ -276,7 +276,7 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 	}
 #endif
 	if (remove(file.c_str()) != 0) {
-		LOG_L(L_WARNING, "[FSA::%s] error '%s' deleting file '%s'", __func__, strerror(errno), file.c_str());
+		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
 		return false;
 	}
 
@@ -341,7 +341,7 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-#ifndef _WIN32
+#ifndef WIN32
 	struct stat info1, info2;
 	const int ret1 = stat(path1.c_str(), &info1);
 	const int ret2 = stat(path2.c_str(), &info2);
@@ -437,7 +437,7 @@ void FileSystemAbstraction::ChDir(const std::string& dir)
 	}
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const spring::regex& regexPattern, int flags)
+static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex& regexPattern, int flags)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
@@ -448,13 +448,13 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 			if (strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
 				if (!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
 					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-						if (spring::regex_match(wfd.cFileName, regexPattern)) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName);
 						}
 					}
 				} else {
 					if (flags & FileQueryFlags::INCLUDE_DIRS) {
-						if (spring::regex_match(wfd.cFileName, regexPattern)) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName + "\\");
 						}
 					}
@@ -486,14 +486,14 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 		if (!S_ISDIR(info.st_mode)) {
 			if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-				if (spring::regex_match(ep->d_name, regexPattern)) {
+				if (boost::regex_match(ep->d_name, regexPattern)) {
 					matches.push_back(dir + ep->d_name);
 				}
 			}
 		} else {
 			// or a directory?
 			if (flags & FileQueryFlags::INCLUDE_DIRS) {
-				if (spring::regex_match(ep->d_name, regexPattern)) {
+				if (boost::regex_match(ep->d_name, regexPattern)) {
 					matches.push_back(dir + ep->d_name + "/");
 				}
 			}
@@ -509,7 +509,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
-	const spring::regex regexPattern(regex);
+	const boost::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }
 

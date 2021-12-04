@@ -87,7 +87,7 @@ void CInfoTextureHandler::DisableCurrentMode()
 
 void CInfoTextureHandler::SetMode(const std::string& name)
 {
-	returnToLOS &= (name !=      ""); // NOLINT(readability-container-size-empty)
+	returnToLOS &= (name !=      "");
 	returnToLOS |= (name ==   "los");
 	inMetalMode  = (name == "metal");
 

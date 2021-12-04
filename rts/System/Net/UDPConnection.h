@@ -4,12 +4,13 @@
 #define _UDP_CONNECTION_H
 
 #include <asio/ip/udp.hpp>
+#include <map>
 #include <memory>
 #include <deque>
+#include <list>
 
 #include "Connection.h"
 #include "System/Misc/SpringTime.h"
-#include "System/UnorderedSet.hpp"
 
 class CRC;
 
@@ -31,24 +32,20 @@ class Chunk
 public:
 	unsigned GetSize() const { return (data.size() + headerSize); }
 	void UpdateChecksum(CRC& crc) const;
-	static constexpr unsigned maxSize = 254;
-	static constexpr unsigned headerSize = 5;
+	static const unsigned maxSize = 254;
+	static const unsigned headerSize = 5;
 	std::int32_t chunkNumber;
 	std::uint8_t chunkSize;
 	std::vector<std::uint8_t> data;
 };
 typedef std::shared_ptr<Chunk> ChunkPtr;
 
-
 class Packet
 {
 public:
-	static constexpr unsigned headerSize = 6;
+	static const unsigned headerSize = 6;
 	Packet(const unsigned char* data, unsigned length);
-	Packet(int _lastCont, int _nakType) {
-		lastContinuous = _lastCont;
-		nakType = _nakType;
-	}
+	Packet(int lastContinuous, int nak);
 
 	unsigned GetSize() const;
 
@@ -57,15 +54,12 @@ public:
 	void Serialize(std::vector<std::uint8_t>& data);
 
 	std::int32_t lastContinuous;
-	/// if < 0, we lost -x packets since lastContinuous
-	/// if > 0, x = size of naks
+	/// if < 0, we lost -x packets since lastContinuous, if >0, x = size of naks
 	std::int8_t nakType;
 	std::uint8_t checksum;
-
 	std::vector<std::uint8_t> naks;
-	std::vector<ChunkPtr> chunks;
+	std::list<ChunkPtr> chunks;
 };
-
 
 /*
  * How Spring protocol-header looks like (size in bytes):
@@ -81,36 +75,35 @@ public:
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket, const asio::ip::udp::endpoint& myAddr);
-	UDPConnection(int sourceport, const std::string& address, const unsigned port);
+	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket,
+			const asio::ip::udp::endpoint& myAddr);
+	UDPConnection(int sourceport, const std::string& address,
+			const unsigned port);
 	UDPConnection(CConnection& conn);
-	~UDPConnection();
+	virtual ~UDPConnection();
 
-	enum {
-		MIN_LOSS_FACTOR = 0,
-		MAX_LOSS_FACTOR = 2
-	};
+	enum { MIN_LOSS_FACTOR = 0, MAX_LOSS_FACTOR = 2 };
 
 
 	// START overriding CConnection
-	void SendData(std::shared_ptr<const RawPacket> pkt) override;
-	bool HasIncomingData() const override { return !msgQueue.empty(); }
-	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const override;
-	std::shared_ptr<const RawPacket> GetData() override;
-	void DeleteBufferPacketAt(unsigned index) override;
-	void Flush(const bool forced) override;
-	bool CheckTimeout(int seconds = 0, bool initial = false) const override;
+	void SendData(std::shared_ptr<const RawPacket> data);
+	bool HasIncomingData() const { return !msgQueue.empty(); }
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
+	void DeleteBufferPacketAt(unsigned index);
+	void Flush(const bool forced);
+	bool CheckTimeout(int seconds = 0, bool initial = false) const;
 
-	void ReconnectTo(CConnection& conn) override;
-	bool CanReconnect() const override;
-	bool NeedsReconnect() override;
+	void ReconnectTo(CConnection &conn);
+	bool CanReconnect() const;
+	bool NeedsReconnect();
 
-	unsigned int GetPacketQueueSize() const override { return msgQueue.size(); }
+	unsigned int GetPacketQueueSize() const { return msgQueue.size(); }
 
-	std::string Statistics() const override;
-	std::string GetFullAddress() const override;
+	std::string Statistics() const;
+	std::string GetFullAddress() const;
 
-	void Update() override;
+	void Update();
 	// END overriding CConnection
 
 
@@ -124,15 +117,13 @@ public:
 	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
-	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const { return (addr == from); }
-	bool UseMinLossFactor() const { return (netLossFactor == MIN_LOSS_FACTOR); }
-
+	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const;
 	/// Connections are stealth by default, this allow them to send data
-	void Unmute() override { muted = false; }
-	void Close(bool flush) override;
-	void SetLossFactor(int factor) override;
+	void Unmute() { muted = false; }
+	void Close(bool flush);
+	void SetLossFactor(int factor);
 
-	const asio::ip::udp::endpoint& GetEndpoint() const { return addr; }
+	const asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
 
 private:
 	void InitConnection(asio::ip::udp::endpoint address,
@@ -145,17 +136,14 @@ private:
 	void Init();
 
 	/// add header to data and send it
-	void CreateChunk(const unsigned char* data, const unsigned length, const int packetNum);
+	void CreateChunk(const unsigned char* data, const unsigned length,
+			const int packetNum);
 	void SendIfNecessary(bool flushed);
 	void AckChunks(int lastAck);
 
-	void RequestResend(ChunkPtr ptr, bool noSort);
+	void RequestResend(ChunkPtr ptr);
 	void SendPacket(Packet& pkt);
 
-	void UpdateWaitingPackets();
-	void UpdateResendRequests();
-
-private:
 	spring_time lastChunkCreatedTime;
 	spring_time lastPacketSendTime;
 	spring_time lastPacketRecvTime;
@@ -167,12 +155,13 @@ private:
 	spring_time lastFramePacketRecvTime;
 	#endif
 
-
+	typedef std::map<int,RawPacket*> packetMap;
+	typedef std::list< std::shared_ptr<const RawPacket> > packetList;
 	/// address of the other end
 	asio::ip::udp::endpoint addr;
 
 	/// maximum size of packets to send
-	unsigned int mtu;
+	unsigned mtu;
 
 	bool muted;
 	bool closed;
@@ -184,11 +173,9 @@ private:
 	int reconnectTime;
 
 	/// outgoing stuff (pure data without header) waiting to be sent
-	std::deque< std::shared_ptr<const RawPacket> > outgoingData;
+	packetList outgoingData;
 	/// packets we have received but not yet read
-	std::vector< std::pair<int, RawPacket> > waitingPackets;
-	spring::unordered_set<int> incomingChunkNums;
-
+	packetMap waitingPackets;
 
 	/// Newly created and not yet sent
 	std::deque<ChunkPtr> newChunks;
@@ -196,17 +183,10 @@ private:
 	std::deque<ChunkPtr> unackedChunks;
 
 	/// Packets the other side missed
-	std::vector< std::pair<std::int32_t, ChunkPtr> > resendRequested;
-	spring::unordered_set<std::int32_t> erasedResendChunks;
+	std::map<std::int32_t, ChunkPtr> resendRequested;
 
 	/// complete packets we received but did not yet consume
 	std::deque< std::shared_ptr<const RawPacket> > msgQueue;
-
-	std::vector<std::uint8_t> sendBuffer;
-	std::vector<std::uint8_t> recvBuffer;
-	std::vector<std::uint8_t> waitBuffer;
-
-	std::vector<int> droppedPackets;
 
 	std::int32_t lastMidChunk;
 
@@ -222,7 +202,7 @@ private:
 	/// Our socket
 	std::shared_ptr<asio::ip::udp::socket> mySocket;
 
-	RawPacket fragmentBuffer;
+	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff
 	#ifdef ENABLE_DEBUG_STATS
@@ -246,18 +226,18 @@ private:
 
 	class BandwidthUsage {
 	public:
-		BandwidthUsage() = default;
+		BandwidthUsage();
 		void UpdateTime(unsigned newTime);
 		void DataSent(unsigned amount, bool prel = false);
 
 		float GetAverage(bool prel = false) const;
 
 	private:
-		unsigned lastTime = 0;
-		unsigned trafficSinceLastTime = 1;
-		unsigned prelTrafficSinceLastTime = 0;
+		unsigned lastTime;
+		unsigned trafficSinceLastTime;
+		unsigned prelTrafficSinceLastTime;
 
-		float average = 0.0f;
+		float average;
 	};
 
 	BandwidthUsage outgoing;

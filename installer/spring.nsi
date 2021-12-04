@@ -100,6 +100,13 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using NSI_UNINSTALL_FILES:  ${NSI_UNINSTALL_FILES}"
 !endif
 
+!ifndef VCREDIST
+	!error "VCREDIST not defined"
+!else
+	${!echonow} "Using VCREDIST:             ${VCREDIST}"
+!endif
+
+
 Section "Engine" SEC_MAIN
 	; make this section read-only -> user can not deselect it
 	SectionIn RO
@@ -131,6 +138,13 @@ Section /o "Portable" SEC_PORTABLE
 	!define INSTALL
 		${!echonow} "Processing: Portable"
 		!include "sections\portable.nsh"
+	!undef INSTALL
+SectionEnd
+
+Section "" SEC_VCREDIST
+	!define INSTALL
+		${!echonow} "Processing: vcredist"
+		!include "sections\vcredist.nsh"
 	!undef INSTALL
 SectionEnd
 

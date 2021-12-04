@@ -2,31 +2,32 @@
 
 #include "System/Platform/CrashHandler.h"
 
-#include <cinttypes> // uintptr_t
+#include <string>
 #include <cstring> // strnlen
+#include <list>
+#include <vector>
+#include <queue>
+#include <set>
+#include <map>
+#include <new>
+#include <signal.h>
+#include <execinfo.h>
 #include <cstdlib>
 #include <cstdio>
-#include <string>
-
-#include <array>
-#include <deque>
-#include <vector>
-#include <new>
-
-#include <csignal>
-#include <execinfo.h>
+#include <inttypes.h> // for uintptr_t
+#include <functional>
 #include <SDL_events.h>
-#include <sys/resource.h> // getrlimits
+#include <sys/resource.h> //for getrlimits
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 #include <dlfcn.h>
 
-#include "Game/GameVersion.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/SpringExitCode.h"
+#include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
+#include "System/MainDefines.h" // for SNPRINTF
 #include "System/StringUtil.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
@@ -37,67 +38,42 @@
 #include "System/Platform/Watchdog.h"
 #endif
 
-
 #if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
-#else
-// NB: Mac/CrashHandler.cpp #include's this compilation unit
-#define ADDR2LINE "atos"
 #endif
 
-#if (defined(__FreeBSD__))
-// show function names, demangle
-#define ADDR2LINE_ARGS " -f -C"
-#else
-// unwind inlines, show addresses, see above
-#define ADDR2LINE_ARGS " -i -a  -f -C"
-#endif
+static const int MAX_STACKTRACE_DEPTH = 100;
+static const std::string INVALID_LINE_INDICATOR = "#####";
+static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 
-
-static constexpr int MAX_STACKTRACE_DEPTH = 100;
-static constexpr uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
-static const char* INVALID_LINE_INDICATOR = "#####";
-
-static const char* glDriverNames[] = {
-	"libGLcore.so",
-	"psb_dri.so",
-	"i965_dri.so",
-	"fglrx_dri.so",
-	"amdgpu_dri.so",
-	"libnvidia-glcore.so"
-};
-static const char* saiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
-static const char* iaiLibWarning = "This stack trace indicates a problem with an AI Interface library.";
-static const char* oglLibWarning =
-	"This stacktrace indicates a problem with your graphics card driver, please try "
-	"upgrading it. Specifically recommended is the latest version; do not forget to "
-	"use a driver removal utility first.";
-
-struct StackEntry {
-	std::string fileline;
-	std::string funcname;
-	std::string filelineAbbrev;
-	std::string funcnameAbbrev;
-	bool inlined = true;
+struct StackFunction {
+    std::string fileline;
+    std::string funcname;
+	std::string abbrev_fileline;
+	std::string abbrev_funcname;
+    bool inLine;
+    StackFunction() : inLine(true) {}
 };
 
 struct StackFrame {
-	int                     level = 0;    // level in the original unwinding (inlined functions share the same level as their "caller")
-	void*                   ip = nullptr; // instruction pointer from libunwind or backtrace()
-	uintptr_t               addr = 0;     // translated address / load address for OS X
-
-	std::string             mangled;      // mangled name retrieved from libunwind (not printed, memoized for debugging)
-	std::string             symbol;       // backtrace_symbols output
-	std::string             path;         // translated library or module path
-	std::vector<StackEntry> entries;      // function names and lines (possibly several inlined) retrieved from addr2line
+	int                   level;    // level in the original unwinding (inlined functions share the same level as their "caller")
+	void*                 ip;       // instruction pointer from libunwind or backtrace()
+	std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
+	std::string           symbol;   // backtrace_symbols output
+	uintptr_t             addr;     // translated address / load address for OS X
+	std::string           path;     // translated library or module path
+	std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
+	StackFrame() :
+		level(0),
+		ip(0),
+		addr(0) { }
 };
 
 typedef std::vector<StackFrame> StackTrace;
-typedef std::pair<std::string, uintptr_t> PathAddrPair;
 
 static int reentrances = 0;
 
-static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel);
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel);
 static void LogStacktrace(const int logLevel, StackTrace& stacktrace);
 
 
@@ -122,7 +98,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_CRASHHANDLER);
 #define LOG_SECTION_CURRENT LOG_SECTION_CRASHHANDLER
 
 
-
 /**
  * Returns the absolute version of a supplied relative path.
  * This is very simple, and can only handle "./", but not "../".
@@ -132,12 +107,15 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 	if (relativePath.empty())
 		return relativePath;
 
-	std::string absolutePath = std::move(UnQuote(relativePath));
+	std::string absolutePath = UnQuote(relativePath);
 
-	if (absolutePath.empty() || absolutePath[0] != '/') {
-		// remove initial "./"
-		if (absolutePath.find("./") == 0)
+	if (absolutePath.length() > 0 && (absolutePath[0] == '/')) {
+		// is already absolute
+	} else {
+		if (absolutePath.find("./") == 0) {
+			// remove initial "./"
 			absolutePath = absolutePath.substr(2);
+		}
 
 		absolutePath = FileSystemAbstraction::EnsurePathSepAtEnd(GetBinaryLocation()) + absolutePath;
 	}
@@ -181,52 +159,37 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 
 	static const std::string debugPath = "/usr/lib/debug";
 
-	const std::string binPath = FileSystem::GetDirectory(binaryFile);
-	const std::string binFile = FileSystem::GetFilename(binaryFile);
-	// const std::string binExt  = FileSystem::GetExtension(binaryFile);
+	const std::string bin_path = FileSystem::GetDirectory(binaryFile);
+	const std::string bin_file = FileSystem::GetFilename(binaryFile);
+	const std::string bin_ext  = FileSystem::GetExtension(binaryFile);
 
-	if (FileSystem::IsReadableFile(symbolFile = binPath + binFile + ".dbg"))
+	symbolFile = bin_path + bin_file + ".dbg";
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
+	}
 
-	if (FileSystem::IsReadableFile(symbolFile = debugPath + binPath + binFile))
+	symbolFile = debugPath + bin_path + bin_file;
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
+	}
 
 	return binaryFile;
 }
 
 
-static bool HaveAddr2Line()
+static char* fgets_addr2line(char* line, int maxLength, FILE* cmdOut)
 {
-	static int i = -1;
-
-	if (i == -1) {
-		FILE* f = popen(ADDR2LINE " --help", "r");
-
-		if ((i = (f == nullptr)) == 1)
-			return false;
-
-		pclose(f);
-	}
-
-	return (i == 0);
-}
-
-static const char* ReadPipe(FILE* file, char* line, int maxLength)
-{
-	const char* res = fgets(line, maxLength, file);
-
-	if (res == nullptr) {
+    char* res = fgets(line, maxLength, cmdOut);
+    if (res) {
+        int sz = strnlen(line, maxLength);
+        if (line[sz-1] == '\n') {
+            line[sz-1] = 0;// exclude the line-ending
+        }
+    } else {
         line[0] = 0;
-		return res;
-	}
+    }
+    LOG_L(L_DEBUG, "addr2line: %s", line);
 
-	const int sz = strnlen(line, maxLength);
-
-	// exclude the line-ending
-	if (line[sz - 1] == '\n')
-		line[sz - 1] = 0;
-
-    LOG_L(L_DEBUG, "[%s] addr2line: %s", __func__, line);
     return res;
 }
 
@@ -248,39 +211,30 @@ static uintptr_t HexToInt(const char* hexStr)
  */
 static void ExtractSymbols(char** lines, StackTrace& stacktrace)
 {
-	int l = 0;
+	int l=0;
 	auto fit = stacktrace.begin();
-
 	while (fit != stacktrace.end()) {
-		LOG_L(L_DEBUG, "[%s] backtrace_symbols[%d]=%s", __func__, l, lines[l]);
-
+		LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
 		if (strncmp(lines[l], "[(nil)]", 20) != 0) {
 			fit->symbol = lines[l];
 			fit++;
 		} else {
-			// preserve ordering of remaining symbols
 			fit = stacktrace.erase(fit);
 		}
-
 		l++;
 	}
-
 	free(lines);
 }
 
-static int CommonStringLength(const std::string& str1, const std::string& str2)
+static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
 {
-	const size_t m = std::min(str1.length(), str2.length());
-	size_t n = 0;
-
-	while (n < m && str1[n] == str2[n]) {
-		n++;
+	int n=0, m = std::min(str1.length(), str2.length());
+	while (n < m && str1[n] == str2[n]) { n++; }
+	if (len != nullptr) {
+		*len = n;
 	}
-
 	return n;
 }
-
-
 
 
 #if !defined(__APPLE__)
@@ -289,70 +243,58 @@ static int CommonStringLength(const std::string& str1, const std::string& str2)
  * Finds the base memory address in the running process for all the libraries
  * involved in the crash.
  */
-static unsigned int FindBaseMemoryAddresses(const StackTrace& stacktrace, std::array<PathAddrPair, 1024>& baseMemAddrPaths)
+static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_baseMemAddr)
 {
 	// store all paths which we have to find
-	std::array<PathAddrPair, 1024> notFoundPaths;
-
-	unsigned int numAddrPairs = 0;
-
-	const auto AddressPred = [&](const StackFrame& sf) { baseMemAddrPaths[numAddrPairs++] = {sf.path, 0}; };
-	const auto SortCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first >  b.first); };
-	const auto FindCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first <  b.first); };
-	const auto  UniquePred = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first == b.first); };
-
-	std::for_each(stacktrace.begin(), stacktrace.begin() + std::min(stacktrace.size(), baseMemAddrPaths.size()), AddressPred);
-	// sort in descending order, then reverse s.t. empty strings do not end up in front
-	std::sort(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs, SortCompare);
-	std::reverse(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs);
-
-	const auto begUniquePaths = baseMemAddrPaths.begin();
-	const auto endUniquePaths = std::unique(begUniquePaths, begUniquePaths + numAddrPairs, UniquePred);
-
-	std::for_each(begUniquePaths, begUniquePaths + (numAddrPairs = endUniquePaths - begUniquePaths), [&](const PathAddrPair& p) { notFoundPaths[&p - begUniquePaths] = p; });
-
-	// /proc/self/maps contains the base addresses for all loaded dynamic libs
-	// of the current process + other stuff (which we are not interested in)
-	FILE* mapsFile = fopen("/proc/self/maps", "rb");
-
-	if (mapsFile == nullptr)
-		return 0;
-
-	// format of /proc/self/maps:
-	// (column names)  address           perms offset  dev   inode      pathname
-	// (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
-	// (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
-	unsigned long int memStartAddr = 0;
-	unsigned long int binAddrOffset = 0;
-
-	char binPathName[512];
-	char binAddrLine[512];
-
-	// read and parse all lines
-	while (numAddrPairs > 0 && fgets(binAddrLine, sizeof(binAddrLine) - 1, mapsFile) != nullptr) {
-		if (sscanf(binAddrLine, "%lx-%*x %*s %lx %*s %*u %s", &memStartAddr, &binAddrOffset, binPathName) != 3)
-			continue;
-
-		if (binAddrOffset != 0)
-			continue;
-
-
-		// go through all paths of the binaries involved in the stacktrace
-		// for each, check if the current line contains this binary
-		const auto end = notFoundPaths.begin() + (endUniquePaths - begUniquePaths);
-		const auto iter = std::lower_bound(notFoundPaths.begin(), end, PathAddrPair{binPathName, 0}, FindCompare);
-
-		if (iter == end || iter->second == uintptr_t(-1) || iter->first != binPathName)
-			continue;
-
-		baseMemAddrPaths[iter - notFoundPaths.begin()].second = memStartAddr;
-		notFoundPaths[iter - notFoundPaths.begin()].second = uintptr_t(-1);
-
-		numAddrPairs -= 1;
+	std::set<std::string> paths_notFound;
+	std::map<std::string,uintptr_t>::const_iterator bpbmai;
+	for (bpbmai = binPath_baseMemAddr.begin(); bpbmai != binPath_baseMemAddr.end(); ++bpbmai) {
+		paths_notFound.insert(bpbmai->first);
 	}
 
-	fclose(mapsFile);
-	return (endUniquePaths - begUniquePaths);
+	FILE* mapsFile = NULL;
+	// /proc/self/maps contains the base addresses for all loaded dynamic
+	// libaries of the current process + other stuff (which we are not interested in)
+	mapsFile = fopen("/proc/self/maps", "rb");
+	if (mapsFile != NULL) {
+		std::set<std::string>::const_iterator pi;
+		// format of /proc/self/maps:
+		// (column names)  address           perms offset  dev   inode      pathname
+		// (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
+		// (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
+		unsigned long int mem_start;
+		unsigned long int binAddr_offset;
+		char              binPathName[512];
+
+		char line[512];
+
+		// read all lines
+		while (!paths_notFound.empty() && (fgets(line, 511, mapsFile) != NULL)) {
+			// parse the line
+			const int red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
+					&mem_start, &binAddr_offset, binPathName);
+
+			if (red == 3) {
+				if (binAddr_offset == 0) {
+					//-> start of binary's memory space
+					std::string matchingPath = "";
+					// go through all paths of the binaries involved in the stack trace
+					for (pi = paths_notFound.begin(); pi != paths_notFound.end(); ++pi) {
+						// does the current line contain this binary?
+						if (*pi == binPathName) {
+							matchingPath = *pi;
+							break;
+						}
+					}
+					if (matchingPath != "") {
+						binPath_baseMemAddr[matchingPath] = mem_start;
+						paths_notFound.erase(matchingPath);
+					}
+				}
+			}
+		}
+		fclose(mapsFile);
+	}
 }
 
 /**
@@ -366,18 +308,21 @@ static std::string ExtractPath(const std::string& line)
 	// /usr/lib/libc.so.6(+0x33b20) [0x7fc022c68b20]
 	// /usr/lib/libstdc++.so.6(_ZN9__gnu_cxx27__verbose_terminate_handlerEv+0x16d) [0x7fc023553fcd]
 
-	size_t end = line.find_last_of('(');
-
+	std::string path;
+	size_t end   = line.find_last_of('('); // if there is a function name
 	if (end == std::string::npos) {
-		// if there is only a memory address, get rid of the ' ' before the '['
-		end = line.find_last_of('[');
-		end -= ((end != std::string::npos) && (end > 0));
+		end = line.find_last_of('['); // if there is only the memory address
+		if ((end != std::string::npos) && (end > 0)) {
+			end--; // to get rid of the ' ' before the '['
+		}
 	}
-
-	if (end == std::string::npos)
-		return INVALID_LINE_INDICATOR;
-
-	return (line.substr(0, end - 0));
+	if (end == std::string::npos) {
+		path = INVALID_LINE_INDICATOR;
+	} else {
+		size_t begin = 0;
+		path = line.substr(begin, end-begin);
+	}
+	return path;
 }
 
 /**
@@ -393,40 +338,36 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 
 	uintptr_t addr = INVALID_ADDR_INDICATOR;
 	const std::string& line = frame.symbol;
-
 	size_t begin = line.find_last_of('[');
 	size_t end = std::string::npos;
-
-	if (begin != std::string::npos)
+	if (begin != std::string::npos) {
 		end = line.find_last_of(']');
-
-	if ((begin != std::string::npos) && (end != std::string::npos))
+	}
+	if ((begin != std::string::npos) && (end != std::string::npos)) {
 		addr = HexToInt(line.substr(begin+1, end-begin-1).c_str());
+	}
 
 	begin = line.find_last_of('(');
 	end = line.find_last_of(')');
-
-	if ((end - begin) != 1) {
+	if (end - begin != 1) {
 		Dl_info info;
-
-		if (dladdr(frame.ip, &info) != 0)
-			return (uintptr_t)frame.ip - (uintptr_t)info.dli_fbase;
+		if (dladdr(frame.ip, &info) != 0) {
+			addr = (uintptr_t)frame.ip - (uintptr_t)info.dli_fbase;
+		}
 	}
 
 	return addr;
 }
 
-static bool ContainsDriverLib(const std::string& path)
+static bool ContainsDriverSo(const std::string& path)
 {
-	bool ret = false;
-
-	for (size_t i = 0, n = sizeof(glDriverNames) / sizeof(glDriverNames[0]); i < n && !ret; i++) {
-		ret = (strstr(path.c_str(), glDriverNames[i]) != nullptr);
+	static std::vector<std::string> drivers({"libGLcore.so", "psb_dri.so", "i965_dri.so", "fglrx_dri.so", "amdgpu_dri.so", "libnvidia-glcore.so" });
+	for(const std::string& driver: drivers) {
+		if (path.find(driver) != std::string::npos)
+			return true;
 	}
-
-	return ret;
+	return false;
 }
-
 
 /**
  * @brief TranslateStackTrace
@@ -434,225 +375,202 @@ static bool ContainsDriverLib(const std::string& path)
  * Translates the module and address information from backtrace symbols into a vector of StackFrame objects,
  *   each with its own set of entries representing the function call and any inlined functions for that call.
  */
-static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel)
 {
 	// Extract important data from backtrace_symbols' output
-	bool oglLibFound = false;
-	bool iaiLibFound = false;
-	bool saiLibFound = false;
+	bool containsDriverSo = false; // OpenGL lib -> graphic problem
+	bool containsAIInterfaceSo = false;
+	bool containsSkirmishAISo  = false;
 
-	LOG_L(L_DEBUG, "[%s][1]", __func__);
+	LOG_L(L_DEBUG, "TranslateStackTrace[1]");
 
-	for (StackFrame& sf: stacktrace) {
+	for (auto it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 		// prepare for addr2line()
-		const std::string relPath = ExtractPath(sf.symbol);
-		const std::string absPath = CreateAbsolutePath(relPath);
+		const std::string path    = ExtractPath(it->symbol);
+		const std::string absPath = CreateAbsolutePath(path);
+		it->path = absPath;
+		it->addr = ExtractAddr(*it);
 
-		sf.path = absPath;
-		sf.addr = ExtractAddr(sf);
-
-		LOG_L(L_DEBUG, "symbol=\"%s\" relPath=\"%s\" absPath=\"%s\" addr=0x%lx", sf.symbol.c_str(), relPath.c_str(), absPath.c_str(), sf.addr);
+		LOG_L(L_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
 
 		// check if there are known sources of fail on the stack
-		if (!oglLibFound)
-			oglLibFound |= ContainsDriverLib(relPath);
+		if (!containsDriverSo) {
+			containsDriverSo |= ContainsDriverSo(path);
+		}
 
-		if (!iaiLibFound)
-			iaiLibFound |= (absPath.find("Interfaces") != std::string::npos);
-
-		if (!saiLibFound)
-			saiLibFound |= (absPath.find("Skirmish") != std::string::npos);
-
+		if (!containsAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
+			containsAIInterfaceSo = true;
+		}
+		if (!containsSkirmishAISo && (absPath.find("Skirmish") != std::string::npos)) {
+			containsSkirmishAISo = true;
+		}
 	}
 
-	LOG_L(L_DEBUG, "[%s][2]", __func__);
+	LOG_L(L_DEBUG, "TranslateStackTrace[2]");
 
+	// Linux Graphic drivers are known to fail with moderate OpenGL usage
+	if (containsDriverSo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
+			  "Please try upgrading or downgrading it. "
+			  "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
+			  "Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
+	}
 
-	// if stacktrace contains both AI and AI Interface frames,
+	// if stack trace contains AI and AI Interface frames,
 	// it is very likely that the problem lies in the AI only
-	iaiLibFound &= !saiLibFound;
+	if (containsSkirmishAISo) {
+		containsAIInterfaceSo = false;
+	}
+	if (containsAIInterfaceSo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with an AI Interface library.");
+		if (aiCrash) *aiCrash = true;
+	}
+	if (containsSkirmishAISo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with a Skirmish AI library.");
+		if (aiCrash) *aiCrash = true;
+	}
 
-	if (oglLibFound)
-		LOG_I(logLevel, "%s", oglLibWarning);
-	if (iaiLibFound)
-		LOG_I(logLevel, "%s", iaiLibWarning);
-	if (saiLibFound)
-		LOG_I(logLevel, "%s", saiLibWarning);
+	LOG_L(L_DEBUG, "TranslateStackTrace[3]");
 
-	LOG_L(L_DEBUG, "[%s][3]", __func__);
+	// Check if addr2line is available
+	static int addr2line_found = -1;
+	if (addr2line_found < 0)
+	{
+		FILE* cmdOut = popen(ADDR2LINE " --help", "r");
+		if (cmdOut == NULL) {
+			addr2line_found = false;
+		} else {
+			addr2line_found = true;
+			pclose(cmdOut);
+		}
+	}
+	if (!addr2line_found) {
+		LOG_L(L_WARNING, " addr2line not found!");
+		return;
+	}
 
-	// check if addr2line is available
-	if (!HaveAddr2Line())
-		LOG_L(L_WARNING, "[%s] addr2line not found!", __func__);
+	LOG_L(L_DEBUG, "TranslateStackTrace[4]");
 
-	LOG_L(L_DEBUG, "[%s][4]", __func__);
+	// Detect BaseMemoryAddresses of all Lib's found in the stacktrace
+	std::map<std::string,uintptr_t> binPath_baseMemAddr;
+	for (auto it = stacktrace.cbegin(); it != stacktrace.cend(); it++) {
+		binPath_baseMemAddr[it->path] = 0;
+	}
+	FindBaseMemoryAddresses(binPath_baseMemAddr);
 
+	LOG_L(L_DEBUG, "TranslateStackTrace[5]");
 
-	// detect base memory-addresses of all libs found in the stacktrace
-	std::array<PathAddrPair, 1024> baseMemAddrPaths;
-	std::deque<size_t> stackFrameIndices;
-
-	std::string       execCommandString;
-	std::stringstream execCommandBuffer;
-
-	LOG_L(L_DEBUG, "[%s][5]", __func__);
-
-	// finally translate it; nested s.t. the outer loop covers
-	// all the entries for one library (fewer addr2line calls)
-	for (unsigned int j = 0, numAddrPairs = FindBaseMemoryAddresses(stacktrace, baseMemAddrPaths); j < numAddrPairs; j++) {
-		const PathAddrPair& baseMemAddrPair = baseMemAddrPaths[j];
-
-		const std::string& modulePath = baseMemAddrPair.first;
+	// Finally translate it:
+	//   This is nested so that the outer loop covers all the entries for one library -- this means fewer addr2line calls.
+	for (auto it = binPath_baseMemAddr.cbegin(); it != binPath_baseMemAddr.cend(); it++) {
+		const std::string& modulePath = it->first;
+		//const uintptr_t&   moduleAddr = it->second;
 		const std::string symbolFile = LocateSymbolFile(modulePath);
 
-		if (modulePath.empty()) {
-			LOG_L(L_ERROR, "[%s][6] addrPair=%u/%u modulePath=N/A (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, baseMemAddrPair.second, symbolFile.c_str());
-		} else {
-			LOG_L(L_DEBUG, "[%s][6] addrPair=%u/%u modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
-		}
+		LOG_L(L_DEBUG, "modulePath: %s, symbolFile: %s", modulePath.c_str(), symbolFile.c_str());
 
-		{
-			stackFrameIndices.clear();
-			execCommandString.clear();
-			execCommandBuffer.str("");
+		std::ostringstream buf;
+		buf << ADDR2LINE << " -i -a -f -C --exe=\"" << symbolFile << "\"";
 
-			execCommandBuffer << ADDR2LINE;
-			execCommandBuffer << ADDR2LINE_ARGS;
-			execCommandBuffer << " -e \"" << symbolFile << "\"";
-
-			// insert requested addresses that should be translated by addr2line
-			for (size_t i = 0, n = stacktrace.size(); i < n; i++) {
-				const StackFrame& sf = stacktrace[i];
-
-				if (sf.path == modulePath) {
-					execCommandBuffer << " " << std::hex << sf.addr;
-					stackFrameIndices.push_back(i);
-				}
+		// insert requested addresses that should be translated by addr2line
+		std::queue<size_t> indices;
+		int i=0;
+		for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
+			if (fit->path == modulePath) {
+				buf << " " << std::hex << fit->addr;
+				indices.push(i);
 			}
-
-			// hide error output from spring's pipe
-			execCommandBuffer << " 2>/dev/null";
-
-			execCommandString = std::move(execCommandBuffer.str());
+			i++;
 		}
 
-		FILE* cmdOutputPipe = popen(execCommandString.c_str(), "r");
-
-		// execute addr2line, read stdout via pipe and write to log-file
-		LOG_L(L_DEBUG, "> %s", execCommandString.c_str());
-
-		if (cmdOutputPipe == nullptr)
-			continue;
-
-
-		char lineBuf[2048] = {0};
-		char lineCtr = 0;
-
-		StackFrame* stackFrame = &stacktrace[stackFrameIndices.front()];
-		StackEntry stackEntry;
-
-		while (ReadPipe(cmdOutputPipe, lineBuf, sizeof(lineBuf)) != nullptr) {
-			if (lineBuf[0] == '0' && lineBuf[1] == 'x') {
-				lineCtr = 0;
-
-				if (!stackFrame->entries.empty()) {
-					stackFrame->entries.back().inlined = false;
-				} else {
-					stackFrame->entries.reserve(8);
-				}
-
-				// new address encountered; switch to corresponding frame
-				if (!stackFrameIndices.empty()) {
-					stackFrame = &stacktrace[stackFrameIndices.front()];
-					stackFrameIndices.pop_front();
-				}
-
+		// execute command addr2line, read stdout and write to log-file
+		buf << " 2>/dev/null"; // hide error output from spring's pipe
+		LOG_L(L_DEBUG, "> %s", buf.str().c_str());
+		FILE* cmdOut = popen(buf.str().c_str(), "r");
+		if (cmdOut != NULL) {
+			const size_t maxLength = 2048;
+			char line[maxLength];
+			char* res = fgets_addr2line(line, maxLength, cmdOut);
+			while (res != NULL) {
+				i = indices.front();
+				indices.pop();
+				// First scan the address and ensure that it matches the one we were expecting
 				uintptr_t parsedAddr = 0;
-				uintptr_t stackAddr = stackFrame->addr;
-
-				if (sscanf(lineBuf, "0x%lx", &parsedAddr) != 1 || parsedAddr != stackAddr) {
-					LOG_L(L_WARNING, "[%s] mismatched address from addr2line for line \"%s\": 0x%lx != 0x%lx", __func__, lineBuf, parsedAddr, stackAddr);
+				int matched = sscanf(line, "0x%lx", &parsedAddr);
+				if (matched != 1 || parsedAddr != stacktrace[i].addr) {
+					LOG_L(L_WARNING, "Mismatched address received from addr2line: 0x%lx != 0x%lx", parsedAddr, stacktrace[i].addr);
 					break;
 				}
+				res = fgets_addr2line(line, maxLength, cmdOut);
+				while (res != NULL) {
+
+					if (line[0] == '0' && line[1] == 'x') {
+						break; // This is the start of a new address
+					}
+
+					StackFunction entry;
+					entry.inLine = true; // marked false later if the last entry
+					std::string funcname = std::string(line);
+					entry.funcname  = funcname.substr(0, funcname.rfind(" (discriminator"));
+
+					if (fgets_addr2line(line, maxLength, cmdOut) == nullptr) { break; }
+					entry.fileline = std::string(line);
+
+					stacktrace[i].entries.push_back(entry);
+
+					res = fgets_addr2line(line, maxLength, cmdOut);
+				}
+				if (!stacktrace[i].entries.empty()) { // Ensure that the last entry in a sequence of results is marked as "not inlined"
+					stacktrace[i].entries.rbegin()->inLine = false;
+				}
 			}
-
-			// consecutive pairs of lines after an address form an entry
-			switch (lineCtr) {
-				case 0: {
-					lineCtr = 1;
-				} break;
-				case 1: {
-					stackEntry.funcname = lineBuf;
-					stackEntry.funcname = stackEntry.funcname.substr(0, stackEntry.funcname.rfind(" (discriminator"));
-					lineCtr = 2;
-				} break;
-				case 2: {
-					stackEntry.fileline = lineBuf;
-					stackFrame->entries.push_back(stackEntry);
-
-					// minor hack; store an <fileline, address> entry as well
-					snprintf(lineBuf, sizeof(lineBuf), "0x%lx", stackFrame->addr);
-
-					stackEntry.funcname = stackEntry.fileline;
-					stackEntry.fileline = lineBuf;
-					stackFrame->entries.push_back(stackEntry);
-
-					// next line can be either an address or a function-name
-					lineCtr = 1;
-				} break;
-				default: {
-					assert(false);
-				} break;
-			}
+			pclose(cmdOut);
 		}
-
-		pclose(cmdOutputPipe);
 	}
 
-	LOG_L(L_DEBUG, "[%s][7]", __func__);
-}
+	LOG_L(L_DEBUG, "TranslateStackTrace[6]");
 
+	return;
+}
 
 static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 {
-	size_t colFileLine = 0;
-
-	const std::string& exePath = Platform::GetProcessExecutablePath();
-	const std::string& cwdPath = Platform::GetOrigCWD();
-
-	for (StackFrame& sf: stacktrace) {
-		for (StackEntry& se: sf.entries) {
-			std::string fileline = se.fileline;
-
-			// case "??:?" and ":?"; print raw backtrace_symbol
-			if (fileline[1] == '?')
-				fileline = sf.symbol;
-
-			se.filelineAbbrev = fileline;
-			se.funcnameAbbrev = se.funcname;
-
-			size_t abbrevStart = 0;
-
-			if (fileline[0] == '/') {
-				// see if we can shorten the file/line bit by removing the common path, i.e. one char for first '/'
-				if ((abbrevStart = CommonStringLength(fileline, exePath)) > 1) {
-					se.filelineAbbrev = std::string(".../") + fileline.substr(abbrevStart, std::string::npos);
-				} else if ((abbrevStart = CommonStringLength(fileline, cwdPath)) > 1) {
-					se.filelineAbbrev = std::string("./") + fileline.substr(abbrevStart, std::string::npos);
+	int colFileline = 0;
+	const std::string& exe_path = Platform::GetProcessExecutablePath();
+	const std::string& cwd_path = Platform::GetOrigCWD();
+	for (auto fit = stacktrace.begin(); fit != stacktrace.end(); fit++) {
+		for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
+			eit->abbrev_funcname = eit->funcname;
+			std::string fileline = eit->fileline;
+			if (fileline[1] == '?') {  // case "??:?", ":?"
+				fileline = fit->symbol;  // print raw backtrace_symbol
+			}
+			eit->abbrev_fileline = fileline;
+			int abbrev_start = 0;
+			if (fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
+				if (CommonStringLength(fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
+					eit->abbrev_fileline = std::string(".../") + fileline.substr(abbrev_start, std::string::npos);
+				} else if (CommonStringLength(fileline, cwd_path, &abbrev_start) > 1) {
+					eit->abbrev_fileline = std::string("./") + fileline.substr(abbrev_start, std::string::npos);
 				}
 			}
 
-			colFileLine = std::max(colFileLine, se.filelineAbbrev.length());
+			if (eit->abbrev_funcname.size() > 100) {
+				eit->abbrev_funcname.resize(94);
+				eit->abbrev_funcname.append(" [...]");
+			}
+
+			colFileline = std::max(colFileline, (int)eit->abbrev_fileline.length());
 		}
 	}
 
-	// print out the translated trace
-	for (const StackFrame& sf: stacktrace) {
-		for (const StackEntry& se: sf.entries) {
-			if (se.inlined) {
-				LOG_I(logLevel, "  <%02u> %*s  %s", sf.level, int(colFileLine), se.filelineAbbrev.c_str(), se.funcnameAbbrev.c_str());
+	// Print out the translated StackTrace
+	for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
+		for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
+			if (eit->inLine) {
+				LOG_I(logLevel, "  <%02u> %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
 			} else {
-				LOG_I(logLevel, "[%02u]   %*s  %s", sf.level, int(colFileLine), se.filelineAbbrev.c_str(), se.funcnameAbbrev.c_str());
+				LOG_I(logLevel, "[%02u]   %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
 			}
 		}
 	}
@@ -661,30 +579,30 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 #endif  // !(__APPLE__)
 
 
-
-
-static void ForcedExit(int secs)
-{
-	std::function<void()> func = [secs]() {
-		spring::this_thread::sleep_for(std::chrono::seconds(secs));
-		std::exit(spring::EXIT_CODE_KILLED);
-	};
-	spring::thread thread{func};
-
-	assert(thread.joinable());
-	thread.detach();
+__FORCE_ALIGN_STACK__
+static void ForcedExitAfterFiveSecs() {
+	spring::this_thread::sleep_for(std::chrono::seconds(5));
+	std::exit(-1);
 }
 
-typedef struct sigaction sigaction_t;
-typedef void (*sigact_handler_t)(int, siginfo_t*, void*);
+__FORCE_ALIGN_STACK__
+static void ForcedExitAfterTenSecs() {
+	spring::this_thread::sleep_for(std::chrono::seconds(10));
+#if defined(__GNUC__)
+	std::_Exit(-1);
+#else
+	std::quick_exit(-1);
+#endif
+}
 
-static sigaction_t& GetSigAction(sigact_handler_t sigact_handler)
+
+typedef struct sigaction sigaction_t;
+
+static sigaction_t& GetSigAction(void (*sigact_handler)(int, siginfo_t*, void*))
 {
 	static sigaction_t sa;
-
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
-
 	if (sigact_handler == nullptr) {
 		// the default signal handler uses the old sa_handler interface, so just identify this case with sigact_handler == null
 		sa.sa_handler = SIG_DFL;
@@ -706,6 +624,7 @@ namespace CrashHandler
 	int thread_unwind(ucontext_t* uc, void** iparray, StackTrace& stacktrace)
 	{
 		assert(iparray != nullptr);
+		assert(&stacktrace != nullptr);
 
 		unw_cursor_t cursor;
 
@@ -774,14 +693,13 @@ namespace CrashHandler
 		return (int(stacktrace.size()));
 	}
 
-
-	static void Stacktrace(pthread_t* hThread = nullptr, const char* threadName = nullptr, const int logLevel = LOG_LEVEL_ERROR)
+	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
 	{
 #if !(DEDICATED || UNIT_TEST)
 		Watchdog::ClearTimer();
 #endif
 
-		if (threadName != nullptr) {
+		if (threadName != NULL) {
 			LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 		} else {
 			LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
@@ -789,16 +707,17 @@ namespace CrashHandler
 
 		StackTrace stacktrace;
 
+		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
 			void* iparray[MAX_STACKTRACE_DEPTH];
-			const int numLines = thread_unwind(nullptr, iparray, stacktrace);
-
-			if (numLines > MAX_STACKTRACE_DEPTH)
+			int numLines = thread_unwind(nullptr, iparray, stacktrace);
+			if (numLines > MAX_STACKTRACE_DEPTH) {
 				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+			}
+			char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
-			// get untranslated stacktrace symbols; give them meaningful names
-			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
+			ExtractSymbols(lines, stacktrace);
 		}
 
 		if (stacktrace.empty()) {
@@ -806,10 +725,11 @@ namespace CrashHandler
 			return;
 		}
 
-		TranslateStackTrace(stacktrace, logLevel);
+		// Translate it
+		TranslateStackTrace(aiCrash, stacktrace, logLevel);
+
 		LogStacktrace(logLevel, stacktrace);
 	}
-
 
 	/**
 	 * FIXME: Needs cleaning.
@@ -818,18 +738,16 @@ namespace CrashHandler
 	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 	{
 		//TODO Our custom thread_backtrace() only works on the mainthread.
-		//     Use gdb's libthread_db to get the stacktraces of all threads.
+		//     Use to gdb's libthread_db to get the stacktraces of all threads.
 		if (!Threading::IsMainThread(thread) && Threading::GetCurrentThread() != thread) {
 			LOG_I(logLevel, "Stacktrace (%s):", threadName.c_str());
 			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
-
 		PrepareStacktrace();
-		Stacktrace(&thread, threadName.c_str(), logLevel);
+		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
 		CleanupStacktrace();
 	}
-
 
 	/**
 	 *
@@ -837,204 +755,251 @@ namespace CrashHandler
      * Since the thread to be traced may be running, it requires a ThreadControls object in order to suspend/resume the thread.
      * @brief RemoteStacktrace
      */
-    void SuspendedStacktrace(Threading::ThreadControls* ctls, const char* threadName)
+    void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName)
     {
 #if !(DEDICATED || UNIT_TEST)
-		Watchdog::ClearTimer();
+        Watchdog::ClearTimer();
 #endif
-		assert(ctls != nullptr);
-		assert(ctls->handle != 0);
-		assert(threadName[0] != 0);
+        assert(ctls != nullptr);
+        assert(ctls->handle != 0);
+        assert(threadName.size() > 0);
 
-		LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
-		LOG_L(L_DEBUG, "[%s][1]", __func__);
+        LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
 
-		StackTrace stacktrace;
+        LOG_L(L_DEBUG, "SuspendedStacktrace[1]");
 
-		{
-			// process and analyse the raw stack trace
-			void* iparray[MAX_STACKTRACE_DEPTH];
+        StackTrace stacktrace;
+
+        // Get untranslated stacktrace symbols
+        {
+            // process and analyse the raw stack trace
+            void* iparray[MAX_STACKTRACE_DEPTH];
 
 			ctls->Suspend();
+
 			const int numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
+
 			ctls->Resume();
 
-			LOG_L(L_DEBUG, "[%s][2]", __func__);
+            LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
 
-			if (numLines > MAX_STACKTRACE_DEPTH)
-				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+            if(numLines > MAX_STACKTRACE_DEPTH) {
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+            }
+            char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
-			// get untranslated stacktrace symbols; give them meaningful names
-			ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
-		}
+            ExtractSymbols(lines, stacktrace);
+        }
 
-		if (stacktrace.empty()) {
-			LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
-			return;
-		}
+        if (stacktrace.empty()) {
+            LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
+            return;
+        }
 
-		LOG_L(L_DEBUG, "[%s][3]", __func__);
+        LOG_L(L_DEBUG, "SuspendedStacktrace[3]");
 
-		// Translate symbols into code line numbers
-		TranslateStackTrace(stacktrace, LOG_LEVEL_WARNING);
+        // Translate symbols into code line numbers
+        TranslateStackTrace(NULL, stacktrace, LOG_LEVEL_WARNING);
 
-		LOG_L(L_DEBUG, "[%s][4]", __func__);
+        LOG_L(L_DEBUG, "SuspendedStacktrace[4]");
 
-		LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
+        // Print out the translated StackTrace
+        LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
+
     }
 
 
-	/**
-	 * This stack trace is tailored for the SIGSEGV / SIGILL / SIGFPE etc signal handler.
-	 * The thread to be traced is usually in a halted state, but the signal handler can
-	 * provide siginfo_t and ucontext_t structures to help produce the trace using libunwind.
-	 * @brief PrepareStacktrace
-	 */
-    void HaltedStacktrace(siginfo_t* siginfo, ucontext_t* ucontext, const char* signame)
+    /**
+     * This stack trace is tailored for the SIGSEGV / SIGILL / SIGFPE etc signal handler.
+     * The thread to be traced is usually in a halted state, but the signal handler can provide siginfo_t and ucontext_t structures to help produce the trace using libunwind.
+     * @brief PrepareStacktrace
+     */
+    void HaltedStacktrace(const std::string& errstr, siginfo_t* siginfo, ucontext_t* ucontext)
     {
-		LOG_L(L_ERROR, "Halted Stacktrace for Spring %s (%s) using libunwind:", (SpringVersion::GetFull()).c_str(), signame);
+        LOG_L(L_ERROR, "Halted Stacktrace for Spring %s using libunwind:", (SpringVersion::GetFull()).c_str());
 
-		assert(siginfo != nullptr);
-		assert(ucontext != nullptr);
+        assert(siginfo != nullptr);
+        assert(ucontext != nullptr);
 
-		StackTrace stacktrace;
+        StackTrace stacktrace;
 
-		LOG_L(L_DEBUG, "[%s][1]", __func__);
+        LOG_L(L_DEBUG, "HaltedStacktrace[1]");
 
-		{
-			// process and analyse the raw stack trace
-			void* iparray[MAX_STACKTRACE_DEPTH];
-			const int numLines = thread_unwind(nullptr, iparray, stacktrace);
+        // Get untranslated stacktrace symbols
+        {
+            // process and analyse the raw stack trace
+            void* iparray[MAX_STACKTRACE_DEPTH];
 
-			LOG_L(L_DEBUG, "[%s][2]", __func__);
+            const int numLines = thread_unwind(nullptr, iparray, stacktrace);
 
-			if (numLines > MAX_STACKTRACE_DEPTH)
-				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+            LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 
-			// get untranslated stacktrace symbols; give them meaningful names
-			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
+            if(numLines > MAX_STACKTRACE_DEPTH) {
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+            }
+
+            char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+
+            ExtractSymbols(lines, stacktrace);
         }
 
-		LOG_L(L_DEBUG, "[%s][3]", __func__);
+        LOG_L(L_DEBUG, "HaltedStacktrace[3]");
 
-		if (stacktrace.empty()) {
-			LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
-			return;
-		}
+        if (stacktrace.empty()) {
+            LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
+            return;
+        }
 
-		TranslateStackTrace(stacktrace, LOG_LEVEL_ERROR);
+        // Translate it
+        TranslateStackTrace(NULL, stacktrace, LOG_LEVEL_ERROR);
 
-		LOG_L(L_DEBUG, "[%s][4]", __func__);
+        LOG_L(L_DEBUG, "HaltedStacktrace[4]");
 
-		// Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
-		LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
+        // Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
+        LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
     }
 
 
 	void PrepareStacktrace(const int logLevel) {}
-	void CleanupStacktrace(const int logLevel) { LOG_CLEANUP(); }
 
+	void CleanupStacktrace(const int logLevel) {
+		LOG_CLEANUP();
+	}
 
 	void HandleSignal(int signal, siginfo_t* siginfo, void* pctx)
 	{
-		switch (signal) {
-			case SIGINT: {
-				// ctrl+c = kill
-				LOG("[%s] caught SIGINT, aborting", __func__);
+		if (signal == SIGINT) {
+			// ctrl+c = kill
+			LOG("caught SIGINT, aborting");
 
-				// first try a clean exit
-				SDL_Event event;
-				event.type = SDL_QUIT;
-				SDL_PushEvent(&event);
+#ifndef HEADLESS
+			// first try a clean exit
+			SDL_Event event;
+			event.type = SDL_QUIT;
+			SDL_PushEvent(&event);
+#endif
 
-				// force an exit if no such luck
-				ForcedExit(5);
-				return;
-			} break;
-			case SIGCONT: {
-				#ifndef DEDICATED
-				Watchdog::ClearTimers(false, false);
-				#endif
-				LOG("[%s] caught SIGCONT, resuming", __func__);
-				return;
-			} break;
-			default: {
-			} break;
+			// abort after 5sec
+			spring::thread(std::bind(&ForcedExitAfterFiveSecs));
+			spring::thread(std::bind(&ForcedExitAfterTenSecs));
+			return;
 		}
 
+		// Turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
+		reentrances++;
 
-		// turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
-		if ((++reentrances) >= 2) {
-			sigaction_t& sa = GetSigAction(nullptr);
-			sigaction(signal, &sa, nullptr);
+		if (reentrances >= 2) {
+			sigaction_t& sa = GetSigAction(NULL);
+			sigaction(signal, &sa, NULL);
 		}
+
+		ucontext_t* uctx = reinterpret_cast<ucontext_t*> (pctx);
 
 		logSinkHandler.SetSinking(false);
 
-
-		ucontext_t* uctx = reinterpret_cast<ucontext_t*>(pctx);
-
-		const char* sigdesc = strsignal(signal);
-		const char* signame = "";
-
-		// append the signal name (no OS function to map signum to signame)
-		switch (signal) {
-			case SIGSEGV: { signame = "SIGSEGV"; } break;
-			case SIGILL : { signame = "SIGILL" ; } break;
-			case SIGPIPE: { signame = "SIGPIPE"; } break;
-			case SIGIO  : { signame = "SIGIO"  ; } break;
-			case SIGFPE : { signame = "SIGFPE" ; } break; // causes endless loop, process never gets past the signal trigger
-			case SIGABRT: { signame = "SIGABRT"; } break; // same
-			case SIGBUS : { signame = "SIGBUS" ; } break;
-			default     : {                      } break;
+		std::string error = strsignal(signal);
+		// append the signal name (it seems there is no OS function to map signum to signame :<)
+		if (signal == SIGSEGV) {
+			error += " (SIGSEGV)";
+		} else if (signal == SIGILL) {
+			error += " (SIGILL)";
+		} else if (signal == SIGPIPE) {
+			error += " (SIGPIPE)";
+		} else if (signal == SIGIO) {
+			error += " (SIGIO)";
+		} else if (signal == SIGABRT) {
+			error += " (SIGABRT)";
+		} else if (signal == SIGFPE) {
+			error += " (SIGFPE)";
+		} else if (signal == SIGBUS) {
+			error += " (SIGBUS)";
 		}
+		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
 
-		LOG_L(L_ERROR, "%s in Spring %s", sigdesc, (SpringVersion::GetFull()).c_str());
+		const bool nonFatalSignal = false;
+		const bool fatalSignal =
+			(signal == SIGSEGV) ||
+			(signal == SIGILL)  ||
+			(signal == SIGPIPE) ||
+			(signal == SIGFPE)  || // causes a endless loop, and process never gets far the causing cmd :<
+			(signal == SIGABRT) || // same
+			(signal == SIGBUS);
+
+		bool keepRunning = false;
+		bool aiCrash = false;
+
+		if (fatalSignal)
+			keepRunning = false;
+		if (nonFatalSignal)
+			keepRunning = true;
 
 		// print stacktrace
 		PrepareStacktrace();
-		HaltedStacktrace(siginfo, uctx, signame);
+		HaltedStacktrace(error, siginfo, uctx);
 		CleanupStacktrace();
 
-		if (signal != SIGIO) {
-			char buf[8192];
-			char* ptr = buf;
+		// try to clean up
+		if (keepRunning) {
+			bool cleanupOk = true;
 
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s", "Spring has crashed:\n");
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", sigdesc);
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", "A stacktrace has been written to:\n");
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", (logOutput.GetFilePath()).c_str());
+			// try to cleanup AIs
+			if (aiCrash) {
+				cleanupOk = false;
+				/*if (!containedAIInterfaceSo.empty()) {
+					//LOG_L(L_ERROR, "Trying to kill AI Interface library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				} else if (!containedSkirmishAISo.empty()) {
+					//LOG_L(L_ERROR, "Trying to kill Skirmish AI library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				}*/
+			}
 
-			// fatal signal, try to clean up
-			Remove();
-			// exit if we cought a critical signal; don't handle any further signals when exiting
-			ErrorMessageBox(buf, "Spring crashed", MBF_OK | MBF_CRASH);
-		} else {
-			logSinkHandler.SetSinking(true);
+			if (cleanupOk) {
+				logSinkHandler.SetSinking(true);
+			} else {
+				keepRunning = false;
+			}
 		}
 
-		// re-enable signal handling for this signal
+		// exit app if we catched a critical one
+		if (!keepRunning) {
+			// don't handle any further signals when exiting
+			Remove();
+
+			std::ostringstream buf;
+			buf << "Spring has crashed:\n"
+				<< error << ".\n\n"
+				<< "A stacktrace has been written to:\n"
+				<< "  " << logOutput.GetFilePath();
+			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH); // this also calls exit()
+		}
+
+		// Re-enable signal handling for this signal
 		// FIXME: reentrances should be implemented using __thread
 		if (reentrances >= 2) {
 			sigaction_t& sa = GetSigAction(&HandleSignal);
-			sigaction(signal, &sa, nullptr);
+			sigaction(signal, &sa, NULL);
 		}
+
+
+
 	}
 
 	void OutputStacktrace() {
 		PrepareStacktrace();
-		Stacktrace(nullptr);
+		Stacktrace(NULL);
 		CleanupStacktrace();
 	}
 
 	void NewHandler() {
-		std::set_new_handler(nullptr); // prevent recursion; OST or EMB might perform hidden allocs
 		LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 		OutputStacktrace();
+
 		ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 	}
-
 
 	void Install() {
 		struct rlimit limits;
@@ -1045,16 +1010,14 @@ namespace CrashHandler
 		}
 		const sigaction_t& sa = GetSigAction(&HandleSignal);
 
-		sigaction(SIGSEGV, &sa, nullptr); // segmentation fault
-		sigaction(SIGILL,  &sa, nullptr); // illegal instruction
-		sigaction(SIGPIPE, &sa, nullptr); // maybe some network error
-		sigaction(SIGIO,   &sa, nullptr); // who knows?
-		sigaction(SIGFPE,  &sa, nullptr); // div0 and more
-		sigaction(SIGABRT, &sa, nullptr);
-		sigaction(SIGINT,  &sa, nullptr);
-		// sigaction(SIGSTOP, &sa, nullptr); // cannot be caught
-		sigaction(SIGCONT, &sa, nullptr);
-		sigaction(SIGBUS,  &sa, nullptr); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
+		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
+		sigaction(SIGILL,  &sa, NULL); // illegal instruction
+		sigaction(SIGPIPE, &sa, NULL); // maybe some network error
+		sigaction(SIGIO,   &sa, NULL); // who knows?
+		sigaction(SIGFPE,  &sa, NULL); // div0 and more
+		sigaction(SIGABRT, &sa, NULL);
+		sigaction(SIGINT,  &sa, NULL);
+		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 
 		std::set_new_handler(NewHandler);
 	}
@@ -1063,17 +1026,15 @@ namespace CrashHandler
 		//const sigaction_t& sa = GetSigAction(SIG_DFL);
 		const sigaction_t& sa = GetSigAction(nullptr);
 
-		sigaction(SIGSEGV, &sa, nullptr);
-		sigaction(SIGILL,  &sa, nullptr);
-		sigaction(SIGPIPE, &sa, nullptr);
-		sigaction(SIGIO,   &sa, nullptr);
-		sigaction(SIGFPE,  &sa, nullptr);
-		sigaction(SIGABRT, &sa, nullptr);
-		sigaction(SIGINT,  &sa, nullptr);
-		// sigaction(SIGSTOP, &sa, nullptr);
-		sigaction(SIGCONT, &sa, nullptr);
-		sigaction(SIGBUS,  &sa, nullptr);
+		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
+		sigaction(SIGILL,  &sa, NULL); // illegal instruction
+		sigaction(SIGPIPE, &sa, NULL); // maybe some network error
+		sigaction(SIGIO,   &sa, NULL); // who knows?
+		sigaction(SIGFPE,  &sa, NULL); // div0 and more
+		sigaction(SIGABRT, &sa, NULL);
+		sigaction(SIGINT,  &sa, NULL);
+		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 
-		std::set_new_handler(nullptr);
+		std::set_new_handler(NULL);
 	}
 }

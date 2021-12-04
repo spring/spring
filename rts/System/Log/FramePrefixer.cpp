@@ -6,14 +6,8 @@
 
 #include "System/MainDefines.h"
 
-#include <cassert>
 #include <cstdarg>
 #include <cstring>
-#include <chrono>
-
-constexpr static int64_t  SECS_TO_NANOSECS = 1000 * 1000 * 1000;
-constexpr static int64_t  MINS_TO_NANOSECS = SECS_TO_NANOSECS * 60;
-constexpr static int64_t HOURS_TO_NANOSECS = MINS_TO_NANOSECS * 60;
 
 
 #ifdef __cplusplus
@@ -21,7 +15,7 @@ extern "C" {
 #endif
 
 // GlobalSynced makes sure this can not be dangling
-static int* frameNumRef = nullptr;
+static int* frameNumRef = NULL;
 
 void log_framePrefixer_setFrameNumReference(int* frameNumReference)
 {
@@ -30,22 +24,15 @@ void log_framePrefixer_setFrameNumReference(int* frameNumReference)
 
 size_t log_framePrefixer_createPrefix(char* result, size_t resultSize)
 {
-	const static auto refTime = std::chrono::high_resolution_clock::now();
-	const        auto curTime = std::chrono::high_resolution_clock::now();
+	if (frameNumRef == NULL) {
+		if (resultSize > 0) {
+			result[0] = '\0';
+			return 1;
+		}
+		return 0;
+	}
 
-	int64_t ns = (curTime - refTime).count();
-
-	// prefix with engine running-time in hh:mm:ss.us format since first log call
-	const int32_t hh = ns / HOURS_TO_NANOSECS; ns %= HOURS_TO_NANOSECS;
-	const int32_t mm = ns /  MINS_TO_NANOSECS; ns %=  MINS_TO_NANOSECS;
-	const int32_t ss = ns /  SECS_TO_NANOSECS; ns %=  SECS_TO_NANOSECS;
-
-	assert(resultSize != 0);
-
-	if (frameNumRef == nullptr)
-		return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld] ", hh, mm, ss, (ns / 1000) % 1000000));
-
-	return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld][f=%07d] ", hh, mm, ss, (ns / 1000) % 1000000, *frameNumRef));
+	return (SNPRINTF(result, resultSize, "[f=%07d] ", *frameNumRef));
 }
 
 #ifdef __cplusplus

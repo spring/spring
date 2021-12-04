@@ -3,26 +3,25 @@
 #ifndef _FEATURE_HANDLER_H
 #define _FEATURE_HANDLER_H
 
+#include <deque>
 #include <vector>
 
 #include "System/float3.h"
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/UnorderedSet.hpp"
-#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
-class CSolidObject;
+class CFeature;
 struct UnitDef;
 class LuaTable;
 struct FeatureDef;
 
 struct FeatureLoadParams {
-	const CSolidObject* parentObj;
-	const UnitDef* unitDef;
 	const FeatureDef* featureDef;
+	const UnitDef* unitDef;
 
-	// not used if parentObj != nullptr
 	float3 pos;
 	float3 speed;
 
@@ -37,17 +36,14 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
-
-class CFeature;
+class LuaParser;
 class CFeatureHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler(): idPool(MAX_FEATURES) {}
-
-	void Init();
-	void Kill();
+	CFeatureHandler();
+	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params);
@@ -72,9 +68,9 @@ private:
 		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
 			return true;
-		// is this ID not already in use *and* has it been recycled by pool?
+		// is this ID not already in use?
 		if (id < features.size())
-			return (features[id] == nullptr && idPool.HasID(id));
+			return (features[id] == nullptr);
 		// AddFeature will not make new room for us
 		return false;
 	}
@@ -90,7 +86,7 @@ private:
 	std::vector<CFeature*> updateFeatures;
 };
 
-extern CFeatureHandler featureHandler;
+extern CFeatureHandler* featureHandler;
 
 
 #endif // _FEATURE_HANDLER_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 //#include "GL/glew.h"
-#ifndef _WIN32
+#ifndef WIN32
 //   #include "GL/glxew.h"
 #endif
 #include "glewstub.h"

@@ -13,7 +13,18 @@ class CWorldObject: public CObject
 public:
 	CR_DECLARE(CWorldObject)
 
-	CWorldObject() = default;
+	CWorldObject()
+		: id(-1)
+		, pos(ZeroVector)
+		, speed(ZeroVector)
+		, radius(0.0f)
+		, height(0.0f)
+		, sqRadius(0.0f)
+		, drawRadius(0.0f)
+		, useAirLos(false)
+		, alwaysVisible(false)
+		, model(NULL)
+	{}
 	CWorldObject(const float3& pos, const float3& spd): CWorldObject()
 	{
 		SetPosition(pos);
@@ -52,21 +63,20 @@ public:
 	float3 GetDrawPos(const float3 v, float t) const { return (pos +     v * t); }
 
 public:
-	int id = -1;
-	int tempNum = 0;            ///< used to check if object has already been processed (in QuadField queries, etc)
+	int id;
 
-	float3 pos;                 ///< position of the very bottom of the object
-	float4 speed;               ///< current velocity vector (elmos/frame), .w = |velocity|
+	float3 pos;         ///< position of the very bottom of the object
+	float4 speed;       ///< current velocity vector (elmos/frame), .w = |velocity|
 
-	float radius = 0.0f;        ///< used for collisions
-	float height = 0.0f;        ///< The height of this object
-	float sqRadius = 0.0f;
-	float drawRadius = 0.0f;    ///< unsynced, used for projectile visibility culling
+	float radius;       ///< used for collisions
+	float height;       ///< The height of this object
+	float sqRadius;
+	float drawRadius;   ///< unsynced, used for projectile visibility culling
 
-	bool useAirLos = false;     ///< if true, the object's visibility is checked against airLosMap[allyteam]
-	bool alwaysVisible = false; ///< if true, object is drawn even if not in LOS
+	bool useAirLos;     ///< if true, the object's visibility is checked against airLosMap[allyteam]
+	bool alwaysVisible; ///< if true, object is drawn even if not in LOS
 
-	S3DModel* model = nullptr;
+	S3DModel* model;
 };
 
 #endif /* WORLD_OBJECT_H */

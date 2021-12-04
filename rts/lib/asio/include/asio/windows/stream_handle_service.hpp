@@ -2,7 +2,7 @@
 // windows/stream_handle_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,8 +17,6 @@
 
 #include "asio/detail/config.hpp"
 
-#if defined(ASIO_ENABLE_OLD_SERVICES)
-
 #if defined(ASIO_HAS_WINDOWS_STREAM_HANDLE) \
   || defined(GENERATING_DOCUMENTATION)
 
@@ -26,7 +24,7 @@
 #include "asio/async_result.hpp"
 #include "asio/detail/win_iocp_handle_service.hpp"
 #include "asio/error.hpp"
-#include "asio/io_context.hpp"
+#include "asio/io_service.hpp"
 
 #include "asio/detail/push_options.hpp"
 
@@ -36,7 +34,7 @@ namespace windows {
 /// Default service implementation for a stream handle.
 class stream_handle_service
 #if defined(GENERATING_DOCUMENTATION)
-  : public asio::io_context::service
+  : public asio::io_service::service
 #else
   : public asio::detail::service_base<stream_handle_service>
 #endif
@@ -44,7 +42,7 @@ class stream_handle_service
 public:
 #if defined(GENERATING_DOCUMENTATION)
   /// The unique service identifier.
-  static asio::io_context::id id;
+  static asio::io_service::id id;
 #endif
 
 private:
@@ -59,6 +57,13 @@ public:
   typedef service_impl_type::implementation_type implementation_type;
 #endif
 
+  /// (Deprecated: Use native_handle_type.) The native handle type.
+#if defined(GENERATING_DOCUMENTATION)
+  typedef implementation_defined native_type;
+#else
+  typedef service_impl_type::native_handle_type native_type;
+#endif
+
   /// The native handle type.
 #if defined(GENERATING_DOCUMENTATION)
   typedef implementation_defined native_handle_type;
@@ -66,10 +71,10 @@ public:
   typedef service_impl_type::native_handle_type native_handle_type;
 #endif
 
-  /// Construct a new stream handle service for the specified io_context.
-  explicit stream_handle_service(asio::io_context& io_context)
-    : asio::detail::service_base<stream_handle_service>(io_context),
-      service_impl_(io_context)
+  /// Construct a new stream handle service for the specified io_service.
+  explicit stream_handle_service(asio::io_service& io_service)
+    : asio::detail::service_base<stream_handle_service>(io_service),
+      service_impl_(io_service)
   {
   }
 
@@ -103,11 +108,10 @@ public:
   }
 
   /// Assign an existing native handle to a stream handle.
-  ASIO_SYNC_OP_VOID assign(implementation_type& impl,
+  asio::error_code assign(implementation_type& impl,
       const native_handle_type& handle, asio::error_code& ec)
   {
-    service_impl_.assign(impl, handle, ec);
-    ASIO_SYNC_OP_VOID_RETURN(ec);
+    return service_impl_.assign(impl, handle, ec);
   }
 
   /// Determine whether the handle is open.
@@ -117,11 +121,16 @@ public:
   }
 
   /// Close a stream handle implementation.
-  ASIO_SYNC_OP_VOID close(implementation_type& impl,
+  asio::error_code close(implementation_type& impl,
       asio::error_code& ec)
   {
-    service_impl_.close(impl, ec);
-    ASIO_SYNC_OP_VOID_RETURN(ec);
+    return service_impl_.close(impl, ec);
+  }
+
+  /// (Deprecated: Use native_handle().) Get the native handle implementation.
+  native_type native(implementation_type& impl)
+  {
+    return service_impl_.native_handle(impl);
   }
 
   /// Get the native handle implementation.
@@ -131,11 +140,10 @@ public:
   }
 
   /// Cancel all asynchronous operations associated with the handle.
-  ASIO_SYNC_OP_VOID cancel(implementation_type& impl,
+  asio::error_code cancel(implementation_type& impl,
       asio::error_code& ec)
   {
-    service_impl_.cancel(impl, ec);
-    ASIO_SYNC_OP_VOID_RETURN(ec);
+    return service_impl_.cancel(impl, ec);
   }
 
   /// Write the given data to the stream.
@@ -154,10 +162,11 @@ public:
       const ConstBufferSequence& buffers,
       ASIO_MOVE_ARG(WriteHandler) handler)
   {
-    asio::async_completion<WriteHandler,
-      void (asio::error_code, std::size_t)> init(handler);
+    asio::detail::async_result_init<
+      WriteHandler, void (asio::error_code, std::size_t)> init(
+        ASIO_MOVE_CAST(WriteHandler)(handler));
 
-    service_impl_.async_write_some(impl, buffers, init.completion_handler);
+    service_impl_.async_write_some(impl, buffers, init.handler);
 
     return init.result.get();
   }
@@ -178,19 +187,20 @@ public:
       const MutableBufferSequence& buffers,
       ASIO_MOVE_ARG(ReadHandler) handler)
   {
-    asio::async_completion<ReadHandler,
-      void (asio::error_code, std::size_t)> init(handler);
+    asio::detail::async_result_init<
+      ReadHandler, void (asio::error_code, std::size_t)> init(
+        ASIO_MOVE_CAST(ReadHandler)(handler));
 
-    service_impl_.async_read_some(impl, buffers, init.completion_handler);
+    service_impl_.async_read_some(impl, buffers, init.handler);
 
     return init.result.get();
   }
 
 private:
   // Destroy all user-defined handler objects owned by the service.
-  void shutdown()
+  void shutdown_service()
   {
-    service_impl_.shutdown();
+    service_impl_.shutdown_service();
   }
 
   // The platform-specific implementation.
@@ -204,7 +214,5 @@ private:
 
 #endif // defined(ASIO_HAS_WINDOWS_STREAM_HANDLE)
        //   || defined(GENERATING_DOCUMENTATION)
-
-#endif // defined(ASIO_ENABLE_OLD_SERVICES)
 
 #endif // ASIO_WINDOWS_STREAM_HANDLE_SERVICE_HPP

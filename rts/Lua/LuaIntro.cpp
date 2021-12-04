@@ -107,6 +107,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
 	    // !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
+	    // !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)             ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
 	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
@@ -137,7 +138,7 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	luaIntro = nullptr;
+	luaIntro = NULL;
 }
 
 
@@ -194,8 +195,9 @@ bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, ExtractModArchiveFile);
 
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigInt);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigInt);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigFloat);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigString);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigString);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, CreateDir);
@@ -250,10 +252,6 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetActionHotKeys);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetLogSections);
-
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigInt);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigFloat);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigString);
 	return true;
 }
 
@@ -314,8 +312,8 @@ string CLuaIntro::LoadFile(const string& filename) const
 void CLuaIntro::DrawLoadScreen()
 {
 	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __func__);
-	static const LuaHashString cmdStr(__func__);
+	luaL_checkstack(L, 2, __FUNCTION__);
+	static const LuaHashString cmdStr("DrawLoadScreen");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 		return; // the call is not defined
@@ -335,10 +333,11 @@ void CLuaIntro::DrawLoadScreen()
 void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline)
 {
 	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 4, __func__);
-	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L))
+	luaL_checkstack(L, 4, __FUNCTION__);
+	static const LuaHashString cmdStr("LoadProgress");
+	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
+	}
 
 	lua_pushsstring(L, msg);
 	lua_pushboolean(L, replace_lastline);

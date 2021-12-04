@@ -15,7 +15,7 @@
 #include "System/StringUtil.h"
 
 
-CR_BIND(CDamageArrayHandler, )
+CR_BIND(CDamageArrayHandler, (NULL))
 
 CR_REG_METADATA(CDamageArrayHandler, (
 	CR_MEMBER(armorDefNameIdxMap),
@@ -23,10 +23,10 @@ CR_REG_METADATA(CDamageArrayHandler, (
 ))
 
 
-CDamageArrayHandler damageArrayHandler;
+CDamageArrayHandler* damageArrayHandler;
 
 
-void CDamageArrayHandler::Init(LuaParser* defsParser)
+CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 {
 	#define DEFAULT_ARMORDEF_NAME "default"
 

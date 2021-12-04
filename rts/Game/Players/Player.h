@@ -31,6 +31,7 @@ public:
 	};
 
 	CPlayer();
+	virtual ~CPlayer(){}
 
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());
@@ -49,16 +50,16 @@ public:
 	void StopControllingUnit();
 
 public:
-	bool active = false;
+	bool active;
 
-	int playerNum = -1;
+	int playerNum;
 
 	/**
 	 * Contains either the current ping of the player to the game host,
 	 * or the value of the pathign flag.
 	 * @see PATHING_FLAG
 	 */
-	int ping = 0;
+	int ping;
 
 	PlayerStatistics currentStats;
 	FPSUnitController fpsController;

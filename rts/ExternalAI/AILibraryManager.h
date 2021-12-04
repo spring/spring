@@ -3,18 +3,15 @@
 #ifndef AI_LIBRARY_MANAGER_H
 #define	AI_LIBRARY_MANAGER_H
 
+#include "IAILibraryManager.h"
+
 #include "AIInterfaceLibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 
 #include <memory>
-#include <map>
 #include <vector>
-#include <set>
-
-class AIInterfaceKey;
-class SkirmishAIKey;
-class CSkirmishAILibrary;
+#include <map>
 
 /**
  * Manages AI Interfaces and Skirmish AIs; their info and current status.
@@ -23,41 +20,13 @@ class CSkirmishAILibrary;
  * In addition to that, it keeps track fo which Interfaces and AIs
  * are currently loaded, and unloads them when they are not needed anymore.
  */
-class AILibraryManager {
+class CAILibraryManager : public IAILibraryManager {
 public:
-	typedef std::set<AIInterfaceKey> T_interfaceSpecs;
-	typedef std::set<SkirmishAIKey> T_skirmishAIKeys;
-
-	typedef std::map<const AIInterfaceKey, CAIInterfaceLibraryInfo> T_interfaceInfos;
-	typedef std::map<const SkirmishAIKey, CSkirmishAILibraryInfo> T_skirmishAIInfos;
-
-	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
-	typedef std::map<const SkirmishAIKey, std::set<std::string> > T_dupSkirm;
-
-
-public:
-	static AILibraryManager* GetInstance(bool init = true);
-
-	static void Create() { GetInstance(false); }
-	static void Destroy() { GetInstance(false)->Kill(); }
-	static void OutputAIInterfacesInfo();
-	static void OutputSkirmishAIInfo();
-
-
-	void Init();
+	CAILibraryManager();
 	/**
 	 * Unloads all Interface and AI shared libraries that are currently loaded.
 	 */
-	void Kill();
-
-	bool Initialized() const { return initialized; }
-
-	/**
-	 * Returns a resolved aikey
-	 * @see SkirmishAIKey::IsUnspecified()
-	 */
-	SkirmishAIKey ResolveSkirmishAIKey(const SkirmishAIKey& skirmishAIKey) const;
-
+	~CAILibraryManager();
 
 	const T_interfaceSpecs& GetInterfaceKeys() const { return interfaceKeys; }
 	const T_skirmishAIKeys& GetSkirmishAIKeys() const { return skirmishAIKeys; }
@@ -65,31 +34,16 @@ public:
 	const T_interfaceInfos& GetInterfaceInfos() const { return interfaceInfos; }
 	const T_skirmishAIInfos& GetSkirmishAIInfos() const { return skirmishAIInfos; }
 
-	/**
-	 * Returns a set of files which contain duplicate Skirmish AI infos.
-	 * This can be used for issueing warnings.
-	 */
+	const T_dupInt& GetDuplicateInterfaceInfos() const { return duplicateInterfaceInfos; }
 	const T_dupSkirm& GetDuplicateSkirmishAIInfos() const { return duplicateSkirmishAIInfos; }
 
 	std::vector<SkirmishAIKey> FittingSkirmishAIKeys(const SkirmishAIKey& skirmishAIKey) const;
-
-	/**
-	 * A Skirmish AI (its library) is only really loaded when it is not yet
-	 * loaded.
-	 */
 	const CSkirmishAILibrary* FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey);
-
-	/**
-	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
-	 * as many times as GetSkirmishAILibrary() was.
-	 * loading and unloading of the interfaces
-	 * is handled internally/automatically.
-	 */
 	void ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey);
 
 private:
 	/** Unloads all currently loaded AIs and interfaces. */
-	void ReleaseAll();
+	void ReleaseEverything();
 
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
@@ -111,7 +65,7 @@ private:
 	 * AI/Interfaces/C/0.1/InterfaceInfo.lua
 	 * AI/Interfaces/Java/0.1/InterfaceInfo.lua
 	 */
-	void GatherInterfaceLibInfo();
+	void GatherInterfaceLibrariesInfos();
 	/**
 	 * Loads info about available Skirmish AIs from Lua info- and option-files.
 	 * -> AI libraries can not corrupt the engines memory
@@ -128,20 +82,19 @@ private:
 	 * AI/Skirmish/RAI/0.601/AIInfo.lua
 	 * AI/Skirmish/RAI/0.601/AIOptions.lua
 	 */
-	void GatherSkirmishAILibInfo();
+	void GatherSkirmishAIsLibrariesInfos();
 
-	void GatherSkirmishAILibInfoFromLuaFiles(T_dupSkirm& duplicateSkirmishAIInfoCheck);
-	void GatherSkirmishAILibInfoFromInterfaceLib(T_dupSkirm& duplicateSkirmishAIInfoCheck);
-	void StoreSkirmishAILibInfo(T_dupSkirm& duplicateSkirmishAIInfoCheck, CSkirmishAILibraryInfo& skirmishAIInfo, const std::string& sourceDesc);
+	void GatherSkirmishAIsLibrariesInfosFromLuaFiles(T_dupSkirm duplicateSkirmishAIInfoCheck);
+	void GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dupSkirm duplicateSkirmishAIInfoCheck);
+	void StoreSkirmishAILibraryInfos(T_dupSkirm duplicateSkirmishAIInfoCheck, CSkirmishAILibraryInfo& skirmishAIInfo, const std::string& sourceDesc);
 	/// Filter out Skirmish AIs that are specified multiple times
-	void FilterDuplicateSkirmishAILibInfo(const T_dupSkirm& duplicateSkirmishAIInfoCheck);
+	void FilterDuplicateSkirmishAILibrariesInfos(T_dupSkirm duplicateSkirmishAIInfoCheck);
 
 	/**
 	 * Clears info about available AIs.
 	 */
-	void ClearAll();
+	void ClearAllInfos();
 
-private:
 	/**
 	 * Finds the best fitting interface.
 	 * The short name has to fit perfectly, and the version of the interface
@@ -152,49 +105,25 @@ private:
 	 * available: 0.1, 0.3, 0.5
 	 * chosen: 0.3
 	 *
-	 * @see AILibraryManager::VersionCompare()
+	 * @see IAILibraryManager::VersionCompare()
 	 */
-	static AIInterfaceKey FindFittingInterfaceKey(
-		const std::string& shortName,
-		const std::string& minVersion,
-		const T_interfaceSpecs& specs
-	);
+	static AIInterfaceKey FindFittingInterfaceSpecifier(
+			const std::string& shortName,
+			const std::string& minVersion,
+			const T_interfaceSpecs& specs);
 
-	/**
-	 * Compares two version strings.
-	 * Splits the version strings at the '.' signs, and compares the parts.
-	 * If the number of parts do not match, then the string with less parts
-	 * is filled up with '.0' parts at its right, eg:
-	 * version 1: 0.1.2   -> 0.1.2.0
-	 * version 2: 0.1.2.3 -> 0.1.2.3
-	 * The left most part has the highest significance.
-	 * Comparison of the individual parts is done with std::string::compare(),
-	 * which implies for example that letters > numbers.
-	 * examples:
-	 * ("2", "1") -> 1
-	 * ("1", "1") -> 0
-	 * ("1", "2") -> -1
-	 * ("0.1.1", "0.1") -> 1
-	 * ("1.a", "1.9") -> 1
-	 * ("1.a", "1.A") -> 1
-	 */
-	static int VersionCompare(const std::string& version1, const std::string& version2);
 
-private:
-	std::map<const AIInterfaceKey, std::unique_ptr<CAIInterfaceLibrary> > loadedAIInterfaceLibs;
+	typedef std::map<const AIInterfaceKey, std::unique_ptr<CAIInterfaceLibrary> > T_loadedInterfaces;
+
+	T_loadedInterfaces loadedAIInterfaceLibraries;
 
 	T_interfaceSpecs interfaceKeys;
 	T_skirmishAIKeys skirmishAIKeys;
-
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 
 	T_dupInt duplicateInterfaceInfos;
 	T_dupSkirm duplicateSkirmishAIInfos;
-
-	bool initialized = false;
 };
 
-#define aiLibManager AILibraryManager::GetInstance(true)
 #endif // AI_LIBRARY_MANAGER_H
-

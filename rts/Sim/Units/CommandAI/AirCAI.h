@@ -32,7 +32,7 @@ public:
 	void ExecuteFight(Command& c);
 	void ExecuteMove(Command& c);
 
-	bool IsValidTarget(const CUnit* enemy, CWeapon* weapon) const override;
+	bool IsValidTarget(const CUnit* enemy) const;
 
 private:
 	bool AirAutoGenerateTarget(AAirMoveType*);

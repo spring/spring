@@ -209,6 +209,7 @@ const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 		case CMD_MOVE_STATE:
 		case CMD_SETBASE:
 		case CMD_INTERNAL:
+		case CMD_SET_WANTED_MAX_SPEED:
 		case CMD_ONOFF:
 		case CMD_CLOAK:
 		case CMD_STOCKPILE:

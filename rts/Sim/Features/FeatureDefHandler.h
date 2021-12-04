@@ -6,43 +6,31 @@
 #include <string>
 #include <vector>
 
-#include "FeatureDef.h"
-
 #include "System/Misc/NonCopyable.h"
 #include "System/UnorderedMap.hpp"
 
 
 class LuaTable;
 class LuaParser;
+struct FeatureDef;
 
 class CFeatureDefHandler : public spring::noncopyable
 {
 
 public:
-	void Init(LuaParser* defsParser);
-	void Kill() {
-		featureDefIDs.clear(); // never iterated in synced code
-		featureDefsVector.clear();
-	}
+	CFeatureDefHandler(LuaParser* defsParser);
+	~CFeatureDefHandler();
 
 	void LoadFeatureDefsFromMap();
 	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true) const;
 	const FeatureDef* GetFeatureDefByID(int id) const {
-		if (!IsValidFeatureDefID(id))
-			return nullptr;
-
+		if ((id < 1) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
+			return NULL;
+		}
 		return &featureDefsVector[id];
 	}
 
-	bool IsValidFeatureDefID(const int id) const {
-		return (id > 0) && (static_cast<size_t>(id) < featureDefsVector.size());
-	}
-
-	// id=0 is not a valid FeatureDef, hence the -1
-	unsigned int NumFeatureDefs() const { return (featureDefsVector.size() - 1); }
-
-	const std::vector<FeatureDef>& GetFeatureDefsVec() const { return featureDefsVector; }
-	const spring::unordered_map<std::string, int>& GetFeatureDefIDs() const { return featureDefIDs; }
+	const spring::unordered_map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
 
 private:
 
@@ -55,7 +43,7 @@ private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature, bool isDefaultFeature);
 
 private:
-	spring::unordered_map<std::string, int> featureDefIDs;
+	spring::unordered_map<std::string, int> featureDefs;
 	std::vector<FeatureDef> featureDefsVector;
 };
 

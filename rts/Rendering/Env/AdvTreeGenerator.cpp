@@ -20,7 +20,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 using std::max;
 using std::min;

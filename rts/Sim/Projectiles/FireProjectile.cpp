@@ -71,9 +71,10 @@ CFireProjectile::CFireProjectile(
 
 void CFireProjectile::Update()
 {
-	if ((--ttl) > 0) {
+	ttl--;
+	if (ttl > 0) {
 		const float partSat = (gs->frameNum & 1) ? 1.0f : 0.8f;
-		if (projectileHandler.GetParticleSaturation() < partSat) {
+		if (projectileHandler->GetParticleSaturation() < partSat) {
 			// unsynced code
 			SubParticle sub;
 			sub.age = 0;
@@ -83,7 +84,7 @@ void CFireProjectile::Update()
 			sub.pos.y += sub.posDif.y;
 			sub.posDif.y = 0;
 			sub.rotSpeed = (guRNG.NextFloat() - 0.5f) * 4;
-			sub.smokeType = guRNG.NextInt(projectileDrawer->NumSmokeTextures());
+			sub.smokeType = guRNG.NextInt(projectileDrawer->smoketex.size());
 			subParticles.push_front(sub);
 
 			sub.maxSize = (0.7f + guRNG.NextFloat()*0.3f) * particleSize;
@@ -97,21 +98,18 @@ void CFireProjectile::Update()
 		if (!(ttl & 31)) {
 			// copy on purpose, since the below can call Lua
 			QuadFieldQuery qfQuery;
-			quadField.GetFeaturesExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
-			quadField.GetUnitsExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
-
-			const DamageArray fireDmg(30.0f);
+			quadField->GetFeaturesExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			quadField->GetUnitsExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 
 			for (CFeature* f: *qfQuery.features) {
-				if (gsRNG.NextFloat() <= 0.8f)
-					continue;
-
-				f->StartFire();
-				// f->DoDamage(fireDmg, ZeroVector, nullptr, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
+				if (gsRNG.NextFloat() > 0.8f) {
+					f->StartFire();
+				}
 			}
 
+			const DamageArray fireDmg(30);
 			for (CUnit* u: *qfQuery.units) {
-				u->DoDamage(fireDmg, ZeroVector, nullptr, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
+				u->DoDamage(fireDmg, ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
 			}
 		}
 	}
@@ -122,7 +120,7 @@ void CFireProjectile::Update()
 			break;
 		}
 
-		pi.pos += (speed + envResHandler.GetCurrentWindVec() * pi.age * 0.05f + pi.posDif * 0.1f);
+		pi.pos += (speed + wind.GetCurrentWind() * pi.age * 0.05f + pi.posDif * 0.1f);
 		pi.posDif *= 0.9f;
 	}
 
@@ -171,8 +169,7 @@ void CFireProjectile::Draw(CVertexArray* va)
 		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 	}
 	for (const SubParticle& pi: subParticles) {
-		const AtlasedTexture* at = projectileDrawer->GetSmokeTexture(pi.smokeType);
-
+		const AtlasedTexture* at = projectileDrawer->smoketex[pi.smokeType];
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
 		const float size = pi.maxSize * fastmath::apxsqrt(age);
 		const float  rot = pi.rotSpeed * age;

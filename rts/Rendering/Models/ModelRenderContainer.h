@@ -6,97 +6,90 @@
 #define MDL_TYPE(o) (o->model->type)
 #define TEX_TYPE(o) (o->model->textureType)
 
-#include <array>
-#include <vector>
-
+#include "System/UnorderedMap.hpp"
 #include "Rendering/Models/3DModel.h"
-#include "System/ContainerUtil.h"
 
-template<typename TObject>
-class ModelRenderContainer {
-private:
-	// note: there can be no more texture-types than S3DModel instances
-	std::array< int, MAX_MODEL_OBJECTS > keys;
-	std::vector< std::vector<TObject*> > bins;
+class CUnit;
+class CFeature;
+class CProjectile;
 
-	typedef  typename decltype(bins)::value_type  ObjectBin;
+class IModelRenderContainer {
+public:
+	static IModelRenderContainer* GetInstance(int);
 
-	size_t numObjs = 0;
-	size_t numBins = 0;
+	IModelRenderContainer(int mdlType): modelType(mdlType) {
+		numUnits = 0;
+		numFeatures = 0;
+		numProjectiles = 0;
+	}
+	virtual ~IModelRenderContainer();
 
-private:
-	int CalcObjectBinIdx(const TObject* o) const { return (TEX_TYPE(o)); }
+	virtual void AddUnit(const CUnit*);
+	virtual void DelUnit(const CUnit*);
 
 public:
-	void Kill() {}
-	void Init() {
-		keys.fill(0);
-		bins.reserve(32);
+	virtual void AddFeature(const CFeature*);
+	virtual void DelFeature(const CFeature*);
 
-		// reuse inner vectors when reloading
-		for (auto& bin: bins) {
-			bin.clear();
-		}
+	virtual void AddProjectile(const CProjectile*);
+	virtual void DelProjectile(const CProjectile*);
 
-		numObjs = 0;
-		numBins = 0;
-	}
+	unsigned int GetNumUnits() const { return numUnits; }
+	unsigned int GetNumFeatures() const { return numFeatures; }
+	unsigned int GetNumProjectiles() const { return numProjectiles; }
 
+protected:
+	typedef std::vector<      CUnit*>       UnitSet;
+	typedef std::vector<   CFeature*>    FeatureSet;
+	typedef std::vector<CProjectile*> ProjectileSet;
 
-	void AddObject(const TObject* o) {
-		const auto kb = keys.begin();
-		const auto ke = keys.begin() + numBins;
-		const auto ki = std::find(kb, ke, CalcObjectBinIdx(o));
+	// textureType ==> modelSet
+	typedef spring::unordered_map<int,       UnitSet>       UnitRenderBin;
+	typedef spring::unordered_map<int,    FeatureSet>    FeatureRenderBin;
+	typedef spring::unordered_map<int, ProjectileSet> ProjectileRenderBin;
 
-		if (ki == ke)
-			keys[numBins++] = CalcObjectBinIdx(o);
+	UnitRenderBin units;              // all opaque or all cloaked
+	FeatureRenderBin features;        // all (opaque and fade) or all shadow
+	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
-		if (bins.size() < numBins)
-			bins.emplace_back();
+	int modelType;
 
-		auto& bin = bins[ki - kb];
+	unsigned int numUnits;
+	unsigned int numFeatures;
+	unsigned int numProjectiles;
 
-		if (bin.empty())
-			bin.reserve(256);
+public:
+	const UnitSet& GetUnitSet(int texType) { return units[texType]; }
+	const FeatureSet& GetFeatureSet(int texType) { return features[texType]; }
+	const ProjectileSet& GetProjectileSet(int texType) { return projectiles[texType]; }
 
-		// numBins += (ki == ke);
-		// cast since updating an object's draw-position requires mutability
-		numObjs += spring::VectorInsertUnique(bin, const_cast<TObject*>(o));
-	}
+	const UnitRenderBin& GetUnitBin() const { return units; }
+	const FeatureRenderBin& GetFeatureBin() const { return features; }
+	const ProjectileRenderBin& GetProjectileBin() const { return projectiles; }
 
-	void DelObject(const TObject* o) {
-		const auto kb = keys.begin();
-		const auto ke = keys.begin() + numBins;
-		const auto ki = std::find(kb, ke, CalcObjectBinIdx(o));
+	UnitRenderBin& GetUnitBinMutable() { return units; }
+	FeatureRenderBin& GetFeatureBinMutable() { return features; }
+	ProjectileRenderBin& GetProjectileBinMutable() { return projectiles; }
+};
 
-		if (ki == ke)
-			return;
+class ModelRenderContainer3DO: public IModelRenderContainer {
+public:
+	ModelRenderContainer3DO(): IModelRenderContainer(MODELTYPE_3DO) {}
+};
 
-		auto& bin = bins[ki - kb];
+class ModelRenderContainerS3O: public IModelRenderContainer {
+public:
+	ModelRenderContainerS3O(): IModelRenderContainer(MODELTYPE_S3O) {}
+};
 
-		// object can be legally absent from this container
-		// e.g. UnitDrawer invokes DelObject on both opaque
-		// and alpha containers (since it does not know the
-		// cloaked state) which also means the tex-type key
-		// might not exist here
-		numObjs -= spring::VectorErase(bin, const_cast<TObject*>(o));
-		numBins -= (bin.empty());
+class ModelRenderContainerOBJ: public IModelRenderContainer {
+public:
+	ModelRenderContainerOBJ(): IModelRenderContainer(MODELTYPE_OBJ) {}
+};
 
-		if (!bin.empty())
-			return;
-
-		// keep empty bin, just remove it from the key-set
-		std::swap(bins[ki - kb], bins[ke - 1 - kb]);
-		std::swap(*ki, *(ke - 1));
-	}
-
-
-	unsigned int GetNumObjects() const { return numObjs; }
-	unsigned int GetNumObjectBins() const { return numBins; }
-	unsigned int GetObjectBinKey(unsigned int idx) const { return keys[idx]; }
-
-	const ObjectBin& GetObjectBin(unsigned int idx) const { return bins[idx]; }
+class ModelRenderContainerASS: public IModelRenderContainer {
+public:
+	ModelRenderContainerASS(): IModelRenderContainer(MODELTYPE_ASS) {}
 };
 
 #endif
-

@@ -15,14 +15,17 @@
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/Sync/SyncTracer.h"
 #include "System/Color.h"
 #include "System/Matrix44f.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
 
 // the smokes life-time in frames
-static constexpr float SMOKE_LIFETIME = 70.0f;
-static constexpr float TRACER_PARTS_STEP = 2.0f;
+static const float SMOKE_TIME = 70.0f;
+
+static const float TRACER_PARTS_STEP = 2.0f;
+static const unsigned int MAX_NUM_AGEMODS = 32;
 
 CR_BIND(CStarburstProjectile::TracerPart, )
 CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
@@ -34,41 +37,48 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 ))
 
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CStarburstProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(aimError),
-	CR_MEMBER(oldSmoke),
-	CR_MEMBER(oldSmokeDir),
-
 	CR_MEMBER(tracking),
+	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(acceleration),
-	CR_MEMBER(distanceToTravel),
-
 	CR_MEMBER(uptime),
-	CR_MEMBER(trailAge),
+	CR_MEMBER(age),
+	CR_MEMBER(oldSmoke),
+	CR_MEMBER(oldSmokeDir),
 	CR_MEMBER(numParts),
+	CR_MEMBER(doturn),
+	CR_MEMBER(smokeTrail),
 	CR_MEMBER(missileAge),
+	CR_MEMBER(distanceToTravel),
+	CR_MEMBER(aimError),
 	CR_MEMBER(curTracerPart),
-
-	CR_MEMBER(ignoreError),
-	CR_MEMBER(turnToTarget),
-
-	CR_MEMBER(tracerParts),
-	CR_MEMBER(smokeTrail)
+	CR_MEMBER(tracerParts)
 ))
 
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, aimError(params.error)
-	, oldSmoke(pos)
-
 	, tracking(params.tracking)
+	, ignoreError(false)
+	, doturn(true)
+	, maxGoodDif(0.0f)
+	, maxSpeed(0.0f)
+	, acceleration(0.f)
 	, distanceToTravel(params.maxRange)
 
 	, uptime(params.upTime)
+	, age(0)
+
+	, oldSmoke(pos)
+	, smokeTrail(nullptr)
+
+	, numParts(0)
+	, missileAge(0)
+	, curTracerPart(0)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 
@@ -82,51 +92,57 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 			uptime = weaponDef->uptime * GAME_SPEED;
 
 		if (weaponDef->flighttime == 0)
-			ttl = std::min(3000.0f, uptime + myrange / maxSpeed + 100);
+			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
 	}
 
-	oldSmokeDir = dir;
-
 	maxGoodDif = math::cos(tracking * 0.6f);
+	oldSmokeDir = dir;
 	drawRadius = maxSpeed * 8.0f;
 
-	castShadow = true;
-	leaveSmokeTrail = (weaponDef != nullptr && weaponDef->visuals.smokeTrail);
+	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
+		tracerParts[a].dir = dir;
+		tracerParts[a].pos = pos;
+		tracerParts[a].speedf = speed.w;
 
-	InitTracerParts();
+		tracerParts[a].ageMods.resize(MAX_NUM_AGEMODS, 1.0f);
+		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, static_cast<unsigned int>((speed.w + 0.6f) / TRACER_PARTS_STEP));
+	}
+	castShadow = true;
+
+#ifdef TRACE_SYNC
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
+#endif
 }
 
 
 void CStarburstProjectile::Collision()
 {
-	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
-
-	CWeaponProjectile::Collision();
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
+	CWeaponProjectile::Collision();
 	oldSmoke = pos;
 }
 
 void CStarburstProjectile::Collision(CUnit* unit)
 {
-	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
-
-	CWeaponProjectile::Collision(unit);
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
+	CWeaponProjectile::Collision(unit);
 	oldSmoke = pos;
 }
 
 void CStarburstProjectile::Collision(CFeature* feature)
 {
-	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
-
-	CWeaponProjectile::Collision(feature);
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
+	CWeaponProjectile::Collision(feature);
 	oldSmoke = pos;
 }
 
@@ -137,44 +153,82 @@ void CStarburstProjectile::Update()
 	uptime--;
 	missileAge++;
 
-	UpdateTargeting();
+	if (target != nullptr && weaponDef->tracks) {
+		const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
-	if (!luaMoveCtrl) {
-		UpdateTrajectory();
-		SetPosition(pos + speed);
+		if (so != nullptr) {
+			targetPos = so->aimPos;
+
+			if (allyteamID != -1 && !ignoreError) {
+				const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+				if (u != nullptr)
+					targetPos = u->GetErrorPos(allyteamID, true);
+			}
+		} else {
+			targetPos = target->pos;
+		}
+
+		targetPos += aimError;
 	}
+
+	if (!luaMoveCtrl)
+		UpdateTrajectory();
 
 	if (ttl > 0)
-		explGenHandler.GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 
-	UpdateTracerPart();
-	UpdateSmokeTrail();
-	UpdateInterception();
-}
 
-void CStarburstProjectile::UpdateTargeting()
-{
-	if (target == nullptr)
-		return;
+	{
+		const unsigned int newTracerPart = (curTracerPart + 1) % NUM_TRACER_PARTS;
 
-	if (!weaponDef->tracks)
-		return;
+		curTracerPart = newTracerPart;
+		TracerPart* tracerPart = &tracerParts[curTracerPart];
+		tracerPart->pos = pos;
+		tracerPart->dir = dir;
+		tracerPart->speedf = speed.w;
 
-	const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-	const CUnit* u = nullptr;
+		unsigned int newsize = 0;
 
-	if (so == nullptr) {
-		targetPos = target->pos + aimError;
-		return;
+		for (float aa = 0; aa < speed.w + 0.6f && newsize < MAX_NUM_AGEMODS; aa += TRACER_PARTS_STEP, ++newsize) {
+			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (guRNG.NextFloat() * 0.8f));
+			tracerPart->ageMods[newsize] = ageMod;
+		}
+
+		tracerPart->numAgeMods = newsize;
 	}
 
-	if (!ignoreError && allyteamID != -1 && (u = dynamic_cast<const CUnit*>(so)) != nullptr)
-		targetPos = u->GetErrorPos(allyteamID, true);
-	else
-		targetPos = so->aimPos;
+	age++;
+	numParts++;
 
-	targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
-	targetPos += aimError;
+	if (weaponDef->visuals.smokeTrail) {
+		if (smokeTrail) {
+			smokeTrail->UpdateEndPos(pos, dir);
+			oldSmoke = pos;
+			oldSmokeDir = dir;
+		}
+
+		if ((age % 8) == 0) {
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
+				owner(),
+				pos,
+				oldSmoke,
+				dir,
+				oldSmokeDir,
+				age == 8,
+				false,
+				7,
+				SMOKE_TIME,
+				0.7f,
+				weaponDef->visuals.texture2
+			);
+
+			numParts = 0;
+			useAirLos = smokeTrail->useAirLos;
+		}
+	}
+
+	UpdateInterception();
 }
 
 void CStarburstProjectile::UpdateTrajectory()
@@ -184,16 +238,14 @@ void CStarburstProjectile::UpdateTrajectory()
 		speed.w += weaponDef->weaponacceleration;
 		speed.w = std::min(speed.w, maxSpeed);
 		CWorldObject::SetVelocity(dir * speed.w); // do not need to update dir or speed.w here
-		return;
-	}
 
-	if (turnToTarget && ttl > 0 && distanceToTravel > 0.0f) {
+	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		// stage 2: turn to target
 		float3 targetErrorVec = (targetPos - pos).Normalize();
 
 		if (targetErrorVec.dot(dir) > 0.99f) {
 			dir = targetErrorVec;
-			turnToTarget = false;
+			doturn = false;
 		} else {
 			targetErrorVec = targetErrorVec - dir;
 			targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
@@ -208,13 +260,11 @@ void CStarburstProjectile::UpdateTrajectory()
 		// do not need to update dir or speed.w here
 		CWorldObject::SetVelocity(dir * speed.w);
 
-		if (distanceToTravel != MAX_PROJECTILE_RANGE)
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 			distanceToTravel -= speed.Length2D();
+		}
 
-		return;
-	}
-
-	if (ttl > 0 && distanceToTravel > 0.0f) {
+	} else if (ttl > 0 && distanceToTravel > 0.0f) {
 		// stage 3: hit target
 		float3 targetErrorVec = (targetPos - pos).Normalize();
 
@@ -231,113 +281,48 @@ void CStarburstProjectile::UpdateTrajectory()
 		speed.w = std::min(speed.w, maxSpeed);
 		CWorldObject::SetVelocity(dir * speed.w);
 
-		if (distanceToTravel != MAX_PROJECTILE_RANGE)
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 			distanceToTravel -= speed.Length2D();
-
-		return;
-	}
-
-	// stage "out of fuel"
-	// changes dir and speed.w, must keep speed-vector in sync
-	SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
-}
-
-
-void CStarburstProjectile::InitTracerParts()
-{
-	const unsigned int maxAgeMods = MAX_NUM_AGEMODS;
-	const unsigned int numAgeMods = static_cast<unsigned int>((speed.w + 0.6f) / TRACER_PARTS_STEP);
-
-	for (unsigned int i = 0; i < NUM_TRACER_PARTS; ++i) {
-		TracerPart& tracerPart = tracerParts[i];
-
-		tracerPart.pos = pos;
-		tracerPart.dir = dir;
-
-		tracerPart.speedf = speed.w;
-		tracerPart.numAgeMods = std::min(maxAgeMods, numAgeMods);
-
-		for (unsigned int j = 0; j < maxAgeMods; j++) {
-			tracerPart.ageMods[j] = 1.0f;
 		}
-	}
-}
 
-void CStarburstProjectile::UpdateTracerPart()
-{
-	TracerPart& tracerPart = tracerParts[curTracerPart = (curTracerPart + 1) % NUM_TRACER_PARTS];
-	tracerPart.pos = pos;
-	tracerPart.dir = dir;
-	tracerPart.speedf = speed.w;
-
-	unsigned int i = 0;
-
-	for (float curStep = 0.0f, maxStep = speed.w + 0.6f; curStep < maxStep && i < MAX_NUM_AGEMODS; curStep += TRACER_PARTS_STEP, ++i) {
-		tracerPart.ageMods[i] = (missileAge < 20) ? 1.0f : (0.6f + (guRNG.NextFloat() * 0.8f));
+	} else {
+		// stage "out of fuel"
+		// changes dir and speed.w, must keep speed-vector in sync
+		SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
 	}
 
-	tracerPart.numAgeMods = i;
-}
-
-void CStarburstProjectile::UpdateSmokeTrail()
-{
-	trailAge++;
-	numParts++;
-
-	if (!leaveSmokeTrail)
-		return;
-
-	if (smokeTrail != nullptr)
-		smokeTrail->UpdateEndPos(oldSmoke = pos, oldSmokeDir = dir);
-
-	if ((trailAge % SMOKE_INTERVAL) != 0)
-		return;
-
-	smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
-		owner(),
-		pos, oldSmoke,
-		dir, oldSmokeDir,
-		trailAge == SMOKE_INTERVAL,
-		false,
-		7.0f,
-		SMOKE_LIFETIME,
-		0.7f,
-		weaponDef->visuals.texture2
-	);
-
-	numParts = 0;
-	useAirLos = smokeTrail->useAirLos;
+	SetPosition(pos + speed);
 }
 
 void CStarburstProjectile::Draw(CVertexArray* va)
 {
+	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;
-
 	const SColor lightYellow(255, 200, 150, 1);
-	const SColor lightRed(255, 180, 180, 1);
-
-	unsigned int partNum = curTracerPart;
 
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		const TracerPart* tracerPart = &tracerParts[partNum];
+		const TracerPart* tracerPart = &tracerParts[part];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
+		float aa = 0;
 
-		float curStep = 0.0f;
+		unsigned int numAgeMods = tracerPart->numAgeMods;
 
-		for (int ageModIdx = 0, numAgeMods = tracerPart->numAgeMods; ageModIdx < numAgeMods; curStep += TRACER_PARTS_STEP, ++ageModIdx) {
-			const float ageMod = tracerPart->ageMods[ageModIdx];
-			const float age2 = (a + (curStep / (ospeed + 0.01f))) * 0.2f;
-			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
-			const float alpha = (missileAge >= 20)? ((1.0f - age2) * std::max(0.0f, 1.0f - age2)): Square(1.0f - age2);
+		for (int num = 0; num < numAgeMods; aa += TRACER_PARTS_STEP, ++num) {
+			const float ageMod = tracerPart->ageMods[num];
+			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
+			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
 
-			const float3 interPos = opos - (odir * ((a * 0.5f) + curStep));
-
-			SColor col = lightYellow * Clamp(alpha, 0.0f, 1.0f);
+			float alpha = Square(1.0f - age2);
+			if (missileAge >= 20) {
+				alpha = (1.0f - age2) * std::max(0.0f, 1.0f - age2);
+			}
+			SColor col = lightYellow * Clamp(alpha, 0.f, 1.f);
 			col.a = 1;
 
+			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
@@ -345,12 +330,12 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 		}
 
 		// unsigned, so LHS will wrap around to UINT_MAX
-		partNum = std::min(partNum - 1, NUM_TRACER_PARTS - 1);
+		part = std::min(part - 1, NUM_TRACER_PARTS - 1);
 	}
 
 	// draw the engine flare
-	constexpr float fsize = 25.0f;
-
+	const SColor lightRed(255, 180, 180, 1);
+	const float fsize = 25.0f;
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
@@ -359,23 +344,25 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 
 int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (ttl <= 0)
-		return 0;
-
 	const float3 rdir = (pos - shieldPos).Normalize();
-	float3 dif2 = rdir - dir;
 
-	// steer away twice as fast as we can steer toward target
-	const float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2.0f);
+	if (ttl > 0) {
+		float3 dif2 = rdir - dir;
 
-	if (dif2.SqLength() < Square(tracking)) {
-		dir = rdir;
-	} else {
-		dif2 = (dif2 - (dir * (dif2.dot(dir)))).Normalize();
-		dir = (dir + (dif2 * tracking)).Normalize();
+		// steer away twice as fast as we can steer toward target
+		const float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2.0f);
+
+		if (dif2.Length() < tracking) {
+			dir = rdir;
+		} else {
+			dif2 = (dif2 - (dir * (dif2.dot(dir)))).Normalize();
+			dir = (dir + (dif2 * tracking)).Normalize();
+		}
+
+		return 2;
 	}
 
-	return 2;
+	return 0;
 }
 
 int CStarburstProjectile::GetProjectilesCount() const

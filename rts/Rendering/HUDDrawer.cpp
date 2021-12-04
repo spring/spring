@@ -14,9 +14,8 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/SpringMath.h"
+#include "System/myMath.h"
 
-#include <cmath>
 
 HUDDrawer* HUDDrawer::GetInstance()
 {
@@ -57,7 +56,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 		glTranslatef(0.0f, 0.0f, -unit->radius);
 		glScalef(1.0f / unit->radius, 1.0f / unit->radius, 1.0f / unit->radius);
 
-		if (unit->moveType->UseHeading()) {
+		if (unit->moveType->useHeading) {
 			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
 		} else {
@@ -77,7 +76,7 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 {
 	glDisable(GL_TEXTURE_2D);
 
-	if (unit->moveType->UseHeading()) {
+	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
@@ -99,7 +98,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 {
 	glDisable(GL_TEXTURE_2D);
 
-	if (unit->moveType->UseHeading()) {
+	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
@@ -133,8 +132,9 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 	glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
 	font->glFormat(-0.9f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
 
-	if (playerHandler.Player(gu->myPlayerNum)->fpsController.mouse2)
+	if (playerHandler->Player(gu->myPlayerNum)->fpsController.mouse2) {
 		font->glPrint(-0.9f, 0.30f, 1.0f, FONT_SCALE | FONT_NORM, "Free-Fire Mode");
+	}
 
 	int numWeaponsToPrint = 0;
 
@@ -276,8 +276,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 void HUDDrawer::Draw(const CUnit* unit)
 {
-	if (unit == nullptr || !draw)
+	if (unit == NULL || !draw) {
 		return;
+	}
 
 	PushState();
 		glDisable(GL_DEPTH_TEST);

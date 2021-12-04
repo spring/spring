@@ -16,14 +16,14 @@
 #include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
 #include "System/Threading/SpringThreading.h"
 
-#include <cassert>
+#include <assert.h>
 
-CLuaRules* luaRules = nullptr;
+CLuaRules* luaRules = NULL;
 
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
-const int* CLuaRules::currentCobArgs = nullptr;
+const int* CLuaRules::currentCobArgs = NULL;
 
 
 /******************************************************************************/
@@ -31,49 +31,37 @@ const int* CLuaRules::currentCobArgs = nullptr;
 
 static spring::mutex m_singleton;
 
-DECL_LOAD_SPLIT_HANDLER(CLuaRules, luaRules)
+DECL_LOAD_HANDLER(CLuaRules, luaRules)
 DECL_FREE_HANDLER(CLuaRules, luaRules)
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaRules::CLuaRules(bool onlySynced): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
+CLuaRules::CLuaRules()
+: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	currentCobArgs = nullptr;
+	currentCobArgs = NULL;
 
 	if (!IsValid())
 		return;
 
-	Init(onlySynced);
+	SetFullCtrl(true);
+	SetFullRead(true);
+	SetCtrlTeam(CEventClient::AllAccessTeam);
+	SetReadTeam(CEventClient::AllAccessTeam);
+	SetReadAllyTeam(CEventClient::AllAccessTeam);
+	SetSelectTeam(CEventClient::AllAccessTeam);
+
+	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD_BASE);
 }
 
 CLuaRules::~CLuaRules()
 {
-	luaRules = nullptr;
-	currentCobArgs = nullptr;
+	luaRules = NULL;
+	currentCobArgs = NULL;
 }
 
-
-std::string CLuaRules::GetUnsyncedFileName() const
-{
-	return LuaRulesUnsyncedFilename;
-}
-
-std::string CLuaRules::GetSyncedFileName() const
-{
-	return LuaRulesSyncedFilename;
-}
-
-std::string CLuaRules::GetInitFileModes() const
-{
-	return SPRING_VFS_MOD_BASE;
-}
-
-int CLuaRules::GetInitSelectTeam() const
-{
-	return CEventClient::AllAccessTeam;
-}
 
 
 bool CLuaRules::AddSyncedCode(lua_State* L)
@@ -111,7 +99,7 @@ bool CLuaRules::AddUnsyncedCode(lua_State* L)
 
 int CLuaRules::UnpackCobArg(lua_State* L)
 {
-	if (currentCobArgs == nullptr) {
+	if (currentCobArgs == NULL) {
 		luaL_error(L, "Error in UnpackCobArg(), no current args");
 	}
 	const int arg = luaL_checkint(L, 1) - 1;
@@ -130,7 +118,8 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 {
 	static int callDepth = 0;
 	if (callDepth >= 16) {
-		LOG_L(L_WARNING, "[LuaRules::%s] call overflow: %s", __func__, name.GetString());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() call overflow: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		return;
 	}
@@ -142,14 +131,16 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 	const int top = lua_gettop(L);
 
 	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
-		LOG_L(L_WARNING, "[LuaRules::%s] lua_checkstack() error: %s", __func__, name.GetString());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() lua_checkstack() error: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;
 	}
 
 	if (!name.GetGlobalFunc(L)) {
-		LOG_L(L_WARNING, "[LuaRules::%s] missing function: %s", __func__, name.GetString());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() missing function: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;
@@ -208,6 +199,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	args[0] = 1; // success
 	lua_settop(L, top);
+	return;
 }
 
 
