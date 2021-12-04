@@ -21,7 +21,7 @@
 	url = git://github.com/spring/pr-downloader.git
 [submodule "tools/SpringMapConvNG"]
 	path = tools/mapcompile
-	url = https://github.com/spring/SpringMapConvNG.git
+	url = git://github.com/spring/SpringMapConvNG.git
 [submodule "AI/Skirmish/AAI"]
 	path = AI/Skirmish/AAI
 	url = git://github.com/spring/AAI.git
