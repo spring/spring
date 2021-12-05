@@ -232,8 +232,8 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 				std::stringstream aiData;
 				eoh->Save(&aiData, ai.first);
 
-				std::streamsize aiSize = aiData.tellp();
-				os.SerializeInt(&aiSize, sizeof(aiSize));
+				std::uint64_t aiSize = aiData.tellp();
+				creg::WriteUInt(&oss, aiSize);
 				if (aiSize > 0)
 					oss << aiData.rdbuf();
 			}
@@ -330,19 +330,31 @@ void CCregLoadSaveHandler::LoadGame()
 		// the only job of gsc is to collect gamestate data
 		CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
 		spring::SafeDelete(gsc);
+	}
 
-		// load ai state
-		for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
-			std::streamsize aiSize;
-			inputStream.SerializeInt(&aiSize, sizeof(aiSize));
+	LEAVE_SYNCED_CODE();
+#else //USING_CREG
+	LOG_L(L_ERROR, "Load failed: creg is disabled");
+#endif //USING_CREG
+}
 
-			std::vector<char> buffer(aiSize);
-			std::stringstream aiData;
-			iss.read(buffer.data(), buffer.size());
-			aiData.write(buffer.data(), buffer.size());
+/// this should be called on frame 0 when the game has started
+void CCregLoadSaveHandler::LoadAIData()
+{
+#ifdef USING_CREG
+	ENTER_SYNCED_CODE();
 
-			eoh->Load(&aiData, ai.first);
-		}
+	// load ai state
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		std::uint64_t aiSize;
+		creg::ReadUInt(&iss, &aiSize);
+
+		std::vector<char> buffer(aiSize);
+		std::stringstream aiData;
+		iss.read(buffer.data(), buffer.size());
+		aiData.write(buffer.data(), buffer.size());
+
+		eoh->Load(&aiData, ai.first);
 	}
 
 	// cleanup
