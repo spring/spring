@@ -74,11 +74,11 @@ option(USERDOCS_PLAIN "Install plain/text engine user-docs (README, LICENSE, etc
 option(USERDOCS_HTML "Install HTML engine user-docs (README.html, LICENSE.html, etc.)" FALSE)
 
 ### make and install the user-doc pages (README, LICENSE, ...)
-if     (WIN32)
+if     (WIN32 OR INSTALL_PORTABLE)
 	set(DOC_DEST_DIR "${DOCDIR}")
-else   (WIN32)
+else   (WIN32 OR INSTALL_PORTABLE)
 	set(DOC_DEST_DIR "${DOCDIR}/engine")
-endif  (WIN32)
+endif  (WIN32 OR INSTALL_PORTABLE)
 
 set(userdoc_INSTALL_HTML FALSE)
 if     (USERDOCS_HTML)

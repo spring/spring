@@ -196,7 +196,6 @@ void CLuaLoadSaveHandler::LoadGame()
 	ENTER_SYNCED_CODE();
 
 	LoadEventClients();
-	LoadAIData();
 	LoadHeightmap();
 
 	LEAVE_SYNCED_CODE();
@@ -212,6 +211,8 @@ void CLuaLoadSaveHandler::LoadEventClients()
 
 void CLuaLoadSaveHandler::LoadAIData()
 {
+	ENTER_SYNCED_CODE();
+
 	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
 		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
 		const std::string aiDataFile = LoadEntireFile(aiSection);
@@ -220,6 +221,8 @@ void CLuaLoadSaveHandler::LoadAIData()
 
 		eoh->Load(&aiData, ai.first);
 	}
+
+	LEAVE_SYNCED_CODE();
 }
 
 

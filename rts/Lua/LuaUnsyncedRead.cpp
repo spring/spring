@@ -1926,9 +1926,9 @@ static void PushTimer(lua_State* L, const spring_time& time)
 	ptrdiff_t p = 0;
 
 	if (sizeof(void*) == 8) {
-		*reinterpret_cast<std::uint64_t*>(&p) = millis;
+		p = spring::SafeCast<std::uint64_t>(millis);
 	} else {
-		*reinterpret_cast<std::uint32_t*>(&p) = millis;
+		p = spring::SafeCast<std::uint32_t>(millis);
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));

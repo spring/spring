@@ -98,7 +98,6 @@ void ReadVarSizeUInt(std::istream* stream, T* buf)
 	*buf = val;
 }
 
-
 template<typename T>
 void WriteVarSizeUInt(std::ostream* stream, T val)
 {
@@ -112,6 +111,16 @@ void WriteVarSizeUInt(std::ostream* stream, T val)
 
 		stream->write((char*)&a, sizeof(char));
 	} while (v > 0);
+}
+
+void creg::ReadUInt(std::istream* stream, std::uint64_t* buf)
+{
+	ReadVarSizeUInt(stream, buf);
+}
+
+void creg::WriteUInt(std::ostream* stream, uint64_t val)
+{
+	WriteVarSizeUInt(stream, val);
 }
 
 //-------------------------------------------------------------------------

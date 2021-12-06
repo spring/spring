@@ -31,7 +31,7 @@ namespace spring {
         template <class Tuple>
         struct HashValueImpl<Tuple,0>
         {
-          static void apply(size_t& uint64_t, Tuple const& tuple)
+          static void apply(uint64_t& seed, Tuple const& tuple)
           {
             hash_combine(seed, std::get<0>(tuple));
           }
@@ -44,15 +44,15 @@ namespace spring {
         seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         return seed;
     }
-
-    template <typename ... TT>
-    struct std::hash<std::tuple<TT...>>
-    {
-        uint64_t operator()(std::tuple<TT...> const& tt) const
-        {
-            uint64_t seed = 0;
-            HashValueImpl<std::tuple<TT...> >::apply(seed, tt);
-            return seed;
-        }
-    };
 }
+
+template <typename ... TT>
+struct std::hash<std::tuple<TT...>>
+{
+    uint64_t operator()(std::tuple<TT...> const& tt) const
+    {
+        uint64_t seed = 0;
+        spring::HashValueImpl<std::tuple<TT...> >::apply(seed, tt);
+        return seed;
+    }
+};

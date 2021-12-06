@@ -3285,19 +3285,6 @@ private:
 
 
 
-class ReloadGameActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ReloadGameActionExecutor() : IUnsyncedActionExecutor("ReloadGame", "Restarts the game with the initially provided start-script") {
-	}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		game->Reload();
-		return true;
-	}
-};
-
-
-
 class ReloadShadersActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ReloadShadersActionExecutor() : IUnsyncedActionExecutor("ReloadShaders", "Reloads all engine shaders") {
@@ -3761,7 +3748,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<DumpStateActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(true));
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));
-	AddActionExecutor(AllocActionExecutor<ReloadGameActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ReloadShadersActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ReloadTexturesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugInfoActionExecutor>());

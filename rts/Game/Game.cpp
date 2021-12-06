@@ -429,19 +429,8 @@ void CGame::Load(const std::string& mapFileName)
 		}
 	}
 
-	if (!forcedQuit) {
-		try {
-			LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
-
-			LoadSkirmishAIs();
-		} catch (const content_error& e) {
-			LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
-			forcedQuit = true;
-		}
-	}
-
 	try {
-		LOG("[Game::%s][8] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+		LOG("[Game::%s][7] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		if (!globalQuit && saveFileHandler != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
@@ -461,8 +450,22 @@ void CGame::Load(const std::string& mapFileName)
 			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
 		}
 	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][8] forced quit with exception \"%s\"", __func__, e.what());
+		LOG_L(L_WARNING, "[Game::%s][7] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
+	}
+
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][8] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+
+			LoadSkirmishAIs();
+			if (saveFileHandler != nullptr) {
+				saveFileHandler->LoadAIData();
+			}
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][8] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
 	}
 
 	Watchdog::DeregisterThread(WDT_LOAD);
@@ -1893,17 +1896,6 @@ bool CGame::IsSimLagging(float maxLatency) const
 	return (!gs->paused && (deltaTime > sfLatency));
 }
 
-
-void CGame::Reload()
-{
-	if (saveFileHandler != nullptr) {
-		// This reloads heightmap, triggers Load call-in, etc.
-		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
-		saveFileHandler->LoadGame();
-	} else {
-		LOG_L(L_WARNING, "[Game::%s] can only reload the game when it has been started from a savegame", __func__);
-	}
-}
 
 void CGame::Save(std::string&& fileName, std::string&& saveArgs)
 {

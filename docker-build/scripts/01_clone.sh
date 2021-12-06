@@ -15,13 +15,15 @@ echo "Cloning SpringRTS from: ${SPRINGRTS_GIT_URL}"
 echo "Using branch: ${BRANCH_NAME}"
 echo "---------------------------------"
 
-CMD="git clone --recursive "${SPRINGRTS_GIT_URL}" -b "${BRANCH_NAME}" "${SPRING_DIR}""
+CMD="git clone "${SPRINGRTS_GIT_URL}" "${SPRING_DIR}""
 
 echo "Command: ${CMD}"
 
 ${CMD}
 
 cd "${SPRING_DIR}"
+git checkout "${BRANCH_NAME}"
+git submodule update --init --recursive
 
 if [ "${PLATFORM}" == "windows-64" ]; then
     git clone "${SPRINGRTS_AUX_URL_PREFIX}/mingwlibs64.git" mingwlibs64

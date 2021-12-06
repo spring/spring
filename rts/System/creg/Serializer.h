@@ -188,6 +188,10 @@ namespace creg {
 		void LoadPackage(std::istream* s, void*& root, Class*& rootCls);
 	};
 
+
+void ReadUInt(std::istream* stream, std::uint64_t* buf);
+void WriteUInt(std::ostream* stream, uint64_t val);
+
 }
 
 #endif //USING_CREG

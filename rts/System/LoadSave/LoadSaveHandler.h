@@ -34,6 +34,7 @@ public:
 	/// load scriptText and (for creg saves) {map,mod}Name needed to fire up the engine
 	virtual bool LoadGameStartInfo(const std::string& file) = 0;
 	virtual void LoadGame() = 0;
+	virtual void LoadAIData() = 0;
 
 	void SaveInfo(const std::string& _mapName, const std::string& _modName) {
 		mapName = _mapName;
@@ -54,6 +55,7 @@ public:
 	void SaveGame(const std::string& file) override {}
 	bool LoadGameStartInfo(const std::string& file) override { return false; }
 	void LoadGame() override {}
+	void LoadAIData() override {}
 };
 
 

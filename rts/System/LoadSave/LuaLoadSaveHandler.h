@@ -22,6 +22,7 @@ public:
 	void SaveGame(const std::string& file) override;
 	bool LoadGameStartInfo(const std::string& file) override;
 	void LoadGame() override;
+	void LoadAIData() override;
 
 protected:
 	void SaveEventClients(); // Lua
@@ -30,7 +31,6 @@ protected:
 	void SaveHeightmap();
 	void SaveEntireFile(const char* file, const char* what, const void* data, int size, bool throwOnError = false);
 	void LoadEventClients();
-	void LoadAIData();
 	void LoadHeightmap();
 	std::string LoadEntireFile(const std::string& file);
 

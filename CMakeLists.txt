@@ -11,6 +11,9 @@ project(Spring)
 
 add_definitions(-DFMT_HEADER_ONLY) #for fmt lib
 
+option(INSTALL_PORTABLE "Make a portable installation (instead of regular system installation)" FALSE)
+option(WITH_MAPCOMPILER "Include map compiler" TRUE)
+
 # dummy so that qtcreator shows all files (even those of windows)
 if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 	add_library(platform_sources EXCLUDE_FROM_ALL "")
@@ -627,3 +630,10 @@ add_subdirectory(rts)
 # this has to be in root CMakeLists.txt
 enable_testing()
 add_subdirectory(test)
+
+if (INSTALL_PORTABLE)
+	install(DIRECTORY DESTINATION games)
+	install(DIRECTORY DESTINATION maps)
+	file(TOUCH springsettings_portable.cfg)  # empty settings file for portable install
+	install(FILES springsettings_portable.cfg DESTINATION . RENAME springsettings.cfg)
+endif (INSTALL_PORTABLE)

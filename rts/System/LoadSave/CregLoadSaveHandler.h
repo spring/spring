@@ -15,6 +15,7 @@ public:
 
 	bool LoadGameStartInfo(const std::string& path) override;
 	void LoadGame() override;
+	void LoadAIData() override;
 	void SaveGame(const std::string& path) override;
 
 protected:
