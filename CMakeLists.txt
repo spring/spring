@@ -634,6 +634,6 @@ add_subdirectory(test)
 if (INSTALL_PORTABLE)
 	install(DIRECTORY DESTINATION games)
 	install(DIRECTORY DESTINATION maps)
-	file(TOUCH springsettings_portable.cfg)  # empty settings file for portable install
-	install(FILES springsettings_portable.cfg DESTINATION . RENAME springsettings.cfg)
+	file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/springsettings_portable.cfg)  # empty settings file for portable install
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/springsettings_portable.cfg DESTINATION . RENAME springsettings.cfg)
 endif (INSTALL_PORTABLE)

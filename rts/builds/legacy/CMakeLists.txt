@@ -44,12 +44,6 @@ foreach(f ${FREETYPE_INCLUDE_DIRS})
 endforeach(f)
 list(APPEND engineLibraries ${FREETYPE_LIBRARY})
 
-if    (PREFER_STATIC_LIBS)
-	# dependencies of FreeType
-	find_package_static(BZip2 REQUIRED)
-	list(APPEND engineLibraries ${BZIP2_LIBRARIES})
-endif (PREFER_STATIC_LIBS)
-
 if    (UNIX)
 	find_package(X11 REQUIRED)
 	list(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
