@@ -732,7 +732,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		if (!isFloat || memberInfo.length < 3)
 			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
-		const std::uint16_t ofs = memberInfo.offset;
+		const std::uint16_t ofs = static_cast<uint16_t>(memberInfo.offset);
 
 		code.append(1, OP_DIR);
 		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
@@ -765,7 +765,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		code.append(1, OP_LOADP);
 		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
 
-		const std::uint16_t ofs = memberInfo.offset;
+		const std::uint16_t ofs = static_cast<uint16_t>(memberInfo.offset);
 
 		code.append(1, OP_STOREP);
 		code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
@@ -840,7 +840,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 
 	// store the final value
-	const std::uint16_t ofs = memberInfo.offset;
+	const std::uint16_t ofs = static_cast<uint16_t>(memberInfo.offset);
 
 	code.push_back(isFloat ? OP_STOREF : OP_STOREI);
 	code.push_back(memberInfo.size);

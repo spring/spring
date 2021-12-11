@@ -35,9 +35,9 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 					for (int i = 0; i<4; ++i) {
 						vi[i] = values.GetInt(i+1, 0);
 					}
-					program->SetUniform4v(key, vi);
+					program->SetUniform4v(key.c_str(), vi);
 				} else {
-					program->SetUniform(key, subTable.GetInt(key, 0));
+					program->SetUniform(key.c_str(), subTable.GetInt(key, 0));
 				}
 			} break;
 			case UNIFORM_TYPE_FLOAT: {
@@ -47,9 +47,9 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 					for (int i = 0; i<4; ++i) {
 						vf[i] = values.GetFloat(i+1, 0.0f);
 					}
-					program->SetUniform4v(key, vf);
+					program->SetUniform4v(key.c_str(), vf);
 				} else {
-					program->SetUniform(key, subTable.GetFloat(key, 0.0f));
+					program->SetUniform(key.c_str(), subTable.GetFloat(key, 0.0f));
 				}
 			} break;
 			case UNIFORM_TYPE_FLOAT_MATRIX: {
@@ -61,19 +61,19 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 							for (int i = 0; i<4; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix2x2(key, false, vf);
+							program->SetUniformMatrix2x2(key.c_str(), false, vf);
 						} break;
 						case 9: {
 							for (int i = 0; i<9; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix3x3(key, false, vf);
+							program->SetUniformMatrix3x3(key.c_str(), false, vf);
 						} break;
 						case 16: {
 							for (int i = 0; i<16; ++i) {
 								vf[i] = values.GetFloat(i+1, 0.0f);
 							}
-							program->SetUniformMatrix4x4(key, false, vf);
+							program->SetUniformMatrix4x4(key.c_str(), false, vf);
 						} break;
 						default:
 							LOG_L(L_ERROR, "%s-shader uniformMatrix error: only square matrices supported right now: %s", program->GetName().c_str(), program->GetLog().c_str());

@@ -5,6 +5,7 @@
 
 #include <string>
 #include <memory>
+#include <array>
 
 #include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
@@ -47,7 +48,11 @@ public:
 	void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context);
 	void KillSDL() const;
 	void PostInit();
+
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
+
+	void SetGLTimeStamp(uint32_t queryIdx) const;
+	uint64_t CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const;
 
 	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
 
@@ -327,9 +332,15 @@ public:
 	/// roughly equal to 210.0f / 255.0f)
 	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
-
 	static constexpr int MIN_WIN_SIZE_X = 400;
 	static constexpr int MIN_WIN_SIZE_Y = 300;
+
+	static constexpr uint32_t NUM_OPENGL_TIMER_QUERIES = 8;
+	static constexpr uint32_t FRAME_REF_TIME_QUERY_IDX = 0;
+	static constexpr uint32_t FRAME_END_TIME_QUERY_IDX = NUM_OPENGL_TIMER_QUERIES - 1;
+private:
+	// double-buffered; results from frame N become available on frame N+1
+	std::array<uint32_t, NUM_OPENGL_TIMER_QUERIES * 2> glTimerQueries;
 };
 
 extern CGlobalRendering* globalRendering;

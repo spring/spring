@@ -14,8 +14,11 @@
 	#include "System/Threading/ThreadPool.h"
 #endif
 
-static spring::spinlock profileMutex;
-static spring::spinlock hashToNameMutex;
+using ProfileMutexType = spring::mutex; //spring::spinlock
+using HashNamMutexType = spring::mutex; //spring::spinlock
+
+static ProfileMutexType profileMutex;
+static HashNamMutexType hashToNameMutex;
 static spring::unordered_map<unsigned, std::string> hashToName;
 static spring::unordered_map<unsigned, int> refCounters;
 
@@ -123,7 +126,7 @@ CTimeProfiler::~CTimeProfiler() = default;
 CTimeProfiler::~CTimeProfiler()
 {
 	// should not be needed, destructor runs after main returns and all threads are gone
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 }
 #endif
 
@@ -138,7 +141,7 @@ bool CTimeProfiler::RegisterTimer(const char* timerName)
 {
 	const unsigned nameHash = hashString(timerName);
 
-	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+	std::lock_guard<HashNamMutexType> lock(hashToNameMutex);
 
 	const auto iter = hashToName.find(nameHash);
 
@@ -158,7 +161,7 @@ bool CTimeProfiler::UnRegisterTimer(const char* timerName)
 {
 	const unsigned nameHash = hashString(timerName);
 
-	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+	std::lock_guard<HashNamMutexType> lock(hashToNameMutex);
 
 	const auto iter = hashToName.find(nameHash);
 
@@ -172,7 +175,7 @@ bool CTimeProfiler::UnRegisterTimer(const char* timerName)
 
 void CTimeProfiler::ResetState() {
 	// grab lock; ThreadPool workers might already be running SCOPED_MT_TIMER
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 
 	profiles.clear();
 	profiles.reserve(128);
@@ -210,7 +213,7 @@ void CTimeProfiler::Update()
 	}
 
 	// FIXME: non-locking threadsafe
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 
 	UpdateRaw();
 	ResortProfilesRaw();
@@ -272,7 +275,7 @@ void CTimeProfiler::ResortProfilesRaw()
 
 		// either caller already has lock, or we are disabled and thread-safe
 		{
-			std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+			std::lock_guard<HashNamMutexType> lock(hashToNameMutex);
 
 			for (const auto& profile: profiles) {
 				const auto iter = hashToName.find(profile.first);
@@ -299,7 +302,7 @@ void CTimeProfiler::RefreshProfiles()
 	assert(enabled);
 
 	// lock so nothing modifies *unsorted* profiles during the refresh
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 
 	RefreshProfilesRaw();
 }
@@ -326,7 +329,7 @@ const CTimeProfiler::TimeRecord& CTimeProfiler::GetTimeRecord(const char* name) 
 	if (!enabled)
 		return (GetTimeRecordRaw(name));
 
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 
 	return (GetTimeRecordRaw(name));
 }
@@ -354,7 +357,7 @@ void CTimeProfiler::AddTime(
 
 	// acquire lock at the start; one inserting thread could
 	// cause a profile rehash and invalidate <pi> for another
-	std::lock_guard<spring::spinlock> lock(profileMutex);
+	std::lock_guard<ProfileMutexType> lock(profileMutex);
 
 	AddTimeRaw(nameHash, startTime, deltaTime, showGraph, threadTimer);
 	AddTimeRaw(hashString("Misc::Profiler::AddTime"), t0, spring_now() - t0, false, false);

@@ -131,13 +131,14 @@ void MatrixUploader::UpdateDerived()
 
 	//update on the GPU
 	const CMatrix44f* clientPtr = matricesMemStorage.GetData().data();
-	CMatrix44f* mappedPtr = ssbo->Map(clientPtr);
+	CMatrix44f* mappedPtr = ssbo->Map(clientPtr, 0, storageElemCount);
 
-	if (clientPtr != mappedPtr)
+	if (!ssbo->HasClientPtr())
 		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(CMatrix44f));
 
-	ssbo->Unmap(storageElemCount);
+	ssbo->Unmap();
 	ssbo->BindBufferRange(bindingIdx);
+	ssbo->SwapBuffer();
 }
 
 std::size_t MatrixUploader::GetDefElemOffsetImpl(const S3DModel* model) const
@@ -256,13 +257,14 @@ void ModelsUniformsUploader::UpdateDerived()
 
 	//update on the GPU
 	const ModelUniformData* clientPtr = modelsUniformsStorage.GetData().data();
-	ModelUniformData* mappedPtr = ssbo->Map(clientPtr);
+	ModelUniformData* mappedPtr = ssbo->Map(clientPtr, 0, storageElemCount);
 
-	if (clientPtr != mappedPtr)
+	if (!ssbo->HasClientPtr())
 		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(ModelUniformData));
 
-	ssbo->Unmap(storageElemCount);
+	ssbo->Unmap();
 	ssbo->BindBufferRange(bindingIdx);
+	ssbo->SwapBuffer();
 }
 
 std::size_t ModelsUniformsUploader::GetDefElemOffsetImpl(const S3DModel* model) const

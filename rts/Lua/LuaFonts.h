@@ -24,6 +24,8 @@ class LuaFonts {
 		static int DeleteFont(lua_State* L);
 
 	private: // userdata call-outs
+		static int DebugAnchor(lua_State* L);
+
 		static int Print(lua_State* L);
 
 		static int Begin(lua_State* L);

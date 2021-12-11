@@ -26,6 +26,7 @@ public:
 
 	void ReloadAll();
 	bool ReleaseProgramObjects(const std::string& poClass);
+	bool ReleaseProgramObject(const std::string& poClass, const std::string& poName);
 	void ReleaseProgramObjectsMap(ProgramObjMap& poMap);
 
 	Shader::IProgramObject* GetProgramObject(const std::string& poClass, const std::string& poName);

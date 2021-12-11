@@ -358,8 +358,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, texHeight(0)
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
-	, texture(0)
-	, textureSpaceMatrix(0)
 {
 	atlasGlyphs.reserve(1024);
 
@@ -373,7 +371,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontStyle  = "unknown";
 
 #ifndef HEADLESS
-	lastTextureUpdate = 0;
 	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
 
@@ -419,11 +416,8 @@ CFontTexture::~CFontTexture()
 #ifndef HEADLESS
 	allFonts.erase(this);
 
-	glDeleteTextures(1, (const GLuint*)&texture);
-	glDeleteLists(textureSpaceMatrix, 1);
-
-	texture = 0;
-	textureSpaceMatrix = 0;
+	glDeleteTextures(1, &glyphAtlasTextureID);
+	glyphAtlasTextureID = 0;
 #endif
 }
 
@@ -431,9 +425,8 @@ CFontTexture::~CFontTexture()
 void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
 	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
-
 	for (auto& font: allFonts) {
-		font->UpdateTexture();
+		font->UpdateGlyphAtlasTexture();
 	}
 }
 
@@ -466,22 +459,26 @@ bool CFontTexture::GenFontConfig() {
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
+	static const GlyphInfo dummy = GlyphInfo();
+
 #ifndef HEADLESS
-	const auto it = glyphs.find(ch);
-	if (it != glyphs.end())
-		return it->second;
+	for (int i = 0; i < 2; i++) {
+		const auto it = glyphs.find(ch);
 
-	// Get block start pos
-	char32_t start, end;
-	start = GetLanguageBlock(ch, end);
+		if (it != glyphs.end())
+			return it->second;
+		if (i == 1)
+			break;
 
-	// Load an entire block
-	LoadBlock(start, end);
-	return GetGlyph(ch);
-#else
-	static GlyphInfo g = GlyphInfo();
-	return g;
+		// get block-range containing this character
+		char32_t end = 0;
+		char32_t start = GetLanguageBlock(ch, end);
+
+		LoadBlock(start, end);
+	}
 #endif
+
+	return dummy;
 }
 
 
@@ -539,7 +536,8 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 				map[idx] = map.back();
 				map.pop_back();
-			} else {
+			}
+			else {
 				++idx;
 			}
 		}
@@ -681,32 +679,25 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 void CFontTexture::CreateTexture(const int width, const int height)
 {
 #ifndef HEADLESS
-	glPushAttrib(GL_TEXTURE_BIT);
+	glGenTextures(1, &glyphAtlasTextureID);
+	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	if (GLEW_ARB_texture_border_clamp) {
-		constexpr GLfloat borderColor[4] = {1.0f, 1.0f, 1.0f, 0.0f};
+	// no border to prevent artefacts in outlined text
+	constexpr GLfloat borderColor[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+	// constexpr GLint swizzleMask[4] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
 
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	// glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
-	glPopAttrib();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	textureSpaceMatrix = glGenLists(1);
-	glNewList(textureSpaceMatrix, GL_COMPILE);
-	glEndList();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
 	atlasUpdate = {};
 	atlasUpdate.Alloc(texWidth = wantedTexWidth = width, texHeight = wantedTexHeight = height, 1);
@@ -767,7 +758,7 @@ void CFontTexture::ReallocAtlases(bool pre)
 }
 
 
-void CFontTexture::UpdateTexture()
+void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
 	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
@@ -800,16 +791,10 @@ void CFontTexture::UpdateTexture()
 	}
 
 
-	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
-		// update texture atlas
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
-
-		// update texture space dlist (this affects already compiled dlists too!)
-		glNewList(textureSpaceMatrix, GL_COMPILE);
-		glScalef(1.0f / texWidth, 1.0f / texHeight, 1.0f);
-		glEndList();
-	glPopAttrib();
+	// update texture atlas
+	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
+	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }
 

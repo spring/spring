@@ -9,17 +9,17 @@ class ProfileDrawer : public CEventClient
 {
 public:
 	// CEventClient interface
-	bool GetFullRead() const { return true; }
-	int  GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
 public:
 	static void SetEnabled(bool enable);
 	static bool IsEnabled() { return (instance != nullptr); }
 
-	virtual void DrawScreen();
-	virtual bool MousePress(int x, int y, int button);
-	virtual bool IsAbove(int x, int y);
-	virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+	virtual void DrawScreen() override;
+	virtual bool MousePress(int x, int y, int button) override;
+	virtual bool IsAbove(int x, int y) override;
+	virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) override;
 
 private:
 	ProfileDrawer();

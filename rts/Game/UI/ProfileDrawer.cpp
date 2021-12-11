@@ -11,7 +11,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Sim/Features/FeatureMemPool.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
 #include "Sim/Misc/GlobalSynced.h"
@@ -27,12 +27,15 @@
 
 ProfileDrawer* ProfileDrawer::instance = nullptr;
 
+static constexpr float MAX_THREAD_HIST_TIME = 0.5f; // secs
+static constexpr float MAX_FRAMES_HIST_TIME = 0.5f; // secs
+
 static constexpr float  MIN_X_COOR = 0.6f;
 static constexpr float  MAX_X_COOR = 0.99f;
 static constexpr float  MIN_Y_COOR = 0.95f;
 static constexpr float LINE_HEIGHT = 0.017f;
 
-static const unsigned int DBG_FONT_FLAGS = (FONT_SCALE | FONT_NORM | FONT_SHADOW);
+static constexpr unsigned int DBG_FONT_FLAGS = (FONT_SCALE | FONT_NORM | FONT_SHADOW);
 
 typedef std::pair<spring_time, spring_time> TimeSlice;
 static std::deque<TimeSlice> vidFrames;
@@ -66,178 +69,241 @@ void ProfileDrawer::SetEnabled(bool enable)
 
 
 
-static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTime, const spring_time maxHist, const float drawArea[4])
+static void DrawBufferStats(const float2 pos)
 {
+	const float4 drawArea = {pos.x, pos.y + 0.02f, 0.2f, pos.y - (0.23f + 0.02f)};
+
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+
+	// background
+	constexpr SColor bgColor = SColor{ 0.0f, 0.0f, 0.0f, 0.5f };
+	rb.SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // TL
+	rb.SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // BL
+	rb.SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // BR
+
+	rb.SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // BR
+	rb.SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // TR
+	rb.SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, bgColor }); // TL
+	rb.Submit(GL_TRIANGLES);
+
+	{
+		std::array<size_t, 4> lfMetrics = {0};
+		for (const auto lf : CglFont::GetLoadedFonts()) {
+			lfMetrics[0] += lf->GetPrimaryBuffer().SumElems();
+			lfMetrics[1] += lf->GetPrimaryBuffer().SumIndcs();
+			lfMetrics[2] += lf->GetPrimaryBuffer().NumSubmits(false);
+			lfMetrics[3] += lf->GetPrimaryBuffer().NumSubmits(true);
+
+			lfMetrics[0] += lf->GetOutlineBuffer().SumElems();
+			lfMetrics[1] += lf->GetOutlineBuffer().SumIndcs();
+			lfMetrics[2] += lf->GetOutlineBuffer().NumSubmits(false);
+			lfMetrics[3] += lf->GetOutlineBuffer().NumSubmits(true);
+		}
+
+		const auto& rdb0    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_0   >();
+		const auto& rdbC    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C   >();
+		/*
+		const auto& rdbN    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_N   >();
+		const auto& rdbT    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_T   >();
+		const auto& rdbTN   = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TN  >();
+		const auto& rdbTC   = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC  >();
+		const auto& rdbTNT  = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TNT >();
+		const auto& rdb2D0  = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2d0 >();
+		const auto& rdb2DC  = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dC >();
+		const auto& rdb2DT  = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dT >();
+		const auto& rdb2DTC = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dTC>();
+		*/
+
+		#define FMT "{elems=" _STPF_ " indcs=" _STPF_ " submits{e,i}={" _STPF_ "," _STPF_ "}}"
+		font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
+
+		font->glFormat(pos.x, pos.y - 0.005f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tFONTS=" FMT, lfMetrics[0], lfMetrics[1], lfMetrics[2], lfMetrics[3]);
+		font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t0=" FMT, rdb0.SumElems(), rdb0.SumIndcs(), rdb0.NumSubmits(false), rdb0.NumSubmits(true));
+		font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tC=" FMT, rdbC.SumElems(), rdbC.SumIndcs(), rdbC.NumSubmits(false), rdbC.NumSubmits(true));
+
+		#undef FMT
+	}
+}
+
+static void DrawTimeSlices(
+	std::deque<TimeSlice>& frames,
+	const spring_time curTime,
+	const spring_time maxTime,
+	const float4& drawArea,
+	const float4& sliceColor
+) {
 	// remove old entries
-	while (!frames.empty() && (curTime - frames.front().second) > maxHist) {
+	while (!frames.empty() && (curTime - frames.front().second) > maxTime) {
 		frames.pop_front();
 	}
 
-	const float y1 = drawArea[1];
-	const float y2 = drawArea[3];
+	const float y1 = drawArea.y;
+	const float y2 = drawArea.w;
 
 	// render
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	const SColor sliceCol = SColor{ sliceColor };
+
 	for (const TimeSlice& ts: frames) {
-		float x1 = (ts.first  % maxHist).toSecsf() / maxHist.toSecsf();
-		float x2 = (ts.second % maxHist).toSecsf() / maxHist.toSecsf();
+		float x1 = (ts.first  % maxTime).toSecsf() / maxTime.toSecsf();
+		float x2 = (ts.second % maxTime).toSecsf() / maxTime.toSecsf();
+
 		x2 = std::max(x1 + globalRendering->pixelX, x2);
 
-		x1 = drawArea[0] + x1 * (drawArea[2] - drawArea[0]);
-		x2 = drawArea[0] + x2 * (drawArea[2] - drawArea[0]);
+		x1 = drawArea.x + x1 * (drawArea.z - drawArea.x);
+		x2 = drawArea.x + x2 * (drawArea.z - drawArea.x);
 
-		va->AddVertex0(x1, y1, 0.0f);
-		va->AddVertex0(x1, y2, 0.0f);
-		va->AddVertex0(x2, y2, 0.0f);
-		va->AddVertex0(x2, y1, 0.0f);
+		rb.SafeAppend({{x1, y1, 0.0f}, sliceCol}); // tl
+		rb.SafeAppend({{x1, y2, 0.0f}, sliceCol}); // bl
+		rb.SafeAppend({{x2, y2, 0.0f}, sliceCol}); // br
 
-		const float mx1 = x1 + 3 * globalRendering->pixelX;
-		const float mx2 = x2 - 3 * globalRendering->pixelX;
-		if (mx1 < mx2) {
-			va->AddVertex0(mx1, y1 + 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx1, y2 - 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx2, y2 - 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx2, y1 + 3 * globalRendering->pixelX, 0.0f);
-		}
+		rb.SafeAppend({{x2, y2, 0.0f}, sliceCol}); // br
+		rb.SafeAppend({{x2, y1, 0.0f}, sliceCol}); // tr
+		rb.SafeAppend({{x1, y1, 0.0f}, sliceCol}); // tl
+
+		const float mx1 = x1 + 3.0f * globalRendering->pixelX;
+		const float mx2 = x2 - 3.0f * globalRendering->pixelX;
+
+		if (mx1 >= mx2)
+			continue;
+
+		rb.SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // bl
+		rb.SafeAppend({{mx1, y2 - 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // tl
+		rb.SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // tr
+
+		rb.SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // tr
+		rb.SafeAppend({{mx2, y1 + 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // br
+		rb.SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, sliceCol}); // bl
 	}
-
-	va->DrawArray0(GL_QUADS);
 }
 
 
-static void DrawThreadBarcode()
+static void DrawThreadBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 {
-	const float maxHist_f = 4.0f;
+	constexpr SColor    barColor = SColor{0.0f, 0.0f, 0.0f, 0.5f};
+	constexpr SColor feederColor = SColor{1.0f, 0.0f, 0.0f, 1.0f};
+
 	const float drawArea[4] = {0.01f, 0.30f, (MIN_X_COOR * 0.5f), 0.35f};
 
 	const spring_time curTime = spring_now();
-	const spring_time maxHist = spring_secs(maxHist_f);
+	const spring_time maxTime = spring_secs(MAX_THREAD_HIST_TIME);
 
 	const size_t numThreads = profiler.GetNumThreadProfiles();
 
-	CVertexArray* va = GetVertexArray();
-
 	{
 		// background
-		va->Initialize();
-			va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-			va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-			va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-			va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-		va->DrawArray0(GL_QUADS);
+		rb.SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // tl
+		rb.SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // bl
+		rb.SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // br
+
+		rb.SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // br
+		rb.SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // tr
+		rb.SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor}); // tl
 	}
 	{
 		// title
-		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist_f);
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.1f seconds :: " _STPF_ " threads)", MAX_THREAD_HIST_TIME, numThreads);
 	}
 	{
-		// need to lock; DrawTimeSlice pop_back()'s old entries from
+		// need to lock; DrawTimeSlice pop_front()'s old entries from
 		// threadProf while ~ScopedMtTimer can modify it concurrently
 		profiler.ToggleLock(true);
 
-		// bars
-		glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
+		// bars for each pool-thread profile
 		int i = 0;
 		for (auto& threadProf: profiler.GetThreadProfiles()) {
 			float drawArea2[4] = {drawArea[0], 0.0f, drawArea[2], 0.0f};
 			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
 			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - (4 * globalRendering->pixelY);
-			DrawTimeSlice(threadProf, curTime, maxHist, drawArea2);
+			DrawTimeSlices(threadProf, curTime, maxTime, drawArea2, {1.0f, 0.0f, 0.0f, 0.6f});
 		}
 
 		profiler.ToggleLock(false);
 	}
 	{
 		// feeder
-		va = GetVertexArray();
-		va->Initialize();
-			const float r = (curTime % maxHist).toSecsf() / maxHist_f;
-			const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-			va->AddVertex0(xf                              , drawArea[1], 0.0f);
-			va->AddVertex0(xf                              , drawArea[3], 0.0f);
-			va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
-			va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
-		glColor3f(1.0f, 0.0f, 0.0f);
-		va->DrawArray0(GL_QUADS);
+		const float r = (curTime % maxTime).toSecsf() / MAX_THREAD_HIST_TIME;
+		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
+
+		rb.SafeAppend({{xf                                 , drawArea[1], 0.0f}, feederColor}); // tl
+		rb.SafeAppend({{xf                                 , drawArea[3], 0.0f}, feederColor}); // bl
+		rb.SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[3], 0.0f}, feederColor}); // br
+
+		rb.SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[3], 0.0f}, feederColor}); // br
+		rb.SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[1], 0.0f}, feederColor}); // tr
+		rb.SafeAppend({{xf                                 , drawArea[1], 0.0f}, feederColor}); // tl
 	}
 }
 
 
-static void DrawFrameBarcode()
+static void DrawFrameBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 {
-	const float maxHist_f = 0.5f;
+	constexpr SColor    barColor = SColor{0.0f, 0.0f, 0.0f, 0.5f};
+	constexpr SColor feederColor = SColor{1.0f, 0.0f, 0.0f, 1.0f};
+
 	const float drawArea[4] = {0.01f, 0.21f, MIN_X_COOR - 0.05f, 0.26f};
 
 	const spring_time curTime = spring_now();
-	const spring_time maxHist = spring_secs(maxHist_f);
+	const spring_time maxTime = spring_secs(MAX_FRAMES_HIST_TIME);
 
-	// background
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-	va->DrawArray0(GL_QUADS);
+	{
+		// background
+		rb.SafeAppend({ {drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor }); // tl
+		rb.SafeAppend({ {drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, barColor }); // bl
+		rb.SafeAppend({ {drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, barColor }); // br
+
+		rb.SafeAppend({ {drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, barColor }); // br
+		rb.SafeAppend({ {drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor }); // tr
+		rb.SafeAppend({ {drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, barColor }); // tl
+	}
 
 	// title and legend
-	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS,
-			"Frame Grapher (%.2fsec)"
-			"\xff\xff\x80\xff  GC"
-			"\xff\xff\xff\x01  Unsynced"
-			"\xff\x01\x01\xff  Swap"
-			"\xff\x01\xff\x01  Video"
-			"\xff\xff\x01\x01  Sim"
-			, maxHist_f);
+	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED,
+		"Frame Grapher (%.2fsec)"
+		"\xff\xff\x80\xff  GC"
+		"\xff\xff\xff\x01  Unsynced"
+		"\xff\x01\x01\xff  Swap"
+		"\xff\x01\xff\x01  Video"
+		"\xff\xff\x01\x01  Sim"
+		, MAX_FRAMES_HIST_TIME
+	);
 
-	// gc frames
-	glColor4f(1.0f, 0.5f, 1.0f, 0.55f);
-	DrawTimeSlice(lgcFrames, curTime, maxHist, drawArea);
+	DrawTimeSlices(lgcFrames, curTime, maxTime, drawArea, {1.0f, 0.5f, 1.0f, 0.55f}); // gc frames
+	DrawTimeSlices(uusFrames, curTime, maxTime, drawArea, {1.0f, 1.0f, 0.0f, 0.90f}); // unsynced-update frames
+	DrawTimeSlices(swpFrames, curTime, maxTime, drawArea, {0.0f, 0.0f, 1.0f, 0.55f}); // video swap frames
+	DrawTimeSlices(vidFrames, curTime, maxTime, drawArea, {0.0f, 1.0f, 0.0f, 0.55f}); // video frames
+	DrawTimeSlices(simFrames, curTime, maxTime, drawArea, {1.0f, 0.0f, 0.0f, 0.55f}); // sim frames
 
-	// updateunsynced frames
-	glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
-	DrawTimeSlice(uusFrames, curTime, maxHist, drawArea);
-
-	// video swap frames
-	glColor4f(0.0f, 0.0f, 1.0f, 0.55f);
-	DrawTimeSlice(swpFrames, curTime, maxHist, drawArea);
-
-	// video frames
-	glColor4f(0.0f, 1.0f, 0.0f, 0.55f);
-	DrawTimeSlice(vidFrames, curTime, maxHist, drawArea);
-
-	// sim frames
-	glColor4f(1.0f, 0.0f, 0.0f, 0.55f);
-	DrawTimeSlice(simFrames, curTime, maxHist, drawArea);
-
-	// draw `feeder` indicating current time pos
-	va = GetVertexArray();
-	va->Initialize();
-		// draw feeder
-		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
+	{
+		// draw 'feeder' (indicates current time pos)
+		const float r = (curTime % maxTime).toSecsf() / MAX_FRAMES_HIST_TIME;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xf, drawArea[1], 0.0f);
-		va->AddVertex0(xf, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
 
+		rb.SafeAppend({{xf                               , drawArea[1], 0.0f}, feederColor}); // tl
+		rb.SafeAppend({{xf                               , drawArea[3], 0.0f}, feederColor}); // bl
+		rb.SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, feederColor}); // br
+
+		rb.SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, feederColor}); // br
+		rb.SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f}, feederColor}); // tr
+		rb.SafeAppend({{xf                               , drawArea[1], 0.0f}, feederColor}); // tl
+	}
+	{
 		// draw scale (horizontal bar that indicates 30FPS timing length)
-		const float xs1 = drawArea[2] - 1.0f / (30.0f * maxHist_f) * (drawArea[2] - drawArea[0]);
-		const float xs2 = drawArea[2] + 0.0f                       * (drawArea[2] - drawArea[0]);
+		const float xs1 = drawArea[2] - 1.0f / (30.0f * MAX_FRAMES_HIST_TIME) * (drawArea[2] - drawArea[0]);
+		const float xs2 = drawArea[2] + 0.0f                                  * (drawArea[2] - drawArea[0]);
 
-		va->AddVertex0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs2, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
-	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-	va->DrawArray0(GL_QUADS);
+		rb.SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, feederColor}); // tl
+		rb.SafeAppend({{xs1, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, feederColor}); // bl
+		rb.SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, feederColor}); // br
+
+		rb.SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, feederColor}); // br
+		rb.SafeAppend({{xs2, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, feederColor}); // tr
+		rb.SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, feederColor}); // tl
+	}
 }
 
 
-static void DrawProfiler()
+static void DrawProfiler(TypedRenderBuffer<VA_TYPE_C   >& rb)
 {
 	font->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -245,38 +311,37 @@ static void DrawProfiler()
 	if ((globalRendering->drawFrame % 10) == 0)
 		profiler.RefreshProfiles();
 
-	constexpr float winColor[4] = {0.0f, 0.0f, 0.5f, 0.5f};
+	constexpr SColor winColor = SColor{ 0.0f, 0.0f, 0.5f, 0.5f };
 	constexpr float textSize = 0.5f;
 
 	const auto& sortedProfiles = profiler.GetSortedProfiles();
 
-	// draw the background of the window
+	// draw the window background
 	{
-		CVertexArray* va  = GetVertexArray();
-		va->Initialize();
-			va->AddVertex0(MIN_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0);
-			va->AddVertex0(MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0);
-			va->AddVertex0(MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0);
-			va->AddVertex0(MAX_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0);
-		glColor4f(winColor[0], winColor[1], winColor[2], winColor[3]);
-		va->DrawArray0(GL_TRIANGLE_STRIP);
+		rb.SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, winColor}); // tl
+		rb.SafeAppend({{MIN_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, winColor}); // bl
+		rb.SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, winColor}); // br
+
+		rb.SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, winColor}); // br
+		rb.SafeAppend({{MAX_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, winColor}); // tr
+		rb.SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, winColor}); // tl
 	}
 
 	// table header
 	{
 		const float fStartY = MIN_Y_COOR + 0.005f;
-		float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
+		      float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "sum-time");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "sum-time");
 
 		// print percent of CPU time used within the last 500ms
-		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "cur-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "max-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "lag");
 
 		// print timer name
-		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "title");
 	}
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
@@ -286,18 +351,18 @@ static void DrawProfiler()
 		const auto& profileData = p.second;
 
 		const float fStartY = MIN_Y_COOR - (y++) * LINE_HEIGHT;
-		float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
+		      float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.stats.y * 100.0f);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak? 1: 255, profileData.newPeak? 1: 255, profileData.stats.z * 100.0f);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak? 1: 255, profileData.newLagPeak? 1: 255, profileData.stats.x);
+		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2f%%", profileData.stats.y * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.2f%%", profileData.newPeak? 1: 255, profileData.newPeak? 1: 255, profileData.stats.z * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.0fms", profileData.newLagPeak? 1: 255, profileData.newLagPeak? 1: 255, profileData.stats.x);
 
 		// print timer name
-		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, p.first);
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, p.first);
 	}
 
 
@@ -307,129 +372,138 @@ static void DrawProfiler()
 		const float selOffset = boxSize * 0.2f;
 
 		// translate to upper-left corner of first box
-		glPushMatrix();
-		glTranslatef(MIN_X_COOR + 0.005f, MIN_Y_COOR + boxSize, 0);
+		const CMatrix44f boxMat(float3{MIN_X_COOR + 0.005f, MIN_Y_COOR + boxSize, 0.0f});
 
-			CVertexArray* va  = GetVertexArray();
-			CVertexArray* va2 = GetVertexArray();
-			va->Initialize();
-			va2->Initialize();
+		int i = 1;
 
-			int i = 1;
+		for (const auto& p: sortedProfiles) {
+			const CTimeProfiler::TimeRecord& tr = p.second;
 
-			for (const auto& p: sortedProfiles) {
-				const CTimeProfiler::TimeRecord& tr = p.second;
+			const SColor selColor(tr.color.x, tr.color.y, tr.color.z, 1.0f);
+			const SColor actColor(1.0f, 0.0f, 0.0f, 1.0f);
 
-				const SColor selColor(tr.color[0], tr.color[1], tr.color[2]);
+			// selection box
+			rb.SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT          , 0.0f), selColor}); // tl
+			rb.SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // bl
+			rb.SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // br
 
-				// selection box
-				va->AddVertexC(float3(      0, -i * LINE_HEIGHT          , 0), selColor); // upper left
-				va->AddVertexC(float3(      0, -i * LINE_HEIGHT - boxSize, 0), selColor); // lower left
-				va->AddVertexC(float3(boxSize, -i * LINE_HEIGHT - boxSize, 0), selColor); // lower right
-				va->AddVertexC(float3(boxSize, -i * LINE_HEIGHT          , 0), selColor); // upper right
+			rb.SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // br
+			rb.SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT          , 0.0f), selColor}); // tr
+			rb.SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT          , 0.0f), selColor}); // tl
 
-				// activated box
-				if (tr.showGraph) {
-					va2->AddVertex0(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0); // upper left
-					va2->AddVertex0(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0); // lower left
-					va2->AddVertex0(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0); // lower right
-					va2->AddVertex0(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT -           selOffset, 0); // upper right
-				}
+			// activated box
+			if (tr.showGraph) {
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tl
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // bl
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // br
 
-				i++;
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // br
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tr
+				rb.SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tl
 			}
 
-			// draw the boxes
-			va->DrawArrayC(GL_QUADS);
-			// draw the 'graph view disabled' cross
-			glColor3f(1.0f, 0.0f, 0.0f);
-			va2->DrawArray0(GL_QUADS);
-
-		glPopMatrix();
+			i++;
+		}
 	}
 
-	// draw the graph
+	// flush all quad elements
+	rb.Submit(GL_TRIANGLES);
+
+	// draw the graph lines
+	//GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+	//wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, CMatrix44f::ClipOrthoProj01());
 	glLineWidth(3.0f);
 
 	for (const auto& p: sortedProfiles) {
 		const CTimeProfiler::TimeRecord& tr = p.second;
 
+		const float3& fc = tr.color;
+		const SColor c(fc[0], fc[1], fc[2]);
+
 		if (!tr.showGraph)
 			continue;
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		const float steps_x = (MAX_X_COOR - MIN_X_COOR) / CTimeProfiler::TimeRecord::numFrames;
+		const float range_x = MAX_X_COOR - MIN_X_COOR;
+		const float steps_x = range_x / CTimeProfiler::TimeRecord::numFrames;
+
 		for (size_t a = 0; a < CTimeProfiler::TimeRecord::numFrames; ++a) {
-			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
-			// This may be more then 1.0f, in case an operation
-			// which ran over many frames, ended in this one.
+			// profile runtime; 0.5f means 50% of a CPU was used during that frame
+			// this may exceed 1.0f if an operation which ran over multiple frames
+			// ended in this one
 			const float p = tr.frames[a].toSecsf() * GAME_SPEED;
 			const float x = MIN_X_COOR + (a * steps_x);
 			const float y = 0.02f + (p * 0.96f);
-			va->AddVertex0(x, y, 0.0f);
+
+			rb.SafeAppend({{x, y, 0.0f}, c});
 		}
 
-		glColorf3((float3) tr.color);
-		va->DrawArray0(GL_LINE_STRIP);
+		rb.Submit(GL_LINE_STRIP);
 	}
+
 	glLineWidth(1.0f);
 }
 
 
-static void DrawInfoText()
+static void DrawInfoText(TypedRenderBuffer<VA_TYPE_C   >& rb)
 {
+	constexpr SColor bgColor = SColor{0.0f, 0.0f, 0.0f, 0.5f};
+
 	// background
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(             0.01f - 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(             0.01f - 10 * globalRendering->pixelX, 0.17f + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(MIN_X_COOR - 0.05f + 10 * globalRendering->pixelX, 0.17f + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(MIN_X_COOR - 0.05f + 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-	va->DrawArray0(GL_QUADS);
+
+	rb.SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, bgColor}); // tl
+	rb.SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, bgColor}); // bl
+	rb.SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, bgColor}); // br
+
+	rb.SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, bgColor}); // br
+	rb.SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, bgColor}); // tr
+	rb.SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, bgColor}); // tl
+
 
 	// print performance-related information (timings, particle-counts, etc)
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
-	const char* fpsFmtStr = "[1] {Draw,Sim}FrameRate={%0.1f, %0.1f}Hz";
-	const char* ctrFmtStr = "[2] {Draw,Sim}FrameTick={%u, %d}";
-	const char* avgFmtStr = "[3] {Update,Draw,Sim}FrameTime={%s%2.1f, %s%2.1f, %s%2.1f}ms";
-	const char* spdFmtStr = "[4] {Current,Wanted}SimSpeedMul={%2.2f, %2.2f}x";
-	const char* sfxFmtStr = "[5] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
-	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
-	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.1fK allocs : %.5u usecs : %.1u states)";
-	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
-	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P,W}={%.1f/%.1f, %.1f/%.1f, %.1f/%.1f, %.1f/%.1f}KB";
+	constexpr const char* fpsFmtStr = "[1] {Draw,Sim}FrameRate={%0.1f, %0.1f}Hz";
+	constexpr const char* ctrFmtStr = "[2] {Draw,Sim}FrameTick={%u, %d}";
+	constexpr const char* avgFmtStr = "[3] {Sim,Update,Draw}FrameTime={%s%2.1f, %s%2.1f, %s%2.1f (GL=%2.1f)}ms";
+	constexpr const char* spdFmtStr = "[4] {Current,Wanted}SimSpeedMul={%2.2f, %2.2f}x";
+	constexpr const char* sfxFmtStr = "[5] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
+	constexpr const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
+	constexpr const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.1fK allocs : %.5u usecs : %.1u states)";
+	constexpr const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
+	constexpr const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P,W}={%.1f/%.1f, %.1f/%.1f, %.1f/%.1f, %.1f/%.1f}KB";
 
 	const CProjectileHandler* ph = &projectileHandler;
 	const IPathManager* pm = pathManager;
 
-	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS);
-	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS, ctrFmtStr, globalRendering->drawFrame, gs->frameNum);
+	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, fpsFmtStr, globalRendering->FPS, gu->simFPS);
+	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, ctrFmtStr, globalRendering->drawFrame, gs->frameNum);
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
-	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS, avgFmtStr,
-	   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
-	   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
-	   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, avgFmtStr,
+		(gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime,
+		(gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		(gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		(globalRendering->CalcGLDeltaTime(CGlobalRendering::FRAME_REF_TIME_QUERY_IDX, CGlobalRendering::FRAME_END_TIME_QUERY_IDX) * 0.001f) * 0.001f
 	);
 
-	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
-	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, sfxFmtStr, ph->projectileContainers[true].size(), ph->projectileContainers[false].size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
+	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
+	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sfxFmtStr, ph->projectileContainers[true].size(), ph->projectileContainers[false].size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
 
 	{
 		const int2 pfsUpdates = pm->GetNumQueuedUpdates();
 
 		switch (pm->GetPathFinderType()) {
 			case NOPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "NO", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "NO", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case TKPFS_TYPE: {
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "TK", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case HAPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "HA", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "HA", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case QTPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			default: {
 			} break;
@@ -445,7 +519,7 @@ static void DrawInfoText()
 		const uint32_t allocTime = state.luaAllocTime.load();
 		const uint32_t numStates = state.numLuaStates.load();
 
-		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, allocMegs, kiloAlloc, allocTime, numStates);
+		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, luaFmtStr, allocMegs, kiloAlloc, allocTime, numStates);
 	}
 
 	{
@@ -453,10 +527,10 @@ static void DrawInfoText()
 
 		GetAvailableVideoRAM(&vidMemInfo.x, globalRenderingInfo.glVendor);
 
-		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
+		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
 	}
 
-	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
+	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sopFmtStr,
 		unitMemPool.alloc_size() / 1024.0f,
 		unitMemPool.freed_size() / 1024.0f,
 		featureMemPool.alloc_size() / 1024.0f,
@@ -472,30 +546,30 @@ static void DrawInfoText()
 
 void ProfileDrawer::DrawScreen()
 {
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0,1,0,1);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& shader = rb.GetShader();
 
-	glDisable(GL_TEXTURE_2D);
-	font->Begin();
-	font->SetTextColor(1,1,0.5f,0.8f);
+	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadMatrixf(CMatrix44f::ClipOrthoProj01());
 
-	DrawThreadBarcode();
-	DrawFrameBarcode();
-	DrawProfiler();
-	DrawInfoText();
+	shader.Enable();
 
-	font->End();
-	glColor4f(1.0f,1.0f,1.0f,1.0f);
-	glEnable(GL_TEXTURE_2D);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
+
+	DrawThreadBarcode(rb);
+	DrawFrameBarcode(rb);
+
+	// text before profiler to batch the background
+	DrawInfoText(rb);
+	DrawProfiler(rb);
+	DrawBufferStats({0.01f, 0.605f});
+
+	shader.Disable();
+
+	font->DrawBufferedGL4();
+
+	/*glMatrixMode(GL_PROJECTION);*/ glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);      glPopMatrix();
 }
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
@@ -504,7 +578,7 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 		return false;
 
 	const float my = CInputReceiver::MouseY(y);
-	const int selIndex = (int) ((MIN_Y_COOR - my) / LINE_HEIGHT);
+	const int selIndex = int((MIN_Y_COOR - my) / LINE_HEIGHT);
 
 	if (selIndex < 0)
 		return false;
@@ -551,7 +625,8 @@ void ProfileDrawer::DbgTimingInfo(DbgTimingInfoType type, const spring_time star
 		case TIMING_UNSYNCED: {
 			uusFrames.emplace_back(start, end);
 		} break;
+		default: {
+		} break;
 	}
 }
-
 

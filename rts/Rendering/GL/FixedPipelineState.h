@@ -1,5 +1,4 @@
-#ifndef FIXED_PIPELINE_STATE_H
-#define FIXED_PIPELINE_STATE_H
+#pragma once
 
 #include <functional>
 #include <string>
@@ -8,7 +7,9 @@
 #include <vector>
 #include <tuple>
 #include <cstring>
+#include <sstream>
 
+#include "System/Log/ILog.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/Shader.h"
 
@@ -209,7 +210,7 @@ namespace GL {
 		uint64_t stateHash = 0u;
 		GLuint lastActiveTexture = ~0u;
 	private:
-		static std::stack<FixedPipelineState> statesChain;
+		static std::stack<FixedPipelineState, std::vector<FixedPipelineState>> statesChain;
 	};
 
 	class ScopedState {
@@ -220,6 +221,28 @@ namespace GL {
 		const FixedPipelineState s;
 	};
 
-}
 
-#endif
+	template<typename ...T>
+	inline constexpr void FixedPipelineState::DumpState(const std::tuple<T...>& tuple)
+	{
+	#if (DEBUG_PIPELINE_STATE == 1)
+		std::ostringstream ss;
+		ss << "[ ";
+		std::apply([&ss](auto&&... args) {((ss << +args << ", "), ...); }, tuple);
+		ss.seekp(-2, ss.cur);
+		ss << " ]";
+
+		LOG_L(L_NOTICE, "[FixedPipelineState::DumpState] %s", ss.str().c_str());
+	#endif // (DEBUG_PIPELINE_STATE == 1)
+	}
+
+	template<typename ...T>
+	inline constexpr void GL::FixedPipelineState::HashState(const std::tuple<T...>& tuple)
+	{
+		const auto lambda = [this](auto&&... args) -> uint64_t {
+			return ((hashString(reinterpret_cast<const char*>(&args), sizeof(args)) * 65521) + ...);
+		};
+		stateHash += std::apply(lambda, tuple);
+	}
+
+}

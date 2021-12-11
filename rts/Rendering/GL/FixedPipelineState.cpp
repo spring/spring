@@ -2,48 +2,23 @@
 
 #include <array>
 #include <stdexcept>
-#include <sstream>
 
 #include "System/type2.h"
 #include "System/float4.h"
 #include "System/StringHash.h"
-#include "System/Log/ILog.h"
 #include "Rendering/GlobalRendering.h"
 
 using namespace GL;
-std::stack<FixedPipelineState> FixedPipelineState::statesChain = {};
+std::stack<FixedPipelineState, std::vector<FixedPipelineState>> FixedPipelineState::statesChain = {};
 
 FixedPipelineState::FixedPipelineState()
 {
 	if (statesChain.empty()) { //default state
 		InferState();
-	} else {
-		*this = statesChain.top(); //copy&paste previous state
+		statesChain.emplace(*this);
 	}
-}
 
-
-template<typename ...T>
-constexpr void FixedPipelineState::DumpState(const std::tuple<T...>& tuple)
-{
-#if (DEBUG_PIPELINE_STATE == 1)
-	std::ostringstream ss;
-	ss << "[ ";
-	std::apply([&ss](auto&&... args) {((ss << +args << ", "), ...); }, tuple);
-	ss.seekp(-2, ss.cur);
-	ss << " ]";
-
-	LOG_L(L_NOTICE, "[FixedPipelineState::DumpState] %s", ss.str().c_str());
-#endif // (DEBUG_PIPELINE_STATE == 1)
-}
-
-template<typename ...T>
-constexpr void GL::FixedPipelineState::HashState(const std::tuple<T...>& tuple)
-{
-	const auto lambda = [this](auto&&... args) -> uint64_t {
-		return ((hashString(reinterpret_cast<const char*>(&args), sizeof(args)) * 65521) +  ...);
-	};
-	stateHash += std::apply(lambda, tuple);
+	*this = statesChain.top(); //copy&paste previous state
 }
 
 FixedPipelineState& GL::FixedPipelineState::InferState()
@@ -213,7 +188,9 @@ void FixedPipelineState::BindUnbind(const bool bind) const
 	}
 
 	//now enable/disable states
+	const auto& prev = statesChain.top().binaryStates;
 	for (const auto [state, status] : binaryStates) {
+		const auto& prevStateIt = prev.find(state);
 		/*
 		  b, s ==> e
 		  1, 1 ==> 1
@@ -221,11 +198,15 @@ void FixedPipelineState::BindUnbind(const bool bind) const
 		  1, 1 ==> 0
 		  0, 0 ==> 1
 		*/
-		const bool en = !(bind ^ status);
-		if (en)
-			glEnable(state);
-		else
-			glDisable(state);
+		const bool en  =                              !(bind ^ status             )      ;
+		const bool pEn = prevStateIt != prev.cend() ? !(bind ^ prevStateIt->second) : !en;
+
+		if (en != pEn) {
+			if (en)
+				glEnable(state);
+			else
+				glDisable(state);
+		}
 	}
 
 	if (lastActiveTexture < CGlobalRendering::MAX_TEXTURE_UNITS)

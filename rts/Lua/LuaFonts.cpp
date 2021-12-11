@@ -36,6 +36,8 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 	LuaPushNamedString(L, "__metatable", "protected metatable");
 
 		// push userdata callouts
+		REGISTER_LUA_CFUNC(DebugAnchor);
+
 		REGISTER_LUA_CFUNC(Print);
 
 		REGISTER_LUA_CFUNC(Begin);
@@ -66,7 +68,7 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 	if (LuaOpenGL::IsDrawingEnabled(L))
 		return;
 
-	luaL_error(L, "%s(): OpenGL calls can only be used in Draw() call-ins, or while creating display lists", caller);
+	luaL_error(L, "[%s::%s] OpenGL calls can only be used in Draw() call-ins", __func__, caller);
 }
 
 
@@ -195,9 +197,15 @@ int LuaFonts::DeleteFont(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaFonts::DebugAnchor(lua_State* L)
+{
+	LOG_L(L_DEBUG, "[LuaFonts::%s] %s", __func__, luaL_optstring(L, 2, ""));
+	return 0;
+}
+
 int LuaFonts::Print(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -229,6 +237,7 @@ int LuaFonts::Print(lua_State* L)
 				case 'O': { options |= FONT_OUTLINE;      } break;
 
 				case 'n': { options ^= FONT_NEAREST;      } break;
+				case 'B': { options |= FONT_BUFFERED;     } break; // for DrawBuffered
 
 				case 'N': { options |= FONT_NORM;         } break;
 				case 'S': { options |= FONT_SCALE;        } break;

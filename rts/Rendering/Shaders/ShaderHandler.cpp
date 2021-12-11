@@ -68,6 +68,25 @@ bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
 	return true;
 }
 
+bool CShaderHandler::ReleaseProgramObject(const std::string& poClass, const std::string& poName)
+{
+	auto classIter = programObjects.find(poClass);
+	if (classIter == programObjects.end())
+		return false;
+
+	auto nameIter = classIter->second.find(poName);
+	if (nameIter == classIter->second.end())
+		return false;
+
+	// free the program object and its attachments
+	if (nameIter->second != Shader::nullProgramObject) {
+		nameIter->second->Release(); delete nameIter->second;
+	}
+	classIter->second.erase(nameIter);
+
+	return true;
+}
+
 void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap) {
 	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
 		Shader::IProgramObject* po = it->second;

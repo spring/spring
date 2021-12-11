@@ -31,14 +31,18 @@ void IStreamBufferConcept::PutBufferLocks()
 	lockList.clear();
 }
 
-IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, const std::string& name_, const std::string_view& bufferTypeName)
+IStreamBufferConcept::IStreamBufferConcept(uint32_t target_, uint32_t numElements_, const std::string& name_, const std::string_view& bufferTypeName)
 	: name{ name_ }
 	, target{ target_ }
 	, id{ 0 }
+	, numElements { numElements_ }
 	, byteSize{ 0 }
 	, allocIdx{ 0 }
+	, mapElemOffet{ 0 }
+	, mapElemCount{ 0 }
 {
-	LOG_L(L_NOTICE, "[StreamBuffer::%s] Created StreamBuffer name %s type %s", __func__, name.c_str(), bufferTypeName.data());
+	if (reportType)
+		LOG_L(L_INFO, "[StreamBuffer::%s] Created StreamBuffer name %s type %s", __func__, name.c_str(), bufferTypeName.data());
 }
 
 void IStreamBufferConcept::QueueLockBuffer(GLsync& syncObj) const

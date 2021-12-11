@@ -15,7 +15,7 @@
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -595,11 +595,9 @@ void CSelectedUnitsHandler::Draw()
 			unitSet = &g->units;
 		}
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(unitSet->size() * 8, 0, VA_SIZE_C);
+		static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
 
-		for (const int unitID: *unitSet) {
+		for (const int unitID : *unitSet) {
 			const CUnit* unit = unitHandler.GetUnit(unitID);
 			const MoveDef* moveDef = unit->moveDef;
 
@@ -611,36 +609,40 @@ void CSelectedUnitsHandler::Draw()
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
 				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
-				mhxsize = (moveDef == nullptr)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
-				mhzsize = (moveDef == nullptr)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
+				mhxsize = (moveDef == nullptr) ? uhxsize : ((moveDef->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (moveDef == nullptr) ? uhzsize : ((moveDef->zsize * SQUARE_SIZE) >> 1);
 
-			const float3 verts[8] = {
-				// UnitDef footprint corners
-				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
-				float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
-				float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize),
-				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize),
-				// MoveDef footprint corners
-				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize),
-				float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize),
-				float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
-				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
-			};
-
-			va->AddVertexQC(verts[0], color1);
-			va->AddVertexQC(verts[1], color1);
-			va->AddVertexQC(verts[2], color1);
-			va->AddVertexQC(verts[3], color1);
+			// UnitDef footprint corners
+			rb.AddQuadLines(
+				{ float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize), color1 },
+				{ float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize), color1 },
+				{ float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize), color1 },
+				{ float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize), color1 }
+			);
 
 			if (globalRendering->drawDebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
-				va->AddVertexQC(verts[4], color2);
-				va->AddVertexQC(verts[5], color2);
-				va->AddVertexQC(verts[6], color2);
-				va->AddVertexQC(verts[7], color2);
+				// MoveDef footprint corners
+				rb.AddQuadLines(
+					{ float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize), color2 },
+					{ float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize), color2 },
+					{ float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize), color2 },
+					{ float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize), color2 }
+				);
 			}
 		}
 
-		va->DrawArrayC(GL_QUADS);
+		auto& shader = rb.GetShader();
+		shader.Enable();
+		//shader.SetUniformMatrix4x4("transformMatrix", false, camera->GetViewProjectionMatrix().m);
+		//glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadMatrixf(camera->GetViewMatrix());
+		//glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadMatrixf(camera->GetProjectionMatrix());
+
+		rb.DrawElements(GL_LINES);
+
+		///*glMatrixMode(GL_PROJECTION);*/ glPopMatrix();
+		//glMatrixMode(GL_MODELVIEW);      glPopMatrix();
+
+		shader.Disable();
 	}
 
 	// highlight queued build sites if we are about to build something

@@ -79,27 +79,6 @@ static std::string glslGetLog(GLuint obj)
 	return infoLog;
 }
 
-
-static std::string GetShaderSource(const std::string& fileName)
-{
-	if (fileName.find("void main()") != std::string::npos)
-		return fileName;
-
-	std::string soPath = "shaders/" + fileName;
-	std::string soSource = "";
-
-	CFileHandler soFile(soPath);
-
-	if (soFile.FileExists()) {
-		soSource.resize(soFile.FileSize());
-		soFile.Read(&soSource[0], soFile.FileSize());
-	} else {
-		LOG_L(L_ERROR, "[%s] file not found \"%s\"", __FUNCTION__, soPath.c_str());
-	}
-
-	return soSource;
-}
-
 static bool ExtractGlslVersion(std::string* src, std::string* version)
 {
 	const auto pos = src->find("#version ");
@@ -134,9 +113,31 @@ namespace Shader {
 		return hash;
 	}
 
+	std::string IShaderObject::GetShaderSource(const std::string& fileName)
+	{
+		if (fileName.find("void main()") != std::string::npos)
+			return fileName;
+
+		std::string soPath = "shaders/" + fileName;
+		std::string soSource = "";
+
+		CFileHandler soFile(soPath);
+
+		if (soFile.FileExists()) {
+			soSource.resize(soFile.FileSize());
+			soFile.Read(&soSource[0], soFile.FileSize());
+			reloadRequested = false;
+		}
+		else {
+			LOG_L(L_ERROR, "[%s] file not found \"%s\"", __FUNCTION__, soPath.c_str());
+		}
+
+		return soSource;
+	}
 
 	bool IShaderObject::ReloadFromDisk()
 	{
+		reloadRequested = true;
 		std::string newText = GetShaderSource(srcFile);
 
 		if (newText != srcText) {
@@ -270,6 +271,21 @@ namespace Shader {
 		log.clear();
 
 		valid = false;
+	}
+
+	bool IProgramObject::RemoveShaderObject(GLenum soType) {
+		for (size_t i = 0; i < shaderObjs.size(); ++i) {
+			IShaderObject*& so = shaderObjs[i];
+			if (so->GetType() == soType) {
+				so->Release();
+				delete so;
+
+				shaderObjs.erase(shaderObjs.begin() + i);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 
@@ -503,7 +519,7 @@ namespace Shader {
 		}
 
 		// reload shader from disk if requested or necessary
-		if ((reloadFromDisk = reloadFromDisk || !oldValid || (oldProgID == 0))) {
+		if ((reloadFromDisk || !oldValid || (oldProgID == 0))) {
 			for (IShaderObject*& so: shaderObjs) {
 				so->ReloadFromDisk();
 			}

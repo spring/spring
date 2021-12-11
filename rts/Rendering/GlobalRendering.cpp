@@ -9,9 +9,11 @@
 #include "GlobalRenderingInfo.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/StreamBuffer.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/UniformConstants.h"
+#include "Rendering/Fonts/glFont.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/type2.h"
@@ -164,7 +166,9 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(borderless),
 
 	CR_IGNORED(sdlWindows),
-	CR_IGNORED(glContexts)
+	CR_IGNORED(glContexts),
+
+	CR_IGNORED(glTimerQueries)
 ))
 
 
@@ -268,6 +272,8 @@ CGlobalRendering::CGlobalRendering()
 	, borderless(configHandler->GetBool("WindowBorderless"))
 	, sdlWindows{nullptr, nullptr}
 	, glContexts{nullptr, nullptr}
+
+	, glTimerQueries{0}
 {
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
@@ -277,6 +283,11 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
+
+	// protect against aborted startup
+	if (glContexts[0] != nullptr) {
+		glDeleteQueries(glTimerQueries.size(), glTimerQueries.data());
+	}
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
@@ -569,6 +580,9 @@ void CGlobalRendering::PostInit() {
 
 	LogVersionInfo(sdlVersionStr, glVidMemStr);
 	ToggleGLDebugOutput(0, 0, 0);
+
+	UniformConstants::GetInstance().Init();
+	glGenQueries(glTimerQueries.size(), glTimerQueries.data());
 }
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
@@ -585,9 +599,47 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	const spring_time pre = spring_now();
 
+	RenderBuffer::SwapStandardRenderBuffers();
+	CglFont::SwapRenderBuffers();
 	IStreamBufferConcept::PutBufferLocks();
 	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+}
+
+void CGlobalRendering::SetGLTimeStamp(uint32_t queryIdx) const
+{
+	if (!GLEW_ARB_timer_query)
+		return;
+
+	glQueryCounter(glTimerQueries[(NUM_OPENGL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
+}
+
+uint64_t CGlobalRendering::CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const
+{
+	if (!GLEW_ARB_timer_query)
+		return 0;
+
+	const uint32_t queryBase = NUM_OPENGL_TIMER_QUERIES * (1 - (drawFrame & 1));
+
+	assert(queryIdx0 < NUM_OPENGL_TIMER_QUERIES);
+	assert(queryIdx1 < NUM_OPENGL_TIMER_QUERIES);
+	assert(queryIdx0 < queryIdx1);
+
+	GLuint64 t0 = 0;
+	GLuint64 t1 = 0;
+
+	GLint res = 0;
+
+	// results from the previous frame should already (or soon) be available
+	while (!res) {
+		glGetQueryObjectiv(glTimerQueries[queryBase + queryIdx1], GL_QUERY_RESULT_AVAILABLE, &res);
+	}
+
+	glGetQueryObjectui64v(glTimerQueries[queryBase + queryIdx0], GL_QUERY_RESULT, &t0);
+	glGetQueryObjectui64v(glTimerQueries[queryBase + queryIdx1], GL_QUERY_RESULT, &t1);
+
+	// nanoseconds between timestamps
+	return (t1 - t0);
 }
 
 
@@ -620,19 +672,19 @@ void CGlobalRendering::SetGLSupportFlags()
 	const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
 	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
 
-	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveARB   = static_cast<bool>(GLEW_ARB_vertex_program && GLEW_ARB_fragment_program);
 	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-	haveGLSL &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
-	haveGLSL &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+	haveGLSL &= static_cast<bool>(GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
+	haveGLSL &= static_cast<bool>(GLEW_VERSION_2_0); // we want OpenGL 2.0 core functions
 
 	#ifndef HEADLESS
 	if (!haveARB || !haveGLSL)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
 
-	haveGL4 = GLEW_ARB_multi_draw_indirect;
-	haveGL4 &= GLEW_ARB_uniform_buffer_object;
-	haveGL4 &= GLEW_ARB_shader_storage_buffer_object;
+	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
 	haveGL4 &= configHandler->GetBool("UseVBO");
 
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
@@ -1171,8 +1223,6 @@ void CGlobalRendering::InitGLState()
 
 	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	gluPerspective(45.0f, aspectRatio, minViewRange, maxViewRange);
-
-	UniformConstants::GetInstance().Init();
 
 	// this does not accomplish much
 	// SwapBuffers(true, true);

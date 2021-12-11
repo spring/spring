@@ -31,7 +31,7 @@
 #include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
@@ -1178,6 +1178,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glTranslatef(0.0f, +1.0f, 0.0f);
 	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2d0>();
+
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
 		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
@@ -1255,24 +1257,26 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 			pts[3] = std::make_pair(pos.x - bias, pos.z - bias); //BL
 		}
 
-
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
-
 		for (int i = 0; i < pts.size(); ++i) {
 			const int ii = (i + 1) % (pts.size());
-			va->AddVertexQ2d0(pts[i ].first, pts[i ].second);
-			va->AddVertexQ2d0(pts[ii].first, pts[ii].second);
+			rb.AddVertex({ pts[i ].first, pts[i ].second });
+			rb.AddVertex({ pts[ii].first, pts[ii].second });
 		}
 
+		//auto& sh = rb.GetShader();
+
 		glLineWidth(2.5f);
-		glColor4f(0, 0, 0, 0.5f);
-		va->DrawArray2d0(GL_LINES);
+		//sh.Enable();
+		//sh.SetUniformMatrix4x4("transformMatrix", false, );
+		//sh.SetUniform("ucolor", 0.0f, 0.0f, 0.0f, 0.5f);
+		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+		rb.DrawArrays(GL_LINES, false);
 
 		glLineWidth(1.5f);
-		glColor4f(1, 1, 1, 0.75f);
-		va->DrawArray2d0(GL_LINES);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.75f);
+		//sh.SetUniform("ucolor", 1.0f, 1.0f, 1.0f, 0.75f);
+		//va->DrawArray2d0(GL_LINES);
+		rb.DrawArrays(GL_LINES);
 
 		glLineWidth(1.0f);
 #endif
@@ -1290,14 +1294,13 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		//            (GLenum)cmdColors.MouseBoxBlendDst());
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertexQ2d0(oldMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, newMapPos.z);
-			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
-		va->DrawArray2d0(GL_LINE_LOOP);
+		rb.AddVertices({
+			{oldMapPos.x, oldMapPos.z},
+			{newMapPos.x, oldMapPos.z},
+			{newMapPos.x, newMapPos.z},
+			{oldMapPos.x, newMapPos.z}
+		});
+		rb.DrawArrays(GL_LINE_LOOP);
 
 		glLineWidth(1.0f);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1486,8 +1489,8 @@ void CMiniMap::DrawNotes()
 	}
 
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+
 	std::deque<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
@@ -1513,18 +1516,18 @@ void CMiniMap::DrawNotes()
 			color.a = (255 * ni->color[3]) / (3 - a);
 			const float sinSize = fastmath::sin(rot) * size;
 			const float cosSize = fastmath::cos(rot) * size;
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
+			rb.AddVertex({ float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f), color });
+			rb.AddVertex({ float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f), color });
 		}
 		++ni;
 	}
-	va->DrawArrayC(GL_LINES);
+	rb.DrawArrays(GL_LINES);
 }
 
 
