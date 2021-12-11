@@ -36,8 +36,6 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 	LuaPushNamedString(L, "__metatable", "protected metatable");
 
 		// push userdata callouts
-		REGISTER_LUA_CFUNC(DebugAnchor);
-
 		REGISTER_LUA_CFUNC(Print);
 
 		REGISTER_LUA_CFUNC(Begin);
@@ -196,12 +194,6 @@ int LuaFonts::DeleteFont(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-int LuaFonts::DebugAnchor(lua_State* L)
-{
-	LOG_L(L_DEBUG, "[LuaFonts::%s] %s", __func__, luaL_optstring(L, 2, ""));
-	return 0;
-}
 
 int LuaFonts::Print(lua_State* L)
 {
