@@ -41,6 +41,8 @@ namespace Shader {
 class CglFont : public CTextWrap
 {
 public:
+	using ColorCodeCallBack = std::function<void(float4)>;
+
 	static bool LoadConfigFonts();
 	static bool LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile);
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
@@ -108,8 +110,6 @@ public:
 	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
 	static bool threadSafety;
 private:
-	using ColorCodeCallBack = std::function<void(float4)>;
-
 	static const float4* ChooseOutlineColor(const float4& textColor);
 
 	template<int shiftXC, int shiftYC, bool outline>
