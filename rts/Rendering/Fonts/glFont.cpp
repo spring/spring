@@ -188,21 +188,23 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	primaryBufferTC = TypedRenderBuffer<VA_TYPE_TC>(NUM_TRI_BUFFER_VERTS, NUM_TRI_BUFFER_ELEMS, IStreamBufferConcept::SB_BUFFERSUBDATA);
 	outlineBufferTC = TypedRenderBuffer<VA_TYPE_TC>(NUM_TRI_BUFFER_VERTS, NUM_TRI_BUFFER_ELEMS, IStreamBufferConcept::SB_BUFFERSUBDATA);
 
+	viewMatrix = DefViewMatrix();
+	projMatrix = DefProjMatrix();
+
+	if (defShader == nullptr)
 	{
-		viewMatrix = DefViewMatrix();
-		projMatrix = DefProjMatrix();
+		// can't use shaderHandler here because it invalidates the objects on reload
+		// but fonts are expected to be available all the time
+		defShader = std::make_unique<Shader::GLSLProgramObject>("[GL-Font]");
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER, vsFont));
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont));
 
-		if (!defShader) {
-			defShader = shaderHandler->CreateProgramObject("[GL-Font]", "", false);
-			defShader->AttachShaderObject(shaderHandler->CreateShaderObject(vsFont, "", GL_VERTEX_SHADER));
-			defShader->AttachShaderObject(shaderHandler->CreateShaderObject(fsFont, "", GL_FRAGMENT_SHADER));
-			defShader->Enable();
-			defShader->SetUniform("tex", 0);
-			defShader->Disable();
-		}
-
-		curShader = defShader;
+		defShader->Enable();
+		defShader->SetUniform("tex", 0);
+		defShader->Disable();
 	}
+
+	curShader = defShader.get();
 
 	loadedFonts.insert(this);
 }
@@ -211,7 +213,6 @@ CglFont::~CglFont()
 {
 	loadedFonts.erase(this);
 }
-
 
 #ifdef HEADLESS
 
@@ -597,7 +598,7 @@ void CglFont::Begin(Shader::IProgramObject* shader) {
 	inBeginEndBlock = true;
 
 	curShader = shader;
-	assert(curShader == defShader); //TODO
+	assert(curShader == defShader.get()); //TODO
 
 	{
 		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
@@ -664,7 +665,7 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 
 		// assume external shaders are never null and already bound
 		curShader = shader;
-		assert(curShader == defShader); //TODO
+		assert(curShader == defShader.get()); //TODO
 
 		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);

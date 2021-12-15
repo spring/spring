@@ -54,13 +54,13 @@ public:
 	~CglFont();
 
 	void Begin(Shader::IProgramObject* shader);
-	void Begin() { Begin(defShader); };
+	void Begin() { Begin(defShader.get()); };
 	void End();
 
 	void DrawBufferedGL4() { DrawBuffered(); }
 	void DrawBufferedGL4(Shader::IProgramObject* shader) { DrawBuffered(shader); }
 
-	void DrawBuffered() { DrawBuffered(defShader); }
+	void DrawBuffered() { DrawBuffered(defShader.get()); }
 	void DrawBuffered(Shader::IProgramObject* shader);
 
 	void SwapBuffers();
@@ -134,12 +134,11 @@ public:
 		return loadedFonts;
 	}
 private:
-	inline static Shader::IProgramObject* defShader = nullptr;
+	inline static std::unique_ptr<Shader::IProgramObject> defShader = nullptr;
 
 	std::string fontPath;
 	spring::recursive_mutex bufferMutex;
 
-	// used by {Begin,End}; each double-buffered
 	TypedRenderBuffer<VA_TYPE_TC> primaryBufferTC;
 	TypedRenderBuffer<VA_TYPE_TC> outlineBufferTC;
 
