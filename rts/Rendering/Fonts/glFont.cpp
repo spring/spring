@@ -666,8 +666,6 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 		curShader = shader;
 		assert(curShader == defShader); //TODO
 
-		curShader->Enable();
-
 		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
@@ -677,6 +675,8 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 
 		GLint progID = 0;
 		glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
+
+		curShader->Enable();
 
 #ifdef INDEXED_FONTS_RENDERING
 		outlineBufferTC.DrawElements(GL_TRIANGLES);
