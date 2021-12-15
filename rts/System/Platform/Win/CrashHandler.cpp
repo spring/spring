@@ -69,8 +69,8 @@ static const char* glLibWarning =
 	"use a driver removal utility first.";
 
 static const char* addrFmts[2] = {
-	"\t(%d) %s:%u %s [0x%08llX]",
-	"\t(%d) %s [0x%08lX]"
+	"\t(%d) %s:%u %s [0x%p]",
+	"\t(%d) %s [0x%p]"
 };
 static const char* errFmt =
 	"Spring has crashed:\n  %s.\n\n"
