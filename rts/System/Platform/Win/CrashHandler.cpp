@@ -144,13 +144,13 @@ bool InitImageHlpDll()
 #if _MSC_VER >= 1500
 	static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
 	{
-		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
+		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", baseOfDll, moduleName);
 		return TRUE;
 	}
 #else // _MSC_VER >= 1500
 	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 	{
-		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
+		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", baseOfDll, moduleName);
 		return TRUE;
 	}
 #endif // _MSC_VER >= 1500
