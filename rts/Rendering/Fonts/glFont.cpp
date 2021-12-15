@@ -623,6 +623,9 @@ void CglFont::End() {
 
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
+		GLint progID = 0;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
+
 		curShader->Enable();
 
 #ifdef INDEXED_FONTS_RENDERING
@@ -634,6 +637,8 @@ void CglFont::End() {
 #endif
 
 		curShader->Disable();
+
+		if (progID > 0) glUseProgram(progID);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -670,6 +675,9 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
+		GLint progID = 0;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
+
 #ifdef INDEXED_FONTS_RENDERING
 		outlineBufferTC.DrawElements(GL_TRIANGLES);
 		primaryBufferTC.DrawElements(GL_TRIANGLES);
@@ -679,6 +687,8 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 #endif
 
 		curShader->Disable();
+
+		if (progID > 0) glUseProgram(progID);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 
