@@ -600,7 +600,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	const spring_time pre = spring_now();
 
 	RenderBuffer::SwapStandardRenderBuffers();
-	CglFont::SwapRenderBuffers();
+	//CglFont::SwapRenderBuffers();
 	IStreamBufferConcept::PutBufferLocks();
 	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());

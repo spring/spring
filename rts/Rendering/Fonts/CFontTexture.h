@@ -91,7 +91,7 @@ public:
 	float GetOutlineWeight() const { return outlineWeight; }
 	float GetLineHeight() const { return lineHeight; }
 	float GetDescender() const { return fontDescender; }
-	int GetTexture() const { return glyphAtlasTextureID; }
+	int GetTexture() const { return texture; }
 
 	const std::string& GetFamily() const { return fontFamily; }
 	const std::string& GetStyle() const { return fontStyle; }
@@ -101,7 +101,7 @@ public:
 public:
 	void ReallocAtlases(bool pre);
 protected:
-	void UpdateGlyphAtlasTexture();
+	void UpdateTexture();
 private:
 	void CreateTexture(const int width, const int height);
 
@@ -123,13 +123,12 @@ protected:
 	int fontSize;
 	std::string fontFamily;
 	std::string fontStyle;
+	int texWidth, texHeight;
+	int wantedTexWidth, wantedTexHeight;
+	unsigned int texture;
 
-	int texWidth;
-	int texHeight;
-	int wantedTexWidth;
-	int wantedTexHeight;
-
-	unsigned int glyphAtlasTextureID = 0;
+public:
+	unsigned int textureSpaceMatrix;
 
 private:
 	int curTextureUpdate = 0;

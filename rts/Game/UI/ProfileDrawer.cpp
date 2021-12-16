@@ -87,6 +87,7 @@ static void DrawBufferStats(const float2 pos)
 	rb.Submit(GL_TRIANGLES);
 
 	{
+		/*
 		std::array<size_t, 4> lfMetrics = {0};
 		for (const auto lf : CglFont::GetLoadedFonts()) {
 			lfMetrics[0] += lf->GetPrimaryBuffer().SumElems();
@@ -99,6 +100,7 @@ static void DrawBufferStats(const float2 pos)
 			lfMetrics[2] += lf->GetOutlineBuffer().NumSubmits(false);
 			lfMetrics[3] += lf->GetOutlineBuffer().NumSubmits(true);
 		}
+		*/
 
 		const auto& rdb0    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_0   >();
 		const auto& rdbC    = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C   >();
@@ -117,9 +119,9 @@ static void DrawBufferStats(const float2 pos)
 		#define FMT "{elems=" _STPF_ " indcs=" _STPF_ " submits{e,i}={" _STPF_ "," _STPF_ "}}"
 		font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
-		font->glFormat(pos.x, pos.y - 0.005f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tFONTS=" FMT, lfMetrics[0], lfMetrics[1], lfMetrics[2], lfMetrics[3]);
-		font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t0=" FMT, rdb0.SumElems(), rdb0.SumIndcs(), rdb0.NumSubmits(false), rdb0.NumSubmits(true));
-		font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tC=" FMT, rdbC.SumElems(), rdbC.SumIndcs(), rdbC.NumSubmits(false), rdbC.NumSubmits(true));
+		//font->glFormat(pos.x, pos.y - 0.005f, 0.5f, FONT_TOP | DBG_FONT_FLAGS, "\tFONTS=" FMT, lfMetrics[0], lfMetrics[1], lfMetrics[2], lfMetrics[3]);
+		font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS, "\t0=" FMT, rdb0.SumElems(), rdb0.SumIndcs(), rdb0.NumSubmits(false), rdb0.NumSubmits(true));
+		font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS, "\tC=" FMT, rdbC.SumElems(), rdbC.SumIndcs(), rdbC.NumSubmits(false), rdbC.NumSubmits(true));
 
 		#undef FMT
 	}
@@ -202,7 +204,7 @@ static void DrawThreadBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	}
 	{
 		// title
-		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.1f seconds :: " _STPF_ " threads)", MAX_THREAD_HIST_TIME, numThreads);
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.1f seconds :: " _STPF_ " threads)", MAX_THREAD_HIST_TIME, numThreads);
 	}
 	{
 		// need to lock; DrawTimeSlice pop_front()'s old entries from
@@ -258,7 +260,7 @@ static void DrawFrameBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	}
 
 	// title and legend
-	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED,
+	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS,
 		"Frame Grapher (%.2fsec)"
 		"\xff\xff\x80\xff  GC"
 		"\xff\xff\xff\x01  Unsynced"
@@ -333,15 +335,15 @@ static void DrawProfiler(TypedRenderBuffer<VA_TYPE_C   >& rb)
 		      float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "sum-time");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "sum-time");
 
 		// print percent of CPU time used within the last 500ms
-		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "cur-%usage");
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "max-%usage");
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "lag");
+		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
-		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "title");
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
 	}
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
@@ -354,15 +356,15 @@ static void DrawProfiler(TypedRenderBuffer<VA_TYPE_C   >& rb)
 		      float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2fs", profileData.total.toSecsf());
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2f%%", profileData.stats.y * 100.0f);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.2f%%", profileData.newPeak? 1: 255, profileData.newPeak? 1: 255, profileData.stats.z * 100.0f);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.0fms", profileData.newLagPeak? 1: 255, profileData.newLagPeak? 1: 255, profileData.stats.x);
+		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.stats.y * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak? 1: 255, profileData.newPeak? 1: 255, profileData.stats.z * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak? 1: 255, profileData.newLagPeak? 1: 255, profileData.stats.x);
 
 		// print timer name
-		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, p.first);
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, p.first);
 	}
 
 
@@ -475,35 +477,35 @@ static void DrawInfoText(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	const CProjectileHandler* ph = &projectileHandler;
 	const IPathManager* pm = pathManager;
 
-	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, fpsFmtStr, globalRendering->FPS, gu->simFPS);
-	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, ctrFmtStr, globalRendering->drawFrame, gs->frameNum);
+	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS);
+	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS, ctrFmtStr, globalRendering->drawFrame, gs->frameNum);
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
-	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, avgFmtStr,
+	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS, avgFmtStr,
 		(gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime,
 		(gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
 		(gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
 		(globalRendering->CalcGLDeltaTime(CGlobalRendering::FRAME_REF_TIME_QUERY_IDX, CGlobalRendering::FRAME_END_TIME_QUERY_IDX) * 0.001f) * 0.001f
 	);
 
-	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
-	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sfxFmtStr, ph->projectileContainers[true].size(), ph->projectileContainers[false].size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
+	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
+	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, sfxFmtStr, ph->projectileContainers[true].size(), ph->projectileContainers[false].size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
 
 	{
 		const int2 pfsUpdates = pm->GetNumQueuedUpdates();
 
 		switch (pm->GetPathFinderType()) {
 			case NOPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "NO", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "NO", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case TKPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "TK", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "TK", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case HAPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "HA", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "HA", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case QTPFS_TYPE: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			default: {
 			} break;
@@ -519,7 +521,7 @@ static void DrawInfoText(TypedRenderBuffer<VA_TYPE_C   >& rb)
 		const uint32_t allocTime = state.luaAllocTime.load();
 		const uint32_t numStates = state.numLuaStates.load();
 
-		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, luaFmtStr, allocMegs, kiloAlloc, allocTime, numStates);
+		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, allocMegs, kiloAlloc, allocTime, numStates);
 	}
 
 	{
@@ -527,10 +529,10 @@ static void DrawInfoText(TypedRenderBuffer<VA_TYPE_C   >& rb)
 
 		GetAvailableVideoRAM(&vidMemInfo.x, globalRenderingInfo.glVendor);
 
-		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
+		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
 	}
 
-	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sopFmtStr,
+	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
 		unitMemPool.alloc_size() / 1024.0f,
 		unitMemPool.freed_size() / 1024.0f,
 		featureMemPool.alloc_size() / 1024.0f,
@@ -554,6 +556,7 @@ void ProfileDrawer::DrawScreen()
 
 	shader.Enable();
 
+	font->Begin();
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
 	DrawThreadBarcode(rb);
@@ -566,7 +569,7 @@ void ProfileDrawer::DrawScreen()
 
 	shader.Disable();
 
-	font->DrawBufferedGL4();
+	font->End();
 
 	/*glMatrixMode(GL_PROJECTION);*/ glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);      glPopMatrix();
