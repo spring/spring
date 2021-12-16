@@ -649,13 +649,6 @@ void CglFont::Begin(Shader::IProgramObject* shader) {
 
 	curShader = shader;
 	assert(curShader == defShader.get()); //TODO
-
-	{
-		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
 }
 
 void CglFont::End() {
@@ -666,6 +659,11 @@ void CglFont::End() {
 	inBeginEndBlock = false;
 
 	{
+		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		//without this, fonts textures are empty in display lists somehow
 		GLboolean inListCompile;
 		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
