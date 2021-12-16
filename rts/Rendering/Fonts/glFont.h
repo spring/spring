@@ -110,6 +110,8 @@ public:
 	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
 	static bool threadSafety;
 private:
+	static void CreateDefaultShader();
+
 	static const float4* ChooseOutlineColor(const float4& textColor);
 
 	template<int shiftXC, int shiftYC, bool outline>

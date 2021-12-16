@@ -114,6 +114,8 @@ namespace Shader {
 		/// create the whole shader from a lua file
 		bool LoadFromLua(const std::string& filename);
 
+		virtual void BindAttribLocation(const char* name, uint32_t index) {}
+
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
 		virtual void EnableRaw() {}
@@ -226,12 +228,6 @@ namespace Shader {
 
 	protected:
 		int GetUniformLocation(const std::string& name) { return GetUniformState(name)->GetLocation(); }
-
-	private:
-		virtual int GetUniformLoc(const char* name) = 0;
-		virtual int GetUniformType(const int idx) = 0;
-
-		UniformState* GetNewUniformState(const char* name);
 		UniformState* GetUniformState(const std::string& name) {
 			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
 			const auto iter = uniformStates.find(hash);
@@ -251,6 +247,11 @@ namespace Shader {
 			return GetNewUniformState(name);
 		}
 
+	private:
+		virtual int GetUniformLoc(const char* name) = 0;
+		virtual int GetUniformType(const int idx) = 0;
+
+		UniformState* GetNewUniformState(const char* name);
 	protected:
 		std::string name;
 		std::string log;
@@ -274,31 +275,31 @@ namespace Shader {
 	public:
 		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
 
-		void Enable() {}
-		void Disable() {}
-		void Release() {}
-		void Reload(bool reloadFromDisk, bool validate) {}
-		bool Validate() { return true; }
-		void Link() {}
+		void Enable() override {}
+		void Disable() override {}
+		void Release() override {}
+		void Reload(bool reloadFromDisk, bool validate) override {}
+		bool Validate() override { return true; }
+		void Link() override {}
 
-		int GetUniformLoc(const char* name) { return -1; }
-		int GetUniformType(const int idx) { return -1; }
+		int GetUniformLoc(const char* name) override { return -1; }
+		int GetUniformType(const int idx) override { return -1; }
 
-		void SetUniform1i(int idx, int   v0) {}
-		void SetUniform2i(int idx, int   v0, int   v1) {}
-		void SetUniform3i(int idx, int   v0, int   v1, int   v2) {}
-		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) {}
-		void SetUniform1f(int idx, float v0) {}
-		void SetUniform2f(int idx, float v0, float v1) {}
-		void SetUniform3f(int idx, float v0, float v1, float v2) {}
-		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) {}
+		void SetUniform1i(int idx, int   v0) override {}
+		void SetUniform2i(int idx, int   v0, int   v1) override {}
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2) override {}
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) override {}
+		void SetUniform1f(int idx, float v0) override {}
+		void SetUniform2f(int idx, float v0, float v1)  override {}
+		void SetUniform3f(int idx, float v0, float v1, float v2) override {}
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) override {}
 
-		void SetUniform2iv(int idx, const int*   v) {}
-		void SetUniform3iv(int idx, const int*   v) {}
-		void SetUniform4iv(int idx, const int*   v) {}
-		void SetUniform2fv(int idx, const float* v) {}
-		void SetUniform3fv(int idx, const float* v) {}
-		void SetUniform4fv(int idx, const float* v) {}
+		void SetUniform2iv(int idx, const int*   v) override {}
+		void SetUniform3iv(int idx, const int*   v) override {}
+		void SetUniform4iv(int idx, const int*   v) override {}
+		void SetUniform2fv(int idx, const float* v) override {}
+		void SetUniform3fv(int idx, const float* v) override {}
+		void SetUniform4fv(int idx, const float* v) override {}
 	};
 
 
@@ -306,33 +307,33 @@ namespace Shader {
 	public:
 		ARBProgramObject(const std::string& poName);
 
-		void Enable();
-		void Disable();
-		void Link();
-		void Release() { IProgramObject::Release(); }
-		void Reload(bool reloadFromDisk, bool validate);
-		bool Validate() { return true; }
+		void Enable() override;
+		void Disable() override;
+		void Link() override;
+		void Release() override { IProgramObject::Release(); }
+		void Reload(bool reloadFromDisk, bool validate) override;
+		bool Validate() override { return true; }
 
-		int GetUniformLoc(const char* name) { return -1; } // FIXME
-		int GetUniformType(const int idx) { return -1; }
-		void SetUniformTarget(int target);
+		int GetUniformLoc(const char* name) override { return -1; } // FIXME
+		int GetUniformType(const int idx) override { return -1; }
+		void SetUniformTarget(int target) override;
 		int GetUnitformTarget();
 
-		void SetUniform1i(int idx, int   v0);
-		void SetUniform2i(int idx, int   v0, int   v1);
-		void SetUniform3i(int idx, int   v0, int   v1, int   v2);
-		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3);
-		void SetUniform1f(int idx, float v0);
-		void SetUniform2f(int idx, float v0, float v1);
-		void SetUniform3f(int idx, float v0, float v1, float v2);
-		void SetUniform4f(int idx, float v0, float v1, float v2, float v3);
+		void SetUniform1i(int idx, int   v0) override;
+		void SetUniform2i(int idx, int   v0, int   v1) override;
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2) override;
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) override;
+		void SetUniform1f(int idx, float v0) override;
+		void SetUniform2f(int idx, float v0, float v1) override;
+		void SetUniform3f(int idx, float v0, float v1, float v2) override;
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) override;
 
-		void SetUniform2iv(int idx, const int*   v);
-		void SetUniform3iv(int idx, const int*   v);
-		void SetUniform4iv(int idx, const int*   v);
-		void SetUniform2fv(int idx, const float* v);
-		void SetUniform3fv(int idx, const float* v);
-		void SetUniform4fv(int idx, const float* v);
+		void SetUniform2iv(int idx, const int*   v) override;
+		void SetUniform3iv(int idx, const int*   v) override;
+		void SetUniform4iv(int idx, const int*   v) override;
+		void SetUniform2fv(int idx, const float* v) override;
+		void SetUniform3fv(int idx, const float* v) override;
+		void SetUniform4fv(int idx, const float* v) override;
 
 	private:
 		int uniformTarget;
@@ -342,63 +343,65 @@ namespace Shader {
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
-		~GLSLProgramObject() { Release(); }
+		~GLSLProgramObject() override { Release(); }
+
+		void BindAttribLocation(const char* name, uint32_t index) override;
 
 		void Enable() override;
 		void Disable() override { DisableRaw(); }
 		void EnableRaw() override;
 		void DisableRaw() override;
-		void Link();
-		bool Validate();
-		void Release();
-		void Reload(bool reloadFromDisk, bool validate);
+		void Link() override;
+		bool Validate() override;
+		void Release() override;
+		void Reload(bool reloadFromDisk, bool validate) override;
 
 	public:
-		void SetUniformLocation(const std::string&);
+		void SetUniformLocation(const std::string&) override;
 
-		void SetUniform1i(int idx, int   v0);
-		void SetUniform2i(int idx, int   v0, int   v1);
-		void SetUniform3i(int idx, int   v0, int   v1, int   v2);
-		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3);
-		void SetUniform1f(int idx, float v0);
-		void SetUniform2f(int idx, float v0, float v1);
-		void SetUniform3f(int idx, float v0, float v1, float v2);
-		void SetUniform4f(int idx, float v0, float v1, float v2, float v3);
+		void SetUniform1i(int idx, int   v0) override;
+		void SetUniform2i(int idx, int   v0, int   v1) override;
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2) override;
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) override;
+		void SetUniform1f(int idx, float v0) override;
+		void SetUniform2f(int idx, float v0, float v1) override;
+		void SetUniform3f(int idx, float v0, float v1, float v2) override;
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) override;
 
-		void SetUniform2iv(int idx, const int*   v);
-		void SetUniform3iv(int idx, const int*   v);
-		void SetUniform4iv(int idx, const int*   v);
-		void SetUniform2fv(int idx, const float* v);
-		void SetUniform3fv(int idx, const float* v);
-		void SetUniform4fv(int idx, const float* v);
+		void SetUniform2iv(int idx, const int*   v) override;
+		void SetUniform3iv(int idx, const int*   v) override;
+		void SetUniform4iv(int idx, const int*   v) override;
+		void SetUniform2fv(int idx, const float* v) override;
+		void SetUniform3fv(int idx, const float* v) override;
+		void SetUniform4fv(int idx, const float* v) override;
 
-		void SetUniformMatrix2fv(int idx, bool transp, const float* v);
-		void SetUniformMatrix3fv(int idx, bool transp, const float* v);
-		void SetUniformMatrix4fv(int idx, bool transp, const float* v);
+		void SetUniformMatrix2fv(int idx, bool transp, const float* v) override;
+		void SetUniformMatrix3fv(int idx, bool transp, const float* v) override;
+		void SetUniformMatrix4fv(int idx, bool transp, const float* v) override;
 
 	private:
-		int GetUniformType(const int idx);
-		int GetUniformLoc(const char* name);
+		int GetUniformType(const int idx) override;
+		int GetUniformLoc(const char* name) override;
 
-		void SetUniform(UniformState* uState, int   v0);
-		void SetUniform(UniformState* uState, float v0);
-		void SetUniform(UniformState* uState, int   v0, int   v1);
-		void SetUniform(UniformState* uState, float v0, float v1);
-		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2);
-		void SetUniform(UniformState* uState, float v0, float v1, float v2);
-		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3);
+		void SetUniform(UniformState* uState, int   v0) override;
+		void SetUniform(UniformState* uState, float v0) override;
+		void SetUniform(UniformState* uState, int   v0, int   v1) override;
+		void SetUniform(UniformState* uState, float v0, float v1) override;
+		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2) override;
+		void SetUniform(UniformState* uState, float v0, float v1, float v2) override;
+		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) override;
 		void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3);
 
-		void SetUniform2v(UniformState* uState, const int*   v);
-		void SetUniform2v(UniformState* uState, const float* v);
-		void SetUniform3v(UniformState* uState, const int*   v);
-		void SetUniform3v(UniformState* uState, const float* v);
-		void SetUniform4v(UniformState* uState, const int*   v);
-		void SetUniform4v(UniformState* uState, const float* v);
+		void SetUniform2v(UniformState* uState, const int*   v) override;
+		void SetUniform2v(UniformState* uState, const float* v) override;
+		void SetUniform3v(UniformState* uState, const int*   v) override;
+		void SetUniform3v(UniformState* uState, const float* v) override;
+		void SetUniform4v(UniformState* uState, const int*   v) override;
+		void SetUniform4v(UniformState* uState, const float* v) override;
 
-		void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  v);
-		void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  v);
-		void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  v);
+		void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  v) override;
+		void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  v) override;
+		void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  v) override;
 
 	private:
 		std::vector<size_t> uniformLocs;

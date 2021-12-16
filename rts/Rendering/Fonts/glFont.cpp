@@ -59,7 +59,7 @@ static const float darkLuminosity = 0.05f +
 	0.0722f * std::pow(darkOutline[2], 2.2f);
 
 //can't be put in VFS due to initialization order
-constexpr const char* vsFont = R"(
+constexpr const char* vsFont330 = R"(
 #version 150 compatibility
 #extension GL_ARB_explicit_attrib_location : enable
 
@@ -79,7 +79,7 @@ void main() {
 }
 )";
 
-constexpr const char* fsFont = R"(
+constexpr const char* fsFont330 = R"(
 #version 150
 
 uniform sampler2D tex;
@@ -96,6 +96,41 @@ void main() {
 
 	float alpha = texture(tex, vUV / texSize).x;
 	outColor = vec4(vCol.r, vCol.g, vCol.b, vCol.a * alpha);
+}
+)";
+
+////////////////////
+
+constexpr const char* vsFont130 = R"(
+#version 130
+
+in vec3 pos;
+in vec2 uv;
+in vec4 col;
+
+out vec4 vCol;
+out vec2 vUV;
+
+void main() {
+	vCol = col;
+	vUV  = uv;
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(pos, 1.0); // TODO: move to UBO
+}
+)";
+
+constexpr const char* fsFont130 = R"(
+#version 130
+
+uniform sampler2D tex;
+
+in vec4 vCol;
+in vec2 vUV;
+
+void main() {
+	vec2 texSize = vec2(textureSize(tex, 0));
+
+	float alpha = texture(tex, vUV / texSize).x;
+	gl_FragColor = vec4(vCol.r, vCol.g, vCol.b, vCol.a * alpha);
 }
 )";
 
@@ -191,19 +226,7 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	viewMatrix = DefViewMatrix();
 	projMatrix = DefProjMatrix();
 
-	if (defShader == nullptr)
-	{
-		// can't use shaderHandler here because it invalidates the objects on reload
-		// but fonts are expected to be available all the time
-		defShader = std::make_unique<Shader::GLSLProgramObject>("[GL-Font]");
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER, vsFont));
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont));
-
-		defShader->Enable();
-		defShader->SetUniform("tex", 0);
-		defShader->Disable();
-	}
-
+	CreateDefaultShader();
 	curShader = defShader.get();
 
 	loadedFonts.insert(this);
@@ -560,6 +583,32 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 	SetOutlineColor(_outlineColor);
 }
 
+
+void CglFont::CreateDefaultShader()
+{
+	if (defShader != nullptr)
+		return;
+
+	// can't use shaderHandler here because it invalidates the objects on reload
+	// but fonts are expected to be available all the time
+	defShader = std::make_unique<Shader::GLSLProgramObject>("[GL-Font]");
+
+	if (GLEW_ARB_explicit_attrib_location && false) {
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER, vsFont330));
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont330));
+	}
+	else {
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER, vsFont130));
+		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont130));
+		defShader->BindAttribLocation("pos", 0);
+		defShader->BindAttribLocation("uv",  1);
+		defShader->BindAttribLocation("col", 2);
+	}
+
+	defShader->Enable();
+	defShader->SetUniform("tex", 0);
+	defShader->Disable();
+}
 
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {

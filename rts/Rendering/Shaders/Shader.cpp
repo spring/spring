@@ -430,6 +430,18 @@ namespace Shader {
 		objID = glCreateProgram();
 	}
 
+	void GLSLProgramObject::BindAttribLocation(const char* name, uint32_t index)
+	{
+		#ifdef _DEBUG
+		{
+			GLint linkStatus = GL_FALSE;
+			glGetProgramiv(objID, GL_LINK_STATUS, &linkStatus);
+			assert(linkStatus == GL_FALSE); //shouldn't be linked
+		}
+		#endif
+		glBindAttribLocation(objID, index, name);
+	}
+
 	void GLSLProgramObject::Enable() {
 		RecompileIfNeeded(true);
 		EnableRaw();
@@ -459,7 +471,7 @@ namespace Shader {
 		// append the validation-log
 		log += glslGetLog(objID);
 
-	#ifdef DEBUG
+	#ifdef _DEBUG
 		// check if there are unset uniforms left
 		GLsizei numUniforms, maxUniformNameLength;
 		glGetProgramiv(objID, GL_ACTIVE_UNIFORMS, &numUniforms);
@@ -534,11 +546,6 @@ namespace Shader {
 			}
 		}
 
-		// clear all uniform locations
-		for (auto& us_pair: uniformStates) {
-			us_pair.second.SetLocation(GL_INVALID_INDEX);
-		}
-
 		// early-exit: empty program (TODO: delete it?)
 		if (shaderObjs.empty())
 			return;
@@ -587,6 +594,32 @@ namespace Shader {
 			}
 		} else {
 			valid = true;
+		}
+
+		{
+			GLsizei numUniforms, maxUniformNameLength;
+			glGetProgramiv(objID, GL_ACTIVE_UNIFORMS, &numUniforms);
+			glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+
+			if (maxUniformNameLength > 0) {
+				std::string bufname(maxUniformNameLength, 0);
+				for (int i = 0; i < numUniforms; ++i) {
+					GLsizei nameLength = 0;
+					GLint size = 0;
+					GLenum type = 0;
+					glGetActiveUniform(objID, i, maxUniformNameLength, &nameLength, &size, &type, &bufname[0]);
+					bufname[nameLength] = 0;
+
+					if (nameLength == 0)
+						continue;
+
+					if (strncmp(bufname.c_str(), "gl_", 3) == 0)
+						continue;
+
+					// clear all uniform locations
+					GetUniformState(bufname)->SetLocation(GL_INVALID_INDEX);
+				}
+			}
 		}
 
 		// FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
