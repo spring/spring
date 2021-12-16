@@ -10,7 +10,8 @@
 
 #include <array>
 
-#if defined(HEADLESS) && !defined(WINGDIAPI)
+#if       defined(HEADLESS)
+	#undef WINGDIAPI
 	#define WINGDIAPI //working around https://github.com/beyond-all-reason/spring/issues/27
 	#include "lib/headlessStubs/glewstub.h"
 	#undef WINGDIAPI
