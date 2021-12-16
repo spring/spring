@@ -82,6 +82,7 @@ extern "C" {
 #define	GLEW_ARB_multi_draw_indirect GL_FALSE
 #define	GLEW_ARB_sync GL_FALSE
 #define GLEW_ARB_timer_query GL_FALSE
+#define GLEW_ARB_explicit_attrib_location GL_FALSE
 
 #define GLXEW_SGI_video_sync GL_FALSE
 

@@ -258,6 +258,7 @@ void CglFont::SetAutoOutlineColor(bool enable) {}
 void CglFont::SetTextColor(const float4* color) {}
 void CglFont::SetOutlineColor(const float4* color) {}
 void CglFont::SetColors(const float4* textColor, const float4* outlineColor) {}
+void CglFont::CreateDefaultShader() {}
 
 float CglFont::GetCharacterWidth(const char32_t c) { return 1.0f; }
 float CglFont::GetTextWidth_(const std::u8string& text) { return (text.size() * 1.0f); }
