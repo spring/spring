@@ -23,7 +23,8 @@ GuiElement::~GuiElement()
 {
 	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
 	{
-		delete *it;
+		if (*it == nullptr) //can be nullptr when spring errors out with some message
+			delete* it;
 	}
 }
 
