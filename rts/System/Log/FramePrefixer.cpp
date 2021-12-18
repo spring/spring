@@ -41,11 +41,12 @@ size_t log_framePrefixer_createPrefix(char* result, size_t resultSize)
 	const int32_t ss = ns /  SECS_TO_NANOSECS; ns %=  SECS_TO_NANOSECS;
 
 	assert(resultSize != 0);
+	using nsCastType = long long int;
 
 	if (frameNumRef == nullptr)
-		return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06lld] ", hh, mm, ss, (ns / 1000) % 1000000));
+		return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06lld] ", hh, mm, ss, static_cast<nsCastType>((ns / 1000) % 1000000)));
 
-	return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06lld][f=%07d] ", hh, mm, ss, (ns / 1000) % 1000000, *frameNumRef));
+	return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06lld][f=%07d] ", hh, mm, ss, static_cast<nsCastType>((ns / 1000) % 1000000), *frameNumRef));
 }
 
 #ifdef __cplusplus
