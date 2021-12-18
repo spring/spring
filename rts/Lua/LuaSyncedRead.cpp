@@ -3312,7 +3312,8 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 		lua_pushnumber(L, unit->flankingBonusDir.x);
 		lua_pushnumber(L, unit->flankingBonusDir.y);
 		lua_pushnumber(L, unit->flankingBonusDir.z);
-		return 7;
+		lua_pushnumber(L, unit->flankingBonusMobility); // the amount of mobility that the unit has collected up to now
+		return 8;
 	}
 
 	return 0;
