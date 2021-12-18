@@ -620,7 +620,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 		#endif
 	}
 
-	if (GetMemSize() == 0 || channels != 4)
+	if (GetMemSize() == 0)
 		return false;
 
 
@@ -636,10 +636,12 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = 4 * (x + (xsize * ((ysize - 1) - y)));
 			const int mi = 4 * (x + (xsize * (              y)));
-			buf[bi + 0] = mem[mi + 0];
-			buf[bi + 1] = mem[mi + 1];
-			buf[bi + 2] = mem[mi + 2];
-			buf[bi + 3] = opaque ? 0xff : mem[mi + 3];
+
+			for (int ch = 0; ch < 3; ++ch) {
+				buf[bi + ch] = (ch < channels) ? mem[mi + ch] : 0xFF;
+			}
+
+			buf[bi + 3] = opaque ? 0xFF : mem[mi + 3];
 		}
 	}
 
