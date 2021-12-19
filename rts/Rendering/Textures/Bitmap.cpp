@@ -641,7 +641,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 				buf[bi + ch] = (ch < channels) ? mem[mi + ch] : 0xFF;
 			}
 
-			buf[bi + 3] = opaque ? 0xFF : mem[mi + 3];
+			buf[bi + 3] = (!opaque && channels == 4) ? mem[mi + 3] : 0xFF;
 		}
 	}
 
