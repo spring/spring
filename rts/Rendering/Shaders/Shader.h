@@ -114,7 +114,7 @@ namespace Shader {
 		/// create the whole shader from a lua file
 		bool LoadFromLua(const std::string& filename);
 
-		virtual void BindAttribLocation(const char* name, uint32_t index) {}
+		virtual void BindAttribLocation(const std::string& name, uint32_t index) {}
 
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
@@ -268,6 +268,7 @@ namespace Shader {
 	public:
 		spring::unsynced_map<std::size_t, UniformState, fast_hash> uniformStates;
 		spring::unsynced_map<int, LuaMatTexture> luaTextures;
+		spring::unsynced_map<std::string, int> attribLocations;
 	};
 
 
@@ -345,7 +346,7 @@ namespace Shader {
 		GLSLProgramObject(const std::string& poName);
 		~GLSLProgramObject() override { Release(); }
 
-		void BindAttribLocation(const char* name, uint32_t index) override;
+		void BindAttribLocation(const std::string& name, uint32_t index) override;
 
 		void Enable() override;
 		void Disable() override { DisableRaw(); }

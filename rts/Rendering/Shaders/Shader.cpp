@@ -430,16 +430,9 @@ namespace Shader {
 		objID = glCreateProgram();
 	}
 
-	void GLSLProgramObject::BindAttribLocation(const char* name, uint32_t index)
+	void GLSLProgramObject::BindAttribLocation(const std::string& name, uint32_t index)
 	{
-		#ifdef _DEBUG
-		{
-			GLint linkStatus = GL_FALSE;
-			glGetProgramiv(objID, GL_LINK_STATUS, &linkStatus);
-			assert(linkStatus == GL_FALSE); //shouldn't be linked
-		}
-		#endif
-		glBindAttribLocation(objID, index, name);
+		attribLocations[name] = index;
 	}
 
 	void GLSLProgramObject::Enable() {
@@ -584,6 +577,10 @@ namespace Shader {
 			if (!shadersValid)
 				return;
 
+			for (const auto& [name, index] : attribLocations) {
+				glBindAttribLocation(objID, index, name.c_str());
+			}
+
 			glLinkProgram(objID);
 
 			valid = glslIsValid(objID);
@@ -592,6 +589,16 @@ namespace Shader {
 			if (!IsValid()) {
 				LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
 			}
+
+			//#ifdef _DEBUG
+			if (IsValid()) {
+				for (const auto& [name, index] : attribLocations) {
+					GLint indexOut = glGetAttribLocation(objID, name.c_str());
+					LOG("[GLSLProgramObject::%s] Setting attribute %s to location %d(requested %d) for program %u", __func__, name.c_str(), indexOut, index, objID);
+				}
+			}
+			//#endif
+
 		} else {
 			valid = true;
 		}
