@@ -40,6 +40,8 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
@@ -258,6 +260,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSunLighting);
 	REGISTER_LUA_CFUNC(SetSunDirection);
 	REGISTER_LUA_CFUNC(SetMapRenderingParams);
+
+	REGISTER_LUA_CFUNC(ForceTesselationUpdate);
 
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
 
@@ -3040,6 +3044,30 @@ int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 	groundDrawer->UpdateRenderState();
 
 	return 0;
+}
+
+int LuaUnsyncedCtrl::ForceTesselationUpdate(lua_State* L)
+{
+	CSMFGroundDrawer* smfDrawer = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
+
+	if (smfDrawer == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CRoamMeshDrawer* roamMeshDrawer = dynamic_cast<CRoamMeshDrawer*>(smfDrawer->GetMeshDrawer());
+	if (roamMeshDrawer == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CRoamMeshDrawer::ForceNextTesselation(
+		luaL_optboolean(L, 1, true ),
+		luaL_optboolean(L, 2, false)
+	);
+
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 

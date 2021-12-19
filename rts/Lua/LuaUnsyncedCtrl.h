@@ -164,6 +164,8 @@ class LuaUnsyncedCtrl {
 		static int SetSunDirection(lua_State* L);
 		static int SetMapRenderingParams(lua_State* L);
 
+		static int ForceTesselationUpdate(lua_State* L);
+
 		static int SendSkirmishAIMessage(lua_State* L);
 
 		static int SetLogSectionFilterLevel(lua_State* L);
