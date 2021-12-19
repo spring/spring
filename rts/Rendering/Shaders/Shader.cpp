@@ -590,14 +590,14 @@ namespace Shader {
 				LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
 			}
 
-			//#ifdef _DEBUG
+			#ifdef _DEBUG
 			if (IsValid()) {
 				for (const auto& [name, index] : attribLocations) {
 					GLint indexOut = glGetAttribLocation(objID, name.c_str());
 					LOG("[GLSLProgramObject::%s] Setting attribute %s to location %d(requested %d) for program %u", __func__, name.c_str(), indexOut, index, objID);
 				}
 			}
-			//#endif
+			#endif
 
 		} else {
 			valid = true;
