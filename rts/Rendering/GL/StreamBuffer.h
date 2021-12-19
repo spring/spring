@@ -159,7 +159,7 @@ public:
 		// BufferDataImpl can only upload the whole buffer completely
 		glBufferData(
 			this->target,
-			this->mapElemCount * sizeof(T),
+			(this->mapElemOffet + this->mapElemCount) * sizeof(T),
 			buffer,
 			GL_STREAM_DRAW
 		);
