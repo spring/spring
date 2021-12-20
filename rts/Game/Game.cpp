@@ -1522,12 +1522,13 @@ void CGame::SimFrame() {
 	gs->frameNum += 1;
 	lastFrameTime = spring_gettime();
 
+#if 0
 	if (globalRendering->timeOffset > 1.0)
 		lastFrameTime += spring_time::fromNanoSecs(static_cast<int64_t>((globalRendering->timeOffset - 1.0f) / globalRendering->weightedSpeedFactor * std::int64_t(1e6)));
 
 	if (globalRendering->timeOffset < 0.0)
 		lastFrameTime += spring_time::fromNanoSecs(static_cast<int64_t>((globalRendering->timeOffset       ) / globalRendering->weightedSpeedFactor * std::int64_t(1e6)));
-
+#endif
 
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
