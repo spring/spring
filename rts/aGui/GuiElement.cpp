@@ -3,6 +3,7 @@
 #include "GuiElement.h"
 
 #include "Rendering/GL/myGL.h"
+#include "System/SafeUtil.h"
 
 namespace agui
 {
@@ -21,19 +22,16 @@ GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false),
 
 GuiElement::~GuiElement()
 {
-	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-	{
-		if (*it == nullptr) //can be nullptr when spring errors out with some message
-			delete* it;
-	}
+	for (auto& ch: children)
+		spring::SafeDelete(ch);
 }
 
 void GuiElement::Draw()
 {
 	DrawSelf();
-	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
+	for (auto ch: children)
 	{
-		(*it)->Draw();
+		ch->Draw();
 	}
 }
 
@@ -41,9 +39,9 @@ bool GuiElement::HandleEvent(const SDL_Event& ev)
 {
 	if (HandleEventSelf(ev))
 		return true;
-	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
+	for (auto ch : children)
 	{
-		if ((*it)->HandleEvent(ev))
+		if (ch->HandleEvent(ev))
 			return true;
 	}
 	return false;
@@ -114,10 +112,8 @@ void GuiElement::SetSize(float x, float y, bool fixed)
 void GuiElement::GeometryChange()
 {
 	GeometryChangeSelf();
-	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-	{
-		(*it)->GeometryChange();
-	}
+	for (auto ch : children)
+		ch->GeometryChange();
 }
 
 float GuiElement::DefaultOpacity() const
@@ -129,10 +125,8 @@ void GuiElement::Move(float x, float y)
 {
 	pos[0] += x;
 	pos[1] += y;
-	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-	{
-		(*it)->Move(x, y);
-	}
+	for (auto ch : children)
+		ch->Move(x, y);
 }
 
 void GuiElement::DrawBox(int how)
