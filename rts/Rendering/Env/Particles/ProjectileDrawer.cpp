@@ -257,6 +257,7 @@ void CProjectileDrawer::Init() {
 
 
 	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
+	for (auto& mr : modelRenderers) { mr.Clear(); }
 
 	LoadWeaponTextures();
 
