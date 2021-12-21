@@ -29,7 +29,8 @@ class LuaShaders {
 		std::string errorLog;
 
 		GLuint GetProgramName(uint32_t progIdx) const;
-		const Program& GetProgram(uint32_t progIdx) const;
+		const Program* GetProgram(uint32_t progIdx) const;
+		      Program* GetProgram(uint32_t progIdx);
 	private:
 		struct Object {
 			Object(GLuint _id, GLenum _type) : id(_id), type(_type) {}
@@ -40,6 +41,8 @@ class LuaShaders {
 		struct ActiveUniform {
 			GLint size = 0;
 			GLenum type = 0;
+		};
+		struct ActiveUniformLocation {
 			GLint location = -1;
 		};
 		struct Program {
@@ -48,21 +51,21 @@ class LuaShaders {
 			GLuint id;
 			std::vector<Object> objects;
 			std::unordered_map<std::string, ActiveUniform> activeUniforms;
+			std::unordered_map<std::string, ActiveUniformLocation> activeUniformLocations;
 		};
 	private:
 		std::vector<Program> programs;
 		std::vector<uint32_t> unused; // references slots in programs
-
-		inline static const Program dummyProgram = Program(0);
 	private:
 		uint32_t AddProgram(const Program& p);
 		bool RemoveProgram(uint32_t progIdx);
 		GLuint GetProgramName(lua_State* L, int index) const;
-		const Program& GetProgram(lua_State* L, int index) const;
+		const Program* GetProgram(lua_State* L, int index) const;
+		      Program* GetProgram(lua_State* L, int index);
 	private:
 		// helper
 		static bool DeleteProgram(Program& p);
-		static GLint GetUniformLocation(const Program& p, const char* name);
+		static GLint GetUniformLocation(Program* p, const char* name);
 	private:
 
 		// the call-outs
@@ -89,7 +92,7 @@ class LuaShaders {
 		static int GetShaderLog(lua_State* L);
 
 	private:
-		inline static const Program* activeProgram = &dummyProgram;
+		inline static Program* activeProgram = nullptr;
 		inline static int activeShaderDepth = 0;
 };
 

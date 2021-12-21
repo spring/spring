@@ -102,13 +102,22 @@ GLuint LuaShaders::GetProgramName(uint32_t progIdx) const
 	return 0;
 }
 
-const LuaShaders::Program& LuaShaders::GetProgram(uint32_t progIdx) const
+const LuaShaders::Program* LuaShaders::GetProgram(uint32_t progIdx) const
 {
-	if (progIdx < programs.size())
-		return programs[progIdx];
+	if (progIdx < programs.size() && progIdx > 0)
+		return &programs[progIdx];
 
-	return dummyProgram;
+	return nullptr;
 }
+
+LuaShaders::Program* LuaShaders::GetProgram(uint32_t progIdx)
+{
+	if (progIdx < programs.size() && progIdx > 0)
+		return &programs[progIdx];
+
+	return nullptr;
+}
+
 
 GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 {
@@ -118,13 +127,15 @@ GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 	return (GetProgramName(luaL_checkint(L, index)));
 }
 
-const LuaShaders::Program& LuaShaders::GetProgram(lua_State* L, int index) const
+const LuaShaders::Program* LuaShaders::GetProgram(lua_State* L, int index) const
 {
-	if (luaL_checkint(L, index) <= 0)
-		return dummyProgram;
-
 	return (GetProgram(luaL_checkint(L, index)));
 }
+LuaShaders::Program* LuaShaders::GetProgram(lua_State* L, int index)
+{
+	return (GetProgram(luaL_checkint(L, index)));
+}
+
 
 uint32_t LuaShaders::AddProgram(const Program& p)
 {
@@ -317,7 +328,7 @@ namespace {
 				} break;
 				}
 
-				ParseUniformType(L, iter->second.location, type);
+				ParseUniformType(L, p.activeUniformLocations.find(uniformName)->second.location, type);
 			}
 		}
 
@@ -337,20 +348,27 @@ namespace {
 
 		prog.activeUniforms.reserve(numUniforms);
 
+		std::array<char, 512> nameBuffer = { 0 };
 		for (int i = 0; i < numUniforms; ++i) {
 			LuaShaders::ActiveUniform u;
-			std::array<char, 512> name = {0};
-			glGetActiveUniform(prog.id, i, name.size() - 1, &uniformLen, &u.size, &u.type, name.data());
+			LuaShaders::ActiveUniformLocation ul;
+
+			glGetActiveUniform(prog.id, i, nameBuffer.size() - 1, &uniformLen, &u.size, &u.type, nameBuffer.data());
+
+			if (strncmp(nameBuffer.data(), "gl_", 3) == 0)
+				continue;
+
+			nameBuffer[uniformLen + 1] = '\0';
+			std::string name(nameBuffer.data());
 
 			if (name[uniformLen - 1] == ']') {
 				// strip "[0]" postfixes from array-uniform names
-				name[uniformLen - 3] = 0;
-				name[uniformLen - 2] = 0;
-				name[uniformLen - 1] = 0;
+				name = name.substr(0, uniformLen - 3);
 			}
 
-			u.location = glGetUniformLocation(prog.id, name.data());
-			prog.activeUniforms[name.data()] = u;
+			ul.location = glGetUniformLocation(prog.id, name.data());
+			prog.activeUniforms[name] = u;
+			prog.activeUniformLocations[name] = ul;
 		}
 
 		return currentProgram;
@@ -498,10 +516,21 @@ namespace {
 	}
 } //anonymous NS
 
-GLint LuaShaders::GetUniformLocation(const LuaShaders::Program& p, const char* name)
+GLint LuaShaders::GetUniformLocation(LuaShaders::Program* p, const char* name)
 {
-	const auto iter = p.activeUniforms.find(name);
-	return (iter != p.activeUniforms.cend()) ? iter->second.location : -1;
+	if (!p)
+		return -1;
+
+	const auto iter = p->activeUniformLocations.find(name);
+	if (iter == p->activeUniformLocations.cend()) {
+		ActiveUniformLocation ul;
+		ul.location = glGetUniformLocation(p->id, name);
+		p->activeUniformLocations[name] = ul;
+
+		return ul.location;
+	}
+
+	return iter->second.location;
 }
 
 int LuaShaders::CreateShader(lua_State* L)
@@ -682,20 +711,20 @@ int LuaShaders::UseShader(lua_State* L)
 	const int progIdx = luaL_checkint(L, 1);
 	if (progIdx == 0) {
 		glUseProgram(0);
-		activeProgram = &dummyProgram;
+		activeProgram = nullptr;
 		lua_pushboolean(L, true);
 		return 1;
 	}
 
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	const auto& prog = shaders.GetProgram(progIdx);
+	auto* prog = shaders.GetProgram(progIdx);
 
-	if (prog.id == dummyProgram.id) {
-		activeProgram = &dummyProgram;
+	if (prog == nullptr) {
+		activeProgram = nullptr;
 		lua_pushboolean(L, false);
 	} else {
-		activeProgram = &prog;
-		glUseProgram(prog.id);
+		activeProgram = prog;
+		glUseProgram(prog->id);
 		lua_pushboolean(L, true);
 	}
 	return 1;
@@ -707,12 +736,12 @@ int LuaShaders::ActiveShader(lua_State* L)
 	const int progIdx = luaL_checkint(L, 1);
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 
-	auto prog = &dummyProgram;
+	Program* prog = nullptr;
 
 	if (progIdx != 0) {
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
-		if ((prog = &shaders.GetProgram(progIdx))->id == dummyProgram.id) {
+		if ((prog = shaders.GetProgram(progIdx)) == nullptr) {
 			return 0;
 		}
 	}
@@ -725,7 +754,7 @@ int LuaShaders::ActiveShader(lua_State* L)
 	activeShaderDepth++;
 	const int error = lua_pcall(L, lua_gettop(L) - 2, 0, 0);
 	activeShaderDepth--;
-	activeProgram = &dummyProgram;
+	activeProgram = nullptr;
 	glUseProgram(currentProgram);
 
 	if (error != 0) {
@@ -778,21 +807,21 @@ static const char* UniformTypeString(GLenum type)
 int LuaShaders::GetActiveUniforms(lua_State* L)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	const auto& prog = shaders.GetProgram(L, 1);
+	const auto* prog = shaders.GetProgram(L, 1);
 
-	if (prog.id == dummyProgram.id)
+	if (prog == nullptr)
 		return 0;
 
 	lua_newtable(L);
 
 	GLint i = 0;
-	for (const auto& [name, au] : prog.activeUniforms) {
+	for (const auto& [name, au] : prog->activeUniforms) {
 		lua_newtable(L); {
 			HSTR_PUSH_STRING(L, "name"    , name);
 			HSTR_PUSH_STRING(L, "type"    , UniformTypeString(au.type));
 			HSTR_PUSH_NUMBER(L, "length"  , name.size());
 			HSTR_PUSH_NUMBER(L, "size"    , au.size);
-			HSTR_PUSH_NUMBER(L, "location", au.location);
+			HSTR_PUSH_NUMBER(L, "location", prog->activeUniformLocations.at(name).location);
 		}
 		lua_rawseti(L, -2, i + 1);
 		++i;
@@ -804,10 +833,10 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 
 int LuaShaders::GetUniformLocation(lua_State* L)
 {
-	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	const auto& prog = shaders.GetProgram(L, 1);
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	Program* prog = shaders.GetProgram(L, 1);
 
-	if (prog.id == dummyProgram.id)
+	if (prog == nullptr)
 		return 0;
 
 	const char* name = luaL_checkstring(L, 2);
@@ -877,7 +906,7 @@ int LuaShaders::Uniform(lua_State* L)
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
 
-	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(*activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
+	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
@@ -907,7 +936,7 @@ int LuaShaders::UniformInt(lua_State* L)
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
 
-	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(*activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
+	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
@@ -967,7 +996,7 @@ int LuaShaders::UniformArray(lua_State* L)
 			#if 0
 			GLUniformArray<int>(L, glUniform1iv, LuaUtils::ParseIntArray);
 			#else
-			const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(*activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
+			const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
 			const int cnt = LuaUtils::ParseIntArray(L, 3, intUniformArrayBuf, sizeof(intUniformArrayBuf) / sizeof(int));
 
 			glUniform1iv(location, cnt, &intUniformArrayBuf[0]);
@@ -978,7 +1007,7 @@ int LuaShaders::UniformArray(lua_State* L)
 			#if 0
 			GLUniformArray<float>(L, glUniform1fv, LuaUtils::ParseFloatArray);
 			#else
-			const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(*activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
+			const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
 			const int cnt = LuaUtils::ParseFloatArray(L, 3, fltUniformArrayBuf, sizeof(fltUniformArrayBuf) / sizeof(float));
 
 			glUniform1fv(location, cnt, &fltUniformArrayBuf[0]);
@@ -997,7 +1026,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
 
-	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(*activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
+	const GLuint location = (lua_type(L, 1) == LUA_TSTRING) ? GetUniformLocation(activeProgram, luaL_checkstring(L, 1)) : luaL_checkint(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
