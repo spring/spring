@@ -1164,14 +1164,8 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 
 void CMiniMap::DrawCameraFrustumAndMouseSelection()
 {
-	glDisable(GL_TEXTURE_2D);
-
-	// clip everything outside of the minimap box
-	SetClipPlanes(false);
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-	glEnable(GL_CLIP_PLANE2);
-	glEnable(GL_CLIP_PLANE3);
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(curPos.x, curPos.y, curDim.x, curDim.y);
 
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
@@ -1179,6 +1173,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2d0>();
+	auto& sh = rb.GetShader();
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
@@ -1258,25 +1253,21 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		}
 
 		for (int i = 0; i < pts.size(); ++i) {
-			const int ii = (i + 1) % (pts.size());
-			rb.AddVertex({ pts[i ].first, pts[i ].second });
-			rb.AddVertex({ pts[ii].first, pts[ii].second });
+			rb.AddVertex({ pts[i].first, pts[i].second });
 		}
 
-		//auto& sh = rb.GetShader();
-
 		glLineWidth(2.5f);
-		//sh.Enable();
-		//sh.SetUniformMatrix4x4("transformMatrix", false, );
-		//sh.SetUniform("ucolor", 0.0f, 0.0f, 0.0f, 0.5f);
-		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-		rb.DrawArrays(GL_LINES, false);
+		sh.Enable();
+
+		sh.SetUniform("ucolor", 0.0f, 0.0f, 0.0f, 0.5f);
+		rb.DrawArrays(GL_LINE_LOOP, false);
 
 		glLineWidth(1.5f);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.75f);
-		//sh.SetUniform("ucolor", 1.0f, 1.0f, 1.0f, 0.75f);
-		//va->DrawArray2d0(GL_LINES);
-		rb.DrawArrays(GL_LINES);
+		sh.SetUniform("ucolor", 1.0f, 1.0f, 1.0f, 0.75f);
+		rb.DrawArrays(GL_LINE_LOOP);
+
+		sh.SetUniform("ucolor", 1.0f, 1.0f, 1.0f, 1.0f);
+		sh.Disable();
 
 		glLineWidth(1.0f);
 #endif
@@ -1308,13 +1299,17 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	DrawNotes();
 
+	/*
 	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
 	glDisable(GL_CLIP_PLANE1);
 	glDisable(GL_CLIP_PLANE2);
 	glDisable(GL_CLIP_PLANE3);
+	*/
 
 	glPopMatrix();
+
+	glDisable(GL_SCISSOR_TEST);
 	glEnable(GL_TEXTURE_2D);
 }
 
