@@ -33,7 +33,7 @@ public:
 
 	std::size_t GetHash() const;
 private:
-	mutable size_t perfectHash = 0u;
+	mutable std::size_t perfectHash = 0u;
 	std::unordered_map<uint8_t, TypedTexture> textures; //relBinding, textureID
 
 	static constexpr uint32_t MAX_TEXTURE_ID = 1 << 17; //enough for everyone (c)
@@ -41,5 +41,5 @@ private:
 
 class TexturesSetHash {
 public:
-	size_t operator()(const TexturesSet& ts) const { return ts.GetHash(); }
+	std::size_t operator()(const TexturesSet& ts) const { return ts.GetHash(); }
 };
