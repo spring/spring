@@ -147,9 +147,9 @@ if (MINGW)
 endif (MINGW)
 fix_lib_name(unitsync)
 
-install (TARGETS unitsync
-	RUNTIME DESTINATION ${LIBDIR}
-	LIBRARY DESTINATION ${LIBDIR})
+include(GNUInstallDirs)
+install(TARGETS unitsync
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_subdirectory(test)
 
