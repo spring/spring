@@ -46,7 +46,7 @@ struct StacktraceLine {
 	int type;
 
 	char modName[MAX_PATH];
-	DWORD dwModAddr;
+	DWORD64 dwModAddr;
 #ifdef _MSC_VER
 	char fileName[MAX_PATH];
 	DWORD lineNumber;
@@ -148,7 +148,7 @@ bool InitImageHlpDll()
 		return TRUE;
 	}
 #else // _MSC_VER >= 1500
-	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
+	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD64 baseOfDll, PVOID userContext)
 	{
 		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
 		return TRUE;
