@@ -137,7 +137,7 @@ void CSMFMapFile::ReadFeatureInfo()
 	constexpr size_t N = S / K;
 
 	if (featureHeader.numFeatureType > N) {
-		snprintf(featureTypes[0], S - 1, "[SMFMapFile::%s] " _STPF_ " excess feature-types defined\n", __func__, static_cast<uint32_t>(featureHeader.numFeatureType - N));
+		snprintf(featureTypes[0], S - 1, "[SMFMapFile::%s] " _STPF_ " excess feature-types defined\n", __func__, static_cast<size_t>(featureHeader.numFeatureType - N));
 		throw content_error(featureTypes[0]);
 	}
 
