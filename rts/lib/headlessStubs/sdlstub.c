@@ -113,6 +113,25 @@ extern DECLSPEC int SDLCALL SDL_SetWindowFullscreen(SDL_Window* window, Uint32 f
 	return 0;
 }
 
+extern DECLSPEC int SDLCALL SDL_GetWindowBordersSize(SDL_Window* window,
+	int* top, int* left,
+	int* bottom, int* right) {
+
+	if (top)
+		*top = 0;
+
+	if (left)
+		*left = 0;
+
+	if (bottom)
+		*bottom = 0;
+
+	if (right)
+		*right = 0;
+
+	return 0;
+}
+
 extern DECLSPEC void SDLCALL SDL_SetWindowBordered(SDL_Window* window, SDL_bool bordered) {
 }
 
@@ -270,6 +289,10 @@ extern DECLSPEC int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
 }
 
 extern DECLSPEC int SDL_GL_GetSwapInterval() {
+	return 0;
+}
+
+extern DECLSPEC int SDLCALL SDL_GL_SetSwapInterval(int interval) {
 	return 0;
 }
 

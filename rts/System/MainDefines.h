@@ -33,7 +33,7 @@
 
 
 /* define a common indicator for 32bit or 64bit-ness */
-#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
+#if defined _WIN64 || defined __x86_64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
 #define __arch64__
 #define __archBits__ 64
 #else
