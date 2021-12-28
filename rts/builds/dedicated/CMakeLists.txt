@@ -44,25 +44,11 @@ if    (UNIX AND NOT MINGW)
 	endif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 endif (UNIX AND NOT MINGW)
 
-if    (MINGW OR APPLE)
-	# Windows:
-	# We still need these header files,
-	# even if we are not going to link with SDL.
-	# We have them available anyway (mingwlibs).
-	# OS X:
-	# Cocoa requires the SDL libary, whenever the SDL headers are used,
-	# due to some #define magic, which is practically impossible to workaround.
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
-		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-	endif()
-else  (MINGW OR APPLE)
-	# Use a direct copy of the GL and SDL headers,
-	# as these may not be available on headless systems.
-	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR APPLE)
-
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
+if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+endif()
 
 ### Assemble the incude dirs
 include_directories(${ENGINE_SRC_ROOT_DIR}/)

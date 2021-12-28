@@ -19,17 +19,8 @@ if (WIN32)
 	list(APPEND unitsync_libs ${WINMM_LIBRARY})
 endif (WIN32)
 
-if    (MINGW OR MSVC)
-	# We still need these header files,
-	# even if we are not going to link with SDL.
-	# We have them available anyway (mingwlibs).
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-else  (MINGW OR MSVC)
-	# Use a direct copy of the GL and SDL headers,
-	# as these may not be available on headless systems.
-	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR MSVC)
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
 
 if    (MINGW)
 	#list(APPEND unitsync_lib_flags -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread)

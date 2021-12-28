@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "glstub.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,7 +150,7 @@ GLAPI void APIENTRY glGetShaderSource(GLuint shader, GLsizei bufSize, GLsizei *l
 GLAPI void APIENTRY glCompileShader(GLuint shader) {}
 GLAPI void APIENTRY glGetShaderiv(GLuint shader, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glGetShaderInfoLog(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog) {}
-GLAPI void APIENTRY glShaderSource (GLuint shader, GLsizei count, const GLchar* *string, const GLint *length) {}
+GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length) {}
 
 GLAPI void APIENTRY glUniform1fARB(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2fARB(GLint location, GLfloat v0, GLfloat v1) {}

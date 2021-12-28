@@ -14,24 +14,10 @@ remove_definitions(-DAVI_CAPTURING)
 
 set(OpenGL_GL_PREFERENCE LEGACY)
 include_directories(${OPENAL_INCLUDE_DIR})
-if    (MINGW OR APPLE OR MSVC)
-	# Windows:
-	# We still need these header files,
-	# even if we are not going to link with gl, glu and SDL.
-	# We have them available anyway (mingwlibs).
-	# OS X:
-	# Cocoa requires the SDL libary, whenever the SDL headers are used,
-	# due to some #define magic, which is practically impossible to workaround.
-	find_package(OpenGL REQUIRED)
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-else  ()
-	# Use a direct copy of the GL and SDL headers,
-	# as these may not be available on headless systems.
-	include_directories(${CMAKE_SOURCE_DIR}/include)
-	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif ()
 
+find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 list(APPEND engineHeadlessLibraries meshoptimizer)
