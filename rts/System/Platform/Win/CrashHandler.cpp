@@ -141,19 +141,19 @@ bool InitImageHlpDll()
 
 
 /** Callback for SymEnumerateModules */
-#if _MSC_VER >= 1500
-	static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
-	{
-		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
-		return TRUE;
-	}
-#else // _MSC_VER >= 1500
-	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD64 baseOfDll, PVOID userContext)
-	{
-		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
-		return TRUE;
-	}
-#endif // _MSC_VER >= 1500
+#if defined(_M_X64) || defined(__amd64__)
+static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD64 baseOfDll, PVOID userContext)
+{
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
+	return TRUE;
+}
+#else
+static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
+{
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
+	return TRUE;
+}
+#endif
 
 
 
@@ -407,7 +407,12 @@ void PrepareStacktrace(const int logLevel) {
 
 	// Record list of loaded DLLs.
 	LOG_RAW_LINE(logLevel, "DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, nullptr);
+
+#if defined(_M_X64) || defined(__amd64__)
+	SymEnumerateModules64(GetCurrentProcess(), EnumModules, nullptr);
+#else
+	SymEnumerateModules(GetCurrentProcess(), EnumModules, nullptr);
+#endif
 }
 
 void CleanupStacktrace(const int logLevel) {
