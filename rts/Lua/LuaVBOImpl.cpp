@@ -360,7 +360,7 @@ bool LuaVBOImpl::DefineElementArray(const sol::optional<sol::object> attribDefAr
 		if (attribDefArgOpt.value().is<int>())
 			indexType = attribDefArgOpt.value().as<int>();
 		else
-			LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid argument object type [%d]. Must be a valid GL type constant", __func__, attribDefArgOpt.value().get_type());
+			LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid argument object type [%d]. Must be a valid GL type constant", __func__, static_cast<int>(attribDefArgOpt.value().get_type()));
 	}
 
 	switch (indexType) {
