@@ -2593,6 +2593,9 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 	if (unit->GetTransporter() != this)
 		return false;
 
+	if (unit->detached)
+		return false;
+
 	for (TransportedUnit& tu: transportedUnits) {
 		if (tu.unit != unit)
 			continue;
