@@ -535,7 +535,13 @@ static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 	if (o == nullptr)
 		return 0;
 
-	o->ForcedSpin((float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4))).SafeNormalize());
+	const float3 newDir = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)).SafeNormalize();
+
+	if (math::fabsf(newDir.SqLength() - 1.0f) > float3::cmp_eps()) {
+		luaL_error(L, "[%s] Invalid front-direction (%f, %f, %f), id = %d, model = %s, teamID = %d", __func__, newDir.x, newDir.y, newDir.z, o->id, o->model ? o->model->name.c_str() : "nullptr", o->team);
+	}
+
+	o->ForcedSpin(newDir);
 	return 0;
 }
 
