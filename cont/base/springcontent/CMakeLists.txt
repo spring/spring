@@ -1,3 +1,8 @@
+# Re-run cmake whenever Git index changes
+set_property(GLOBAL APPEND
+  PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/.git/index"
+)
+
 file(GLOB_RECURSE ARB_SHADERS  "shaders/ARB/*.vp" "shaders/ARB/*.fp")
 file(GLOB_RECURSE GLSL_SHADERS "shaders/GLSL/*.glsl" "shaders/GLSL/*.lua")
 
