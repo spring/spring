@@ -8,6 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 
 #include "fmt/format.h"
 #include "lib/fmt/printf.h"
@@ -45,20 +46,22 @@ template <typename T>
 class RenderBufferShader {
 public:
 	static Shader::IProgramObject& GetShader() {
+
+		Shader::IProgramObject* shader = shaderHandler->GetProgramObject(poClass, typeName);
+
 		if (shader) {
 			if (!shader->IsReloadRequested())
-				return *(shader.get());
+				return *shader;
 			else {
-				shader->Release();
+				shaderHandler->ReleaseProgramObject(poClass, typeName);
 				shader = nullptr;
 			}
 		}
 
-		if (!shader) {
-			// can't use shaderHandler here because it invalidates the objects on reload
-			// but shaders are expected to be available all the time
-			shader = std::make_unique<Shader::GLSLProgramObject>(typeName);
-		}
+		if (!shader)
+			shader = shaderHandler->CreateProgramObject(poClass, typeName, false);
+
+		assert(shader);
 
 		std::string vertSrc = GetShaderTemplate("GLSL/RenderBufferVertTemplate.glsl");
 		std::string fragSrc = GetShaderTemplate("GLSL/RenderBufferFragTemplate.glsl");
@@ -87,8 +90,8 @@ public:
 			fragOutput
 		);
 
-		shader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER  , vertSrc));
-		shader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fragSrc));
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertSrc, "", GL_VERTEX_SHADER));
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragSrc, "", GL_FRAGMENT_SHADER));
 
 		shader->Link();
 
@@ -192,8 +195,7 @@ private:
 		return stSource;
 	}
 private:
-	inline static std::unique_ptr<Shader::IProgramObject> shader = nullptr;
-
+	static constexpr const char* poClass = "[RenderBufferShader]";
 	static constexpr const char* typeName = spring::TypeToCStr<T>();
 	static constexpr const char* nl = "\r\n";
 };
