@@ -1,6 +1,6 @@
-# Re-run cmake whenever Git index changes
+# Re-run cmake whenever Git ORIG_HEAD changes
 set_property(GLOBAL APPEND
-  PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/.git/index"
+  PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/.git/ORIG_HEAD"
 )
 
 file(GLOB_RECURSE ARB_SHADERS  "shaders/ARB/*.vp" "shaders/ARB/*.fp")
