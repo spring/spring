@@ -142,7 +142,7 @@ bool InitImageHlpDll()
 
 /** Callback for SymEnumerateModules */
 #if defined(_M_X64) || defined(__amd64__)
-static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD64 baseOfDll, PVOID userContext)
+static BOOL CALLBACK EnumModules(PCSTR moduleName, DWORD64 baseOfDll, PVOID userContext)
 {
 	LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%p\t%s", reinterpret_cast<void*>(ptrdiff_t(baseOfDll)), moduleName);
 	return TRUE;
