@@ -49,13 +49,18 @@
   but support for it has not yet spread wide enough.
 */
 #if defined __arch64__
-	#define __SIZE_T_PRINTF_FORMAT__ "%llu"
+    #if defined __MINGW64__ && (__GNUC__ < 11)
+		#define __SIZE_T_PRINTF_FORMAT__ "%I64u"
+    #elif defined __linux__
+		#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+	#else
+		#define __SIZE_T_PRINTF_FORMAT__ "%llu"
+    #endif
 #else
-	#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+	#define __SIZE_T_PRINTF_FORMAT__ "%u"
 #endif
 /* a shorter form */
 #define _STPF_ __SIZE_T_PRINTF_FORMAT__
-
 
 #if defined(_MSC_VER)
 	#define _threadlocal __declspec(thread)
