@@ -499,7 +499,12 @@ int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 	lua_pushnumber(L, globalRendering->winSizeY);
 	lua_pushnumber(L, globalRendering->winPosX);
 	lua_pushnumber(L, winPosY_bl);
-	return 4;
+
+	lua_pushnumber(L, globalRendering->winBorder[0]);
+	lua_pushnumber(L, globalRendering->winBorder[1]);
+	lua_pushnumber(L, globalRendering->winBorder[2]);
+	lua_pushnumber(L, globalRendering->winBorder[3]);
+	return 4 + 4;
 }
 
 
@@ -507,8 +512,9 @@ int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 {
 	lua_pushnumber(L, globalRendering->screenSizeX);
 	lua_pushnumber(L, globalRendering->screenSizeY);
-	lua_pushnumber(L, 0.0f);
-	lua_pushnumber(L, 0.0f);
+	lua_pushnumber(L, globalRendering->screenPosX);
+	lua_pushnumber(L, globalRendering->screenPosY);
+
 	return 4;
 }
 

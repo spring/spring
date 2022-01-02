@@ -76,24 +76,25 @@ bool CheckAvailableVideoModes()
 		SDL_DisplayMode pm = {0, 0, 0, 0, nullptr};
 		SDL_Rect db;
 		SDL_GetDisplayBounds(k, &db);
+		const std::string dn = SDL_GetDisplayName(k);
 
-		LOG("\tdisplay=%d modes=%d bounds={x=%d, y=%d, w=%d, h=%d}", k + 1, numModes, db.x, db.y, db.w, db.h);
+		LOG("\tDisplay (%s)=%d modes=%d bounds={x=%d, y=%d, w=%d, h=%d}", dn.c_str(), k + 1, numModes, db.x, db.y, db.w, db.h);
 
 		for (int i = 0; i < numModes; ++i) {
 			SDL_GetDisplayMode(k, i, &cm);
 
-			const float r0 = (cm.w *  9.0f) / cm.h;
-			const float r1 = (cm.w * 10.0f) / cm.h;
-			const float r2 = (cm.w * 16.0f) / cm.h;
-
-			// skip legacy (3:2, 4:3, 5:4, ...) and weird (10:6, ...) ratios
-			if (r0 != 16.0f && r1 != 16.0f && r2 != 25.0f)
-				continue;
 			// show only the largest refresh-rate and bit-depth per resolution
 			if (cm.w == pm.w && cm.h == pm.h && (SDL_BPP(cm.format) < SDL_BPP(pm.format) || cm.refresh_rate < pm.refresh_rate))
 				continue;
 
-			globalRenderingInfo.availableVideoModes.emplace_back(std::array{ k + 1, cm.w, cm.h, static_cast<int>(SDL_BPP(cm.format)), cm.refresh_rate });
+			globalRenderingInfo.availableVideoModes.emplace_back(GlobalRenderingInfo::AvailableVideoMode{
+				dn,
+				k + 1,
+				cm.w,
+				cm.h,
+				static_cast<int32_t>(SDL_BPP(cm.format)),
+				cm.refresh_rate
+			});
 
 			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), cm.w, cm.h, SDL_BPP(cm.format), cm.refresh_rate);
 			pm = cm;

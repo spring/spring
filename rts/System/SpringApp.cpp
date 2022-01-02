@@ -768,6 +768,7 @@ bool SpringApp::Update()
 	swap = (retc && activeController != nullptr && activeController->Draw());
 	#endif
 
+	globalRendering->UpdateWindow();
 	// always swap by default, not doing so can upset some drivers
 	globalRendering->SwapBuffers(swap, false);
 	return retc;

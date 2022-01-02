@@ -32,27 +32,32 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	for (int i = 0; i < globalRenderingInfo.availableVideoModes.size(); ++i) {
 		lua_pushnumber(L, i + 1);
 
-		lua_createtable(L, 0, 5);
+		lua_createtable(L, 0, 6);
 
 		lua_pushsstring(L, "display");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][0]);
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].displayIndex);
+		lua_rawset(L, -3);
+
+		lua_pushsstring(L, "displayName");
+		lua_pushsstring(L, globalRenderingInfo.availableVideoModes[i].displayName.c_str());
 		lua_rawset(L, -3);
 
 		lua_pushsstring(L, "w");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][1]);
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].width);
 		lua_rawset(L, -3);
 
 		lua_pushsstring(L, "h");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][2]);
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].height);
 		lua_rawset(L, -3);
 
 		lua_pushsstring(L, "bpp");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][3]);
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].bpp);
 		lua_rawset(L, -3);
 
 		lua_pushsstring(L, "hz");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i][4]);
+		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].refreshRate);
 		lua_rawset(L, -3);
+
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);

@@ -40,7 +40,7 @@ public:
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
+	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden);
 	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
 	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
 	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
@@ -64,12 +64,15 @@ public:
 	void LogDisplayMode(SDL_Window* window) const;
 
 	void SetWindowTitle(const std::string& title);
+	void UpdateWindow();
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
 
 	bool GetWindowInputGrabbing();
 	bool SetWindowInputGrabbing(bool enable);
 	bool ToggleWindowInputGrabbing();
+
+	bool SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl);
 
 	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	void SetDualScreenParams();
@@ -125,6 +128,10 @@ public:
 	int screenSizeX;
 	int screenSizeY;
 
+	/// the screen offsets in pixels (in case display is not the first one)
+	int screenPosX;
+	int screenPosY;
+
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;
@@ -140,6 +147,12 @@ public:
 	/// the viewport size in pixels
 	int viewSizeX;
 	int viewSizeY;
+
+	/// the window borders
+	std::array<int, 4> winBorder;
+
+	/// Some settings got changed need to adjust the way window is
+	unsigned int winChgFrame;
 
 	/// screen {View,Proj} matrices for rendering in pixel coordinates
 	CMatrix44f screenViewMatrix;

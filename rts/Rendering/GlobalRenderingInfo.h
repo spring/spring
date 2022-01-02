@@ -7,9 +7,17 @@
 #include "System/type2.h"
 
 #include <vector>
-#include <array>
 
 struct GlobalRenderingInfo {
+	struct AvailableVideoMode {
+		std::string displayName;
+		int32_t displayIndex;
+		int32_t width;
+		int32_t height;
+		int32_t bpp;
+		int32_t refreshRate;
+	};
+
 	const char* gpuName;
 	const char* gpuVendor;
 
@@ -29,7 +37,7 @@ struct GlobalRenderingInfo {
 	SDL_version sdlVersionCompiled;
 	SDL_version sdlVersionLinked;
 
-	std::vector<std::array<int, 5>> availableVideoModes;
+	std::vector<AvailableVideoMode> availableVideoModes;
 };
 
 extern GlobalRenderingInfo globalRenderingInfo;

@@ -1699,12 +1699,16 @@ void CLuaHandle::ViewResize()
 	lua_newtable(L);
 	LuaPushNamedNumber(L, "screenSizeX", globalRendering->screenSizeX);
 	LuaPushNamedNumber(L, "screenSizeY", globalRendering->screenSizeY);
-	LuaPushNamedNumber(L, "screenPosX",  0.0f);
-	LuaPushNamedNumber(L, "screenPosY",  0.0f);
+	LuaPushNamedNumber(L, "screenPosX", globalRendering->screenPosX);
+	LuaPushNamedNumber(L, "screenPosY", globalRendering->screenPosY);
 	LuaPushNamedNumber(L, "windowSizeX", globalRendering->winSizeX);
 	LuaPushNamedNumber(L, "windowSizeY", globalRendering->winSizeY);
 	LuaPushNamedNumber(L, "windowPosX",  globalRendering->winPosX);
 	LuaPushNamedNumber(L, "windowPosY",  winPosY_bl);
+	LuaPushNamedNumber(L, "windowBorderTop"   , globalRendering->winBorder[0]);
+	LuaPushNamedNumber(L, "windowBorderLeft"  , globalRendering->winBorder[1]);
+	LuaPushNamedNumber(L, "windowBorderBottom", globalRendering->winBorder[2]);
+	LuaPushNamedNumber(L, "windowBorderRight" , globalRendering->winBorder[3]);
 	LuaPushNamedNumber(L, "viewSizeX",   globalRendering->viewSizeX);
 	LuaPushNamedNumber(L, "viewSizeY",   globalRendering->viewSizeY);
 	LuaPushNamedNumber(L, "viewPosX",    globalRendering->viewPosX);
