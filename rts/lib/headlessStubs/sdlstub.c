@@ -279,6 +279,7 @@ extern DECLSPEC Uint8 SDLCALL SDL_GetAppState() {
 extern DECLSPEC int SDL_GetNumVideoDisplays(void) {
 	return 0;
 }
+
 extern DECLSPEC int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
 	if (rect == 0) return -1;
 	rect->w = 640;
@@ -286,6 +287,19 @@ extern DECLSPEC int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
 	rect->x = 0;
 	rect->y = 0;
 	return 0;
+}
+
+extern DECLSPEC int SDL_GetDisplayUsableBounds(int displayIndex, SDL_Rect* rect) {
+	if (rect == 0) return -1;
+	rect->w = 640;
+	rect->h = 480;
+	rect->x = 0;
+	rect->y = 0;
+	return 0;
+}
+
+extern DECLSPEC const char* SDLCALL SDL_GetDisplayName(int displayIndex) {
+	return "";
 }
 
 extern DECLSPEC int SDL_GL_GetSwapInterval() {
