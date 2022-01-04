@@ -1,10 +1,5 @@
-# Re-run cmake whenever Git ORIG_HEAD changes
-set_property(GLOBAL APPEND
-  PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/.git/ORIG_HEAD"
-)
-
-file(GLOB_RECURSE ARB_SHADERS  "shaders/ARB/*.vp" "shaders/ARB/*.fp")
-file(GLOB_RECURSE GLSL_SHADERS "shaders/GLSL/*.glsl" "shaders/GLSL/*.lua")
+file(GLOB_RECURSE ARB_SHADERS  CONFIGURE_DEPENDS "shaders/ARB/*.vp" "shaders/ARB/*.fp")
+file(GLOB_RECURSE GLSL_SHADERS CONFIGURE_DEPENDS "shaders/GLSL/*.glsl" "shaders/GLSL/*.lua")
 
 foreach(ITEM ${ARB_SHADERS})
    get_filename_component(ITEM_NAME ${ITEM} NAME)
