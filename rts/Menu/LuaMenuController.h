@@ -23,6 +23,7 @@ public:
 	int TextInput(const std::string& utf8Text) override;
 	int TextEditing(const std::string& utf8, unsigned int start, unsigned int length) override;
 
+	bool Update() override;
 	bool Draw() override;
 	void ResizeEvent() override;
 

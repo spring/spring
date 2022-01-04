@@ -87,10 +87,7 @@ void CLuaMenuController::ResizeEvent()
 	eventHandler.ViewResize();
 }
 
-
-
-
-bool CLuaMenuController::Draw()
+bool CLuaMenuController::Update()
 {
 	// we should not become the active controller unless this holds (see ::Activate)
 	assert(luaMenu != nullptr);
@@ -103,11 +100,20 @@ bool CLuaMenuController::Draw()
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
+	return true;
+}
+
+bool CLuaMenuController::Draw()
+{
+	// we should not become the active controller unless this holds (see ::Activate)
+	assert(luaMenu != nullptr);
+
 	// render if global rendering active + luamenu allows it, and at least once per 30s
 	const bool allowDraw = (globalRendering->active && luaMenu->AllowDraw());
 	const bool forceDraw = ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30);
 
 	if (allowDraw || forceDraw) {
+		globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 		ClearScreen();
 
 		eventHandler.DrawGenesis();
