@@ -169,6 +169,13 @@ namespace {
 		},
 	)
 
+	DECLARE_FILTER_EX(NameUnitDefContain, 1, unit->unitDef->name.find(name) != std::string::npos,
+		std::string name;
+		void SetParam(int index, const std::string& value) override {
+			name = value;
+		},
+	)
+
 	DECLARE_FILTER_EX(Category, 1, unit->category == cat,
 		unsigned int cat;
 		void SetParam(int index, const std::string& value) override {
