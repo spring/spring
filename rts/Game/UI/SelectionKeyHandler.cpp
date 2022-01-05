@@ -169,7 +169,7 @@ namespace {
 		},
 	)
 
-	DECLARE_FILTER_EX(NameUnitDefContain, 1, unit->unitDef->name.find(name) != std::string::npos,
+	DECLARE_FILTER_EX(IdMatches, 1, unit->unitDef->name.compare(name) == 0,
 		std::string name;
 		void SetParam(int index, const std::string& value) override {
 			name = value;
