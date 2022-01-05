@@ -92,7 +92,8 @@ struct LuaHashString {
 		}
 
 	private:
-		char str[32];
+		static constexpr size_t strMaxLen = 64;
+		char str[strMaxLen];
 		uint32_t slen = 0;
 		uint32_t hash = 0;
 };
