@@ -190,8 +190,6 @@ CGlobalRendering::CGlobalRendering()
 
 	, screenSizeX(1)
 	, screenSizeY(1)
-	, screenPosX(0)
-	, screenPosY(0)
 
 	// window geometry
 	, winPosX(configHandler->GetInt("WindowPosX"))
@@ -205,7 +203,7 @@ CGlobalRendering::CGlobalRendering()
 	, viewSizeX(1)
 	, viewSizeY(1)
 
-	, winBorder{0}
+	, winBorder{ 0 }
 
 	, winChgFrame(0)
 
@@ -287,14 +285,14 @@ CGlobalRendering::CGlobalRendering()
 {
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {
-		"Fullscreen",
-		"WindowBorderless",
-		"XResolution",
-		"YResolution",
-		"XResolutionWindowed",
-		"YResolutionWindowed",
-		"WindowPosX",
-		"WindowPosY"
+			"Fullscreen",
+			"WindowBorderless",
+			"XResolution",
+			"YResolution",
+			"XResolutionWindowed",
+			"YResolutionWindowed",
+			"WindowPosX",
+			"WindowPosY"
 	});
 }
 
@@ -324,7 +322,7 @@ void CGlobalRendering::PreKill()
 }
 
 
-SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden)
+SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const
 {
 	SDL_Window* newWindow = nullptr;
 
@@ -959,6 +957,12 @@ void CGlobalRendering::SetWindowTitle(const std::string& title)
 	SDL_SetWindowTitle(sdlWindows[0], title.c_str());
 }
 
+void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
+{
+	LOG("[GR::%s][1] key=%s val=%s", __func__, key.c_str(), value.c_str());
+	winChgFrame = drawFrame + 1; //will happen on next frame
+}
+
 void CGlobalRendering::UpdateWindow()
 {
 	if (winChgFrame < drawFrame)
@@ -987,50 +991,31 @@ void CGlobalRendering::UpdateWindow()
 	// the maximized-flag also has to be cleared, otherwise going from native fullscreen to windowed
 	// ignores the configured *ResolutionWindowed values
 	// (SDL_SetWindowDisplayMode sets the mode used by fullscreen windows which is not what we want)
-#if 0
+	#if 0
 	if (fullScreenFlag == SDL_WINDOW_FULLSCREEN) {
 		SDL_SetWindowFullscreen(sdlWindows[0], 0);
 		SDL_RestoreWindow(sdlWindows[0]);
 	}
-#endif
+	#endif
 
 	if (SDL_SetWindowFullscreen(sdlWindows[0], 0) != 0)
 		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
 
-	screenPosX = 0;
-	screenPosY = 0;
-	screenSizeX = maxRes.x;
-	screenSizeY = maxRes.y;
-
-	winPosX = configHandler->GetInt("WindowPosX");
-	winPosY = configHandler->GetInt("WindowPosY");
-	winSizeX = newRes.x;
-	winSizeY = newRes.y;
-
 	SDL_RestoreWindow(sdlWindows[0]);
+	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	SDL_SetWindowSize(sdlWindows[0], newRes.x, newRes.y);
 	SDL_SetWindowBordered(sdlWindows[0], borderless ? SDL_FALSE : SDL_TRUE);
 
-	SDL_GetWindowBordersSize(sdlWindows[0], &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
-
-	SDL_SetWindowPosition(sdlWindows[0], winPosX, winPosY);
-	SDL_SetWindowSize(sdlWindows[0], newRes.x, newRes.y);
+	if (SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen) != 0)
+		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
 
 	if (newRes == maxRes)
 		SDL_MaximizeWindow(sdlWindows[0]);
 
 	WindowManagerHelper::SetWindowResizable(sdlWindows[0], !borderless && !fullScreen);
 
-	if (SDL_SetWindowFullscreen(sdlWindows[0], (borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN) * fullScreen) != 0)
-		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
-
 	// on Windows, fullscreen-to-windowed switches can sometimes cause the context to be lost (?)
 	MakeCurrentContext(false, false, false);
-}
-
-void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
-{
-	LOG("[GR::%s][1] key=%s val=%s", __func__, key.c_str(), value.c_str());
-	winChgFrame = drawFrame + 1; //will happen on next frame
 }
 
 
@@ -1053,23 +1038,17 @@ bool CGlobalRendering::ToggleWindowInputGrabbing()
 	return (SetWindowInputGrabbing(true));
 }
 
-bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl)
+bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl) const
 {
-	if (fs && !bl) //fullscreen and not borderless
-		return false;
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
 	if (displayIdx < 0 || displayIdx >= numDisplays)
 		return false;
 
 	SDL_Rect db;
+	GetScreenEffectiveBounds(db, &displayIdx, &fs);
 
-	if (fs)
-		SDL_GetDisplayBounds(displayIdx, &db);
-	else
-		SDL_GetDisplayUsableBounds(displayIdx, &db);
-
-	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY             };
+	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY };
 	const int2 brPos = { db.x + winRPosX + winSizeX_, db.y + winRPosY + winSizeY_ };
 
 	if ((tlPos.x < db.x) || (tlPos.y < db.y) || (tlPos.x > db.x + db.w) || (tlPos.y > db.y + db.h))
@@ -1091,7 +1070,6 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 
 	return true;
 }
-
 
 int2 CGlobalRendering::GetMaxWinRes() const {
 	SDL_DisplayMode dmode;
@@ -1118,6 +1096,21 @@ int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 	res.x = std::max(res.x, MIN_WIN_SIZE_X * (1 - fullScrn));
 	res.y = std::max(res.y, MIN_WIN_SIZE_Y * (1 - fullScrn));
 	return res;
+}
+
+int CGlobalRendering::GetCurrentDisplayIndex() const
+{
+	return sdlWindows[0] ? SDL_GetWindowDisplayIndex(sdlWindows[0]) : 0;
+}
+
+void CGlobalRendering::GetScreenEffectiveBounds(SDL_Rect& r, const int* di, const bool* fs) const
+{
+	const int displayIndex = di ? *di : GetCurrentDisplayIndex();
+	const bool fullScreen_ = fs ? *fs : this->fullScreen;
+	if (fullScreen_)
+		SDL_GetDisplayBounds(displayIndex, &r);
+	else
+		SDL_GetDisplayUsableBounds(displayIndex, &r);
 }
 
 
@@ -1163,8 +1156,6 @@ void CGlobalRendering::UpdatePixelGeometry()
 void CGlobalRendering::ReadWindowPosAndSize()
 {
 #ifdef HEADLESS
-	screenPosX = 8;
-	screenPosY = 8;
 	screenSizeX = 8;
 	screenSizeY = 8;
 	winSizeX = 8;
@@ -1173,27 +1164,23 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	winPosY = 0;
 
 #else
-	SDL_Rect screenSize;
-	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(sdlWindows[0]), &screenSize);
 
-	SDL_GetWindowBordersSize(sdlWindows[0], &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
+	SDL_Rect screenSize;
+	GetScreenEffectiveBounds(screenSize);
 
 	// no other good place to set these
-	screenPosX = screenSize.x;
-	screenPosY = screenSize.y;
 	screenSizeX = screenSize.w;
 	screenSizeY = screenSize.h;
+	screenPosX  = screenSize.x;
+	screenPosY  = screenSize.y;
 
+	SDL_GetWindowBordersSize(sdlWindows[0], &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
 	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
 	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
 
-	// enforce >=0 https://github.com/beyond-all-reason/spring/issues/23
-	// enforce screenSize bounds instead
-	winPosX = std::max(winPosX, screenSize.x);
-	winPosY = std::max(winPosY, screenSize.y);
-
-	winSizeX = std::min(winSizeX, screenSize.w);
-	winSizeY = std::min(winSizeY, screenSize.h);
+	//enforce >=0 https://github.com/beyond-all-reason/spring/issues/23
+	winPosX = std::max(winPosX, 0);
+	winPosY = std::max(winPosY, 0);
 #endif
 
 	// should be done by caller
@@ -1244,15 +1231,15 @@ void CGlobalRendering::UpdateScreenMatrices()
 	const float vpy = viewPosY + bottomWinCoor;
 	const float vsx = viewSizeX; // same as winSizeX except in dual-screen mode
 	const float vsy = viewSizeY; // same as winSizeY
-	const float ssx = screenSizeX;
-	const float ssy = screenSizeY;
+	const float ssx = screenSizeX - screenPosX;
+	const float ssy = screenSizeY - screenPosY;
 	const float hssx = 0.5f * ssx;
 	const float hssy = 0.5f * ssy;
 
 	const float zplane = screenParameters.y * (ssx / screenParameters.x);
 	const float znear = zplane * 0.5f;
 	const float zfar = zplane * 2.0f;
-	const float zfact = znear / zplane;
+	constexpr float zfact = 0.5f;
 
 	const float left = (vpx - hssx) * zfact;
 	const float bottom = (vpy - hssy) * zfact;

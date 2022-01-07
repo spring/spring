@@ -13,6 +13,7 @@
 #include "System/type2.h"
 
 struct SDL_version;
+struct SDL_Rect;
 struct SDL_Window;
 typedef void* SDL_GLContext;
 
@@ -40,7 +41,7 @@ public:
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden);
+	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
 	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
 	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
 	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
@@ -72,7 +73,7 @@ public:
 	bool SetWindowInputGrabbing(bool enable);
 	bool ToggleWindowInputGrabbing();
 
-	bool SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl);
+	bool SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl) const;
 
 	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	void SetDualScreenParams();
@@ -87,6 +88,9 @@ public:
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetMaxWinRes() const;
 	int2 GetCfgWinRes(bool fullScrn) const;
+
+	int GetCurrentDisplayIndex() const;
+	void GetScreenEffectiveBounds(SDL_Rect& r, const int* di = nullptr, const bool* fs = nullptr) const;
 
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;

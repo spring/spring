@@ -754,6 +754,7 @@ bool SpringApp::Update()
 	bool swap = true;
 
 	configHandler->Update();
+	globalRendering->UpdateWindow();
 
 	#if 0
 	if (activeController == nullptr)
@@ -768,7 +769,6 @@ bool SpringApp::Update()
 	swap = (retc && activeController != nullptr && activeController->Draw());
 	#endif
 
-	globalRendering->UpdateWindow();
 	// always swap by default, not doing so can upset some drivers
 	globalRendering->SwapBuffers(swap, false);
 	return retc;
@@ -944,6 +944,10 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			switch (event.window.event) {
 				case SDL_WINDOWEVENT_MOVED: {
 					SaveWindowPosAndSize();
+					globalRendering->UpdateGLConfigs();
+					globalRendering->UpdateGLGeometry();
+					globalRendering->InitGLState();
+					UpdateInterfaceGeometry();
 				} break;
 				// case SDL_WINDOWEVENT_RESIZED: // always preceded by CHANGED
 				case SDL_WINDOWEVENT_SIZE_CHANGED: {

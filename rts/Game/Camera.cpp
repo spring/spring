@@ -664,7 +664,7 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
 		const int screenH = globalRendering->viewSizeY;
-		const int screenW = globalRendering->viewSizeX << globalRendering->dualScreenMode;
+		const int screenW = globalRendering->viewSizeX << static_cast<uint32_t>(globalRendering->dualScreenMode);
 
 		const float width = configHandler->GetFloat("EdgeMoveWidth");
 
