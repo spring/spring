@@ -81,10 +81,6 @@ CMouseHandler::CMouseHandler()
 {
 	const int2 screenCenter = globalRendering->GetScreenCenter();
 
-	// initially center the cursor
-	mouseInput->SetPos(screenCenter);
-	mouseInput->WarpPos(screenCenter);
-
 	dir = GetCursorCameraDir(lastx = screenCenter.x, lasty = screenCenter.y);
 
 
@@ -695,10 +691,6 @@ void CMouseHandler::ShowMouse()
 	// (by switching between default cursor and later the real one, e.g. `attack`)
 	// instead update state and cursor at the same time
 	ToggleHwCursor(hardwareCursor);
-
-	// force a warp back to center
-	mouseInput->SetPos(globalRendering->GetScreenCenter());
-	mouseInput->WarpPos(mouseInput->GetPos());
 }
 
 void CMouseHandler::HideMouse()
