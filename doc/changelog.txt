@@ -6,6 +6,8 @@ Spring changelog
 
 Lua:
  - allow empty argument for Spring.GetKeyBindings to return all keybindings
+ - `firestarter` weapon tag no longer capped at 10000 in defs (which
+   becomes 100 in Lua after rescale). Now uncapped.
 Maps:
  - New bumpwater params, most of these were just hard-coded values:
     - waveOffsetFactor    (0.0)
