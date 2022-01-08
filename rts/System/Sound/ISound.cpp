@@ -24,7 +24,7 @@
 CONFIG(bool, Sound).defaultValue(true).description("Enables (OpenAL) or disables sound.");
 
 CONFIG(bool, UseEFX     ).defaultValue( true).safemodeValue(false);
-CONFIG(bool, UseSDLAudio).defaultValue(false).safemodeValue(false);
+CONFIG(bool, UseSDLAudio).defaultValue( true).safemodeValue(false);
 
 // defined here so spring-headless contains them, too (default & headless should contain the same set of configtags!)
 CONFIG(int, MaxSounds).defaultValue(128).headlessValue(1).minimumValue(1).description("Maximum sounds played in parallel.");
