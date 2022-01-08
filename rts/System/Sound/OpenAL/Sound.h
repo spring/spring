@@ -56,6 +56,8 @@ public:
 	bool Mute() override;
 	bool IsMuted() const override { return mute; }
 
+	void DeviceChanged(uint32_t sdlDeviceIndex) override;
+
 	void Iconified(bool state) override;
 
 	void PrintDebugInfo() override;
@@ -93,7 +95,10 @@ private:
 private:
 	ALCdevice* curDevice = nullptr;
 	ALCcontext* curContext = nullptr;
-	int sdlDeviceID = 0;
+	int sdlDeviceID = -1;
+	bool hasAlcSoftLoopBack = false;
+
+	std::string selectedDeviceName = "";
 
 	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
