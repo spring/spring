@@ -23,7 +23,7 @@ find_package_static(GLEW 1.5.1 REQUIRED)
 list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
 list(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 
-find_package_static(FontConfig)
+find_package_static(FONTCONFIG)
 if    (FONTCONFIG_FOUND)
 	list(APPEND engineIncludes ${FONTCONFIG_INCLUDE_DIR})
 	if    (NOT EXISTS "${FONTCONFIG_INCLUDE_DIR}/fontconfig/fontconfig.h")
