@@ -49,6 +49,8 @@ CLuaMenu::CLuaMenu()
 	if (!IsValid())
 		return;
 
+	queuedAction = ACTION_NOVALUE;
+
 	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
 	const std::string file = "LuaMenu/main.lua";
 	const std::string code = LoadFile(file);
