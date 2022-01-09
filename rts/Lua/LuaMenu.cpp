@@ -329,10 +329,14 @@ bool CLuaMenu::Enable(bool enableCommand)
 		}
 	}
 
-	bool res = CLuaMenu::ReloadHandler();
-	luaMenu->ActivateGame();
+	if (!CLuaMenu::ReloadHandler())
+		return false;
 
-	return res;
+	if (luaMenu == nullptr)
+		return false;
+
+	luaMenu->ActivateGame();
+	return true;
 }
 
 bool CLuaMenu::Disable()
