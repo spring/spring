@@ -289,7 +289,7 @@ The filename of such config files can be as following:
 See also
 --------
 ifndef::DEFAULT[spring(6)]
-ifndef::LEGACY[spring-legacy(6)]
+ifndef::LEGACY[spring-opengl4(6)]
 ifndef::HEADLESS[spring-headless(6)]
 ifndef::DEDICATED[spring-dedicated(6)]
 
