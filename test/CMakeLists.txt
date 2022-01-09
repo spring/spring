@@ -1,7 +1,7 @@
 # See README.md for usage instructions
 if (MINGW)
 	remove_flag("-mwindows")
-endif (MINGW)
+endif ()
 # defines spring_test_compile_fail macro
 include(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
@@ -10,10 +10,10 @@ if    (UNIX AND (NOT APPLE) AND (NOT MINGW))
 
 	if    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
 		message(FATAL_ERROR "librt.[so|a] not found! Needed by std::chrono when statically linked!")
-	endif (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-else  (UNIX AND (NOT APPLE) AND (NOT MINGW))
+	endif ()
+else ()
 	set(REALTIME_LIBRARY "")
-endif (UNIX AND (NOT APPLE) AND (NOT MINGW))
+endif ()
 
 include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
@@ -28,16 +28,16 @@ if (WIN32)
 	execute_process(COMMAND ping -6 ::1 -n 1
 		RESULT_VARIABLE IPV6_RET
 		ERROR_QUIET)
-else(WIN32)
+else ()
 	execute_process(COMMAND ping6 ::1 -c 1
 		RESULT_VARIABLE IPV6_RET
 		ERROR_QUIET)
-endif (WIN32)
+endif ()
 
 if (NOT ${IPV6_RET} EQUAL 0)
 	add_definitions(-DNO_IPV6)
 	message(STATUS "No ipv6 support, disabling test")
-endif (NOT ${IPV6_RET} EQUAL 0)
+endif ()
 
 set(test_Log_sources
 		"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
@@ -99,7 +99,7 @@ if(NOT DEFINED ENV{CI})
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_UDPListener generateVersionFiles)
-endif()
+endif ()
 
 ################################################################################
 ### ILog
@@ -300,7 +300,7 @@ endif()
 		add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
 ###
 ################################################################################
-	endif (NOT NO_CREG)
+	endif ()
 
 ################################################################################
 ### UnitSync
@@ -342,7 +342,7 @@ endif()
 		)
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		list(APPEND test_libs atomic)
-	endif()
+	endif ()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
 

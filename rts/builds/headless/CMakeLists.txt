@@ -28,7 +28,7 @@ if    (WIN32 OR APPLE)
 	if (MSVC)
 		include_directories(${CMAKE_SOURCE_DIR}/include)
 	endif ()
-else  ()
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -57,7 +57,7 @@ target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sou
 if    (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-endif (MINGW)
+endif ()
 
 
 ### Install the executable

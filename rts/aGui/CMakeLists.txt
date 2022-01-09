@@ -1,11 +1,11 @@
 if    (MINGW OR APPLE OR MSVC)
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
-else  (MINGW OR APPLE OR MSVC)
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR APPLE OR MSVC)
+endif ()
 
 include_directories(${GLEW_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/rts/lib/slimsig/include)

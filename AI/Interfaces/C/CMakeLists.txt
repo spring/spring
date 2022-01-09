@@ -25,10 +25,10 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 	# Check if the user wants to compile the AI
 	if    (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	else ()
 		set(BUILD_THIS_SKIRMISHAI FALSE)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	endif ()
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -59,7 +59,7 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 		install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstDataDir}" FILES_MATCHING PATTERN REGEX "AI(Info|Options)\\.lua$" EXCLUDE PATTERN "*")
 		# Install the library
 		install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
-	endif (BUILD_THIS_SKIRMISHAI)
+	endif ()
 endmacro (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
 
 ### END: MACROS_AND_FUNCTIONS
@@ -74,22 +74,22 @@ set(mySourceDirRel    "src")
 # Check if the user wants to compile the interface
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 	set(AI_TYPES_NATIVE TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+else ()
 	set(AI_TYPES_NATIVE FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+endif ()
 
 if    (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 	set(AI_TYPES_NATIVE FALSE)
-endif (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 # Check dependencies of the interface are met
 if    (AI_TYPES_NATIVE)
 	set_global(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AI_TYPES_NATIVE)
+else ()
 	set_global(BUILD_${myName}_AIINTERFACE FALSE)
 	message ("warning: C & C++ AI Interface will not be built!")
-endif (AI_TYPES_NATIVE)
+endif ()
 
 
 # Build
@@ -123,4 +123,4 @@ if    (BUILD_${myName}_AIINTERFACE)
 	install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstDataDir}" FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$" EXCLUDE PATTERN "*")
 	# Install the library
 	install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
-endif (BUILD_${myName}_AIINTERFACE)
+endif ()

@@ -13,18 +13,18 @@ set(mySourceDirRel    "")
 # Check if the user wants to compile the wrapper
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 	set(AIWRAPPERS_NATIVE TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+else ()
 	set(AIWRAPPERS_NATIVE FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+endif ()
 
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_NATIVE)
 	set_global(BUILD_${myName}_AIWRAPPER TRUE)
-else  (AIWRAPPERS_NATIVE)
+else ()
 	set_global(BUILD_${myName}_AIWRAPPER FALSE)
 	message ("warning: Legacy C++ AI Wrapper will not be built!")
-endif (AIWRAPPERS_NATIVE)
+endif ()
 
 
 # Build
@@ -67,4 +67,4 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_dependencies(${myCregTarget} generateVersionFiles)
 	set_target_properties(${myCregTarget} PROPERTIES OUTPUT_NAME   "${myName}Creg")
 	set_target_properties(${myCregTarget} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
-endif (BUILD_${myName}_AIWRAPPER)
+endif ()

@@ -71,12 +71,12 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
 	if(CXX_SUPPORT_NO_CLASS_MEMACCESS)
 		set(flagstoadd "${flagstoadd} -Wno-class-memaccess")
-	endif()
+	endif ()
 	check_cxx_compiler_flag(-Wno-tautological-compare CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
 	if(CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
 		set(flagstoadd "${flagstoadd} -Wno-tautological-compare")
-	endif()
+	endif ()
 	set_target_properties(assimp PROPERTIES COMPILE_FLAGS ${flagstoadd})
 
-endif()
+endif ()
 

@@ -12,7 +12,7 @@ project(Spring)
 # dummy so that qtcreator shows all files (even those of windows)
 if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 	add_library(platform_sources EXCLUDE_FROM_ALL "")
-endif()
+endif ()
 
 # includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
 include(Util)
@@ -23,25 +23,25 @@ set(MIN_GCC_VER "7.0")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
 		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
-	else()
+	else ()
 		message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
-	endif()
-endif()
+	endif ()
+endif ()
 
 # set some internal vars
 
 if (NOT "${CMAKE_C_FLAGS}" STREQUAL "")
 	message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
-endif()
+endif ()
 
 if (NOT "${CMAKE_CXX_FLAGS}" STREQUAL "")
 	message(WARNING "Using custom CXX_FLAGS: ${CMAKE_CXX_FLAGS} this build will very likely not sync in online mode!")
-endif()
+endif ()
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if    (CUSTOM_COMPILER_DEFINITIONS)
 	add_definitions(${CUSTOM_COMPILER_DEFINITIONS})
-endif (CUSTOM_COMPILER_DEFINITIONS)
+endif ()
 
 
 ### set the default build type
@@ -49,20 +49,20 @@ if    (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING
 		"Choose the type of build, options are: RELWITHDEBINFO DEBUG RELEASE PROFILE"
 		FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+endif ()
 
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
 if(${CMAKE_BUILD_TYPE_UPPER} MATCHES "^DEBUG")
 	set(DEBUG_BUILD TRUE)
-else()
+else ()
 	set(DEBUG_BUILD FALSE)
-endif()
+endif ()
 
 if(DEBUG_BUILD)
 	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source,vars")
-else()
+else ()
 	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source")
-endif()
+endif ()
 
 
 # Tell windows to pass arguments around in @response files
@@ -70,7 +70,7 @@ endif()
 if    (WIN32)
 	set(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 1)
 	set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 1)
-endif (WIN32)
+endif ()
 
 
 # XCode
@@ -79,10 +79,10 @@ if    (APPLE)
 	add_definitions(${PIC_FLAG})
 	if    (MACOSX_BUNDLE)
 		add_definitions(-DMACOSX_BUNDLE)
-	endif (MACOSX_BUNDLE)
-else  (APPLE)
+	endif ()
+else ()
 	set(MACOSX_BUNDLE FALSE)
-endif (APPLE)
+endif ()
 
 ### Compiler flags and defines based on build type
 include(TestCXXFlags)
@@ -91,9 +91,9 @@ include(TestCXXFlags)
 set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(MARCH_BITS 64 CACHE INTERNAL "" FORCE)
-else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
+else ()
 	set(MARCH_BITS 32 CACHE INTERNAL "" FORCE)
-endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+endif ()
 
 message(STATUS "Building Spring on ${MARCH_BITS}bit environment")
 set(BUILD_BITS "${MARCH_BITS}" CACHE STRING "Target arch machine type")
@@ -111,7 +111,7 @@ if    (UNIX AND NOT MINGW)
 	set(APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set(PIXMAPS_DIR      "share/pixmaps"      CACHE STRING "Where to install icons")
 	set(MIME_DIR         "share/mime"         CACHE STRING "Where MIME definitions are located")
-else  (UNIX AND NOT MINGW)
+else ()
 	set(BINDIR  "." CACHE STRING "Where to install binaries")
 	set(LIBDIR  "." CACHE STRING "Where to install libraries")
 	set(DOCDIR  "doc" CACHE STRING "Where to install basic project documentation (README, LICENSE, etc.)")
@@ -120,13 +120,13 @@ else  (UNIX AND NOT MINGW)
 	if    (NOT MINGWLIBS)
 		if(MSVC)
 			set(MINGWLIBS ${CMAKE_SOURCE_DIR}/vclibs CACHE PATH "Location of the vclibs package")
-		else(MSVC)
+		else ()
 			if(BUILD_BITS EQUAL 32)
 				set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
-			else(BUILD_BITS EQUAL 32)
+			else ()
 				set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs64 CACHE PATH "Location of the mingwlibs package")
-			endif(BUILD_BITS EQUAL 32)
-		endif(MSVC)
+			endif ()
+		endif ()
 	endif ()
 	if    (EXISTS "${MINGWLIBS}" AND IS_DIRECTORY "${MINGWLIBS}")
 		# MinGW needs an additional library, mwindows
@@ -134,7 +134,7 @@ else  (UNIX AND NOT MINGW)
 		# (Actually on second look, I think it only needs one of the m* libraries.)
 		if(NOT MSVC)
 			set(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
-		endif(NOT MSVC)
+		endif ()
 		set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 		set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 		include_directories(${MINGWLIBS}/include)
@@ -144,7 +144,7 @@ else  (UNIX AND NOT MINGW)
 		set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
 		set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 		set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-	else()
+	else ()
 		message(WARNING "Compiling for windows. MINGWLIBS '${MINGWLIBS}' is not a valid directory, trying system libs")
 	endif ()
 
@@ -154,15 +154,15 @@ else  (UNIX AND NOT MINGW)
 
 	if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 		add_definitions(-DWIN32)
-	endif()
+	endif ()
 
 	if(MSVC)
 		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(EXE_FLAGS WIN32)
-	else()
+	else ()
 		include_directories(rts/lib/mingw-std-threads)
-	endif()
-endif (UNIX AND NOT MINGW)
+	endif ()
+endif ()
 
 ## Artificial Intelligence
 # In theory, it should be possible to set this to LIBDIR instead
@@ -178,22 +178,22 @@ if    (NOT WIN32 AND NOT MACOSX_BUNDLE)
 	set(SPRING_DATADIR_INTERNAL "")
 	if    (SPRING_DATADIR)
 		set(SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM_T}")
-	endif (SPRING_DATADIR)
+	endif ()
 	if    (CMAKE_INSTALL_PREFIX)
 		set(SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${DATADIR}")
-	endif (CMAKE_INSTALL_PREFIX)
+	endif ()
 	set(BUILTIN_DATADIRS "${SPRING_DATADIR_INTERNAL}")
-endif (NOT WIN32 AND NOT MACOSX_BUNDLE)
+endif ()
 if    (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
 	# If the AI library dir is not the same as the normal data dir,
 	# add it to the internal list of data dirs
 	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${AI_LIBS_DIR}")
-endif (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
+endif ()
 if    (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 	# If the AI data dir is not the same as the normal data dir
 	# nor the AI library dir, add it to the internal list of data dirs
 	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${AI_DATA_DIR}")
-endif (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
+endif ()
 add_definitions(-DSPRING_DATADIR="${BUILTIN_DATADIRS}")
 
 
@@ -210,17 +210,17 @@ set(LOG_LEVEL "DEFAULT" CACHE STRING
 		* WARNING (only use this if you know what you are doing!)")
 if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 	add_definitions(-D_LOG_LEVEL_MIN=LOG_LEVEL_${LOG_LEVEL})
-endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
+endif ()
 
 option(SYNCCHECK "Check sync during gameplay (Required for online play!)" TRUE)
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
-endif (SYNCCHECK)
+endif ()
 
 option(NO_CREG "Disable creg support" FALSE)
 if    (NO_CREG)
 	add_definitions(-DNOT_USING_CREG)
-endif (NO_CREG)
+endif ()
 
 option(NO_SOUND "No sound output support" FALSE)
 
@@ -229,16 +229,16 @@ if    (WIN32)
 	option(NO_AVI "Disable in-game video recording" FALSE)
 	if    (NOT NO_AVI)
 		add_definitions(-DAVI_CAPTURING)
-	endif (NOT NO_AVI)
+	endif ()
 
 	if   (NOT MSVC)
 		## stdout console
 		option(WINDOWS_CONSOLE "Show a visible cmd.exe with stdout when spring runs" FALSE)
 		if    (NOT WINDOWS_CONSOLE)
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
-		endif (NOT WINDOWS_CONSOLE)
-	endif(NOT MSVC)
-endif (WIN32)
+		endif ()
+	endif ()
+endif ()
 
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
@@ -252,46 +252,46 @@ if    (PREFER_STATIC_LIBS)
 	find_package_static(PNG REQUIRED)
 	find_package_static(TIFF REQUIRED)
 	find_package_static(GIF REQUIRED)
-endif (PREFER_STATIC_LIBS)
+endif ()
 
 if    (WIN32)
 	find_package(Windres REQUIRED)
 	set(CMAKE_RC_COMPILER ${WINDRES_BIN})
 	find_package(Win32Libs REQUIRED)
-endif (WIN32)
+endif ()
 
 if     (WIN32)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_SHARED_MODULE_PREFIX "")
 elseif (UNIX)
 	# unix specifics
-else   (UNIX)
+else ()
 	# mac
 	find_library(COREFOUNDATION_LIBRARY CoreFoundation)
 	include_directories("${COREFOUNDATION_LIBRARY}/Headers")
-endif  (WIN32)
+endif ()
 
 find_package(Valgrind)
 if    (VALGRIND_FOUND)
 	add_definitions(-DUSE_VALGRIND)
-endif (VALGRIND_FOUND)
+endif ()
 
 include (CheckSymbolExists)
 check_symbol_exists(strnlen string.h HAVE_STRNLEN)
 if (NOT HAVE_STRNLEN)
 	message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
-endif()
+endif ()
 
 ### Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
 option(LTO "Link Time Optimizations (LTO)" FALSE)
 if    (LTO)
 	if    (NOT LTO_FLAGS)
 		message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
-	endif (NOT LTO_FLAGS)
+	endif ()
 	set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
-endif (LTO)
+endif ()
 
 
 ### Memory Access Protection (BoundsChecking)
@@ -299,11 +299,11 @@ option(DEBUG_BOUNDSCHECK "Array/Pointer BoundsChecking a.k.a. buffer overflow pr
 if    (DEBUG_BOUNDSCHECK)
 	if    (NOT MPX_FLAGS)
 		message(WARNING "Tried to enable BoundsCheck, but compiler doesn't support it!")
-	endif (NOT MPX_FLAGS)
+	endif ()
 	set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${MPX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${MPX_FLAGS}")
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${MPX_FLAGS}")
-endif (DEBUG_BOUNDSCHECK)
+endif ()
 
 
 ### ld.gold
@@ -313,14 +313,14 @@ if    (LDGOLD_FOUND)
 	if    (COMPRESS_DEBUG_SYMBOLS)
 		message(STATUS "Compressing debug symbols")
 		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${LDGOLD_LINKER_FLAGS}")
-	endif (COMPRESS_DEBUG_SYMBOLS)
+	endif ()
 
 	set(CMAKE_LINKER LD_GOLD)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
-else  (LDGOLD_FOUND)
+else ()
 	message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
-endif (LDGOLD_FOUND)
+endif ()
 
 message(STATUS "Compiling with C++17")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
@@ -333,7 +333,7 @@ add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to co
 option(THREADPOOL "Enable ThreadPools" TRUE)
 if (THREADPOOL)
 	add_definitions(-DTHREADPOOL)
-endif(THREADPOOL)
+endif ()
 
 
 ### warnings
@@ -342,7 +342,7 @@ if(NOT MSVC)
 	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
 	if (DEBUG_SIGNAL_NANS AND CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif()
+	endif ()
 
 
 	### CompileTime Warnings
@@ -352,23 +352,23 @@ if(NOT MSVC)
 	if    (DEBUG_MAX_WARNINGS)
 		# This would produce the maximum on warnings
 		set(DEBUG_WARNINGS "-Wall -Wconversion ${COMMON_WARNINGS}")
-	else  (DEBUG_MAX_WARNINGS)
+	else ()
 		# This should produce a sane amount of warnings
 		set(DEBUG_WARNINGS "-Wall -Wno-sign-compare ${COMMON_WARNINGS}")
-	endif (DEBUG_MAX_WARNINGS)
-endif(NOT MSVC)
+	endif ()
+endif ()
 
 
 if(DEBUG_BUILD)
         set(DEBUG_LUANAN_DEFAULT TRUE)
-else()
+else ()
         set(DEBUG_LUANAN_DEFAULT FALSE)
-endif()
+endif ()
 
 option(DEBUG_LUANAN "check for nans in lua" ${DEBUG_LUANAN_DEFAULT})
 if(DEBUG_LUANAN)
         add_definitions(-DDEBUG_LUANAN)
-endif()
+endif ()
 
 
 
@@ -404,23 +404,23 @@ if    ($ENV{CXX} MATCHES "icpc")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
 		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
-	endif (UNIX)
+	endif ()
 
 	if    (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 		message(STATUS "using march=${MARCH_FLAG}")
-	else  (MARCH_FLAG)
+	else ()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
 		message(STATUS "using mtune=generic")
-	endif (MARCH_FLAG)
+	endif ()
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
 	# silence warnings
 	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
-else   (MSVC)
+else ()
 	message(WARNING "unknown compiler")
-endif ($ENV{CXX} MATCHES "icpc")
+endif ()
 
 set(CXX_DEBUG_DEFINES          "-DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
 set(CXX_RELWITHDEBINFO_DEFINES "-DNDEBUG")
@@ -440,17 +440,17 @@ if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS_RELEASE        "${CMAKE_EXE_LINKER_FLAGS_RELEASE}        /LTCG")
 	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
 	set(CMAKE_CXX_FLAGS_PROFILE               "${CMAKE_CXX_FLAGS_PROFILE} /LTCG")
-else  (MSVC)
+else ()
 	if (CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
-	endif(CMAKE_COMPILER_IS_GNUCXX)
+	endif ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 	if (UNIX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-	endif (UNIX)
+	endif ()
 	if    (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mthreads")
-	endif (MINGW)
+	endif ()
 
 	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} ${CXX_RELWITHDEBINFO_DEFINES}")
@@ -465,7 +465,7 @@ else  (MSVC)
 	if (MARCH_BITS EQUAL 64 AND BUILD_BITS EQUAL 32)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-	endif (MARCH_BITS EQUAL 64 AND BUILD_BITS EQUAL 32)
+	endif ()
 
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
@@ -475,11 +475,11 @@ else  (MSVC)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
 			message(STATUS "Enable IMAGE_FILE_LARGE_ADDRESS_AWARE (>2GB memory limit)")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--large-address-aware")
-		else (BUILD_BITS EQUAL 32)
+		else ()
 			message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
-		endif (BUILD_BITS EQUAL 32)
-	endif  (MINGW)
-endif (MSVC)
+		endif ()
+	endif ()
+endif ()
 
 
 
@@ -493,7 +493,7 @@ add_custom_target(generateSources)
 # Make sure git is found if git is used
 if   (EXISTS "${CMAKE_SOURCE_DIR}/.git")
 	find_package(Git REQUIRED)
-endif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+endif ()
 
 # Generate the version files
 set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
@@ -525,7 +525,7 @@ if (MSVC)
 			"  Configuring Version files ..." VERBATIM
 		)
 	add_custom_target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
-else (MSVC)
+else ()
 	# This is always executed (on every run of "make"),
 	# but the actual version files are only written in case of a change
 	# in the version info they use, or in the template file content.
@@ -542,7 +542,7 @@ else (MSVC)
 			"  Configuring Version files ..." VERBATIM
 	)
 
-endif (MSVC)
+endif ()
 
 add_dependencies(generateSources generateVersionFiles)
 
@@ -554,7 +554,7 @@ add_subdirectory(rts/lib)
 
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	add_subdirectory(AI)
-endif (NOT "${AI_TYPES}" STREQUAL "NONE")
+endif ()
 
 # As tools/unitsync/ depends on sources from here, we add this one first
 add_subdirectory(rts/System)

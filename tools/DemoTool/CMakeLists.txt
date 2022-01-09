@@ -41,7 +41,7 @@ add_executable(demotool EXCLUDE_FROM_ALL DemoTool.cpp ${demoToolSpringSources})
 if (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-endif (MINGW)
+endif ()
 add_definitions(-DNOT_USING_CREG)
 target_link_libraries(demotool
 		${SPRING_MINIZIP_LIBRARY}

@@ -14,7 +14,7 @@ macro(create_base_content_archive outputdir filename files)
 		set(QUIET ">/dev/null")
 	elseif(WIN32)
 		set(QUIET ">nul")
-	endif()
+	endif ()
 	set(outputfile "${Spring_BINARY_DIR}/${outputdir}/${filename}")
 	set(ENV{TZ} UTC)
 	add_custom_command(

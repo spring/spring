@@ -26,10 +26,10 @@ macro    (create_engine_build_and_install_target targetName)
 		)
 	if (CREATE_MAN_PAGES)
 		list(APPEND ${targetName}-Deps manpages)
-	endif()
+	endif ()
 	if (userdoc_INSTALL_HTML)
 		list(APPEND ${targetName}-Deps userdocs)
-	endif()
+	endif ()
 
 	# Create a custom meta build target
 	add_custom_target(${myBuildTarget}
@@ -52,7 +52,7 @@ macro    (create_engine_build_and_install_target targetName)
 		)
 	if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 		set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
-	endif (NOT "${AI_TYPES}" STREQUAL "NONE")
+	endif ()
 
 	create_install_target(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 
@@ -65,7 +65,7 @@ macro    (create_engine_build_and_install_target targetName)
 		add_dependencies(spring spring-${targetName}) # This also works for custom targets
 		add_dependencies(install-spring install-spring-${targetName}) # This also works for custom targets
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring")
-	else()
+	else ()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
 endmacro (create_engine_build_and_install_target targetName)
@@ -76,7 +76,7 @@ macro    (add_engine_build build)
 	option(BUILD_spring-${build} "Configure the spring-${build} target." TRUE)
 	if     (BUILD_spring-${build})
 		add_subdirectory(${build})
-	endif  ()
+	endif ()
 endmacro (add_engine_build)
 
 # add default dummy target which is used later on
@@ -90,8 +90,8 @@ if    (WIN32)
 	if (MSVC)
 		# Make sure we disable the default manifest generation to prevent conflicts
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
-	endif()
-endif (WIN32)
+	endif ()
+endif ()
 
 # the build targets
 add_engine_build(opengl4)

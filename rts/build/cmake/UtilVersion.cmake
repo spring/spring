@@ -65,7 +65,7 @@ Macro    (parse_spring_version varPrefix version)
 	catch_regex_group("${VERSION_REGEX_DEV}" 3 "${varPrefix}_COMMITS"   "${version}")
 	catch_regex_group("${VERSION_REGEX_DEV}" 4 "${varPrefix}_HASH"      "${version}")
 	catch_regex_group("${VERSION_REGEX_DEV}" 5 "${varPrefix}_BRANCH"    "${version}")
-EndMacro (parse_spring_version)
+EndMacro ()
 
 Macro    (PrintParsedSpringVersion varPrefix)
 	Message("  major:     ${${varPrefix}_MAJOR}")
@@ -73,7 +73,7 @@ Macro    (PrintParsedSpringVersion varPrefix)
 	Message("  commits:   ${${varPrefix}_COMMITS}")
 	Message("  hash:      ${${varPrefix}_HASH}")
 	Message("  branch:    ${${varPrefix}_BRANCH}")
-EndMacro (PrintParsedSpringVersion)
+EndMacro ()
 
 
 # Concatenates Spring version string parts to form a full version specifier.
@@ -90,7 +90,7 @@ Macro    (create_spring_version_string res_var major patchSet commits hash branc
 	If     (NOT "${commits}" STREQUAL "")
 		Set(${res_var} "${${res_var}}-${commits}-g${hash} ${branch}")
 	EndIf  ()
-EndMacro (create_spring_version_string)
+EndMacro ()
 
 
 
@@ -103,7 +103,7 @@ Macro    (check_spring_release_version res_var version)
 	If     ("${version}" MATCHES "^${VERSION_REGEX_RELEASE}$")
 		Set(${res_var} TRUE)
 	EndIf  ()
-EndMacro (check_spring_release_version)
+EndMacro ()
 
 
 
@@ -125,7 +125,7 @@ Macro    (get_version_from_file vers_var vers_file)
 	Else  (EXISTS "${vers_file}")
 		Set(${vers_var}-NOTFOUND "1")
 	EndIf (EXISTS "${vers_file}")
-EndMacro (get_version_from_file)
+EndMacro ()
 
 
 
@@ -196,7 +196,7 @@ Macro    (fetch_spring_version dir prefix)
 			Message(FATAL_ERROR "Invalid version format: ${${prefix}_VERSION}")
 		endif()
 	endif()
-EndMacro (fetch_spring_version)
+EndMacro ()
 
 Macro (TestVersion)
 	foreach(version ${VERSION_REGEX_ANY_MATCH_EXAMPLES})
