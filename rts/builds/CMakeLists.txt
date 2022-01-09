@@ -57,7 +57,7 @@ macro    (create_engine_build_and_install_target targetName)
 	create_install_target(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 
 	# allow easy switching of the default engine
-	if    (${targetName} STREQUAL "legacy")
+	if    (${targetName} STREQUAL "opengl4")
 		# Create shortcuts
 		# * make spring
 		# * make install-spring
@@ -94,6 +94,6 @@ if    (WIN32)
 endif (WIN32)
 
 # the build targets
-add_engine_build(legacy)
+add_engine_build(opengl4)
 add_engine_build(dedicated)
 add_engine_build(headless)

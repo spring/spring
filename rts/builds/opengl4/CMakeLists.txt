@@ -81,11 +81,11 @@ list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 include_directories(${engineIncludes})
 
 ### Build the executable
-add_executable(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-target_link_libraries(engine-legacy ${engineLibraries})
+add_executable(engine-opengl4 ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+target_link_libraries(engine-opengl4 ${engineLibraries})
 
 
 ### Install the executable
-install(TARGETS engine-legacy DESTINATION ${BINDIR})
+install(TARGETS engine-opengl4 DESTINATION ${BINDIR})
 
-create_engine_build_and_install_target(legacy)
+create_engine_build_and_install_target(opengl4)
