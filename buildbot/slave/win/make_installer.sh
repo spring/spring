@@ -85,14 +85,6 @@ rm -f ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
-# # create installer
-# ./installer/make_installer.sh
-#
-# # move installer to rsync-directory
-# mv ./installer/spring*.exe ${INSTALLER_FILENAME}
-#
-# ./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
-
 # create a file which contains the latest version of a branch
 echo ${VERSION} > ${TMP_BASE}/${CONFIG}/${BRANCH}/LATEST_${PLATFORM}
 

@@ -60,7 +60,7 @@ fi
 
 SRC_DIR=$(cd $(dirname $0); pwd)
 
-# Move to spring source root (eg containing dir 'installer')
+# Move to spring source root (eg containing dir 'rts')
 cd ${SRC_DIR}; cd ../..
 
 # Ensure directories exist (some VCSes do not support empty directories)

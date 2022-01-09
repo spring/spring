@@ -75,10 +75,6 @@ progress.make
 
 # Installer files
 /external
-/installer/SpringLobby
-/installer/TASClient
-/installer/downloads
-/installer/custom_defines.nsi
 
 # AI files
 /AI/Skirmish/*/build
