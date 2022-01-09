@@ -13,15 +13,15 @@
 INCLUDE(FindPackageHandleStandardArgs)
 
 # Already in cache, be silent
-IF    (ASCIIDOC_BIN)
+if    (ASCIIDOC_BIN)
 	SET(AsciiDoc_FIND_QUIETLY TRUE)
-ENDIF (ASCIIDOC_BIN)
-IF    (XSLTPROC_BIN)
+endif ()
+if    (XSLTPROC_BIN)
 	SET(XSLTProc_FIND_QUIETLY TRUE)
-ENDIF (XSLTPROC_BIN)
-IF    (DOCBOOK_XSL)
+endif()
+if    (DOCBOOK_XSL)
 	SET(DocBook_FIND_QUIETLY TRUE)
-ENDIF (DOCBOOK_XSL)
+endif ()
 
 find_program(ASCIIDOC_BIN
 	NAMES asciidoc
@@ -47,12 +47,12 @@ find_file(DOCBOOK_XSL
 	DOC "DocBook XSL Style-Sheet"
 	)
 
-IF    (NOT DOCBOOK_XSL)
+if    (NOT DOCBOOK_XSL)
 	file(GLOB DOCBOOK_XSL / /usr/share/xml/docbook/xsl-stylesheets-*/manpages/docbook.xsl)
-	IF    (DOCBOOK_XSL)
+	if    (DOCBOOK_XSL)
 		list(GET DOCBOOK_XSL 0 DOCBOOK_XSL)
-	ENDIF (DOCBOOK_XSL)
-ENDIF (NOT DOCBOOK_XSL)
+	endif ()
+endif ()
 
 # handle the QUIETLY and REQUIRED arguments and set ASCIIDOC_FOUND to TRUE if
 # all listed variables are TRUE

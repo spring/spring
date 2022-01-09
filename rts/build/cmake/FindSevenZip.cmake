@@ -11,10 +11,10 @@
 
 INCLUDE(FindPackageHandleStandardArgs)
 
-IF    (SEVENZIP_BIN)
+if    (SEVENZIP_BIN)
 	# Already in cache, be silent
 	SET(SevenZip_FIND_QUIETLY TRUE)
-ENDIF (SEVENZIP_BIN)
+endif ()
 
 # 7zr(.exe) only supports 7z archives, while 7z(.exe) and 7za(.exe)
 # additionally support many other formats (eg zip)

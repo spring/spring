@@ -35,20 +35,20 @@ if   (CMAKE_HOST_WIN32)
 	set(PATH_SEP_H      "\\")
 	set(PATH_DELIM_H    ";")
 	set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
-else (CMAKE_HOST_WIN32)
+else ()
 	set(PATH_SEP_H      "/")
 	set(PATH_DELIM_H    ":")
 	set(ABS_DIR_REGEX_H "^/")
-endif (CMAKE_HOST_WIN32)
+endif ()
 if    (WIN32)
 	set(PATH_SEP_T      "\\")
 	set(PATH_DELIM_T    ";")
 	set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
-else  (WIN32)
+else ()
 	set(PATH_SEP_T      "/")
 	set(PATH_DELIM_T    ":")
 	set(ABS_DIR_REGEX_T "^/")
-endif (WIN32)
+endif ()
 
 
 # define the fPic compiler flag
@@ -56,14 +56,14 @@ if     (APPLE)
 	set(PIC_FLAG "-fPIC")
 elseif (MINGW)
 	set(PIC_FLAG "")
-else   ()
+else ()
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8) # add fpic flag on 64 bit platforms
 		set(PIC_FLAG "-fpic")
 	else () #no fpic needed on 32bit
 		set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
 		set(PIC_FLAG "")
-	endif()
-endif  ()
+	endif ()
+endif ()
 
 
 # This is needed because CMake, or at least some versions of it (eg. 2.8),
@@ -73,8 +73,8 @@ macro    (fix_lib_name targetName)
 		set_target_properties(${targetName} PROPERTIES PREFIX "lib")
 		if    (APPLE)
 			set_target_properties(${targetName} PROPERTIES SUFFIX ".dylib")
-		endif (APPLE)
-	endif (UNIX)
+		endif ()
+	endif ()
 endmacro (fix_lib_name targetName)
 
 
@@ -104,7 +104,7 @@ macro    (create_install_target targetName var_list_depends var_list_instDirs)
 	foreach    (instDir ${${var_list_instDirs}})
 		if    (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
 			message(FATAL_ERROR "Not a valid dir for installer target: ${instDir}, \"${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt\" does not exist.")
-		endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
+		endif ()
 		set(installCmds ${installCmds}
 			COMMAND "${CMAKE_COMMAND}"
 				"-P" "${CMAKE_BINARY_DIR}/${instDir}/cmake_install.cmake"
@@ -116,7 +116,7 @@ macro    (create_install_target targetName var_list_depends var_list_instDirs)
 	# Make sure we do have commands at all
 	if    ("${installCmds}" STREQUAL "")
 		message(FATAL_ERROR "No valid install dirs supplied.")
-	endif ("${installCmds}" STREQUAL "")
+	endif ()
 
 	# Create a custom install target
 	add_custom_target(install-${targetName}
@@ -180,9 +180,9 @@ endmacro (get_list_of_submodules list_var)
 macro    (get_version_from_file vers_var vers_file)
 	if    (EXISTS ${vers_file})
 		file(STRINGS "${vers_file}" ${vers_var} LIMIT_COUNT 1)
-	else  (EXISTS ${vers_file})
+	else ()
 		set(${vers_var} "UNKNOWN_VERSION")
-	endif (EXISTS ${vers_file})
+	endif ()
 endmacro (get_version_from_file vers_var vers_file)
 
 
@@ -198,7 +198,7 @@ function    (make_absolute absDir_var baseDir relDir)
 	set(_absDir "${baseDir}")
 	if    (NOT "${relDir}" STREQUAL "")
 		set(_absDir "${_absDir}/${relDir}")
-	endif (NOT "${relDir}" STREQUAL "")
+	endif ()
 	set(${absDir_var} ${_absDir} PARENT_SCOPE)
 endfunction (make_absolute)
 
@@ -215,10 +215,10 @@ macro    (get_version_plus_dep_file vers_var versDepFile_var)
 		set_source_files_properties("${myVersionDepFile}" PROPERTIES HEADER_FILE_ONLY TRUE)
 		set_source_files_properties("${myVersionDepFile}" PROPERTIES GENERATED TRUE)
 		set(${versDepFile_var} "${myVersionDepFile}")
-	else  (EXISTS ${myVersionFile})
+	else ()
 		set(${vers_var}        "UNKNOWN_VERSION")
 		set(${versDepFile_var} "${myVersionFile}")
-	endif (EXISTS ${myVersionFile})
+	endif ()
 endmacro (get_version_plus_dep_file vers_var versDepFile_var)
 
 
@@ -230,15 +230,15 @@ macro    (get_native_sources_recursive _var _dir _relDir)
 		# Recursively get sources for source extension _ext
 		if    ("${_relDir}" STREQUAL "")
 			file(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
-		else  ("${_relDir}" STREQUAL "")
+		else ()
 			file(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
-		endif ("${_relDir}" STREQUAL "")
+		endif ()
 		# Concatenate to previous results
 		if    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
 			set(${_var} "${${_var}}${_sources}")
-		else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+		else ()
 			set(${_var} "${${_var}};${_sources}")
-		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+		endif ()
 	endforeach (_ext)
 endmacro (get_native_sources_recursive _var _dir _relDir)
 
@@ -253,7 +253,7 @@ macro    (catch_regex_group pattern group var str)
 	set(${var} "")
 	if     ("${${var}_MATCH_TEST}" STREQUAL "${str}")
 		string(REGEX REPLACE "${pattern}" "\\${group}" ${var} "${str}")
-	endif  ()
+	endif ()
 endmacro (catch_regex_group)
 
 
@@ -273,7 +273,7 @@ macro(find_freetype_hack)
 		  /usr/freeware
 		)
 		unprefer_static_libs()
-	endif()
+	endif ()
 endmacro()
 
 

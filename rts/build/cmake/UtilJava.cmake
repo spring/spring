@@ -18,9 +18,9 @@
 
 if     (CMAKE_HOST_WIN32)
 	set(JAVA_GLOBAL_LIBS_DIRS "${MINGWLIBS}")
-else   (CMAKE_HOST_WIN32)
+else ()
 	set(JAVA_GLOBAL_LIBS_DIRS "/usr/share/java" "/usr/local/share/java")
-endif  (CMAKE_HOST_WIN32)
+endif ()
 make_global(JAVA_GLOBAL_LIBS_DIRS)
 
 
@@ -35,9 +35,9 @@ macro    (find_java_lib path_var libName additionalSearchDirs)
 		)
 	if    (NOT ${path_var})
 		message(SEND_ERROR "${libName}.jar not found!")
-	else  (NOT ${path_var})
+	else ()
 		ai_message(STATUS "Found ${libName}.jar: ${${path_var}}")
-	endif (NOT ${path_var})
+	endif ()
 endmacro (find_java_lib path_var libName additionalSearchDirs)
 
 
@@ -49,7 +49,7 @@ macro    (get_first_sub_dir_name name_var dir)
 		if    (IS_DIRECTORY "${dir}/${dirPart}")
 			set(${name_var} ${dirPart})
 			break()
-		endif (IS_DIRECTORY "${dir}/${dirPart}")
+		endif ()
 	endforeach (dirPart)
 endmacro (get_first_sub_dir_name name_var dir)
 
@@ -88,14 +88,14 @@ function    (find_manifest_file srcDir result_var)
 			if     (EXISTS "${srcDir}${subDir_var}manifest.mf")
 				set(${result_var} "${srcDir}${subDir_var}manifest.mf")
 				break()
-			endif  (EXISTS "${srcDir}${subDir_var}manifest.mf")
+			endif ()
 		endforeach(subDir_var)
-	else   (CMAKE_HOST_WIN32)
+	else ()
 		find_file(${result_var}
 			NAMES "manifest.mf" "MANIFEST.MF"
 			PATHS "${srcDir}"
 			PATH_SUFFIXES ${manifestSubdirs}
 			NO_DEFAULT_PATH)
-	endif  (CMAKE_HOST_WIN32)
+	endif ()
 	set(${result_var} ${${result_var}} PARENT_SCOPE)
 endfunction (find_manifest_file)

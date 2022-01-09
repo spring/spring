@@ -9,7 +9,7 @@
 #   find_package(Git)
 #   if(GIT_FOUND)
 #     message("git found: ${GIT_EXECUTABLE}")
-#   endif()
+#   endif ()
 
 #=============================================================================
 # Copyright 2010 Kitware, Inc.
@@ -34,8 +34,8 @@ set(git_names git eg)
 if(WIN32)
   if(NOT CMAKE_GENERATOR MATCHES "MSYS")
     set(git_names git.cmd git eg.cmd eg)
-  endif()
-endif()
+  endif ()
+endif ()
 
 find_program(GIT_EXECUTABLE
   NAMES ${git_names}

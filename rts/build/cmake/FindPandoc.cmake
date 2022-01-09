@@ -22,7 +22,7 @@ include(FindPackageHandleStandardArgs)
 if    (PANDOC_BIN)
 	# Already in cache, be silent
 	set(Pandoc_FIND_QUIETLY TRUE)
-endif (PANDOC_BIN)
+endif ()
 
 find_program(PANDOC_BIN
 		NAMES pandoc
@@ -47,4 +47,4 @@ if    (PANDOC_FOUND)
 				-o "${fileDst}"
 				"${fileSrc}")
 	endmacro (pandoc_md_to_html)
-endif (PANDOC_FOUND)
+endif ()

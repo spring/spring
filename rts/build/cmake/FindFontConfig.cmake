@@ -12,7 +12,7 @@ Include(FindPackageHandleStandardArgs)
 If     (FONTCONFIG_INCLUDE_DIR)
 	# Already in cache, be silent
 	Set(FONTCONFIG_FIND_QUIETLY TRUE)
-EndIf  (FONTCONFIG_INCLUDE_DIR)
+endif ()
 
 Find_Path(FONTCONFIG_INCLUDE_DIR fontconfig/fontconfig.h)
 
@@ -27,6 +27,6 @@ If     (FONTCONFIG_FOUND)
 	Set(FONTCONFIG_LIBRARIES ${FONTCONFIG_LIBRARY})
 Else   (FONTCONFIG_FOUND)
 	Set(FONTCONFIG_LIBRARIES)
-EndIf  (FONTCONFIG_FOUND)
+endif ()
 
 Mark_As_Advanced(FONTCONFIG_LIBRARY FONTCONFIG_INCLUDE_DIR)

@@ -17,7 +17,7 @@ include(FindPackageHandleStandardArgs)
 if    (MARKDOWN_BIN)
 	# Already in cache, be silent
 	set(Markdown_FIND_QUIETLY TRUE)
-endif (MARKDOWN_BIN)
+endif ()
 
 find_program(MARKDOWN_BIN
 		NAMES markdown markdown_py
@@ -40,4 +40,4 @@ if    (MARKDOWN_FOUND)
 		set("${var_command}"
 				${MARKDOWN_BIN} "${fileSrc}" > "${fileDst}")
 	endmacro (markdown_md_to_html)
-endif (MARKDOWN_FOUND)
+endif ()

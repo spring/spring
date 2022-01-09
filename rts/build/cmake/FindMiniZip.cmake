@@ -12,7 +12,7 @@ Include(FindPackageHandleStandardArgs)
 If     (MINIZIP_INCLUDE_DIR)
   # Already in cache, be silent
   Set(MINIZIP_FIND_QUIETLY TRUE)
-EndIf  (MINIZIP_INCLUDE_DIR)
+endif ()
 
 Find_Path(MINIZIP_INCLUDE_DIR minizip/zip.h)
 
@@ -27,6 +27,6 @@ If     (MINIZIP_FOUND)
   Set(MINIZIP_LIBRARIES ${MINIZIP_LIBRARY})
 Else   (MINIZIP_FOUND)
   Set(MINIZIP_LIBRARIES)
-EndIf  (MINIZIP_FOUND)
+endif ()
 
 Mark_As_Advanced(MINIZIP_LIBRARY MINIZIP_INCLUDE_DIR)
