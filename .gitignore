@@ -132,6 +132,8 @@ progress.make
 /infolog.txt
 /demos
 /LuaUI
+/_script.txt
+/loadprogress_cached.lua
 
 #Visual Studio files
 *.vcxproj
