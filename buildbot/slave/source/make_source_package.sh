@@ -95,7 +95,9 @@ rm -rf .git \
 	.gitignore \
 	.gitmodules \
 	.mailmap \
-	tools/pr-downloader/src/lsl \
+	tools/pr-downloader/src/lsl/lsl \
+	tools/pr-downloader/src/lsl/lslextract \
+	tools/pr-downloader/src/lsl/lslunitsync \
 	tools/pr-downloader/src/lib/cimg \
 	tools/pr-downloader/src/lib/libgit2
 
