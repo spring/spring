@@ -311,6 +311,45 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 /******************************************************************************/
 
 
+bool CLuaMenu::Enable(bool enableCommand)
+{
+	if (luaMenu != nullptr) {
+		if (enableCommand) {
+			LOG_L(L_WARNING, "[CLuaMenu] LuaMenu is already enabled");
+			return false;
+		}
+
+		if (luaMenu->IsRunning()) {
+			// has to be queued, corrupts the Lua VM if done inside a pcall
+			// (LuaRules can reload itself inside callins because the action
+			// SendCommands("luarules reload") goes over the network, and is
+			// not when received)
+			luaMenu->QueueAction(CLuaMenu::ACTION_RELOAD);
+			return true;
+		}
+	}
+
+	bool res = CLuaMenu::ReloadHandler();
+	luaMenu->ActivateGame();
+
+	return res;
+}
+
+bool CLuaMenu::Disable()
+{
+	if (luaMenu == nullptr) {
+		LOG_L(L_WARNING, "[CLuaMenu] LuaMenu is already disabled");
+		return false;
+	}
+
+	if (luaMenu->IsRunning()) {
+		luaMenu->QueueAction(CLuaMenu::ACTION_DISABLE);
+		return true;
+	}
+
+	return CLuaMenu::FreeHandler();
+}
+
 void CLuaMenu::ActivateMenu(const std::string& msg)
 {
 	LUA_CALL_IN_CHECK(L);

@@ -48,6 +48,7 @@
 
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Lua/LuaMenu.h"
 
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
@@ -2545,6 +2546,32 @@ public:
 	}
 };
 
+class LuaMenuActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LuaMenuActionExecutor() : IUnsyncedActionExecutor("LuaMenu",
+		"Allows one to reload or disable LuaMenu, or alternatively to send"
+		" a chat message to LuaMenu") {}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const std::string& command = action.GetArgs();
+
+		if (command == "reload" || command == "enable") {
+			CLuaMenu::Enable(command == "enable");
+			return true;
+		}
+		if (command == "disable") {
+			CLuaMenu::Disable();
+			return true;
+		}
+		if (luaMenu != nullptr) {
+			luaMenu->GotChatMsg(command, 0);
+			return true;
+		}
+
+		LOG_L(L_DEBUG, "LuaMenu is not loaded");
+		return true;
+	}
+};
 
 class MiniMapActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3708,6 +3735,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<ClearMapMarksActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<NoLuaDrawActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LuaUIActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LuaMenuActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LuaGarbageCollectControlExecutor>());
 	AddActionExecutor(AllocActionExecutor<MiniMapActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<GroundDecalsActionExecutor>());
