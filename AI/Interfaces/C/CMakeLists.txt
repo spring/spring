@@ -60,7 +60,7 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 		# Install the library
 		install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
 	endif ()
-endmacro (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+endmacro ()
 
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################

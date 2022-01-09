@@ -59,7 +59,7 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		foreach    (wrapperName ${wrapperNames})
 			set(myDependTargets  ${myDependTargets}  "${${wrapperName}_AIWRAPPER_TARGET}")
 			set(myDependLibFiles ${myDependLibFiles} "${${wrapperName}_AIWRAPPER_JAR_BIN}")
-		endforeach (wrapperName)
+		endforeach ()
 		set_source_files_properties(${myDependLibFiles} PROPERTIES GENERATED TRUE)
 
 		# find java source root
@@ -106,7 +106,7 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		concat_classpaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 		foreach    (wrapperName ${wrapperNames})
 			concat_classpaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
-		endforeach (wrapperName)
+		endforeach ()
 
 		# Locate the manifest file
 		find_manifest_file("${myDir}" myManifestFile)
@@ -124,7 +124,7 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
 		foreach    (srcFile ${mySources})
 			file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-		endforeach (srcFile)
+		endforeach ()
 
 		# Compile and pack the library
 		add_custom_command(
@@ -209,9 +209,9 @@ macro    (configure_java_skirmish_ai wrapperNames)
 			if    (EXISTS ${wrapperJLibDir})
 				install(DIRECTORY "${wrapperJLibDir}/" DESTINATION ${myInstDataDir}/jlib)
 			endif ()
-		endforeach (wrapperName)
+		endforeach ()
 	endif ()
-endmacro (configure_java_skirmish_ai wrapperNames)
+endmacro ()
 
 
 ### END: MACROS_AND_FUNCTIONS
@@ -394,7 +394,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		if    (${isInList} EQUAL -1)
 			file(REMOVE "${genFile}")
 		endif ()
-	endforeach (genFile)
+	endforeach ()
 
 	#cleanup generated dir if some input file changed
 	add_custom_command(
@@ -555,7 +555,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	endif ()
 	foreach    (srcFile ${myJavaSources} ${myJavaGeneratedSources})
 		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-	endforeach (srcFile)
+	endforeach ()
 
 	add_custom_command(
 		OUTPUT

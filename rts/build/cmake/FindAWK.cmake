@@ -7,7 +7,7 @@
 
 INCLUDE(FindPackageHandleStandardArgs)
 
-if    (AWK_BIN)
+if (AWK_BIN)
 	# Already in cache, be silent
 	SET(AWK_FIND_QUIETLY TRUE)
 endif ()
@@ -15,9 +15,9 @@ endif ()
 
 SET(AWK_NAMES awk gawk mawk nawk)
 
-if    (CMAKE_HOST_WIN32)
+if (CMAKE_HOST_WIN32)
 	set(AWK_BIN "${MINGWLIBS}/bin/awk.exe")
-	if    (NOT EXISTS AWK_BIN)
+	if (NOT EXISTS AWK_BIN)
 		find_program(AWK_BIN NAMES ${AWK_NAMES})
 	endif ()
 else ()
@@ -28,7 +28,7 @@ endif ()
 # if AWK_BIN is valid
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(AWK DEFAULT_MSG AWK_BIN)
 
-if    (AWK_FOUND)
+if (AWK_FOUND)
 	# Try to fetch the AWK version
 	#
 	# There are different ways of doing this, and not all implementations
@@ -53,7 +53,7 @@ if    (AWK_FOUND)
 		OUTPUT_VARIABLE AWK_VERSION
 		ERROR_QUIET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-	if    ( NOT${RET_VAL} EQUAL 0 OR AWK_VERSION STREQUAL "")
+	if ( NOT${RET_VAL} EQUAL 0 OR AWK_VERSION STREQUAL "")
 		EXECUTE_PROCESS(COMMAND ${AWK_BIN} --version
 			RESULT_VARIABLE RET_VAL
 			OUTPUT_VARIABLE AWK_VERSION
@@ -61,11 +61,11 @@ if    (AWK_FOUND)
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 	endif ()
 
-	if    (${RET_VAL} EQUAL 0)
+	if (${RET_VAL} EQUAL 0)
 		# reduce to first line
 		String(REGEX REPLACE "\n.*" "" AWK_VERSION "${AWK_VERSION}")
-		if    (NOT AWK_FIND_QUIETLY)
-			message(STATUS "AWK version: ${AWK_VERSION}")
+		if (NOT AWK_FIND_QUIETLY)
+			message (STATUS "AWK version: ${AWK_VERSION}")
 		endif ()
 	else ()
 		# failed to fetch version, clear

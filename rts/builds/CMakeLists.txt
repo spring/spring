@@ -68,7 +68,7 @@ macro    (create_engine_build_and_install_target targetName)
 	else ()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
-endmacro (create_engine_build_and_install_target targetName)
+endmacro ()
 
 
 # This allows us to disable each build type individually at configure stage.
@@ -77,7 +77,7 @@ macro    (add_engine_build build)
 	if     (BUILD_spring-${build})
 		add_subdirectory(${build})
 	endif ()
-endmacro (add_engine_build)
+endmacro ()
 
 # add default dummy target which is used later on
 add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")

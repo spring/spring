@@ -172,7 +172,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 				"${myGeneratedSourceDir}/${myPkg}/clb/Wrapp${className}.java"
 				)
 		endif ()
-	endforeach (className)
+	endforeach ()
 
 	set(myGeneratedEventSources
 		"${myGeneratedSourceDir}/${myPkg}/AbstractOOAI.java"
@@ -303,7 +303,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	endif ()
 	foreach    (srcFile ${mySources} ${myGeneratedSources})
 		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-	endforeach (srcFile)
+	endforeach ()
 
 	# compile and pack library
 	add_custom_command(

@@ -14,7 +14,7 @@
 
 include(FindPackageHandleStandardArgs)
 
-if    (MARKDOWN_BIN)
+if (MARKDOWN_BIN)
 	# Already in cache, be silent
 	set(Markdown_FIND_QUIETLY TRUE)
 endif ()
@@ -32,12 +32,12 @@ find_package_handle_standard_args(Markdown DEFAULT_MSG MARKDOWN_BIN)
 
 mark_as_advanced(MARKDOWN_BIN)
 
-if    (MARKDOWN_FOUND)
-	macro    (markdown_md_to_html var_command fileSrc fileDst)
+if (MARKDOWN_FOUND)
+	macro (markdown_md_to_html var_command fileSrc fileDst)
 		# There are at least two compleetly different versions of markdown.
 		# The one on gentoo suports a lot of cmd-line switches,
 		# the one on Ubuntu not. This should work with both:
 		set("${var_command}"
 				${MARKDOWN_BIN} "${fileSrc}" > "${fileDst}")
-	endmacro (markdown_md_to_html)
+	endmacro ()
 endif ()

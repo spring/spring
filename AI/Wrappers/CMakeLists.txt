@@ -15,7 +15,7 @@ macro    (ai_wrapper_message type msg)
 	if    (NOT AIWRAPPER_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif ()
-endmacro (ai_wrapper_message type msg)
+endmacro ()
 
 
 # Configure all AI Wrapper submodules that need processing
@@ -29,5 +29,5 @@ foreach    (aiWrapperDir ${AI_WRAPPER_DIRS})
 			list(APPEND DEPS_AI_WRAPPERS ${aiWrapperDir}-AIWrapper)
 		endif ()
 	endif ()
-endforeach (aiWrapperDir)
+endforeach ()
 make_global(DEPS_AI_WRAPPERS)

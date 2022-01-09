@@ -9,7 +9,7 @@
 
 Include(FindPackageHandleStandardArgs)
 
-If     (MINIZIP_INCLUDE_DIR)
+if (MINIZIP_INCLUDE_DIR)
   # Already in cache, be silent
   Set(MINIZIP_FIND_QUIETLY TRUE)
 endif ()
@@ -23,9 +23,9 @@ Find_Library(MINIZIP_LIBRARY NAMES ${MINIZIP_NAMES})
 # all listed variables are TRUE
 Find_Package_Handle_Standard_Args(MINIZIP DEFAULT_MSG MINIZIP_LIBRARY MINIZIP_INCLUDE_DIR)
 
-If     (MINIZIP_FOUND)
+if (MINIZIP_FOUND)
   Set(MINIZIP_LIBRARIES ${MINIZIP_LIBRARY})
-Else   (MINIZIP_FOUND)
+else ()
   Set(MINIZIP_LIBRARIES)
 endif ()
 

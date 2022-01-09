@@ -13,7 +13,7 @@ macro    (skirmish_ai_message type msg)
 	if    (NOT SKIRMISHAI_FIND_QUIETLY)
 		message(STATUS "${msg}")
 	endif ()
-endmacro (skirmish_ai_message typemsg)
+endmacro ()
 
 
 # Add all Skirmish AI submodules
@@ -24,5 +24,5 @@ foreach    (skirmishAIDir ${SKIRMISH_AI_DIRS})
 	if (TARGET ${skirmishAIDir})
 		list(APPEND DEPS_AI_SKIRMISH ${skirmishAIDir})
 	endif ()
-endforeach (skirmishAIDir)
+endforeach ()
 make_global(DEPS_AI_SKIRMISH)

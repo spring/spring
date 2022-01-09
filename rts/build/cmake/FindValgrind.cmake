@@ -5,14 +5,14 @@
 
 Include(FindPackageHandleStandardArgs)
 
-If     (VALGRIND_INCLUDE_DIR)
+if (VALGRIND_INCLUDE_DIR)
 	# Already in cache, be silent
 	Set(VALGRIND_FIND_QUIETLY TRUE)
 endif ()
 
 Find_Path(VALGRIND_INCLUDE_DIR valgrind/valgrind.h)
 
-if    (VALGRIND_INCLUDE_DIR)
+if (VALGRIND_INCLUDE_DIR)
 	set(VALGRIND_FOUND TRUE)
 else ()
 	set(VALGRIND_FOUND FALSE)

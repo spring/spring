@@ -1,7 +1,7 @@
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
 if (NOT WIN32)
-	if    (XCB_LIBRARIES)
+	if (XCB_LIBRARIES)
 		SET(XCB_FIND_QUIETLY TRUE)
 	endif ()
 

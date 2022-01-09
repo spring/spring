@@ -16,7 +16,7 @@
 #
 
 
-if     (CMAKE_HOST_WIN32)
+if (CMAKE_HOST_WIN32)
 	set(JAVA_GLOBAL_LIBS_DIRS "${MINGWLIBS}")
 else ()
 	set(JAVA_GLOBAL_LIBS_DIRS "/usr/share/java" "/usr/local/share/java")
@@ -26,41 +26,41 @@ make_global(JAVA_GLOBAL_LIBS_DIRS)
 
 # Looks for a Java library (Jar file) in system wide search paths and in
 # additional dirs supplied as argument.
-macro    (find_java_lib path_var libName additionalSearchDirs)
+macro (find_java_lib path_var libName additionalSearchDirs)
 	find_file(${path_var} "${libName}.jar"
 		PATHS ${additionalSearchDirs} ${JAVA_GLOBAL_LIBS_DIRS}
 		DOC "Path to the Java library ${libName}.jar"
 		NO_DEFAULT_PATH
 		NO_CMAKE_FIND_ROOT_PATH
 		)
-	if    (NOT ${path_var})
-		message(SEND_ERROR "${libName}.jar not found!")
+	if (NOT ${path_var})
+		message (SEND_ERROR "${libName}.jar not found!")
 	else ()
-		ai_message(STATUS "Found ${libName}.jar: ${${path_var}}")
+		ai_message (STATUS "Found ${libName}.jar: ${${path_var}}")
 	endif ()
-endmacro (find_java_lib path_var libName additionalSearchDirs)
+endmacro ()
 
 
 # Returns the name of the first sub-dir (in alphabetical descending order)
 # under dir.
-macro    (get_first_sub_dir_name name_var dir)
+macro (get_first_sub_dir_name name_var dir)
 	file(GLOB dirContent RELATIVE "${dir}" "${dir}/*")
 	foreach    (dirPart ${dirContent})
-		if    (IS_DIRECTORY "${dir}/${dirPart}")
+		if (IS_DIRECTORY "${dir}/${dirPart}")
 			set(${name_var} ${dirPart})
 			break()
 		endif ()
-	endforeach (dirPart)
-endmacro (get_first_sub_dir_name name_var dir)
+	endforeach ()
+endmacro ()
 
 
 # Recursively lists all JAR files in a given directory
 # and concatenates them in a Java Classpath compatible way into a single string.
-macro    (create_classpath classPath_var dir)
+macro (create_classpath classPath_var dir)
 	file(GLOB_RECURSE ${classPath_var} FOLLOW_SYMLINKS "${dir}/*.jar")
 	# Make sure we use the correct path delimitter for the compiling system
 	string(REPLACE ";" "${PATH_DELIM_H}" ${classPath_var} "${${classPath_var}}")
-endmacro (create_classpath classPath_var dir)
+endmacro ()
 
 
 # Concatenates an arbritrary number of Java ClassPaths (may be empty).
@@ -68,10 +68,10 @@ function    (concat_classpaths resultingCP_var)
 	set(${resultingCP_var} "")
 	foreach    (cpPart ${ARGN})
 		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM_H}")
-	endforeach (cpPart)
+	endforeach ()
 	string(REGEX REPLACE "${PATH_DELIM_H}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
 	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
-endfunction (concat_classpaths)
+endfunction ()
 
 # Look for a manifest.mf file in a few specific sub-dirs.
 # This could be done with a simple find_file call,
@@ -83,13 +83,13 @@ function    (find_manifest_file srcDir result_var)
 		"/src/"
 		"/")
 	set(${result_var} "${result_var}-NOTFOUND")
-	if     (CMAKE_HOST_WIN32)
+	if (CMAKE_HOST_WIN32)
 		foreach(subDir_var ${manifestSubdirs})
-			if     (EXISTS "${srcDir}${subDir_var}manifest.mf")
+			if (EXISTS "${srcDir}${subDir_var}manifest.mf")
 				set(${result_var} "${srcDir}${subDir_var}manifest.mf")
 				break()
 			endif ()
-		endforeach(subDir_var)
+		endforeach ()
 	else ()
 		find_file(${result_var}
 			NAMES "manifest.mf" "MANIFEST.MF"
@@ -98,4 +98,4 @@ function    (find_manifest_file srcDir result_var)
 			NO_DEFAULT_PATH)
 	endif ()
 	set(${result_var} ${${result_var}} PARENT_SCOPE)
-endfunction (find_manifest_file)
+endfunction ()

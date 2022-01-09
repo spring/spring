@@ -17,7 +17,7 @@ macro    (ai_interface_message type msg)
 	if    (NOT AIINTERFACE_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif ()
-endmacro (ai_interface_message type msg)
+endmacro ()
 
 
 # Add all AI Interface submodules
@@ -32,5 +32,5 @@ foreach    (aiInterfaceDir ${AI_INTERFACE_DIRS})
 	elseif (NOT "${aiInterfaceDir}" STREQUAL "Python")
 		ai_interface_message(STATUS "Python AI Interface is not yet compatible with pureint changes -> temporarily disabled")
 	endif ()
-endforeach (aiInterfaceDir)
+endforeach ()
 make_global(DEPS_AI_INTERFACES)

@@ -9,7 +9,7 @@
 
 Include(FindPackageHandleStandardArgs)
 
-If     (FONTCONFIG_INCLUDE_DIR)
+if (FONTCONFIG_INCLUDE_DIR)
 	# Already in cache, be silent
 	Set(FONTCONFIG_FIND_QUIETLY TRUE)
 endif ()
@@ -23,9 +23,9 @@ Find_Library(FONTCONFIG_LIBRARY NAMES ${FONTCONFIG_NAMES})
 # all listed variables are TRUE
 Find_Package_Handle_Standard_Args(FONTCONFIG DEFAULT_MSG FONTCONFIG_LIBRARY FONTCONFIG_INCLUDE_DIR)
 
-If     (FONTCONFIG_FOUND)
+if (FONTCONFIG_FOUND)
 	Set(FONTCONFIG_LIBRARIES ${FONTCONFIG_LIBRARY})
-Else   (FONTCONFIG_FOUND)
+else ()
 	Set(FONTCONFIG_LIBRARIES)
 endif ()
 

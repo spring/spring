@@ -88,7 +88,7 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   /opt
 )
 
-if(SDL2_INCLUDE_DIR AND EXISTS "${SDL2_INCLUDE_DIR}/SDL_version.h")
+if (SDL2_INCLUDE_DIR AND EXISTS "${SDL2_INCLUDE_DIR}/SDL_version.h")
   file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_MAJOR_LINE REGEX "^#define[ \t]+SDL_MAJOR_VERSION[ \t]+[0-9]+$")
   file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_MINOR_LINE REGEX "^#define[ \t]+SDL_MINOR_VERSION[ \t]+[0-9]+$")
   file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_PATCH_LINE REGEX "^#define[ \t]+SDL_PATCHLEVEL[ \t]+[0-9]+$")
@@ -118,8 +118,8 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   /opt
 )
 
-if(NOT SDL2_BUILDING_LIBRARY)
-  if(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
+if (NOT SDL2_BUILDING_LIBRARY)
+  if (NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
     # Non-OS X framework versions expect you to also dynamically link to
     # SDL2main. This is mainly for Windows and OS X. Other (Unix) platforms
     # seem to provide SDL2main for compatibility even though they don't
@@ -153,8 +153,8 @@ if (SDL2_LIBRARY_TEMP)
   SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} CACHE INTERNAL "")
 
   # For SDL2main
-  if(NOT SDL2_BUILDING_LIBRARY)
-    if(SDL2MAIN_LIBRARY)
+  if (NOT SDL2_BUILDING_LIBRARY)
+    if (SDL2MAIN_LIBRARY)
       SET(SDL2_LIBRARY ${SDL2MAIN_LIBRARY} ${SDL2_LIBRARY})
     endif ()
   endif ()
@@ -168,7 +168,7 @@ if (SDL2_LIBRARY_TEMP)
   # "real" variable in one-shot.
   if (APPLE)
     SET(SDL2_LIBRARY ${SDL2_LIBRARY} "-framework Cocoa")
-  endif()
+  endif ()
 
 
   # For threads, as mentioned Apple doesn't need this.
@@ -176,13 +176,13 @@ if (SDL2_LIBRARY_TEMP)
   # and try using this line, so I'm just skipping it entirely for OS X.
   if (NOT APPLE)
     SET(SDL2_LIBRARY ${SDL2_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-  endif()
+  endif ()
 
 
   # For MinGW library
   if (MINGW)
     SET(SDL2_LIBRARY ${MINGW32_LIBRARY} ${SDL2_LIBRARY_TEMP})
-  endif()
+  endif ()
 
   SET(SDL2_FOUND "YES")
 endif ()

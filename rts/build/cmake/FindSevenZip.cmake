@@ -11,7 +11,7 @@
 
 INCLUDE(FindPackageHandleStandardArgs)
 
-if    (SEVENZIP_BIN)
+if (SEVENZIP_BIN)
 	# Already in cache, be silent
 	SET(SevenZip_FIND_QUIETLY TRUE)
 endif ()

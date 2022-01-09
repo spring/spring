@@ -13,13 +13,13 @@
 INCLUDE(FindPackageHandleStandardArgs)
 
 # Already in cache, be silent
-if    (ASCIIDOC_BIN)
+if (ASCIIDOC_BIN)
 	SET(AsciiDoc_FIND_QUIETLY TRUE)
 endif ()
-if    (XSLTPROC_BIN)
+if (XSLTPROC_BIN)
 	SET(XSLTProc_FIND_QUIETLY TRUE)
-endif()
-if    (DOCBOOK_XSL)
+endif ()
+if (DOCBOOK_XSL)
 	SET(DocBook_FIND_QUIETLY TRUE)
 endif ()
 
@@ -47,9 +47,9 @@ find_file(DOCBOOK_XSL
 	DOC "DocBook XSL Style-Sheet"
 	)
 
-if    (NOT DOCBOOK_XSL)
+if (NOT DOCBOOK_XSL)
 	file(GLOB DOCBOOK_XSL / /usr/share/xml/docbook/xsl-stylesheets-*/manpages/docbook.xsl)
-	if    (DOCBOOK_XSL)
+	if (DOCBOOK_XSL)
 		list(GET DOCBOOK_XSL 0 DOCBOOK_XSL)
 	endif ()
 endif ()

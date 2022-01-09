@@ -7,8 +7,8 @@
 #   GIT_FOUND - true if the command line client was found
 # Example usage:
 #   find_package(Git)
-#   if(GIT_FOUND)
-#     message("git found: ${GIT_EXECUTABLE}")
+#   if (GIT_FOUND)
+#     message ("git found: ${GIT_EXECUTABLE}")
 #   endif ()
 
 #=============================================================================
@@ -31,8 +31,8 @@ set(git_names git eg)
 # Prefer .cmd variants on Windows unless running in a Makefile
 # in the MSYS shell.
 #
-if(WIN32)
-  if(NOT CMAKE_GENERATOR MATCHES "MSYS")
+if (WIN32)
+  if (NOT CMAKE_GENERATOR MATCHES "MSYS")
     set(git_names git.cmd git eg.cmd eg)
   endif ()
 endif ()

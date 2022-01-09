@@ -63,7 +63,7 @@ macro    (ai_message type msg)
 	if    (NOT AI_FIND_QUIETLY)
 		message(${type} "${msg}")
 	endif ()
-endmacro (ai_message type msg)
+endmacro ()
 
 
 find_package(AWK)

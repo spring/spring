@@ -6,9 +6,9 @@
 #  WINDRES_BIN    - will be set to the windres executable (eg. windres.exe)
 #  WINDRES_FOUND  - TRUE if windres was found
 
-if    (MINGW)
+if (MINGW)
 	# Already in cache, be silent
-	if    (WINDRES_BIN)
+	if (WINDRES_BIN)
 		SET(Windres_FIND_QUIETLY TRUE)
 	endif ()
 
@@ -35,17 +35,17 @@ if    (MINGW)
 	MARK_AS_ADVANCED(WINDRES_BIN)
 
 
-	MACRO    (CreateResourceCompileCommand out_var dirIn fileIn fileOut)
+	macro (CreateResourceCompileCommand out_var dirIn fileIn fileOut)
 		if (WINDRES_FOUND)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT
 					"${fileOut}"
 				DEPENDS
-					"${fileIn}" 
+					"${fileIn}"
 				COMMAND
 					"${WINDRES_BIN}"
 						"-I${dirIn}"
-						"-i${fileIn}" 
+						"-i${fileIn}"
 						"-o" "${fileOut}"
 						"-v"
 				)
@@ -54,10 +54,10 @@ if    (MINGW)
 				OBJECT_DEPENDS ${fileIn}
 				)
 			SET(${out_var} "${fileOut}")
-		else  ()
+		else ()
 			SET(${out_var} "")
-			MESSAGE(WARNING "Could not find windres, not compiling resource \"${fileIn}\".")
+			message (WARNING "Could not find windres, not compiling resource \"${fileIn}\".")
 		endif ()
-	ENDMACRO (CreateResourceCompileCommand out_var dirIn fileIn fileOut)
+	endmacro ()
 endif ()
 
