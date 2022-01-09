@@ -156,3 +156,10 @@ Spring.VC.VC.opendb
 /rapid
 /packages
 
+#gflags generated files
+/rts/lib/gflags/gflags-config-install.cmake
+/rts/lib/gflags/gflags-config-version.cmake
+/rts/lib/gflags/gflags-config.cmake
+/rts/lib/gflags/gflags-targets.cmake
+/rts/lib/gflags/include/
+
