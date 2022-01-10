@@ -69,12 +69,6 @@ inline const std::string CreateAdditionalVersion()
 	#define GV_ADD_SPACE " "
 #endif
 
-#if defined PROFILE
-	GV_ADD_SPACE "Profile"
-	#undef  GV_ADD_SPACE
-	#define GV_ADD_SPACE " "
-#endif
-
 #if defined TRACE_SYNC
 	GV_ADD_SPACE "Sync-Trace"
 	#undef  GV_ADD_SPACE
