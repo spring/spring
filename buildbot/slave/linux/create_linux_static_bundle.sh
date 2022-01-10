@@ -40,7 +40,7 @@ for tostripfile in ${EXECUTABLES}; do
 				echo "not stripping ${tostripfile}"
 			fi
 			# remove RPATH/RUNPATH
-			chrpath --delete ${tostripfile}
+			chrpath --delete ${tostripfile} || true # ignore errors on static linked executables
 		fi
 	fi
 done
