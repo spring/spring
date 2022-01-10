@@ -28,7 +28,7 @@ fi
 # Find correct working directory.
 # (Compatible with SConstruct, which is in trunk root)
 
-while [ ! -d installer ]; do
+while [ ! -d rts ]; do
 	if [ "${PWD}" = "/" ]; then
 		echo "Error: Could not find installer directory." >&2
 		echo "Make sure to run this script from a directory below your checkout directory." >&2
@@ -95,7 +95,9 @@ rm -rf .git \
 	.gitignore \
 	.gitmodules \
 	.mailmap \
-	tools/pr-downloader/src/lsl \
+	tools/pr-downloader/src/lsl/lsl \
+	tools/pr-downloader/src/lsl/lslextract \
+	tools/pr-downloader/src/lsl/lslunitsync \
 	tools/pr-downloader/src/lib/cimg \
 	tools/pr-downloader/src/lib/libgit2
 

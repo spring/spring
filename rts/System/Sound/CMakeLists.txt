@@ -17,9 +17,9 @@ set_target_properties(no-sound PROPERTIES COMPILE_FLAGS "-DNO_SOUND")
 # Define default sound implementation
 if    (NO_SOUND)
 	set(sound-impl no-sound PARENT_SCOPE)
-else  (NO_SOUND)
+else ()
 	set(sound-impl sound PARENT_SCOPE)
-endif (NO_SOUND)
+endif ()
 
 
 # Real Sound implementaiton
@@ -56,4 +56,4 @@ if    (NOT NO_SOUND)
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	target_link_libraries(sound ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY})
 	target_link_libraries(sound ${OPENAL_LIBRARY})
-endif (NOT NO_SOUND)
+endif ()

@@ -3,7 +3,7 @@
 # Sets the overrides for compiler flags
 # Only executed ONCE (on the initial cmake run)
 
-if(MSVC)
+if (MSVC)
 	set(MSVC_EXTRA_DEFINES "/DWINDOWS /D_CRT_SECURE_NO_WARNINGS")
 	set(MSVC_EXTRA_FLAGS "/wd4244 /wd4018 /wd4800 /wd4305 /wd4514 /wd4996 /wd4710 /wd4820")
 
@@ -18,4 +18,4 @@ if(MSVC)
 	set(CMAKE_C_FLAGS_MINSIZEREL_INIT     "/MD /O1 /Ob1 /D NDEBUG")
 	set(CMAKE_C_FLAGS_RELEASE_INIT        "/MD /O2 /Ob2 /D NDEBUG")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO_INIT "/MD /Zi /O2 /Ob1 /D NDEBUG")
-endif(MSVC)
+endif ()

@@ -73,11 +73,11 @@ if   (NOT MSVC)
 	SET(cxxflags "${cxxflags} -w -O3")
 	if (NOT $ENV{CXX} MATCHES "icpc")
 		SET(cxxflags "${cxxflags} -mfpmath=sse -msse")
-	endif (NOT $ENV{CXX} MATCHES "icpc")
+	endif ()
 elseif (BUILD_BITS EQUAL 64)
 	ENABLE_LANGUAGE(ASM_MASM)
 	SET(fpu_settings_asm "FPUSettings.asm")
-endif(NOT MSVC)
+endif ()
 SET_SOURCE_FILES_PROPERTIES(${libm_flt32_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_FLT32 ${cxxflags}")
 
 ADD_LIBRARY(streflop STATIC EXCLUDE_FROM_ALL

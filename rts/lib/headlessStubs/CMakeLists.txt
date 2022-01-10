@@ -1,7 +1,7 @@
 SET(headlessStubsSources
-		"glewstub"
-		"glstub"
-		"sdlstub"
+		"glewstub.c"
+		"glstub.c"
+		"sdlstub.c"
 	)
 
 IF    (WIN32 OR APPLE)

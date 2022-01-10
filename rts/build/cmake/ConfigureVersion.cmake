@@ -16,7 +16,7 @@
 #	)
 #
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
@@ -30,18 +30,18 @@ parse_spring_version(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
 
 # We define these, so it may be used in the to-be-configured files
 set(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
-if     ("${SPRING_VERSION_ENGINE}" MATCHES "^${VERSION_REGEX_RELEASE}$")
+if ("${SPRING_VERSION_ENGINE}" MATCHES "^${VERSION_REGEX_RELEASE}$")
 	set(SPRING_VERSION_ENGINE_RELEASE 1)
-else   ()
+else ()
 	set(SPRING_VERSION_ENGINE_RELEASE 0)
-endif  ()
+endif ()
 
 # This is supplied by -DVERSION_ADDITIONAL="abc"
 set(SPRING_VERSION_ENGINE_ADDITIONAL "${VERSION_ADDITIONAL}")
 
 
 
-message("Spring engine version: ${SPRING_ENGINE_VERSION} (${SPRING_VERSION_ENGINE_ADDITIONAL})")
+message ("Spring engine version: ${SPRING_ENGINE_VERSION} (${SPRING_VERSION_ENGINE_ADDITIONAL})")
 
 
 

@@ -68,7 +68,7 @@ make_global_var(sources_engine_System_common
 	)
 if    (NO_CREG)
 	make_global_var(sources_engine_System_creg )
-else  (NO_CREG)
+else ()
 	make_global_var(sources_engine_System_creg
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/SerializeLuaState.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
@@ -76,7 +76,7 @@ else  (NO_CREG)
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
 		)
-endif (NO_CREG)
+endif ()
 make_global_var(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveNameResolver.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
@@ -159,7 +159,7 @@ if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 			${sources_engine_System_Threading_Linux}
 			${sources_engine_System_Threading_Mac}
 		)
-endif()
+endif ()
 
 set(sources_engine_System_Threading
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CpuID.cpp"
@@ -200,12 +200,12 @@ elseif (WIN32)
 			${sources_engine_System_Platform_Windows}
 			${sources_engine_System_Threading}
 		)
-else()
+else ()
 	make_global_var(sources_engine_System
 			${sources_engine_System}
 			${sources_engine_System_Threading}
 		)
-endif  ()
+endif ()
 
 
 add_subdirectory(FileSystem)

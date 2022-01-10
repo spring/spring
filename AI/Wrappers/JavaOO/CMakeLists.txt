@@ -16,18 +16,18 @@ set(myName               "JavaOO")
 # Check if the user wants to compile the wrapper
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AIWRAPPERS_JAVA TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+else ()
 	set(AIWRAPPERS_JAVA FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+endif ()
 
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	set_global(BUILD_${myName}_AIWRAPPER TRUE)
-else  (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+else ()
 	set_global(BUILD_${myName}_AIWRAPPER FALSE)
 	message("warning: Java OO AI Wrapper will not be built!")
-endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 # Build
@@ -75,9 +75,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 	find_manifest_file("${myDir}" myManifestFile)
 	if    (myManifestFile)
 		set(myBinJarArgs "cmf" "${myManifestFile}")
-	else  (myManifestFile)
+	else ()
 		set(myBinJarArgs "cf")
-	endif (myManifestFile)
+	endif ()
 
 	# remove all generated sources from build dir, if it exists
 	# (required for build dirs of git:master from before 21. September 2010)
@@ -167,12 +167,12 @@ if    (BUILD_${myName}_AIWRAPPER)
 			list(APPEND myGeneratedCallbackSources
 				"${myGeneratedSourceDir}/${myPkg}/clb/WrappCurrentCommand.java"
 				)
-		else   ()
+		else ()
 			list(APPEND myGeneratedCallbackSources
 				"${myGeneratedSourceDir}/${myPkg}/clb/Wrapp${className}.java"
 				)
-		endif  ()
-	endforeach (className)
+		endif ()
+	endforeach ()
 
 	set(myGeneratedEventSources
 		"${myGeneratedSourceDir}/${myPkg}/AbstractOOAI.java"
@@ -300,10 +300,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
 	if    (EXISTS "${mySrcArgFile}")
 		file(REMOVE "${mySrcArgFile}")
-	endif (EXISTS "${mySrcArgFile}")
+	endif ()
 	foreach    (srcFile ${mySources} ${myGeneratedSources})
 		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-	endforeach (srcFile)
+	endforeach ()
 
 	# compile and pack library
 	add_custom_command(
@@ -380,4 +380,4 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	add_dependencies(${myTarget} ${myJavaTarget})
 
-endif (BUILD_${myName}_AIWRAPPER)
+endif ()

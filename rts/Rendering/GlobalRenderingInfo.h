@@ -16,6 +16,8 @@ struct GlobalRenderingInfo {
 	const char* glslVersion;
 	const char* glewVersion;
 
+	const char* sdlDriverName;
+
 	char glVersionShort[256];
 	char glslVersionShort[256];
 

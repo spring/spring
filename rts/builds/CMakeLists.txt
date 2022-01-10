@@ -26,10 +26,10 @@ macro    (create_engine_build_and_install_target targetName)
 		)
 	if (CREATE_MAN_PAGES)
 		list(APPEND ${targetName}-Deps manpages)
-	endif()
+	endif ()
 	if (userdoc_INSTALL_HTML)
 		list(APPEND ${targetName}-Deps userdocs)
-	endif()
+	endif ()
 
 	# Create a custom meta build target
 	add_custom_target(${myBuildTarget}
@@ -52,12 +52,12 @@ macro    (create_engine_build_and_install_target targetName)
 		)
 	if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 		set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
-	endif (NOT "${AI_TYPES}" STREQUAL "NONE")
+	endif ()
 
 	create_install_target(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 
 	# allow easy switching of the default engine
-	if    (${targetName} STREQUAL "legacy")
+	if    (${targetName} STREQUAL "opengl4")
 		# Create shortcuts
 		# * make spring
 		# * make install-spring
@@ -65,10 +65,10 @@ macro    (create_engine_build_and_install_target targetName)
 		add_dependencies(spring spring-${targetName}) # This also works for custom targets
 		add_dependencies(install-spring install-spring-${targetName}) # This also works for custom targets
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring")
-	else()
+	else ()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
-endmacro (create_engine_build_and_install_target targetName)
+endmacro ()
 
 
 # This allows us to disable each build type individually at configure stage.
@@ -76,8 +76,8 @@ macro    (add_engine_build build)
 	option(BUILD_spring-${build} "Configure the spring-${build} target." TRUE)
 	if     (BUILD_spring-${build})
 		add_subdirectory(${build})
-	endif  ()
-endmacro (add_engine_build)
+	endif ()
+endmacro ()
 
 # add default dummy target which is used later on
 add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -90,10 +90,10 @@ if    (WIN32)
 	if (MSVC)
 		# Make sure we disable the default manifest generation to prevent conflicts
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
-	endif()
-endif (WIN32)
+	endif ()
+endif ()
 
 # the build targets
-add_engine_build(legacy)
+add_engine_build(opengl4)
 add_engine_build(dedicated)
 add_engine_build(headless)

@@ -41,10 +41,10 @@ macro    (configure_java_skirmish_ai wrapperNames)
 	set(BUILD_THIS_SKIRMISHAI FALSE)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	endif ()
 	if    (NOT BUILD_THIS_SKIRMISHAI)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (NOT BUILD_THIS_SKIRMISHAI)
+	endif ()
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -59,7 +59,7 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		foreach    (wrapperName ${wrapperNames})
 			set(myDependTargets  ${myDependTargets}  "${${wrapperName}_AIWRAPPER_TARGET}")
 			set(myDependLibFiles ${myDependLibFiles} "${${wrapperName}_AIWRAPPER_JAR_BIN}")
-		endforeach (wrapperName)
+		endforeach ()
 		set_source_files_properties(${myDependLibFiles} PROPERTIES GENERATED TRUE)
 
 		# find java source root
@@ -69,9 +69,9 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		elseif (EXISTS "${myDir}/src")
 			# simple java source dir path
 			set(mySourceDir          "${myDir}/src")
-		else   (EXISTS "${myDir}/src/main/java")
+		else ()
 			message(SEND_ERROR "No sources dir found for Skirmish AI: ${myName}")
-		endif  (EXISTS "${myDir}/src/main/java")
+		endif ()
 
 		# Create a list of all the AIs source files (for compiling)
 		file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
@@ -106,25 +106,25 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		concat_classpaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 		foreach    (wrapperName ${wrapperNames})
 			concat_classpaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
-		endforeach (wrapperName)
+		endforeach ()
 
 		# Locate the manifest file
 		find_manifest_file("${myDir}" myManifestFile)
 		if    (myManifestFile)
 			set(myBinJarArgs "cmf" "${myManifestFile}")
-		else  (myManifestFile)
+		else ()
 			set(myBinJarArgs "cf")
-		endif (myManifestFile)
+		endif ()
 
 		# Write list of source files to an arg-file
 		set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
 		if    (EXISTS "${mySrcArgFile}")
 			file(REMOVE "${mySrcArgFile}")
-		endif (EXISTS "${mySrcArgFile}")
+		endif ()
 		set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
 		foreach    (srcFile ${mySources})
 			file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-		endforeach (srcFile)
+		endforeach ()
 
 		# Compile and pack the library
 		add_custom_command(
@@ -178,27 +178,27 @@ macro    (configure_java_skirmish_ai wrapperNames)
 		install(DIRECTORY "${myBuildDir}/jlib/"            DESTINATION ${myInstDataDir}/jlib)
 		if    (EXISTS "${myBuildDir}/resources")
 			install(DIRECTORY "${myBuildDir}/resources/"   DESTINATION ${myInstDataDir}/resources)
-		endif (EXISTS "${myBuildDir}/resources")
+		endif ()
 		if    (EXISTS "${myBuildDir}/config")
 			install(DIRECTORY "${myBuildDir}/config/"      DESTINATION ${myInstDataDir}/config)
-		endif (EXISTS "${myBuildDir}/config")
+		endif ()
 		if    (EXISTS "${myBuildDir}/script")
 			install(DIRECTORY "${myBuildDir}/script/"      DESTINATION ${myInstDataDir}/script)
-		endif (EXISTS "${myBuildDir}/script")
+		endif ()
 
 		# Install special script and config files
 		if    (EXISTS "${myDir}/src/main/groovy")
 			install(DIRECTORY "${myDir}/src/main/groovy/"  DESTINATION ${myInstDataDir}/script)
-		endif (EXISTS "${myDir}/src/main/groovy")
+		endif ()
 		if    (EXISTS "${myDir}/src/main/ruby")
 			install(DIRECTORY "${myDir}/src/main/ruby/"    DESTINATION ${myInstDataDir}/script)
-		endif (EXISTS "${myDir}/src/main/ruby")
+		endif ()
 		if    (EXISTS "${myDir}/src/main/bsh")
 			install(DIRECTORY "${myDir}/src/main/bsh/"     DESTINATION ${myInstDataDir}/script)
-		endif (EXISTS "${myDir}/src/main/bsh")
+		endif ()
 		if    (EXISTS "${myDir}/src/main/config")
 			install(DIRECTORY "${myDir}/src/main/config/"  DESTINATION ${myInstDataDir}/config)
-		endif (EXISTS "${myDir}/src/main/config")
+		endif ()
 
 		# Install jars of wrappers
 		foreach    (wrapperName ${wrapperNames})
@@ -208,10 +208,10 @@ macro    (configure_java_skirmish_ai wrapperNames)
 			# Install the wrappers java libs, if there are any
 			if    (EXISTS ${wrapperJLibDir})
 				install(DIRECTORY "${wrapperJLibDir}/" DESTINATION ${myInstDataDir}/jlib)
-			endif (EXISTS ${wrapperJLibDir})
-		endforeach (wrapperName)
-	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (configure_java_skirmish_ai wrapperNames)
+			endif ()
+		endforeach ()
+	endif ()
+endmacro ()
 
 
 ### END: MACROS_AND_FUNCTIONS
@@ -230,47 +230,47 @@ set(myPkg                "${myPkgFirstPart}/springrts/ai")
 # Check if the user wants to compile the interface
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AI_TYPES_JAVA TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+else ()
 	set(AI_TYPES_JAVA FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+endif ()
 
 if    (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 	set(AI_TYPES_JAVA FALSE)
-endif (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 # Look for dependencies, but only if the user wants to build the interface
 if    (AI_TYPES_JAVA)
 	if    (NOT JAVA_FOUND)
 		find_package(Java REQUIRED COMPONENTS Development)
-	endif (NOT JAVA_FOUND)
+	endif ()
 	if    (MINGW)
 		set (JNI_FOUND TRUE)
-	else  (MINGW)
+	else ()
 		# this hack is needed for FindJNI.cmake to use the JDK we want it to use,
 		# as otherwise it might not find one at all (eg. in the case of OpenJDK)
 		if    ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
 			set(ENV{JAVA_HOME} "${JAVA_HOME}")
-		endif ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
+		endif ()
 		find_package(JNI REQUIRED)
 		if (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND TRUE)
 			include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
-		else (JAVA_INCLUDE_PATH)
+		else ()
 			set (JNI_FOUND FALSE)
 			message(WARNING "No Java includes found!")
-		endif (JAVA_INCLUDE_PATH)
-	endif (MINGW)
-endif (AI_TYPES_JAVA)
+		endif ()
+	endif ()
+endif ()
 
 
 # Check if dependencies of the interface are met
 if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	set_global(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+else ()
 	set_global(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
-endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 # Build
@@ -394,7 +394,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		if    (${isInList} EQUAL -1)
 			file(REMOVE "${genFile}")
 		endif ()
-	endforeach (genFile)
+	endforeach ()
 
 	#cleanup generated dir if some input file changed
 	add_custom_command(
@@ -524,9 +524,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	find_manifest_file("${myDir}" myManifestFile)
 	if    (myManifestFile)
 		set(myBinJarArgs "cmf" "${myManifestFile}")
-	else  (myManifestFile)
+	else ()
 		set(myBinJarArgs "cf")
-	endif (myManifestFile)
+	endif ()
 
 	# Build the native part
 	# ---------------------
@@ -535,7 +535,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# from the installed JDK, as the jni_md.h is in here too,
 		# and this file contains OS (win32) specific information.
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
-	endif (MINGW)
+	endif ()
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
 	add_library(${myNativeTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${myVersionDepFile})
 	add_dependencies(${myNativeTarget} generateVersionFiles)
@@ -552,10 +552,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
 	if    (EXISTS "${mySrcArgFile}")
 		file(REMOVE "${mySrcArgFile}")
-	endif (EXISTS "${mySrcArgFile}")
+	endif ()
 	foreach    (srcFile ${myJavaSources} ${myJavaGeneratedSources})
 		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-	endforeach (srcFile)
+	endforeach ()
 
 	add_custom_command(
 		OUTPUT
@@ -658,4 +658,4 @@ if    (BUILD_${myName}_AIINTERFACE)
 	install(FILES     "${myBuildDir}/${myBinJarFile}"  DESTINATION ${myInstDataDir})
 	# Install the sources archive
 	install(FILES     "${myBuildDir}/${mySrcJarFile}"  DESTINATION ${myInstDataDir}/jlib)
-endif (BUILD_${myName}_AIINTERFACE)
+endif ()
