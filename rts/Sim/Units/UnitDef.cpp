@@ -755,17 +755,18 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 			continue;
 
 		switch (c) {
-			case 'g': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEO; needGeo = true; } break;
-			case 'y': { defYardMap[ymCopyIdx - 1] = YARDMAP_OPEN;                } break;
-			case 's': { defYardMap[ymCopyIdx - 1] = YARDMAP_STACKABLE;           } break;
-			case 'c': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARD;                } break;
-			case 'i': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARDINV;             } break;
-//			case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
+			case 'g': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEO;          needGeo = true; } break;
+			case 'j': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEOSTACKABLE; needGeo = true; } break;
+			case 'y': { defYardMap[ymCopyIdx - 1] = YARDMAP_OPEN;                         } break;
+			case 's': { defYardMap[ymCopyIdx - 1] = YARDMAP_STACKABLE;                    } break;
+			case 'c': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARD;                         } break;
+			case 'i': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARDINV;                      } break;
+//			case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;                     } break; // TODO?
 			case 'w':
 			case 'x':
 			case 'f':
-			case 'o': { defYardMap[ymCopyIdx - 1] = YARDMAP_BLOCKED;             } break;
-			default : {                                                          } break;
+			case 'o': { defYardMap[ymCopyIdx - 1] = YARDMAP_BLOCKED;                      } break;
+			default : {                                                                   } break;
 		}
 	}
 

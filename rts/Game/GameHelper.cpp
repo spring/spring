@@ -1298,7 +1298,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 					const int ymIdx = GetYardMapIndex(buildInfo.buildFacing, int2{ yardxpos, yardypos }, xrange, zrange);
 
 					// if tested square is covered by a stackable yardmap cell, consider it acceptable for construction
-					ret = (!unitDef->yardmap.empty() && unitDef->yardmap[ymIdx] <= YardmapStates::YARDMAP_STACKABLE) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED;
+					ret = (!unitDef->yardmap.empty() && unitDef->yardmap[ymIdx] <= YardmapStates::YARDMAP_GEOSTACKABLE) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED;
 				} else {
 					ret = BUILDSQUARE_OCCUPIED;
 				}
