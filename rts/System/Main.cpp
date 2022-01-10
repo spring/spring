@@ -19,10 +19,6 @@
 #include <cstdlib>
 #include <cstdint>
 
-#ifdef _WIN32
-	#include "lib/SOP/SOP.hpp" // NvOptimus
-#endif
-
 // https://stackoverflow.com/a/27881472/9819318
 EXTERNALIZER_B EXPORT_CLAUSE uint32_t NvOptimusEnablement = 0x00000001;         EXTERNALIZER_E //Optimus/NV use discrete GPU hint
 EXTERNALIZER_B EXPORT_CLAUSE uint32_t AmdPowerXpressRequestHighPerformance = 1; EXTERNALIZER_E // AMD use discrete GPU hint
@@ -50,26 +46,6 @@ int Run(int argc, char* argv[])
 
 
 /**
- * Always run on dedicated GPU
- * @return true when restart is required with new env vars
- */
-#if !defined(PROFILE) && !defined(HEADLESS)
-static bool SetNvOptimusProfile(const std::string& processFileName)
-{
-#ifdef _WIN32
-	if (SOP_CheckProfile("Spring"))
-		return false;
-
-	// sic; on Windows execvp spawns a new process which breaks lobby state-tracking by PID
-	return (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE, false);
-#endif
-	return false;
-}
-#endif
-
-
-
-/**
  * @brief main
  * @return exit code
  * @param argc argument count
@@ -79,23 +55,6 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
  */
 int main(int argc, char* argv[])
 {
-// PROFILE builds exit on execv, HEADLESS does not use the GPU
-#if !defined(PROFILE) && !defined(HEADLESS)
-#define MAX_ARGS 32
-
-	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
-		// prepare for restart
-		std::array<std::string, MAX_ARGS> args;
-
-		for (int i = 0, n = std::min(argc, MAX_ARGS); i < n; i++)
-			args[i] = argv[i];
-
-		// ExecProc normally does not return; if it does the retval is an error-string
-		ErrorMessageBox(Platform::ExecuteProcess(args), "Execv error:", MBF_OK | MBF_EXCL);
-	}
-#undef MAX_ARGS
-#endif
-
 	return (Run(argc, argv));
 }
 
