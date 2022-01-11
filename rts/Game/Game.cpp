@@ -1774,7 +1774,10 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		else if ((msg.destination < playerHandler.ActivePlayers()) && player)
 		{	// player -> spectators and spectator -> player PMs should be forbidden
 			// player <-> player and spectator <-> spectator are allowed
-			if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
+			// all replay whispers can be read when watching it
+			if (player->isFromDemo) {
+				LOG("%s whispered %s: %s", label.c_str(), playerHandler.Player(msg.destination)->name.c_str(), s.c_str());
+			} else if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
 				LOG("%sPrivate: %s", label.c_str(), s.c_str());
 				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
