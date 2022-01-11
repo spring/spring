@@ -246,9 +246,6 @@ TEST_CASE("UnitSync")
 		FAIL_CHECK("No error on GetWritableDataDirectory before init"); // there's an error cause we called GetWritableDataDirectory() before Init()!
 	}
 
-	// Check if unitsync function IsSpringReleaseVersion matches VersionGenerated.h
-	CHECK(us::IsSpringReleaseVersion() == (SPRING_VERSION_ENGINE_RELEASE == 1));
-
 	// Init Unitsync
 	/*LOG("ArchiveScanner: ");
 	auto fut = std::async(std::launch::async, []() -> int { return us::Init(false, 0); } );
