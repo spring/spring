@@ -2,6 +2,11 @@ Spring changelog
 (since 85.0 a "!" prefix indicates backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 107.0 --------------------------------------------------------
+Misc:
+ - when watching a replay, you can now see everybody's whispers
+
+
 -- 106.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features
