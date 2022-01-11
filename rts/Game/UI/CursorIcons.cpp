@@ -92,8 +92,8 @@ void CCursorIcons::DrawCursors()
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
 	const CMouseCursor* currentCursor = NULL;
 
-	for (auto it = icons.cbegin(); it != icons.cend(); ++it) {
-		const int command = it->cmd;
+	for (const auto& icon : icons) {
+		const int command = icon.cmd;
 		if (command != currentCmd) {
 			currentCmd = command;
 			currentCursor = GetCursor(currentCmd);
@@ -102,7 +102,7 @@ void CCursorIcons::DrawCursors()
 			}
 		}
 		if (currentCursor != NULL) {
-			const float3 winPos = camera->CalcWindowCoordinates(it->pos);
+			const float3 winPos = camera->CalcWindowCoordinates(icon.pos);
 			if (winPos.z <= 1.0f) {
 				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
 			}
@@ -132,17 +132,16 @@ void CCursorIcons::DrawTexts()
 	font->Begin();
 	font->SetColors(); //default
 
-	std::set<IconText>::iterator it;
-	for (it = texts.begin(); it != texts.end(); ++it) {
-		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
+	for (const auto text : texts) {
+		const float3 winPos = camera->CalcWindowCoordinates(text.pos);
 		if (winPos.z <= 1.0f) {
 			const float x = (winPos.x * globalRendering->pixelX);
 			const float y = (winPos.y * globalRendering->pixelY) + yOffset;
 
 			if (guihandler->GetOutlineFonts()) {
-				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, it->text);
+				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, text.text);
 			} else {
-				font->glPrint(x, y, fontScale, FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM, it->text);
+				font->glPrint(x, y, fontScale, FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM, text.text);
 			}
 		}
 	}
@@ -152,6 +151,9 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
+	if (buildIcons.empty())
+		return;
+
 	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
@@ -159,13 +161,22 @@ void CCursorIcons::DrawBuilds()
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 
-	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
+	for (const auto& buildIcon : buildIcons) {
+		const auto* unitDef = unitDefHandler->GetUnitDefByID(-(buildIcon.cmd));
+		assert(unitDef);
+
+		const auto* model = unitDef->LoadModel();
+		assert(model);
+
+		if (!camera->InView(buildIcon.pos, model->GetDrawRadius()))
+			continue;
+
 		glPushMatrix();
 		glLoadIdentity();
-		glTranslatef3(it->pos);
-		glRotatef(it->facing * 90.0f, 0.0f, 1.0f, 0.0f);
+		glTranslatef3(buildIcon.pos);
+		glRotatef(buildIcon.facing * 90.0f, 0.0f, 1.0f, 0.0f);
 
-		unitDrawer->DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
+		unitDrawer->DrawIndividualDefAlpha(unitDef, buildIcon.team, false);
 
 		glPopMatrix();
 	}
@@ -219,8 +230,8 @@ const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 		case CMD_AUTOREPAIRLEVEL:
 */
 		default: {
-			std::map<int, std::string>::const_iterator it = customTypes.find(cmd);
-			if (it == customTypes.end()) {
+			const auto it = customTypes.find(cmd);
+			if (it == customTypes.cend()) {
 				return NULL;
 			}
 			cursorName = it->second;

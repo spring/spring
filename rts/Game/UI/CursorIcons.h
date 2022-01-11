@@ -3,7 +3,7 @@
 #ifndef CURSORICONS_H
 #define CURSORICONS_H
 
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <string>
 using std::string;
@@ -16,7 +16,7 @@ class CCursorIcons
 	public:
 		CCursorIcons();
 		~CCursorIcons();
-		
+
 		void Enable(bool);
 
 		inline void AddIcon(int cmd, const float3& pos);
@@ -36,7 +36,7 @@ class CCursorIcons
 		const CMouseCursor* GetCursor(int cmd) const;
 
 	protected:
-	
+
 		bool enabled;
 
 		struct Icon {
@@ -111,7 +111,7 @@ class CCursorIcons
 		std::set<IconText> texts;
 		std::set<BuildIcon> buildIcons;
 
-		std::map<int, string> customTypes;
+		std::unordered_map<int, string> customTypes;
 };
 
 
