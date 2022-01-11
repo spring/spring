@@ -27,12 +27,12 @@ list(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
 if (WIN32)
 	list(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
-endif (WIN32)
+endif ()
 
 if    (UNIX AND NOT MINGW)
 	if    (PREFER_STATIC_LIBS)
 		list(APPEND engineDedicatedLibraries ${C_LIBRARY} ${MATH_LIBRARY} ${REALTIME_LIBRARY})
-	endif (PREFER_STATIC_LIBS)
+	endif ()
 
 	# Needed for dynamically loading shared libraries (on some OS)
 	list(APPEND engineDedicatedLibraries ${CMAKE_DL_LIBS})
@@ -40,10 +40,10 @@ if    (UNIX AND NOT MINGW)
 	# Needed for backtrace* on some systems
 	if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 		list(APPEND engineDedicatedLibraries execinfo)
-	endif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-endif (UNIX AND NOT MINGW)
+	endif ()
+endif ()
 
-if    (MINGW OR APPLE)
+if    (WIN32 OR APPLE)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with SDL.
@@ -53,14 +53,17 @@ if    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
+	if (MSVC)
+		include_directories(${CMAKE_SOURCE_DIR}/include)
+	endif ()
 	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
 		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-	endif()
-else  (MINGW OR APPLE)
+	endif ()
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR APPLE)
+endif ()
 
 
 ### Assemble the incude dirs
@@ -81,13 +84,13 @@ elseif	(WIN32)
 	set(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler.cpp)
-else	()
+else ()
 	set(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
-endif	()
+endif ()
 
 set(system_files
 	${sources_engine_System_FileSystem}
@@ -130,7 +133,7 @@ set(system_files
 	)
 if    (WIN32)
 	list(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion.cpp)
-endif (WIN32)
+endif ()
 
 set(engineDedicatedSources
 	${system_files}
@@ -168,21 +171,21 @@ add_executable(engine-dedicated
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
 		${ENGINE_ICON}
-		main
+		main.cpp
 	)
 target_link_libraries(engine-dedicated ${engineDedicatedLibraries})
 if    (MINGW)
 	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${IPHLPAPI_LIBRARY} ${WINMM_LIBRARY})
-endif (MINGW)
+endif ()
 if    (MSVC)
-	target_link_libraries(engine-dedicated ${DBGHELP_LIBRARY})
-endif (MSVC)
+	target_link_libraries(engine-dedicated ${DBGHELP_LIBRARY} ${IPHLPAPI_LIBRARY})
+endif ()
 add_dependencies(engine-dedicated generateVersionFiles)
 
 if    (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(engine-dedicated PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-endif (MINGW)
+endif ()
 
 install(TARGETS engine-dedicated DESTINATION ${BINDIR})
 

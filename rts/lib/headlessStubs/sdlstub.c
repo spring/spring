@@ -200,6 +200,10 @@ extern DECLSPEC void SDLCALL SDL_GetVersion(SDL_version* ver) {
 	*ver = stubVersion;
 }
 
+extern DECLSPEC const char* SDL_GetCurrentVideoDriver() {
+	return "headless stub";
+}
+
 extern DECLSPEC int SDLCALL SDL_ShowCursor(int toggle) {
 	return 0;
 }
@@ -295,6 +299,10 @@ extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
 }
 
 extern DECLSPEC void SDLCALL SDL_StopTextInput(void) {
+}
+
+extern DECLSPEC int SDLCALL SDL_GL_SetSwapInterval(int interval) {
+	return 0;
 }
 
 #ifdef __cplusplus

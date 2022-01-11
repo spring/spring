@@ -19,10 +19,10 @@
 
 include(FindPackageHandleStandardArgs)
 
-if    (PANDOC_BIN)
+if (PANDOC_BIN)
 	# Already in cache, be silent
 	set(Pandoc_FIND_QUIETLY TRUE)
-endif (PANDOC_BIN)
+endif ()
 
 find_program(PANDOC_BIN
 		NAMES pandoc
@@ -37,8 +37,8 @@ find_package_handle_standard_args(Pandoc DEFAULT_MSG PANDOC_BIN)
 
 mark_as_advanced(PANDOC_BIN)
 
-if    (PANDOC_FOUND)
-	macro    (pandoc_md_to_html var_command fileSrc fileDst title)
+if (PANDOC_FOUND)
+	macro (pandoc_md_to_html var_command fileSrc fileDst title)
 		set("${var_command}"
 				"${PANDOC_BIN}"
 				--from=markdown
@@ -46,5 +46,5 @@ if    (PANDOC_FOUND)
 				-s --variable="pagetitle:${title}"
 				-o "${fileDst}"
 				"${fileSrc}")
-	endmacro (pandoc_md_to_html)
-endif (PANDOC_FOUND)
+	endmacro ()
+endif ()

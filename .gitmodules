@@ -1,27 +1,27 @@
 [submodule "HughAI"]
 	path = AI/Skirmish/HughAI
-	url = git://github.com/spring/HughAI.git
+	url = https://github.com/spring/HughAI.git
 [submodule "AI/Interfaces/Python"]
 	path = AI/Interfaces/Python
-	url = git://github.com/spring/Python.git
+	url = https://github.com/spring/Python.git
 [submodule "AI/Skirmish/Shard"]
 	path = AI/Skirmish/Shard
-	url = git://github.com/spring/Shard.git
+	url = https://github.com/spring/Shard.git
 [submodule "AI/Skirmish/KAIK"]
 	path = AI/Skirmish/KAIK
-	url = git://github.com/spring/KAIK.git
+	url = https://github.com/spring/KAIK.git
 [submodule "AI/Skirmish/CircuitAI"]
 	path = AI/Skirmish/CircuitAI
-	url = git://github.com/spring/CircuitAI.git
+	url = https://github.com/spring/CircuitAI.git
 [submodule "tools/unitsync/python"]
 	path = tools/unitsync/python
-	url = git://github.com/spring/pyunitsync.git
+	url = https://github.com/spring/pyunitsync.git
 [submodule "tools/pr-downloader"]
 	path = tools/pr-downloader
-	url = git://github.com/spring/pr-downloader.git
+	url = https://github.com/spring/pr-downloader.git
 [submodule "tools/SpringMapConvNG"]
 	path = tools/mapcompile
 	url = https://github.com/spring/SpringMapConvNG.git
 [submodule "AI/Skirmish/AAI"]
 	path = AI/Skirmish/AAI
-	url = git://github.com/spring/AAI.git
+	url = https://github.com/spring/AAI.git

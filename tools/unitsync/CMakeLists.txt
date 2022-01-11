@@ -17,26 +17,29 @@ list(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 if (WIN32)
 	list(APPEND unitsync_libs ${IPHLPAPI_LIBRARY})
 	list(APPEND unitsync_libs ${WINMM_LIBRARY})
-endif (WIN32)
+endif ()
 
-if    (MINGW OR MSVC)
+if    (WIN32)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
-else  (MINGW OR MSVC)
+	if (MSVC)
+		include_directories(${CMAKE_SOURCE_DIR}/include)
+	endif ()
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif (MINGW OR MSVC)
+endif ()
 
 
 add_definitions(-DUNITSYNC)
 if (NOT WIN32)
 	add_definitions(-fPIC)
 	add_definitions(${PIC_FLAG})
-endif()
+endif ()
 add_definitions(-DNOT_USING_CREG)
 add_definitions(-DHEADLESS)
 add_definitions(-DNO_SOUND)
@@ -46,6 +49,7 @@ remove_definitions(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
+include_directories(${ZLIB_INCLUDE_DIR})
 include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
 include_directories(${ENGINE_SRC_ROOT}/lib/lua/include)
 include_directories(${ENGINE_SRC_ROOT}/lib/7zip)
@@ -92,9 +96,9 @@ set(main_files
 	)
 if (WIN32)
 	list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
-else (WIN32)
+else ()
         list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
-endif (WIN32)
+endif ()
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
@@ -133,14 +137,14 @@ endfunction()
 check_linker_flag("-Wl,--exclude-libs,ALL" LINKER_HAS_EXCLUDELIBS)
 if (LINKER_HAS_EXCLUDELIBS)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--exclude-libs,ALL)
-else()
+else ()
 	message(WARNING "linker doesn't support -Wl,--exclude-libs,ALL this leads to a broken unitsync.so")
-endif()
+endif ()
 
 
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
-endif (MINGW)
+endif ()
 fix_lib_name(unitsync)
 
 install (TARGETS unitsync
@@ -153,4 +157,4 @@ option(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: br
 if (UNITSYNC_PYTHON_BINDINGS)
 	# only add this if the submodule is present
 	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-endif()
+endif ()

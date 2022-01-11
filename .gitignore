@@ -75,10 +75,6 @@ progress.make
 
 # Installer files
 /external
-/installer/SpringLobby
-/installer/TASClient
-/installer/downloads
-/installer/custom_defines.nsi
 
 # AI files
 /AI/Skirmish/*/build
@@ -136,6 +132,8 @@ progress.make
 /infolog.txt
 /demos
 /LuaUI
+/_script.txt
+/loadprogress_cached.lua
 
 #Visual Studio files
 *.vcxproj
@@ -155,4 +153,11 @@ Spring.VC.VC.opendb
 /maps
 /rapid
 /packages
+
+#gflags generated files
+/rts/lib/gflags/gflags-config-install.cmake
+/rts/lib/gflags/gflags-config-version.cmake
+/rts/lib/gflags/gflags-config.cmake
+/rts/lib/gflags/gflags-targets.cmake
+/rts/lib/gflags/include/
 

@@ -20,7 +20,7 @@ DESTDIR=${DEST} ${MAKE} install
 cd ${INSTALLDIR}
 
 
-EXECUTABLES="spring* lib*.so pr-downloader $(find AI/Skirmish -name libSkirmishAI.so) $(find AI/Interfaces -name libAIInterface.so)"
+EXECUTABLES="spring* lib*.so pr-downloader mapcompile mapdecompile $(find AI/Skirmish -name libSkirmishAI.so) $(find AI/Interfaces -name libAIInterface.so)"
 
 DEBUGFILES=""
 
@@ -40,7 +40,7 @@ for tostripfile in ${EXECUTABLES}; do
 				echo "not stripping ${tostripfile}"
 			fi
 			# remove RPATH/RUNPATH
-			chrpath --delete ${tostripfile}
+			chrpath --delete ${tostripfile} || true # ignore errors on static linked executables
 		fi
 	fi
 done

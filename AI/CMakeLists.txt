@@ -29,7 +29,6 @@ include_directories(
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-set(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
 
 remove_definitions(-DSTREFLOP_SSE)
 remove_definitions(-DSTREFLOP_SOFT)
@@ -37,7 +36,7 @@ add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 
 if    (MINGW)
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
-endif (MINGW)
+endif ()
 
 
 # Assemble common additional native AI sources
@@ -62,8 +61,8 @@ make_global(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
 macro    (ai_message type msg)
 	if    (NOT AI_FIND_QUIETLY)
 		message(${type} "${msg}")
-	endif (NOT AI_FIND_QUIETLY)
-endmacro (ai_message type msg)
+	endif ()
+endmacro ()
 
 
 find_package(AWK)

@@ -2,6 +2,11 @@ Spring changelog
 (since 85.0 a "!" prefix indicates backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 107.0 --------------------------------------------------------
+Misc:
+ - when watching a replay, you can now see everybody's whispers
+
+
 -- 106.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features
@@ -29,6 +34,8 @@ Lua:
  ! change {Allow,Unit}Command callin parameters
 	AllowCommand(..., cmdTag, fromSynced) --> AllowCommand(..., cmdTag, playerID, fromSynced, fromLua)
 	 UnitCommand(..., cmdTag            ) -->  UnitCommand(..., cmdTag, playerID, fromSynced, fromLua)
+ - change ProjectileDestroyed callin parameters
+        (projectileID) --> (projectileID, projectileOwnerID, weaponDefID)
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
  - add UnitDefs[i].moveDef.isSubmarine
@@ -200,7 +207,7 @@ AI:
    skirmishAiCallback_Unit_get{CaptureProgress,BuildProgress,ParalyzeDamage} functions
 
 Misc:
- - when watching a replay, you can now see everybody's whispers
+ ! buildsystem: rename engine-legacy to engine-opengl4
  - dedicated server now defaults the `AllowSpectatorJoin` springsetting to false (still true for non-dedi)
  - Rifle weapontype: remove hardcoded particles
  - add MapConvNG executables to official spring builds: https://springrts.com/wiki/MapConvNG

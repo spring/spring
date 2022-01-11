@@ -62,10 +62,9 @@ private:
 	int blipSoundID;
 };
 
-
 CInMapDraw::CInMapDraw()
 {
-	static_assert(sizeof(CNotificationPeeper) < sizeof(notificationPeeperMem), "");
+	static_assert(sizeof(CNotificationPeeper) <= sizeof(notificationPeeperMem), "");
 	eventHandler.AddClient(new (notificationPeeperMem) CNotificationPeeper());
 }
 

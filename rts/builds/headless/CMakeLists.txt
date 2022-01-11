@@ -14,7 +14,7 @@ remove_definitions(-DAVI_CAPTURING)
 
 set(OpenGL_GL_PREFERENCE LEGACY)
 include_directories(${OPENAL_INCLUDE_DIR})
-if    (MINGW OR APPLE OR MSVC)
+if    (WIN32 OR APPLE)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with gl, glu and SDL.
@@ -25,7 +25,10 @@ if    (MINGW OR APPLE OR MSVC)
 	find_package(OpenGL REQUIRED)
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
-else  ()
+	if (MSVC)
+		include_directories(${CMAKE_SOURCE_DIR}/include)
+	endif ()
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -54,7 +57,7 @@ target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sou
 if    (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-endif (MINGW)
+endif ()
 
 
 ### Install the executable

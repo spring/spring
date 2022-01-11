@@ -12,7 +12,7 @@
 #if defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
-		#include <GL/glew.h>
+	#include <GL/glew.h>
 #endif // defined(HEADLESS)
 
 

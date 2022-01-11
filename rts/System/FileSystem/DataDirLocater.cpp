@@ -499,13 +499,13 @@ bool DataDirLocater::IsInstallDirDataDir()
 	// Check if spring binary & unitsync library are in the same folder
 #if defined(UNITSYNC)
 	const std::string dir = Platform::GetModulePath();
-	const std::string fileExe = dir + "/" + GetSpringBinaryName();
+	const std::string fileExe = FileSystem::EnsurePathSepAtEnd(dir) + GetSpringBinaryName();
 
 	return FileSystem::FileExists(fileExe);
 
 #else
 	const std::string dir = Platform::GetProcessExecutablePath();
-	const std::string fileUnitsync = dir + "/" + GetUnitsyncLibName();
+	const std::string fileUnitsync = FileSystem::EnsurePathSepAtEnd(dir) + GetUnitsyncLibName();
 
 	return FileSystem::FileExists(fileUnitsync);
 
@@ -522,13 +522,13 @@ bool DataDirLocater::IsPortableMode()
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
-	const std::string dir = GetBinaryLocation();
-	if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
+	const std::string dir = FileSystem::EnsurePathSepAtEnd(GetBinaryLocation());
+	if (!FileSystem::FileExists(dir + "springsettings.cfg"))
 		return false;
 
 	// Test 3
 	// Check if the directory is writeable
-	if (!FileSystem::DirIsWritable(dir + "/"))
+	if (!FileSystem::DirIsWritable(dir))
 		return false;
 
 	// PortableMode (don't use HomeDirs as writedirs, instead save files next to binary)
@@ -539,11 +539,12 @@ bool DataDirLocater::IsPortableMode()
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 {
 	bool looksLikeDataDir = true;
+	const std::string dir = FileSystem::EnsurePathSepAtEnd(dirPath);
 
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/maps");
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/games");
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/engines");
-	// looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/unitsyncs"); TODO uncomment this if the new name for unitsync has been set
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "maps");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "games");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "engines");
+	// looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "unitsyncs"); TODO uncomment this if the new name for unitsync has been set
 
 	return looksLikeDataDir;
 }

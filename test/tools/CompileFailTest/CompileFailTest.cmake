@@ -11,13 +11,13 @@
 # @brief A macro for compile fail test (to test illegal code)
 # based on Boost's BoostTesting.cmake
 # URL: http://svn.boost.org/svn/boost/branches/CMake/Boost_1_35_0/tools/build/CMake/BoostTesting.cmake
-macro(spring_test_compile_fail testname sourcefile def_flag)
+macro (spring_test_compile_fail testname sourcefile def_flag)
 	# Determine the include directories to pass along to the underlying project.
-	Get_Directory_Property(TEST_INCLUDE_DIRS INCLUDE_DIRECTORIES)
-	SET(TEST_INCLUDES "")
-	FOREACH(DIR ${TEST_INCLUDE_DIRS})
+	get_directory_property(TEST_INCLUDE_DIRS INCLUDE_DIRECTORIES)
+	set(TEST_INCLUDES "")
+	foreach (DIR ${TEST_INCLUDE_DIRS})
 		SET(TEST_INCLUDES "${TEST_INCLUDES}:${DIR}")
-	ENDFOREACH(DIR ${TEST_INCLUDE_DIRS})
+	endforeach ()
 
 	# Add Test
 	ADD_TEST("${testname}"
@@ -30,5 +30,5 @@ macro(spring_test_compile_fail testname sourcefile def_flag)
 		--build-project CompileFailTest
 		--build-options -DSOURCE=${sourcefile} -DINCLUDES=${TEST_INCLUDES} -DDEF_FLAG="${def_flag}"
 	)
-	Set_Tests_Properties("${testname}" PROPERTIES WILL_FAIL ON)
-endmacro(spring_test_compile_fail)
+	set_tests_properties("${testname}" PROPERTIES WILL_FAIL ON)
+endmacro ()

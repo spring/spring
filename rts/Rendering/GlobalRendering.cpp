@@ -808,7 +808,7 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if ((grInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) grInfo.glRenderer  = "unknown";
 	if ((grInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) grInfo.glslVersion = "unknown";
 	if ((grInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) grInfo.glewVersion = "unknown";
-
+	if ((grInfo.sdlDriverName = (const char*) SDL_GetCurrentVideoDriver(           )) == nullptr) grInfo.sdlDriverName = "unknown";
 	// should never be null with any driver, no harm in an extra check
 	// (absence of GLSL version string would indicate bigger problems)
 	if (std::strcmp(globalRenderingInfo.glslVersion, "unknown") == 0)
@@ -848,6 +848,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
+	LOG("\tSDL driver  : %s", globalRenderingInfo.sdlDriverName);
 	LOG("\t");
 }
 

@@ -15,10 +15,10 @@
 Set(Git_FIND_QUIETLY TRUE)
 Find_Package(Git)
 
-If    (GIT_FOUND)
+if (GIT_FOUND)
 
 	# Executes a git command plus arguments.
-	Macro    (git_util_command var dir command)
+	macro (git_util_command var dir command)
 		Set(${var})
 		Set(${var}-NOTFOUND)
 		Set(CMD_GIT ${GIT_EXECUTABLE} ${command} ${ARGN})
@@ -32,23 +32,23 @@ If    (GIT_FOUND)
 				ERROR_STRIP_TRAILING_WHITESPACE
 			)
 
-		If    (NOT ${CMD_RET_VAL} EQUAL 0)
+		if (NOT ${CMD_RET_VAL} EQUAL 0)
 			Set(${var})
 			Set(${var}-NOTFOUND "1")
-			If    (NOT GIT_UTIL_FIND_QUIETLY)
-				Message(STATUS "Command \"${CMD_GIT}\" in directory ${dir} failed with output:\n\"${GIT_ERROR}\"")
-			EndIf (NOT GIT_UTIL_FIND_QUIETLY)
-		EndIf (NOT ${CMD_RET_VAL} EQUAL 0)
-	EndMacro (git_util_command)
+			if (NOT GIT_UTIL_FIND_QUIETLY)
+				message (STATUS "Command \"${CMD_GIT}\" in directory ${dir} failed with output:\n\"${GIT_ERROR}\"")
+			endif ()
+		endif ()
+	endmacro ()
 
 
 
 
 	# Fetches the revision SHA1 hash of the current HEAD.
 	# This command may fail if dir is not a git repo.
-	Macro    (git_util_hash var dir)
+	macro (git_util_hash var dir)
 		git_util_command(${var} "${dir}" rev-list -n 1 ${ARGN} HEAD)
-	EndMacro (git_util_hash)
+	endmacro ()
 
 
 
@@ -57,9 +57,9 @@ If    (GIT_FOUND)
 	# This command may fail if dir is not a git repo.
 	# In case dir has a detached HEAD, var will be set to "HEAD",
 	# else it will be set to the branch name, eg. "master" or "develop".
-	Macro    (git_util_branch var dir)
+	macro (git_util_branch var dir)
 		git_util_command(${var} "${dir}" rev-parse --abbrev-ref ${ARGN} HEAD)
-	EndMacro (git_util_branch)
+	endmacro ()
 
 
 
@@ -69,9 +69,9 @@ If    (GIT_FOUND)
 	# Only tags matching the given pattern (shell glob, see manual for git-tag)
 	# may be used.
 	# Example tag patterns: all tags:"*", spring-version-tags:"*.*.*"
-	Macro    (git_util_describe var dir tagPattern)
+	macro (git_util_describe var dir tagPattern)
 		git_util_command(${var} "${dir}" describe --tags --abbrev=7 --always --candidates 999 --match "${tagPattern}" ${ARGN})
-	EndMacro (git_util_describe)
+	endmacro ()
 
 
 
@@ -96,7 +96,7 @@ If    (GIT_FOUND)
 	# - ${prefix}_GIT_FILES_UNVERSIONED : number of uncommitted unversioned files
 	# - ${prefix}_GIT_FILES_CLEAN       : TRUE if there are no uncommitted modified files
 	# - ${prefix}_GIT_FILES_CLEAN_VERY  : TRUE if there are no uncommitted modified, added, deleted or unversioned files
-	Macro    (git_info dir prefix)
+	macro (git_info dir prefix)
 
 		# Fetch ${prefix}_GIT_REVISION_HASH
 		git_util_hash(${prefix}_GIT_REVISION_HASH "${dir}")
@@ -105,10 +105,10 @@ If    (GIT_FOUND)
 		# Fetch ${prefix}_GIT_REVISION_NAME
 		Set(${prefix}_GIT_REVISION_NAME)
 		Set(${prefix}_GIT_REVISION_NAME-NOTFOUND)
-		If    (${prefix}_GIT_REVISION_HASH)
+		if (${prefix}_GIT_REVISION_HASH)
 			git_util_command(${prefix}_GIT_REVISION_NAME "${dir}"
 					name-rev --name-only --tags --no-undefined --always ${${prefix}_GIT_REVISION_HASH})
-		EndIf (${prefix}_GIT_REVISION_HASH)
+		endif ()
 
 
 		# Fetch ${prefix}_GIT_DESCRIBE
@@ -140,7 +140,7 @@ If    (GIT_FOUND)
 
 		git_util_command(${prefix}_GIT_STATUS_OUT "${dir}" status --porcelain)
 
-		If    (${prefix}_GIT_STATUS_OUT)
+		if (${prefix}_GIT_STATUS_OUT)
 			# convert the raw command output to a list like:
 			# "M;M;M;M;M;A;D;D;??;??;??"
 			String(REGEX REPLACE
@@ -154,38 +154,38 @@ If    (GIT_FOUND)
 			Set(${prefix}_GIT_FILES_DELETED     0)
 			Set(${prefix}_GIT_FILES_UNVERSIONED 0)
 			ForEach    (type ${${prefix}_GIT_STATUS_OUT_LIST_NO_PATHS})
-				If     ("${type}" STREQUAL "M")
+				if ("${type}" STREQUAL "M")
 					Math(EXPR ${prefix}_GIT_FILES_MODIFIED    "${${prefix}_GIT_FILES_MODIFIED}    + 1")
-				ElseIf ("${type}" STREQUAL "A")
+				Elseif ("${type}" STREQUAL "A")
 					Math(EXPR ${prefix}_GIT_FILES_ADDED       "${${prefix}_GIT_FILES_ADDED}       + 1")
-				ElseIf ("${type}" STREQUAL "D")
+				Elseif ("${type}" STREQUAL "D")
 					Math(EXPR ${prefix}_GIT_FILES_DELETED     "${${prefix}_GIT_FILES_DELETED}     + 1")
-				ElseIf ("${type}" STREQUAL "??")
+				Elseif ("${type}" STREQUAL "??")
 					Math(EXPR ${prefix}_GIT_FILES_UNVERSIONED "${${prefix}_GIT_FILES_UNVERSIONED} + 1")
-				EndIf  ()
-			EndForEach (type)
+				endif ()
+			endforeach ()
 			Math(EXPR ${prefix}_GIT_FILES_CHANGES
 					"${${prefix}_GIT_FILES_MODIFIED} + ${${prefix}_GIT_FILES_ADDED} + ${${prefix}_GIT_FILES_DELETED} + ${${prefix}_GIT_FILES_UNVERSIONED}")
 
-			If    (${${prefix}_GIT_FILES_MODIFIED} EQUAL 0)
+			if (${${prefix}_GIT_FILES_MODIFIED} EQUAL 0)
 				Set(${prefix}_GIT_FILES_CLEAN TRUE)
-			Else  ()
+			else ()
 				Set(${prefix}_GIT_FILES_CLEAN FALSE)
-			EndIf ()
-			If    (${${prefix}_GIT_FILES_CHANGES} EQUAL 0)
+			endif ()
+			if (${${prefix}_GIT_FILES_CHANGES} EQUAL 0)
 				Set(${prefix}_GIT_FILES_CLEAN_VERY TRUE)
-			Else  ()
+			else ()
 				Set(${prefix}_GIT_FILES_CLEAN_VERY FALSE)
-			EndIf ()
-		Else  (${prefix}_GIT_STATUS_OUT)
+			endif ()
+		else ()
 			Set(${prefix}_GIT_FILES_MODIFIED-NOTFOUND    "1")
 			Set(${prefix}_GIT_FILES_ADDED-NOTFOUND       "1")
 			Set(${prefix}_GIT_FILES_DELETED-NOTFOUND     "1")
 			Set(${prefix}_GIT_FILES_UNVERSIONED-NOTFOUND "1")
 			Set(${prefix}_GIT_FILES_CLEAN-NOTFOUND       "1")
 			Set(${prefix}_GIT_FILES_CLEAN_VERY-NOTFOUND  "1")
-		EndIf (${prefix}_GIT_STATUS_OUT)
-	EndMacro (git_info)
+		endif ()
+	endmacro ()
 
 
 
@@ -193,20 +193,20 @@ If    (GIT_FOUND)
 
 	# Prints extensive git version info.
 	# @see git_info
-	Macro    (Git_Print_Info dir)
+	macro (Git_Print_Info dir)
 		Set(prefix Git_Print_Info_tmp_prefix_)
 		git_info(${dir} ${prefix})
-		Message("  SHA1              : ${${prefix}_GIT_REVISION_HASH}")
-		Message("  revision-name     : ${${prefix}_GIT_REVISION_NAME}")
-		Message("  describe          : ${${prefix}_GIT_DESCRIBE}")
-		Message("  branch            : ${${prefix}_GIT_BRANCH}")
-		Message("  local file stats")
-		Message("    modified:       : ${${prefix}_GIT_FILES_MODIFIED}")
-		Message("    added:          : ${${prefix}_GIT_FILES_ADDED}")
-		Message("    deleted:        : ${${prefix}_GIT_FILES_DELETED}")
-		Message("    unversioned:    : ${${prefix}_GIT_FILES_UNVERSIONED}")
-		Message("  repository state")
-		Message("    clean           : ${${prefix}_GIT_FILES_CLEAN}")
-		Message("    very clean      : ${${prefix}_GIT_FILES_CLEAN_VERY}")
-	EndMacro (Git_Print_Info)
-EndIf (GIT_FOUND)
+		message ("  SHA1              : ${${prefix}_GIT_REVISION_HASH}")
+		message ("  revision-name     : ${${prefix}_GIT_REVISION_NAME}")
+		message ("  describe          : ${${prefix}_GIT_DESCRIBE}")
+		message ("  branch            : ${${prefix}_GIT_BRANCH}")
+		message ("  local file stats")
+		message ("    modified:       : ${${prefix}_GIT_FILES_MODIFIED}")
+		message ("    added:          : ${${prefix}_GIT_FILES_ADDED}")
+		message ("    deleted:        : ${${prefix}_GIT_FILES_DELETED}")
+		message ("    unversioned:    : ${${prefix}_GIT_FILES_UNVERSIONED}")
+		message ("  repository state")
+		message ("    clean           : ${${prefix}_GIT_FILES_CLEAN}")
+		message ("    very clean      : ${${prefix}_GIT_FILES_CLEAN_VERY}")
+	endmacro ()
+endif ()

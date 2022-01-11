@@ -7,5 +7,5 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-add_executable(dirchange EXCLUDE_FROM_ALL dirchange)
+add_executable(dirchange EXCLUDE_FROM_ALL dirchange.cpp)
 set_target_properties(dirchange PROPERTIES OUTPUT_NAME "dch")
