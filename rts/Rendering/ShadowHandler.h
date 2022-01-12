@@ -115,11 +115,11 @@ private:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
-	bool shadowsLoaded;
-	bool inShadowPass;
+	bool shadowsLoaded = false;
+	bool inShadowPass = false;
 
-	static bool firstInit;
-	static bool shadowsSupported;
+	inline static bool firstInit = true;
+	inline static bool shadowsSupported = false;
 
 	// these project geometry into light-space
 	// to write the (FBO) depth-buffer texture

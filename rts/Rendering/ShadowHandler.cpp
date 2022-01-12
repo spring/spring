@@ -36,10 +36,6 @@ CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM
 
 CShadowHandler shadowHandler;
 
-bool CShadowHandler::shadowsSupported = false;
-bool CShadowHandler::firstInit = true;
-
-
 void CShadowHandler::Reload(const char* argv)
 {
 	int nextShadowConfig = (shadowConfig + 1) & 0xF;
