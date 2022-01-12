@@ -91,6 +91,14 @@ void CPlayer::UpdateControlledTeams()
 
 void CPlayer::NotifyPlayerChanged() const
 {
+	/* SyncedPlayerChanged is similar to PlayerChanged, but:
+	 * 1) is available in synced Lua,
+	 * 2) doesn't fire for replay-watching specs.
+	 *
+	 * This is a separate event because:
+	 * 1) exposing the full PlayerChanged to synced would lead to desynced replays,
+	 * 2) removing replay watchers from PlayerChanged would needlessly hurt unsynced Lua,
+	 * 3) sending the event only to unsynced would be inconsistent and opaque. */
 	if (gameSetup == nullptr || !gameSetup->hostDemo || IsFromDemo())
 		eventHandler.SyncedPlayerChanged(playerNum);
 
