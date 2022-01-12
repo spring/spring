@@ -26,6 +26,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/MsgStrings.h"
 #include "System/StartScriptGen.h"
+#include "Rendering/GlobalRendering.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -184,6 +185,7 @@ SelectMenu::~SelectMenu()
 bool SelectMenu::Draw()
 {
 	spring_msecs(10).sleep(true);
+	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 	ClearScreen();
 	agui::gui->Draw();
 

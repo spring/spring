@@ -27,7 +27,7 @@ public:
 	SelectMenu(std::shared_ptr<ClientSetup> setup);
 	~SelectMenu();
 
-	bool Draw();
+	bool Draw() override;
 
 private:
 	void Demo();

@@ -62,8 +62,8 @@ CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).descri
 CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
 CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
-CONFIG(int, WindowPosX).minimumValue(0).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowPosY).minimumValue(0).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosX).defaultValue(0 ).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 
 
 /**
@@ -285,14 +285,14 @@ CGlobalRendering::CGlobalRendering()
 {
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {
-			"Fullscreen",
-			"WindowBorderless",
-			"XResolution",
-			"YResolution",
-			"XResolutionWindowed",
-			"YResolutionWindowed",
-			"WindowPosX",
-			"WindowPosY"
+		"Fullscreen",
+		"WindowBorderless",
+		"XResolution",
+		"YResolution",
+		"XResolutionWindowed",
+		"YResolutionWindowed",
+		"WindowPosX",
+		"WindowPosY"
 	});
 }
 
@@ -322,14 +322,12 @@ void CGlobalRendering::PreKill()
 }
 
 
-SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const
+SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) const
 {
 	SDL_Window* newWindow = nullptr;
 
 	const int aaLvls[] = {msaaLevel, msaaLevel / 2, msaaLevel / 4, msaaLevel / 8, msaaLevel / 16, msaaLevel / 32, 0};
 	const int zbBits[] = {24, 32, 16};
-
-	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
 	const char* winName = hidden? "hidden": "main";
 	const char* wpfName = "";
@@ -344,9 +342,18 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 	//   and has no effect anyway, setting a minimum size for a window overrides
 	//   it while disabling the SetWindowMinimumSize call still results in a 1x1
 	//   window on the desktop
-	sdlFlags |= (SDL_WINDOW_FULLSCREEN_DESKTOP * borderless + SDL_WINDOW_FULLSCREEN * (1 - borderless)) * fullScreen;
-	sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless);
-	sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
+	//
+	//   SDL_WINDOW_FULLSCREEN, for "real" fullscreen with a videomode change;
+	//   SDL_WINDOW_FULLSCREEN_DESKTOP for "fake" fullscreen that takes the size of the desktop;
+	//   and 0 for windowed mode.
+
+	// do not set here
+	//sdlFlags |= mix(SDL_WINDOW_FULLSCREEN, SDL_WINDOW_FULLSCREEN_DESKTOP, borderless) * fullScreen;
+	//sdlFlags |=    (SDL_WINDOW_BORDERLESS * borderless);
+	//sdlFlags |=    (SDL_WINDOW_HIDDEN * hidden);
+
+	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	         sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
 
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (newWindow == nullptr); i++) {
 		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
@@ -358,7 +365,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (newWindow == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
-			if ((newWindow = SDL_CreateWindow(title, winPosX, winPosY, winRes.x, winRes.y, sdlFlags)) == nullptr) {
+			if ((newWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, minRes.x, minRes.y, sdlFlags)) == nullptr) {
 				LOG_L(L_WARNING, frmts[0], __func__, SDL_GetError(), aaLvls[i], zbBits[j], winName);
 				continue;
 			}
@@ -374,17 +381,6 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 		return nullptr;
 	}
 
-#if defined(_WIN32)
-	if (borderless && !fullScreen) {
-		WindowManagerHelper::SetWindowResizable(newWindow, !borderless);
-
-		SDL_SetWindowBordered(newWindow, borderless? SDL_FALSE: SDL_TRUE);
-		SDL_SetWindowPosition(newWindow, winPosX, winPosY);
-		SDL_SetWindowSize(newWindow, winRes.x, winRes.y);
-	}
-#endif
-
-	SDL_SetWindowMinimumSize(newWindow, minRes.x, minRes.y);
 	return newWindow;
 }
 
@@ -463,9 +459,6 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	const char* softGL = getenv("LIBGL_ALWAYS_SOFTWARE");
 
 	// get wanted resolution and context-version
-	const int2 winRes = GetCfgWinRes(fullScreen);
-	const int2 maxRes = GetMaxWinRes();
-	const int2 minRes = {MIN_WIN_SIZE_X, MIN_WIN_SIZE_Y};
 	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
 		int2{                  std::max(mesaGL[0] - '0', 3),                   std::max(mesaGL[2] - '0', 0)}:
 		int2{configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
@@ -499,26 +492,20 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		make_even_number(msaaLevel);
 	}
 
-	if ((sdlWindows[0] = CreateSDLWindow(winRes, minRes, title, false)) == nullptr)
+	if ((sdlWindows[0] = CreateSDLWindow(title, false)) == nullptr)
 		return false;
 
-	if ((sdlWindows[1] = CreateSDLWindow(winRes, minRes, title, true)) == nullptr)
+	if ((sdlWindows[1] = CreateSDLWindow(title, true)) == nullptr)
 		return false;
 
-	#if 0
-	// do not use SDL_HideWindow since that also removes the taskbar entry
-	if (minimized)
-		SDL_MinimizeWindow(sdlWindows[0]);
-	#else
 	if (hidden)
 		SDL_HideWindow(sdlWindows[0]);
-	#endif
-	// make extra sure the maximized-flag is set
-	else if (winRes == maxRes)
-		SDL_MaximizeWindow(sdlWindows[0]);
 
 	if (configHandler->GetInt("MinimizeOnFocusLoss") == 0)
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+
+	SetWindowAttributes(sdlWindows[0]);
+	//SetWindowAttributes(sdlWindows[1]);
 
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
@@ -539,14 +526,13 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		return false;
 	}
 
-	// redundant, but harmless
-	SDL_GL_MakeCurrent(sdlWindows[0], glContexts[0]);
+	MakeCurrentContext(false, false, false);
 	SDL_DisableScreenSaver();
 	return true;
 }
 
 
-void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clear) {
+void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clear) const {
 	if (clear) {
 		SDL_GL_MakeCurrent(sdlWindows[hidden], nullptr);
 	} else {
@@ -951,10 +937,78 @@ void CGlobalRendering::LogDisplayMode(SDL_Window* window) const
 	LOG("[GR::%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
 }
 
+void CGlobalRendering::GetAllDisplayBounds(SDL_Rect& r) const
+{
+	int displayIdx = 0;
+	GetScreenEffectiveBounds(r, &displayIdx);
+
+	std::array<int, 4> mb = { r.x, r.y, r.x + r.w, r.y + r.h }; //L, T, R, B
+
+	for (displayIdx = 1; displayIdx < SDL_GetNumVideoDisplays(); ++displayIdx) {
+		SDL_Rect db;
+		GetScreenEffectiveBounds(db, &displayIdx);
+		std::array<int, 4> b = { db.x, db.y, db.x + db.w, db.y + db.h }; //L, T, R, B
+
+		if (b[0] < mb[0]) mb[0] = b[0];
+		if (b[1] < mb[1]) mb[1] = b[1];
+		if (b[2] > mb[2]) mb[2] = b[2];
+		if (b[3] > mb[3]) mb[3] = b[3];
+	}
+
+	r = { mb[0], mb[1], mb[2] - mb[0], mb[3] - mb[0] };
+}
+
+void CGlobalRendering::GetWindowPosSizeBounded(int& x, int& y, int& w, int& h) const
+{
+	SDL_Rect r;
+	GetAllDisplayBounds(r);
+
+	x = std::clamp(x, r.x, r.x + r.w);
+	y = std::clamp(y, r.y, r.y + r.h);
+	w = std::max(w, minRes.x * (1 - fullScreen)); w = std::min(w, r.w - x);
+	h = std::max(h, minRes.y * (1 - fullScreen)); h = std::min(h, r.h - y);
+}
+
 
 void CGlobalRendering::SetWindowTitle(const std::string& title)
 {
 	SDL_SetWindowTitle(sdlWindows[0], title.c_str());
+}
+
+void CGlobalRendering::SetWindowAttributes(SDL_Window* window)
+{
+	// Get wanted state
+	borderless = configHandler->GetBool("WindowBorderless");
+	fullScreen = configHandler->GetBool("Fullscreen");
+	winPosX = configHandler->GetInt("WindowPosX");
+	winPosY = configHandler->GetInt("WindowPosY");
+
+	// get desired resolution
+	// note that the configured fullscreen resolution is just
+	// ignored by SDL if not equal to the user's screen size
+	const int2 maxRes = GetMaxWinRes();
+	      int2 newRes = GetCfgWinRes();
+
+	LOG("[GR::%s][1] cfgFullScreen=%d newRes=<%d,%d>", __func__, fullScreen, newRes.x, newRes.y);
+
+	if (SDL_SetWindowFullscreen(window, 0) != 0)
+		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
+
+	GetWindowPosSizeBounded(winPosX, winPosY, newRes.x, newRes.y);
+
+	SDL_RestoreWindow(window);
+	SDL_SetWindowMinimumSize(window, minRes.x, minRes.y);
+	SDL_SetWindowPosition(window, winPosX, winPosY);
+	SDL_SetWindowSize(window, newRes.x, newRes.y);
+	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+
+	if (SDL_SetWindowFullscreen(window, (borderless ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP) * fullScreen) != 0)
+		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
+
+	if (newRes == maxRes)
+		SDL_MaximizeWindow(window);
+
+	WindowManagerHelper::SetWindowResizable(window, !borderless && !fullScreen);
 }
 
 void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
@@ -965,56 +1019,13 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 void CGlobalRendering::UpdateWindow()
 {
-	if (winChgFrame < drawFrame)
+	if (winChgFrame != drawFrame)
 		return;
 
 	if (sdlWindows[0] == nullptr)
 		return;
 
-	// update wanted state
-	borderless = configHandler->GetBool("WindowBorderless");
-	fullScreen = configHandler->GetBool("Fullscreen");
-
-	const uint32_t sdlWindowFlags = SDL_GetWindowFlags(sdlWindows[0]);
-	const uint32_t fullScreenFlag = (sdlWindowFlags & SDL_WINDOW_FULLSCREEN);
-
-	// get desired resolution
-	// note that the configured fullscreen resolution is just
-	// ignored by SDL if not equal to the user's screen size
-	const int2 newRes = GetCfgWinRes(fullScreen);
-	const int2 maxRes = GetMaxWinRes();
-
-	LOG("[GR::%s][1] (cfgFullScreen=%d sdlFullScreen=%d) newRes=<%d,%d>", __func__, fullScreen, fullScreenFlag == SDL_WINDOW_FULLSCREEN, newRes.x, newRes.y);
-
-	// if currently in fullscreen mode, neither SDL_SetWindowSize nor SDL_SetWindowBordered will work
-	// need to first drop to windowed mode before changing these properties, then switch modes again
-	// the maximized-flag also has to be cleared, otherwise going from native fullscreen to windowed
-	// ignores the configured *ResolutionWindowed values
-	// (SDL_SetWindowDisplayMode sets the mode used by fullscreen windows which is not what we want)
-	#if 0
-	if (fullScreenFlag == SDL_WINDOW_FULLSCREEN) {
-		SDL_SetWindowFullscreen(sdlWindows[0], 0);
-		SDL_RestoreWindow(sdlWindows[0]);
-	}
-	#endif
-
-	if (SDL_SetWindowFullscreen(sdlWindows[0], 0) != 0)
-		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
-
-	SDL_RestoreWindow(sdlWindows[0]);
-	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	SDL_SetWindowSize(sdlWindows[0], newRes.x, newRes.y);
-	SDL_SetWindowBordered(sdlWindows[0], borderless ? SDL_FALSE : SDL_TRUE);
-
-	if (SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen) != 0)
-		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
-
-	if (newRes == maxRes)
-		SDL_MaximizeWindow(sdlWindows[0]);
-
-	WindowManagerHelper::SetWindowResizable(sdlWindows[0], !borderless && !fullScreen);
-
-	// on Windows, fullscreen-to-windowed switches can sometimes cause the context to be lost (?)
+	SetWindowAttributes(sdlWindows[0]);
 	MakeCurrentContext(false, false, false);
 }
 
@@ -1073,16 +1084,16 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 
 int2 CGlobalRendering::GetMaxWinRes() const {
 	SDL_DisplayMode dmode;
-	SDL_GetDesktopDisplayMode(0, &dmode);
+	SDL_GetDesktopDisplayMode(GetCurrentDisplayIndex(), &dmode);
 	return {dmode.w, dmode.h};
 }
 
-int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
+int2 CGlobalRendering::GetCfgWinRes() const
 {
 	static const char* xsKeys[2] = {"XResolutionWindowed", "XResolution"};
 	static const char* ysKeys[2] = {"YResolutionWindowed", "YResolution"};
 
-	int2 res = {configHandler->GetInt(xsKeys[fullScrn]), configHandler->GetInt(ysKeys[fullScrn])};
+	int2 res = {configHandler->GetInt(xsKeys[fullScreen]), configHandler->GetInt(ysKeys[fullScreen])};
 
 	// copy Native Desktop Resolution if user did not specify a value
 	// SDL2 can do this itself if size{X,Y} are set to zero but fails
@@ -1092,9 +1103,6 @@ int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 	if (res.x <= 0 || res.y <= 0)
 		res = GetMaxWinRes();
 
-	// limit minimum window size in windowed mode
-	res.x = std::max(res.x, MIN_WIN_SIZE_X * (1 - fullScrn));
-	res.y = std::max(res.y, MIN_WIN_SIZE_Y * (1 - fullScrn));
 	return res;
 }
 
@@ -1162,7 +1170,7 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	winSizeY = 8;
 	winPosX = 0;
 	winPosY = 0;
-
+	winBorder = { 0 };
 #else
 
 	SDL_Rect screenSize;
@@ -1179,8 +1187,8 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
 
 	//enforce >=0 https://github.com/beyond-all-reason/spring/issues/23
-	winPosX = std::max(winPosX, 0);
-	winPosY = std::max(winPosY, 0);
+	//winPosX = std::max(winPosX, 0);
+	//winPosY = std::max(winPosY, 0);
 #endif
 
 	// should be done by caller
@@ -1203,10 +1211,11 @@ void CGlobalRendering::SaveWindowPosAndSize()
 	if ((SDL_GetWindowFlags(sdlWindows[0]) & SDL_WINDOW_MINIMIZED) != 0)
 		return;
 
-	configHandler->Set("WindowPosX", winPosX);
-	configHandler->Set("WindowPosY", winPosY);
-	configHandler->Set("XResolutionWindowed", winSizeX);
-	configHandler->Set("YResolutionWindowed", winSizeY);
+	// do not notify about changes to block update loop
+	configHandler->Set("WindowPosX", winPosX, false, false);
+	configHandler->Set("WindowPosY", winPosY, false, false);
+	configHandler->Set("XResolutionWindowed", winSizeX, false, false);
+	configHandler->Set("YResolutionWindowed", winSizeY, false, false);
 }
 
 
@@ -1220,7 +1229,6 @@ void CGlobalRendering::UpdateGLConfigs()
 
 void CGlobalRendering::UpdateScreenMatrices()
 {
-	LOG("[GR::%s]", __func__);
 	// .x := screen width (meters), .y := eye-to-screen (meters)
 	static float2 screenParameters = { 0.36f, 0.60f };
 
@@ -1231,8 +1239,8 @@ void CGlobalRendering::UpdateScreenMatrices()
 	const float vpy = viewPosY + bottomWinCoor;
 	const float vsx = viewSizeX; // same as winSizeX except in dual-screen mode
 	const float vsy = viewSizeY; // same as winSizeY
-	const float ssx = screenSizeX - screenPosX;
-	const float ssy = screenSizeY - screenPosY;
+	const float ssx = screenSizeX;
+	const float ssy = screenSizeY;
 	const float hssx = 0.5f * ssx;
 	const float hssy = 0.5f * ssy;
 
@@ -1245,6 +1253,8 @@ void CGlobalRendering::UpdateScreenMatrices()
 	const float bottom = (vpy - hssy) * zfact;
 	const float right = ((vpx + vsx) - hssx) * zfact;
 	const float top = ((vpy + vsy) - hssy) * zfact;
+
+	LOG("[GR::%s] vpx=%f, vpy=%f, vsx=%f, vsy=%f, ssx=%f, ssy=%f, screenPosX=%d, screenPosY=%d", __func__, vpx, vpy, vsx, vsy, ssx, ssy, screenPosX, screenPosY);
 
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
 	screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };

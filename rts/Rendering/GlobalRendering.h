@@ -41,7 +41,7 @@ public:
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
+	SDL_Window* CreateSDLWindow(const char* title, bool hidden) const;
 	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
 	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
 	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
@@ -55,7 +55,7 @@ public:
 	void SetGLTimeStamp(uint32_t queryIdx) const;
 	uint64_t CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const;
 
-	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
+	void MakeCurrentContext(bool hidden, bool secondary, bool clear) const;
 
 	void CheckGLExtensions() const;
 	void SetGLSupportFlags();
@@ -64,7 +64,12 @@ public:
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
 	void LogDisplayMode(SDL_Window* window) const;
 
+	void GetAllDisplayBounds(SDL_Rect& r) const;
+
+	void GetWindowPosSizeBounded(int& x, int& y, int& w, int& h) const;
+
 	void SetWindowTitle(const std::string& title);
+	void SetWindowAttributes(SDL_Window* window);
 	void UpdateWindow();
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -87,7 +92,7 @@ public:
 
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetMaxWinRes() const;
-	int2 GetCfgWinRes(bool fullScrn) const;
+	int2 GetCfgWinRes() const;
 
 	int GetCurrentDisplayIndex() const;
 	void GetScreenEffectiveBounds(SDL_Rect& r, const int* di = nullptr, const bool* fs = nullptr) const;
@@ -349,8 +354,8 @@ public:
 	/// roughly equal to 210.0f / 255.0f)
 	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
-	static constexpr int MIN_WIN_SIZE_X = 400;
-	static constexpr int MIN_WIN_SIZE_Y = 300;
+	//minimum window resolution in non-fullscreen mode
+	static constexpr int2 minRes = { 400, 400 };
 
 	static constexpr uint32_t NUM_OPENGL_TIMER_QUERIES = 8;
 	static constexpr uint32_t FRAME_REF_TIME_QUERY_IDX = 0;

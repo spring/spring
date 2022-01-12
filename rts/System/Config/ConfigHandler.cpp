@@ -30,7 +30,7 @@ public:
 	ConfigHandlerImpl(const std::vector<std::string>& locations, bool safemode);
 	~ConfigHandlerImpl() override;
 
-	void SetString(const std::string& key, const std::string& value, bool useOverlay) override;
+	void SetString(const std::string& key, const std::string& value, bool useOverlay, bool notify) override;
 	std::string GetString(const std::string& key) const override;
 	bool IsSet(const std::string& key) const override;
 	bool IsReadOnly(const std::string& key) const override;
@@ -268,7 +268,7 @@ std::string ConfigHandlerImpl::GetString(const std::string& key) const
  * This would happen if e.g. unitsync and spring would access
  * the config file at the same time, if we would not lock.
  */
-void ConfigHandlerImpl::SetString(const std::string& key, const std::string& value, bool useOverlay)
+void ConfigHandlerImpl::SetString(const std::string& key, const std::string& value, bool useOverlay, bool notify)
 {
 	// if we set something to be persisted,
 	// we do want to override the overlay value
@@ -308,7 +308,9 @@ void ConfigHandlerImpl::SetString(const std::string& key, const std::string& val
 	}
 
 	std::lock_guard<spring::mutex> lck(observerMutex);
-	changedValues[key] = value;
+
+	if (notify)
+		changedValues[key] = value;
 }
 
 void ConfigHandlerImpl::Update()

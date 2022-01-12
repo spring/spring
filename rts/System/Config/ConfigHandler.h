@@ -62,11 +62,11 @@ public:
 
 	/// @see SetString
 	template<typename T>
-	void Set(const std::string& key, const T& value, bool useOverlay = false)
+	void Set(const std::string& key, const T& value, bool useOverlay = false, bool notify = true)
 	{
 		std::ostringstream buffer;
 		buffer << value;
-		SetString(key, buffer.str(), useOverlay);
+		SetString(key, buffer.str(), useOverlay, notify);
 	}
 
 	/// @brief Get bool, throw if key not present
@@ -93,7 +93,7 @@ public:
 	 * @param useOverlay if true, the value will only be set in memory,
 	 *        and therefore be lost for the next game
 	 */
-	virtual void SetString(const std::string& key, const std::string& value, bool useOverlay = false) = 0;
+	virtual void SetString(const std::string& key, const std::string& value, bool useOverlay = false, bool notify = true) = 0;
 
 	/**
 	 * @brief Get string config value

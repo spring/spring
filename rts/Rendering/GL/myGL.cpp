@@ -83,6 +83,10 @@ bool CheckAvailableVideoModes()
 		for (int i = 0; i < numModes; ++i) {
 			SDL_GetDisplayMode(k, i, &cm);
 
+			// skip resolutions less than minimum / per dimension
+			if (cm.w < globalRendering->minRes.x || cm.h < globalRendering->minRes.y)
+				continue;
+
 			// show only the largest refresh-rate and bit-depth per resolution
 			if (cm.w == pm.w && cm.h == pm.h && (SDL_BPP(cm.format) < SDL_BPP(pm.format) || cm.refresh_rate < pm.refresh_rate))
 				continue;
