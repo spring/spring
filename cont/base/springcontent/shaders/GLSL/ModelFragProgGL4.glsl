@@ -56,6 +56,8 @@ in Data {
 	float fogFactor;
 };
 
+uniform int shadingMode = 0; //NORMAL_SHADING
+
 uniform vec4 alphaCtrl = vec4(0.0, 0.0, 0.0, 1.0); //always pass
 uniform vec4 colorMult = vec4(1.0);
 uniform vec4 nanoColor = vec4(0.0);
@@ -100,35 +102,37 @@ void main(void)
 		discard;
 
 	texColor1.rgb = mix(texColor1.rgb, teamCol.rgb, texColor1.a);
+	vec3 finalColor = texColor1.rgb;
 
-	vec3 L = normalize(sunDir.xyz);
-	vec3 V = normalize(worldCameraDir);
-	vec3 H = normalize(L + V); //half vector
-	vec3 N = normalize(worldNormal);
-	vec3 R = -reflect(V, N);
+	if (shadingMode == 0) { // NORMAL_SHADING
+		vec3 L = normalize(sunDir.xyz);
+		vec3 V = normalize(worldCameraDir);
+		vec3 H = normalize(L + V); //half vector
+		vec3 N = normalize(worldNormal);
+		vec3 R = -reflect(V, N);
 
-	vec3 reflColor = texture(reflectTex, R).rgb;
+		vec3 reflColor = texture(reflectTex, R).rgb;
 
-	float NdotL = clamp(dot(N, L), 0.0, 1.0);
-	float HdotN = clamp(dot(N, H), 0.0, 1.0);
+		float NdotL = clamp(dot(N, L), 0.0, 1.0);
+		float HdotN = clamp(dot(N, H), 0.0, 1.0);
 
-	float shadowMult = mix(1.0, GetShadowMult(shadowVertexPos.xyz / shadowVertexPos.w, NdotL), shadowDensity.y);
+		float shadowMult = mix(1.0, GetShadowMult(shadowVertexPos.xyz / shadowVertexPos.w, NdotL), shadowDensity.y);
 
-	vec3 light = sunAmbientModel.rgb + (NdotL * sunDiffuseModel.rgb);
+		vec3 light = sunAmbientModel.rgb + (NdotL * sunDiffuseModel.rgb);
 
-	// A general rule of thumb is to set Blinn-Phong exponent between 2 and 4 times the Phong shininess exponent.
-	vec3 specular = sunSpecularModel.rgb * min(pow(HdotN, 2.5 * sunSpecularModel.a) + 0.3 * pow(HdotN, 2.0 * 3.0), 1.0);
-	specular *= (texColor2.g * 4.0);
+		// A general rule of thumb is to set Blinn-Phong exponent between 2 and 4 times the Phong shininess exponent.
+		vec3 specular = sunSpecularModel.rgb * min(pow(HdotN, 2.5 * sunSpecularModel.a) + 0.3 * pow(HdotN, 2.0 * 3.0), 1.0);
+		specular *= (texColor2.g * 4.0);
 
-	// no highlights if in shadow; decrease light to ambient level
-	specular *= shadowMult;
+		// no highlights if in shadow; decrease light to ambient level
+		specular *= shadowMult;
 
-	light = mix(sunAmbientModel.rgb, light, shadowMult);
-	light = mix(light, reflColor, texColor2.g); // reflection
-	light += texColor2.rrr; // self-illum
+		light = mix(sunAmbientModel.rgb, light, shadowMult);
+		light = mix(light, reflColor, texColor2.g); // reflection
+		light += texColor2.rrr; // self-illum
 
-	vec3 finalColor = texColor1.rgb * light + specular;
-
+		finalColor = finalColor * light + specular;
+	}
 
 	#if (DEFERRED_MODE == 1)
 		vec4 diffColor = colorMult * vec4(mix(texColor1.rgb, nanoColor.rgb, nanoColor.a), alpha);
@@ -138,8 +142,8 @@ void main(void)
 		fragColor[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 		fragColor[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
-		fragColor.rgb = mix( fogColor.rgb, finalColor.rgb, fogFactor  );
-		fragColor.rgb = mix(fragColor.rgb,  nanoColor.rgb, nanoColor.a);
+		fragColor.rgb = mix(finalColor.rgb, fogColor.rgb, (1.0 - fogFactor) * int(shadingMode == 0) );
+		fragColor.rgb = mix(fragColor.rgb ,  nanoColor.rgb, nanoColor.a * int(shadingMode == 0));
 		fragColor.a   = alpha;
 		fragColor *= colorMult;
 	#endif

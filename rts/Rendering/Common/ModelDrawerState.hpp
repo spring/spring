@@ -32,6 +32,11 @@ enum ShaderDrawingModes {
 	REFRAC_MODEL = 2,
 };
 
+enum ShaderShadingModes {
+	NORMAL_SHADING = 0,
+	SKIP_SHADING = 1,
+};
+
 class IModelDrawerState {
 public:
 	template<typename T>
@@ -66,9 +71,13 @@ public:
 	virtual void SetNanoColor(const float4& color) const = 0;
 
 	void SetColorMultiplier(float a = 1.0f) const { SetColorMultiplier(1.0f, 1.0f, 1.0f, a); };
-	virtual void SetColorMultiplier(float r, float g, float b, float a) const {};
-
+	virtual void SetColorMultiplier(float r, float g, float b, float a) const {
+		assert(false);  //doesn't make sense, except in GL4, overridden below
+	};
 	virtual void SetDrawingMode(ShaderDrawingModes sdm = ShaderDrawingModes::NORMAL_MODEL) const {
+		assert(false);  //doesn't make sense, except in GL4, overridden below
+	};
+	virtual void SetShadingMode(ShaderShadingModes sm = ShaderShadingModes::NORMAL_SHADING) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
 	};
 	virtual void SetStaticModelMatrix(const CMatrix44f& mat) const {
@@ -198,6 +207,7 @@ public:
 	void SetColorMultiplier(float r, float g, float b, float a) const override;
 
 	void SetDrawingMode(ShaderDrawingModes sdm) const override;
+	void SetShadingMode(ShaderShadingModes sm) const override;
 	void SetStaticModelMatrix(const CMatrix44f& mat) const override;
 	void SetClipPlane(uint8_t idx, const float4& cp = { 0.0f,  0.0f, 0.0f, 1.0f }) const override;
 private:

@@ -659,6 +659,14 @@ void CModelDrawerStateGL4::SetDrawingMode(ShaderDrawingModes sdm) const
 	}
 }
 
+void CModelDrawerStateGL4::SetShadingMode(ShaderShadingModes sm) const
+{
+	assert(modelShader != nullptr);
+	assert(modelShader->IsBound());
+
+	modelShader->SetUniform("shadingMode", static_cast<int>(sm));
+}
+
 void CModelDrawerStateGL4::SetStaticModelMatrix(const CMatrix44f& mat) const
 {
 	assert(modelShader != nullptr);
