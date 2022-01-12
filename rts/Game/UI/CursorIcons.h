@@ -27,21 +27,10 @@ class CCursorIcons
 
 		void Draw();
 
-	protected:
-		void Clear();
-		void DrawCursors();
-		void DrawTexts();
-		void DrawBuilds();
-
-		const CMouseCursor* GetCursor(int cmd) const;
-
-	protected:
-
-		bool enabled;
-
+	public:
 		struct Icon {
 			Icon(int c, const float3& p)
-			: cmd(c), pos(p) {}
+				: cmd(c), pos(p) {}
 
 			bool operator<(const Icon& i) const
 			{
@@ -62,7 +51,7 @@ class CCursorIcons
 
 		struct IconText {
 			IconText(const string& t, const float3& p)
-			: text(t), pos(p) {}
+				: text(t), pos(p) {}
 
 			bool operator<(const IconText& i) const
 			{
@@ -80,7 +69,7 @@ class CCursorIcons
 
 		struct BuildIcon {
 			BuildIcon(int c, const float3& p, int t, int f)
-			: pos(p), cmd(c), team(t), facing(f) {}
+				: pos(p), cmd(c), team(t), facing(f) {}
 
 			bool operator<(const BuildIcon& i) const
 			{
@@ -103,6 +92,20 @@ class CCursorIcons
 			int team;
 			int facing;
 		};
+
+	protected:
+		void Clear();
+		void DrawCursors();
+		void DrawTexts();
+		void DrawBuilds();
+
+		const CMouseCursor* GetCursor(int cmd) const;
+
+	protected:
+
+		bool enabled;
+
+
 		// use a set to minimize the number of texture bindings,
 		// and to avoid overdraw from multiple units with the
 		// same command

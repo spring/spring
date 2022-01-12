@@ -151,37 +151,7 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
-	if (buildIcons.empty())
-		return;
-
-	ScopedModelDrawerImpl<CUnitDrawer> legacy(true, false);
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
-	glEnable(GL_DEPTH_TEST);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
-
-	for (const auto& buildIcon : buildIcons) {
-		const auto* unitDef = unitDefHandler->GetUnitDefByID(-(buildIcon.cmd));
-		assert(unitDef);
-
-		const auto* model = unitDef->LoadModel();
-		assert(model);
-
-		if (!camera->InView(buildIcon.pos, model->GetDrawRadius()))
-			continue;
-
-		glPushMatrix();
-		glLoadIdentity();
-		glTranslatef3(buildIcon.pos);
-		glRotatef(buildIcon.facing * 90.0f, 0.0f, 1.0f, 0.0f);
-
-		unitDrawer->DrawIndividualDefAlpha(unitDef, buildIcon.team, false);
-
-		glPopMatrix();
-	}
-
-	glDisable(GL_DEPTH_TEST);
+	unitDrawer->DrawBuildIcons(buildIcons);
 }
 
 

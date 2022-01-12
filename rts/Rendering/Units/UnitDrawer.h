@@ -3,11 +3,13 @@
 
 #include <vector>
 #include <array>
+#include <set>
 
 #include "Rendering/Common/ModelDrawer.h"
 #include "Rendering/Common/ModelDrawerState.hpp"
 #include "Rendering/Units/UnitDrawerData.h"
 #include "Rendering/GL/LightHandler.h"
+#include "Game/UI/CursorIcons.h"
 #include "System/type2.h"
 #include "Sim/Units/CommandAI/Command.h"
 
@@ -76,6 +78,8 @@ public:
 	// Build Squares
 	        bool ShowUnitBuildSquare(const BuildInfo& buildInfo) const { return ShowUnitBuildSquare(buildInfo, std::vector<Command>()); }
 	virtual bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands) const = 0;
+
+	virtual void DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const = 0;
 protected:
 	static bool ShouldDrawOpaqueUnit(CUnit* u, uint8_t thisPassMask);
 	static bool ShouldDrawAlphaUnit(CUnit* u, uint8_t thisPassMask);
@@ -142,6 +146,7 @@ public:
 	void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false) const override;
 
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands) const override;
+	void DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const override;
 
 	void DrawUnitMiniMapIcons() const override;
 	void DrawUnitIcons() const override;
@@ -220,6 +225,8 @@ public:
 	void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false) const = 0;
 	void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false) const = 0;
 	*/
+
+	//void DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const override;
 protected:
 	void DrawObjectsShadow(int modelType) const override;
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const override;

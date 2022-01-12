@@ -1211,7 +1211,103 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	return canBuild;
 }
 
+void CUnitDrawerLegacy::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const
+{
+	if (buildIcons.empty())
+		return;
+
+	glEnable(GL_DEPTH_TEST);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
+
+	for (const auto& buildIcon : buildIcons) {
+		const auto* unitDef = unitDefHandler->GetUnitDefByID(-(buildIcon.cmd));
+		assert(unitDef);
+
+		const auto* model = unitDef->LoadModel();
+		assert(model);
+
+		if (!camera->InView(buildIcon.pos, model->GetDrawRadius()))
+			continue;
+
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef3(buildIcon.pos);
+		glRotatef(buildIcon.facing * 90.0f, 0.0f, 1.0f, 0.0f);
+
+		unitDrawer->DrawIndividualDefAlpha(unitDef, buildIcon.team, false);
+
+		glPopMatrix();
+	}
+
+	glDisable(GL_DEPTH_TEST);
+}
+
 /***********************************************************************/
+
+// CUnitDrawerLegacy::DrawBuildIcons is seemingly unbeatable in terms of FPS
+/*
+void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const
+{
+	if (buildIcons.empty())
+		return;
+
+	glEnable(GL_DEPTH_TEST);
+	SetupAlphaDrawing(false);
+
+	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
+	modelDrawerState->SetShadingMode(ShaderShadingModes::SKIP_SHADING);
+	modelDrawerState->SetColorMultiplier(0.3f);
+
+	int prevModelType = -1;
+	int prevTexType = -1;
+
+	auto& smv = S3DModelVAO::GetInstance();
+	smv.Bind();
+
+	for (const auto& buildIcon : buildIcons) {
+		const auto* unitDef = unitDefHandler->GetUnitDefByID(-(buildIcon.cmd));
+		assert(unitDef);
+
+		const auto* model = unitDef->LoadModel();
+		assert(model);
+
+		if (!camera->InView(buildIcon.pos, model->GetDrawRadius()))
+			continue;
+
+		static CMatrix44f staticWorldMat;
+
+		staticWorldMat.LoadIdentity();
+		staticWorldMat.Translate(buildIcon.pos);
+		staticWorldMat.RotateY(-buildIcon.facing * math::DEG_TO_RAD * 90.0f);
+
+		modelDrawerState->SetTeamColor(buildIcon.team);
+		modelDrawerState->SetStaticModelMatrix(staticWorldMat);
+
+		if (prevModelType != model->type || prevTexType != model->textureType) {
+			if (prevModelType != -1)
+				CModelDrawerHelper::PopModelRenderState(prevModelType);
+
+			prevModelType = model->type; prevTexType = model->textureType;
+			CModelDrawerHelper::PushModelRenderState(model->type);
+			CModelDrawerHelper::BindModelTypeTexture(model->type, model->textureType); //ineficient rendering, but w/e
+		}
+
+		smv.SubmitImmediately(model, buildIcon.team, DrawFlags::SO_ALPHAF_FLAG);
+	}
+
+	if (prevModelType != -1)
+		CModelDrawerHelper::PopModelRenderState(prevModelType);
+
+	modelDrawerState->SetColorMultiplier();
+	modelDrawerState->SetDrawingMode();
+	modelDrawerState->SetShadingMode();
+
+	smv.Unbind();
+
+	ResetAlphaDrawing(false);
+	glDisable(GL_DEPTH_TEST);
+}
+*/
 
 void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 {
