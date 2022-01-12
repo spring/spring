@@ -38,7 +38,9 @@ public:
 	static void Kill();
 	static S3DModelVAO& GetInstance() { return *instance; }
 public:
-	static constexpr size_t INSTANCE_BUFFER_NUM_ELEMS = 2 << 15;
+	static constexpr size_t INSTANCE_BUFFER_NUM_BATCHED = 2 << 15;
+	static constexpr size_t INSTANCE_BUFFER_NUM_IMMEDIATE = 2 << 10;
+	static constexpr size_t INSTANCE_BUFFER_NUM_ELEMS = INSTANCE_BUFFER_NUM_BATCHED + INSTANCE_BUFFER_NUM_IMMEDIATE;
 public:
 	S3DModelVAO();
 
@@ -86,7 +88,8 @@ private:
 private:
 	inline static S3DModelVAO* instance = nullptr;
 private:
-	uint32_t baseInstance = 0u;
+	uint32_t batchedBaseInstance;
+	uint32_t immediateBaseInstance; //note relative index
 
 	VBO vertVBO;
 	VBO indxVBO;

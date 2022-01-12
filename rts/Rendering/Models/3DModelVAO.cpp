@@ -49,8 +49,9 @@ void S3DModelVAO::DisableAttribs() const
 }
 
 S3DModelVAO::S3DModelVAO()
+	: batchedBaseInstance{ 0u }
+	, immediateBaseInstance{ 0u }
 {
-	baseInstance = 0u;
 	std::vector<SVertexData> vertData; vertData.reserve(2 << 21);
 	std::vector<uint32_t   > indxData; indxData.reserve(2 << 22);
 
@@ -212,14 +213,14 @@ void S3DModelVAO::Submit(GLenum mode, bool bindUnbind)
 	static std::vector<SDrawElementsIndirectCommand> submitCmds;
 	submitCmds.clear();
 
-	baseInstance = 0u;
+	batchedBaseInstance = 0u;
 
 	static std::vector<SInstanceData> allRenderModelData;
-	allRenderModelData.reserve(INSTANCE_BUFFER_NUM_ELEMS);
+	allRenderModelData.reserve(INSTANCE_BUFFER_NUM_BATCHED);
 	allRenderModelData.clear();
 
 	for (const auto& [indxCount, renderModelData] : modelDataToInstance) {
-		if (allRenderModelData.size() + renderModelData.size() >= INSTANCE_BUFFER_NUM_ELEMS)
+		if (allRenderModelData.size() + renderModelData.size() >= INSTANCE_BUFFER_NUM_BATCHED)
 			continue;
 
 		SDrawElementsIndirectCommand scmd{
@@ -227,13 +228,13 @@ void S3DModelVAO::Submit(GLenum mode, bool bindUnbind)
 			static_cast<uint32_t>(renderModelData.size()),
 			indxCount.index,
 			0u,
-			baseInstance
+			batchedBaseInstance
 		};
 
 		submitCmds.emplace_back(scmd);
 
 		allRenderModelData.insert(allRenderModelData.end(), renderModelData.cbegin(), renderModelData.cend());
-		baseInstance += renderModelData.size();
+		batchedBaseInstance += renderModelData.size();
 	}
 
 	if (submitCmds.empty())
@@ -263,20 +264,21 @@ bool S3DModelVAO::SubmitImmediatelyImpl(const TObj* obj, uint32_t indexStart, ui
 
 	const auto uniIndex = modelsUniformsStorage.GetObjOffset(obj); //doesn't need to exist for defs. Don't check for validity
 
-	// do not increment base instance for now.
-	// TODO: dedicate some circular space (~1024 items) for immediate submissions closer to the end of instVBO
 	SInstanceData instanceData(static_cast<uint32_t>(matIndex), teamID, drawFlags, uniIndex);
+	const uint32_t immediateBaseInstanceAbs = INSTANCE_BUFFER_NUM_BATCHED + immediateBaseInstance;
 	SDrawElementsIndirectCommand scmd{
 		indexCount,
 		1,
 		indexStart,
 		0u,
-		baseInstance
+		immediateBaseInstanceAbs
 	};
 
 	instVBO.Bind();
-	instVBO.SetBufferSubData(baseInstance * sizeof(SInstanceData), sizeof(SInstanceData), &instanceData);
+	instVBO.SetBufferSubData(immediateBaseInstanceAbs * sizeof(SInstanceData), sizeof(SInstanceData), &instanceData);
 	instVBO.Unbind();
+
+	immediateBaseInstance = (immediateBaseInstance + 1) % INSTANCE_BUFFER_NUM_IMMEDIATE;
 
 	if (bindUnbind)
 		Bind();
@@ -286,7 +288,6 @@ bool S3DModelVAO::SubmitImmediatelyImpl(const TObj* obj, uint32_t indexStart, ui
 	if (bindUnbind)
 		Unbind();
 
-	//TODO sanitization
 	return true;
 }
 
