@@ -113,7 +113,7 @@ public:
     /**  @param buffer:       Pointer to output buffer.
      *   @param sizeToRead:   Amount of bytes to read
      *   @return              Returns how much bytes were read.  */
-    virtual int read(void* buffer, int sizeToRead)  {
+    virtual int read(void* buffer, int sizeToRead) override {
         if(sizeToRead<0) {
             return 0;
         }
@@ -129,7 +129,7 @@ public:
 
     // ----------------------------------------------------------------------------------
     //! Returns size of file in bytes
-    virtual int getSize()   {
+    virtual int getSize() override {
         return (int)data.size();
     }
 

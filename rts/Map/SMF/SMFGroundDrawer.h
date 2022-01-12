@@ -32,17 +32,17 @@ public:
 
 	friend class CSMFReadMap;
 
-	void Draw(const DrawPass::e& drawPass);
+	void Draw(const DrawPass::e& drawPass) override;
 	void DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest);
 	void DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest);
-	void DrawShadowPass();
+	void DrawShadowPass() override;
 
-	void Update();
-	void UpdateRenderState();
+	void Update() override;
+	void UpdateRenderState() override;
 	void SunChanged();
 
-	void SetLuaShader(const LuaMapShaderData*);
-	void SetDrawDeferredPass(bool b) {
+	void SetLuaShader(const LuaMapShaderData*) override;
+	void SetDrawDeferredPass(bool b) override {
 		if ((drawDeferred = b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
 		}
@@ -51,19 +51,20 @@ public:
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 
-	void IncreaseDetail() { SetDetail(groundDetail + 1); }
-	void DecreaseDetail() { SetDetail(groundDetail - 1); }
-	void SetDetail(int newGroundDetail);
-	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
+	void IncreaseDetail() override { SetDetail(groundDetail + 1); }
+	void DecreaseDetail() override { SetDetail(groundDetail - 1); }
+	void SetDetail(int newGroundDetail) override;
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const override;
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
 	      CSMFReadMap* GetReadMap()       { return smfMap; }
-	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
-	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
+	const GL::LightHandler* GetLightHandler() const override { return &lightHandler; }
+	      GL::LightHandler* GetLightHandler()       override { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const override { return &geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       override { return &geomBuffer; }
 
+	IMeshDrawer* GetMeshDrawer() { return meshDrawer; }
 	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
 private:

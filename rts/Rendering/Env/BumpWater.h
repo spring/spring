@@ -9,7 +9,7 @@
 #include "IWater.h"
 
 #include "System/EventClient.h"
-#include "System/Misc/RectangleOptimizer.h"
+#include "System/Misc/RectangleOverlapHandler.h"
 
 
 namespace Shader {
@@ -20,24 +20,24 @@ class CBumpWater : public IWater, public CEventClient
 {
 public:
 	//! CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return shoreWaves && (eventName == "UnsyncedHeightMapUpdate");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
 public:
 	CBumpWater();
 	virtual ~CBumpWater();
 
-	void Update();
-	void UpdateWater(CGame* game);
-	void OcclusionQuery();
+	void Update() override;
+	void UpdateWater(CGame* game) override;
+	void OcclusionQuery() override;
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
-	void Draw();
-	int GetID() const { return WATER_RENDERER_BUMPMAPPED; }
-	const char* GetName() const { return "bumpmapped"; }
+	void Draw() override;
+	int GetID() const override { return WATER_RENDERER_BUMPMAPPED; }
+	const char* GetName() const override { return "bumpmapped"; }
 
 private:
 	void GenWaterPlaneBuffer(bool radial);
@@ -64,12 +64,12 @@ private:
 	};
 
 	std::vector<CoastAtlasRect> coastmapAtlasRects;
-	CRectangleOptimizer heightmapUpdates;
+	CRectangleOverlapHandler heightmapUpdates;
 
 	void UploadCoastline(const bool forceFull = false);
 	void UpdateCoastmap(const bool initialize = false);
 	void UpdateDynWaves(const bool initialize = false);
-	void UnsyncedHeightMapUpdate(const SRectangle& rect);
+	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 
 private:
 	//! user options

@@ -3,6 +3,7 @@
 #ifndef TEAM_BASE_H
 #define TEAM_BASE_H
 
+#include <algorithm>
 #include <string>
 
 #include "System/float3.h"
@@ -69,7 +70,7 @@ public:
 	 *
 	 * @see incomeMultiplier
 	 */
-	void SetAdvantage(float advantage) { SetIncomeMultiplier(std::max(0.0f, advantage) + 1.0f); }
+	void SetAdvantage(float advantage) { SetIncomeMultiplier(std::max(-1.0f, advantage) + 1.0f); }
 
 	void SetIncomeMultiplier(float incomeMult) { incomeMultiplier = std::max(0.0f, incomeMult); }
 	float GetIncomeMultiplier() const { return incomeMultiplier; }

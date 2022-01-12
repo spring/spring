@@ -3,7 +3,11 @@
 #include "DataDirLocater.h"
 
 #include <cstdlib>
-#ifdef WIN32
+#include <cassert>
+#include <cstring>
+#include <sstream>
+
+#ifdef _WIN32
 	#include <io.h>
 	#include <direct.h>
 	#include <windows.h>
@@ -17,12 +21,9 @@
 #endif
 
 #include "System/Platform/Win/win32.h"
-#include <sstream>
-#include <cassert>
-#include <string.h>
 
-#include "FileSystem.h"
 #include "CacheDir.h"
+#include "FileSystem.h"
 #include "System/Exceptions.h"
 #include "System/MainDefines.h" // for sPS, cPS, cPD
 #include "System/Config/ConfigHandler.h"
@@ -30,14 +31,20 @@
 #include "System/Platform/Misc.h"
 #include "System/SafeUtil.h"
 
-CONFIG(std::string, SpringData).defaultValue("")
-		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs")
-		.readOnly(true);
+CONFIG(std::string, SpringData)
+	.defaultValue("")
+	.description("List of additional data-directories, separated by ';' on Windows and ':' on other OSs")
+	.readOnly(true);
+
+CONFIG(std::string, SpringDataRoot)
+	.defaultValue("")
+	.description("Optional custom data-directory content root ('base', 'maps', ...) to scan for archives")
+	.readOnly(true);
 
 
 static inline std::string GetSpringBinaryName()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	return "spring.exe";
 #else
 	return "spring";
@@ -46,7 +53,7 @@ static inline std::string GetSpringBinaryName()
 
 static inline std::string GetUnitsyncLibName()
 {
-#if   defined(WIN32)
+#if   defined(_WIN32)
 	return "unitsync.dll";
 #elif defined(__APPLE__)
 	return "libunitsync.dylib";
@@ -66,16 +73,29 @@ static std::string GetBinaryLocation()
 }
 
 
-DataDir::DataDir(const std::string& path)
-	: path(path)
-	, writable(false)
+static inline void SplitColonString(const std::string& str, const std::function<void(const std::string&)>& cbf)
+{
+	size_t prev_colon = 0;
+	size_t colon;
+
+	// cPD is ';' or ':' depending on OS
+	while ((colon = str.find(cPD, prev_colon)) != std::string::npos) {
+		cbf(str.substr(prev_colon, colon - prev_colon));
+		prev_colon = colon + 1;
+	}
+
+	cbf(str.substr(prev_colon));
+}
+
+
+
+DataDir::DataDir(const std::string& path): path(path)
 {
 	FileSystem::EnsurePathSepAtEnd(this->path);
 }
 
+
 DataDirLocater::DataDirLocater()
-	: isolationMode(false)
-	, writeDir(nullptr)
 {
 	UpdateIsolationModeByEnvVar();
 }
@@ -109,19 +129,23 @@ const std::vector<DataDir>& DataDirLocater::GetDataDirs() const
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 {
 	std::string out;
+
 #ifdef _WIN32
-	const size_t maxSize = 32 * 1024;
+	constexpr size_t maxSize = 32 * 1024;
 	char out_c[maxSize];
 	ExpandEnvironmentStrings(in.c_str(), out_c, maxSize); // expands %HOME% etc.
 	out = out_c;
 #else
 	std::string previous = in;
+
 	for (int i = 0; i < 10; ++i) { // repeat substitution till we got a pure absolute path
 		wordexp_t pwordexp;
-		int r = wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
-		if (r == EXIT_SUCCESS) {
+
+		// expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
+		if (wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD) == EXIT_SUCCESS) {
 			if (pwordexp.we_wordc > 0) {
-				out = pwordexp.we_wordv[0];;
+				out = pwordexp.we_wordv[0];
+
 				for (unsigned int w = 1; w < pwordexp.we_wordc; ++w) {
 					out += " ";
 					out += pwordexp.we_wordv[w];
@@ -132,9 +156,9 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 			out = in;
 		}
 
-		if (previous == out) {
+		if (previous == out)
 			break;
-		}
+
 		previous.swap(out);
 	}
 #endif
@@ -146,35 +170,24 @@ void DataDirLocater::AddDirs(const std::string& dirs)
 	if (dirs.empty())
 		return;
 
-	size_t prev_colon = 0;
-	size_t colon;
-	while ((colon = dirs.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
-		AddDir(dirs.substr(prev_colon, colon - prev_colon));
-		prev_colon = colon + 1;
-	}
-	AddDir(dirs.substr(prev_colon));
+	SplitColonString(dirs, [&](const std::string& dir) { AddDir(dir); });
 }
 
 void DataDirLocater::AddDir(const std::string& dir)
 {
-	if (!dir.empty()) {
-		// to make use of ensure-slash-at-end,
-		// we create a DataDir here already
-		const DataDir newDataDir(SubstEnvVars(dir));
-		bool alreadyAdded = false;
+	if (dir.empty())
+		return;
 
-		std::vector<DataDir>::const_iterator ddi;
-		for (ddi = dataDirs.begin(); ddi != dataDirs.end(); ++ddi) {
-			if (FileSystem::ComparePaths(newDataDir.path, ddi->path)) {
-				alreadyAdded = true;
-				break;
-			}
-		}
+	// create DataDir here to ensure comparison includes trailing slash
+	const DataDir newDataDir(SubstEnvVars(dir));
 
-		if (!alreadyAdded) {
-			dataDirs.push_back(newDataDir);
-		}
-	}
+	const auto pred = [&](const DataDir& dd) { return (FileSystem::ComparePaths(newDataDir.path, dd.path)); };
+	const auto iter = std::find_if(dataDirs.begin(), dataDirs.end(), pred);
+
+	if (iter != dataDirs.end())
+		return;
+
+	dataDirs.push_back(newDataDir);
 }
 
 bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
@@ -188,11 +201,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
 
-	if (FileSystem::DirExists(dataDir->path)) {
-		return true;
-	}
-
-	return false;
+	return FileSystem::DirExists(dataDir->path);
 }
 
 void DataDirLocater::FilterUsableDataDirs()
@@ -202,18 +211,18 @@ void DataDirLocater::FilterUsableDataDirs()
 	// (I did not bother filtering out non-consecutive duplicates because then
 	//  there is the question which of the multiple instances to purge.)
 
-	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if (d->path != previous) {
-			if (DeterminePermissions(&*d)) {
-				newDatadirs.push_back(*d);
-				previous = d->path;
-				if (d->writable) {
-					LOG("Using read-write data directory: %s", d->path.c_str());
+	for (auto& dd : dataDirs) {
+		if (dd.path != previous) {
+			if (DeterminePermissions(&dd)) {
+				newDatadirs.push_back(dd);
+				previous = dd.path;
+				if (dd.writable) {
+					LOG("[DataDirLocater::%s] using read-write data directory: %s", __func__, dd.path.c_str());
 				} else {
-					LOG("Using read-only data directory: %s",  d->path.c_str());
+					LOG("[DataDirLocater::%s] using read-only data directory: %s", __func__, dd.path.c_str());
 				}
 			} else {
-				LOG_L(L_DEBUG, "Potentional data directory: %s", d->path.c_str());
+				LOG_L(L_DEBUG, "[DataDirLocater::%s] potentional data directory: %s", __func__, dd.path.c_str());
 			}
 		}
 	}
@@ -237,13 +246,13 @@ void DataDirLocater::FindWriteableDataDir()
 	writeDir = nullptr;
 
 	for (DataDir& d: dataDirs) {
-		if (!IsWriteableDir(&d))
-			continue;
-
-		d.writable = true;
-		writeDir = &d;
-		break;
+		if ((d.writable = IsWriteableDir(&d))) {
+			writeDir = &d;
+			break;
+		}
 	}
+
+	LOG("[DataDirLocater::%s] using writeable data-directory \"%s\"", __func__, (writeDir != nullptr)? writeDir->path.c_str(): "<NULL>");
 }
 
 
@@ -251,7 +260,6 @@ void DataDirLocater::AddCurWorkDir()
 {
 	AddDir(Platform::GetOrigCWD());
 }
-
 
 void DataDirLocater::AddPortableDir()
 {
@@ -268,16 +276,16 @@ void DataDirLocater::AddPortableDir()
 	// unitsyncs/unitsync-0.83.1.0.exe
 	const std::string curWorkDirParent = FileSystem::GetParent(dd_curWorkDir);
 
-	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
+	if (!curWorkDirParent.empty() && LooksLikeMultiVersionDataDir(curWorkDirParent))
 		AddDirs(curWorkDirParent); // "../"
-	}
+
 	AddDirs(dd_curWorkDir);
 }
 
 
 void DataDirLocater::AddHomeDirs()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	// All MS Windows variants
 
 	// fetch my documents path
@@ -312,11 +320,11 @@ void DataDirLocater::AddHomeDirs()
 
 void DataDirLocater::AddEtcDirs()
 {
-#ifndef WIN32
+#ifndef _WIN32
 	// Linux, FreeBSD, Solaris, Apple non-bundle
 
 	// settings in /etc
-	std::string dd_etc = "";
+	std::string dd_etc;
 	{
 		FILE* fileH = ::fopen("/etc/spring/datadir", "r");
 		if (fileH) {
@@ -338,7 +346,7 @@ void DataDirLocater::AddEtcDirs()
 		}
 	}
 
-	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
+	AddDirs(dd_etc);  // from /etc/spring/datadir FIXME add in IsolatedMode too?
 #endif
 }
 
@@ -346,10 +354,8 @@ void DataDirLocater::AddEtcDirs()
 void DataDirLocater::AddShareDirs()
 {
 	// always true under Windows and true for `multi-engine` setups under *nix
-	if (IsInstallDirDataDir()) {
-		const std::string dd_curWorkDir = GetBinaryLocation();
-		AddDirs(dd_curWorkDir);
-	}
+	if (IsInstallDirDataDir())
+		AddDirs(GetBinaryLocation());
 
 #if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
@@ -438,8 +444,7 @@ void DataDirLocater::Check()
 {
 	if (IsIsolationMode()) {
 		LOG("[DataDirLocater::%s] Isolation Mode!", __func__);
-	} else
-	if (IsPortableMode()) {
+	} else if (IsPortableMode()) {
 		LOG("[DataDirLocater::%s] Portable Mode!", __func__);
 	}
 
@@ -452,7 +457,7 @@ void DataDirLocater::Check()
 				"Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
-			#ifdef WIN32
+			#ifdef _WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
 				"- by giving your user-account write access to the installation directory";
 			#else
@@ -494,20 +499,17 @@ bool DataDirLocater::IsInstallDirDataDir()
 	// Check if spring binary & unitsync library are in the same folder
 #if defined(UNITSYNC)
 	const std::string dir = Platform::GetModulePath();
-	const std::string fileExe = dir + "/" + GetSpringBinaryName();
+	const std::string fileExe = FileSystem::EnsurePathSepAtEnd(dir) + GetSpringBinaryName();
 
-	if (!FileSystem::FileExists(fileExe))
-		return false;
+	return FileSystem::FileExists(fileExe);
 
 #else
 	const std::string dir = Platform::GetProcessExecutablePath();
-	const std::string fileUnitsync = dir + "/" + GetUnitsyncLibName();
+	const std::string fileUnitsync = FileSystem::EnsurePathSepAtEnd(dir) + GetUnitsyncLibName();
 
-	if (!FileSystem::FileExists(fileUnitsync))
-		return false;
+	return FileSystem::FileExists(fileUnitsync);
 
 #endif
-	return true;
 }
 
 
@@ -520,13 +522,13 @@ bool DataDirLocater::IsPortableMode()
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
-	const std::string dir = GetBinaryLocation();
-	if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
+	const std::string dir = FileSystem::EnsurePathSepAtEnd(GetBinaryLocation());
+	if (!FileSystem::FileExists(dir + "springsettings.cfg"))
 		return false;
 
 	// Test 3
 	// Check if the directory is writeable
-	if (!FileSystem::DirIsWritable(dir + "/"))
+	if (!FileSystem::DirIsWritable(dir))
 		return false;
 
 	// PortableMode (don't use HomeDirs as writedirs, instead save files next to binary)
@@ -537,11 +539,12 @@ bool DataDirLocater::IsPortableMode()
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 {
 	bool looksLikeDataDir = true;
+	const std::string dir = FileSystem::EnsurePathSepAtEnd(dirPath);
 
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/maps");
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/games");
-	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/engines");
-	// looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/unitsyncs"); TODO uncomment this if the new name for unitsync has been set
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "maps");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "games");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "engines");
+	// looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dir + "unitsyncs"); TODO uncomment this if the new name for unitsync has been set
 
 	return looksLikeDataDir;
 }
@@ -570,6 +573,12 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 
 	return dataDirPaths;
 }
+
+std::array<std::string, 5> DataDirLocater::GetDataDirRoots() const
+{
+	return {{"base", "maps", "games", "packages", configHandler->GetString("SpringDataRoot")}};
+}
+
 
 static DataDirLocater* instance = nullptr;
 DataDirLocater& DataDirLocater::GetInstance()

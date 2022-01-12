@@ -103,8 +103,11 @@ CALLIN_LIST = {
 	"AllowUnitTransfer",
 	"AllowUnitBuildStep",
 	"AllowUnitTransport",
+	"AllowUnitTransportLoad",
+	"AllowUnitTransportUnload",
 	"AllowUnitCloak",
 	"AllowUnitDecloak",
+	"AllowUnitKamikaze",
 	"AllowFeatureBuildStep",
 	"AllowFeatureCreation",
 	"AllowResourceLevel",
@@ -141,6 +144,7 @@ CALLIN_LIST = {
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
 	"DrawGroundPreForward",
+	"DrawGroundPostForward",
 	"DrawGroundPreDeferred",
 	"DrawGroundPostDeferred",
 	"DrawUnitsPostDeferred",
@@ -154,6 +158,9 @@ CALLIN_LIST = {
 	"DrawFeature",
 	"DrawShield",
 	"DrawProjectile",
+	"DrawMaterial",
+
+	"SunChanged",
 
 	-- unsynced message callins
 	"RecvFromSynced",

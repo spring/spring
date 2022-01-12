@@ -41,8 +41,8 @@ GameData::GameData(std::shared_ptr<const RawPacket> pckt)
 	// avoid reinterpret_cast; buffer is not null-terminated
 	setupText = {buffer.begin(), buffer.end()};
 
-	for (size_t i = 0; i < sizeof(mapChecksum); i++) { packet >> mapChecksum[i]; }
-	for (size_t i = 0; i < sizeof(modChecksum); i++) { packet >> modChecksum[i]; }
+	for (auto& checksum: mapChecksum) { packet >> checksum; }
+	for (auto& checksum: modChecksum) { packet >> checksum; }
 
 	packet >> randomSeed;
 }
@@ -61,8 +61,8 @@ const netcode::RawPacket* GameData::Pack() const
 	*buffer << std::uint16_t(compressed.size());
 	*buffer << compressed;
 
-	for (size_t i = 0; i < sizeof(mapChecksum); i++) { *buffer << mapChecksum[i]; }
-	for (size_t i = 0; i < sizeof(modChecksum); i++) { *buffer << modChecksum[i]; }
+	for (auto& checksum: mapChecksum) { *buffer << checksum; }
+	for (auto& checksum: modChecksum) { *buffer << checksum; }
 
 	*buffer << randomSeed;
 	return buffer;

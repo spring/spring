@@ -13,7 +13,7 @@
 #include "System/Platform/Watchdog.h"
 
 #ifdef UNITSYNC
-void ErrorMessageBox(const std::string&, const std::string&, unsigned int) { throw; } // pass to US
+void ErrorMessageBox(const char*, const char*, unsigned int) { throw; } // pass to US
 #endif
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
@@ -30,8 +30,8 @@ static void ClearThreadReg() {}
 #endif
 
 
-volatile bool FileSystemInitializer::initSuccess = false;
-volatile bool FileSystemInitializer::initFailure = false;
+std::atomic<bool> FileSystemInitializer::initSuccess = {false};
+std::atomic<bool> FileSystemInitializer::initFailure = {false};
 
 void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const std::string& configName, const bool safemode)
 {
@@ -70,7 +70,7 @@ bool FileSystemInitializer::Initialize()
 		dataDirLocater.Check();
 
 		archiveScanner = new CArchiveScanner();
-		CVFSHandler::SetGlobalInstance(new CVFSHandler());
+		CVFSHandler::SetGlobalInstance(new CVFSHandler("SpringVFS"));
 
 		initSuccess = true;
 	} catch (const std::exception& ex) {
@@ -111,7 +111,9 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 void FileSystemInitializer::Reload()
 {
 	// repopulated by PreGame, etc
-	vfsHandler->DeleteArchives();
+	// stash mod and map archives which may be requested again
+	// useful since reloading the same game is the common case
+	vfsHandler->UnMapArchives(true);
 	archiveScanner->Reload();
 }
 

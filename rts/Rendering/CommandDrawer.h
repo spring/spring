@@ -21,8 +21,8 @@ public:
 	// clear the set after WorldDrawer and MiniMap have both used it
 	void Update() { luaQueuedUnitSet.clear(); }
 
-	void Draw(const CCommandAI*) const;
-	void DrawLuaQueuedUnitSetCommands() const;
+	void Draw(const CCommandAI*, bool onMiniMap) const;
+	void DrawLuaQueuedUnitSetCommands(bool onMiniMap) const;
 	void DrawQueuedBuildingSquares(const CBuilderCAI*) const;
 
 	void AddLuaQueuedUnit(const CUnit* unit);

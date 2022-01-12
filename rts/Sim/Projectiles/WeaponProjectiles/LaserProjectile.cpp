@@ -11,10 +11,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
-
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CLaserProjectile,(
@@ -32,7 +28,8 @@ CR_REG_METADATA(CLaserProjectile,(
 
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, speedf(0.0f)
+	// NB: constant, assumes |speed=dir*projectileSpeed| never changes after creation
+	, speedf(speed.w)
 	, maxLength(0.0f)
 	, curLength(0.0f)
 	, intensity(0.0f)
@@ -43,13 +40,10 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	// FIXME: constant, assumes |speed| never changes after creation
-	speedf = speed.w;
-
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 
-		maxLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+		maxLength = weaponDef->duration * (speedf * GAME_SPEED);
 		intensity = weaponDef->intensity;
 		intensityFalloff = intensity * weaponDef->falloffRate;
 
@@ -62,11 +56,6 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 	}
 
 	drawRadius = maxLength;
-
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
-#endif
 }
 
 void CLaserProjectile::Update()
@@ -92,10 +81,9 @@ void CLaserProjectile::UpdateIntensity() {
 	}
 
 	if (weaponDef->laserHardStop) {
-		if (curLength < maxLength && speed != ZeroVector) {
-			// bolt reached its max-range but wasn't fully extended yet
+		// bolt reached its max-range but wasn't fully extended yet
+		if (curLength < maxLength && speed != ZeroVector)
 			stayTime = 1 + int((maxLength - curLength) / speedf);
-		}
 
 		SetVelocityAndSpeed(ZeroVector);
 	} else {
@@ -109,15 +97,11 @@ void CLaserProjectile::UpdateLength() {
 	if (speed != ZeroVector) {
 		// expand bolt to maximum length if not
 		// stopped / collided OR after hardstop
-		curLength += speedf;
-		curLength = std::min(maxLength, curLength);
+		curLength = std::min(curLength + speedf, maxLength);
 	} else {
-		if (stayTime == 0) {
-			// contract bolt to zero length after stayTime
-			// expires (can be immediately if not hardstop)
-			curLength -= speedf;
-			curLength = std::max(curLength, 0.0f);
-		}
+		// contract bolt to zero length after stayTime
+		// expires (can be immediately if not hardstop)
+		curLength = std::max(curLength - speedf * (stayTime == 0), 0.0f);
 	}
 
 	stayTime = std::max(stayTime - 1, 0);
@@ -188,8 +172,8 @@ void CLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 		return;
 
 	float3 dif(pos - camera->GetPos());
-	const float camDist = dif.Length();
-	dif /= camDist;
+	const float camDist = dif.LengthNormalize();
+
 	float3 dir1(dif.cross(dir));
 	dir1.Normalize();
 	float3 dir2(dif.cross(dir1));
@@ -215,39 +199,69 @@ void CLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 		float texEndOffset;
 
 		if (checkCol) { // expanding or contracting?
-			texStartOffset = 0;
+			texStartOffset = 0.0f;
 			texEndOffset   = (1.0f - (curLength / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		} else {
 			texStartOffset = (-1.0f + (curLength / maxLength) + ((float)stayTime * (speedf / maxLength))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 			texEndOffset   = ((float)stayTime * (speedf / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 
-		va->SafeAppend({drawPos - (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->ystart, col });
-		va->SafeAppend({drawPos + (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->yend,   col });
-		va->SafeAppend({drawPos + (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col });
-		va->SafeAppend({drawPos - (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col });
-		va->SafeAppend({drawPos - (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->ystart, col2});
-		va->SafeAppend({drawPos + (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->yend,   col2});
-		va->SafeAppend({drawPos + (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col2});
-		va->SafeAppend({drawPos - (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col2});
+		{
+			va->SafeAppend({drawPos - (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->ystart, col });
+			va->SafeAppend({drawPos + (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->yend,   col });
+			va->SafeAppend({drawPos + (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col });
 
-		va->SafeAppend({drawPos - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
-		va->SafeAppend({drawPos + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col });
-		va->SafeAppend({pos2    + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
-		va->SafeAppend({pos2    - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col });
-		va->SafeAppend({drawPos - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
-		va->SafeAppend({drawPos + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2});
-		va->SafeAppend({pos2    + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
-		va->SafeAppend({pos2    - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2});
+			va->SafeAppend({drawPos + (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col });
+			va->SafeAppend({drawPos - (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col });
+			va->SafeAppend({drawPos - (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->ystart, col });
+		}
+		{
+			va->SafeAppend({drawPos - (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->ystart, col2});
+			va->SafeAppend({drawPos + (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->yend,   col2});
+			va->SafeAppend({drawPos + (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col2});
 
-		va->SafeAppend({pos2    - (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->ystart, col });
-		va->SafeAppend({pos2    + (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->yend,   col });
-		va->SafeAppend({pos2    + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col });
-		va->SafeAppend({pos2    - (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col });
-		va->SafeAppend({pos2    - (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->ystart, col2});
-		va->SafeAppend({pos2    + (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->yend,   col2});
-		va->SafeAppend({pos2    + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2});
-		va->SafeAppend({pos2    - (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2});
+			va->SafeAppend({drawPos + (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col2});
+			va->SafeAppend({drawPos - (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col2});
+			va->SafeAppend({drawPos - (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->ystart, col2});
+		}
+
+		{
+			va->SafeAppend({drawPos - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
+			va->SafeAppend({drawPos + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col });
+			va->SafeAppend({pos2    + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
+
+			va->SafeAppend({pos2    + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
+			va->SafeAppend({pos2    - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col });
+			va->SafeAppend({drawPos - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
+		}
+		{
+			va->SafeAppend({drawPos - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
+			va->SafeAppend({drawPos + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2});
+			va->SafeAppend({pos2    + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
+
+			va->SafeAppend({pos2    + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
+			va->SafeAppend({pos2    - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2});
+			va->SafeAppend({drawPos - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
+		}
+
+		{
+			va->SafeAppend({pos2    - (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->ystart, col });
+			va->SafeAppend({pos2    + (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->yend,   col });
+			va->SafeAppend({pos2    + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col });
+
+			va->SafeAppend({pos2    + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col });
+			va->SafeAppend({pos2    - (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col });
+			va->SafeAppend({pos2    - (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->ystart, col });
+		}
+		{
+			va->SafeAppend({pos2    - (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->ystart, col2});
+			va->SafeAppend({pos2    + (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->yend,   col2});
+			va->SafeAppend({pos2    + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2});
+
+			va->SafeAppend({pos2    + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2});
+			va->SafeAppend({pos2    - (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2});
+			va->SafeAppend({pos2    - (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->ystart, col2});
+		}
 	} else {
 		const float3 pos1 = drawPos + (dir * (size * 0.5f));
 		const float3 pos2 = pos1 - (dir * (curLength + size));
@@ -263,14 +277,24 @@ void CLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 			texEndOffset   = ((float)stayTime * (speedf / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 
-		va->SafeAppend({pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
-		va->SafeAppend({pos1 + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col });
-		va->SafeAppend({pos2 + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
-		va->SafeAppend({pos2 - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col });
-		va->SafeAppend({pos1 - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
-		va->SafeAppend({pos1 + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2});
-		va->SafeAppend({pos2 + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
-		va->SafeAppend({pos2 - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2});
+		{
+			va->SafeAppend({pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
+			va->SafeAppend({pos1 + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col });
+			va->SafeAppend({pos2 + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
+
+			va->SafeAppend({pos2 + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col });
+			va->SafeAppend({pos2 - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col });
+			va->SafeAppend({pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col });
+		}
+		{
+			va->SafeAppend({pos1 - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
+			va->SafeAppend({pos1 + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2});
+			va->SafeAppend({pos2 + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
+
+			va->SafeAppend({pos2 + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2});
+			va->SafeAppend({pos2 - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2});
+			va->SafeAppend({pos1 - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2});
+		}
 	}
 }
 

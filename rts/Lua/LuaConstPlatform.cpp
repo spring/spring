@@ -33,9 +33,15 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedBool(L, "glSupportRestartPrimitive", globalRendering->supportRestartPrimitive);
 	LuaPushNamedBool(L, "glSupportClipSpaceControl", globalRendering->supportClipSpaceControl);
 	LuaPushNamedBool(L, "glSupportFragDepthLayout" , globalRendering->supportFragDepthLayout);
+	LuaPushNamedBool(L, "glSupportSeamlessCubeMaps", globalRendering->supportSeamlessCubeMaps);
 
-	LuaPushNamedString(L, "osName", Platform::GetOS());
+	LuaPushNamedString(L, "osName", Platform::GetOSNameStr());
+	LuaPushNamedString(L, "osVersion", Platform::GetOSVersionStr());
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamilyStr());
+	LuaPushNamedString(L, "hwConfig", Platform::GetHardwareStr());
+
+	LuaPushNamedString(L, "sysInfoHash", Platform::GetSysInfoHash());
+	LuaPushNamedString(L, "macAddrHash", Platform::GetMacAddrHash());
 
 	return true;
 }

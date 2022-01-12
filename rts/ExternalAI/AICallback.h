@@ -28,8 +28,6 @@ private:
 
 	bool allowOrders = true;
 
-	CGroupHandler* gh = nullptr;
-
 private:
 	// utility methods
 	void verify();
@@ -163,7 +161,6 @@ public:
 	float GetElevation(float x, float z);
 
 	void LineDrawerStartPath(const float3& pos, const float* color);
-	void LineDrawerFinishPath();
 	void LineDrawerDrawLine(const float3& endPos, const float* color);
 	void LineDrawerDrawLineAndIcon(int commandId, const float3& endPos, const float* color);
 	void LineDrawerDrawIconAtLastPos(int commandId);
@@ -255,8 +252,8 @@ public:
 	// 2. if inSize is less than 0, the data size is calculated using strlen()
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
-	const char* CallLuaRules(const char* inData, int inSize = -1);
-	const char* CallLuaUI(const char* inData, int inSize = -1);
+	const char* CallLuaRules(const char* inData, int inSize, size_t* outSize);
+	const char* CallLuaUI(const char* inData, int inSize, size_t* outSize);
 
 	// never called, implemented in SSkirmishAICallbackImpl
 	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }

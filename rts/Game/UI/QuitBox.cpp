@@ -2,7 +2,10 @@
 
 #include "QuitBox.h"
 
+#include <cmath>
+
 #include "MouseHandler.h"
+#include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
@@ -16,12 +19,9 @@
 #include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/TimeUtil.h"
-#include "System/FileSystem/FileSystem.h"
-#include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keycode.h>
-
 
 #define MAX_QUIT_TEAMS (teamHandler.ActiveTeams() - 1)
 
@@ -121,8 +121,7 @@ void CQuitBox::Draw()
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
 
 	{
 		// draw the background box
@@ -154,9 +153,9 @@ void CQuitBox::Draw()
 
 	{
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->Submit(GL_QUADS);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->Submit(GL_TRIANGLES);
 		shader->Disable();
 	}
 
@@ -328,21 +327,10 @@ void CQuitBox::MouseRelease(int x, int y, int button)
 
 		// save current game state
 		if (save) {
-			if (FileSystem::CreateDirectory("Saves")) {
-				std::string timeStr = std::move(CTimeUtil::GetCurrentTimeStr());
-				std::string saveFileName = timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName;
+			const std::string currTimeStr = std::move(CTimeUtil::GetCurrentTimeStr());
+			const std::string saveFileName = currTimeStr + "_" + modInfo.filename + "_" + gameSetup->mapName;
 
-				if (!FileSystem::FileExists(saveFileName = "Saves/" + saveFileName + ".ssf")) {
-					LOG("Saving game to %s", saveFileName.c_str());
-					ILoadSaveHandler* ls = ILoadSaveHandler::Create(true);
-					ls->mapName = gameSetup->mapName;
-					ls->modName = modInfo.filename;
-					ls->SaveGame(saveFileName);
-					delete ls;
-				} else {
-					LOG_L(L_ERROR, "File %s already exists, game NOT saved!", saveFileName.c_str());
-				}
-			}
+			game->Save("Saves/" + saveFileName + ".ssf", "");
 		}
 	}
 	else if (InBox(mx, my, box + menuBox)) {
@@ -382,7 +370,7 @@ void CQuitBox::MouseMove(int x, int y, int dx, int dy, int button)
 		const float tsz = sz / float(MAX_QUIT_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)(scr / tsz + 0.5), MAX_QUIT_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_QUIT_TEAMS - numTeamsDisp));
 		return;
 	}
 

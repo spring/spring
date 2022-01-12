@@ -8,14 +8,14 @@
 
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/RenderDataBufferFwd.hpp"
+#include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapterFwd.hpp"
 #include "System/Color.h"
 #include "System/float4.h"
 #include "System/type2.h"
 #include "System/Matrix44f.h"
 
 
-class CVertexArray;
 class CUnit;
 namespace icon {
 	class CIconData;
@@ -27,18 +27,29 @@ public:
 	CMiniMap();
 	virtual ~CMiniMap();
 
-	bool MousePress(int x, int y, int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
-	void MouseRelease(int x, int y, int button);
+	bool MousePress(int x, int y, int button) override;
+	void MouseMove(int x, int y, int dx,int dy, int button) override;
+	void MouseRelease(int x, int y, int button) override;
 	void MoveView(int x, int y);
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
-	void Draw();
-	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false, bool luaCall = false);
+	bool IsAbove(int x, int y) override;
+
+	std::string GetTooltip(int x, int y) override;
+
+	void Draw() override;
+	void DrawForReal();
 	void Update();
+
+	void RenderCachedTextureRaw();
+	void RenderCachedTextureNormalized(bool luaCall);
+	void RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix44f& projMat);
+
+	void RenderCameraFrustumLinesAndSelectionBox(GL::WideLineAdapterC* wla);
+	void RenderMarkerNotificationRectangles(GL::RenderDataBufferC* buffer);
+
 
 	void ConfigCommand(const std::string& command);
 
+	CMatrix44f CalcNormalizedCoorMatrix(bool dualScreen, bool luaCall) const;
 	float3 GetMapPosition(int x, int y) const;
 	CUnit* GetSelectUnit(const float3& pos) const;
 
@@ -53,7 +64,6 @@ public:
 
 	void SetMinimized(bool state) { minimized = state; }
 	bool GetMinimized() const { return minimized; }
-
 	bool GetMaximized() const { return maximized; }
 
 	int GetPosX()  const { return curPos.x; }
@@ -77,6 +87,7 @@ public:
 	const CMatrix44f& GetProjMat(unsigned int idx) const { return projMats[idx]; }
 
 protected:
+	void LoadBuffer();
 	void ParseGeometry(const std::string& geostr);
 	void ToggleMaximized(bool maxspect);
 	void SetMaximizedGeometry();
@@ -85,31 +96,33 @@ protected:
 	void ProxyMousePress(int x, int y, int button);
 	void ProxyMouseRelease(int x, int y, int button);
 
-	bool RenderCachedTexture(bool useNormalizedCoors);
-	void DrawBackground() const;
+	void DrawBackground();
 	void DrawUnitIcons() const;
 	void DrawUnitRanges() const;
 	void DrawWorldStuff() const;
-	void DrawCameraFrustumAndMouseSelection();
-	void SetClipPlanes(const bool lua) const;
 
-	void EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const;
-	void LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const;
+	void DrawFrame(GL::RenderDataBufferC* buffer);
+	bool DrawButtonQuads(GL::RenderDataBufferTC* buffer);
+	bool DrawButtonLoops(GL::RenderDataBufferC* buffer);
+	bool DrawButtons(GL::RenderDataBufferTC* tcbuffer, GL::RenderDataBufferC* cbuffer) {
+		return (DrawButtonQuads(tcbuffer) && DrawButtonLoops(cbuffer));
+	}
 
-	void DrawFrame(GL::RenderDataBufferC* rdBufferC);
-	void DrawNotes();
-	void DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
-	void DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
+	void DrawMinimizedButtonQuad(GL::RenderDataBufferTC* buffer);
+	void DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer);
 
 	void DrawUnitHighlight(const CUnit* unit);
-	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
+	void DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color) const;
+	void DrawCircleW(GL::WideLineAdapterC* buffer, const float4& pos, const float4& color) const;
+
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
 	void UpdateTextureCache();
 	void ResizeTextureCache();
 
 protected:
-	static void DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int);
+	static void DrawSurfaceCircleFunc(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color, unsigned int);
+	static void DrawSurfaceCircleWFunc(GL::WideLineAdapterC* wla, const float4& pos, const float4& color, unsigned int);
 
 protected:
 	int2 curPos;
@@ -118,20 +131,25 @@ protected:
 	int2 oldPos;
 	int2 oldDim;
 
-	float unitBaseSize;
-	float unitExponent;
+	int2 minimapTexSize;
 
-	float unitSizeX;
-	float unitSizeY;
-	float unitSelectRadius;
+
+	float minimapRefreshRate = 0.0f;
+
+	float unitBaseSize = 0.0f;
+	float unitExponent = 0.0f;
+
+	float unitSizeX = 0.0f;
+	float unitSizeY = 0.0f;
+	float unitSelectRadius = 0.0f;
 
 	bool fullProxy = false;
-
 	bool proxyMode = false;
 	bool selecting = false;
 	bool maxspect = false;
 	bool maximized = false;
 	bool minimized = false;
+	bool mouseEvents = true; // if false, MousePress is not handled
 	bool mouseLook = false;
 	bool mouseMove = false;
 	bool mouseResize = false;
@@ -150,8 +168,9 @@ protected:
 		bool Inside(int x, int y) const {
 			return ((x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax));
 		}
-		void DrawBox(GL::RenderDataBufferC* rdBufferC) const;
-		void DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const;
+
+		void DrawBox(GL::RenderDataBufferC* buffer) const;
+		void DrawTextureBox(GL::RenderDataBufferTC* buffer) const;
 
 		int xmin, xmax;
 		int ymin, ymax;
@@ -175,7 +194,7 @@ protected:
 
 	int buttonSize = 0;
 
-	int drawCommands;
+	int drawCommands = 0;
 	float cursorScale = 0.0f;
 
 	SColor myColor = {0.2f, 0.9f, 0.2f, 1.0f};
@@ -189,11 +208,16 @@ protected:
 	FBO fbo;
 	FBO fboResolve;
 
-	int2 minimapTexSize;
-	float minimapRefreshRate = 0.0f;
+	GL::RenderDataBuffer miniMap;
+
 
 	GLuint minimapTextureID = 0;
 	GLuint buttonsTextureID = 0;
+
+	struct MiniMapVertType {
+		float2 xy;
+		float2 tc;
+	};
 
 	struct Notification {
 		float creationTime;

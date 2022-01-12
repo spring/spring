@@ -1,19 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+
 #include "LuaScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 // script function-indices never change, so this is fine wrt. reloading
-static std::vector<std::string> scriptNames;
+static std::array<std::string, LUAFN_Last> scriptNames;
 static spring::unordered_map<std::string, int> scriptMap;
 
 
-const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
+void CLuaUnitScriptNames::InitScriptNames()
 {
-	if (!scriptNames.empty())
-		return scriptNames;
-
-	scriptNames.resize(LUAFN_Last);
+	if (!scriptNames[LUAFN_Destroy].empty())
+		return;
 
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
@@ -59,36 +59,21 @@ const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_BlockShot]     = "BlockShot";
 	scriptNames[LUAFN_TargetWeight]  = "TargetWeight";
 
-	//for (size_t i = 0; i < scriptNames.size(); ++i) {
-	//	LOG_L(L_DEBUG, "LUAFN: %3d %s", i, scriptNames[i].c_str());
-	//}
 
-	return scriptNames;
-}
+	scriptMap.reserve(scriptNames.size());
 
-
-const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
-{
-	if (!scriptMap.empty())
-		return scriptMap;
-
-	const std::vector<std::string>& n = GetScriptNames();
-
-	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(std::pair<std::string, int>(n[i], i));
+	for (size_t i = 0; i < scriptNames.size(); ++i) {
+		scriptMap.insert(scriptNames[i], i);
 	}
-
-	//for (auto it = scriptMap.cbegin(); it != scriptMap.cend(); ++it) {
-	//	LOG_L(L_DEBUG, "LUAFN: %s -> %3d", it->first.c_str(), it->second);
-	//}
-
-	return scriptMap;
 }
+
+
+const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames() { assert(!scriptMap.empty()); return scriptNames; }
+const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap() { assert(!scriptMap.empty()); return scriptMap; }
 
 
 int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
-	const auto& scriptMap = GetScriptMap();
 	const auto it = scriptMap.find(fname);
 
 	if (it != scriptMap.end())
@@ -97,13 +82,12 @@ int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 	return -1;
 }
 
-const std::string& CLuaUnitScriptNames::GetScriptName(int num)
+const std::string& CLuaUnitScriptNames::GetScriptName(unsigned int num)
 {
 	const static std::string empty;
-	const std::vector<std::string>& n = GetScriptNames();
 
-	if (num >= 0 && num < int(n.size()))
-		return n[num];
+	if (num < scriptNames.size())
+		return scriptNames[num];
 
 	return empty;
 }

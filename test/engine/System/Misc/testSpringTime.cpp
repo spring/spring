@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#define BOOST_TEST_MODULE SpringTime
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 #include "System/TimeProfiler.h"
 #include "System/Misc/SpringTime.h"
@@ -14,9 +14,7 @@
 #include <chrono>
 #include <thread>
 
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
-
-// #define BOOST_MONOTONIC_RAW_CLOCK
+InitSpringTime ist;
 
 static constexpr int testRuns = 1000000;
 
@@ -33,7 +31,7 @@ struct Cpp11ChronoClock {
 
 
 
-#if defined(__USE_GNU) && !defined(WIN32)
+#if defined(__USE_GNU) && !defined(_WIN32)
 #include <time.h>
 struct PosixClockMT {
 	static inline float ToMs() { return 1.0f / 1e6; }
@@ -41,15 +39,6 @@ struct PosixClockMT {
 	static inline int64_t Get() {
 		timespec t1;
 
-		// boost::chrono has a system_clock (CLOCK_REALTIME --> affected
-		// by NTP and can jump forward and backward) and a steady_clock
-		// (CLOCK_MONOTONIC --> can be slewed by NTP but will never jump)
-		//
-		// which of the two becomes a typedef for high_resolution_clock
-		// depends on BOOST_CHRONO_HAS_CLOCK_STEADY, note however there
-		// is also a CLOCK_MONOTONIC_RAW (never slews or jumps which is
-		// what we want, no NTP adjustments at all) but boost DOES *NOT*
-		// USE this even in the latest release (1.54)!
 	#if defined(CLOCK_MONOTONIC_RAW)
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	#else
@@ -114,14 +103,16 @@ struct TestProcessor {
 };
 
 
-BOOST_AUTO_TEST_CASE( ClockQualityCheck )
+TEST_CASE("ClockQualityCheck")
 {
 	LOG("Clock Precision Test");
-	BOOST_WARN(std::chrono::high_resolution_clock::is_steady);
+	if (!std::chrono::high_resolution_clock::is_steady) {
+		WARN("std::chrono::high_resolution_clock::is_steady is false");
+	}
 
 	float bestAvg = 1e9;
 
-#if defined(__USE_GNU) && !defined(WIN32)
+#if defined(__USE_GNU) && !defined(_WIN32)
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockMT>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockRT>::Run());
 #endif
@@ -141,8 +132,8 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	// check min precision range
 	{
 		const spring_time d = spring_time::fromNanoSecs(1e3); // 1us
-		BOOST_CHECK( std::abs(1000.0f * d.toSecsf() - d.toMilliSecsf()) < d.toMilliSecsf() );
-		BOOST_CHECK( d.toSecsf() > 0.0f );
+		CHECK( std::abs(1000.0f * d.toSecsf() - d.toMilliSecsf()) < d.toMilliSecsf() );
+		CHECK( d.toSecsf() > 0.0f );
 	}
 
 	// check max precision range
@@ -150,24 +141,26 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 		static const float DAYS_TO_SECS = 60*60*24;
 		static const float SECS_TO_MS   = 1000;
 		const spring_time d = spring_time(4 * DAYS_TO_SECS * SECS_TO_MS);
-		BOOST_CHECK( std::abs(d.toSecsf() - (4 * DAYS_TO_SECS)) < 1.0f);
-		BOOST_CHECK( d.toSecsf() > 0.0f ); // else there is a overflow!
+		CHECK( std::abs(d.toSecsf() - (4 * DAYS_TO_SECS)) < 1.0f);
+		CHECK( d.toSecsf() > 0.0f ); // else there is a overflow!
 	}
 
 	// check toMilliSecsf precision range
 	for (int i = 0; i<16; ++i) {
 		const float f10ei = std::pow(10.0f, i);
 		if (i > 12) {
-			BOOST_WARN( std::abs(spring_time(f10ei).toMilliSecsf() - f10ei) < 1.0f);
+			if (std::abs(spring_time(f10ei).toMilliSecsf() - f10ei) >= 1.0f) {
+				//WARN("std::abs(spring_time(f10ei).toMilliSecsf() - f10ei) >= 1.0f");
+			}
 		} else {
-			BOOST_CHECK( std::abs(spring_time(f10ei).toMilliSecsf() - f10ei) < 1.0f);
+			CHECK( std::abs(spring_time(f10ei).toMilliSecsf() - f10ei) < 1.0f);
 		}
 	}
 
 	// check toMilliSecsf behind dot precision range
 	for (int i = 0; i>=-6; --i) {
 		const float f10ei = std::pow(10.0f, i);
-		BOOST_CHECK( std::abs(spring_time(f10ei).toMilliSecsf()) > 0.0f);
+		CHECK( std::abs(spring_time(f10ei).toMilliSecsf()) > 0.0f);
 	}
 
 	// check toSecsf precision range
@@ -175,30 +168,32 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 		const float f10ei = std::pow(10.0f, i);
 		if (i > 7) {
 			// everything above 10e7 seconds might be unprecise
-			BOOST_WARN( std::abs(spring_time::fromSecs(f10ei).toSecsf() - f10ei) < 1.0f);
+			if (std::abs(spring_time::fromSecs(f10ei).toSecsf() - f10ei) >= 1.0f) {
+				//WARN("std::abs(spring_time::fromSecs(f10ei).toSecsf() - f10ei) >= 1.0f");
+			}
 		} else {
 			// 10e7 seconds should be minimum in precision range
-			BOOST_CHECK( std::abs(spring_time::fromSecs(f10ei).toSecsf() - f10ei) < 1.0f);
+			CHECK( std::abs(spring_time::fromSecs(f10ei).toSecsf() - f10ei) < 1.0f);
 		}
 	}
 
 	// check toSecsf behind dot precision range
 	for (int i = 0; i>=-9; --i) {
 		const float f10ei = std::pow(10.0f, i);
-		BOOST_CHECK( std::abs(spring_time(f10ei * 1000.f).toSecsf()) > 0.0f);
+		CHECK( std::abs(spring_time(f10ei * 1000.f).toSecsf()) > 0.0f);
 	}
 
 	// check toSecs precision range
 	int64_t i10ei = 10;
 	for (int i = 1; i<10; ++i) {
-		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecsi() - i10ei) < 1.0f);
+		CHECK( std::abs(spring_time::fromSecs(i10ei).toSecsi() - i10ei) < 1.0f);
 		i10ei *= 10LL;
 	}
 
-	BOOST_CHECK( std::abs(spring_time(1).toMilliSecsf() - 1.0f) < 0.1f);
-	BOOST_CHECK( std::abs(spring_time(1e3).toSecsf() - 1e0) < 0.1f);
-	BOOST_CHECK( std::abs(spring_time(1e6).toSecsf() - 1e3) < 0.1f);
-	BOOST_CHECK( std::abs(spring_time(1e9).toSecsf() - 1e6) < 0.1f);
+	CHECK( std::abs(spring_time(1).toMilliSecsf() - 1.0f) < 0.1f);
+	CHECK( std::abs(spring_time(1e3).toSecsf() - 1e0) < 0.1f);
+	CHECK( std::abs(spring_time(1e6).toSecsf() - 1e3) < 0.1f);
+	CHECK( std::abs(spring_time(1e9).toSecsf() - 1e6) < 0.1f);
 
 	spring_clock::PopTickRate();
 }
@@ -213,7 +208,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
 void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <windows.h>
 	void sleep_windows(int time)  { Sleep(time); }
 #else
@@ -265,7 +260,7 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const i
 	LOG("[%35s] accuracy:={ err: %+.4fms %+.4fms erravg: %.4fms } min sleep time:={ min: %.6fms avg: %.6fms max: %.6fms }", name.c_str(), emin.toMilliSecsf(), emax.toMilliSecsf(), eavg * 1e-6, tmin.toMilliSecsf(), tavg * 1e-6, tmax.toMilliSecsf());
 }
 
-BOOST_AUTO_TEST_CASE( ThreadSleepTime )
+TEST_CASE("ThreadSleepTime")
 {
 	LOG("Sleep() Precision Test");
 
@@ -273,7 +268,7 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 500, 1e6);
 	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 500000, 0);
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 	BenchmarkSleepFnc("sleep_windows", &sleep_windows, 500, 1e0);
 #else
 	BenchmarkSleepFnc("sleep_posix_msec", &sleep_posix_msec, 500, 1e0);
@@ -284,17 +279,18 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 }
 
 
-BOOST_AUTO_TEST_CASE(Timer)
+TEST_CASE("Timer")
 {
 
-	ScopedTimer t2("test");
+	TimerNameRegistrar("test");
+	ScopedTimer t2(hashString("test"));
 	ScopedOnceTimer t("test");
 	sleep_spring(500);
 
-	BOOST_CHECK(t2.GetDuration().toMilliSecsi() >= 450);
-	BOOST_CHECK(t.GetDuration().toMilliSecsi() >= 450);
+	CHECK(t2.GetDuration().toMilliSecsi() >= 450);
+	CHECK(t.GetDuration().toMilliSecsi() >= 450);
 
-	BOOST_CHECK(t2.GetDuration().toMilliSecsi() <= 550);
-	BOOST_CHECK(t.GetDuration().toMilliSecsi() <= 550);
+	CHECK(t2.GetDuration().toMilliSecsi() <= 550);
+	CHECK(t.GetDuration().toMilliSecsi() <= 550);
 }
 

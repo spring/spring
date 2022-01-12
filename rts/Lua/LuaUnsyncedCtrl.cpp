@@ -2,6 +2,7 @@
 
 #include "LuaUnsyncedCtrl.h"
 
+#include "LuaConfig.h"
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -99,14 +100,9 @@
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
-using std::min;
-using std::max;
-
 // MinGW defines this for a WINAPI function
 #undef SendMessage
 #undef CreateDirectory
-
-const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 
 /******************************************************************************/
@@ -261,9 +257,11 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
+	REGISTER_LUA_CFUNC(GarbageCollectCtrl);
 
 	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
 	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
+	REGISTER_LUA_CFUNC(PreloadSoundItem);
 
 	REGISTER_LUA_CFUNC(CreateDecal);
 	REGISTER_LUA_CFUNC(DestroyDecal);
@@ -378,15 +376,13 @@ static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index
 	if (unit == nullptr || unit->noSelect)
 		return nullptr;
 
-	if (gs->godMode)
+	// NB:
+	//   partial god-mode does not set selectTeam to AllAccess (which
+	//   is registered in controlledTeams); spectatingFullSelect does
+	if (gu->GetMyPlayer()->CanControlTeam(unit->team))
 		return unit;
 
-	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
-
-	if (selectTeam < 0)
-		return ((selectTeam == CEventClient::AllAccessTeam)? unit: nullptr);
-
-	if (selectTeam == unit->team)
+	if (CanSelectTeam(L, unit->team))
 		return unit;
 
 	return nullptr;
@@ -498,88 +494,89 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
 	LuaParser soundDefsParser(luaL_checksstring(L, 1), SPRING_VFS_ZIP_FIRST, SPRING_VFS_ZIP_FIRST);
 
-	const bool success = sound->LoadSoundDefs(&soundDefsParser);
+	const bool retval = sound->LoadSoundDefs(&soundDefsParser);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, success);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
 	const int args = lua_gettop(L);
+	      int index = 3;
 
 	const unsigned int soundID = sound->GetSoundId(luaL_checksstring(L, 1));
 
-	if (soundID > 0) {
-		float volume = luaL_optfloat(L, 2, 1.0f);
-
-		float3 pos;
-		float3 speed;
-
-		int index = 3;
-
-		if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
-			pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
-			index += 3;
-
-			if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
-				speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				index += 3;
-			}
-		}
-
-		// last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		IAudioChannel** channel = &Channels::General;
-
-		if (args >= index) {
-			if (lua_isstring(L, index)) {
-				string channelStr = lua_tostring(L, index);
-				StringToLowerInPlace(channelStr);
-
-				if (channelStr == "battle" || channelStr == "sfx") {
-					channel = &Channels::Battle;
-				}
-				else if (channelStr == "unitreply" || channelStr == "voice") {
-					channel = &Channels::UnitReply;
-				}
-				else if (channelStr == "userinterface" || channelStr == "ui") {
-					channel = &Channels::UserInterface;
-				}
-			} else if (lua_isnumber(L, index)) {
-				const int channelNum = lua_toint(L, index);
-
-				if (channelNum == 1) {
-					channel = &Channels::Battle;
-				}
-				else if (channelNum == 2) {
-					channel = &Channels::UnitReply;
-				}
-				else if (channelNum == 3) {
-					channel = &Channels::UserInterface;
-				}
-			}
-		}
-
-		if (index >= 6) {
-			if (index >= 9) {
-				channel[0]->PlaySample(soundID, pos, speed, volume);
-			} else {
-				channel[0]->PlaySample(soundID, pos, volume);
-			}
-		} else
-			channel[0]->PlaySample(soundID, volume);
-	}
-
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, soundID > 0);
+	if (soundID == 0) {
+		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	return 0;
+	const float volume = luaL_optfloat(L, 2, 1.0f);
+
+	float3 pos;
+	float3 speed;
+
+	if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
+		pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
+		index += 3;
+
+		if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
+			speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
+			index += 3;
+		}
+	}
+
+	// last argument (with and without pos/speed arguments) is the optional channel
+	IAudioChannel* channel = Channels::General;
+
+	if (args >= index) {
+		if (lua_isstring(L, index)) {
+			switch (hashStringLower(lua_tostring(L, index))) {
+				case hashStringLower("battle"):
+				case hashStringLower("sfx"   ): {
+					channel = Channels::Battle;
+				} break;
+
+				case hashStringLower("unitreply"):
+				case hashStringLower("voice"    ): {
+					channel = Channels::UnitReply;
+				} break;
+
+				case hashStringLower("userinterface"):
+				case hashStringLower("ui"           ): {
+					channel = Channels::UserInterface;
+				} break;
+
+				default: {
+				} break;
+			}
+		} else if (lua_isnumber(L, index)) {
+			switch (lua_toint(L, index)) {
+				case  1: { channel = Channels::Battle       ; } break;
+				case  2: { channel = Channels::UnitReply    ; } break;
+				case  3: { channel = Channels::UserInterface; } break;
+				default: {                                    } break;
+			}
+		}
+	}
+
+	if (index < 6) {
+		channel->PlaySample(soundID, volume);
+
+		lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+		return 1;
+	}
+
+	if (index >= 9) {
+		channel->PlaySample(soundID, pos, speed, volume);
+	} else {
+		channel->PlaySample(soundID, pos, volume);
+	}
+
+	lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+	return 1;
 }
 
 
@@ -590,12 +587,8 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, true);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+	return 1;
 }
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
@@ -623,8 +616,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 
 	//! only a preset name given?
 	if (lua_israwstring(L, 1)) {
-		const std::string presetname = lua_tostring(L, 1);
-		efx.SetPreset(presetname, false);
+		efx.SetPreset(lua_tostring(L, 1), false);
 		return 0;
 	}
 
@@ -690,20 +682,25 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				if (alParamType[param] == EFXParamTypes::VECTOR) {
 					float3 v;
 
-					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3) {
+					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3)
 						efxprops.reverb_props_v[param] = v;
-					}
 				}
+
+				continue;
 			}
-			else if (lua_isnumber(L, -1)) {
-				if (alParamType[param] == EFXParamTypes::FLOAT) {
+
+			if (lua_isnumber(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::FLOAT)
 					efxprops.reverb_props_f[param] = lua_tofloat(L, -1);
-				}
+
+				continue;
 			}
-			else if (lua_isboolean(L, -1)) {
-				if (alParamType[param] == EFXParamTypes::BOOL) {
+
+			if (lua_isboolean(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::BOOL)
 					efxprops.reverb_props_i[param] = lua_toboolean(L, -1);
-				}
+
+				continue;
 			}
 		}
 	}
@@ -751,12 +748,13 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+
 	const int teamId = luaL_checkint(L, 5);
+	const int facing = luaL_checkint(L, 6);
 
 	if (!teamHandler.IsValidTeam(teamId))
 		return 0;
 
-	const int facing = luaL_checkint(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, teamId, facing);
 	return 0;
 }
@@ -765,11 +763,11 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
 	if (lua_istable(L, 1)) {
-		const bool isMap = luaL_optboolean(L, 2, false);
-		const int unitArg = isMap ? -2 : -1;
-		const int table = 1;
+		// second arg indicates if table is a map
+		const int unitArg = luaL_optboolean(L, 2, false)? -2 : -1;
+		const int tableIdx = 1;
 
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2))
 				continue;
 
@@ -821,12 +819,29 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
-	const float3 pos(luaL_checkfloat(L, 1),
-	                 luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3));
+	const float4 targetPos = {
+		luaL_checkfloat(L, 1),
+		luaL_checkfloat(L, 2),
+		luaL_checkfloat(L, 3),
+		luaL_optfloat(L, 4, 0.5f),
+	};
+	const float3 targetDir = {
+		luaL_optfloat(L, 5, (camera->GetDir()).x),
+		luaL_optfloat(L, 6, (camera->GetDir()).y),
+		luaL_optfloat(L, 7, (camera->GetDir()).z),
+	};
 
-	camHandler->CameraTransition(luaL_optfloat(L, 4, 0.5f));
-	camHandler->GetCurrentController().SetPos(pos);
+	if (targetPos.w >= 0.0f) {
+		camHandler->CameraTransition(targetPos.w);
+		camHandler->GetCurrentController().SetPos(targetPos);
+		camHandler->GetCurrentController().SetDir(targetDir);
+	} else {
+		// no transition, bypass controller
+		camera->SetPos(targetPos);
+		camera->SetDir(targetDir);
+		// camera->Update();
+	}
+
 	return 0;
 }
 
@@ -837,8 +852,9 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		return 0;
 
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SetCameraState(table[, camTime])");
+		luaL_error(L, "[%s(stateTable[, camTransTime[, transTimeFactor[, transTimeExpon] ] ])] incorrect arguments", __func__);
 
+	camHandler->SetTransitionParams(luaL_optfloat(L, 3, camHandler->GetTransitionTimeFactor()), luaL_optfloat(L, 4, camHandler->GetTransitionTimeExponent()));
 	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
 	const bool retval = camHandler->SetState(ParseCamStateMap(L, 1));
@@ -856,7 +872,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SelectUnitArray()");
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	// clear the current units, unless the append flag is present
 	if (!luaL_optboolean(L, 2, false))
@@ -879,7 +895,7 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SelectUnitMap()");
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	// clear the current units, unless the append flag is present
 	if (!luaL_optboolean(L, 2, false))
@@ -928,15 +944,11 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 
 	const CMouseCursor::HotSpot hotSpot = (luaL_optboolean(L, 4, false))? CMouseCursor::TopLeft: CMouseCursor::Center;
 
-	const bool overwrite = luaL_optboolean(L, 3, true);
-	const bool assigned = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
+	const bool retval = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, luaL_optboolean(L, 3, true));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, assigned);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 
@@ -946,18 +958,14 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 	const string newName = luaL_checksstring(L, 2);
 
 	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if (luaL_optboolean(L, 3, false)) {
+	if (luaL_optboolean(L, 3, false))
 		hotSpot = CMouseCursor::TopLeft;
-	}
 
-	const bool worked = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
+	const bool retval = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, worked);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 /******************************************************************************/
@@ -990,7 +998,6 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	const bool showArea = luaL_optboolean(L, 4, false);
 
 	cmdColors.SetCustomCmdData(cmdID, iconID, color, showArea);
-
 	return 0;
 }
 
@@ -1063,109 +1070,169 @@ int LuaUnsyncedCtrl::SetVideoCapturingTimeOffset(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetWaterParams()");
-	}
+	if (!lua_istable(L, 1))
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
-		if (lua_istable(L, -1)) {
-			float color[3];
-			const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
-			if (size >= 3) {
-				if (key == "absorb") {
-					waterRendering->absorb = color;
-				} else if (key == "baseColor") {
-					waterRendering->baseColor = color;
-				} else if (key == "minColor") {
-					waterRendering->minColor = color;
-				} else if (key == "surfaceColor") {
-					waterRendering->surfaceColor = color;
-				} else if (key == "diffuseColor") {
-					waterRendering->diffuseColor = color;
-				} else if (key == "specularColor") {
-					waterRendering->specularColor = color;
-					} else if (key == "planeColor") {
-					waterRendering->planeColor.x = color[0];
-					waterRendering->planeColor.y = color[1];
-					waterRendering->planeColor.z = color[2];
-				} else {
-					luaL_error(L, "Unknown array key %s", key.c_str());
+		switch (lua_type(L, -1)) {
+			case LUA_TTABLE: {
+				float color[3];
+				const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
+
+				if (size < 3)
+					luaL_error(L, "[%s] unexpected size %d for array key %s", __func__, size, key);
+
+				switch (hashString(key)) {
+					case hashString("absorb"): {
+						waterRendering->absorb = color;
+					} break;
+					case hashString("baseColor"): {
+						waterRendering->baseColor = color;
+					} break;
+					case hashString("minColor"): {
+						waterRendering->minColor = color;
+					} break;
+					case hashString("surfaceColor"): {
+						waterRendering->surfaceColor = color;
+					} break;
+					case hashString("diffuseColor"): {
+						waterRendering->diffuseColor = color;
+					} break;
+					case hashString("specularColor"): {
+						waterRendering->specularColor = color;
+					} break;
+					case hashString("planeColor"): {
+						waterRendering->planeColor.x = color[0];
+						waterRendering->planeColor.y = color[1];
+						waterRendering->planeColor.z = color[2];
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown array key \"%s\"", __func__, key);
+					} break;
 				}
-			} else {
-				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
-			}
-		}
 
-		else if (lua_israwstring(L, -1)) {
-			const std::string value = lua_tostring(L, -1);
-			if (key == "texture") {
-				waterRendering->texture = value;
-			} else if (key == "foamTexture") {
-				waterRendering->foamTexture = value;
-			} else if (key == "normalTexture") {
-				waterRendering->normalTexture = value;
-			} else {
-				luaL_error(L, "Unknown string key %s", key.c_str());
-			}
-		}
+				continue;
+			} break;
 
-		else if (lua_isnumber(L, -1)) {
-			const float value = lua_tofloat(L, -1);
-			if (key == "repeatX") {
-				waterRendering->repeatX = value;
-			} else if (key == "repeatY") {
-				waterRendering->repeatY = value;
-			} else if (key == "surfaceAlpha") {
-				waterRendering->surfaceAlpha = value;
-			} else if (key == "ambientFactor") {
-				waterRendering->ambientFactor = value;
-			} else if (key == "diffuseFactor") {
-				waterRendering->diffuseFactor = value;
-			} else if (key == "specularFactor") {
-				waterRendering->specularFactor = value;
-			} else if (key == "specularPower") {
-				waterRendering->specularPower = value;
-			} else if (key == "fresnelMin") {
-				waterRendering->fresnelMin = value;
-			} else if (key == "fresnelMax") {
-				waterRendering->fresnelMax = value;
-			} else if (key == "fresnelPower") {
-				waterRendering->fresnelPower = value;
-			} else if (key == "reflectionDistortion") {
-				waterRendering->reflDistortion = value;
-			} else if (key == "blurBase") {
-				waterRendering->blurBase = value;
-			} else if (key == "blurExponent") {
-				waterRendering->blurExponent = value;
-			} else if (key == "perlinStartFreq") {
-				waterRendering->perlinStartFreq = value;
-			} else if (key == "perlinLacunarity") {
-				waterRendering->perlinLacunarity = value;
-			} else if (key == "perlinAmplitude") {
-				waterRendering->perlinAmplitude = value;
-			} else if (key == "numTiles") {
-				waterRendering->numTiles = (unsigned char)value;
-			} else {
-				luaL_error(L, "Unknown scalar key %s", key.c_str());
-			}
-		}
+			case LUA_TSTRING: {
+				const std::string value = lua_tostring(L, -1);
 
-		else if (lua_isboolean(L, -1)) {
-			const bool value = lua_toboolean(L, -1);
-			if (key == "shoreWaves") {
-				waterRendering->shoreWaves = value;
-			} else if (key == "forceRendering") {
-				waterRendering->forceRendering = value;
-			} else if (key == "hasWaterPlane") {
-				waterRendering->hasWaterPlane = value;
-			} else {
-				luaL_error(L, "Unknown boolean key %s", key.c_str());
-			}
+				switch (hashString(key)) {
+					case hashString("texture"): {
+						waterRendering->texture = value;
+					} break;
+					case hashString("foamTexture"): {
+						waterRendering->foamTexture = value;
+					} break;
+					case hashString("normalTexture"): {
+						waterRendering->normalTexture = value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown string key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			case LUA_TNUMBER: {
+				const float value = lua_tofloat(L, -1);
+
+				switch (hashString(key)) {
+					case hashString("repeatX"): {
+						waterRendering->repeatX = value;
+					} break;
+					case hashString("repeatY"): {
+						waterRendering->repeatY = value;
+					} break;
+
+					case hashString("surfaceAlpha"): {
+						waterRendering->surfaceAlpha = value;
+					} break;
+
+					case hashString("ambientFactor"): {
+						waterRendering->ambientFactor = value;
+					} break;
+					case hashString("diffuseFactor"): {
+						waterRendering->diffuseFactor = value;
+					} break;
+					case hashString("specularFactor"): {
+						waterRendering->specularFactor = value;
+					} break;
+					case hashString("specularPower"): {
+						waterRendering->specularPower = value;
+					} break;
+
+					case hashString("fresnelMin"): {
+						waterRendering->fresnelMin = value;
+					} break;
+					case hashString("fresnelMax"): {
+						waterRendering->fresnelMax = value;
+					} break;
+					case hashString("fresnelPower"): {
+						waterRendering->fresnelPower = value;
+					} break;
+
+					case hashString("reflectionDistortion"): {
+						waterRendering->reflDistortion = value;
+					} break;
+
+					case hashString("blurBase"): {
+						waterRendering->blurBase = value;
+					} break;
+					case hashString("blurExponent"): {
+						waterRendering->blurExponent = value;
+					} break;
+
+					case hashString("perlinStartFreq"): {
+						waterRendering->perlinStartFreq = value;
+					} break;
+					case hashString("perlinLacunarity"): {
+						waterRendering->perlinLacunarity = value;
+					} break;
+					case hashString("perlinAmplitude"): {
+						waterRendering->perlinAmplitude = value;
+					} break;
+
+					case hashString("numTiles"): {
+						waterRendering->numTiles = (unsigned char)value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown scalar key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			case LUA_TBOOLEAN: {
+				const bool value = lua_toboolean(L, -1);
+
+				switch (hashString(key)) {
+					case hashString("shoreWaves"): {
+						waterRendering->shoreWaves = value;
+					} break;
+					case hashString("forceRendering"): {
+						waterRendering->forceRendering = value;
+					} break;
+					case hashString("hasWaterPlane"): {
+						waterRendering->hasWaterPlane = value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown boolean key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			default: {
+			} break;
 		}
 	}
 
@@ -1177,7 +1244,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
-		luaL_error(L, "[%s] argument %c must be a table!", caller, tblIdx);
+		luaL_error(L, "[%s] argument %d must be a table!", caller, tblIdx);
 		return false;
 	}
 
@@ -1185,62 +1252,98 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const std::string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
-		if (lua_istable(L, -1)) {
-			float array[3] = {0.0f, 0.0f, 0.0f};
+		switch (lua_type(L, -1)) {
+			case LUA_TTABLE: {
+				float array[3] = {0.0f, 0.0f, 0.0f};
 
-			if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
-				if (key == "position") {
-					light.SetPosition(array);
-				} else if (key == "direction") {
-					light.SetDirection(array);
-				} else if (key == "ambientColor") {
-					light.SetAmbientColor(array);
-				} else if (key == "diffuseColor") {
-					light.SetDiffuseColor(array);
-				} else if (key == "specularColor") {
-					light.SetSpecularColor(array);
-				} else if (key == "intensityWeight") {
-					light.SetIntensityWeight(array);
-				} else if (key == "attenuation") {
-					light.SetAttenuation(array);
-				} else if (key == "ambientDecayRate") {
-					light.SetAmbientDecayRate(array);
-				} else if (key == "diffuseDecayRate") {
-					light.SetDiffuseDecayRate(array);
-				} else if (key == "specularDecayRate") {
-					light.SetSpecularDecayRate(array);
-				} else if (key == "decayFunctionType") {
-					light.SetDecayFunctionType(array);
+				if (LuaUtils::ParseFloatArray(L, -1, array, 3) < 3)
+					continue;
+
+				switch (hashString(key)) {
+					case hashString("position"): {
+						light.SetPosition(array);
+					} break;
+					case hashString("direction"): {
+						light.SetDirection(array);
+					} break;
+
+					case hashString("ambientColor"): {
+						light.SetAmbientColor(array);
+					} break;
+					case hashString("diffuseColor"): {
+						light.SetDiffuseColor(array);
+					} break;
+					case hashString("specularColor"): {
+						light.SetSpecularColor(array);
+					} break;
+
+					case hashString("intensityWeight"): {
+						light.SetIntensityWeight(array);
+					} break;
+					case hashString("attenuation"): {
+						light.SetAttenuation(array);
+					} break;
+
+					case hashString("ambientDecayRate"): {
+						light.SetAmbientDecayRate(array);
+					} break;
+					case hashString("diffuseDecayRate"): {
+						light.SetDiffuseDecayRate(array);
+					} break;
+					case hashString("specularDecayRate"): {
+						light.SetSpecularDecayRate(array);
+					} break;
+					case hashString("decayFunctionType"): {
+						light.SetDecayFunctionType(array);
+					} break;
+
+					default: {
+					} break;
 				}
+
+				continue;
+			} break;
+
+			case LUA_TNUMBER: {
+				switch (hashString(key)) {
+					case hashString("radius"): {
+						light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
+					} break;
+					case hashString("fov"): {
+						light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
+					} break;
+					case hashString("ttl"): {
+						light.SetTTL(lua_tofloat(L, -1));
+					} break;
+					case hashString("priority"): {
+						light.SetPriority(lua_tofloat(L, -1));
+					} break;
+					default: {
+					} break;
+				}
+
+				continue;
 			}
 
-			continue;
-		}
+			case LUA_TBOOLEAN: {
+				switch (hashString(key)) {
+					case hashString("ignoreLOS"): {
+						light.SetIgnoreLOS(lua_toboolean(L, -1));
+					} break;
+					case hashString("localSpace"): {
+						light.SetLocalSpace(lua_toboolean(L, -1));
+					} break;
+					default: {
+					} break;
+				}
 
-		if (lua_isnumber(L, -1)) {
-			if (key == "radius") {
-				light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
-			} else if (key == "fov") {
-				light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
-			} else if (key == "ttl") {
-				light.SetTTL(lua_tofloat(L, -1));
-			} else if (key == "priority") {
-				light.SetPriority(lua_tofloat(L, -1));
+				continue;
 			}
 
-			continue;
-		}
-
-		if (lua_isboolean(L, -1)) {
-			if (key == "ignoreLOS") {
-				light.SetIgnoreLOS(lua_toboolean(L, -1));
-			} else if (key == "localSpace") {
-				light.SetLocalSpace(lua_toboolean(L, -1));
-			}
-
-			continue;
+			default: {
+			} break;
 		}
 	}
 
@@ -1553,9 +1656,8 @@ int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	if (sky != nullptr) {
+	if (sky != nullptr)
 		sky->SetLuaTexture(ParseLuaTextureData(L, false));
-	}
 
 	return 0;
 }
@@ -1564,9 +1666,6 @@ int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1579,9 +1678,6 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1594,9 +1690,6 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1641,9 +1734,6 @@ int LuaUnsyncedCtrl::SetUnitSelectionVolumeData(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
@@ -1682,27 +1772,28 @@ int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
 
 int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
+
 	const string iconName  = luaL_checkstring(L, 1);
 	const string texName   = luaL_checkstring(L, 2);
+
 	const float  size      = luaL_optnumber(L, 3, 1.0f);
 	const float  dist      = luaL_optnumber(L, 4, 1.0f);
+
 	const bool   radAdjust = luaL_optboolean(L, 5, false);
-	lua_pushboolean(L, icon::iconHandler->AddIcon(iconName, texName,
-	                                        size, dist, radAdjust));
+
+	lua_pushboolean(L, icon::iconHandler.AddIcon(iconName, texName, size, dist, radAdjust));
 	return 1;
 }
 
 
 int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
-	const string iconName  = luaL_checkstring(L, 1);
-	lua_pushboolean(L, icon::iconHandler->FreeIcon(iconName));
+
+	lua_pushboolean(L, icon::iconHandler.FreeIcon(luaL_checkstring(L, 1)));
 	return 1;
 }
 
@@ -1714,53 +1805,54 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
 	const string path = luaL_checkstring(L, 1);
 
-	CFileHandler fhVFS(path, SPRING_VFS_ZIP);
-	CFileHandler fhRAW(path, SPRING_VFS_RAW);
+	CFileHandler vfsFile(path, SPRING_VFS_ZIP);
+	CFileHandler rawFile(path, SPRING_VFS_RAW);
 
-	if (!fhVFS.FileExists()) {
+	if (!vfsFile.FileExists()) {
 		luaL_error(L, "file \"%s\" not found in mod archive", path.c_str());
 		return 0;
 	}
 
-	if (fhRAW.FileExists()) {
+	if (rawFile.FileExists()) {
 		luaL_error(L, "cannot extract file \"%s\": already exists", path.c_str());
 		return 0;
 	}
 
 
-	string dname = FileSystem::GetDirectory(path);
-	string fname = FileSystem::GetFilename(path);
+	std::string dname = FileSystem::GetDirectory(path);
+	std::string fname = FileSystem::GetFilename(path);
 
-#ifdef WIN32
+#ifdef _WIN32
 	const size_t s = dname.size();
 	// get rid of any trailing slashes (CreateDirectory()
 	// fails on at least XP and Vista if they are present,
 	// ie. it creates the dir but actually returns false)
-	if ((s > 0) && ((dname[s - 1] == '/') || (dname[s - 1] == '\\'))) {
+	if ((s > 0) && ((dname[s - 1] == '/') || (dname[s - 1] == '\\')))
 		dname = dname.substr(0, s - 1);
-	}
 #endif
 
 	if (!dname.empty() && !FileSystem::CreateDirectory(dname))
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
 
-	const int numBytes = fhVFS.FileSize();
-	char* buffer = new char[numBytes];
 
-	fhVFS.Read(buffer, numBytes);
-
+	std::vector<uint8_t> buffer;
 	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
-	fstr.write((const char*) buffer, numBytes);
+
+	if (!vfsFile.IsBuffered()) {
+		buffer.resize(vfsFile.FileSize(), 0);
+		vfsFile.Read(buffer.data(), buffer.size());
+	} else {
+		buffer = std::move(vfsFile.GetBuffer());
+	}
+
+	fstr.write((const char*) buffer.data(), buffer.size());
 	fstr.close();
 
 	if (!dname.empty()) {
-		LOG("Extracted file \"%s\" to directory \"%s\"",
-				fname.c_str(), dname.c_str());
+		LOG("[%s] extracted file \"%s\" to directory \"%s\"", __func__, fname.c_str(), dname.c_str());
 	} else {
-		LOG("Extracted file \"%s\"", fname.c_str());
+		LOG("[%s] extracted file \"%s\"", __func__, fname.c_str());
 	}
-
-	delete[] buffer;
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -1826,12 +1918,10 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	const int cmdIndex = lua_toint(L, 1) - CMD_INDEX_OFFSET;
-	int button = luaL_optint(L, 2, 1); // LMB
+	const int button = luaL_optint(L, 2, 1); // LMB
 
 	if (args <= 2) {
-		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
-		const bool success = guihandler->SetActiveCommand(cmdIndex, rmb);
-		lua_pushboolean(L, success);
+		lua_pushboolean(L, guihandler->SetActiveCommand(cmdIndex, button != SDL_BUTTON_LEFT));
 		return 1;
 	}
 
@@ -1842,8 +1932,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	const bool meta  = luaL_checkboolean(L, 7);
 	const bool shift = luaL_checkboolean(L, 8);
 
-	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb,
-	                                                  alt, ctrl, meta, shift);
+	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb, alt, ctrl, meta, shift);
 	lua_pushboolean(L, success);
 	return 1;
 }
@@ -2086,12 +2175,15 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		return 0;
 	}
 
-	std::vector<std::string> processArgs;
+	std::array<std::string, 32> processArgs;
+
+	processArgs[0] = springFullName;
+	processArgs[1] = " ";
 
 	#if 0
 	// arguments to Spring binary given by Lua code, if any
 	if (!springArgs.empty())
-		processArgs.push_back(springArgs);
+		processArgs[1] = springArgs;
 	#endif
 
 	if (!scriptText.empty()) {
@@ -2101,7 +2193,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		scriptFile.write(scriptText.c_str(), scriptText.size());
 		scriptFile.close();
 
-		processArgs.push_back(scriptFullName);
+		processArgs[2] = scriptFullName;
 	}
 
 	#ifdef _WIN32
@@ -2112,7 +2204,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 	spring::SafeDelete(gameServer);
 
 	LOG("[%s] Spring \"%s\" should be restarting", __func__, springFullName.c_str());
-	Platform::ExecuteProcess(springFullName, processArgs, newProcess);
+	Platform::ExecuteProcess(processArgs, newProcess);
 
 	// only reached on execvp failure
 	return 1;
@@ -2178,7 +2270,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	if (ud == nullptr)
 		return 0;
 
-	ud->iconType = icon::iconHandler->GetIcon(luaL_checksstring(L, 2));
+	ud->iconType = icon::iconHandler.GetIcon(luaL_checksstring(L, 2));
 
 	// set decoys to the same icon
 	if (ud->decoyDef != nullptr)
@@ -2188,16 +2280,16 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 
-	if (decoyMapIt == decoyMap.end())
-		return 0;
+	if (decoyMapIt != decoyMap.end()) {
+		const auto& decoySet = decoyMapIt->second;
 
-	const auto& decoySet = decoyMapIt->second;
-
-	for (const int decoyDefID: decoySet) {
-		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
-		decoyDef->iconType = ud->iconType;
+		for (const int decoyDefID: decoySet) {
+			const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
+			decoyDef->iconType = ud->iconType;
+		}
 	}
 
+	//!! unitDrawer->UpdateUnitDefMiniMapIcons(ud);
 	return 0;
 }
 
@@ -2255,12 +2347,10 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 		return 0;
 	}
 
-	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-
-	if ((groupID < 0) || (groupID >= (int)groups.size()))
+	if (!uiGroupHandlers[gu->myTeam].HasGroup(groupID))
 		return 0;
 
-	CGroup* group = groups[groupID];
+	CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(groupID);
 
 	if (group != nullptr)
 		unit->SetGroup(group);
@@ -2280,9 +2370,9 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseCtrlUnit(L, __func__, -2); // the key
-			if (unit != nullptr && !unit->noSelect) {
+
+			if (unit != nullptr && !unit->noSelect)
 				unitIDs.push_back(unit->id);
-			}
 		}
 	}
 }
@@ -2297,12 +2387,11 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __func__, -1); // the value
-			if (unit != NULL && !unit->noSelect) {
+
+			if (unit != nullptr && !unit->noSelect)
 				unitIDs.push_back(unit->id);
-			}
 		}
 	}
-	return;
 }
 
 
@@ -2316,16 +2405,13 @@ static bool CanGiveOrders(const lua_State* L)
 	if (gs->noHelperAIs)
 		return false;
 
-	if (gs->godMode)
-		return true;
-
-	if (gu->spectating)
-		return false;
-
 	const int ctrlTeam = CLuaHandle::GetHandleCtrlTeam(L);
 
+	if (gu->GetMyPlayer()->CanControlTeam(ctrlTeam))
+		return true;
+
 	// FIXME ? (correct? warning / error?)
-	return ((ctrlTeam == gu->myTeam) && (ctrlTeam >= 0));
+	return (!gu->spectating && (ctrlTeam == gu->myTeam) && (ctrlTeam >= 0));
 }
 
 
@@ -2334,9 +2420,7 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 	if (!CanGiveOrders(L))
 		return 1;
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 1);
-
-	selectedUnitsHandler.GiveCommand(cmd);
+	selectedUnitsHandler.GiveCommand(LuaUtils::ParseCommand(L, __func__, 1));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2350,15 +2434,16 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 		return 1;
 	}
 
-	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+	const CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+
 	if (unit == nullptr || unit->noSelect) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
+	const Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, MAX_AIS, MAX_TEAMS, unit->id, cmd.GetID(false), cmd.GetID(true), cmd.GetTimeOut(), cmd.GetOpts(), cmd.GetNumParams(), cmd.GetParams()));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2375,18 +2460,13 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitMap(L, __func__, 1, unitIDs);
-	const int count = (int)unitIDs.size();
 
-	if (count <= 0) {
+	if (unitIDs.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, {LuaUtils::ParseCommand(L, __func__, 2)});
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2403,18 +2483,13 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitArray(L, __func__, 1, unitIDs);
-	const int count = (int)unitIDs.size();
 
-	if (count <= 0) {
+	if (unitIDs.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, {LuaUtils::ParseCommand(L, __func__, 2)});
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2465,16 +2540,12 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
 
-	bool pairwise = false;
-	if (args >= 3)
-		pairwise = lua_toboolean(L, 3);
-
 	if (unitIDs.empty() || commands.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands, pairwise);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands, (args >= 3 && lua_toboolean(L, 3)));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2725,35 +2796,50 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float4 color;
 			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
 
-			if (key == "fogColor") {
-				sky->fogColor = color;
-			} else if (key == "skyColor") {
-				sky->skyColor = color;
-			} else if (key == "skyDir") {
-// 				sky->skyDir = color;
-			} else if (key == "sunColor") {
-				sky->sunColor = color;
-			} else if (key == "cloudColor") {
-				sky->cloudColor = color;
-			} else {
-				luaL_error(L, "Unknown array key %s", key.c_str());
+			switch (hashString(key)) {
+				case hashString("fogColor"): {
+					sky->fogColor = color;
+				} break;
+				case hashString("skyColor"): {
+					sky->skyColor = color;
+				} break;
+				case hashString("skyDir"): {
+					// sky->skyDir = color;
+				} break;
+				case hashString("sunColor"): {
+					sky->sunColor = color;
+				} break;
+				case hashString("cloudColor"): {
+					sky->cloudColor = color;
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown array key %s", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 
-		else if (lua_isnumber(L, -1)) {
-			if (key == "fogStart") {
-				sky->fogStart = lua_tofloat(L, -1);
-			} else if (key == "fogEnd") {
-				sky->fogEnd = lua_tofloat(L, -1);
-			} else {
-				luaL_error(L, "Unknown scalar key %s", key.c_str());
+		if (lua_isnumber(L, -1)) {
+			switch (hashString(key)) {
+				case hashString("fogStart"): {
+					sky->fogStart = lua_tofloat(L, -1);
+				} break;
+				case hashString("fogEnd"): {
+					sky->fogEnd = lua_tofloat(L, -1);
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown scalar key %s", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 	}
 
@@ -2769,7 +2855,7 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SetSunLighting()");
+		luaL_error(L, "[%s] argument should be a table", __func__);
 
 	CSunLighting sl = *sunLighting;
 
@@ -2777,23 +2863,23 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float4 color;
 			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
 
-			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), color))
+			if (sl.SetValue(key, color))
 				continue;
 
-			luaL_error(L, "Unknown array key %s", key.c_str());
+			luaL_error(L, "[%s] unknown array key %s", __func__, key);
 		}
 
 		if (lua_isnumber(L, -1)) {
-			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), lua_tofloat(L, -1)))
+			if (sl.SetValue(key, lua_tofloat(L, -1)))
 				continue;
 
-			luaL_error(L, "Unknown scalar key %s", key.c_str());
+			luaL_error(L, "[%s] unknown scalar key %s", __func__, key);
 		}
 	}
 
@@ -2803,42 +2889,53 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetMapRenderingParams()");
-	}
+	if (!lua_istable(L, 1))
+		luaL_error(L, "[%s] incorrect arguments");
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float values[4];
 			const int size = LuaUtils::ParseFloatArray(L, -1, values, 4);
-			if (size == 4) {
-				if (key == "splatTexScales") {
+
+			if (size < 4)
+				luaL_error(L, "[%s] unexpected size %d for array key \"%s\"", __func__, size, key);
+
+			switch (hashString(key)) {
+				case hashString("splatTexScales"): {
 					mapRendering->splatTexScales = values;
-				} else if (key == "splatTexMults") {
+				} break;
+				case hashString("splatTexMults"): {
 					mapRendering->splatTexMults = values;
-				} else {
-					luaL_error(L, "Unknown array key %s", key.c_str());
-				}
-			} else {
-				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown array key \"%s\"", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 
-		else if (lua_isboolean(L, -1)) {
+		if (lua_isboolean(L, -1)) {
 			const bool value = lua_toboolean(L, -1);
-			if (key == "voidWater") {
-				mapRendering->voidWater = value;
-			} else if (key == "voidGround") {
-				mapRendering->voidGround = value;
-			} else if (key == "splatDetailNormalDiffuseAlpha") {
-				mapRendering->splatDetailNormalDiffuseAlpha = value;
-			} else {
-				luaL_error(L, "Unknown boolean key %s", key.c_str());
+
+			switch (hashString(key)) {
+				case hashString("voidWater"): {
+					mapRendering->voidWater = value;
+				} break;
+				case hashString("voidGround"): {
+					mapRendering->voidGround = value;
+				} break;
+				case hashString("splatDetailNormalDiffuseAlpha"): {
+					mapRendering->splatDetailNormalDiffuseAlpha = value;
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown boolean key \"%s\"", __func__, key);
+				} break;
 			}
 		}
 	}
@@ -2893,15 +2990,35 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	if (lua_gettop(L) == 0) {
+		// clear for current thread
 		Watchdog::ClearTimer();
 		return 0;
 	}
 
 	if (lua_isstring(L, 1)) {
-		Watchdog::ClearTimer(lua_tostring(L, 1));
+		Watchdog::ClearTimer(lua_tostring(L, 1), luaL_optboolean(L, 2, false));
 	} else {
-		Watchdog::ClearTimer("main");
+		Watchdog::ClearTimer("main", luaL_optboolean(L, 2, false));
 	}
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::GarbageCollectCtrl(lua_State* L) {
+	luaContextData* ctxData = GetLuaContextData(L);
+	SLuaGarbageCollectCtrl& gcCtrl = ctxData->gcCtrl;
+
+	gcCtrl.itersPerBatch = std::max(0, luaL_optint(L, 1, gcCtrl.itersPerBatch));
+
+	gcCtrl.numStepsPerIter = std::max(0, luaL_optint(L, 2, gcCtrl.numStepsPerIter));
+	gcCtrl.minStepsPerIter = std::max(0, luaL_optint(L, 3, gcCtrl.minStepsPerIter));
+	gcCtrl.maxStepsPerIter = std::max(0, luaL_optint(L, 4, gcCtrl.maxStepsPerIter));
+
+	gcCtrl.minLoopRunTime = std::max(0.0f, luaL_optfloat(L, 5, gcCtrl.minLoopRunTime));
+	gcCtrl.maxLoopRunTime = std::max(0.0f, luaL_optfloat(L, 6, gcCtrl.maxLoopRunTime));
+
+	gcCtrl.baseRunTimeMult = std::max(0.0f, luaL_optfloat(L, 7, gcCtrl.baseRunTimeMult));
+	gcCtrl.baseMemLoadMult = std::max(0.0f, luaL_optfloat(L, 8, gcCtrl.baseMemLoadMult));
 
 	return 0;
 }
@@ -2927,6 +3044,17 @@ int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
 
 	fd->PreloadModel();
 	return 0;
+}
+
+
+int LuaUnsyncedCtrl::PreloadSoundItem(lua_State* L)
+{
+	// always push false in synced context
+	const bool retval = sound->PreloadSoundItem(luaL_checkstring(L, 1));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
+
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 /******************************************************************************/

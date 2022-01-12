@@ -123,12 +123,12 @@ public:
     // ----------------------------------------------------------------------
     /** @copydoc Logger::attachStream   */
     bool attachStream(LogStream *pStream,
-        unsigned int severity);
+        unsigned int severity) override;
 
     // ----------------------------------------------------------------------
     /** @copydoc Logger::detatchStream */
     bool detatchStream(LogStream *pStream,
-        unsigned int severity);
+        unsigned int severity) override;
 
 
 private:
@@ -145,16 +145,16 @@ private:
 private:
 
     /** @brief  Logs debug infos, only been written when severity level VERBOSE is set */
-    void OnDebug(const char* message);
+    void OnDebug(const char* message) override;
 
     /** @brief  Logs an info message */
-    void OnInfo(const char*  message);
+    void OnInfo(const char*  message) override;
 
     /** @brief  Logs a warning message */
-    void OnWarn(const char*  message);
+    void OnWarn(const char*  message) override;
 
     /** @brief  Logs an error message */
-    void OnError(const char* message);
+    void OnError(const char* message) override;
 
     // ----------------------------------------------------------------------
     /** @brief Writes a message to all streams */

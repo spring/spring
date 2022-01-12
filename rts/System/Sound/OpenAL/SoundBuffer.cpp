@@ -40,18 +40,19 @@ int	VorbisClose(void* datasource)
 }
 
 
-SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
+SoundBuffer::bufferMapT SoundBuffer::bufferMap;
 SoundBuffer::bufferVecT SoundBuffer::buffers;
 
 static std::vector<std::uint8_t> decodeBuffer;
+
 
 #pragma pack(push, 1)
 // Header copied from WavLib by Michael McTernan
 struct WAVHeader
 {
-	std::uint8_t riff[4];         // "RIFF"
+	std::uint8_t riff[4];        // "RIFF"
 	std::int32_t totalLength;
-	std::uint8_t wavefmt[8];      // WAVEfmt "
+	std::uint8_t wavefmt[8];     // WAVEfmt "
 	std::int32_t length;         // Remaining length 4 bytes
 	std::int16_t format_tag;
 	std::int16_t channels;       // Mono=1 Stereo=2
@@ -59,17 +60,18 @@ struct WAVHeader
 	std::int32_t AvgBytesPerSec;
 	std::int16_t BlockAlign;
 	std::int16_t BitsPerSample;
-	std::uint8_t data[4];         // "data"
+	std::uint8_t data[4];        // "data"
 	std::int32_t datalen;        // Raw data length 4 bytes
 };
 #pragma pack(pop)
+
 
 bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer)
 {
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
 	if ((buffer.empty()) || memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
-		LOG_L(L_ERROR, "ReadWAV: invalid header: %s", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid header", __func__, file.c_str());
 		return false;
 	}
 
@@ -89,7 +91,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		LOG_L(L_ERROR, "ReadWAV (%s): invalid format tag", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid format tag", __func__, file.c_str());
 		return false;
 	}
 
@@ -98,7 +100,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
-			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (mono)", file.c_str());
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of bits per sample (mono; %d)", __func__, file.c_str(), header->BitsPerSample);
 			return false;
 		}
 	}
@@ -106,19 +108,19 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
-			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (stereo)", file.c_str());
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of bits per sample (stereo; %d)", __func__, file.c_str(), header->BitsPerSample);
 			return false;
 		}
 	}
 	else {
-		LOG_L(L_ERROR, "ReadWAV (%s): invalid number of channels.", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%d)", __func__, file.c_str(), header->channels);
 		return false;
 	}
 
 	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
 		LOG_L(L_ERROR,
-				"WAV file %s has data length %i greater than actual data length %i",
-				file.c_str(), header->datalen,
+				"[%s(%s)] data length %i greater than actual data length %i",
+				__func__, file.c_str(), header->datalen,
 				(int)(buffer.size() - sizeof(WAVHeader)));
 
 //		LOG_L(L_WARNING, "OpenAL: size %d\n", size);
@@ -136,7 +138,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 	}
 
 	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
-		LOG_L(L_WARNING, "Loading audio failed for %s", file.c_str());
+		LOG_L(L_WARNING, "[%s(%s)] failed generating buffer", __func__, file.c_str());
 
 	filename = file;
 	channels = header->channels;
@@ -161,22 +163,22 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 	OggVorbis_File oggStream;
 	const int result = ov_open_callbacks(&buf, &oggStream, nullptr, 0, vorbisCallbacks);
 	if (result < 0) {
-		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		LOG_L(L_WARNING, "[%s(%s)] could not open Ogg stream (%s)", __func__, file.c_str(), ErrorString(result).c_str());
 		return false;
 	}
 
-	vorbis_info* vorbisInfo = ov_info(&oggStream, -1);
-	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
+	const vorbis_info* vorbisInfo = ov_info(&oggStream, -1);
+	// const vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
 
 	ALenum format;
 
-	if (vorbisInfo->channels == 1) {
-		format = AL_FORMAT_MONO16;
-	} else if (vorbisInfo->channels == 2) {
-		format = AL_FORMAT_STEREO16;
-	} else {
-		LOG_L(L_ERROR, "File %s: invalid number of channels: %i", file.c_str(), vorbisInfo->channels);
-		return false;
+	switch (vorbisInfo->channels) {
+		case  1: { format = AL_FORMAT_MONO16  ; } break;
+		case  2: { format = AL_FORMAT_STEREO16; } break;
+		default: {
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%i)", __func__, file.c_str(), vorbisInfo->channels);
+			return false;
+		}
 	}
 
 	size_t pos = 0;
@@ -193,13 +195,13 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 
 		switch ((read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section))) {
 			case OV_HOLE:
-				LOG_L(L_WARNING, "%s: garbage or corrupt page in stream (non-fatal)", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] garbage or corrupt page in stream (non-fatal)", __func__, file.c_str());
 				continue; // read next
 			case OV_EBADLINK:
-				LOG_L(L_WARNING, "%s: corrupted stream", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] corrupted stream", __func__, file.c_str());
 				return false; // abort
 			case OV_EINVAL:
-				LOG_L(L_WARNING, "%s: corrupted headers", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] corrupted headers", __func__, file.c_str());
 				return false; // abort
 			default:
 				break; // all good
@@ -208,12 +210,34 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 		pos += read;
 	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
-	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
+	if (!AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate))
+		LOG_L(L_WARNING, "[%s(%s)] failed generating buffer", __func__, file.c_str());
+
+	// for non-seekable streams, ov_time_total returns OV_EINVAL (-131) while
+	// ov_time_tell always[?] returns the decoding time offset relative to EOS
 	filename = file;
 	channels = vorbisInfo->channels;
-	length   = ov_time_total(&oggStream, -1);
+	length   = (ov_seekable(&oggStream) == 0)? ov_time_tell(&oggStream): ov_time_total(&oggStream, -1);
 	return true;
 }
+
+
+bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate)
+{
+	alGenBuffers(1, &id);
+	if (!CheckError("SoundBuffer::alGenBuffers"))
+		return false;
+	alBufferData(id, format, (ALvoid*) data, datalength, rate);
+	return CheckError("SoundBuffer::alBufferData");
+}
+
+bool SoundBuffer::Release() {
+	if (id == 0)
+		return false;
+	alDeleteBuffers(1, &id);
+	return true;
+}
+
 
 int SoundBuffer::BufferSize() const
 {
@@ -242,7 +266,7 @@ SoundBuffer& SoundBuffer::GetById(const size_t id)
 
 size_t SoundBuffer::AllocedSize()
 {
-	int numBytes = 0;
+	size_t numBytes = 0;
 	for (auto it = ++buffers.cbegin(); it != buffers.cend(); ++it)
 		numBytes += it->BufferSize();
 	return numBytes;
@@ -256,14 +280,5 @@ size_t SoundBuffer::Insert(SoundBuffer&& buffer)
 	buffers.emplace_back(std::move(buffer));
 
 	return bufId;
-}
-
-bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate)
-{
-	alGenBuffers(1, &id);
-	if (!CheckError("SoundBuffer::AlGenBuffers"))
-		return false;
-	alBufferData(id, format, (ALvoid*) data, datalength, rate);
-	return CheckError("SoundBuffer::AlGenBufferData");
 }
 

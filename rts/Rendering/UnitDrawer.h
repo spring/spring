@@ -10,6 +10,7 @@
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/UnitDrawerState.hpp"
 #include "Rendering/UnitDefImage.h"
 #include "System/EventClient.h"
@@ -20,10 +21,8 @@ struct SolidObjectDef;
 struct UnitDef;
 struct S3DModel;
 
-class IModelRenderContainer;
 class CSolidObject;
 class CUnit;
-class CVertexArray;
 
 struct Command;
 struct BuildInfo;
@@ -62,7 +61,7 @@ class CUnitDrawer: public CEventClient
 {
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
 			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
 			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
@@ -70,22 +69,22 @@ public:
 			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
 			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderUnitCreated(const CUnit*, int cloaked);
-	void RenderUnitDestroyed(const CUnit*);
+	void RenderUnitCreated(const CUnit*, int cloaked) override;
+	void RenderUnitDestroyed(const CUnit*) override;
 
-	void UnitEnteredRadar(const CUnit* unit, int allyTeam);
-	void UnitEnteredLos(const CUnit* unit, int allyTeam);
-	void UnitLeftRadar(const CUnit* unit, int allyTeam);
-	void UnitLeftLos(const CUnit* unit, int allyTeam);
+	void UnitEnteredRadar(const CUnit* unit, int allyTeam) override;
+	void UnitEnteredLos(const CUnit* unit, int allyTeam) override;
+	void UnitLeftRadar(const CUnit* unit, int allyTeam) override;
+	void UnitLeftLos(const CUnit* unit, int allyTeam) override;
 
-	void UnitCloaked(const CUnit* unit);
-	void UnitDecloaked(const CUnit* unit);
+	void UnitCloaked(const CUnit* unit) override;
+	void UnitDecloaked(const CUnit* unit) override;
 
-	void PlayerChanged(int playerNum);
-	void SunChanged();
+	void PlayerChanged(int playerNum) override;
+	void SunChanged() override;
 
 public:
 	CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false) {}
@@ -96,7 +95,7 @@ public:
 	void Init();
 	void Kill();
 
-	void Update();
+	void Update() override;
 
 	void UpdateGhostedBuildings();
 
@@ -132,6 +131,7 @@ public:
 	// alpha.x := alpha-value
 	// alpha.y := alpha-pass (true or false)
 	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
+	void SetAlphaTest(const float4& params) const;
 
 
 	void SetupOpaqueDrawing(bool deferredPass);
@@ -143,18 +143,22 @@ public:
 	void ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild);
 	bool ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild);
 
-	void SetUnitDrawDist(float dist);
-	void SetUnitIconDist(float dist);
-
-	void DrawUnitMiniMapIcons() const;
+	void SetUnitDrawDist(float dist) {
+		unitDrawDist = dist;
+		unitDrawDistSqr = unitDrawDist * unitDrawDist;
+	}
+	void SetUnitIconDist(float dist) {
+		unitIconDist = dist;
+		iconLength = unitIconDist * unitIconDist * 750.0f;
+	}
 
 public:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
-	IModelRenderContainer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IModelRenderContainer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
@@ -225,7 +229,9 @@ private:
 
 public:
 	void DrawUnitIcons();
-	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void DrawUnitMiniMapIcon(const CUnit* unit, GL::RenderDataBufferTC* buffer) const;
+	void DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const;
+
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
@@ -296,8 +302,8 @@ private:
 	bool useDistToGroundForIcons;
 
 private:
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> opaqueModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <map>
 #include <cfloat>
 
 #include <SDL_keycode.h>
@@ -56,10 +55,8 @@
 #endif
 
 
-using netcode::RawPacket;
-using std::string;
-
 CONFIG(bool, DemoFromDemo).defaultValue(false);
+CONFIG(bool, LoadBadSaves).defaultValue(false);
 
 static char mapChecksumMsgBuf[1024] = {0};
 static char modChecksumMsgBuf[1024] = {0};
@@ -68,7 +65,7 @@ CPreGame* pregame = nullptr;
 
 CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
-	, savefile(nullptr)
+	, saveFileHandler(nullptr)
 	, connectTimer(spring_gettime())
 	, wantDemo(true)
 {
@@ -82,12 +79,12 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 #endif
 
 	if (!clientSetup->isHost) {
-		LOG("[%s] client using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] using client IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		// don't allow luasocket to connect to the host
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
-		clientNet->InitClient(clientSetup, SpringVersion::GetFull(), Platform::GetPlatformStr());
+		clientNet->InitClient(clientSetup, SpringVersion::GetSync(), Platform::GetPlatformStr());
 	} else {
-		LOG("[%s] server using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] using server IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		clientNet->InitLocalClient();
 	}
 }
@@ -103,29 +100,41 @@ CPreGame::~CPreGame()
 	pregame = nullptr;
 }
 
-void CPreGame::LoadSetupscript(const std::string& script)
+void CPreGame::LoadSetupScript(const std::string& script)
 {
 	assert(clientSetup->isHost);
 	StartServer(script);
 }
 
-void CPreGame::LoadDemo(const std::string& demo)
+void CPreGame::LoadDemoFile(const std::string& demo)
 {
 	assert(clientSetup->isHost);
-
-	if (!configHandler->GetBool("DemoFromDemo"))
-		wantDemo = false;
+	wantDemo &= configHandler->GetBool("DemoFromDemo");
 
 	ReadDataFromDemo(demo);
 }
 
-void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
+void CPreGame::LoadSaveFile(const std::string& save)
 {
 	assert(clientSetup->isHost);
-	savefile = ILoadSaveHandler::Create(usecreg);
-	savefile->LoadGameStartInfo(save.c_str());
 
-	StartServer(savefile->scriptText);
+	saveFileHandler = ILoadSaveHandler::CreateHandler(save);
+
+	if (saveFileHandler->LoadGameStartInfo(save) || configHandler->GetBool("LoadBadSaves")) {
+		StartServer(saveFileHandler->GetScriptText());
+		return;
+	}
+
+	LOG_L(L_ERROR, "[PreGame::%s] incompatible save-file specified", __func__);
+
+	if (CLuaMenuController::ActivateInstance("[PreGame] incompatible save-file")) {
+		assert(pregame == this);
+		spring::SafeDelete(pregame);
+		return;
+	}
+
+	spring::exitCode = spring::EXIT_CODE_BADSAVE;
+	gu->globalQuit = true;
 }
 
 int CPreGame::KeyPressed(int k, bool isRepeat)
@@ -187,27 +196,34 @@ bool CPreGame::Update()
 	return true;
 }
 
-void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
+
+void CPreGame::AddMapArchivesToVFS(const CGameSetup* setup)
 {
-	LOG("[PreGame::%s] using map: %s", __func__, setup->mapName.c_str());
-	// Load Map archive
+	// map gets added in StartServer if we are the host, so this can show twice
+	// StartServerForDemo does *not* add the map but waits for GameDataReceived
+	LOG("[PreGame::%s][server=%p] using map \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->mapName.c_str(), vfsHandler->HasArchive(setup->mapName), vfsHandler->HasTempArchive(setup->mapName));
+
+	// load map archive
 	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
+}
 
-	if (mapOnly)
-		return;
+void CPreGame::AddModArchivesToVFS(const CGameSetup* setup)
+{
+	LOG("[PreGame::%s][server=%p] using game \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->modName.c_str(), vfsHandler->HasArchive(setup->modName), vfsHandler->HasTempArchive(setup->modName));
 
-	// Load Mutators (if any)
+	// load mutators (if any); use WithDeps since mutators depend on the archives they override
 	for (const std::string& mut: setup->GetMutatorsCont()) {
-		LOG("[PreGame::%s] using mutator: %s", __func__, mut.c_str());
-		vfsHandler->AddArchiveWithDeps(mut, false);
+		LOG("[PreGame::%s] using mutator \"%s\"", __func__, mut.c_str());
+
+		vfsHandler->AddArchiveWithDeps(mut, true);
 	}
 
-	// Load Game archive
+	// load game archive
 	vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
-	modArchive = archiveScanner->ArchiveFromName(setup->modName);
-	LOG("[PreGame::%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modArchive.c_str());
+	modFileName = archiveScanner->ArchiveFromName(setup->modName);
 }
+
 
 void CPreGame::StartServer(const std::string& setupscript)
 {
@@ -231,7 +247,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	AddGameSetupArchivesToVFS(startGameSetup.get(), true);
+	AddMapArchivesToVFS(startGameSetup.get());
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
@@ -260,7 +276,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startGameData->SetSetupText(startGameSetup->setupText);
 	gameServer = new CGameServer(clientSetup, startGameData, startGameSetup);
 
-	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull(), Platform::GetPlatformStr());
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetSync(), Platform::GetPlatformStr());
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -278,14 +294,14 @@ void CPreGame::UpdateClientNet()
 			return;
 		}
 
-		LOG_L(L_ERROR, "[PreGame] Server Connection Timeout");
+		LOG_L(L_ERROR, "[PreGame::%s] server connection timeout", __func__);
 
 		spring::exitCode = spring::EXIT_CODE_TIMEOUT;
 		gu->globalQuit = true;
 		return;
 	}
 
-	std::shared_ptr<const RawPacket> packet;
+	std::shared_ptr<const netcode::RawPacket> packet;
 
 	while ((packet = clientNet->GetData(gs->frameNum))) {
 		const unsigned char* inbuf = packet->data;
@@ -313,7 +329,7 @@ void CPreGame::UpdateClientNet()
 
 					// force exit to system if no menu
 					LOG("[PreGame::%s] server requested quit or rejected connection (reason \"%s\")", __func__, message.c_str());
-					handleerror(nullptr, "server requested quit or rejected connection: " + message, "Quit message", MBF_OK | MBF_EXCL);
+					handleerror(nullptr, "server requested quit or rejected connection", "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_{QUIT,REJECT_CONNECT}] exception \"%s\"", __func__, ex.what());
 				}
@@ -321,7 +337,7 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_CREATE_NEWPLAYER: {
 				// server will send this first if we're using mid-game join
-				// feature, to let us know about ourselves (we won't be in
+				// feature to let us know about ourselves (we won't be in
 				// gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
@@ -333,7 +349,7 @@ void CPreGame::UpdateClientNet()
 
 					// since the >> operator uses dest size to extract data from
 					// the packet, we need to use temp variables of the same
-					// size of the packet, before converting to dest variable
+					// size of the packet before converting to dest variable
 					pckt >> playerNum;
 					pckt >> spectator;
 					pckt >> team;
@@ -380,11 +396,11 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(playerNum);
 				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
-				LOG("[PreGame::%s] received local player number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+				LOG("[PreGame::%s] received local player number %i (team %i, allyteam %i), creating LoadScreen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
 
-				CLoadScreen::CreateDeleteInstance(gameSetup->MapFile(), modArchive, savefile);
+				CLoadScreen::CreateDeleteInstance(std::move(gameSetup->MapFileName()), std::move(modFileName), saveFileHandler);
 
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
@@ -421,9 +437,9 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->remove("SourcePort", false);
 		//tgame->remove("IsHost", false);
 
-		for (auto it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
-			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
-				it->second->AddPair("isfromdemo", 1);
+		for (auto& section: tgame->sections) {
+			if (section.first.size() > 6 && section.first.substr(0, 6) == "player") {
+				section.second->AddPair("isfromdemo", 1);
 			}
 		}
 
@@ -446,7 +462,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	good_fpu_control_registers("before CGameServer creation");
 
 	gameServer = new CGameServer(clientSetup, gameData, demoGameSetup);
-	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull(), Platform::GetPlatformStr());
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetSync(), Platform::GetPlatformStr());
 
 	good_fpu_control_registers("after CGameServer creation");
 	LOG("[PreGame::%s] started GameServer", __func__);
@@ -523,7 +539,8 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	}
 
 	// load archives into VFS
-	AddGameSetupArchivesToVFS(gameSetup, false);
+	AddMapArchivesToVFS(gameSetup);
+	AddModArchivesToVFS(gameSetup);
 
 	{
 		// check checksums of map & game
@@ -546,12 +563,13 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		std::fill(asModChecksum.begin(), asModChecksum.end(), 0);
 
 		try {
+			// gameSetup->MapFileName()
 			archiveScanner->CheckArchive(gameSetup->mapName, gdMapChecksum, asMapChecksum);
 		} catch (const content_error& ex) {
 			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 		}
 		try {
-			archiveScanner->CheckArchive(modArchive, gdModChecksum, asModChecksum);
+			archiveScanner->CheckArchive(modFileName, gdModChecksum, asModChecksum);
 		} catch (const content_error& ex) {
 			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 		}
@@ -572,14 +590,16 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		wantDemo = false;
 
 	if (clientNet != nullptr && wantDemo) {
-		assert(clientNet->GetDemoRecorder() == nullptr);
+		CDemoRecorder recorder = {gameSetup->mapName, gameSetup->modName, false};
 
-		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
-		recorder->WriteSetupText(gameData->GetSetupText());
-		recorder->SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
-		clientNet->SetDemoRecorder(recorder);
+		recorder.WriteSetupText(gameData->GetSetupText());
+		recorder.SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
 
-		LOG("PreGame::%s] recording demo to \"%s\"", __func__, (recorder->GetName()).c_str());
+		assert(!clientNet->GetDemoRecorder()->IsValid());
+		clientNet->SetDemoRecorder(std::move(recorder));
+		assert(clientNet->GetDemoRecorder()->IsValid());
+
+		LOG("[PreGame::%s] recording demo to \"%s\"", __func__, (clientNet->GetDemoRecorder()->GetName()).c_str());
 	}
 }
 

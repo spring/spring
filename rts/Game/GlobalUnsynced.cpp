@@ -15,7 +15,6 @@
 #include "System/SafeUtil.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Sync/SyncTracer.h"
 
 #include <ctime>
 
@@ -96,13 +95,7 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
-	myPlayerNum = myNumber;
-
-#ifdef TRACE_SYNC
-	tracefile.Initialize(myPlayerNum);
-#endif
-
-	const CPlayer* myPlayer = playerHandler.Player(myPlayerNum);
+	const CPlayer* myPlayer = playerHandler.Player(myPlayerNum = myNumber);
 
 	myTeam = myPlayer->team;
 	if (!teamHandler.IsValidTeam(myTeam))

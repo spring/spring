@@ -31,7 +31,7 @@ class CKeyBindings : public CommandReceiver
 		const ActionList& GetActionList(const CKeyChain& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
-		virtual void PushAction(const Action&);
+		virtual void PushAction(const Action&) override;
 		bool ExecuteCommand(const std::string& line);
 
 		// Receive configuration notifications (for KeyChainTimeout)

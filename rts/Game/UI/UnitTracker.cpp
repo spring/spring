@@ -13,7 +13,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 CUnitTracker unitTracker;
@@ -206,7 +206,7 @@ void CUnitTracker::SetCam()
 		return;
 	}
 
-	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == 0) {
+	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == nullptr) {
 		timeOut = 1;
 		lastFollowUnit = 0;
 	}

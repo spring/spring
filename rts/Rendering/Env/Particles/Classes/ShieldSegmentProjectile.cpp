@@ -11,7 +11,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/UnorderedMap.hpp"
 
 
@@ -43,7 +43,7 @@ static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheret
 
 
 
-ShieldSegmentCollection& ShieldSegmentCollection::operator = (ShieldSegmentCollection&& ssc) {
+ShieldSegmentCollection& ShieldSegmentCollection::operator=(ShieldSegmentCollection&& ssc) noexcept {
 	shield = ssc.shield; ssc.shield = nullptr;
 	shieldTexture = ssc.shieldTexture; ssc.shieldTexture = nullptr;
 
@@ -122,6 +122,9 @@ void ShieldSegmentCollection::Kill()
 void ShieldSegmentCollection::PostLoad()
 {
 	lastAllowDrawFrame = -1;
+	if (shield == nullptr)
+		return;
+
 	const WeaponDef* wd = shield->weaponDef;
 
 	if ((allowDrawing = wd->IsVisibleShield())) {
@@ -345,7 +348,10 @@ void ShieldSegmentProjectile::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color});
 			va->SafeAppend({shieldPos + vertices[idxTR] * size, texCoors[idxTR].x, texCoors[idxTR].y, color});
 			va->SafeAppend({shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color});
+
+			va->SafeAppend({shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color});
 			va->SafeAppend({shieldPos + vertices[idxBL] * size, texCoors[idxBL].x, texCoors[idxBL].y, color});
+			va->SafeAppend({shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color});
 		}
 	}
 }

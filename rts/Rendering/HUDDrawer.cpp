@@ -16,8 +16,9 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
+#include <cmath>
 
 HUDDrawer* HUDDrawer::GetInstance()
 {
@@ -36,7 +37,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	viewMat.Translate(0.0f, 0.0f, -unit->radius);
 	viewMat.Scale({1.0f / unit->radius, 1.0f / unit->radius, 1.0f / unit->radius});
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		viewMat.RotateX(  90.0f * math::DEG_TO_RAD);
 		viewMat.RotateZ(-180.0f * math::DEG_TO_RAD);
 	} else {
@@ -82,8 +83,8 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 
 	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
@@ -111,7 +112,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	// prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
 	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{ 0.0f,  0.5f, 0.0f}, arrowColor});
@@ -162,7 +163,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 		if (wd->stockpile && !w->numStockpiled) {
 			if (w->numStockpileQued > 0) {
 				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
-				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Stockpiling (%i%%)", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
+				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Stockpiling (%i%%)", wd->description.c_str(), std::roundf(100.0f * w->buildPercent));
 			} else {
 				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
 				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: No ammo", wd->description.c_str());
@@ -172,7 +173,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 		}
 		if (w->reloadStatus > gs->frameNum) {
 			font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
-			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
+			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - std::roundf(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed)));
 			continue;
 		}
 		if (!w->angleGood) {
@@ -190,15 +191,15 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 
 void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 {
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
 	// draw the reticle in world coordinates
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	prog->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 
 
@@ -283,21 +284,21 @@ void HUDDrawer::Draw(const CUnit* unit)
 	if (unit == nullptr || !draw)
 		return;
 
-	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PushBits(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		DrawUnitDirectionArrow(unit);
 		DrawCameraDirectionArrow(unit);
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 
 	DrawModel(unit);
 	DrawWeaponStates(unit);
 	DrawTargetReticle(unit);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }

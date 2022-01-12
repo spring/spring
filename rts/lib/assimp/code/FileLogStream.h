@@ -58,7 +58,7 @@ class FileLogStream :
 public:
     FileLogStream( const char* file, IOSystem* io = NULL );
     ~FileLogStream();
-    void write( const char* message );
+    void write( const char* message ) override;
 
 private:
     IOStream *m_pStream;

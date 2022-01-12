@@ -10,7 +10,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
@@ -66,10 +66,11 @@ void COverheadController::KeyMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= math::sqrt(move.z) * 200;
 
-	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
-	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
+	move *= (math::sqrt(move.z) * 200.0f);
+	pos.x += (move.x * pixelSize * 2.0f * scrollSpeed);
+	pos.z -= (move.y * pixelSize * 2.0f * scrollSpeed);
+
 	Update();
 }
 
@@ -79,10 +80,12 @@ void COverheadController::MouseMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= 100 * middleClickScrollSpeed;
 
-	pos.x += move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
-	pos.z += move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
+	// ignore middleClickScrollSpeed sign in locked MMB-scroll mode
+	move = mix(move, move * Sign(middleClickScrollSpeed), mouse->locked) * middleClickScrollSpeed * 100.0f;
+	pos.x += (move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed);
+	pos.z += (move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed);
+
 	Update();
 }
 

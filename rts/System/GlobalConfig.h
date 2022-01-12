@@ -46,6 +46,7 @@ public:
 	 */
 	unsigned mtu = 1400;
 
+
 	/**
 	 * @brief linkBandwidth
 	 *
@@ -81,6 +82,7 @@ public:
 	 */
 	int linkIncomingMaxWaitingPackets = 512;
 
+
 	/**
 	 * @brief useNetMessageSmoothingBuffer
 	 *
@@ -96,6 +98,14 @@ public:
 	 * Allows Lua to write to springsettings/springrc file
 	 */
 	bool luaWritableConfigFile = false;
+
+	/**
+	 * @brief vfsCacheArchiveFiles
+	 *
+	 * Whether the VFS should cache (BufferedArchive) files in memory
+	 */
+	bool vfsCacheArchiveFiles = true;
+
 
 	/**
 	 * @brief teamHighlight

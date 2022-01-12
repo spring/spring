@@ -32,7 +32,7 @@ static constexpr int FONT_SCALE     = 1 << 12; // given size argument will be tr
 
 static constexpr int FONT_NEAREST   = 1 << 13; // round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
-static constexpr int FONT_BUFFERED  = 1 << 14; // make glFormat append to buffer outside a {Begin,End}GL4 pair
+static constexpr int FONT_BUFFERED  = 1 << 14; // make glFormat append to buffer outside a {Begin,End} pair
 
 
 namespace Shader {
@@ -47,28 +47,34 @@ public:
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 	static void ReallocAtlases(bool pre);
+	static void SwapRenderBuffers();
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
 	~CglFont();
 
 
-	void BeginGL4() { BeginGL4(defShader); }
-	void EndGL4() { EndGL4(defShader); }
-	void BeginGL4(Shader::IProgramObject* shader);
-	void EndGL4(Shader::IProgramObject* shader);
+	void Begin() { Begin(defShader); }
+	void End() { End(defShader); }
+	void Begin(Shader::IProgramObject* shader);
+	void End(Shader::IProgramObject* shader);
 
-	void DrawBufferedGL4() { DrawBufferedGL4(defShader); }
-	void DrawBufferedGL4(Shader::IProgramObject* shader);
+	void DrawBufferedGL4() { DrawBuffered(); }
+	void DrawBufferedGL4(Shader::IProgramObject* shader) { DrawBuffered(shader); }
 
-	void ResetBufferGL4(bool outline) {
+	void DrawBuffered() { DrawBuffered(defShader); }
+	void DrawBuffered(Shader::IProgramObject* shader);
+
+	void SwapBuffers();
+
+	void ResetBuffer(bool outline) {
 		const unsigned int bi = GetBufferIdx(outline);
 
 		prvBufferPos[bi] = mapBufferPtr[bi];
 		curBufferPos[bi] = mapBufferPtr[bi];
 	}
-	void ResetBuffersGL4() {
-		ResetBufferGL4(false);
-		ResetBufferGL4( true);
+	void ResetBuffers() {
+		ResetBuffer(false);
+		ResetBuffer( true);
 	}
 
 
@@ -77,6 +83,12 @@ public:
 	void glWorldBegin(Shader::IProgramObject* shader);
 	void glWorldEnd(Shader::IProgramObject* shader);
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
+
+	void SetViewMatrix(const CMatrix44f& mat) { viewMatrix = mat; }
+	void SetProjMatrix(const CMatrix44f& mat) { projMatrix = mat; }
+
+	static CMatrix44f DefViewMatrix();
+	static CMatrix44f DefProjMatrix();
 
 	/**
 	 * @param s  absolute font size, or relative scale, if option FONT_SCALE is set
@@ -128,10 +140,7 @@ private:
 	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
 
 private:
-	unsigned int GetBufferIdx(bool outline) const { return (currBufferIndxGL4 * 2 + outline); }
-
-	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIndxGL4]; }
-	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIndxGL4]; }
+	unsigned int GetBufferIdx(bool outline) const { return (currBufferIndx * 2 + outline); }
 
 	enum {
 		PRIMARY_BUFFER = 0,
@@ -143,9 +152,12 @@ private:
 	spring::recursive_mutex bufferMutex;
 
 
-	// used by {Begin,End}GL4; each double-buffered
+	// used by {Begin,End}; each double-buffered
 	GL::RenderDataBuffer primaryBuffer[2];
 	GL::RenderDataBuffer outlineBuffer[2];
+
+	GL::RenderDataBufferTC primaryBufferTC[2];
+	GL::RenderDataBufferTC outlineBufferTC[2];
 
 	Shader::IProgramObject* defShader = nullptr;
 	Shader::IProgramObject* curShader = nullptr;
@@ -155,12 +167,11 @@ private:
 	VA_TYPE_TC* curBufferPos[2 * 2] = {nullptr, nullptr, nullptr, nullptr}; // current {primary,outline} write-pos
 
 
-	unsigned int currBufferIndxGL4 = 0;
-	unsigned int lastPrintFrameGL4 = 0;
+	unsigned int currBufferIndx = 0;
+	unsigned int lastPrintFrame = 0;
 
-	bool inBeginEndGL4 = false; // implies bufferMutex is locked
+	bool inBeginEndBlock = false; // implies bufferMutex is locked
 	bool autoOutlineColor = false; // auto-select outline color for in-text-colorcodes
-	bool setColor = true; // used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
 	float4 textColor;
 	float4 outlineColor;
@@ -170,6 +181,9 @@ private:
 	float4 baseOutlineColor;
 
 	float2 textDepth;
+
+	CMatrix44f viewMatrix;
+	CMatrix44f projMatrix;
 };
 
 

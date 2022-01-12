@@ -18,14 +18,13 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/Log/ILog.h"
 
@@ -42,6 +41,8 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimTime),
 	CR_MEMBER(reclaimLeft),
+
+	CR_MEMBER(defResources),
 	CR_MEMBER(resources),
 
 	CR_MEMBER(lastReclaimFrame),
@@ -54,7 +55,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(def),
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
-	CR_MEMBER(myFire),
+
 	CR_MEMBER(solidOnTop),
 	CR_MEMBER(transMatrix),
 	CR_POSTLOAD(PostLoad)
@@ -74,31 +75,7 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 ))
 
 
-CFeature::CFeature()
-: CSolidObject()
-
-, isRepairingBeforeResurrect(false)
-, inUpdateQue(false)
-, deleteMe(false)
-, alphaFade(true)
-
-, drawAlpha(1.0f)
-, resurrectProgress(0.0f)
-, reclaimTime(0.0f)
-, reclaimLeft(1.0f)
-, resources(0.0f, 1.0f)
-
-, lastReclaimFrame(0)
-, fireTime(0)
-, smokeTime(0)
-
-, drawQuad(-2)
-, drawFlag(-1)
-
-, def(nullptr)
-, udef(nullptr)
-, myFire(nullptr)
-, solidOnTop(nullptr)
+CFeature::CFeature(): CSolidObject()
 {
 	assert(featureMemPool.alloced(this));
 
@@ -113,14 +90,10 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField.RemoveFeature(this);
 
-	if (myFire != nullptr) {
-		myFire->StopFire();
-		myFire = nullptr;
-	}
+	if (!def->geoThermal)
+		return;
 
-	if (def->geoThermal) {
-		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
-	}
+	CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 }
 
 
@@ -171,6 +144,8 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 
 void CFeature::Initialize(const FeatureLoadParams& params)
 {
+	const CSolidObject* po = params.parentObj;
+
 	def = params.featureDef;
 	udef = params.unitDef;
 
@@ -188,7 +163,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	maxHealth = def->health;
 	reclaimTime = def->reclaimTime;
 
-	resources = SResourcePack(def->metal, def->energy);
+	defResources = {def->metal, def->energy};
+	resources = {def->metal, def->energy};
 
 	crushResistance = def->crushResistance;
 
@@ -208,10 +184,10 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	moveCtrl.SetVelocityMask(mix(OnesVector, UpVector, udef == nullptr && def->drawType < DRAWTYPE_TREE));
 
 	// set position before mid-position
-	Move((params.pos).cClampInMap(), false);
+	Move(((po == nullptr)? params.pos: po->pos).cClampInMap(), false);
 	// use base-class version, AddFeature() below
 	// will already insert us in the update-queue
-	CWorldObject::SetVelocity(params.speed);
+	CWorldObject::SetVelocity((po == nullptr)? params.speed: po->speed);
 
 	switch (def->drawType) {
 		case DRAWTYPE_NONE: {
@@ -295,8 +271,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const float step = amount / reclaimTime;
 
 		// Work out how much that will cost
-		const float metalUse  = step * def->metal;
-		const float energyUse = step * def->energy;
+		const float metalUse  = step * defResources.metal;
+		const float energyUse = step * defResources.energy;
 		const bool canExecRepair = (builderTeam->res.metal >= metalUse && builderTeam->res.energy >= energyUse);
 		const bool repairAllowed = !canExecRepair ? false : eventHandler.AllowFeatureBuildStep(builder, this, step);
 
@@ -306,8 +282,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 			resources.metal  += metalUse;
 			resources.energy += energyUse;
-			resources.metal  = std::min(resources.metal, def->metal);
-			resources.energy = std::min(resources.energy, def->energy);
+			resources.metal  = std::min(resources.metal, defResources.metal);
+			resources.energy = std::min(resources.energy, defResources.energy);
 
 			reclaimLeft = Clamp(reclaimLeft + step, 0.0f, 1.0f);
 
@@ -342,7 +318,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	if ((modInfo.multiReclaim == 0) && (lastReclaimFrame == gs->frameNum))
 		return true;
 
-	const float step = (-amount) / reclaimTime;
+	const float step = -amount / reclaimTime;
 
 	if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 		return false;
@@ -350,8 +326,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	// stop the last bit giving too much resource
 	const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
 	const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
-	const float metalFraction  = std::min(def->metal  * fractionReclaimed, resources.metal);
-	const float energyFraction = std::min(def->energy * fractionReclaimed, resources.energy);
+	const float metalFraction  = std::min(defResources.metal  * fractionReclaimed, resources.metal);
+	const float energyFraction = std::min(defResources.energy * fractionReclaimed, resources.energy);
 	const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
 
 	SResourceOrder order;
@@ -377,13 +353,14 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	else {
 		// Chunky reclaiming, work out how many chunk boundaries we crossed
 		const float chunkSize = 1.0f / modInfo.reclaimMethod;
-		const int oldChunk = ChunkNumber(oldReclaimLeft);
-		const int newChunk = ChunkNumber(reclaimLeft);
 
-		if (oldChunk != newChunk) {
-			const float numChunks = oldChunk - newChunk;
-			order.add.metal  = std::min(numChunks * def->metal * chunkSize,  resources.metal);
-			order.add.energy = std::min(numChunks * def->energy * chunkSize, resources.energy);
+		const int oldChunk  = ChunkNumber(oldReclaimLeft);
+		const int newChunk  = ChunkNumber(reclaimLeft);
+		const int numChunks = oldChunk - newChunk;
+
+		if (numChunks != 0) {
+			order.add.metal  = std::min(numChunks * defResources.metal  * chunkSize, resources.metal);
+			order.add.energy = std::min(numChunks * defResources.energy * chunkSize, resources.energy);
 		}
 	}
 
@@ -411,6 +388,9 @@ void CFeature::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
+	// do nothing if already marked for deletion this frame, i.e. isDead
+	if (deleteMe)
+		return;
 	// paralyzers do not damage features
 	if (damages.paralyzeDamageTime)
 		return;
@@ -437,15 +417,15 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
+		FeatureLoadParams params = {nullptr, nullptr, featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
 		CFeature* deathFeature = featureHandler.CreateWreckage(params);
 
 		if (deathFeature != nullptr) {
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
-			deathFeature->resources.metal  *= (def->metal != 0.0f)  ? resources.metal  / def->metal  : 1.0f;
-			deathFeature->resources.energy *= (def->energy != 0.0f) ? resources.energy / def->energy : 1.0f;
+			deathFeature->resources.metal  *= (defResources.metal  != 0.0f) ? resources.metal  / defResources.metal  : 1.0f;
+			deathFeature->resources.energy *= (defResources.energy != 0.0f) ? resources.energy / defResources.energy : 1.0f;
 		}
 
 		featureHandler.DeleteFeature(this);
@@ -458,7 +438,7 @@ void CFeature::DoDamage(
 void CFeature::DependentDied(CObject *o)
 {
 	if (o == solidOnTop)
-		solidOnTop = 0;
+		solidOnTop = nullptr;
 
 	CSolidObject::DependentDied(o);
 }
@@ -510,7 +490,7 @@ void CFeature::ForcedSpin(const float3& newDir)
 
 void CFeature::UpdateTransformAndPhysState()
 {
-	UpdateDirVectors(!def->upright);
+	UpdateDirVectors(!def->upright && IsOnGround(), true);
 	UpdateTransform(pos, true);
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (SetSpeed(speed) != 0.0f));
@@ -605,6 +585,11 @@ bool CFeature::UpdatePosition()
 		return true;
 	}
 
+	// position updates should not stop before speed drops to zero, but
+	// the epsilon-comparison can cause this to happen on level terrain
+	// nullify the vector to prevent visual extrapolation jitter
+	SetVelocityAndSpeed(mix({ZeroVector, 0.0f}, speed * moveCtrl.velocityMask, moveCtrl.enabled));
+
 	return (moveCtrl.enabled);
 }
 
@@ -647,10 +632,10 @@ void CFeature::StartFire()
 	if (fireTime != 0 || !def->burnable)
 		return;
 
-	fireTime = 200 + (int)(gsRNG.NextFloat() * GAME_SPEED);
-	featureHandler.SetFeatureUpdateable(this);
+	// burn for a few seconds
+	fireTime = 200 + gsRNG.NextInt(GAME_SPEED);
 
-	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
+	featureHandler.SetFeatureUpdateable(this);
 }
 
 
@@ -693,10 +678,10 @@ void CFeature::EmitGeoSmoke()
 	if (projectileHandler.GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
 		return;
 
-	const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
+	const float3 pPos = guRNG.NextVector() * 10.0f + (pos - UpVector * 10.0f);
 	const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
 
-	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
+	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, 50 + guRNG.NextInt(7), this);
 }
 
 

@@ -3,9 +3,6 @@
 #ifndef _FEATURE_H
 #define _FEATURE_H
 
-#include <vector>
-#include <list>
-#include <string>
 #include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"
@@ -20,13 +17,12 @@ struct FeatureLoadParams;
 class CUnit;
 struct UnitDef;
 class DamageArray;
-class CFireProjectile;
 
 
 
 class CFeature: public CSolidObject, public spring::noncopyable
 {
-	CR_DECLARE(CFeature)
+	CR_DECLARE_DERIVED(CFeature)
 
 public:
 	CFeature();
@@ -76,19 +72,19 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
-	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) def); }
+	const SolidObjectDef* GetDef() const override { return ((const SolidObjectDef*) def); }
 
-	int GetBlockingMapID() const;
+	int GetBlockingMapID() const override;
 
 	/**
 	 * Negative amount = reclaim
 	 * @return true if reclaimed
 	 */
-	bool AddBuildPower(CUnit* builder, float amount);
-	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
-	void SetVelocity(const float3& v);
-	void ForcedMove(const float3& newPos);
-	void ForcedSpin(const float3& newDir);
+	bool AddBuildPower(CUnit* builder, float amount) override;
+	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) override;
+	void SetVelocity(const float3& v) override;
+	void ForcedMove(const float3& newPos) override;
+	void ForcedSpin(const float3& newDir) override;
 
 	bool Update();
 	bool UpdatePosition();
@@ -102,61 +98,62 @@ public:
 	void StartFire();
 	void EmitGeoSmoke();
 
-	void DependentDied(CObject *o);
+	void DependentDied(CObject *o) override;
 	void ChangeTeam(int newTeam);
+
+	void SetDrawFlag(int f) { drawFlag = f; }
 
 	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final { return transMatrix[synced]; }
+	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final override { return transMatrix[synced]; }
 	const CMatrix44f& GetTransformMatrixRef(bool synced = false) const { return transMatrix[synced]; }
 
 private:
+	void PostLoad();
+
 	static int ChunkNumber(float f);
 
 public:
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
-	 * Basically, once a corspe has been a little bit reclaimed,
+	 * Basically, once a corpse has been a little bit reclaimed,
 	 * if they start rezzing, then they cannot reclaim again
 	 * until the corpse has been fully 'repaired'.
 	 */
-	bool isRepairingBeforeResurrect;
-	bool inUpdateQue;
-	bool deleteMe;
-	bool alphaFade; // unsynced
+	bool isRepairingBeforeResurrect = false;
+	bool inUpdateQue = false;
+	bool deleteMe = false;
+	bool alphaFade = true; // unsynced
 
-	float drawAlpha; // unsynced
-	float resurrectProgress;
-	float reclaimTime;
-	float reclaimLeft;
+	float drawAlpha = 1.0f; // unsynced
+	float resurrectProgress = 0.0f;
+	float reclaimTime = 0.0f;
+	float reclaimLeft = 1.0f;
 
-	SResourcePack resources;
+	int lastReclaimFrame = 0;
+	int fireTime = 0;
+	int smokeTime = 0;
 
-	int lastReclaimFrame;
-	int fireTime;
-	int smokeTime;
+	int drawQuad = -1; /// which drawQuad we are part of (unsynced)
+	int drawFlag = -2; /// one of FD_*_FLAG (unsynced)
 
-	int drawQuad; /// which drawQuad we are part of (unsynced)
-	int drawFlag; /// one of FD_*_FLAG (unsynced)
-
-	const FeatureDef* def;
-	const UnitDef* udef; /// type of unit this feature should be resurrected to
+	SResourcePack defResources = {0.0f, 1.0f};
+	SResourcePack resources = {0.0f, 1.0f};
 
 	MoveCtrl moveCtrl;
 
-	CFireProjectile* myFire;
+	const FeatureDef* def = nullptr;
+	const UnitDef* udef = nullptr; /// type of unit this feature should be resurrected to
 
 	/// object on top of us if we are a geothermal vent
-	CSolidObject* solidOnTop;
+	CSolidObject* solidOnTop = nullptr;
 
 
 private:
-	void PostLoad();
-
 	// [0] := unsynced, [1] := synced
 	CMatrix44f transMatrix[2];
 };

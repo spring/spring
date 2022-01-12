@@ -14,6 +14,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -25,9 +26,8 @@
 #include "Sim/Weapons/Cannon.h"
 #include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
@@ -57,8 +57,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(sprayAngle),
 	CR_MEMBER(predictSpeedMod),
 
-	CR_MEMBER(fireSoundId),
-	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(hasBlockShot),
 	CR_MEMBER(hasTargetWeight),
 	CR_MEMBER(angleGood),
@@ -178,9 +176,8 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
 	errorVectorAdd(ZeroVector),
-	muzzleFlareSize(1),
-	fireSoundId(0),
-	fireSoundVolume(0)
+
+	muzzleFlareSize(1)
 {
 	assert(weaponMemPool.alloced(this));
 }
@@ -303,11 +300,6 @@ void CWeapon::Update()
 	UpdateAim();
 	UpdateFire();
 	UpdateSalvo();
-
-#ifdef TRACE_SYNC
-	tracefile << __FUNCTION__;
-	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z << "\n";
-#endif
 }
 
 
@@ -418,7 +410,8 @@ void CWeapon::UpdateFire()
 		return;
 
 	// pre-check if we got enough resources (so CobBlockShot gets only called when really possible to shoot)
-	auto shotRes = SResourcePack(weaponDef->metalcost, weaponDef->energycost);
+	const SResourcePack shotRes = {weaponDef->metalcost, weaponDef->energycost};
+
 	if (!weaponDef->stockpile && !owner->HaveResources(shotRes))
 		return;
 
@@ -450,11 +443,6 @@ void CWeapon::UpdateFire()
 	nextSalvo = gs->frameNum;
 	salvoError = gsRNG.NextVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
-	if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
-		// area firing stuff is too effective at radar firing...
-		salvoError *= 1.3f;
-	}
-
 	owner->lastMuzzleFlameSize = muzzleFlareSize;
 	owner->lastMuzzleFlameDir = wantedDir;
 	owner->script->FireWeapon(weaponNum);
@@ -468,9 +456,8 @@ bool CWeapon::UpdateStockpile()
 
 	if (numStockpileQued > 0) {
 		const float p = 1.0f / weaponDef->stockpileTime;
-		auto res = SResourcePack(weaponDef->metalcost * p, weaponDef->energycost * p);
 
-		if (owner->UseResources(res))
+		if (owner->UseResources({weaponDef->metalcost * p, weaponDef->energycost * p}))
 			buildPercent += p;
 
 		if (buildPercent >= 1) {
@@ -497,7 +484,7 @@ void CWeapon::UpdateSalvo()
 
 	// Decloak
 	if (owner->unitDef->decloakOnFire)
-		owner->ScriptDecloak(nullptr, this);
+		owner->ScriptDecloak(HaveUnitTarget()? currentTarget.unit: nullptr, this);
 
 	for (int i = 0; i < projectilesPerShot; ++i) {
 		owner->script->Shot(weaponNum);
@@ -565,7 +552,7 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 void CWeapon::DropCurrentTarget()
 {
-	if (currentTarget.type == Target_Unit)
+	if (HaveUnitTarget())
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 
 	currentTarget = SWeaponTarget();
@@ -597,7 +584,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (avoidTarget)
 		return true;
 
-	if (currentTarget.type == Target_Unit) {
+	if (HaveUnitTarget()) {
 		if (!TryTarget(SWeaponTarget(currentTarget.unit, currentTarget.isUserTarget))) {
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
@@ -630,31 +617,27 @@ bool CWeapon::AutoTarget()
 	if (!AllowWeaponAutoTarget())
 		return false;
 
-	// search for other in range targets
+	// search for other in-range targets
 	lastTargetRetry = gs->frameNum;
 
-	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* avoidUnit = (avoidTarget && HaveUnitTarget()) ? currentTarget.unit : nullptr;
+
+	CUnit* goodTargetUnit = nullptr;
+	CUnit*  badTargetUnit = nullptr;
+
+	auto& targetPairs = helper->targetPairs;
 
 	// NOTE:
 	//   GenerateWeaponTargets sorts by INCREASING order of priority, so lower equals better
-	//   <targets> is normally sorted such that all bad TargetCategory units are at the end,
-	//   but Lua can mess with the ordering arbitrarily
-	static std::vector<std::pair<float, CUnit*>> targets;
-
-	targets.clear();
-	targets.reserve(32);
-
-	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
-
-	CUnit* goodTargetUnit = nullptr;
-	CUnit* badTargetUnit = nullptr;
-
-	for (const auto& targetsPair: targets) {
-		CUnit* unit = targetsPair.second;
+	//   <targetPairs> is normally sorted such that all bad TargetCategory units live at the
+	//   end, but Lua can mess with the ordering arbitrarily
+	for (size_t i = 0, n = CGameHelper::GenerateWeaponTargets(this, avoidUnit, targetPairs); i < n; i++, assert(n == targetPairs.size())) {
+		CUnit* unit = targetPairs[i].second;
 
 		// save the "best" bad target in case we have no other
 		// good targets (of higher priority) left in <targets>
 		const bool isBadTarget = (unit->category & badTargetCategory);
+
 		if (isBadTarget && (badTargetUnit != nullptr))
 			continue;
 
@@ -692,11 +675,6 @@ void CWeapon::SlowUpdate()
 {
 	errorVectorAdd = (gsRNG.NextVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
 	predictSpeedMod = 1.0f + (gsRNG.NextFloat() - 0.5f) * 2 * ExperienceErrorScale();
-
-#ifdef TRACE_SYNC
-	tracefile << "Weapon slow update: ";
-	tracefile << owner->id << " " << weaponNum <<  "\n";
-#endif
 
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
@@ -797,8 +775,8 @@ bool CWeapon::CheckTargetAngleConstraint(const float3 worldTargetDir, const floa
 float3 CWeapon::GetTargetBorderPos(
 	const CUnit* targetUnit,
 	const float3 rawTargetPos,
-	const float3 rawTargetDir) const
-{
+	const float3 rawTargetDir
+) const {
 	float3 targetBorderPos = rawTargetPos;
 
 	if (weaponDef->targetBorder == 0.0f)
@@ -841,7 +819,8 @@ float3 CWeapon::GetTargetBorderPos(
 	const float3 targetRayPos = rawTargetPos + targetOffset;
 
 	// adjust the length of <targetVec> based on the targetBorder factor
-	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry))
+	// the muzzle position must not be inside tmpColVol for this to work
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry) && tmpColQry.AllHit())
 		targetBorderPos = mix(tmpColQry.GetIngressPos(), tmpColQry.GetEgressPos(), weaponDef->targetBorder <= 0.0f);
 
 	return targetBorderPos;
@@ -854,6 +833,7 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preF
 
 	if (!TestTarget(tgtPos, trg))
 		return false;
+
 	// auto-targeted units are allowed to be out of range
 	// (UpdateFire will still block firing at such units)
 	if (!trg.isAutoTarget && !TestRange(tgtPos, trg))
@@ -890,7 +870,6 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 				return false;
 			if (!trg.isUserTarget && trg.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL)
 				return false;
-
 			// don't fire at allied targets
 			if (!trg.isUserTarget && teamHandler.Ally(owner->allyteam, trg.unit->allyteam))
 				return false;
@@ -937,28 +916,25 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 
 bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	const float3 tmpTargetDir = (tgtPos - aimFromPos).SafeNormalize();
-
 	const float heightDiff = tgtPos.y - aimFromPos.y;
+	const float targetDist = aimFromPos.SqDistance2D(tgtPos);
+
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
 	if (trg.type == Target_Pos || weaponDef->cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
-		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
+		weaponRange = GetRange2D(0.0f, heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
-		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
-			weaponRange = GetRange2D(0.0f);
-		}
+		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod))
+			weaponRange = GetRange2D(0.0f, 0.0f);
 	}
 
-	if (aimFromPos.SqDistance2D(tgtPos) > (weaponRange * weaponRange))
+	if (targetDist > (weaponRange * weaponRange))
 		return false;
 
 	// NOTE: mainDir is in unit-space
-	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
-
-	return (CheckTargetAngleConstraint(tmpTargetDir, worldMainDir));
+	return (CheckTargetAngleConstraint((tgtPos - aimFromPos).SafeNormalize(), owner->GetObjectSpaceVec(mainDir)));
 }
 
 
@@ -1080,18 +1056,25 @@ void CWeapon::Init()
 
 void CWeapon::Fire(bool scriptCall)
 {
-#ifdef TRACE_SYNC
-	tracefile << weaponDef->name.c_str() << " fire: ";
-	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z;
-	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
-#endif
 	owner->lastFireWeapon = gs->frameNum;
+
+	// target-leading can nudge currentTargetPos into an adjacent quadfield cell
+	// such that tracing a ray to it does not touch the cell in which our target
+	// unit actually resides
+	// to prevent this, temporarily add unit to cell at currentTargetPos as well
+	bool qfAddUnit = (HaveUnitTarget() && weaponDef->IsHitScanWeapon());
+	bool qfHasUnit = false;
+
+	if (qfAddUnit)
+		qfHasUnit = quadField.InsertUnitIf(currentTarget.unit, currentTargetPos);
 
 	FireImpl(scriptCall);
 
-	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
-		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
-	}
+	if (qfHasUnit)
+		quadField.RemoveUnitIf(currentTarget.unit, currentTargetPos);
+
+	if (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger)
+		Channels::Battle->PlayRandomSample(weaponDef->fireSound, owner);
 }
 
 
@@ -1182,23 +1165,27 @@ float CWeapon::GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float mod
 }
 
 
-float CWeapon::GetRange2D(const float yDiff) const
+float CWeapon::GetRange2D(float boost, float ydiff) const
 {
-	const float rangeSq = range * range;
-	const float ydiffSq = yDiff * yDiff;
-	const float   root = rangeSq - ydiffSq;
+	const float rangeSq = Square(range + boost); // c^2 (hyp)
+	const float ydiffSq = Square(ydiff); // b^2 (opp)
+	const float    root = rangeSq - ydiffSq; // a^2 (adj)
 	return (math::sqrt(std::max(root, 0.0f)));
 }
 
 
-void CWeapon::StopAttackingAllyTeam(const int ally)
+bool CWeapon::StopAttackingTargetIf(const std::function<bool(const SWeaponTarget&)>& pred)
 {
-	if (currentTarget.type != Target_Unit)
-		return;
-	if (currentTarget.unit->allyteam != ally)
-		return;
+	if (!pred(currentTarget))
+		return false;
 
 	DropCurrentTarget();
+	return true;
+}
+
+bool CWeapon::StopAttackingAllyTeam(const int ally)
+{
+	return (StopAttackingTargetIf([&](const SWeaponTarget& t) { return (t.type == Target_Unit && t.unit->allyteam == ally); }));
 }
 
 
@@ -1256,14 +1243,20 @@ float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
 
 float3 CWeapon::GetLeadVec(const CUnit* unit) const
 {
-	assert(unit);
-	const float predict = GetPredictedImpactTime(unit->pos);
-	float3 lead = unit->speed * predict * mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
-	if (weaponDef->leadLimit >= 0.0f) {
-		const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
-		if (lead.SqLength() > Square(leadBonus))
-			lead *= (leadBonus) / (lead.Length() + 0.01f);
-	}
+	const float predictTime = GetPredictedImpactTime(unit->pos);
+	const float predictMult = mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
+
+	float3 lead = unit->speed * predictTime * predictMult;
+
+	if (weaponDef->leadLimit < 0.0f)
+		return lead;
+
+	const float leadLenSq = lead.SqLength();
+	const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
+
+	if (leadLenSq > Square(leadBonus))
+		lead *= (leadBonus / (math::sqrt(leadLenSq) + 0.01f));
+
 	return lead;
 }
 

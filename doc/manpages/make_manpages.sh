@@ -60,7 +60,7 @@ fi
 
 SRC_DIR=$(cd $(dirname $0); pwd)
 
-# Move to spring source root (eg containing dir 'installer')
+# Move to spring source root (eg containing dir 'rts')
 cd ${SRC_DIR}; cd ../..
 
 # Ensure directories exist (some VCSes do not support empty directories)
@@ -77,7 +77,7 @@ cd ${BUILD_DIR}
 cp ${SRC_DIR}/*.6.txt ${BUILD_DIR}
 
 MANPAGES[0]="spring";               MANPAGES_ATTRIBUTES[0]="-a DEFAULT"
-MANPAGES[1]="spring-legacy";        MANPAGES_ATTRIBUTES[1]="-a LEGACY"
+MANPAGES[1]="spring-opengl4";       MANPAGES_ATTRIBUTES[1]="-a OPENGL4"
 MANPAGES[2]="spring-headless";      MANPAGES_ATTRIBUTES[2]="-a HEADLESS -a GUILESS"
 MANPAGES[3]="spring-dedicated";     MANPAGES_ATTRIBUTES[3]="-a DEDICATED -a GUILESS"
 

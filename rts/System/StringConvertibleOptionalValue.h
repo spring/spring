@@ -36,7 +36,7 @@ public:
 	}
 	const T& Get() const { return value; }
 
-	std::string ToString() const
+	std::string ToString() const override
 	{
 		std::ostringstream buf;
 		buf << value;
@@ -71,7 +71,7 @@ public:
 	void operator=(const T& x) { value = x; isSet = true; }
 	const T& Get() const { return value; }
 
-	std::string ToString() const { return value; }
+	std::string ToString() const override { return value; }
 	static T FromString(const std::string& value) { return value; }
 
 protected:

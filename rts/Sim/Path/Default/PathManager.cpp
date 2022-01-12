@@ -44,17 +44,33 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	lowResPE->Kill();
-	medResPE->Kill();
-	maxResPF->Kill();
+	// Finalize is not called in case of forced exit
+	if (maxResPF != nullptr) {
+		lowResPE->Kill();
+		medResPE->Kill();
+		maxResPF->Kill();
 
-	maxResPF = nullptr;
-	medResPE = nullptr;
-	lowResPE = nullptr;
+		maxResPF = nullptr;
+		medResPE = nullptr;
+		lowResPE = nullptr;
+	}
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
 	IPathFinder::KillStatic();
+}
+
+
+void CPathManager::RemoveCacheFiles()
+{
+	medResPE->RemoveCacheFile("pe" , mapInfo->map.name);
+	lowResPE->RemoveCacheFile("pe2", mapInfo->map.name);
+}
+
+
+std::uint32_t CPathManager::GetPathCheckSum() const {
+	assert(IsFinalized());
+	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
 std::int64_t CPathManager::Finalize() {
@@ -67,13 +83,8 @@ std::int64_t CPathManager::Finalize() {
 
 		// maxResPF only runs on the main thread, so can be unsafe
 		maxResPF->Init(false);
-		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe" , mapInfo->map.name);
 		lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
-
-		// make cached path data checksum part of synced state s.t. when
-		// any client has a corrupted or incorrect cache it desyncs from
-		// the start, not minutes later
-		{ SyncedUint tmp(GetPathCheckSum()); }
 	}
 
 	const spring_time dt = spring_gettime() - t0;
@@ -562,20 +573,20 @@ float3 CPathManager::NextWayPoint(
 		// OR we are stuck on an impassable square
 		if (maxResPath.path.empty()) {
 			if (lowResPath.path.empty() && medResPath.path.empty()) {
-				if (multiPath->searchResult == IPath::Ok) {
-					waypoint = multiPath->finalGoal; break;
-				} else {
-					// reached in the CantGetCloser case for any max-res searches
-					// that start within their goal radius (ie. have no waypoints)
-					// RequestPath always puts startPos into maxResPath to handle
-					// this so waypoint will have been set to it (during previous
-					// iteration) if we end up here
-					break;
-				}
+				if (multiPath->searchResult == IPath::Ok)
+					waypoint = multiPath->finalGoal;
+
+				// [else]
+				// reached in the CantGetCloser case for any max-res searches
+				// that start within their goal radius (ie. have no waypoints)
+				// RequestPath always puts startPos into maxResPath to handle
+				// this so waypoint will have been set to it (during previous
+				// iteration) if we end up here
 			} else {
 				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
-				break;
 			}
+
+			break;
 		} else {
 			waypoint = maxResPath.path.back();
 			maxResPath.path.pop_back();
@@ -706,13 +717,6 @@ void CPathManager::GetPathWayPoints(
 	for (IPath::path_list_type::const_reverse_iterator pvi = lowResPoints.rbegin(); pvi != lowResPoints.rend(); ++pvi) {
 		points.push_back(*pvi);
 	}
-}
-
-
-
-std::uint32_t CPathManager::GetPathCheckSum() const {
-	assert(IsFinalized());
-	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
 

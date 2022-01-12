@@ -27,8 +27,8 @@ void AudioChannel::SetVolume(float newVolume)
 
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (auto it = curSources.begin(); it != curSources.end(); ++it) {
-		(*it)->UpdateVolume();
+	for (CSoundSource* src: curSources) {
+		src->UpdateVolume();
 	}
 
 	CheckError("AudioChannel::SetVolume");
@@ -63,12 +63,12 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 
 void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
+	if (id == 0 || volume <= 0.0f)
+		return;
+
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
-		return;
-
-	if (volume <= 0.0f)
 		return;
 
 	// get the sound item, then find a source for it
@@ -99,9 +99,9 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 		int prio = INT_MAX;
 
-		for (auto it = curSources.begin(); it != curSources.end(); ++it) {
-			if ((*it)->GetCurrentPriority() < prio) {
-				src  = *it;
+		for (CSoundSource* tmp: curSources) {
+			if (tmp->GetCurrentPriority() < prio) {
+				src  = tmp;
 				prio = src->GetCurrentPriority();
 			}
 		}
@@ -129,6 +129,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	curSources.insert(sndSource);
 }
 
+
 void AudioChannel::PlaySample(size_t id, float volume)
 {
 	FindSourceAndPlay(id, -FwdVector, ZeroVector, volume, true);
@@ -144,28 +145,24 @@ void AudioChannel::PlaySample(size_t id, const float3& pos, const float3& veloci
 	FindSourceAndPlay(id, pos, velocity, volume, false);
 }
 
-
 void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 {
 	FindSourceAndPlay(id, obj->pos, obj->speed, volume, false);
 }
 
 
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj)
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) { PlayRandomSample(soundSet, obj->pos, obj->speed); }
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel)
 {
-	PlayRandomSample(soundSet, obj->pos);
-}
+	int soundIdx = -1;
 
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
-{
-	if (soundSet.NumSounds() == 0)
-		return;
+	switch (soundSet.NumSounds()) {
+		case  0: {                                         return; } break;
+		case  1: { soundIdx =                                   0; } break;
+		default: { soundIdx = guRNG.NextInt(soundSet.NumSounds()); } break;
+	}
 
-	const int soundIdx = guRNG.NextInt(soundSet.NumSounds());
-	const int soundID = soundSet.getID(soundIdx);
-	const float soundVol = soundSet.getVolume(soundIdx);
-
-	PlaySample(soundID, pos, soundVol);
+	FindSourceAndPlay(soundSet.getID(soundIdx), pos, vel, soundSet.getVolume(soundIdx), false);
 }
 
 

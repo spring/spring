@@ -46,7 +46,7 @@ CPathTexture::CPathTexture()
 	infoTexPBO.New(texSize.x * texSize.y * texChannels, GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CPathTexture");
@@ -194,10 +194,10 @@ void CPathTexture::Update()
 		isCleared = true;
 		updateProcess = 0;
 		fbo.Bind();
-		glViewport(0,0, texSize.x, texSize.y);
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(0,0, texSize.x, texSize.y);
+		glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 		FBO::Unbind();
 		return;
 	}

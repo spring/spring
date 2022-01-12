@@ -14,7 +14,7 @@ public:
 	void Draw() const;
 
 	void GenerateIBLTextures() const;
-	void ResetMVPMatrices() const;
+	void SetupScreenState() const;
 
 private:
 	void DrawOpaqueObjects() const;

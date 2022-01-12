@@ -22,19 +22,18 @@ CR_REG_METADATA(CFlameProjectile,(
 ))
 
 
-CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
+CFlameProjectile::CFlameProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, curTime(0.0f)
 	, physLife(0.0f)
 	, invttl(1.0f / ttl)
 	, spread(params.spread)
 {
-
 	projectileType = WEAPON_FLAME_PROJECTILE;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->size * weaponDef->collisionSize, 0.0f);
-		drawRadius = weaponDef->size;
 
+		drawRadius = weaponDef->size;
 		physLife = 1.0f / weaponDef->duration;
 	}
 }
@@ -64,9 +63,8 @@ void CFlameProjectile::Update()
 	sqRadius = radius * radius;
 	drawRadius = radius * weaponDef->collisionSize;
 
-	curTime += invttl;
+	curTime = std::min(curTime + invttl, 1.0f);
 	checkCol &= (curTime <= physLife);
-	curTime = std::min(curTime, 1.0f);
 	deleteMe |= (curTime >= 1.0f);
 
 	explGenHandler.GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
@@ -80,7 +78,10 @@ void CFlameProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 }
 
 int CFlameProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -90,11 +91,10 @@ int CFlameProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, 
 
 	const float3 rdir = (pos - shieldPos).Normalize();
 
-	if (rdir.dot(speed) < shieldMaxSpeed) {
-		SetVelocityAndSpeed(speed + (rdir * shieldForce));
-		return 2;
-	}
+	if (rdir.dot(speed) >= shieldMaxSpeed)
+		return 0;
 
-	return 0;
+	SetVelocityAndSpeed(speed + (rdir * shieldForce));
+	return 2;
 }
 

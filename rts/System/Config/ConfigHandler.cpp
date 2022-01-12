@@ -10,8 +10,8 @@
 #include "System/UnorderedMap.hpp"
 #include "System/Threading/SpringThreading.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include <stdexcept>
 
@@ -19,7 +19,7 @@
 
 typedef std::map<std::string, std::string> StringMap;
 
-ConfigHandler* configHandler = NULL;
+ConfigHandler* configHandler = nullptr;
 
 
 /******************************************************************************/
@@ -27,19 +27,19 @@ ConfigHandler* configHandler = NULL;
 class ConfigHandlerImpl : public ConfigHandler
 {
 public:
-	ConfigHandlerImpl(const std::vector<std::string>& locations, const bool safemode);
-	~ConfigHandlerImpl();
+	ConfigHandlerImpl(const std::vector<std::string>& locations, bool safemode);
+	~ConfigHandlerImpl() override;
 
-	void SetString(const std::string& key, const std::string& value, bool useOverlay);
-	std::string GetString(const std::string& key) const;
-	bool IsSet(const std::string& key) const;
-	bool IsReadOnly(const std::string& key) const;
-	void Delete(const std::string& key);
-	std::string GetConfigFile() const;
-	const StringMap GetData() const;
-	StringMap GetDataWithoutDefaults() const;
-	void Update();
-	void EnableWriting(bool write) { writingEnabled = write; }
+	void SetString(const std::string& key, const std::string& value, bool useOverlay) override;
+	std::string GetString(const std::string& key) const override;
+	bool IsSet(const std::string& key) const override;
+	bool IsReadOnly(const std::string& key) const override;
+	void Delete(const std::string& key) override;
+	std::string GetConfigFile() const override;
+	const StringMap GetData() const override;
+	StringMap GetDataWithoutDefaults() const override;
+	void Update() override;
+	void EnableWriting(bool write) override { writingEnabled = write; }
 
 protected:
 	struct NamedConfigNotifyCallback {
@@ -50,8 +50,8 @@ protected:
 	};
 
 protected:
-	void AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs);
-	void RemoveObserver(void* observer);
+	void AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs) override;
+	void RemoveObserver(void* observer) override;
 
 private:
 	void RemoveDefaults();
@@ -156,17 +156,17 @@ void ConfigHandlerImpl::RemoveDefaults()
 		// Copy the map; we modify the original while iterating over the copy.
 		const StringMap file = source->GetData();
 
-		for (auto it = file.cbegin(); it != file.cend(); ++it) {
+		for (const auto& item: file) {
 			// Does the key exist in `defaults'?
-			const auto pos = defaults.find(it->first);
+			const auto pos = defaults.find(item.first);
 
-			if (pos != defaults.end() && pos->second == it->second) {
+			if (pos != defaults.end() && pos->second == item.second) {
 				// Exists and value is equal => Delete.
-				source->Delete(it->first);
+				source->Delete(item.first);
 			} else {
 				// Doesn't exist or is not equal => Store new default.
 				// (It will be the default for the next FileConfigSource.)
-				defaults[it->first] = it->second;
+				defaults[item.first] = item.second;
 			}
 		}
 	}
@@ -187,12 +187,12 @@ StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
 		// Copy the map; we modify the original while iterating over the copy.
 		const StringMap file = source->GetData();
 
-		for (auto it = file.cbegin(); it != file.cend(); ++it) {
-			const auto pos = defaults.find(it->first);
-			if (pos != defaults.end() && pos->second == it->second)
+		for (const auto& item: file) {
+			const auto pos = defaults.find(item.first);
+			if (pos != defaults.end() && pos->second == item.second)
 				continue;
 
-			cleanConfig[it->first] = it->second;
+			cleanConfig[item.first] = item.second;
 		}
 	}
 

@@ -20,6 +20,59 @@ struct MoveDef;
 
 class CPathManager: public IPathManager {
 public:
+	struct MultiPath {
+		MultiPath(): moveDef(nullptr), caller(nullptr) {}
+		MultiPath(const MoveDef* moveDef, const float3& startPos, const float3& goalPos, float goalRadius)
+			: searchResult(IPath::Error)
+			, start(startPos)
+			, peDef(startPos, goalPos, goalRadius, 3.0f, 2000)
+			, moveDef(moveDef)
+			, caller(nullptr)
+		{}
+
+		MultiPath(const MultiPath& mp) = delete;
+		MultiPath(MultiPath&& mp) { *this = std::move(mp); }
+
+		MultiPath& operator = (const MultiPath& mp) = delete;
+		MultiPath& operator = (MultiPath&& mp) {
+			lowResPath = std::move(mp.lowResPath);
+			medResPath = std::move(mp.medResPath);
+			maxResPath = std::move(mp.maxResPath);
+
+			searchResult = mp.searchResult;
+
+			start = mp.start;
+			finalGoal = mp.finalGoal;
+
+			peDef   = mp.peDef;
+			moveDef = mp.moveDef;
+			caller  = mp.caller;
+
+			mp.moveDef = nullptr;
+			mp.caller  = nullptr;
+			return *this;
+		}
+
+		// paths
+		IPath::Path lowResPath;
+		IPath::Path medResPath;
+		IPath::Path maxResPath;
+
+		IPath::SearchResult searchResult;
+
+		// request definition; start is const after ctor
+		float3 start;
+		float3 finalGoal;
+
+		CCircularSearchConstraint peDef;
+
+		const MoveDef* moveDef;
+
+		// additional information
+		CSolidObject* caller;
+	};
+
+public:
 	CPathManager();
 	~CPathManager();
 
@@ -28,6 +81,7 @@ public:
 
 	std::int64_t Finalize() override;
 
+	void RemoveCacheFiles() override;
 	void Update() override;
 	void UpdatePath(const CSolidObject*, unsigned int) override;
 	void DeletePath(unsigned int pathID) override {
@@ -91,58 +145,15 @@ public:
 
 	int2 GetNumQueuedUpdates() const override;
 
-private:
-	struct MultiPath {
-		MultiPath(): moveDef(nullptr), caller(nullptr) {}
-		MultiPath(const MoveDef* moveDef, const float3& startPos, const float3& goalPos, float goalRadius)
-			: searchResult(IPath::Error)
-			, start(startPos)
-			, peDef(startPos, goalPos, goalRadius, 3.0f, 2000)
-			, moveDef(moveDef)
-			, caller(nullptr)
-		{}
 
-		MultiPath(const MultiPath& mp) = delete;
-		MultiPath(MultiPath&& mp) { *this = std::move(mp); }
+	const CPathFinder* GetMaxResPF() const { return maxResPF; }
+	const CPathEstimator* GetMedResPE() const { return medResPE; }
+	const CPathEstimator* GetLowResPE() const { return lowResPE; }
 
-		MultiPath& operator = (const MultiPath& mp) = delete;
-		MultiPath& operator = (MultiPath&& mp) {
-			lowResPath = std::move(mp.lowResPath);
-			medResPath = std::move(mp.medResPath);
-			maxResPath = std::move(mp.maxResPath);
+	const PathFlowMap* GetPathFlowMap() const { return pathFlowMap; }
+	const PathHeatMap* GetPathHeatMap() const { return pathHeatMap; }
 
-			searchResult = mp.searchResult;
-
-			start = mp.start;
-			finalGoal = mp.finalGoal;
-
-			peDef   = mp.peDef;
-			moveDef = mp.moveDef;
-			caller  = mp.caller;
-
-			mp.moveDef = nullptr;
-			mp.caller  = nullptr;
-			return *this;
-		}
-
-		// paths
-		IPath::Path lowResPath;
-		IPath::Path medResPath;
-		IPath::Path maxResPath;
-
-		IPath::SearchResult searchResult;
-
-		// request definition; start is const after ctor
-		float3 start;
-		float3 finalGoal;
-
-		CCircularSearchConstraint peDef;
-
-		const MoveDef* moveDef;
-
-		// additional information
-		CSolidObject* caller;
-	};
+	const spring::unordered_map<unsigned int, MultiPath>& GetPathMap() const { return pathMap; }
 
 private:
 	IPath::SearchResult ArrangePath(

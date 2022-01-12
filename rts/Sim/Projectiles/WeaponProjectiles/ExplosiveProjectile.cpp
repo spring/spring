@@ -11,10 +11,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
-
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CExplosiveProjectile, (
@@ -43,11 +39,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	} else {
 		invttl = 1.0f / ttl;
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "New explosive: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
-#endif
 }
 
 void CExplosiveProjectile::Update()
@@ -119,7 +110,10 @@ void CExplosiveProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col});
 		va->SafeAppend({stagePos + xdirCam - ydirCam, tex->xend,   tex->ystart, col});
 		va->SafeAppend({stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col});
+
+		va->SafeAppend({stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col});
 		va->SafeAppend({stagePos - xdirCam + ydirCam, tex->xstart, tex->yend,   col});
+		va->SafeAppend({stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col});
 	}
 }
 

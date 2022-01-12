@@ -16,17 +16,14 @@ public:
 	enum HotSpot {TopLeft, Center};
 
 public:
-	static CMouseCursor New(const std::string& name, HotSpot hs) { return (CMouseCursor(name, hs)); }
-
 	CMouseCursor() = default; // null-cursor
+	CMouseCursor(const std::string& name, HotSpot hs);
 	CMouseCursor(const CMouseCursor& mc) = delete;
 	CMouseCursor(CMouseCursor&& mc) { *this = std::move(mc); }
 	~CMouseCursor();
 
 	CMouseCursor& operator = (const CMouseCursor& mc) = delete;
-	CMouseCursor& operator = (CMouseCursor&& mc);
-
-	CMouseCursor(const std::string& name, HotSpot hs);
+	CMouseCursor& operator = (CMouseCursor&& mc) noexcept;
 
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
@@ -45,28 +42,31 @@ public:
 private:
 	struct ImageData;
 
+	bool LoadDummyImage();
 	bool LoadCursorImage(const std::string& name, ImageData& image);
-	bool BuildFromSpecFile(const std::string& name);
+	bool Build(const std::string& name);
+	bool BuildFromSpecFile(const std::string& name, int& lastFrame);
 	bool BuildFromFileNames(const std::string& name, int lastFrame);
 
 public:
 	static constexpr float MIN_FRAME_LENGTH = 0.010f;  // seconds
 	static constexpr float DEF_FRAME_LENGTH = 0.100f;  // seconds
 
-	static constexpr size_t HWC_MEM_SIZE = 128;
+	static constexpr size_t HWC_MEM_SIZE = 136;
 
 
 private:
 	struct ImageData {
-		unsigned int texture;
-		int xOrigSize;
-		int yOrigSize;
-		int xAlignedSize;
-		int yAlignedSize;
+		unsigned int texture = 0;
+		int xOrigSize = 0;
+		int yOrigSize = 0;
+		int xAlignedSize = 0;
+		int yAlignedSize = 0;
 	};
 	struct FrameData {
-		FrameData(const ImageData& _image, float time): image(_image), length(time) {}
-		ImageData image;
+		FrameData(unsigned int idx, float time): imageIdx(idx), length(time) {}
+
+		unsigned int imageIdx = 0;
 
 		float length = 0.0f;
 		float startTime = 0.0f;

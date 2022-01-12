@@ -31,6 +31,7 @@ struct SRectangle;
 struct UnitDef;
 struct BuildInfo;
 struct FeatureDef;
+class LuaMaterial;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -131,8 +132,8 @@ class CEventClient
 		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
 
 		virtual void UnitIdle(const CUnit* unit) {}
-		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
-		virtual void UnitCmdDone(const CUnit* unit, const Command& command) {}
+		virtual void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua) {}
+		virtual void UnitCmdDone(const CUnit* unit, const Command& command                                              ) {}
 		virtual void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -196,14 +197,17 @@ class CEventClient
 
 
 		virtual bool CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
-		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) { return true; }
+		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) { return true; }
 
 		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
 		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
 		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
 		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) { return true; }
+		virtual bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) { return true; }
+		virtual bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) { return true; }
 		virtual bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) { return true; }
 		virtual bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) { return true; }
+		virtual bool AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed) { return true; }
 		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) { return true; }
 		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) { return true; }
 		virtual bool AllowResourceLevel(int teamID, const string& type, float level) { return true; }
@@ -309,7 +313,7 @@ class CEventClient
 		                        const float3* pos1,
 		                        const std::string* label);
 
-		virtual void SunChanged(); //FIXME add to lua
+		virtual void SunChanged();
 
 		virtual void ViewResize();
 
@@ -326,6 +330,7 @@ class CEventClient
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
 		virtual void DrawGroundPreForward() {}
+		virtual void DrawGroundPostForward() {}
 		virtual void DrawGroundPreDeferred() {}
 		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
@@ -340,13 +345,14 @@ class CEventClient
 		virtual bool DrawFeature(const CFeature* feature) { return false; }
 		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
 		virtual bool DrawProjectile(const CProjectile* projectile) { return false; }
+		virtual bool DrawMaterial(const LuaMaterial* material) { return false; }
 
 		virtual void GameProgress(int gameFrame);
 
 		virtual void DrawLoadScreen();
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
-		virtual void CollectGarbage() {}
+		virtual void CollectGarbage(bool forced) {}
 		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
 		virtual void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime) {}
 		virtual void MetalMapChanged(const int x, const int z) {}

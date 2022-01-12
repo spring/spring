@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-using std::sprintf;
-
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"
@@ -24,7 +22,7 @@ using std::sprintf;
 #include "System/Log/ILog.h"
 
 #include <vector>
-#include <stdlib.h> // malloc(), calloc(), free()
+#include <cstdlib> // malloc(), calloc(), free()
 #include <sstream> // ostringstream
 #include <cstring>
 
@@ -309,7 +307,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 	// fill up writeableDataDirs until interfaceId index is in there
 	// if it is not yet
 	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)interfaceId; ++wdd)
-		writeableDataDirs.push_back("");
+		writeableDataDirs.emplace_back("");
 
 	if (writeableDataDirs[interfaceId].empty()) {
 		char tmpRes[1024];
@@ -320,14 +318,14 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		writeableDataDirs[interfaceId] = tmpRes;
 
 		if (!exists) {
-			char errorMsg[1024];
+			char errorMsg[1086];
 
 			SNPRINTF(errorMsg, sizeof(errorMsg),
 				"Unable to create writable data-dir for interface %i: %s",
 				interfaceId, tmpRes);
 
 			aiInterfaceCallback_Log_exception(interfaceId, errorMsg, 1, true);
-			return NULL;
+			return nullptr;
 		}
 	}
 

@@ -59,11 +59,9 @@ public:
 	 * Sets the float3 to the given float[3].
 	 */
 	float3& operator= (const float f[3]) {
-
 		x = f[0];
 		y = f[1];
 		z = f[2];
-
 		return *this;
 	}
 
@@ -90,7 +88,7 @@ public:
 	 * space (adds the x/y/z components individually)
 	 */
 	float3 operator+ (const float3& f) const {
-		return float3(x+f.x, y+f.y, z+f.z);
+		return float3(x + f.x, y + f.y, z + f.z);
 	}
 
 	/**
@@ -102,7 +100,7 @@ public:
 	 * increased in all directions by that float.
 	 */
 	float3 operator+ (const float f) const {
-		return float3(x+f, y+f, z+f);
+		return float3(x + f, y + f, z + f);
 	}
 
 	/**
@@ -128,18 +126,7 @@ public:
 	 * subtracting each x/y/z component individually.
 	 */
 	float3 operator- (const float3& f) const {
-		return float3(x-f.x, y-f.y, z-f.z);
-	}
-
-	/**
-	 * @brief operator -
-	 * @return inverted float3
-	 *
-	 * When negating the float3, inverts all three
-	 * x/y/z components.
-	 */
-	float3 operator- () const {
-		return float3(-x, -y, -z);
+		return float3(x - f.x, y - f.y, z - f.z);
 	}
 
 	/**
@@ -151,7 +138,7 @@ public:
 	 * decreases all three x/y/z components by that amount.
 	 */
 	float3 operator- (const float f) const {
-		return float3(x-f, y-f, z-f);
+		return float3(x - f, y - f, z - f);
 	}
 
 	/**
@@ -167,6 +154,19 @@ public:
 		z -= f.z;
 	}
 
+
+	/**
+	 * @brief operator -
+	 * @return inverted float3
+	 *
+	 * When negating the float3, inverts all three
+	 * x/y/z components.
+	 */
+	float3 operator- () const {
+		return float3(-x, -y, -z);
+	}
+
+
 	/**
 	 * @brief operator *
 	 * @param f float3 to multiply
@@ -176,7 +176,7 @@ public:
 	 * multiplies each x/y/z component individually.
 	 */
 	float3 operator* (const float3& f) const {
-		return float3(x*f.x, y*f.y, z*f.z);
+		return float3(x * f.x, y * f.y, z * f.z);
 	}
 
 	/**
@@ -188,7 +188,7 @@ public:
 	 * each x/y/z component by that float.
 	 */
 	float3 operator* (const float f) const {
-		return float3(x*f, y*f, z*f);
+		return float3(x * f, y * f, z * f);
 	}
 
 	/**
@@ -227,7 +227,7 @@ public:
 	 * each x/y/z component individually.
 	 */
 	float3 operator/ (const float3& f) const {
-		return float3(x/f.x, y/f.y, z/f.z);
+		return float3(x / f.x, y / f.y, z / f.z);
 	}
 
 	/**
@@ -239,8 +239,7 @@ public:
 	 * each x/y/z component by that float.
 	 */
 	float3 operator/ (const float f) const {
-		const float inv = 1.0f / f;
-		return (*this) * inv;
+		return ((*this) * (1.0f / f));
 	}
 
 	/**
@@ -264,9 +263,9 @@ public:
 	 * the new values inside this float3.
 	 */
 	void operator/= (const float f) {
-		const float inv = 1.0f / f;
-		(*this) *= inv;
+		(*this) *= (1.0f / f);
 	}
+
 
 	/**
 	 * @brief operator ==
@@ -291,6 +290,7 @@ public:
 	bool operator!= (const float3& f) const {
 		return (!equals(f));
 	}
+
 
 	/**
 	 * @brief operator[]
@@ -341,7 +341,7 @@ public:
 	 * another float3 (sums the products of each
 	 * x/y/z component).
 	 */
-	float dot (const float3& f) const {
+	float dot(const float3& f) const {
 		return (x * f.x) + (y * f.y) + (z * f.z);
 	}
 
@@ -354,7 +354,7 @@ public:
 	 * another float3 (sums the products of
 	 * x/z components).
 	 */
-	float dot2D (const float3& f) const {
+	float dot2D(const float3& f) const {
 		return (x * f.x) + (z * f.z);
 	}
 
@@ -373,6 +373,7 @@ public:
 				(z * f.x) - (x * f.z),
 				(x * f.y) - (y * f.x));
 	}
+
 
 	/**
 	 * @brief distance between float3s
@@ -407,6 +408,35 @@ public:
 		return math::sqrt(dx*dx + dz*dz);
 	}
 
+
+	/**
+	 * @brief SqDistance between float3s squared
+	 * @param f float3 to compare against
+	 * @return float squared distance between float3s
+	 *
+	 * Returns the squared distance of 2 float3s
+	 */
+	float SqDistance(const float3& f) const {
+		const float dx = x - f.x;
+		const float dy = y - f.y;
+		const float dz = z - f.z;
+		return (dx*dx + dy*dy + dz*dz);
+	}
+
+	/**
+	 * @brief SqDistance2D between float3s (only x and z)
+	 * @param f float3 to compare against
+	 * @return 2D squared distance between float3s
+	 *
+	 * Returns the squared 2d-distance of 2 float3s
+	 */
+	float SqDistance2D(const float3& f) const {
+		const float dx = x - f.x;
+		const float dz = z - f.z;
+		return (dx*dx + dz*dz);
+	}
+
+
 	/**
 	 * @brief Length of this vector
 	 * @return float length of vector
@@ -434,22 +464,40 @@ public:
 	}
 
 	/**
+	 * @brief length squared
+	 * @return length squared
+	 *
+	 * Returns the length of this vector squared.
+	 */
+	float SqLength() const {
+		return (x*x + y*y + z*z);
+	}
+
+	/**
+	 * @brief 2-dimensional length squared
+	 * @return 2D length squared
+	 *
+	 * Returns the 2-dimensional length of this
+	 * vector squared.
+	 */
+	float SqLength2D() const {
+		return (x*x + z*z);
+	}
+
+	/**
 	 * normalize vector in-place, return its old length
 	 */
 	float LengthNormalize() {
 		const float len = Length();
-		if (likely(len > nrm_eps())) {
+
+		if (likely(len > nrm_eps()))
 			(*this) *= (1.0f / len);
-		}
+
 		return len;
 	}
 
 	float LengthNormalize2D() {
-		const float len = Length2D();
-		if (likely(len > nrm_eps())) {
-			y = 0.0f; (*this) *= (1.0f / len);
-		}
-		return len;
+		y = 0.0f; return LengthNormalize();
 	}
 
 
@@ -465,7 +513,6 @@ public:
 #ifndef BUILDING_AI
 		return SafeNormalize();
 #endif
-		assert(SqLength() > nrm_eps());
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -485,8 +532,7 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	float3& UnsafeNormalize() {
-		(*this) *= math::isqrt(SqLength());
-		return *this;
+		return ((*this) *= math::isqrt(SqLength()));
 	}
 
 	float3& UnsafeNormalize2D() {
@@ -503,9 +549,9 @@ public:
 	 */
 	float3& SafeNormalize() {
 		const float sql = SqLength();
-		if (likely(sql > nrm_eps())) {
+
+		if (likely(sql > nrm_eps()))
 			(*this) *= math::isqrt(sql);
-		}
 
 		return *this;
 	}
@@ -527,7 +573,6 @@ public:
 #ifndef BUILDING_AI
 		return SafeANormalize();
 #endif
-		assert(SqLength() > nrm_eps());
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
@@ -548,8 +593,8 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& UnsafeANormalize() {
-		(*this) *= math::isqrt(SqLength());
-		return *this;
+		assert(SqLength() > nrm_eps());
+		return ((*this) *= math::isqrt(SqLength()));
 	}
 
 	float3& UnsafeANormalize2D() {
@@ -567,9 +612,9 @@ public:
 	 */
 	float3& SafeANormalize() {
 		const float sql = SqLength();
-		if (likely(sql > nrm_eps())) {
+
+		if (likely(sql > nrm_eps()))
 			(*this) *= math::isqrt(sql);
-		}
 
 		return *this;
 	}
@@ -579,77 +624,15 @@ public:
 	}
 
 
-	/**
-	 * @brief length squared
-	 * @return length squared
-	 *
-	 * Returns the length of this vector squared.
-	 */
-	float SqLength() const {
-		return x*x + y*y + z*z;
-	}
+	static bool CheckNaN(float c) { return (!math::isnan(c) && !math::isinf(c)); }
 
-	/**
-	 * @brief 2-dimensional length squared
-	 * @return 2D length squared
-	 *
-	 * Returns the 2-dimensional length of this
-	 * vector squared.
-	 */
-	float SqLength2D() const {
-		return x*x + z*z;
-	}
-
-
-	/**
-	 * @brief SqDistance between float3s squared
-	 * @param f float3 to compare against
-	 * @return float squared distance between float3s
-	 *
-	 * Returns the squared distance of 2 float3s
-	 */
-	float SqDistance(const float3& f) const {
-		const float dx = x - f.x;
-		const float dy = y - f.y;
-		const float dz = z - f.z;
-		return (dx*dx + dy*dy + dz*dz);
-	}
-
-
-	/**
-	 * @brief SqDistance2D between float3s (only x and z)
-	 * @param f float3 to compare against
-	 * @return 2D squared distance between float3s
-	 *
-	 * Returns the squared 2d-distance of 2 float3s
-	 */
-	float SqDistance2D(const float3& f) const {
-		const float dx = x - f.x;
-		const float dz = z - f.z;
-		return (dx*dx + dz*dz);
-	}
-
+	bool CheckNaNs() const { return (CheckNaN(x) && CheckNaN(y) && CheckNaN(z)); }
 	void AssertNaNs() const {
-		assert(!math::isnan(x) && !math::isinf(x));
-		assert(!math::isnan(y) && !math::isinf(y));
-		assert(!math::isnan(z) && !math::isinf(z));
+		assert(CheckNaN(x));
+		assert(CheckNaN(y));
+		assert(CheckNaN(z));
 	}
 
-	/**
-	 * @brief max x pos
-	 *
-	 * Static value containing the maximum x position (:= mapDims.mapx-1)
-	 * @note maxxpos is set after loading the map.
-	 */
-	static float maxxpos;
-
-	/**
-	 * @brief max z pos
-	 *
-	 * Static value containing the maximum z position (:= mapDims.mapy-1)
-	 * @note maxzpos is set after loading the map.
-	 */
-	static float maxzpos;
 
 	/**
 	 * @brief Check against FaceHeightmap bounds
@@ -666,6 +649,7 @@ public:
 	 * @note USE THIS!
 	 */
 	bool IsInMap() const;
+
 
 	/**
 	 * @brief Clamps to FaceHeightmap
@@ -691,9 +675,27 @@ public:
 	static float3 min(const float3 v1, const float3 v2);
 	static float3 max(const float3 v1, const float3 v2);
 	static float3 fabs(const float3 v);
+	static float3 sign(const float3 v);
 
 	static constexpr float cmp_eps() { return 1e-04f; }
 	static constexpr float nrm_eps() { return 1e-12f; }
+
+	/**
+	 * @brief max x pos
+	 *
+	 * Static value containing the maximum x position (:= mapDims.mapx-1)
+	 * @note maxxpos is set after loading the map.
+	 */
+	static float maxxpos;
+
+	/**
+	 * @brief max z pos
+	 *
+	 * Static value containing the maximum z position (:= mapDims.mapy-1)
+	 * @note maxzpos is set after loading the map.
+	 */
+	static float maxzpos;
+
 
 public:
 	union {

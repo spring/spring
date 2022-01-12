@@ -15,8 +15,6 @@ const float vtxBaseColorMult = 1.0 / 255.0;
 void main() {
 	vec4 vertexPos = vec4(vtxPositionAttr, 1.0);
 	vec4 vertexShadowPos = shadowViewMat * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	gl_Position = shadowProjMat * vertexShadowPos;
 

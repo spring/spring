@@ -9,8 +9,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/Sync/SyncTracer.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, )
 CR_REG_METADATA(CEmgCannon, )

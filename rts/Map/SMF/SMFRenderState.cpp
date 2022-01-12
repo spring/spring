@@ -18,6 +18,7 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
+#include "System/float4.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
 
@@ -104,7 +105,7 @@ void SMFRenderStateGLSL::Update(
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
 		const float3 cameraPos = camera->GetPos();
-		const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+		const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapRendering->voidWater);
@@ -157,36 +158,40 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform("mapSizePO2", mapDims.pwr2mapx * SQUARE_SIZE * 1.0f, mapDims.pwr2mapy * SQUARE_SIZE * 1.0f);
 			glslShaders[n]->SetUniform("mapSize",    mapDims.mapx     * SQUARE_SIZE * 1.0f, mapDims.mapy     * SQUARE_SIZE * 1.0f);
 
-			glslShaders[n]->SetUniform4v<const char*, float>("lightDir",  sky->GetLight()->GetLightDir());
-			glslShaders[n]->SetUniform3v<const char*, float>("cameraPos", &cameraPos.x);
+			glslShaders[n]->SetUniform4v<float>("lightDir",  sky->GetLight()->GetLightDir());
+			glslShaders[n]->SetUniform3v<float>("cameraPos", &cameraPos.x);
 
-			glslShaders[n]->SetUniform3v<const char*, float>("groundAmbientColor",  &sunLighting->groundAmbientColor.x);
-			glslShaders[n]->SetUniform3v<const char*, float>("groundDiffuseColor",  &sunLighting->groundDiffuseColor.x);
-			glslShaders[n]->SetUniform3v<const char*, float>("groundSpecularColor", &sunLighting->groundSpecularColor.x);
+			glslShaders[n]->SetUniform3v<float>("groundAmbientColor",  &sunLighting->groundAmbientColor.x);
+			glslShaders[n]->SetUniform3v<float>("groundDiffuseColor",  &sunLighting->groundDiffuseColor.x);
+			glslShaders[n]->SetUniform3v<float>("groundSpecularColor", &sunLighting->groundSpecularColor.x);
 
 			glslShaders[n]->SetUniform("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
-			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
+			glslShaders[n]->SetUniform("gammaExponent", globalRendering->gammaExponent);
+
+			glslShaders[n]->SetUniformMatrix4x4<float>("viewMat", false, camera->GetViewMatrix());
+			glslShaders[n]->SetUniformMatrix4x4<float>("viewMatInv", false, camera->GetViewMatrixInverse());
+			glslShaders[n]->SetUniformMatrix4x4<float>("viewProjMat", false, camera->GetViewProjectionMatrix());
+			glslShaders[n]->SetUniformMatrix4x4<float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
+			glslShaders[n]->SetUniform4v<float>("shadowParams", shadowHandler.GetShadowParams());
+
+			glslShaders[n]->SetUniform4v<float>("alphaTestCtrl", float4{0.0f, 0.0f, 0.0f, 1.0f});
 
 			// Enable always sets these
-			// glslShaders[n]->SetUniform4v<const char*, float>("fwdDynLights", lightHandler->NumLightUniformVecs(), lightHandler->GetRawLightDataPtr());
+			// glslShaders[n]->SetUniform4v<float>("fwdDynLights", lightHandler->NumLightUniformVecs(), lightHandler->GetRawLightDataPtr());
 
-			glslShaders[n]->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
-			glslShaders[n]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
+			glslShaders[n]->SetUniform3v<float>("fogParams", &fogParams.x);
+			glslShaders[n]->SetUniform4v<float>("fogColor", sky->fogColor);
 
-			glslShaders[n]->SetUniform4v<const char*, float>("clipPlane", IWater::MapNullClipPlane());
+			glslShaders[n]->SetUniform4v<float>("clipPlane", IWater::MapNullClipPlane());
 
-			glslShaders[n]->SetUniform3v<const char*, float>("waterMinColor",    &waterRendering->minColor.x);
-			glslShaders[n]->SetUniform3v<const char*, float>("waterBaseColor",   &waterRendering->baseColor.x);
-			glslShaders[n]->SetUniform3v<const char*, float>("waterAbsorbColor", &waterRendering->absorb.x);
+			glslShaders[n]->SetUniform3v<float>("waterMinColor",    &waterRendering->minColor.x);
+			glslShaders[n]->SetUniform3v<float>("waterBaseColor",   &waterRendering->baseColor.x);
+			glslShaders[n]->SetUniform3v<float>("waterAbsorbColor", &waterRendering->absorb.x);
 
-			glslShaders[n]->SetUniform4v<const char*, float>("splatTexScales", mapRendering->splatTexScales);
-			glslShaders[n]->SetUniform4v<const char*, float>("splatTexMults", mapRendering->splatTexMults);
+			glslShaders[n]->SetUniform4v<float>("splatTexScales", mapRendering->splatTexScales);
+			glslShaders[n]->SetUniform4v<float>("splatTexMults", mapRendering->splatTexMults);
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
@@ -214,15 +219,21 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		shader->EnableRaw();
+		// Set the clip plane even for Lua shaders, is unknowable otherwise
+		switch (drawPass) {
+			case DrawPass::WaterReflection: { shader->SetUniform4v<float>("clipPlane", IWater::MapReflClipPlane()); } break;
+			case DrawPass::WaterRefraction: { shader->SetUniform4v<float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+			default: {} break;
+		}
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
 	}
-
-	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 
@@ -230,31 +241,32 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	const float3 cameraPos = camera->GetPos();
-	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
 	shader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	shader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	shader->Enable();
-	shader->SetUniform2v<const char*, float>("mapHeights", &mapParams.x);
-	shader->SetUniform3v<const char*, float>("cameraPos", &cameraPos.x);
-	shader->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
-	shader->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
-	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
-	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
-	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	shader->SetUniform2v<float>("mapHeights", &mapParams.x);
+	shader->SetUniform3v<float>("cameraPos", &cameraPos.x);
+	shader->SetUniformMatrix4x4<float>("viewMat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<float>("viewMatInv", false, camera->GetViewMatrixInverse());
+	shader->SetUniformMatrix4x4<float>("viewProjMat", false, camera->GetViewProjectionMatrix());
+	shader->SetUniformMatrix4x4<float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
+	shader->SetUniform4v<float>("shadowParams", shadowHandler.GetShadowParams());
+	shader->SetUniform3v<float>("fogParams", &fogParams.x);
+	shader->SetUniform<float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	shader->SetUniform<float>("gammaExponent", globalRendering->gammaExponent);
 
 	if (cLightHandler->NumConfigLights() > 0) {
 		mLightHandler->Update();
-		shader->SetUniform4v<const char*, float>("fwdDynLights", cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+		shader->SetUniform4v<float>("fwdDynLights", cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
 	}
 
 	switch (drawPass) {
-		case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
-		case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+		case DrawPass::WaterReflection: { shader->SetUniform4v<float>("clipPlane", IWater::MapReflClipPlane()); } break;
+		case DrawPass::WaterRefraction: { shader->SetUniform4v<float>("clipPlane", IWater::MapRefrClipPlane()); } break;
 		default: {} break;
 	}
 
@@ -285,7 +297,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	if (useLuaShaders) {
 		glActiveTexture(GL_TEXTURE0);
-		glUseProgram(0);
+		glslShaders[GLSL_SHADER_CURRENT]->DisableRaw();
 		return;
 	}
 
@@ -303,10 +315,10 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 
 
-void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
+void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy, const int nsx, const int mip) const {
 	// needs to be set even for Lua shaders, is unknowable otherwise
 	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy, sqy * nsx + sqx, mip);
 }
 
 
@@ -321,6 +333,7 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 
 
 void SMFRenderStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
+	// called during the SunChanged event, shader is not bound
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
@@ -328,5 +341,9 @@ void SMFRenderStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
+}
+
+void SMFRenderStateGLSL::SetAlphaTest(const float4& params) const {
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v<float>("alphaTestCtrl", params);
 }
 

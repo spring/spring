@@ -3,23 +3,22 @@
 #include "IconHandler.h"
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <locale>
 #include <cctype>
 #include <cmath>
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
 #include "System/Exceptions.h"
 
 namespace icon {
-using std::string;
 
-CIconHandler* iconHandler = nullptr;
-CIconData CIconHandler::safetyData;
+CIconHandler iconHandler;
+
+static CIconData dummyIconData[CIconHandler::ICON_DATA_OFFSET];
 
 
 /******************************************************************************/
@@ -27,46 +26,42 @@ CIconData CIconHandler::safetyData;
 //  CIconHandler
 //
 
-CIconHandler::CIconHandler()
-{
-	defTexID = 0;
-	defIconData = nullptr;
-
-	LoadIcons("gamedata/icontypes.lua");
-
-	auto it = iconMap.find("default");
-
-	if (it != iconMap.end()) {
-		defIconData = it->second.data;
-	} else {
-		defIconData = new CIconData("default", GetDefaultTexture(), 1.0f, 1.0f, false, false, 128, 128);
-		iconMap["default"] = CIcon(defIconData);
-	}
-}
-
-
-CIconHandler::~CIconHandler()
+void CIconHandler::Kill()
 {
 	glDeleteTextures(1, &defTexID);
+
+	defTexID = 0;
+	numIcons = 0;
+
+	dummyIconData[ SAFETY_DATA_IDX] = {};
+	dummyIconData[DEFAULT_DATA_IDX] = {};
+
+	iconMap.clear();
+
+	for (CIconData& id: iconData) {
+		id = {};
+	}
 }
 
 
-bool CIconHandler::LoadIcons(const string& filename)
+bool CIconHandler::LoadIcons(const std::string& filename)
 {
 	LuaParser luaParser(filename, SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		LOG_L(L_WARNING, "%s: %s",
-				filename.c_str(), luaParser.GetErrorLog().c_str());
-	}
+
+	if (!luaParser.Execute())
+		LOG_L(L_WARNING, "%s: %s", filename.c_str(), luaParser.GetErrorLog().c_str());
 
 	const LuaTable iconTypes = luaParser.GetRoot();
 
-	std::vector<string> iconNames;
+	std::vector<std::string> iconNames;
 	iconTypes.GetKeys(iconNames);
 
-	for (size_t i = 0; i < iconNames.size(); i++) {
-		const string& iconName = iconNames[i];
+	dummyIconData[ SAFETY_DATA_IDX] = {};
+	dummyIconData[DEFAULT_DATA_IDX] = {"default", GetDefaultTexture(), 1.0f, 1.0f, false, false, DEFAULT_TEX_SIZE_X, DEFAULT_TEX_SIZE_Y};
+
+	for (const std::string& iconName : iconNames) {
 		const LuaTable iconTable = iconTypes.SubTable(iconName);
+
 		AddIcon(
 			iconName,
 			iconTable.GetString("bitmap",       ""),
@@ -76,21 +71,41 @@ bool CIconHandler::LoadIcons(const string& filename)
 		);
 	}
 
+	const auto it = iconMap.find("default");
+
+	if (it != iconMap.end()) {
+		dummyIconData[DEFAULT_DATA_IDX].CopyData(GetIconData(it->second.dataIdx));
+		dummyIconData[DEFAULT_DATA_IDX].SwapOwner(GetIconDataMut(it->second.dataIdx));
+	} else {
+		iconMap["default"] = CIcon(DEFAULT_DATA_IDX);
+	}
+
 	return true;
 }
 
 
-bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
-                           float size, float distance, bool radAdj)
-{
-	unsigned int texID;
-	int xsize, ysize;
+bool CIconHandler::AddIcon(
+	const std::string& iconName,
+	const std::string& texName,
+	float size,
+	float distance,
+	bool radAdj
+) {
+	if (numIcons == iconData.size()) {
+		LOG_L(L_DEBUG, "[IconHandler::%s] too many icons added (maximum=%u)", __func__, numIcons);
+		return false;
+	}
+
+	unsigned int texID = 0;
+	unsigned int xsize = 0;
+	unsigned int ysize = 0;
 
 	bool ownTexture = true;
 
 	try {
 		CBitmap bitmap;
-		if (!textureName.empty() && bitmap.Load(textureName)) {
+
+		if ((ownTexture = !texName.empty() && bitmap.Load(texName))) {
 			texID = bitmap.CreateMipMapTexture();
 			
 			glBindTexture(GL_TEXTURE_2D, texID);
@@ -100,58 +115,63 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 			ysize = bitmap.ysize;
 		} else {
 			texID = GetDefaultTexture();
-			xsize = 128;
-			ysize = 128;
-			ownTexture = false;
+			xsize = DEFAULT_TEX_SIZE_X;
+			ysize = DEFAULT_TEX_SIZE_Y;
 		}
 	} catch (const content_error& ex) {
 		// bail on non-existant file
-		LOG_L(L_DEBUG, "Failed to add icon: %s", ex.what());
+		LOG_L(L_DEBUG, "[IconHandler::%s] exception \"%s\" adding icon \"%s\" with texture \"%s\"", __func__, ex.what(), iconName.c_str(), texName.c_str());
 		return false;
 	}
 
-	auto it = iconMap.find(iconName);
+	const auto it = iconMap.find(iconName);
 
 	if (it != iconMap.end())
 		FreeIcon(iconName);
 
-	CIconData* iconData = new CIconData(iconName, texID,  size, distance,
-	                                         radAdj, ownTexture, xsize, ysize);
+	// data must be constructed first since CIcon's ctor will Ref() it
+	iconData[numIcons] = {iconName, texID,  size, distance, radAdj, ownTexture, xsize, ysize};
+	// indices 0 and 1 are reserved
+	iconMap[iconName] = CIcon(ICON_DATA_OFFSET + numIcons++);
 
-	iconMap[iconName] = CIcon(iconData);
-
-	if (iconName == "default")
-		defIconData = iconData;
+	if (iconName == "default") {
+		dummyIconData[DEFAULT_DATA_IDX].CopyData(&iconData[numIcons - 1]);
+		dummyIconData[DEFAULT_DATA_IDX].SwapOwner(&iconData[numIcons - 1]);
+	}
 
 	return true;
 }
 
 
-bool CIconHandler::FreeIcon(const string& iconName)
+bool CIconHandler::FreeIcon(const std::string& iconName)
 {
-	auto it = iconMap.find(iconName);
+	const auto it = iconMap.find(iconName);
+
 	if (it == iconMap.end())
 		return false;
 	if (iconName == "default")
 		return false;
 
-	CIconData* iconData = it->second.data;
-	iconData->CopyData(defIconData);
+	// fill with default data (TODO: reuse freed slots)
+	GetIconDataMut(it->second.dataIdx)->CopyData(&dummyIconData[DEFAULT_DATA_IDX]);
 
 	iconMap.erase(iconName);
 	return true;
 }
 
 
-CIcon CIconHandler::GetIcon(const string& iconName) const
+CIcon CIconHandler::GetIcon(const std::string& iconName) const
 {
-	auto it = iconMap.find(iconName);
+	const auto it = iconMap.find(iconName);
 
 	if (it == iconMap.end())
-		return CIcon(defIconData);
+		return GetDefaultIcon();
 
 	return it->second;
 }
+
+const CIconData* CIconHandler::GetSafetyIconData() { return &dummyIconData[SAFETY_DATA_IDX]; }
+const CIconData* CIconHandler::GetDefaultIconData() { return &dummyIconData[DEFAULT_DATA_IDX]; }
 
 
 unsigned int CIconHandler::GetDefaultTexture()
@@ -161,10 +181,10 @@ unsigned int CIconHandler::GetDefaultTexture()
 	if (defTexID != 0)
 		return defTexID;
 
-	unsigned char si[128 * 128 * 4];
-	for (int y = 0; y < 128; ++y) {
-		for (int x = 0; x < 128; ++x) {
-			const int index = ((y * 128) + x) * 4;
+	unsigned char si[DEFAULT_TEX_SIZE_X * DEFAULT_TEX_SIZE_Y * 4];
+	for (int y = 0; y < DEFAULT_TEX_SIZE_Y; ++y) {
+		for (int x = 0; x < DEFAULT_TEX_SIZE_X; ++x) {
+			const int index = ((y * DEFAULT_TEX_SIZE_X) + x) * 4;
 			const int dx = (x - 64);
 			const int dy = (y - 64);
 			const float r = std::sqrt((dx * dx) + (dy * dy)) / 64.0f;
@@ -183,15 +203,15 @@ unsigned int CIconHandler::GetDefaultTexture()
 		}
 	}
 
-	CBitmap bitmap(si, 128, 128);
-	defTexID = bitmap.CreateTexture();
+	CBitmap bitmap(si, DEFAULT_TEX_SIZE_X, DEFAULT_TEX_SIZE_Y);
 
-	glBindTexture(GL_TEXTURE_2D, defTexID);
+	glBindTexture(GL_TEXTURE_2D, defTexID = bitmap.CreateTexture());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	return defTexID;
 }
+
 
 
 /******************************************************************************/
@@ -201,47 +221,60 @@ unsigned int CIconHandler::GetDefaultTexture()
 
 CIcon::CIcon() 
 {
-	if (iconHandler != nullptr && iconHandler->defIconData) {
-		data = iconHandler->defIconData;
+	CIconData* data = nullptr;
+
+	// use default data if handler is initialized
+	if (iconHandler.defTexID != 0) {
+		data = &dummyIconData[dataIdx = CIconHandler::DEFAULT_DATA_IDX];
 	} else {
-		data = &CIconHandler::safetyData;
+		data = &dummyIconData[dataIdx = CIconHandler::SAFETY_DATA_IDX];
 	}
+
 	data->Ref();
 }
 
 
-CIcon::CIcon(CIconData* d)
+CIcon::CIcon(unsigned int idx)
 {
-	if ((data = d) == nullptr)
-		data = &CIconHandler::safetyData;
-
-	data->Ref();
+	iconHandler.GetIconDataMut(dataIdx = idx)->Ref();
 }
-
 
 CIcon::CIcon(const CIcon& icon)
 {
-	data = icon.data;
-	data->Ref();
+	iconHandler.GetIconDataMut(dataIdx = icon.dataIdx)->Ref();
+}
+
+CIcon::~CIcon()
+{
+	// NB: icons can outlive the handler
+	UnRefData(&iconHandler);
 }
 
 
 CIcon& CIcon::operator=(const CIcon& icon)
 {
-	if (data != icon.data) {
-		data->UnRef();
-		data = icon.data;
-		data->Ref();
+	if (dataIdx != icon.dataIdx) {
+		CIconData* iconData = iconHandler.GetIconDataMut(dataIdx);
+
+		iconData->UnRef();
+		iconData = iconHandler.GetIconDataMut(dataIdx = icon.dataIdx);
+		iconData->Ref();
 	}
+
 	return *this;
 }
 
 
-CIcon::~CIcon()
-{
-	data->UnRef();
-	data = nullptr;
+void CIcon::UnRefData(CIconHandler* ih) {
+	if (ih != nullptr)
+		ih->GetIconDataMut(dataIdx)->UnRef();
+
+	dataIdx = CIconHandler::SAFETY_DATA_IDX;
 }
+
+const CIconData* CIcon::operator->()  const { return iconHandler.GetIconData(dataIdx); }
+const CIconData* CIcon::GetIconData() const { return iconHandler.GetIconData(dataIdx); }
+
 
 
 
@@ -252,48 +285,44 @@ CIcon::~CIcon()
 //  CIconData
 //
 
-CIconData::CIconData() :
-	ownTexture(false),
-	refCount(123456),
-	name("safety"),
-	texID(0),
-	xsize(1),
-	ysize(1),
-	size(1.0f),
-	distance(1.0f),
-	distSqr(1.0f),
-	radiusAdjust(false)
-{
-}
+CIconData::CIconData(
+	const std::string& _name,
+	unsigned int _texID,
+	float _size,
+	float _distance,
+	bool radAdj,
+	bool ownTex,
+	unsigned int _xsize,
+	unsigned int _ysize
+)
+	: name(_name)
+	, refCount(0)
 
-CIconData::CIconData(const std::string& _name, unsigned int _texID,
-                     float _size, float _distance, bool radAdj, bool ownTex,
-                     int _xsize, int _ysize)
-: ownTexture(ownTex), refCount(0),
-  name(_name), texID(_texID),
-  xsize(_xsize), ysize(_ysize),
-  size(_size), distance(_distance),
-  radiusAdjust(radAdj)
+	, texID(_texID)
+	, xsize(_xsize)
+	, ysize(_ysize)
+
+	, size(_size)
+	, distance(_distance)
+	, distSqr(distance * distance)
+
+	, ownTexture(ownTex)
+	, radiusAdjust(radAdj)
 {
-	distSqr = distance * distance;
 }
 
 CIconData::~CIconData()
 {
 	if (ownTexture) {
+		#ifndef HEADLESS
+		assert(texID != 0);
+		#endif
 		glDeleteTextures(1, &texID);
-		texID = 0;
 	}
+
+	texID = 0;
 }
 
-
-void CIconData::UnRef()
-{
-	if ((--refCount) > 0)
-		return;
-
-	delete this;
-}
 
 void CIconData::CopyData(const CIconData* iconData)
 {

@@ -25,6 +25,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
+#include "System/SpringMath.h"
 
 #define ENABLE_TEXMEMPOOL 1
 
@@ -32,7 +33,7 @@
 struct InitializeOpenIL {
 	InitializeOpenIL() { ilInit(); }
 	~InitializeOpenIL() { ilShutDown(); }
-}static initOpenIL;
+} static initOpenIL;
 
 
 struct TexMemPool {
@@ -57,6 +58,11 @@ public:
 
 	spring::mutex& GetMutex() { return bmpMutex; }
 
+	size_t Size() const { return (memArray.size()); }
+	size_t AllocIdx(size_t size) { return (Alloc(size) - Base()); }
+	size_t AllocIdxRaw(size_t size) { return (AllocRaw(size) - Base()); }
+
+	uint8_t* Base() { return (memArray.data()); }
 	uint8_t* Alloc(size_t size) {
 		std::lock_guard<spring::mutex> lck(bmpMutex);
 		return (AllocRaw(size));
@@ -94,6 +100,7 @@ public:
 					continue;
 
 				// give up
+				LOG_L(L_ERROR, "[TexMemPool::%s] failed to allocate bitmap of size " _STPF_ "u from pool of total size " _STPF_ "u", __func__, size, Size());
 				throw std::bad_alloc();
 				return mem;
 			}
@@ -119,12 +126,12 @@ public:
 	}
 
 
-	void Free(uint8_t*& mem, size_t size) {
+	void Free(uint8_t* mem, size_t size) {
 		std::lock_guard<spring::mutex> lck(bmpMutex);
 		FreeRaw(mem, size);
 	}
 
-	void FreeRaw(uint8_t*& mem, size_t size) {
+	void FreeRaw(uint8_t* mem, size_t size) {
 		#if (ENABLE_TEXMEMPOOL == 0)
 		delete[] mem;
 		#else
@@ -160,33 +167,34 @@ public:
 		if (freeList.size() >= 64 || freeSize >= (memArray.size() >> 4))
 			DefragRaw();
 		#endif
-
-		mem = nullptr;
 	}
 
 
 	void Dispose() {
 		freeList = {};
 		memArray = {};
-	}
-	void Resize(size_t size) {
-		std::lock_guard<spring::mutex> lck(bmpMutex);
-
-		freeList.clear();
-		freeList.reserve(16);
-		freeList.emplace_back(0, size);
-
-		memArray.clear();
-		memArray.resize(size);
-
-		memset(memArray.data(), 0, size);
-
-		LOG_L(L_INFO, "[TexMemPool::%s] poolSize=%u allocSize=%u texCount=%u", __func__, uint32_t(size), uint32_t(allocSize), uint32_t(numAllocs - numFrees));
 
 		numAllocs = 0;
 		allocSize = 0;
 		numFrees  = 0;
 		freeSize  = 0;
+	}
+	void Resize(size_t size) {
+		std::lock_guard<spring::mutex> lck(bmpMutex);
+
+		if (memArray.empty()) {
+			freeList.reserve(32);
+			freeList.emplace_back(0, size);
+
+			memArray.resize(size, 0);
+		} else {
+			assert(size > Size());
+
+			freeList.emplace_back(Size(), size - Size());
+			memArray.resize(size, 0);
+		}
+
+		LOG_L(L_INFO, "[TexMemPool::%s] poolSize=" _STPF_ "u allocSize=" _STPF_ "u texCount=" _STPF_ "u", __func__, size, allocSize, numAllocs - numFrees);
 	}
 
 
@@ -235,14 +243,18 @@ public:
 			i += 1;
 		}
 
-
 		if (j >= freeList.size())
 			return false;
 
 		// shrink
 		freeList.resize(j);
 
-		freeSize = std::accumulate(freeList.begin(), freeList.end(), FreePair{0, 0}, accuPred).second;
+		const auto freeBeg  = freeList.begin();
+		const auto freeEnd  = freeList.end();
+		      auto freePair = FreePair{0, 0};
+
+		freePair = std::accumulate(freeBeg, freeEnd, freePair, accuPred);
+		freeSize = freePair.second;
 		return true;
 	}
 };
@@ -276,25 +288,24 @@ static bool IsValidImageFormat(int format) {
 
 CBitmap::~CBitmap()
 {
-	texMemPool.Free(mem, GetMemSize());
+	texMemPool.Free(GetRawMem(), GetMemSize());
 }
 
 CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 	: xsize(_xsize)
 	, ysize(_ysize)
 	, channels(_channels)
-	, compressed(false)
 {
 	assert(GetMemSize() > 0);
-	mem = texMemPool.Alloc(GetMemSize());
+	memIdx = texMemPool.AllocIdx(GetMemSize());
 
 	if (data != nullptr) {
-		assert(!((mem < data) && (mem + GetMemSize()) > data));
-		assert(!((data < mem) && (data + GetMemSize()) > mem));
+		assert(!((GetRawMem() < data) && (GetRawMem() + GetMemSize()) > data));
+		assert(!((data < GetRawMem()) && (data + GetMemSize()) > GetRawMem()));
 
-		std::memcpy(mem, data, GetMemSize());
+		std::memcpy(GetRawMem(), data, GetMemSize());
 	} else {
-		std::memset(mem, 0, GetMemSize());
+		std::memset(GetRawMem(), 0, GetMemSize());
 	}
 }
 
@@ -302,17 +313,21 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 CBitmap& CBitmap::operator=(const CBitmap& bmp)
 {
 	if (this != &bmp) {
-		texMemPool.Free(mem, GetMemSize());
+		// NB: Free preserves size for asserts
+		texMemPool.Free(GetRawMem(), GetMemSize());
 
-		if (bmp.mem != nullptr) {
+		if (bmp.GetRawMem() != nullptr) {
 			assert(!bmp.compressed);
 			assert(bmp.GetMemSize() != 0);
 
-			assert(!((mem < bmp.GetRawMem()) && (mem + GetMemSize()) > bmp.GetRawMem()));
-			assert(!((bmp.GetRawMem() < mem) && (bmp.GetRawMem() + bmp.GetMemSize()) > mem));
+			assert(!((    GetRawMem() < bmp.GetRawMem()) && (    GetRawMem() +     GetMemSize()) > bmp.GetRawMem()));
+			assert(!((bmp.GetRawMem() <     GetRawMem()) && (bmp.GetRawMem() + bmp.GetMemSize()) >     GetRawMem()));
 
-			mem = texMemPool.Alloc(bmp.GetMemSize());
-			std::memcpy(mem, bmp.mem, bmp.GetMemSize());
+			memIdx = texMemPool.AllocIdx(bmp.GetMemSize());
+
+			std::memcpy(GetRawMem(), bmp.GetRawMem(), bmp.GetMemSize());
+		} else {
+			memIdx = size_t(-1);
 		}
 
 		xsize = bmp.xsize;
@@ -332,10 +347,10 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 	return *this;
 }
 
-CBitmap& CBitmap::operator=(CBitmap&& bmp)
+CBitmap& CBitmap::operator=(CBitmap&& bmp) noexcept
 {
 	if (this != &bmp) {
-		std::swap(mem, bmp.mem);
+		std::swap(memIdx, bmp.memIdx);
 		std::swap(xsize, bmp.xsize);
 		std::swap(ysize, bmp.ysize);
 		std::swap(channels, bmp.channels);
@@ -354,36 +369,50 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp)
 
 void CBitmap::InitPool(size_t size)
 {
-	texMemPool.Resize(size);
+	// only allow expansion; config-size is in MB
+	size *= (1024 * 1024);
+
+	if (size > texMemPool.Size())
+		texMemPool.Resize(size);
+
+	texMemPool.Defrag();
 }
+
+
+const uint8_t* CBitmap::GetRawMem() const { return ((memIdx == size_t(-1))? nullptr: (texMemPool.Base() + memIdx)); }
+      uint8_t* CBitmap::GetRawMem()       { return ((memIdx == size_t(-1))? nullptr: (texMemPool.Base() + memIdx)); }
+
 
 void CBitmap::Alloc(int w, int h, int c)
 {
-	mem = texMemPool.Alloc((xsize = w) * (ysize = h) * (channels = c));
-	memset(mem, 0, GetMemSize());
+	if (!Empty())
+		texMemPool.Free(GetRawMem(), GetMemSize());
+
+	memIdx = texMemPool.AllocIdx((xsize = w) * (ysize = h) * (channels = c));
+	memset(GetRawMem(), 0, GetMemSize());
 }
 
 void CBitmap::AllocDummy(const SColor fill)
 {
 	compressed = false;
+
 	Alloc(1, 1, sizeof(SColor));
-	reinterpret_cast<SColor*>(&mem[0])[0] = fill;
+	Fill(fill);
 }
 
-bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
+bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
 {
-	#ifndef BITMAP_NO_OPENGL
-	SCOPED_TIMER("Misc::Bitmap::Load");
-	#endif
-
-	const size_t curMemSize = GetMemSize();
-
-	bool noAlpha = true;
+	bool isLoaded = false;
+	bool isValid  = false;
+	bool noAlpha  =  true;
 
 	const bool loadDDS = (FileSystem::GetExtension(filename) == "dds"); // always lower-case
 	const bool flipDDS = true; // default, also assumed by gl.TexRect
 
+	const size_t curMemSize = GetMemSize();
 
+
+	channels = 4;
 	#ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
 	#endif
@@ -432,21 +461,18 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	compressed = loadDDS;
 	#endif
 
-	channels = 4;
-
 
 	CFileHandler file(filename);
+	std::vector<uint8_t> buffer;
 
 	if (!file.FileExists()) {
 		AllocDummy();
 		return false;
 	}
 
-	std::vector<uint8_t> buffer;
-
 	if (!file.IsBuffered()) {
-		buffer.resize(file.FileSize() + 2, 0);
-		file.Read(buffer.data(), file.FileSize());
+		buffer.resize(file.FileSize(), 0);
+		file.Read(buffer.data(), buffer.size());
 	} else {
 		// steal if file was loaded from VFS
 		buffer = std::move(file.GetBuffer());
@@ -456,7 +482,8 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	{
 		std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
 
-		// IL does not vertically flip DDS images by default, unlike nv_dds
+		// do not preserve the image origin since IL does not
+		// vertically flip DDS images by default, unlike nv_dds
 		ilOriginFunc((loadDDS && flipDDS)? IL_ORIGIN_LOWER_LEFT: IL_ORIGIN_UPPER_LEFT);
 		ilEnable(IL_ORIGIN_SET);
 
@@ -468,42 +495,46 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 			// do not signal floating point exceptions in devil library
 			ScopedDisableFpuExceptions fe;
 
-			const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), buffer.size());
+			isLoaded = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), buffer.size());
+			isValid = (isLoaded && IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT)));
+			noAlpha = (isValid && (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4));
 
 			// FPU control word has to be restored as well
 			streflop::streflop_init<streflop::Simple>();
+		}
 
-			ilDisable(IL_ORIGIN_SET);
+		if (isValid) {
+			ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 
-			if (!success) {
-				AllocDummy();
-				return false;
+			xsize = ilGetInteger(IL_IMAGE_WIDTH);
+			ysize = ilGetInteger(IL_IMAGE_HEIGHT);
+			// format = ilGetInteger(IL_IMAGE_FORMAT);
+
+			texMemPool.FreeRaw(GetRawMem(), curMemSize);
+			memIdx = texMemPool.AllocIdxRaw(GetMemSize());
+
+			// ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, GetRawMem());
+			for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
+				std::memset(GetRawMem(), 0xFF, GetMemSize());
+				std::memcpy(GetRawMem(), imgData, GetMemSize());
 			}
 		}
 
-		{
-			if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
-				LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
-				return false;
-			}
-		}
-
-		noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);
-		ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-
-		xsize = ilGetInteger(IL_IMAGE_WIDTH);
-		ysize = ilGetInteger(IL_IMAGE_HEIGHT);
-
-		texMemPool.FreeRaw(mem, curMemSize);
-		mem = texMemPool.AllocRaw(GetMemSize());
-
-		// ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, mem);
-		std::memcpy(mem, ilGetData(), GetMemSize());
-
+		ilDisable(IL_ORIGIN_SET);
 		ilDeleteImages(1, &imageID);
 	}
 
+	// has to be outside the mutex scope; AllocDummy will acquire it again and
+	// LOG can indirectly cause other bitmaps to be loaded through FontTexture
+	if (!isValid) {
+		LOG_L(L_ERROR, "[BMP::%s] invalid bitmap \"%s\" (loaded=%d)", __func__, filename.c_str(), isLoaded);
+		AllocDummy();
+		return false;
+	}
+
 	if (noAlpha) {
+		uint8_t* mem = GetRawMem();
+
 		for (int y = 0; y < ysize; ++y) {
 			for (int x = 0; x < xsize; ++x) {
 				mem[((y * xsize + x) * 4) + 3] = defaultAlpha;
@@ -558,10 +589,13 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 		xsize = ilGetInteger(IL_IMAGE_WIDTH);
 		ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-		texMemPool.FreeRaw(mem, curMemSize);
-		mem = texMemPool.AllocRaw(GetMemSize());
+		texMemPool.FreeRaw(GetRawMem(), curMemSize);
+		memIdx = texMemPool.AllocIdxRaw(GetMemSize());
 
-		std::memcpy(mem, ilGetData(), GetMemSize());
+		for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
+			std::memset(GetRawMem(), 0xFF, GetMemSize());
+			std::memcpy(GetRawMem(), imgData, GetMemSize());
+		}
 
 		ilDeleteImages(1, &imageID);
 	}
@@ -570,7 +604,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
+bool CBitmap::Save(const std::string& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
 		#ifndef BITMAP_NO_OPENGL
@@ -583,7 +617,11 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	if (GetMemSize() == 0 || channels != 4)
 		return false;
 
-	std::vector<uint8_t> buf(xsize * ysize * 4);
+
+	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+
+	const uint8_t* mem = GetRawMem();
+	      uint8_t* buf = texMemPool.AllocRaw(xsize * ysize * 4);
 
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
@@ -599,9 +637,6 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 		}
 	}
 
-
-	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
-
 	// clear any previous errors
 	while (ilGetError() != IL_NO_ERROR);
 
@@ -614,8 +649,10 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	ILuint imageID = 0;
 	ilGenImages(1, &imageID);
 	ilBindImage(imageID);
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.data());
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 	assert(ilGetError() == IL_NO_ERROR);
+
+	texMemPool.FreeRaw(buf, xsize * ysize * 4);
 
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
@@ -685,28 +722,56 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 }
 
 
-bool CBitmap::SaveFloat(std::string const& filename) const
+bool CBitmap::SaveGrayScale(const std::string& filename) const
 {
-	// small hack: we read the RGBA pack as a single FLT32 value!
+	if (compressed)
+		return false;
+
+	CBitmap bmp = *this;
+
+	for (uint8_t* mem = bmp.GetRawMem(); mem != nullptr; mem = nullptr) {
+		// approximate luminance
+		bmp.MakeGrayScale();
+
+		// convert RGBA tuples to normalized FLT32 values expected by SaveFloat; GBA are destroyed
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
+				*reinterpret_cast<float*>(&mem[(y * xsize + x) * 4]) = static_cast<float>(mem[(y * xsize + x) * 4 + 0] / 255.0f);
+			}
+		}
+
+		// save FLT32 data in 16-bit ushort format
+		return (bmp.SaveFloat(filename));
+	}
+
+	return false;
+}
+
+
+bool CBitmap::SaveFloat(const std::string& filename) const
+{
+	// must have four channels; each RGBA tuple is reinterpreted as a single FLT32 value
 	if (GetMemSize() == 0 || channels != 4)
 		return false;
 
+	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourselves
-	const float* memf = reinterpret_cast<const float*>(&mem[0]);
+	const uint8_t* u8mem = GetRawMem();
+	const float* f32mem = reinterpret_cast<const float*>(&u8mem[0]);
 
-	std::vector<uint16_t> buf(xsize * ysize);
+	uint16_t* u16mem = reinterpret_cast<uint16_t*>(texMemPool.AllocRaw(xsize * ysize * sizeof(uint16_t)));
 
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = x + (xsize * ((ysize - 1) - y));
 			const int mi = x + (xsize * (              y));
-			const uint16_t us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
-			buf[bi] = us;
+			const uint16_t us = f32mem[mi] * 0xFFFF; // convert float 0..1 to ushort
+			u16mem[bi] = us;
 		}
 	}
 
-	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
 	ilSetInteger(IL_JPG_QUALITY, 80);
 
@@ -715,7 +780,9 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	ilBindImage(imageID);
 	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
 	//       IL_FLOAT is converted to RGB with 8bit colordepth!
-	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.data());
+	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, u16mem);
+
+	texMemPool.FreeRaw(reinterpret_cast<uint8_t*>(u16mem), xsize * ysize * sizeof(uint16_t));
 
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
@@ -770,10 +837,10 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 
 	if (mipmaps) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glBuildMipmaps(GL_TEXTURE_2D, intFormats[channels], xsize, ysize, extFormats[channels], GL_UNSIGNED_BYTE, &mem[0]);
+		glBuildMipmaps(GL_TEXTURE_2D, intFormats[channels], xsize, ysize, extFormats[channels], GL_UNSIGNED_BYTE, GetRawMem());
 	} else {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, intFormats[channels], xsize, ysize, 0, extFormats[channels], GL_UNSIGNED_BYTE, &mem[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, intFormats[channels], xsize, ysize, 0, extFormats[channels], GL_UNSIGNED_BYTE, GetRawMem());
 	}
 
 	return texture;
@@ -801,7 +868,8 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 
 unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const
 {
-	glPushAttrib(GL_TEXTURE_BIT);
+	assert(Threading::IsMainThread());
+	glAttribStatePtr->PushTextureBit();
 
 	if (texID == 0)
 		glGenTextures(1, &texID);
@@ -813,7 +881,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
-			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (!ddsimage.upload_texture2D(0, GL_TEXTURE_2D)) {
@@ -831,7 +898,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::Texture3D:
-			glEnable(GL_TEXTURE_3D);
 			glBindTexture(GL_TEXTURE_3D, texID);
 
 			if (!ddsimage.upload_texture3D()) {
@@ -847,7 +913,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::TextureCubemap:
-			glEnable(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 
 			if (!ddsimage.upload_textureCubemap()) {
@@ -869,7 +934,7 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return texID;
 }
 #else  // !BITMAP_NO_OPENGL
@@ -886,6 +951,8 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 
 void CBitmap::CreateAlpha(uint8_t red, uint8_t green, uint8_t blue)
 {
+	uint8_t* mem = GetRawMem();
+
 	float3 aCol;
 
 	for (int a = 0; a < 3; ++a) {
@@ -894,7 +961,7 @@ void CBitmap::CreateAlpha(uint8_t red, uint8_t green, uint8_t blue)
 
 		for (int y = 0; y < ysize; ++y) {
 			for (int x = 0; x < xsize; ++x) {
-				const int index = (y*xsize + x) * 4;
+				const int index = (y * xsize + x) * 4;
 
 				if (mem[index + 3] == 0)
 					continue;
@@ -902,7 +969,7 @@ void CBitmap::CreateAlpha(uint8_t red, uint8_t green, uint8_t blue)
 					continue;
 
 				cCol += mem[index + a];
-				++numCounted;
+				numCounted += 1;
 			}
 		}
 
@@ -923,11 +990,13 @@ void CBitmap::SetTransparent(const SColor& c, const SColor trans)
 
 	constexpr uint32_t RGB = 0x00FFFFFF;
 
-	uint32_t* mem_i = reinterpret_cast<uint32_t*>(&mem[0]);
+	uint32_t* mem_i = reinterpret_cast<uint32_t*>(GetRawMem());
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			if ((*mem_i & RGB) == (c.i & RGB))
 				*mem_i = trans.i;
+
 			mem_i++;
 		}
 	}
@@ -936,6 +1005,8 @@ void CBitmap::SetTransparent(const SColor& c, const SColor trans)
 
 void CBitmap::Renormalize(float3 newCol)
 {
+	uint8_t* mem = GetRawMem();
+
 	float3 aCol;
 	float3 colorDif;
 
@@ -947,7 +1018,7 @@ void CBitmap::Renormalize(float3 newCol)
 				const unsigned int index = (y* xsize + x) * 4;
 				if (mem[index + 3] != 0) {
 					cCol += mem[index + a];
-					++numCounted;
+					numCounted += 1;
 				}
 			}
 		}
@@ -968,11 +1039,20 @@ void CBitmap::Renormalize(float3 newCol)
 }
 
 
-inline static void kernelBlur(CBitmap* dst, const uint8_t* src, int x, int y, int channel, float weight)
-{
+inline static void kernelBlur(
+	uint8_t* dstMem,
+	const uint8_t* srcMem,
+	int xsize,
+	int ysize,
+	int nchannels,
+	int x,
+	int y,
+	int channel,
+	float weight
+) {
 	float fragment = 0.0f;
 
-	const int pos = (x + y * dst->xsize) * dst->channels + channel;
+	const int pos = (x + y * xsize) * nchannels + channel;
 
 	for (int i = 0; i < 9; ++i) {
 		int yoffset = (i                 / 3) - 1;
@@ -981,22 +1061,19 @@ inline static void kernelBlur(CBitmap* dst, const uint8_t* src, int x, int y, in
 		const int tx = x + xoffset;
 		const int ty = y + yoffset;
 
-		if ((tx < 0) || (tx >= dst->xsize))
-			xoffset = 0;
+		xoffset *= ((tx >= 0) && (tx < xsize));
+		yoffset *= ((ty >= 0) && (ty < ysize));
 
-		if ((ty < 0) || (ty >= dst->ysize))
-			yoffset = 0;
-
-		const int offset = (yoffset * dst->xsize + xoffset) * dst->channels;
+		const int offset = (yoffset * xsize + xoffset) * nchannels;
 
 		if (i == 4) {
-			fragment += weight * blurkernel[i] * src[pos + offset];
+			fragment += (weight * blurkernel[i] * srcMem[pos + offset]);
 		} else {
-			fragment += blurkernel[i] * src[pos + offset];
+			fragment +=           blurkernel[i] * srcMem[pos + offset];
 		}
 	}
 
-	dst->GetRawMem()[pos] = static_cast<uint8_t>(std::max(0.0f, std::min(255.0f, fragment)));
+	dstMem[pos] = static_cast<uint8_t>(Clamp(fragment, 0.0f, 255.0f));
 }
 
 
@@ -1005,21 +1082,23 @@ void CBitmap::Blur(int iterations, float weight)
 	if (compressed)
 		return;
 
-	CBitmap tmp;
+	CBitmap tmp(nullptr, xsize, ysize, channels);
 
 	CBitmap* src = this;
 	CBitmap* dst = &tmp;
 
-	dst->Alloc(xsize, ysize, channels);
-
 	for (int i = 0; i < iterations; ++i) {
+		const uint8_t* srcMem = src->GetRawMem();
+		      uint8_t* dstMem = dst->GetRawMem();
+
 		for_mt(0, ysize, [&](const int y) {
 			for (int x = 0; x < xsize; x++) {
 				for (int j = 0; j < channels; j++) {
-					kernelBlur(dst, &src->mem[0], x, y, j, weight);
+					kernelBlur(dstMem, srcMem, xsize, ysize, channels, x, y, j, weight);
 				}
 			}
 		});
+
 		std::swap(src, dst);
 	}
 
@@ -1033,9 +1112,22 @@ void CBitmap::Blur(int iterations, float weight)
 }
 
 
+void CBitmap::Fill(const SColor& c)
+{
+	if (compressed)
+		return;
+
+	uint8_t* mem = GetRawMem();
+
+	for (size_t i = 0, n = GetMemSize() / channels; i < n; i++) {
+		memcpy(&mem[i * channels], &c.r, channels);
+	}
+}
+
+
 void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 {
-	if (xpos + src.xsize > xsize || ypos + src.ysize > ysize) {
+	if ((xpos + src.xsize) > xsize || (ypos + src.ysize) > ysize) {
 		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst!");
 		return;
 	}
@@ -1045,12 +1137,15 @@ void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 		return;
 	}
 
+	const uint8_t* srcMem = src.GetRawMem();
+	      uint8_t* dstMem =     GetRawMem();
+
 	for (int y = 0; y < src.ysize; ++y) {
 		const int pixelDst = (((ypos + y) *     xsize) + xpos) * channels;
 		const int pixelSrc = ((        y  * src.xsize) +    0) * channels;
 
 		// copy the whole line
-		std::copy(&src.mem[pixelSrc], &src.mem[pixelSrc] + channels * src.xsize, &mem[pixelDst]);
+		std::copy(&srcMem[pixelSrc], &srcMem[pixelSrc] + channels * src.xsize, &dstMem[pixelDst]);
 	}
 }
 
@@ -1086,7 +1181,7 @@ SDL_Surface* CBitmap::CreateSDLSurface()
 
 	// this will only work with 24bit RGB and 32bit RGBA pictures
 	// note: does NOT create a copy of mem, must keep this around
-	surface = SDL_CreateRGBSurfaceFrom(mem, xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
+	surface = SDL_CreateRGBSurfaceFrom(GetRawMem(), xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
 
 	if (surface == nullptr)
 		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface Failed!");
@@ -1116,6 +1211,9 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 
 	bm.Alloc(newx, newy);
 
+	const uint8_t* srcMem =    GetRawMem();
+	      uint8_t* dstMem = bm.GetRawMem();
+
 	const float dx = (float) xsize / newx;
 	const float dy = (float) ysize / newy;
 
@@ -1124,35 +1222,40 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 		const int sy = (int) cy;
 		cy += dy;
 		int ey = (int) cy;
-		if (ey == sy) {
-			ey = sy+1;
-		}
+		if (ey == sy)
+			ey = sy + 1;
 
 		float cx = 0;
-		for (int x=0; x < newx; ++x) {
+		for (int x = 0; x < newx; ++x) {
 			const int sx = (int) cx;
 			cx += dx;
 			int ex = (int) cx;
-			if (ex == sx) {
+			if (ex == sx)
 				ex = sx + 1;
-			}
 
-			int r=0, g=0, b=0, a=0;
+			int r = 0;
+			int g = 0;
+			int b = 0;
+			int a = 0;
+
 			for (int y2 = sy; y2 < ey; ++y2) {
 				for (int x2 = sx; x2 < ex; ++x2) {
 					const int index = (y2*xsize + x2) * 4;
-					r += mem[index + 0];
-					g += mem[index + 1];
-					b += mem[index + 2];
-					a += mem[index + 3];
+
+					r += srcMem[index + 0];
+					g += srcMem[index + 1];
+					b += srcMem[index + 2];
+					a += srcMem[index + 3];
 				}
 			}
+
 			const int index = (y*bm.xsize + x) * 4;
 			const int denom = (ex - sx) * (ey - sy);
-			bm.mem[index + 0] = r / denom;
-			bm.mem[index + 1] = g / denom;
-			bm.mem[index + 2] = b / denom;
-			bm.mem[index + 3] = a / denom;
+
+			dstMem[index + 0] = r / denom;
+			dstMem[index + 1] = g / denom;
+			dstMem[index + 2] = b / denom;
+			dstMem[index + 3] = a / denom;
 		}
 	}
 
@@ -1164,6 +1267,8 @@ void CBitmap::InvertColors()
 {
 	if (compressed)
 		return;
+
+	uint8_t* mem = GetRawMem();
 
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
@@ -1182,6 +1287,8 @@ void CBitmap::InvertAlpha()
 	if (compressed)
 		return; // Don't try to invert DDS
 
+	uint8_t* mem = GetRawMem();
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
@@ -1195,6 +1302,8 @@ void CBitmap::MakeGrayScale()
 {
 	if (compressed)
 		return;
+
+	uint8_t* mem = GetRawMem();
 
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
@@ -1214,7 +1323,7 @@ void CBitmap::MakeGrayScale()
 
 static ILubyte TintByte(ILubyte value, float tint)
 {
-	return std::max(0.0f, std::min(255.0f, value * tint));
+	return Clamp(value * tint, 0.0f, 255.0f);
 }
 
 
@@ -1223,9 +1332,12 @@ void CBitmap::Tint(const float tint[3])
 	if (compressed)
 		return;
 
+	uint8_t* mem = GetRawMem();
+
 	for (int y = 0; y < ysize; y++) {
 		for (int x = 0; x < xsize; x++) {
 			const int base = ((y * xsize) + x) * 4;
+
 			mem[base + 0] = TintByte(mem[base + 0], tint[0]);
 			mem[base + 1] = TintByte(mem[base + 1], tint[1]);
 			mem[base + 2] = TintByte(mem[base + 2], tint[2]);
@@ -1240,15 +1352,19 @@ void CBitmap::ReverseYAxis()
 	if (compressed)
 		return; // don't try to flip DDS
 
-	std::vector<uint8_t> tmpLine(channels * xsize);
+	uint8_t* tmp = texMemPool.Alloc(xsize * channels);
+	uint8_t* mem = GetRawMem();
 
 	for (int y = 0; y < (ysize / 2); ++y) {
 		const int pixelLow  = (((y            ) * xsize) + 0) * channels;
 		const int pixelHigh = (((ysize - 1 - y) * xsize) + 0) * channels;
 
 		// copy the whole line
-		std::copy(mem + pixelHigh, mem + pixelHigh + channels * xsize, tmpLine.data());
+		std::copy(mem + pixelHigh, mem + pixelHigh + channels * xsize, tmp);
 		std::copy(mem + pixelLow , mem + pixelLow  + channels * xsize, mem + pixelHigh);
-		std::copy(tmpLine.data(), tmpLine.data() + channels * xsize, mem + pixelLow);
+		std::copy(tmp, tmp + channels * xsize, mem + pixelLow);
 	}
+
+	texMemPool.Free(tmp, xsize * channels);
 }
+

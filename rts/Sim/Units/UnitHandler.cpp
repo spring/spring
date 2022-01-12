@@ -17,9 +17,8 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Set.h"
 
@@ -50,25 +49,6 @@ UnitMemPool unitMemPool;
 
 CUnitHandler unitHandler;
 
-
-void CUnitHandler::SanityCheckUnit(const CUnit* unit)
-{
-	unit->pos.AssertNaNs();
-	unit->midPos.AssertNaNs();
-	unit->relMidPos.AssertNaNs();
-	unit->speed.AssertNaNs();
-	unit->deathSpeed.AssertNaNs();
-	unit->rightdir.AssertNaNs();
-	unit->updir.AssertNaNs();
-	unit->frontdir.AssertNaNs();
-
-	if (unit->unitDef->IsGroundUnit()) {
-		assert(unit->pos.x >= -(float3::maxxpos * 16.0f));
-		assert(unit->pos.x <=  (float3::maxxpos * 16.0f));
-		assert(unit->pos.z >= -(float3::maxzpos * 16.0f));
-		assert(unit->pos.z <=  (float3::maxzpos * 16.0f));
-	}
-};
 
 CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 {
@@ -112,7 +92,6 @@ void CUnitHandler::Init() {
 		// in that case the per-team limit is recalculated for every
 		// other team in the respective allyteam
 		maxUnits = CalcMaxUnits();
-
 		maxUnitRadius = 0.0f;
 	}
 	{
@@ -141,29 +120,34 @@ void CUnitHandler::Kill()
 {
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
-		u->delayedWreckLevel = -1;
+		u->KilledScriptFinished(-1);
 		unitMemPool.free(u);
 	}
+	{
+		// do not clear in ctor because creg-loaded objects would be wiped out
+		unitMemPool.clear();
 
-	// do not clear in ctor because creg-loaded objects would be wiped out
-	unitMemPool.clear();
+		units.clear();
 
-	units.clear();
+		for (int teamNum = 0; teamNum < MAX_TEAMS; teamNum++) {
+			// reuse inner vectors when reloading
+			// unitsByDefs[teamNum].clear();
 
-	for (int teamNum = 0; teamNum < MAX_TEAMS; teamNum++) {
-		// reuse inner vectors when reloading
-		// unitsByDefs[teamNum].clear();
-
-		for (size_t defID = 0; defID < unitsByDefs[teamNum].size(); defID++) {
-			unitsByDefs[teamNum][defID].clear();
+			for (size_t defID = 0; defID < unitsByDefs[teamNum].size(); defID++) {
+				unitsByDefs[teamNum][defID].clear();
+			}
 		}
+
+		activeUnits.clear();
+		unitsToBeRemoved.clear();
+
+		// only iterated by unsynced code, GetBuilderCAIs has no synced callers
+		builderCAIs.clear();
 	}
-
-	activeUnits.clear();
-	unitsToBeRemoved.clear();
-
-	// only iterated by unsynced code, GetBuilderCAIs has no synced callers
-	builderCAIs.clear();
+	{
+		maxUnits = 0;
+		maxUnitRadius = 0.0f;
+	}
 }
 
 
@@ -321,25 +305,24 @@ void CUnitHandler::UpdateUnitMoveTypes()
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
+		unit->PreUpdate();
 
 		if (moveType->Update())
 			eventHandler.UnitMoved(unit);
 
 		// this unit is not coming back, kill it now without any death
-		// sequence (so deathScriptFinished becomes true immediately)
+		// sequence (s.t. deathScriptFinished becomes true immediately)
 		if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED))
 			unit->ForcedKillUnit(nullptr, false, true, false);
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 		assert(activeUnits[activeUpdateUnit] == unit);
 	}
 }
 
 void CUnitHandler::UpdateUnitLosStates()
 {
-	SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
-
 	for (CUnit* unit: activeUnits) {
 		for (int at = 0; at < teamHandler.ActiveAllyTeams(); ++at) {
 			unit->UpdateLosStatus(at);
@@ -361,11 +344,11 @@ void CUnitHandler::SlowUpdateUnits()
 	for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
 		CUnit* unit = activeUnits[activeSlowUpdateUnit];
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 		unit->SlowUpdate();
 		unit->SlowUpdateWeapons();
 		unit->SlowUpdateLocalModel();
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 
 		n--;
 	}
@@ -377,11 +360,13 @@ void CUnitHandler::UpdateUnits()
 
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
-		SanityCheckUnit(unit);
+
+		unit->SanityCheck();
 		unit->Update();
 		// unsynced; done on-demand when drawing unit
 		// unit->UpdateLocalModel();
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
+
 		assert(activeUnits[activeUpdateUnit] == unit);
 	}
 }
@@ -391,16 +376,7 @@ void CUnitHandler::UpdateUnitWeapons()
 	SCOPED_TIMER("Sim::Unit::Weapon");
 
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-		CUnit* unit = activeUnits[activeUpdateUnit];
-
-		if (!unit->CanUpdateWeapons())
-			continue;
-
-		for (CWeapon* w: unit->weapons) {
-			w->Update();
-		}
-
-		assert(activeUnits[activeUpdateUnit] == unit);
+		activeUnits[activeUpdateUnit]->UpdateWeapons();
 	}
 }
 

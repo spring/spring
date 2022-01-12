@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
 #include "LuaHandleSynced.h"
 #include "System/UnorderedMap.hpp"
 
@@ -30,27 +27,33 @@ class CLuaRules : public CSplitLuaHandle
 {
 public:
 	static bool CanLoadHandler() { return true; }
-	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
-	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+	static bool ReloadHandler(bool onlySynced = false) { return (FreeHandler(), LoadFreeHandler(onlySynced)); } // NOTE the ','
+	static bool LoadFreeHandler(bool onlySynced = false) { return (LoadHandler(onlySynced) || FreeHandler()); }
 
-	static bool LoadHandler();
+	static bool LoadHandler(bool onlySynced);
 	static bool FreeHandler();
 
 public: // call-ins
 	void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 	             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
-	const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize) {
-		return syncedLuaHandle.RecvSkirmishAIMessage(aiID, data, inSize);
+	const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize, size_t* outSize) {
+		return syncedLuaHandle.RecvSkirmishAIMessage(aiID, data, inSize, outSize);
 	}
 
+
 private:
-	CLuaRules();
+	CLuaRules(bool onlySynced);
 	virtual ~CLuaRules();
 
 protected:
-	bool AddSyncedCode(lua_State* L);
-	bool AddUnsyncedCode(lua_State* L);
+	bool AddSyncedCode(lua_State* L) override;
+	bool AddUnsyncedCode(lua_State* L) override;
+
+	std::string GetUnsyncedFileName() const override;
+	std::string GetSyncedFileName() const override;
+	std::string GetInitFileModes() const override;
+	int GetInitSelectTeam() const override;
 
 	int UnpackCobArg(lua_State* L);
 

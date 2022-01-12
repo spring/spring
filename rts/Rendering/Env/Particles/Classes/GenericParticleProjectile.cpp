@@ -6,6 +6,7 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/creg/DefTypes.h"
 
 CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
 
@@ -27,8 +28,8 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	: CProjectile(pos, speed, owner, false, false, false)
 
 	, gravity(ZeroVector)
-	, texture(NULL)
-	, colorMap(NULL)
+	, texture(nullptr)
+	, colorMap(nullptr)
 	, directional(false)
 	, life(0.0f)
 	, decayrate(0.0f)
@@ -69,9 +70,13 @@ void CGenericParticleProjectile::Draw(GL::RenderDataBufferTC* va) const
 
 	unsigned char color[4];
 	colorMap->GetColor(color, life);
+
 	va->SafeAppend({drawPos + (-xdir - ydir) * size, texture->xstart, texture->ystart, color});
 	va->SafeAppend({drawPos + (-xdir + ydir) * size, texture->xend,   texture->ystart, color});
 	va->SafeAppend({drawPos + ( xdir + ydir) * size, texture->xend,   texture->yend,   color});
+
+	va->SafeAppend({drawPos + ( xdir + ydir) * size, texture->xend,   texture->yend,   color});
 	va->SafeAppend({drawPos + ( xdir - ydir) * size, texture->xstart, texture->yend,   color});
+	va->SafeAppend({drawPos + (-xdir - ydir) * size, texture->xstart, texture->ystart, color});
 }
 

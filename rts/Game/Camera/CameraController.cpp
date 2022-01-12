@@ -35,7 +35,7 @@ bool CCameraController::SetStateBool(const StateMap& sm, const std::string& name
 {
 	const StateMap::const_iterator it = sm.find(name);
 
-	if (it != sm.end()) {
+	if (it != sm.cend()) {
 		var = (it->second > 0.0f);
 		return true;
 	}
@@ -47,7 +47,7 @@ bool CCameraController::SetStateFloat(const StateMap& sm, const std::string& nam
 {
 	const StateMap::const_iterator it = sm.find(name);
 
-	if (it != sm.end()) {
+	if (it != sm.cend()) {
 		var = it->second;
 		return true;
 	}

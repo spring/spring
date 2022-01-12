@@ -52,7 +52,6 @@ CDirtProjectile::CDirtProjectile(
 }
 
 CDirtProjectile::CDirtProjectile() :
-	CProjectile(),
 	alpha(255.0f),
 	alphaFalloff(10.0f),
 	size(10.0f),
@@ -97,7 +96,10 @@ void CDirtProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->yend,   col});
 	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->ystart, col});
+	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col});
 }
 
 

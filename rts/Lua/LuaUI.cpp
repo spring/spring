@@ -2,6 +2,7 @@
 
 #include "LuaUI.h"
 
+#include "LuaConfig.h"
 #include "LuaInclude.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaArchive.h"
@@ -27,27 +28,15 @@
 #include "LuaIO.h"
 #include "LuaZip.h"
 #include "Game/Camera.h"
-#include "Game/Camera/CameraController.h"
-#include "Game/Game.h"
-#include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnitsHandler.h"
-#include "Game/UI/CommandColors.h"
-#include "Game/UI/InfoConsole.h"
-#include "Game/UI/KeyCodes.h"
-#include "Game/UI/KeySet.h"
-#include "Game/UI/KeyBindings.h"
-#include "Game/UI/MiniMap.h"
-#include "Game/UI/MouseHandler.h"
-#include "Map/ReadMap.h"
-#include "Rendering/IconHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSModes.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/StringUtil.h"
 #include "System/Threading/SpringThreading.h"
 #include "lib/luasocket/src/luasocket.h"
@@ -57,31 +46,13 @@
 
 CONFIG(bool, LuaSocketEnabled)
 	.defaultValue(true)
-	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
+	.description("Enable LuaSocket support, allows Lua widgets to make TCP/UDP connections")
 	.readOnly(true)
 ;
 
-using std::max;
 
+CLuaUI* luaUI = nullptr;
 
-CLuaUI* luaUI = NULL;
-
-const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
-
-static const char* GetVFSMode(bool lockedAccess)
-{
-	const char* accessMode = SPRING_VFS_RAW;
-
-	if (lockedAccess) {
-		if (!CLuaHandle::GetDevMode()) {
-			accessMode = SPRING_VFS_MOD;
-		} else {
-			accessMode = SPRING_VFS_RAW SPRING_VFS_ZIP;
-		}
-	}
-
-	return accessMode;
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -111,16 +82,14 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
-	const bool luaLockedAccess = CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
 
-	const std::string mode = GetVFSMode(luaLockedAccess);
+	const std::string mode = (CLuaHandle::GetDevMode()) ? SPRING_VFS_RAW_FIRST : SPRING_VFS_MOD;
 	const std::string file = (CFileHandler::FileExists("luaui.lua", mode) ? "luaui.lua": "LuaUI/main.lua");
 	const std::string code = LoadFile(file, mode);
 
 	LOG("LuaUI Entry Point: \"%s\"", file.c_str());
-	LOG("LuaUI Access Lock: %s", (luaLockedAccess ? ((!CLuaHandle::GetDevMode()) ? "enabled": "bypassed"): "disabled" ));
-	LOG("LuaSocket Enabled: %s", (luaSocketEnabled ? "yes": "no" ));
+	LOG("LuaSocket Support: %s", (luaSocketEnabled? "enabled": "disabled"));
 
 	if (code.empty()) {
 		KillLua();
@@ -136,10 +105,9 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_string);
 	LUA_OPEN_LIB(L, luaopen_debug);
 
-	//initialize luasocket
-	if (luaSocketEnabled){
+	// initialize luasocket
+	if (luaSocketEnabled)
 		InitLuaSocket(L);
-	}
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
@@ -234,7 +202,7 @@ void CLuaUI::InitLuaSocket(lua_State* L) {
 
 string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 {
-	CFileHandler f(name, mode.c_str());
+	CFileHandler f(name, mode);
 
 	string code;
 	if (!f.LoadStringData(code))
@@ -246,17 +214,20 @@ string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 
 static bool IsDisallowedCallIn(const string& name)
 {
-	return
-		   (name == "Explosion")
-		|| (name == "DrawUnit")
-		|| (name == "DrawFeature")
-		|| (name == "DrawShield")
-		|| (name == "DrawProjectile")
-	;
+	switch (hashString(name.c_str())) {
+		case hashString("Explosion"     ): { return true; } break;
+		case hashString("DrawUnit"      ): { return true; } break;
+		case hashString("DrawFeature"   ): { return true; } break;
+		case hashString("DrawShield"    ): { return true; } break;
+		case hashString("DrawProjectile"): { return true; } break;
+		case hashString("DrawMaterial"  ): { return true; } break;
+		default                          : {              } break;
+	}
+
+	return false;
 }
 
-
-bool CLuaUI::HasCallIn(lua_State* L, const string& name)
+bool CLuaUI::HasCallIn(lua_State* L, const string& name) const
 {
 	// never allow these calls
 	if (IsDisallowedCallIn(name))
@@ -268,15 +239,18 @@ bool CLuaUI::HasCallIn(lua_State* L, const string& name)
 
 void CLuaUI::UpdateTeams()
 {
-	if (luaUI) {
-		luaUI->SetFullCtrl(gs->godMode);
-		luaUI->SetCtrlTeam(gs->godMode ? AllAccessTeam :
-		                  (gu->spectating ? NoAccessTeam : gu->myTeam));
-		luaUI->SetFullRead(gu->spectatingFullView);
-		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
-		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
-		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
-	}
+	if (luaUI == nullptr)
+		return;
+
+	const bool allAccessCtrl = (gs->godMode == GODMODE_MAX_VAL);
+	const bool  noAccessCtrl = (gs->godMode == 0 && gu->spectating);
+
+	luaUI->SetFullCtrl(allAccessCtrl);
+	luaUI->SetCtrlTeam(allAccessCtrl ? AllAccessTeam : (noAccessCtrl ? NoAccessTeam : gu->myTeam));
+	luaUI->SetFullRead(gu->spectatingFullView);
+	luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
+	luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
+	luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
 }
 
 
@@ -297,23 +271,18 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event name
+bool CLuaUI::ConfigureLayout(const string& command)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("ConfigureLayout");
-	if (!cmdStr.GetGlobalFunc(L)) {
+	luaL_checkstack(L, 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
-	}
 
 	lua_pushsstring(L, command);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, 1, 0)) {
-		return false;
-	}
-
-	return true;
+	return RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -343,8 +312,8 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 
 	LUA_CALL_IN_CHECK(L);
 
-	luaL_checkstack(L, 6, __FUNCTION__);
-	static const LuaHashString cmdStr("ShockFront");
+	luaL_checkstack(L, 6, __func__);
+	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false; //FIXME improve in GameHelper.cpp and pipe instead through eventHandler?
@@ -365,28 +334,26 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	lua_pushnumber(L, dir.z);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, 4, 0)) {
-		return;
-	}
-
-	return;
+	RunCallIn(L, cmdStr, 4, 0);
 }
 
 
 /******************************************************************************/
 
-bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
-                           const vector<SCommandDescription>& cmds,
-                           vector<int>& removeCmds,
-                           vector<SCommandDescription>& customCmds,
-                           vector<int>& onlyTextureCmds,
-                           vector<ReStringPair>& reTextureCmds,
-                           vector<ReStringPair>& reNamedCmds,
-                           vector<ReStringPair>& reTooltipCmds,
-                           vector<ReParamsPair>& reParamsCmds,
-                           spring::unordered_map<int, int>& buttonList,
-                           string& menuName)
-{
+bool CLuaUI::LayoutButtons(
+	int& xButtons,
+	int& yButtons,
+	const vector<SCommandDescription>& cmds,
+	vector<int>& removeCmds,
+	vector<SCommandDescription>& customCmds,
+	vector<int>& onlyTextureCmds,
+	vector<ReStringPair>& reTextureCmds,
+	vector<ReStringPair>& reNamedCmds,
+	vector<ReStringPair>& reTooltipCmds,
+	vector<ReParamsPair>& reParamsCmds,
+	spring::unordered_map<int, int>& buttonList,
+	string& menuName
+) {
 	customCmds.clear();
 	removeCmds.clear();
 	reTextureCmds.clear();
@@ -397,13 +364,12 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	menuName = "";
 
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 6, __FUNCTION__);
+	luaL_checkstack(L, 6, __func__);
 	const int top = lua_gettop(L);
 
-	static const LuaHashString cmdStr("LayoutButtons");
-	if (!cmdStr.GetGlobalFunc(L)) {
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-	}
 
 	lua_pushnumber(L, xButtons);
 	lua_pushnumber(L, yButtons);
@@ -503,17 +469,16 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 }
 
 
-bool CLuaUI::BuildCmdDescTable(lua_State* L,
-                               const vector<SCommandDescription>& cmds)
+bool CLuaUI::BuildCmdDescTable(lua_State* L, const vector<SCommandDescription>& cmds)
 {
-	lua_newtable(L);
+	lua_createtable(L, cmds.size(), 0);
 
-	const int cmdDescCount = (int)cmds.size();
-	for (int i = 0; i < cmdDescCount; i++) {
+	for (size_t i = 0; i < cmds.size(); i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
 		LuaUtils::PushCommandDesc(L, cmds[i]);
 		lua_rawset(L, -3);
 	}
+
 	return true;
 }
 
@@ -612,13 +577,12 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 }
 
 
-bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
-                               vector<SCommandDescription>& cmdDescs)
+bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index, vector<SCommandDescription>& cmdDescs)
 {
 	const int table = index;
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
+
 	int paramIndex = 1;
 	for (lua_rawgeti(L, table, paramIndex);
 	     lua_istable(L, -1);

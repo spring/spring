@@ -8,7 +8,6 @@
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -38,6 +37,7 @@ void CWreckProjectile::Update()
 		CSmokeProjectile* hp = projMemPool.alloc<CSmokeProjectile>(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
+
 	deleteMe |= (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z));
 }
 
@@ -53,12 +53,16 @@ void CWreckProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col});
 	#undef wt
 }
 
-void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CWreckProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::redA);
+	va->SafeAppend({pos        , color4::redA});
+	va->SafeAppend({pos + speed, color4::redA});
 }
 

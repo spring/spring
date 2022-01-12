@@ -7,7 +7,7 @@
 #enable_language(Java)
 
 # includes rts/build/cmake/UtilJava.cmake
-INCLUDE(UtilJava)
+include(UtilJava)
 
 
 set(myName               "JavaOO")
@@ -16,33 +16,33 @@ set(myName               "JavaOO")
 # Check if the user wants to compile the wrapper
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AIWRAPPERS_JAVA TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+else ()
 	set(AIWRAPPERS_JAVA FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+endif ()
 
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
-else  (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
+	set_global(BUILD_${myName}_AIWRAPPER TRUE)
+else ()
+	set_global(BUILD_${myName}_AIWRAPPER FALSE)
 	message("warning: Java OO AI Wrapper will not be built!")
-endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 # Build
 if    (BUILD_${myName}_AIWRAPPER)
 	set(myDir        "${CMAKE_CURRENT_SOURCE_DIR}")
-	GetLastPathPart(dirName ${myDir})
+	get_last_path_part(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
 	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
 	set(mySourceDirRel     "src/main/java")
-	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	AIWrapperMessage(STATUS "Found AI Wrapper: ${myName}")
+	ai_wrapper_message(STATUS "Found AI Wrapper: ${myName}")
 
 
 	# Build library
@@ -58,26 +58,26 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myBinJarFile                 "${myJarFile}.jar")
 	set(mySrcJarFile                 "${myJarFile}-src.jar")
 	set(myJLibDir                    "${myDir}/jlib")
-	FindJavaLib(vecmath_jar "vecmath" "${myJLibDir}")
+	find_java_lib(vecmath_jar "vecmath" "${myJLibDir}")
 	set(myJLibs                      "${vecmath_jar}")
 	set(jAiIntJavaSourceDir          "${JAVA_SRC_DIR_Java_AIINTERFACE}")
 	set(jAiIntJavaGeneratedSourceDir "${JAVA_GEN_SRC_DIR_Java_AIINTERFACE}")
 	set(myClassPath                  "${myJLibs}${PATH_DELIM_H}${CLASSPATH_Java_AIINTERFACE}")
 
-	SetGlobal(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
-	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
-	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
-	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
+	set_global(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
+	set_global(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
+	set_global(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
+	set_global(${myName}_AIWRAPPER_TARGET        "${myTarget}")
+	set_global(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
+	set_global(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Locate the manifest file
-	FindManifestFile("${myDir}" myManifestFile)
+	find_manifest_file("${myDir}" myManifestFile)
 	if    (myManifestFile)
 		set(myBinJarArgs "cmf" "${myManifestFile}")
-	else  (myManifestFile)
+	else ()
 		set(myBinJarArgs "cf")
-	endif (myManifestFile)
+	endif ()
 
 	# remove all generated sources from build dir, if it exists
 	# (required for build dirs of git:master from before 21. September 2010)
@@ -167,12 +167,12 @@ if    (BUILD_${myName}_AIWRAPPER)
 			list(APPEND myGeneratedCallbackSources
 				"${myGeneratedSourceDir}/${myPkg}/clb/WrappCurrentCommand.java"
 				)
-		else   ()
+		else ()
 			list(APPEND myGeneratedCallbackSources
 				"${myGeneratedSourceDir}/${myPkg}/clb/Wrapp${className}.java"
 				)
-		endif  ()
-	endforeach (className)
+		endif ()
+	endforeach ()
 
 	set(myGeneratedEventSources
 		"${myGeneratedSourceDir}/${myPkg}/AbstractOOAI.java"
@@ -300,10 +300,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
 	if    (EXISTS "${mySrcArgFile}")
 		file(REMOVE "${mySrcArgFile}")
-	endif (EXISTS "${mySrcArgFile}")
+	endif ()
 	foreach    (srcFile ${mySources} ${myGeneratedSources})
 		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-	endforeach (srcFile)
+	endforeach ()
 
 	# compile and pack library
 	add_custom_command(
@@ -380,4 +380,4 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	add_dependencies(${myTarget} ${myJavaTarget})
 
-endif (BUILD_${myName}_AIWRAPPER)
+endif ()

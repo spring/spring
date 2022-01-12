@@ -17,10 +17,13 @@
 //CONFIG(bool, ColorElev).defaultValue(true).description("If heightmap (default hotkey [F1]) should be colored or not.");
 
 constexpr VA_TYPE_0 VERTS[] = {
-	{{ 0.0f,  0.0f, 0.0f}},
-	{{ 0.0f, +1.0f, 0.0f}},
-	{{+1.0f, +1.0f, 0.0f}},
-	{{+1.0f,  0.0f, 0.0f}},
+	{{ 0.0f,  0.0f, 0.0f}}, // bl
+	{{ 0.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f,  0.0f, 0.0f}}, // br
+	{{ 0.0f,  0.0f, 0.0f}}, // bl
 };
 
 
@@ -52,7 +55,7 @@ CHeightTexture::CHeightTexture()
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_RGBA, GL_UNSIGNED_BYTE, &CHeightLinePalette::paletteColored[0].r);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 1, 256, 1, GL_RGBA, GL_UNSIGNED_BYTE, &CHeightLinePalette::paletteBlackAndWhite[0].r);
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CHeightTexture");
@@ -162,11 +165,12 @@ void CHeightTexture::Update()
 		return UpdateCPU();
 
 	fbo.Bind();
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->DisableBlendMask();
+
 	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
 
@@ -174,27 +178,11 @@ void CHeightTexture::Update()
 
 	shader->Enable();
 	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
-
-	// cleanup
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
 }
 
-
-void CHeightTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
-{
-	needUpdate = true;
-}
-
-
-bool CHeightTexture::IsUpdateNeeded()
-{
-	return needUpdate;
-}

@@ -4,7 +4,7 @@
 #define _THREADING_H_
 
 #include <string>
-#ifndef WIN32
+#ifndef _WIN32
 #include <pthread.h>
 #include "System/Platform/Linux/ThreadSupport.h"
 #include <semaphore.h>
@@ -15,22 +15,37 @@
 
 #include "System/Platform/Win/win32.h"
 #include "System/Threading/SpringThreading.h"
-#include <functional>
+
 #include <atomic>
+#include <functional>
+
 #include <cinttypes>
+#include <cstring>
 
 
 
 namespace Threading {
-
 	class ThreadControls;
 
-	extern thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
+	enum {
+		THREAD_IDX_MAIN = 0,
+		THREAD_IDX_LOAD = 1,
+		THREAD_IDX_SND  = 2,
+		THREAD_IDX_VFSI = 3,
+		THREAD_IDX_WDOG = 4,
+		THREAD_IDX_LAST = 5,
+	};
 
-	/**
-	 * Generic types & functions to handle OS native threads
-	 */
-#ifdef WIN32
+
+	// used to indicate the result of a suspend or resume operation
+	enum SuspendResult {
+		THREADERR_NONE,
+		THREADERR_NOT_RUNNING,
+		THREADERR_MISC
+	};
+
+	// generic types & functions to handle OS native threads
+#ifdef _WIN32
 	typedef DWORD     NativeThreadId;
 	typedef HANDLE    NativeThreadHandle;
 #else
@@ -40,34 +55,28 @@ namespace Threading {
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
 
-	/**
-	 * Used to indicate the result of a suspend or resume operation.
-	 */
-	enum SuspendResult {
-		THREADERR_NONE,
-		THREADERR_NOT_RUNNING,
-		THREADERR_MISC
-	};
+#ifndef _WIN32
+	extern thread_local std::shared_ptr<ThreadControls> localThreadControls;
+#endif
+
 
 	/**
 	 * Creates a new spring::thread whose entry function is wrapped by some boilerplate code that allows for suspend/resume.
 	 * These suspend/resume controls are exposed via the ThreadControls object that is provided by the caller and initialized by the thread.
 	 * The thread is guaranteed to be in a running and initialized state when this function returns.
 	 *
-	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
+	 * The threadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
 	 *
 	 */
-	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* threadCtls = nullptr);
 
 	/**
 	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
 	 */
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
 
-#ifndef WIN32
-	void SetCurrentThreadControls(bool);
-#else
-	static inline void SetCurrentThreadControls(bool) {}
+#ifndef _WIN32
+	void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls);
 #endif
 
 	/**
@@ -83,13 +92,14 @@ namespace Threading {
 
 		NativeThreadHandle      handle;
 		std::atomic<bool>       running;
-	#ifndef WIN32
+	#ifndef _WIN32
 		spring::mutex            mutSuspend;
 		spring::condition_variable condInitialized;
 		ucontext_t              ucontext;
 		pid_t                   thread_id;
 	#endif
 	};
+
 
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
@@ -152,28 +162,38 @@ namespace Threading {
 	 * Used to raise errors in the main-thread issued by worker-threads
 	 */
 	struct Error {
-		Error() : flags(0) {}
-		Error(const std::string& _caption, const std::string& _message, const unsigned int _flags) : caption(_caption), message(_message), flags(_flags) {}
+		Error() : flags(0) {
+			memset(caption, 0, sizeof(caption));
+			memset(message, 0, sizeof(message));
+		}
+		Error(const char* _caption, const char* _message, unsigned int _flags) : flags(_flags) {
+			strncpy(caption, _caption, sizeof(caption) - 1);
+			strncpy(message, _message, sizeof(message) - 1);
+		}
 		Error(const Error&) = delete;
 		Error(Error&& e) { *this = std::move(e); }
 
 		Error& operator = (const Error& e) = delete;
 		Error& operator = (Error&& e) {
-			caption = std::move(e.caption);
-			message = std::move(e.message);
+			memcpy(caption, e.caption, sizeof(caption));
+			memcpy(message, e.message, sizeof(message));
+			memset(e.caption, 0, sizeof(caption));
+			memset(e.message, 0, sizeof(message));
+
 			flags = e.flags;
+			e.flags = 0;
 			return *this;
 		}
 
-		bool Empty() const { return (caption.empty() && message.empty() && flags == 0); }
+		bool Empty() const { return (caption[0] == 0 && message[0] == 0 && flags == 0); }
 
-		std::string caption;
-		std::string message;
+		char caption[512];
+		char message[512];
 		unsigned int flags;
 	};
 
-	void SetThreadError(Error&& err);
-	Error* GetThreadError();
+	const Error* GetThreadErrorC();
+	      Error* GetThreadErrorM();
 }
 
 

@@ -135,7 +135,7 @@ public:
     }
 
     /** @copydoc LogStream::write */
-    void write(const char* message) {
+    void write(const char* message) override {
         stream.callback(message,stream.user);
     }
 
@@ -163,7 +163,7 @@ const aiScene* aiImportFileEx( const char* pFile, unsigned int pFlags,  aiFileIO
 }
 
 // ------------------------------------------------------------------------------------------------
-const aiScene* aiImportFileExWithProperties( const char* pFile, unsigned int pFlags, 
+const aiScene* aiImportFileExWithProperties( const char* pFile, unsigned int pFlags,
         aiFileIO* pFS, const aiPropertyStore* props) {
     ai_assert(NULL != pFile);
 
@@ -202,7 +202,7 @@ const aiScene* aiImportFileExWithProperties( const char* pFile, unsigned int pFl
 
     // return imported data. If the import failed the pointer is NULL anyways
     ASSIMP_END_EXCEPTION_REGION(const aiScene*);
-    
+
     return scene;
 }
 

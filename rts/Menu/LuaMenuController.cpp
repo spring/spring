@@ -39,14 +39,26 @@ CLuaMenuController::~CLuaMenuController()
 }
 
 
-void CLuaMenuController::Reset()
+bool CLuaMenuController::Reset()
 {
-	if (!Valid())
-		return;
+	if (!Valid()) {
+		// if no LuaMenu, cursor will not be updated (again) until game exists so force a reset
+		// calling ReloadCursors here is not possible since no archives are loaded at this point
+		mouse->ResetCursor();
+		return false;
+	}
 
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
+
+	// lock should not be needed here, but does no harm either
+	vfsHandler->GrabLock();
+	vfsHandler->SetName("LuaMenuVFS");
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
+	vfsHandler->SetName("SpringVFS");
+	vfsHandler->FreeLock();
+
 	mouse->ReloadCursors();
+	return true;
 }
 
 bool CLuaMenuController::Activate(const std::string& msg)
@@ -83,7 +95,7 @@ bool CLuaMenuController::Draw()
 	// we should not become the active controller unless this holds (see ::Activate)
 	assert(luaMenu != nullptr);
 
-	eventHandler.CollectGarbage();
+	eventHandler.CollectGarbage(false);
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
 	mouse->UpdateCursors();

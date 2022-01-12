@@ -28,38 +28,29 @@ public:
 	}
 
 	struct Texture {
-		Texture()
-		: name(""), id(0), fbo(0), fboDepth(0),
-		  target(GL_TEXTURE_2D), format(GL_RGBA8),
-		  xsize(0), ysize(0), border(0),
-		  min_filter(GL_LINEAR), mag_filter(GL_LINEAR),
-		  wrap_s(GL_REPEAT), wrap_t(GL_REPEAT), wrap_r(GL_REPEAT),
-		  aniso(0.0f)
-		{}
-
-		std::string name;
-
-		GLuint id;
+		GLuint id = 0;
 
 		// FIXME: obsolete, use raw FBO's
-		GLuint fbo;
-		GLuint fboDepth;
+		GLuint fbo = 0;
+		GLuint fboDepth = 0;
 
-		GLenum target;
-		GLenum format;
+		GLenum target = GL_TEXTURE_2D;
+		GLenum format = GL_RGBA8;
 
-		GLsizei xsize;
-		GLsizei ysize;
-		GLint border;
+		GLsizei xsize   = 0;
+		GLsizei ysize   = 0;
+		GLsizei samples = 0;
 
-		GLenum min_filter;
-		GLenum mag_filter;
+		GLint border = 0;
 
-		GLenum wrap_s;
-		GLenum wrap_t;
-		GLenum wrap_r;
+		GLenum min_filter = GL_LINEAR;
+		GLenum mag_filter = GL_LINEAR;
 
-		GLfloat aniso;
+		GLenum wrap_s = GL_REPEAT;
+		GLenum wrap_t = GL_REPEAT;
+		GLenum wrap_r = GL_REPEAT;
+
+		GLfloat aniso = 0.0f;
 	};
 
 	std::string Create(const Texture& tex);
@@ -67,11 +58,16 @@ public:
 	bool Free(const std::string& name);
 	bool FreeFBO(const std::string& name);
 	void FreeAll();
+	void ChangeParams(const Texture& tex) const;
+	void ApplyParams(const Texture& tex) const;
 
 	size_t GetIdx(const std::string& name) const;
 
-	const Texture* GetInfo(size_t texIdx) const { return &textureVec[texIdx]; }
-	const Texture* GetInfo(const std::string& name) const;
+	const Texture* GetInfo(size_t texIdx) const { return ((texIdx < textureVec.size())? &textureVec[texIdx]: nullptr); }
+	      Texture* GetInfo(size_t texIdx)       { return ((texIdx < textureVec.size())? &textureVec[texIdx]: nullptr); }
+
+	const Texture* GetInfo(const std::string& name) const { return (GetInfo(GetIdx(name))); }
+	      Texture* GetInfo(const std::string& name)       { return (GetInfo(GetIdx(name))); }
 
 private:
 	int lastCode;

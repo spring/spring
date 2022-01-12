@@ -80,7 +80,7 @@ public:
 		float maxDecRate,
 		bool wantReverse,
 		bool isReversing
-	) const;
+	) const override;
 
 	#if 1
 	short GetDeltaHeading(
@@ -88,7 +88,7 @@ public:
 		short newHeading,
 		short oldHeading,
 		float maxTurnRate
-	) const;
+	) const override;
 	#endif
 
 	short GetDeltaHeading(
@@ -99,15 +99,15 @@ public:
 		float maxTurnAccel,
 		float turnBrakeDist,
 		float* curTurnSpeed
-	) const;
+	) const override;
 
-	bool AllowSetTempGoalPosition(unsigned int pathID, const float3& pos) const { return true; }
-	void SetTempGoalPosition(unsigned int pathID, const float3& pos) { realGoalPos = pos; }
-	void SetRealGoalPosition(unsigned int pathID, const float3& pos) { tempGoalPos = pos; }
+	bool AllowSetTempGoalPosition(unsigned int pathID, const float3& pos) const override { return true; }
+	void SetTempGoalPosition(unsigned int pathID, const float3& pos) override { realGoalPos = pos; }
+	void SetRealGoalPosition(unsigned int pathID, const float3& pos) override { tempGoalPos = pos; }
 
-	bool IgnoreTerrain(const MoveDef& md, const float3& pos) const;
-	bool IgnoreCollision(const CUnit* collider, const CUnit* collidee) const { return false; }
-	bool IgnoreCollision(const CUnit* collider, const CFeature* collidee) const { return false; }
+	bool IgnoreTerrain(const MoveDef& md, const float3& pos) const override;
+	bool IgnoreCollision(const CUnit* collider, const CUnit* collidee) const override { return false; }
+	bool IgnoreCollision(const CUnit* collider, const CFeature* collidee) const override { return false; }
 
 private:
 	float3 realGoalPos; // where <owner> ultimately wants to go (its final waypoint)

@@ -24,43 +24,40 @@ private:
 	typedef std::pair<std::string, float> StreamQueueItem;
 
 public:
-	AudioChannel(): curStreamSrc(nullptr) {}
+	void Enable(bool newState) override;
+	void SetVolume(float newVolume) override;
 
-	void Enable(bool newState);
-	void SetVolume(float newVolume);
+	void PlaySample(size_t id, float volume = 1.0f) override;
+	void PlaySample(size_t id, const float3& pos, float volume = 1.0f) override;
+	void PlaySample(size_t id, const float3& pos, const float3& velocity, float volume = 1.0f) override;
 
-	void PlaySample(size_t id, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& pos, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& pos, const float3& velocity, float volume = 1.0f);
+	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f) override;
 
-	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
+	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) override;
+	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel = ZeroVector) override;
 
-	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj);
-	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
-
-	void StreamPlay(const StreamQueueItem& item, bool enqueue) { StreamPlay(item.first, item.second, enqueue); }
-	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
+	void StreamPlay(const StreamQueueItem& item, bool enqueue)  { StreamPlay(item.first, item.second, enqueue); }
+	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) override;
 
 	/**
 	 * @brief Stop playback
 	 *
 	 * Do not call this if you just want to play another file (for performance).
 	 */
-	void StreamStop();
-	void StreamPause();
-	float StreamGetTime();
-	float StreamGetPlayTime();
+	void StreamStop() override;
+	void StreamPause() override;
+	float StreamGetTime() override;
+	float StreamGetPlayTime() override;
 
 protected:
-	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative);
-
-	void SoundSourceFinished(CSoundSource* sndSource);
+	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative) override;
+	void SoundSourceFinished(CSoundSource* sndSource) override;
 
 private:
 	spring::unsynced_set<CSoundSource*> curSources;
 	std::deque<StreamQueueItem> streamQueue;
 
-	CSoundSource* curStreamSrc;
+	CSoundSource* curStreamSrc = nullptr;
 
 	static constexpr size_t MAX_STREAM_QUEUESIZE = 10;
 };

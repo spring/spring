@@ -48,7 +48,7 @@ public:
       asio::io_context& io_context);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown();
+  ASIO_DECL void shutdown() override;
 
   // Construct a new serial port implementation.
   void construct(implementation_type& impl)

@@ -6,7 +6,7 @@ layout(location = 1) in vec4 a_color_rgba;
 
 uniform mat4 u_movi_mat;
 uniform mat4 u_proj_mat;
-uniform ivec2 u_diffuse_tex_sqr;
+uniform ivec3 u_diffuse_tex_sqr;
 
 const vec4 detail_plane_s = vec4(0.005, 0.000, 0.005, 0.5);
 const vec4 detail_plane_t = vec4(0.000, 0.005, 0.000, 0.5);

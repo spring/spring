@@ -34,14 +34,16 @@ public:
 	 * @param BSIZE
 	 *   The resolution of the estimator, given in mapsquares.
 	 *
-	 * @param cacheFileName
+	 * @param peFileName
 	 *   Name of the file on disk where pre-calculated data is stored.
 	 *   The name given are added to the end of the filename, after the
 	 *   name of the corresponding map.
 	 *   Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	void Init(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
+	void Init(IPathFinder*, unsigned int BSIZE, const std::string& peFileName, const std::string& mapFileName);
 	void Kill();
+
+	bool RemoveCacheFile(const std::string& peFileName, const std::string& mapFileName);
 
 
 	/**
@@ -64,6 +66,10 @@ public:
 	 * path data.
 	 */
 	std::uint32_t GetPathChecksum() const { return pathChecksum; }
+
+
+	const std::vector<float>& GetVertexCosts() const { return vertexCosts; }
+	const std::deque<int2>& GetUpdatedBlocks() const { return updatedBlocks; }
 
 
 protected: // IPathFinder impl
@@ -101,7 +107,7 @@ protected: // IPathFinder impl
 	) override;
 
 private:
-	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
+	void InitEstimator(const std::string& peFileName, const std::string& mapFileName);
 	void InitBlocks();
 
 	void CalcOffsetsAndPathCosts(unsigned int threadNum, spring::barrier* pathBarrier);
@@ -112,8 +118,8 @@ private:
 	void CalcVertexPathCosts(const MoveDef&, int2, unsigned int threadNum = 0);
 	void CalcVertexPathCost(const MoveDef&, int2, unsigned int pathDir, unsigned int threadNum = 0);
 
-	bool ReadFile(const std::string& baseFileName, const std::string& mapName);
-	void WriteFile(const std::string& baseFileName, const std::string& mapName);
+	bool ReadFile(const std::string& peFileName, const std::string& mapFileName);
+	bool WriteFile(const std::string& peFileName, const std::string& mapFileName);
 
 	std::uint32_t CalcChecksum() const;
 	std::uint32_t CalcHash(const char* caller) const;

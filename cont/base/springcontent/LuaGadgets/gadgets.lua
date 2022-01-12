@@ -212,7 +212,7 @@ function gadgetHandler:LoadGadget(filename)
   setfenv(chunk, gadget)
   local success, err = pcall(chunk)
   if (not success) then
-    Spring.Log(LOG_SECTION, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(LOG_SECTION, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. tostring(err) .. ')')
     return nil
   end
   if (err == false) then
@@ -1067,6 +1067,17 @@ function gadgetHandler:DrawProjectile(projectileID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawMaterial(materialID, drawMode)
+  for _,g in r_ipairs(self.DrawMaterialList) do
+    if (g:DrawMaterial(materialID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+
 function gadgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,g in r_ipairs(self.RecvSkirmishAIMessageList) do
     local dataRet = g:RecvSkirmishAIMessage(aiTeam, dataStr)
@@ -1090,11 +1101,17 @@ function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
-                                    cmdID, cmdParams, cmdOptions, cmdTag, synced)
+function gadgetHandler:AllowCommand(
+	unitID, unitDefID, unitTeam,
+	cmdID, cmdParams, cmdOptions, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,g in r_ipairs(self.AllowCommandList) do
-    if (not g:AllowCommand(unitID, unitDefID, unitTeam,
-                           cmdID, cmdParams, cmdOptions, cmdTag, synced)) then
+    if (not g:AllowCommand(
+		unitID, unitDefID, unitTeam,
+		cmdID, cmdParams, cmdOptions, cmdTag,
+		playerID, fromSynced, fromLua)
+	) then
       return false
     end
   end
@@ -1145,13 +1162,50 @@ function gadgetHandler:AllowUnitTransport(
   transporteeID, transporteeUnitDefID, transporteeTeam
 )
   for _,g in r_ipairs(self.AllowUnitTransportList) do
-    if (not g:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
-                                 transporteeID, transporteeUnitDefID, transporteeTeam)) then
+    if (not g:AllowUnitTransport(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam
+    )) then
       return false
     end
   end
   return true
 end
+
+function gadgetHandler:AllowUnitTransportLoad(
+  transporterID, transporterUnitDefID, transporterTeam,
+  transporteeID, transporteeUnitDefID, transporteeTeam,
+  loadPosX, loadPosY, loadPosZ
+)
+  for _,g in r_ipairs(self.AllowUnitTransportLoadList) do
+    if (not g:AllowUnitTransportLoad(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam,
+      loadPosX, loadPosY, loadPosZ
+    )) then
+      return false
+    end
+  end
+  return true
+end
+
+function gadgetHandler:AllowUnitTransportUnload(
+  transporterID, transporterUnitDefID, transporterTeam,
+  transporteeID, transporteeUnitDefID, transporteeTeam,
+  unloadPosX, unloadPosY, unloadPosZ
+)
+  for _,g in r_ipairs(self.AllowUnitTransportUnloadList) do
+    if (not g:AllowUnitTransportUnload(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam,
+      unloadPosX, unloadPosY, unloadPosZ
+    )) then
+      return false
+    end
+  end
+  return true
+end
+
 
 function gadgetHandler:AllowUnitCloak(unitID, enemyID)
   for _,g in r_ipairs(self.AllowUnitCloakList) do
@@ -1166,6 +1220,17 @@ end
 function gadgetHandler:AllowUnitDecloak(unitID, objectID, weaponID)
   for _,g in r_ipairs(self.AllowUnitDecloakList) do
     if (not g:AllowUnitDecloak(unitID, objectID, weaponID)) then
+      return false
+    end
+  end
+
+  return true
+end
+
+
+function gadgetHandler:AllowUnitKamikaze(unitID, targetID)
+  for _,g in r_ipairs(self.AllowUnitKamikazeList) do
+    if (not g:AllowUnitKamikaze(unitID, targetID)) then
       return false
     end
   end
@@ -1377,9 +1442,17 @@ function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams
   end
 end
 
-function gadgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+function gadgetHandler:UnitCommand(
+	unitID, unitDefID, unitTeam,
+	cmdID, cmdParams, cmdOpts, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,g in r_ipairs(self.UnitCommandList) do
-    g:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+    g:UnitCommand(
+		unitID, unitDefID, unitTeam,
+		cmdID, cmdParams, cmdOpts, cmdTag,
+		playerID, fromSynced, fromLua
+	)
   end
 end
 
@@ -1828,6 +1901,12 @@ function gadgetHandler:DrawGroundPreForward()
   end
 end
 
+function gadgetHandler:DrawGroundPostForward()
+  for _,g in r_ipairs(self.DrawGroundPostForwardList) do
+    g:DrawGroundPostForward()
+  end
+end
+
 function gadgetHandler:DrawGroundPreDeferred()
   for _,g in r_ipairs(self.DrawGroundPreDeferredList) do
     g:DrawGroundPreDeferred()
@@ -1879,6 +1958,12 @@ function gadgetHandler:DrawInMiniMap(mmsx, mmsy)
   end
 end
 
+
+function gadgetHandler:SunChanged()
+  for _,g in r_ipairs(self.SunChangedList) do
+    g:SunChanged()
+  end
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

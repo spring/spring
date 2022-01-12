@@ -35,6 +35,30 @@ void CShaderHandler::ReloadShaders(bool persistent)
 }
 
 
+void CShaderHandler::InsertExtProgramObject(const char* name, Shader::IProgramObject* prog)
+{
+	assert(name[0] != 0);
+
+	if (GetExtProgramObject(name) != nullptr)
+		return;
+
+	assert(GetExtShaderSources(name) == nullptr);
+
+	// for RenderDataBuffer shaders, collision freedom is
+	// guaranteed at compile-time by GetShaderName switch
+	const unsigned int hash = hashString(name);
+
+	extProgramObjects.insert(hash, prog);
+	extShaderSources.insert(hash, {});
+
+	// the attached shader objects may go away later, so make
+	// copies of their source strings while those still exist
+	for (const Shader::IShaderObject* shader: prog->GetShaderObjs()) {
+		extShaderSources[hash][ GL::ShaderTypeToEnum(shader->GetType()) ] = shader->GetSrc(false);
+	}
+}
+
+
 bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool persistent)
 {
 	ProgramTable& pTable = programObjects[persistent];
@@ -50,8 +74,8 @@ bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool pers
 
 void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
 {
-	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
-		Shader::IProgramObject* po = it->second;
+	for (const auto& item: poMap) {
+		Shader::IProgramObject* po = item.second;
 
 		// free the program object and its attachments
 		if (po == Shader::nullProgramObject)

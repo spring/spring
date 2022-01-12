@@ -6,13 +6,14 @@
 #include <string>
 #include <vector>
 
+#include "FeatureDef.h"
+
 #include "System/Misc/NonCopyable.h"
 #include "System/UnorderedMap.hpp"
 
 
 class LuaTable;
 class LuaParser;
-struct FeatureDef;
 
 class CFeatureDefHandler : public spring::noncopyable
 {

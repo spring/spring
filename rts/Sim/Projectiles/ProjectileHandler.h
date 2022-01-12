@@ -11,7 +11,7 @@
 #include "System/float3.h"
 
 // bypass id and event handling for unsynced projectiles (faster)
-#define UNSYNCED_PROJ_NOEVENT 1
+#define PH_UNSYNCED_PROJECTILE_EVENTS 0
 
 class CProjectile;
 class CUnit;
@@ -48,16 +48,23 @@ public:
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
 
-	void SetMaxParticles(int value) { maxParticles = value; }
-	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
+	void SetMaxParticles(int value) { maxParticles = std::max(0, value); }
+	void SetMaxNanoParticles(int value) { maxNanoParticles = std::max(0, value); }
 
 	void Update();
 
-	float GetParticleSaturation(const bool withRandomization = true) const;
-	int   GetCurrentParticles() const;
+	float GetParticleSaturation(bool randomized = true) const;
+	float GetNanoParticleSaturation(float priority) const {
+		const float total = std::max(1.0f, maxNanoParticles * priority);
+		const float fract = std::max(int(currentNanoParticles >= maxNanoParticles), currentNanoParticles) / total;
+
+		return std::min(1.0f, fract);
+	}
+
+	int GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
-	void AddGroundFlash(CGroundFlash* flash);
+	void AddGroundFlash(CGroundFlash* flash) { groundFlashes.push_back(flash); }
 	void AddFlyingPiece(
 		const S3DModel* model,
 		const S3DModelPiece* piece,
@@ -71,7 +78,7 @@ public:
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
 public:
-	int maxParticles = 0;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxParticles = 0;
 	int maxNanoParticles = 0;
 	int currentNanoParticles = 0;
 
@@ -91,8 +98,17 @@ public:
 	GroundFlashContainer groundFlashes;
 
 private:
-	void UpdateProjectileContainer(bool);
+	// event-notifiers
+	void CreateProjectile(CProjectile*);
+	void DestroyProjectile(CProjectile*);
 
+	void UpdateProjectiles(bool);
+	void UpdateProjectiles() {
+		UpdateProjectiles( true);
+		UpdateProjectiles(false);
+	}
+
+private:
 	// [0] := available unsynced projectile ID's
 	// [1] := available synced (weapon, piece) projectile ID's
 	std::vector<int> freeProjectileIDs[2];

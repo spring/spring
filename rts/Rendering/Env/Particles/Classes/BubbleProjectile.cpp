@@ -25,8 +25,7 @@ CR_REG_METADATA(CBubbleProjectile, (
 
 
 CBubbleProjectile::CBubbleProjectile()
-	: CProjectile()
-	, ttl(0)
+	: ttl(0)
 	, alpha(0.0f)
 	, size(0.0f)
 	, startSize(0.0f)
@@ -90,7 +89,10 @@ void CBubbleProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col});
 	#undef bt
 }
 

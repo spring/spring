@@ -5,40 +5,48 @@
 
 #include "UnitScript.h"
 #include "NullUnitScript.h"
-#include "Sim/Units/Unit.h"
+#include "LuaScriptNames.h"
 #include "System/UnorderedMap.hpp"
 
 class CLuaHandle;
+class CUnit;
 struct lua_State;
 
 // Hack for creg:
 // Since CLuaUnitScript isn't creged, during loading it will
 // construct a CNullUnitScript instead.
-class CLuaUnitScript : public CNullUnitScript
+class CLuaUnitScript : public CUnitScript
 {
+	CR_DECLARE_DERIVED(CLuaUnitScript)
 private:
 	static CUnit* activeUnit;
 	static CUnitScript* activeScript;
 
 	// remember whether we are running in LuaRules or LuaGaia
-	CLuaHandle* handle;
+	CLuaHandle* handle = nullptr;
 
 	// needed to luaL_unref our refs in ~CLuaUnitScript
-	lua_State* L;
+	lua_State* L = nullptr;
 
 	// contrary to COB the list of functions may differ per unit,
 	// so the LUAFN_* -> function mapping can differ per unit too.
-	std::vector<int> scriptIndex;
+	std::array<int, LUAFN_Last> scriptIndex;
 	spring::unordered_map<std::string, int> scriptNames;
 
 	// used to enforce SetDeathScriptFinished can only be used inside Killed
-	bool inKilled;
+	bool inKilled = false;
 
 public:
+	// for creg use only
+	CLuaUnitScript() : CUnitScript(nullptr) {}
+
 	// note: instance can not logically be created from outside CreateScript
 	// the ctor and dtor still have to be public because scripts are pooled
 	CLuaUnitScript(lua_State* L, CUnit* unit);
-	virtual ~CLuaUnitScript();
+	~CLuaUnitScript();
+
+	void PostLoad();
+	void Serialize(creg::ISerializer* s);
 
 protected:
 	void ShowScriptError(const std::string& msg) override;
@@ -80,14 +88,13 @@ public:
 	void Killed() override;
 	void WindChanged(float heading, float speed) override;
 	void ExtractionRateChanged(float speed) override;
-	void WorldRockUnit(const float3& rockDir) override {
-		RockUnit(unit->GetObjectSpaceVec(rockDir));
-	}
+
+	void WorldRockUnit(const float3& rockDir) override;
 	void RockUnit(const float3& rockDir) override;
-	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
-		HitByWeapon(unit->GetObjectSpaceVec(hitDir), weaponDefId, inoutDamage);
-	}
+
+	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
 	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
+
 	void SetSFXOccupy(int curTerrainType) override;
 	void QueryLandingPads(std::vector<int>& out_pieces) override;
 	void BeginTransport(const CUnit* unit) override;

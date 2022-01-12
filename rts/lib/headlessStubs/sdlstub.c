@@ -60,6 +60,7 @@ extern DECLSPEC SDL_Window* SDLCALL SDL_CreateWindow(const char* title, int x, i
 extern DECLSPEC void SDLCALL SDL_DestroyWindow(SDL_Window * window) {}
 extern DECLSPEC void SDLCALL SDL_MinimizeWindow(SDL_Window * window) {}
 extern DECLSPEC void SDLCALL SDL_MaximizeWindow(SDL_Window * window) {}
+extern DECLSPEC void SDLCALL SDL_RestoreWindow(SDL_Window * window) {}
 
 extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window, SDL_GLContext context){
 	return 0;
@@ -97,6 +98,7 @@ extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
 }
 
+extern DECLSPEC int SDLCALL SDL_SetRelativeMouseMode(SDL_bool enabled) { return SDL_FALSE; }
 extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
 }
 
@@ -121,16 +123,11 @@ extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int i, int j) {
 extern DECLSPEC void SDLCALL SDL_SetModState(SDL_Keymod modstate) {
 }
 
-extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) {
-	return 0;
-}
+extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) { return 0; }
+extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) { return 0; }
 
-extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) {
-	return 0;
-}
-
-extern DECLSPEC void SDLCALL SDL_PumpEvents() {
-}
+extern DECLSPEC void SDLCALL SDL_FlushEvent(Uint32 type) {}
+extern DECLSPEC void SDLCALL SDL_PumpEvents() {}
 
 extern DECLSPEC void SDLCALL SDL_SetWindowTitle(SDL_Window* window, const char* title) {
 }
@@ -201,6 +198,10 @@ extern DECLSPEC const SDL_version* SDLCALL SDL_Linked_Version() {
 
 extern DECLSPEC void SDLCALL SDL_GetVersion(SDL_version* ver) {
 	*ver = stubVersion;
+}
+
+extern DECLSPEC const char* SDL_GetCurrentVideoDriver() {
+	return "headless stub";
 }
 
 extern DECLSPEC int SDLCALL SDL_ShowCursor(int toggle) {
@@ -298,6 +299,10 @@ extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
 }
 
 extern DECLSPEC void SDLCALL SDL_StopTextInput(void) {
+}
+
+extern DECLSPEC int SDLCALL SDL_GL_SetSwapInterval(int interval) {
+	return 0;
 }
 
 #ifdef __cplusplus

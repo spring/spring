@@ -107,6 +107,7 @@ local flexCallIns = {
   'GameOver',
   'GamePaused',
   'GameFrame',
+  'GameProgress',
   'GameSetup',
   'TeamDied',
   'TeamChanged',
@@ -155,9 +156,16 @@ local flexCallIns = {
   'DrawWorldShadow',
   'DrawWorldReflection',
   'DrawWorldRefraction',
+  'DrawGroundPreForward',
+  'DrawGroundPostForward',
+  'DrawGroundPreDeferred',
+  'DrawGroundPostDeferred',
+  'DrawUnitsPostDeferred',
+  'DrawFeaturesPostDeferred',
   'DrawScreenEffects',
   'DrawScreenPost',
   'DrawInMiniMap',
+  'SunChanged',
   'RecvSkirmishAIMessage',
 }
 local flexCallInMap = {}
@@ -326,7 +334,7 @@ local function GetWidgetInfo(name, mode)
     setfenv(chunk, info)
     local success, err = pcall(chunk)
     if (not success) then
-      Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. err)
+      Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. tostring(err))
     end
   end
 
@@ -1333,6 +1341,42 @@ function widgetHandler:DrawWorldRefraction()
   end
 end
 
+function widgetHandler:DrawGroundPreForward()
+  for _,w in ripairs(self.DrawGroundPreForwardList) do
+    w:DrawGroundPreForward()
+  end
+end
+
+function widgetHandler:DrawGroundPostForward()
+  for _,w in ripairs(self.DrawGroundPostForwardList) do
+    w:DrawGroundPostForward()
+  end
+end
+
+
+function widgetHandler:DrawGroundPreDeferred()
+  for _,w in ripairs(self.DrawGroundPreDeferredList) do
+    w:DrawGroundPreDeferred()
+  end
+end
+
+function widgetHandler:DrawGroundPostDeferred()
+  for _,w in ripairs(self.DrawGroundPostDeferredList) do
+    w:DrawGroundPostDeferred()
+  end
+end
+
+function widgetHandler:DrawUnitsPostDeferred()
+  for _,w in ripairs(self.DrawUnitsPostDeferredList) do
+    w:DrawUnitsPostDeferred()
+  end
+end
+
+function widgetHandler:DrawFeaturesPostDeferred()
+  for _,w in ripairs(self.DrawFeaturesPostDeferredList) do
+    w:DrawFeaturesPostDeferred()
+  end
+end
 
 function widgetHandler:DrawScreenEffects(vsx, vsy)
   for _,w in ripairs(self.DrawScreenEffectsList) do
@@ -1354,6 +1398,13 @@ function widgetHandler:DrawInMiniMap(xSize, ySize)
   end
 end
 
+
+function widgetHandler:SunChanged()
+  for _,w in ripairs(self.SunChangedList) do
+    w:SunChanged()
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --
@@ -1841,9 +1892,17 @@ function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
+function widgetHandler:UnitCommand(
+	unitID, unitDefID, unitTeam,
+	cmdId, cmdParams, cmdOpts, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,w in ipairs(self.UnitCommandList) do
-    w:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
+    w:UnitCommand(
+      unitID, unitDefID, unitTeam,
+      cmdID, cmdParams, cmdOpts, cmdTag,
+      playerID, fromSynced, fromLua
+    )
   end
   return
 end

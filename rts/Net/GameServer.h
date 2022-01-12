@@ -5,6 +5,7 @@
 
 // #include <asio/ip/udp.hpp>
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <array>
@@ -100,7 +101,12 @@ public:
 
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
-	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
+
+	static bool IsServerCommand(const std::string& cmd) {
+		const auto pred = [](const std::string& a, const std::string& b) { return (a < b); };
+		const auto iter = std::lower_bound(commandBlacklist.begin(), commandBlacklist.end(), cmd, pred);
+		return (iter != commandBlacklist.end() && *iter == cmd);
+	}
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
@@ -120,21 +126,21 @@ private:
 	/// Execute textual messages received from clients
 	void PushAction(const Action& action, bool fromAutoHost);
 
-	void StripGameSetupText(const GameData* const newGameData);
+	void StripGameSetupText(GameData* gameData);
 
 	/**
 	 * @brief kick the specified player from the battle
 	 */
-	void KickPlayer(const int playerNum);
+	void KickPlayer(int playerNum);
 	/**
 	 * @brief force the specified player to spectate
 	 */
-	void SpecPlayer(const int playerNum);
+	void SpecPlayer(int playerNum);
 	/**
-	 * @brief drops chat or drawin messages for given playerNum
+	 * @brief drops chat or draw messages for given playerNum
 	 */
-	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw);
-	void ResignPlayer(const int playerNum);
+	void MutePlayer(int playerNum, bool muteChat, bool muteDraw);
+	void ResignPlayer(int playerNum);
 
 	bool CheckPlayerPassword(const int playerNum, const std::string& pw) const;
 
@@ -180,87 +186,9 @@ private:
 	void Message(const std::string& message, bool broadcast = true, bool internal = false);
 	void PrivateMessage(int playerNum, const std::string& message);
 
-	void AddToPacketCache(std::shared_ptr<const netcode::RawPacket>& pckt);
-
 	float GetDemoTime() const;
 
 private:
-	/////////////////// game settings ///////////////////
-	std::shared_ptr<const ClientSetup> myClientSetup;
-	std::shared_ptr<const    GameData> myGameData;
-	std::shared_ptr<const  CGameSetup> myGameSetup;
-
-	/////////////////// game status variables ///////////////////
-	volatile bool quitServer;
-	int serverFrameNum;
-
-	spring_time serverStartTime;
-	spring_time readyTime;
-	spring_time gameStartTime;
-	spring_time gameEndTime;	///< Tick when game end was detected
-	spring_time lastNewFrameTick;
-	spring_time lastPlayerInfo;
-	spring_time lastUpdate;
-	spring_time lastBandwidthUpdate;
-
-	float modGameTime;
-	float gameTime;
-	float startTime;
-	float frameTimeLeft;
-
-	bool isPaused;
-	/// whether the game is pausable for others than the host
-	bool gamePausable;
-
-	float userSpeedFactor;
-	float internalSpeed;
-
-	std::map<unsigned char, GameSkirmishAI> ais;
-	std::array<bool, MAX_AIS> usedSkirmishAIIds;
-
-	std::vector<GameParticipant> players;
-	std::vector<GameTeam> teams;
-	std::vector<unsigned char> winningAllyTeams;
-
-	std::array<spring_time, MAX_PLAYERS> pingTimeFilter;
-
-	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> clientDrawFilter;
-	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> clientMuteFilter;
-
-	// std::map<asio::ip::udp::endpoint, int> rejectedConnections;
-	std::map<std::string, int> rejectedConnections;
-
-	std::pair<std::string, std::string> refClientVersion;
-
-	float medianCpu;
-	int medianPing;
-	int curSpeedCtrl;
-	int loopSleepTime;
-
-	/// The maximum speed users are allowed to set
-	float maxUserSpeed;
-	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
-	float minUserSpeed;
-
-	bool cheating;
-	bool noHelperAIs;
-	bool canReconnect;
-	bool allowSpecDraw;
-	bool allowSpecJoin;
-	bool whiteListAdditionalPlayers;
-
-	bool logInfoMessages;
-	bool logDebugMessages;
-
-	std::deque< std::shared_ptr<const netcode::RawPacket> > packetCache;
-
-	/////////////////// sync stuff ///////////////////
-#ifdef SYNCCHECK
-	std::set<int> outstandingSyncFrames;
-#endif
-	int syncErrorFrame;
-	int syncWarningFrame;
-
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
@@ -268,14 +196,95 @@ private:
 	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0, int playerNum = -1);
 
 	uint8_t ReserveSkirmishAIId();
-	void FreeSkirmishAIId(uint8_t skirmishAIId) { usedSkirmishAIIds[skirmishAIId] = false; }
 
-	unsigned localClientNumber;
+private:
+	/////////////////// game settings ///////////////////
+	std::shared_ptr<const ClientSetup> myClientSetup;
+	std::shared_ptr<const    GameData> myGameData;
+	std::shared_ptr<const  CGameSetup> myGameSetup;
+
+
+	std::vector< std::pair<bool, GameSkirmishAI> > skirmishAIs;
+	std::vector<uint8_t> freeSkirmishAIs;
+
+	std::vector<GameParticipant> players;
+	std::vector<GameTeam> teams;
+	std::vector<unsigned char> winningAllyTeams;
+
+	std::array<           spring_time           , MAX_PLAYERS> netPingTimings; // throttles NETMSG_PING
+	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> mapDrawTimings; // throttles NETMSG_MAPDRAW
+	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> chatMutedFlags; // blocks NETMSG_{CHAT,DRAW}
+	std::array<                            bool , MAX_PLAYERS> aiControlFlags; // blocks NETMSG_AI_CREATED (aicontrol)
+
+	// std::map<asio::ip::udp::endpoint, int> rejectedConnections;
+	std::map<std::string, int> rejectedConnections;
+
+	std::pair<std::string, std::string> refClientVersion;
+
+	std::deque< std::shared_ptr<const netcode::RawPacket> > packetCache;
+
+	/////////////////// sync stuff ///////////////////
+#ifdef SYNCCHECK
+	std::set<int> outstandingSyncFrames;
+#endif
+
+	/////////////////// game status variables ///////////////////
+	spring_time serverStartTime = spring_gettime();
+	spring_time readyTime = spring_notime;
+
+	spring_time lastNewFrameTick = spring_notime;
+	spring_time lastPlayerInfo = spring_notime;
+	spring_time lastUpdate = spring_notime;
+	spring_time lastBandwidthUpdate = spring_notime;
+
+	float modGameTime = 0.0f;
+	float gameTime = 0.0f;
+	float startTime = 0.0f;
+	float frameTimeLeft = 0.0f;
+
+	float userSpeedFactor = 1.0f;
+	float internalSpeed = 1.0f;
+
+	float medianCpu = 0.0f;
+	int medianPing = 0;
+	int curSpeedCtrl = 0;
+	int loopSleepTime = 0;
+
+
+	int serverFrameNum = -1;
+
+	int syncErrorFrame = 0;
+	int syncWarningFrame = 0;
+
+	int linkMinPacketSize = 1;
+
+	unsigned localClientNumber = -1u;
+
+
+	/// The maximum speed users are allowed to set
+	float maxUserSpeed = 1.0f;
+	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
+	float minUserSpeed = 1.0f;
+
+	bool isPaused = false;
+	/// whether the game is pausable for others than the host
+	bool gamePausable = true;
+
+	bool cheating = false;
+	bool noHelperAIs = false;
+	bool canReconnect = false;
+	bool allowSpecDraw = true;
+	bool allowSpecJoin = false;
+	bool whiteListAdditionalPlayers = false;
+
+	bool logInfoMessages = false;
+	bool logDebugMessages = false;
+
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set
-	static std::set<std::string> commandBlacklist;
+	static std::array<std::string, 25> commandBlacklist;
 
-	std::unique_ptr<netcode::UDPListener> UDPNet;
+	std::unique_ptr<netcode::UDPListener> udpListener;
 	std::unique_ptr<CDemoReader> demoReader;
 	std::unique_ptr<CDemoRecorder> demoRecorder;
 	std::unique_ptr<AutohostInterface> hostif;
@@ -285,11 +294,10 @@ private:
 
 	mutable spring::recursive_mutex gameServerMutex;
 
-	volatile bool gameHasStarted;
-	volatile bool generatedGameID;
-	volatile bool reloadingServer;
-
-	int linkMinPacketSize;
+	std::atomic<bool> gameHasStarted{false};
+	std::atomic<bool> generatedGameID{false};
+	std::atomic<bool> reloadingServer{false};
+	std::atomic<bool> quitServer{false};
 
 	union {
 		unsigned char charArray[16];

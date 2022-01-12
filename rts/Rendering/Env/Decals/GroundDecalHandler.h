@@ -91,6 +91,8 @@ public:
 	void GhostDestroyed(GhostSolidObject* gb) override;
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+
+	void AddSolidObject(CSolidObject* object) override;
 	void ForceRemoveSolidObject(CSolidObject* object) override;
 
 	void OnDecalLevelChanged() override {}
@@ -137,12 +139,10 @@ public:
 
 public:
 	struct SolidObjectDecalType {
-		SolidObjectDecalType(): texture(0) {}
-
 		std::string name;
 		std::vector<SolidObjectGroundDecal*> objectDecals;
 
-		unsigned int texture;
+		unsigned int texture = 0;
 	};
 
 	struct Scar {
@@ -230,7 +230,7 @@ private:
 	int ScarOverlapSize(const Scar& s1, const Scar& s2);
 	void TestScarOverlaps(const Scar& scar);
 	void RemoveScar(Scar& scar);
-	void LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset);
+	bool LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset);
 
 private:
 	enum DecalShaderProgram {
@@ -248,7 +248,7 @@ private:
 	std::vector<int> addedScars;
 
 	// stores indices into <scars> of reserved slots, per quad
-	std::vector< std::vector<int> > scarField;
+	std::vector<std::vector<int>> scarField;
 
 
 	GL::RenderDataBuffer decalBuffer;
@@ -257,15 +257,15 @@ private:
 	VA_TYPE_TC* curBufferPos = nullptr; // write-pos
 
 
-	int scarFieldX;
-	int scarFieldY;
+	int scarFieldX = 0;
+	int scarFieldY = 0;
 
-	unsigned int scarTex;
+	unsigned int scarAtlasTex = 0;
 
 	// number of calls made to TestScarOverlaps
-	int lastScarOverlapTest;
+	int lastScarOverlapTest = 0;
 
-	float maxScarOverlapSize;
+	float maxScarOverlapSize = 0.0f;
 
 	LegacyTrackHandler trackHandler;
 };

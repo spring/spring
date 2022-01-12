@@ -15,7 +15,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Misc/SpringTime.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 /******************************************************************************/
 
@@ -42,8 +42,8 @@ void CPlayerRosterDrawer::Draw()
 	chart.clear();
 	chart.append(buf);
 
-	for (size_t a = 0, s = playerIndices.size(); a < s; ++a) {
-		const CPlayer* p = playerHandler.Player(playerIndices[a]);
+	for (const int playerIndex : playerIndices) {
+		const CPlayer* p = playerHandler.Player(playerIndex);
 
 		if (!p->active)
 			continue;

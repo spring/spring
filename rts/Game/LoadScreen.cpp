@@ -44,11 +44,11 @@ CONFIG(int, LoadingMT).defaultValue(0).safemodeValue(0);
 
 CLoadScreen* CLoadScreen::singleton = nullptr;
 
-CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile)
+CLoadScreen::CLoadScreen(std::string&& _mapFileName, std::string&& _modFileName, ILoadSaveHandler* _saveFile)
 	: saveFile(_saveFile)
 
-	, mapName(_mapName)
-	, modName(_modName)
+	, mapFileName(std::move(_mapFileName))
+	, modFileName(std::move(_modFileName))
 
 	, mtLoading(true)
 	, lastDrawTime(0)
@@ -105,14 +105,12 @@ bool CLoadScreen::Init()
 	clientNet->KeepUpdating(true);
 
 	netHeartbeatThread = std::move(spring::thread(Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet))));
-	game = new CGame(mapName, modName, saveFile);
+	game = new CGame(mapFileName, modFileName, saveFile);
 
-	if (mtLoading) {
+	if ((CglFont::threadSafety = mtLoading)) {
 		try {
 			// create the game-loading thread; rebinds primary context to hidden window
-			CglFont::threadSafety = true;
-
-			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName)));
+			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::Load, game, mapFileName)));
 
 			while (!Watchdog::HasThread(WDT_LOAD));
 		} catch (const opengl_error& gle) {
@@ -135,7 +133,7 @@ bool CLoadScreen::Init()
 		return true;
 
 	LOG("[LoadScreen::%s] single-threaded", __func__);
-	game->LoadGame(mapName);
+	game->Load(mapFileName);
 	return false;
 }
 
@@ -149,7 +147,7 @@ void CLoadScreen::Kill()
 
 	CLuaIntro::FreeHandler();
 
-	// at this point, the thread running CGame::LoadGame
+	// at this point, gameLoadThread running CGame::Load
 	// has finished and deregistered itself from WatchDog
 	gameLoadThread.join();
 
@@ -180,20 +178,20 @@ static void FinishedLoading()
 }
 
 
-void CLoadScreen::CreateDeleteInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+void CLoadScreen::CreateDeleteInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile)
 {
-	if (CreateInstance(mapName, modName, saveFile))
+	if (CreateInstance(std::move(mapFileName), std::move(modFileName), saveFile))
 		return;
 
-	// not mtLoading, LoadGame has completed and we can go
+	// not mtLoading, Game::Load has completed and we can go
 	DeleteInstance();
 	FinishedLoading();
 }
 
-bool CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+bool CLoadScreen::CreateInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile)
 {
 	assert(singleton == nullptr);
-	singleton = new CLoadScreen(mapName, modName, saveFile);
+	singleton = new CLoadScreen(std::move(mapFileName), std::move(modFileName), saveFile);
 
 	// returns true when mtLoading, false otherwise
 	return (singleton->Init());
@@ -250,7 +248,7 @@ bool CLoadScreen::Update()
 		loadMessages.clear();
 	}
 
-	if (game->IsFinishedLoading()) {
+	if (game->IsDoneLoading()) {
 		CLoadScreen::DeleteInstance();
 		FinishedLoading();
 		return true;
@@ -309,7 +307,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replaceLast)
 
 	loadMessages.emplace_back(text, replaceLast);
 
-	LOG("%s", text.c_str());
+	LOG("[LoadScreen::%s] text=\"%s\"", __func__, text.c_str());
 	LOG_CLEANUP();
 
 	// be paranoid about FPU state for the loading thread since some

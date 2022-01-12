@@ -7,7 +7,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -20,7 +19,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 
@@ -57,8 +56,14 @@ CPieceProjectile::CPieceProjectile(
 	model = owner->model;
 
 	{
-		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler.GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		const UnitDef* ud = owner->unitDef;
+
+		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExpGenCount() > 0) {
+			cegID = guRNG.NextInt(ud->GetPieceExpGenCount());
+			cegID = ud->GetPieceExpGenID(cegID);
+
+			explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		}
 
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
@@ -237,9 +242,10 @@ void CPieceProjectile::Update()
 }
 
 
-void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CPieceProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::red);
+	va->SafeAppend({pos        , color4::red});
+	va->SafeAppend({pos + speed, color4::red});
 }
 
 
@@ -262,7 +268,10 @@ void CPieceProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xend,   eft->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col});
+
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col});
 		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xstart, eft->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col});
 	}
 }
 

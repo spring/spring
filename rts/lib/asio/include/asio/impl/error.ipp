@@ -31,12 +31,12 @@ namespace detail {
 class netdb_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
   {
     return "asio.netdb";
   }
 
-  std::string message(int value) const
+  std::string message(int value) const override
   {
     if (value == error::host_not_found)
       return "Host not found (authoritative)";
@@ -63,12 +63,12 @@ namespace detail {
 class addrinfo_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
   {
     return "asio.addrinfo";
   }
 
-  std::string message(int value) const
+  std::string message(int value) const override
   {
     if (value == error::service_not_found)
       return "Service not found";
@@ -93,12 +93,12 @@ namespace detail {
 class misc_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
   {
     return "asio.misc";
   }
 
-  std::string message(int value) const
+  std::string message(int value) const override
   {
     if (value == error::already_open)
       return "Already open";

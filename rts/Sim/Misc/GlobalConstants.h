@@ -4,13 +4,6 @@
 #define _GLOBAL_CONSTANTS_H
 
 /**
- * @brief square size
- *
- * Defines the size of 1 heightmap square as 8 elmos.
- */
-static constexpr int SQUARE_SIZE = 8;
-
-/**
  * @brief footprint scale
  *
  * Multiplier for {Unit, Feature, Move}Def footprint sizes which are
@@ -19,6 +12,15 @@ static constexpr int SQUARE_SIZE = 8;
  * covers SQUARE_SIZE*2 x SQUARE_SIZE*2 elmos.
  */
 static constexpr int SPRING_FOOTPRINT_SCALE = 2;
+
+/**
+ * @brief square size
+ *
+ * Defines the size of 1 heightmap square as 8 elmos.
+ */
+static constexpr int       SQUARE_SIZE =               8;
+static constexpr int BUILD_SQUARE_SIZE = SQUARE_SIZE * 2;
+
 
 /**
  * conversion factor from elmos to meters

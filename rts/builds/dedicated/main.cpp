@@ -4,6 +4,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 
 #include "Game/GameSetup.h"
@@ -59,7 +61,7 @@ void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
-#ifndef WIN32
+#ifndef _WIN32
 	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
@@ -252,7 +254,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-#if defined(WIN32) && !defined(_MSC_VER)
+#if defined(_WIN32) && !defined(_MSC_VER)
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

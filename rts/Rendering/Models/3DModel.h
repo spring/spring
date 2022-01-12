@@ -89,14 +89,42 @@ public:
  */
 
 struct S3DModelPiece {
-	S3DModelPiece()
-		: parent(nullptr)
-		, scales(OnesVector)
-		, mins(DEF_MIN_SIZE)
-		, maxs(DEF_MAX_SIZE)
-	{}
+	S3DModelPiece() = default;
 
-	virtual ~S3DModelPiece() { shatterIndices.Release(); }
+	// runs during global deinit, can not Clear() since that touches OpenGL
+	virtual ~S3DModelPiece() { assert(shatterIndices.vboId == 0); }
+
+	virtual void Clear() {
+		name.clear();
+		children.clear();
+
+		for (S3DModelPiecePart& p: shatterParts) {
+			p.renderData.clear();
+		}
+
+		parent = nullptr;
+		colvol = {};
+
+		bposeMatrix.LoadIdentity();
+		bakedMatrix.LoadIdentity();
+
+		offset = ZeroVector;
+		goffset = ZeroVector;
+		scales = OnesVector;
+
+		mins = DEF_MIN_SIZE;
+		maxs = DEF_MAX_SIZE;
+
+		vboStartElem = 0;
+		vboStartIndx = 0;
+
+		shatterIndices.Release();
+		// Release() does not virginize, be explicit here in case of reload
+		shatterIndices = {};
+
+		hasBakedMat = false;
+		dummyPadding = false;
+	}
 
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;
@@ -168,17 +196,18 @@ public:
 	std::vector<S3DModelPiece*> children;
 	std::array<S3DModelPiecePart, S3DModelPiecePart::SHATTER_VARIATIONS> shatterParts;
 
-	S3DModelPiece* parent;
+	S3DModelPiece* parent = nullptr;
 	CollisionVolume colvol;
 
-	CMatrix44f bposeMatrix;    /// bind-pose transform, including baked rots
-	CMatrix44f bakedMatrix;    /// baked local-space rotations
+	CMatrix44f bposeMatrix;      /// bind-pose transform, including baked rots
+	CMatrix44f bakedMatrix;      /// baked local-space rotations
 
-	float3 offset;             /// local (piece-space) offset wrt. parent piece
-	float3 goffset;            /// global (model-space) offset wrt. root piece
-	float3 scales;             /// baked uniform scaling factors (assimp-only)
-	float3 mins;
-	float3 maxs;
+	float3 offset;               /// local (piece-space) offset wrt. parent piece
+	float3 goffset;              /// global (model-space) offset wrt. root piece
+	float3 scales = OnesVector;  /// baked uniform scaling factors (assimp-only)
+
+	float3 mins = DEF_MIN_SIZE;
+	float3 maxs = DEF_MAX_SIZE;
 
 	unsigned int vboStartElem = 0;
 	unsigned int vboStartIndx = 0;
@@ -248,7 +277,12 @@ struct S3DModel
 	S3DModelPiece* GetRootPiece() const { return (GetPiece(0)); }
 
 	void AddPiece(S3DModelPiece* p) { pieceObjects.push_back(p); }
-	void DeletePieces();
+	void DeletePieces() {
+		assert(!pieceObjects.empty());
+
+		// NOTE: actual piece memory is owned by parser pools
+		pieceObjects.clear();
+	}
 
 	void Draw() const;
 	void DrawPiece(const S3DModelPiece* omp) const;
@@ -267,7 +301,7 @@ struct S3DModel
 	void UnbindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
 
 	// minor hack for piece-projectiles, saves a uniform
-	void SetPieceMatrixWeight(size_t i, float w) const { const_cast<CMatrix44f&>(pieceMatrices[i])[15] = w; }
+	// void SetPieceMatrixWeight(size_t i, float w) const { const_cast<CMatrix44f&>(pieceMatrices[i])[15] = w; }
 	void SetPieceMatrices();
 	void FlattenPieceTree(S3DModelPiece* root);
 	void FlattenPieceTreeRec(S3DModelPiece* piece);

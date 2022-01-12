@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <string>
-
 #include <SDL.h>
 
 
@@ -13,35 +11,34 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
-#include "System/type2.h"
-#include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "System/type2.h"
+#include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/creg/creg_cond.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Platform/errorhandler.h"
-#include "System/creg/creg_cond.h"
 
 
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
-CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
-CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
+CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(3).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
-CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
-// enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
-// (otherwise defaults to off because it reduces mipmap quality, smallest compressed level is bigger)
+// apply runtime texture compression for glBuildMipmaps?
+// glCompressedTex*Image* must additionally be supported
+// for DDS (SMF DXT1, etc)
+// this defaults to off because it reduces mipmap quality
+// the smallest compressed mip-level is necessarily bigger
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
@@ -75,14 +72,17 @@ GlobalRenderingInfo globalRenderingInfo;
 CR_BIND(CGlobalRendering, )
 
 CR_REG_METADATA(CGlobalRendering, (
-	CR_MEMBER(teamNanospray),
+	CR_MEMBER(active),
+
 	CR_MEMBER(drawSky),
 	CR_MEMBER(drawWater),
 	CR_MEMBER(drawGround),
 	CR_MEMBER(drawMapMarks),
 
-	CR_MEMBER(drawdebug),
-	CR_MEMBER(drawdebugtraceray),
+	CR_MEMBER(drawDebug),
+	CR_MEMBER(drawDebugTraceRay),
+	CR_MEMBER(drawDebugCubeMap),
+
 	CR_MEMBER(glDebug),
 	CR_MEMBER(glDebugErrors),
 
@@ -105,18 +105,18 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(viewSizeY),
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
-	CR_IGNORED(aspectRatio),
-	CR_IGNORED(zNear),
-	CR_IGNORED(viewRange),
 
-	CR_IGNORED(forceCoreContext),
-	CR_IGNORED(forceSwapBuffers),
+	CR_IGNORED(minViewRange),
+	CR_IGNORED(maxViewRange),
+	CR_IGNORED(aspectRatio),
+
+	CR_IGNORED(gammaExponent),
 
 	CR_IGNORED(msaaLevel),
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(maxTexAnisoLvl),
 
-	CR_IGNORED(active),
+	CR_MEMBER(teamNanospray),
 	CR_IGNORED(compressTextures),
 
 	CR_IGNORED(haveATI),
@@ -124,12 +124,12 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
 
-	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
+	CR_IGNORED(supportSeamlessCubeMaps),
 	CR_IGNORED(supportFragDepthLayout),
 	CR_IGNORED(glslMaxVaryings),
 	CR_IGNORED(glslMaxAttributes),
@@ -182,42 +182,45 @@ CGlobalRendering::CGlobalRendering()
 	, pixelX(0.01f)
 	, pixelY(0.01f)
 
+	// sane defaults
+	, minViewRange(MIN_ZNEAR_DIST * 8.0f)
+	, maxViewRange(MAX_VIEW_RANGE * 0.5f)
 	, aspectRatio(1.0f)
 
-	, zNear(NEAR_PLANE)
-	, viewRange(MAX_VIEW_RANGE)
-
-	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
-	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
+	, gammaExponent(1.0f)
 
 	// fallback
-	, msaaLevel(std::max(configHandler->GetInt("MSAALevel"), configHandler->GetInt("FSAALevel")))
+	, msaaLevel(configHandler->GetInt("MSAALevel"))
 	, maxTextureSize(2048)
 	, maxTexAnisoLvl(0.0f)
 
+	, active(true)
 	, drawSky(true)
 	, drawWater(true)
 	, drawGround(true)
 	, drawMapMarks(true)
 
-	, drawdebug(false)
-	, drawdebugtraceray(false)
+	, drawDebug(false)
+	, drawDebugTraceRay(false)
+	, drawDebugCubeMap(false)
+
 	, glDebug(false)
 	, glDebugErrors(false)
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
-	, active(true)
-	, compressTextures(false)
+	, compressTextures(configHandler->GetBool("CompressTextures"))
+
 	, haveATI(false)
 	, haveMesa(false)
 	, haveIntel(false)
 	, haveNvidia(false)
-	, atiHacks(false)
+
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
+	, supportSeamlessCubeMaps(false)
 	, supportFragDepthLayout(false)
 
 	, glslMaxVaryings(0)
@@ -244,8 +247,11 @@ CGlobalRendering::~CGlobalRendering()
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
 
-	GL::KillRenderBuffers();
-	glDeleteQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+	// protect against aborted startup
+	if (glContexts[0] != nullptr) {
+		GL::KillRenderBuffers();
+		glDeleteQueries(NUM_OPENGL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+	}
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
@@ -310,7 +316,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 		return nullptr;
 	}
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	if (borderless && !fullScreen) {
 		WindowManagerHelper::SetWindowResizable(newWindow, !borderless);
 
@@ -328,7 +334,7 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 {
 	SDL_GLContext newContext = nullptr;
 
-	constexpr int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
+	constexpr int2 glCtxs[] = {{3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
 	          int2 cmpCtx;
 
 	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), minCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)))) {
@@ -340,33 +346,26 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 		return newContext;
 
 	const char* winName = (targetWindow == sdlWindows[1])? "hidden": "main";
-
-	const char* frmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d %s-context", "[GR::%s] created %s GL%d.%d %s-context"};
-	const char* profs[] = {"compatibility", "core"};
+	const char* msgFmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d context", "[GR::%s] created %s GL%d.%d context"};
 
 	char buf[1024] = {0};
-	SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), winName, minCtx.x, minCtx.y, profs[forceCoreContext]);
+	SNPRINTF(buf, sizeof(buf), msgFmts[false], __func__, SDL_GetError(), winName, minCtx.x, minCtx.y);
 
-	for (const int2 tmpCtx: glCtxs) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, tmpCtx.y);
+	for (const int2 tstCtx: glCtxs) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tstCtx.x);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, tstCtx.y);
 
-		for (uint32_t mask: {SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY}) {
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
-
-			if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
-				LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
-			} else {
-				// save the lowest successfully created fallback compatibility-context
-				if (mask == SDL_GL_CONTEXT_PROFILE_COMPATIBILITY && cmpCtx.x == 0 && tmpCtx.x >= minCtx.x)
-					cmpCtx = tmpCtx;
-
-				LOG_L(L_WARNING, frmts[true], __func__, winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
-			}
-
-			// accepts nullptr's
-			SDL_GL_DeleteContext(newContext);
+		if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
+			LOG_L(L_WARNING, msgFmts[false], __func__, SDL_GetError(), winName, tstCtx.x, tstCtx.y);
+			break;
 		}
+
+		// save the lowest successfully created fallback context
+		if (cmpCtx.x == 0 && tstCtx.x >= minCtx.x)
+			cmpCtx = tstCtx;
+
+		LOG_L(L_WARNING, msgFmts[true], __func__, winName, tstCtx.x, tstCtx.y);
+		SDL_GL_DeleteContext(newContext);
 	}
 
 	if (cmpCtx.x == 0) {
@@ -376,10 +375,8 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, cmpCtx.x);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, cmpCtx.y);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
-	// should never fail at this point
-	return (newContext = SDL_GL_CreateContext(targetWindow));
+	return (SDL_GL_CreateContext(targetWindow));
 }
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
@@ -401,7 +398,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	// get wanted resolution and context-version
 	const int2 winRes = GetCfgWinRes(fullScreen);
 	const int2 maxRes = GetMaxWinRes();
-	const int2 minRes = {minWinSizeX, minWinSizeY};
+	const int2 minRes = {MIN_WIN_SIZE_X, MIN_WIN_SIZE_Y};
 	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
 		int2{                  std::max(mesaGL[0] - '0', 3),                   std::max(mesaGL[2] - '0', 0)}:
 		int2{configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
@@ -421,7 +418,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	//   3.0/1.30 for Mesa, other drivers return their *maximum* supported context
 	//   in compat and do not make 3.0 itself available in core (though this still
 	//   suffices for most of Spring)
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, minCtx.x);
@@ -509,7 +506,7 @@ void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clea
 void CGlobalRendering::DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context) {
 	if (window == sdlWindows[0]) {
 		WindowManagerHelper::SetIconSurface(window, nullptr);
-		SDL_SetWindowGrab(window, SDL_FALSE);
+		SetWindowInputGrabbing(false);
 	}
 
 	SDL_GL_MakeCurrent(window, nullptr);
@@ -547,21 +544,21 @@ void CGlobalRendering::PostInit() {
 	ToggleGLDebugOutput(0, 0, 0);
 
 	GL::InitRenderBuffers();
-	glGenQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+	glGenQueries(NUM_OPENGL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 }
 
 
 void CGlobalRendering::SetGLTimeStamp(uint32_t queryIdx) const
 {
-	glQueryCounter(glTimerQueries[(NUM_GL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
+	glQueryCounter(glTimerQueries[(NUM_OPENGL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
 }
 
 uint64_t CGlobalRendering::CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const
 {
-	const uint32_t queryBase = NUM_GL_TIMER_QUERIES * (1 - (drawFrame & 1));
+	const uint32_t queryBase = NUM_OPENGL_TIMER_QUERIES * (1 - (drawFrame & 1));
 
-	assert(queryIdx0 < NUM_GL_TIMER_QUERIES);
-	assert(queryIdx1 < NUM_GL_TIMER_QUERIES);
+	assert(queryIdx0 < NUM_OPENGL_TIMER_QUERIES);
+	assert(queryIdx1 < NUM_OPENGL_TIMER_QUERIES);
 	assert(queryIdx0 < queryIdx1);
 
 	GLuint64 t0 = 0;
@@ -591,15 +588,11 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	if (clearErrors || glDebugErrors)
 		glClearErrors("GR", __func__, glDebugErrors);
 
-	// not swapping while still incrementing drawFrame can cause weirdness
-	if (false && !allowSwapBuffers && !forceSwapBuffers)
-		return;
-
-	const spring_time pre = spring_now();
+	const spring_time preSwapTime = spring_now();
 
 	GL::SwapRenderBuffers();
 	SDL_GL_SwapWindow(sdlWindows[0]);
-	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+	eventHandler.DbgTimingInfo(TIMING_SWAP, preSwapTime, spring_now());
 
 	// NB: this does not just count frames drawn by game
 	drawFrame += 1;
@@ -636,6 +629,7 @@ void CGlobalRendering::CheckGLExtensions() const
 	#ifdef GLEW_ARB_buffer_storage
 	CHECK_REQ_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
 	#endif
+	CHECK_REQ_EXT(GLEW_ARB_draw_buffers); // 2.0 (MRT)
 	CHECK_REQ_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
 	CHECK_REQ_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
@@ -660,7 +654,7 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
 	CHECK_REQ_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
 	CHECK_REQ_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
-	CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
+	//CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
 	CHECK_OPT_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
 	CHECK_OPT_EXT(GLEW_ARB_texture_border_clamp); // 1.3
 
@@ -694,13 +688,15 @@ void CGlobalRendering::CheckGLExtensions() const
 
 void CGlobalRendering::SetGLSupportFlags()
 {
-	const std::string& glVendor   = StringToLower(globalRenderingInfo.glVendor);
-	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
+	const char* glVendor   = globalRenderingInfo.glVendor;
+	const char* glRenderer = globalRenderingInfo.glRenderer;
 
-	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
-	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
-	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
-	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
+	haveNvidia  = (StrCaseStr(  glVendor,  "nvidia ") != nullptr);
+	haveATI    |= (StrCaseStr(  glVendor,     "ati ") != nullptr);
+	haveATI    |= (StrCaseStr(  glVendor,     "amd ") != nullptr);
+	haveIntel   = (StrCaseStr(  glVendor,    "intel") != nullptr);
+	haveMesa   |= (StrCaseStr(glRenderer,    "mesa ") != nullptr);
+	haveMesa   |= (StrCaseStr(glRenderer, "gallium ") != nullptr);
 
 	if (haveATI) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
@@ -739,20 +735,6 @@ void CGlobalRendering::SetGLSupportFlags()
 	}
 
 
-	{
-		// use some ATI bugfixes?
-		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI;
-		atiHacks &= (atiHacksCfg < 0); // runtime detect
-		atiHacks |= (atiHacksCfg > 0); // user override
-	}
-
-	// apply runtime texture compression for glBuildMipmaps?
-	// glCompressedTex*Image* must additionally be supported
-	// for DDS (SMF DXT1, etc)
-	compressTextures = configHandler->GetBool("CompressTextures");
-
-
 	#ifdef GLEW_NV_primitive_restart
 	// not defined for headless builds
 	supportRestartPrimitive = GLEW_NV_primitive_restart;
@@ -760,33 +742,36 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_ARB_clip_control
 	supportClipSpaceControl = GLEW_ARB_clip_control;
 	#endif
+	#ifdef GLEW_ARB_seamless_cube_map
+	supportSeamlessCubeMaps = GLEW_ARB_seamless_cube_map;
+	#endif
 	// CC did not exist as an extension before GL4.5, too recent to enforce
-	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
+	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
-	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
+	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
 
 
-	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
-	// they seem to support GL_DEPTH_COMPONENT24 for static textures
-	// but those can't be rendered to)
+	#if 0
 	{
-		#if 0
+		// detect if GL_DEPTH_COMPONENT24 is supported for render targets
+		// many ATIs historically did not; they only seemed to support it
+		// for static textures
 		GLint state = 0;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_RED, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffer = (state > 0);
-		#else
-		if (FBO::IsSupported() && !atiHacks) {
-			FBO fbo;
-			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT,  GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
-			fbo.Unbind();
-		}
-		#endif
 	}
+	#else
+	{
+		FBO fbo;
+		fbo.Bind();
+		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
+		fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT , GL_DEPTH_COMPONENT24, 16, 16);
+		support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
+		fbo.Unbind();
+	}
+	#endif
 }
 
 void CGlobalRendering::QueryGLMaxVals()
@@ -823,7 +808,7 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if ((grInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) grInfo.glRenderer  = "unknown";
 	if ((grInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) grInfo.glslVersion = "unknown";
 	if ((grInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) grInfo.glewVersion = "unknown";
-
+	if ((grInfo.sdlDriverName = (const char*) SDL_GetCurrentVideoDriver(           )) == nullptr) grInfo.sdlDriverName = "unknown";
 	// should never be null with any driver, no harm in an extra check
 	// (absence of GLSL version string would indicate bigger problems)
 	if (std::strcmp(globalRenderingInfo.glslVersion, "unknown") == 0)
@@ -863,13 +848,13 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
+	LOG("\tSDL driver  : %s", globalRenderingInfo.sdlDriverName);
 	LOG("\t");
 }
 
 void CGlobalRendering::LogGLSupportInfo() const
 {
 	LOG("[GR::%s]", __func__);
-	LOG("\tFBO extension support     : %i", FBO::IsSupported());
 	LOG("\tNVX GPU mem-info support  : %i", glewIsExtensionSupported("GL_NVX_gpu_memory_info"));
 	LOG("\tATI GPU mem-info support  : %i", glewIsExtensionSupported("GL_ATI_meminfo"));
 	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
@@ -877,6 +862,7 @@ void CGlobalRendering::LogGLSupportInfo() const
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
+	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
 	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
@@ -888,14 +874,13 @@ void CGlobalRendering::LogGLSupportInfo() const
 	LOG("\tmax. uniform buffer-bindings : %i", glslMaxUniformBufferBindings);
 	LOG("\tmax. uniform block-size      : %iKB", glslMaxUniformBufferSize / 1024);
 	LOG("\t");
-	LOG("\tenable ATI-hacks : %i", atiHacks);
-	LOG("\tcompress MIP-maps: %i", compressTextures);
+	LOG("\trun-time texture compression: %i", compressTextures);
 	LOG("\t");
 }
 
 void CGlobalRendering::LogDisplayMode(SDL_Window* window) const
 {
-	// print final mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
+	// print final mode (call after UpdateViewPortGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(window, &dmode);
 
@@ -923,30 +908,58 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	if (sdlWindows[0] == nullptr)
 		return;
 
+	// update wanted state
 	borderless = configHandler->GetBool("WindowBorderless");
 	fullScreen = configHandler->GetBool("Fullscreen");
 
-	const int2 res = GetCfgWinRes(fullScreen);
+	const uint32_t sdlWindowFlags = SDL_GetWindowFlags(sdlWindows[0]);
+	const uint32_t fullScreenFlag = (sdlWindowFlags & SDL_WINDOW_FULLSCREEN);
 
-	SDL_SetWindowSize(sdlWindows[0], res.x, res.y);
+	// get desired resolution
+	// note that the configured fullscreen resolution is just
+	// ignored by SDL if not equal to the user's screen size
+	const int2 newRes = GetCfgWinRes(fullScreen);
+	const int2 maxRes = GetMaxWinRes();
+
+	LOG("[GR::%s][1] key=%s val=%s (cfgFullScreen=%d sdlFullScreen=%d) newRes=<%d,%d>", __func__, key.c_str(), value.c_str(), fullScreen, fullScreenFlag == SDL_WINDOW_FULLSCREEN, newRes.x, newRes.y);
+
+	// if currently in fullscreen mode, neither SDL_SetWindowSize nor SDL_SetWindowBordered will work
+	// need to first drop to windowed mode before changing these properties, then switch modes again
+	// the maximized-flag also has to be cleared, otherwise going from native fullscreen to windowed
+	// ignores the configured *ResolutionWindowed values
+	// (SDL_SetWindowDisplayMode sets the mode used by fullscreen windows which is not what we want)
+	#if 0
+	if (fullScreenFlag == SDL_WINDOW_FULLSCREEN) {
+		SDL_SetWindowFullscreen(sdlWindows[0], 0);
+		SDL_RestoreWindow(sdlWindows[0]);
+	}
+	#endif
+
+	if (SDL_SetWindowFullscreen(sdlWindows[0], 0) != 0)
+		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
+
+	SDL_RestoreWindow(sdlWindows[0]);
 	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
+	SDL_SetWindowSize(sdlWindows[0], newRes.x, newRes.y);
 	SDL_SetWindowBordered(sdlWindows[0], borderless ? SDL_FALSE : SDL_TRUE);
+
+	if (SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen) != 0)
+		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
+
+	if (newRes == maxRes)
+		SDL_MaximizeWindow(sdlWindows[0]);
+
 	WindowManagerHelper::SetWindowResizable(sdlWindows[0], !borderless && !fullScreen);
-	// set size again in an attempt to fix some bugs
-	SDL_SetWindowSize(sdlWindows[0], res.x, res.y);
+
+	// on Windows, fullscreen-to-windowed switches can sometimes cause the context to be lost (?)
+	MakeCurrentContext(false, false, false);
 }
 
 
 bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 {
-	if (enable) {
-		SDL_SetWindowGrab(sdlWindows[0], SDL_TRUE);
-		return true;
-	}
-
-	SDL_SetWindowGrab(sdlWindows[0], SDL_FALSE);
-	return false;
+	SDL_SetWindowGrab(sdlWindows[0], enable? SDL_TRUE: SDL_FALSE);
+	return enable;
 }
 
 bool CGlobalRendering::ToggleWindowInputGrabbing()
@@ -980,12 +993,13 @@ int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 		res = GetMaxWinRes();
 
 	// limit minimum window size in windowed mode
-	res.x = std::max(res.x, minWinSizeX * (1 - fullScrn));
-	res.y = std::max(res.y, minWinSizeY * (1 - fullScrn));
+	res.x = std::max(res.x, MIN_WIN_SIZE_X * (1 - fullScrn));
+	res.y = std::max(res.y, MIN_WIN_SIZE_Y * (1 - fullScrn));
 	return res;
 }
 
 
+// only called on startup; change the config based on command-line args
 void CGlobalRendering::SetFullScreen(bool cliWindowed, bool cliFullScreen)
 {
 	const bool cfgFullScreen = configHandler->GetBool("Fullscreen");
@@ -1076,47 +1090,65 @@ void CGlobalRendering::SaveWindowPosAndSize()
 
 void CGlobalRendering::UpdateGLConfigs()
 {
+	LOG("[GR::%s]", __func__);
+
 	// re-read configuration value
 	verticalSync->SetInterval();
 }
 
 void CGlobalRendering::UpdateGLGeometry()
 {
+	LOG("[GR::%s][1] winSize=<%d,%d>", __func__, winSizeX, winSizeY);
+
 	ReadWindowPosAndSize();
 	SetDualScreenParams();
 	UpdateViewPortGeometry();
 	UpdatePixelGeometry();
+
+	LOG("[GR::%s][2] winSize=<%d,%d>", __func__, winSizeX, winSizeY);
 }
 
 void CGlobalRendering::InitGLState()
 {
-	glClearDepth(1.0f);
-	glDepthRange(0.0f, 1.0f);
+	LOG("[GR::%s] glAttribStatePtr=%p", __func__, glAttribStatePtr);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+	if (glAttribStatePtr == nullptr) {
+		glClearDepth(1.0f);
+		glDepthRangef(0.0f, 1.0f);
 
-	#ifdef GLEW_ARB_clip_control
-	// avoid precision loss with default DR transform
-	if (supportClipSpaceControl)
-		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-	#endif
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
-	// MSAA rasterization
-	if ((msaaLevel *= CheckGLMultiSampling()) != 0) {
-		glEnable(GL_MULTISAMPLE);
+		#ifdef GLEW_ARB_clip_control
+		// avoid precision loss with default DR transform
+		if (supportClipSpaceControl)
+			glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+		#endif
+
+		#ifdef GLEW_ARB_seamless_cube_map
+		if (supportSeamlessCubeMaps)
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		#endif
+
+		// MSAA rasterization
+		if ((msaaLevel *= CheckGLMultiSampling()) != 0) {
+			glEnable(GL_MULTISAMPLE);
+		} else {
+			glDisable(GL_MULTISAMPLE);
+		}
+
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
+		// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), minViewRange, maxViewRange));
 	} else {
-		glDisable(GL_MULTISAMPLE);
+		// resize event, no need to reinitialize state in modern times
+		glAttribStatePtr->ViewPort(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	}
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
-	// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
-
-
-	SwapBuffers(true, true);
+	// this does not accomplish much
+	// SwapBuffers(true, true);
 	LogDisplayMode(sdlWindows[0]);
 }
 
@@ -1223,7 +1255,7 @@ bool CGlobalRendering::CheckGLEWContextVersion(const int2& curCtx) const
 
 
 
-#if defined(WIN32) && !defined(HEADLESS)
+#if defined(_WIN32) && !defined(HEADLESS)
 	#if defined(_MSC_VER) && _MSC_VER >= 1600
 		#define _GL_APIENTRY __stdcall
 	#else
@@ -1333,11 +1365,12 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	const GLvoid* userParam
 ) {
 	switch (msgID) {
+		case 131154: { return; } break; // "Pixel-path performance warning: Pixel transfer is synchronized with 3D rendering."
 		case 131169: { return; } break; // "Framebuffer detailed info: The driver allocated storage for renderbuffer N."
 		case 131185: { return; } break; // "Buffer detailed info: Buffer object 123 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
 		case 131204: { return; } break; // "Texture state usage warning: Texture 123 is base level inconsistent. Check texture size."
 		case 131218: { return; } break; // "Program/shader state performance warning: Vertex shader in program 123 is being recompiled based on GL state."
-		default: {} break;
+		default    : {         } break;
 	}
 
 	const char* msgSrceStr = glDebugMessageSourceName(msgSrce);

@@ -186,14 +186,13 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 
 	std::vector<TexFile> texFiles;
 
-	const std::vector<std::string>& filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
-	      std::vector<std::string>  files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
+	const std::vector<std::string>& bmpFiles = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	      std::vector<std::string>  tgaFiles = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 
-	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
-	texFiles.reserve(files.size() + CTAPalette::NUM_PALETTE_ENTRIES);
+	tgaFiles.insert(tgaFiles.end(), bmpFiles.begin(), bmpFiles.end());
+	texFiles.reserve(tgaFiles.size() + CTAPalette::NUM_PALETTE_ENTRIES);
 
-	for (auto fi = files.begin(); fi != files.end(); ++fi) {
-		const std::string& s = *fi;
+	for (const std::string& s: tgaFiles) {
 		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority
@@ -209,8 +208,7 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 		}
 	}
 
-	if (paletteFile.FileExists())
-		palette.Init(paletteFile);
+	palette.Init(paletteFile);
 
 	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
 		TexFile texFile;

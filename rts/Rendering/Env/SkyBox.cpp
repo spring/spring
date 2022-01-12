@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "SkyBox.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
@@ -21,11 +20,13 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 
 // between 1 and 4 drawcalls per frame (opaque, water, env * 2)
-// each call updates 4 vertices using a different camera and is
+// each call updates 6 vertices using a different camera and is
 // double-buffered; this means buffer size must be the smallest
 // common multiple of {1,2,3,4} to avoid flickering
-static constexpr unsigned int SKYBOX_VERTEX_CNT = 6 * 4;
+static constexpr unsigned int SKYBOX_VERTEX_CNT = 6 * (2 * 3);
 static constexpr unsigned int SKYBOX_BUFFER_LEN = SKYBOX_VERTEX_CNT * 2;
+
+static_assert((SKYBOX_BUFFER_LEN % 4) == 0, "");
 
 
 CSkyBox::CSkyBox(const std::string& texture)
@@ -36,7 +37,7 @@ CSkyBox::CSkyBox(const std::string& texture)
 
 CSkyBox::~CSkyBox()
 {
-	skyBox.Kill();
+	(skyBox.GetBuffer())->Kill();
 }
 
 
@@ -70,25 +71,25 @@ void CSkyBox::LoadBuffer()
 		{1,  3, GL_FLOAT,  (sizeof(float) * 5),  "a_texcoor_xyz", VA_TYPE_OFFSET(float, 2)},
 	}};
 
+	static GL::RenderDataBuffer skyBuf;
 
-	skyBox.Init(true);
-	skyBox.TUpload<SkyBoxVertType, uint32_t, SkyBoxAttrType>(SKYBOX_BUFFER_LEN, 0, vertAttrs.size(),  nullptr, nullptr, vertAttrs.data());
+	skyBuf.Kill();
+	skyBox.Setup(&skyBuf, &vertAttrs, SKYBOX_BUFFER_LEN, 0);
 
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText.c_str(), ""}, {GL_FRAGMENT_SHADER, fsText.c_str(), ""}};
-	Shader::IProgramObject* shaderProg = skyBox.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText, ""}, {GL_FRAGMENT_SHADER, fsText, ""}};
+	Shader::IProgramObject* shaderProg = skyBuf.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();
 	shaderProg->SetUniform("u_skycube_tex", 0);
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
+	shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shaderProg->Disable();
 
-	vtxPtr = skyBox.MapElems<SkyBoxVertType>(true, true);
+	vtxPtr = skyBox.GetElemsMap();
 	vtxPos = vtxPtr;
 
-	for (unsigned int i = 0, n = SKYBOX_BUFFER_LEN; i < n; i++) {
-		*(vtxPos++) = {{0.0f, 0.0f}, ZeroVector};
-	}
+	memset(vtxPos, 0, SKYBOX_BUFFER_LEN * sizeof(SkyBoxVertType));
 	#endif
 }
 
@@ -99,32 +100,44 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	if (!globalRendering->drawSky)
 		return;
 
-	glDisable(GL_BLEND);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableDepthTest();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
+	SkyBoxBuffer* buffer = &skyBox;
+	Shader::IProgramObject* shader = buffer->GetShader();
+
 	{
+		if (vtxPos == vtxPtr)
+			buffer->Wait();
+
 		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
 		*(vtxPos++) = {{1.0f, 1.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX,                          0)};
 		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
+
+		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
 		*(vtxPos++) = {{0.0f, 0.0f}, -camera->CalcPixelDir(                         0, globalRendering->viewSizeY)};
+		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
+	}
+	{
+		shader->Enable();
+		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
+		buffer->Submit(GL_TRIANGLES, (((vtxPos - 6) - vtxPtr) + SKYBOX_VERTEX_CNT) % SKYBOX_BUFFER_LEN, 6);
+		shader->Disable();
 	}
 
-	skyBox.EnableShader();
-	skyBox.Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
-	skyBox.DisableShader();
-
 	// wraparound
-	if ((vtxPos - vtxPtr) >= (SKYBOX_BUFFER_LEN))
+	if ((vtxPos - vtxPtr) >= SKYBOX_BUFFER_LEN)
 		vtxPos = vtxPtr;
+	if (vtxPos == vtxPtr)
+		buffer->Sync();
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->EnableDepthTest();
 	#endif
 }
 

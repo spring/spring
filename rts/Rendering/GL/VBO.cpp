@@ -23,11 +23,12 @@ VBO::VBO(GLenum _defTarget, const bool storage, bool readable)
 	readableStorage = readable;
 }
 
-VBO& VBO::operator=(VBO&& other)
+VBO& VBO::operator=(VBO&& other) noexcept
 {
 	std::swap(vboId, other.vboId);
 	std::swap(bound, other.bound);
 	std::swap(mapped, other.mapped);
+	std::swap(nullSizeMapped, other.nullSizeMapped);
 
 	std::swap(bufSize, other.bufSize);
 	std::swap(memSize, other.memSize);
@@ -35,7 +36,7 @@ VBO& VBO::operator=(VBO&& other)
 	std::swap(curBoundTarget, other.curBoundTarget);
 	std::swap(defTarget, other.defTarget);
 	std::swap(usage, other.usage);
-	std::swap(nullSizeMapped, other.nullSizeMapped);
+	std::swap(mapUnsyncedBit, other.mapUnsyncedBit);
 
 	std::swap(immutableStorage, other.immutableStorage);
 	std::swap(readableStorage, other.readableStorage);
@@ -77,9 +78,9 @@ bool VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 		return New(newSize, newUsage, nullptr);
 
 	const size_t oldSize = bufSize;
+	const GLenum oldBoundTarget = curBoundTarget;
 
 	glClearErrors("VBO", __func__, globalRendering->glDebugErrors);
-	const GLenum oldBoundTarget = curBoundTarget;
 
 	{
 		VBO vbo(GL_COPY_WRITE_BUFFER, immutableStorage);
@@ -116,12 +117,15 @@ bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 	assert(bound);
 	assert(!mapped || (newData == nullptr && newSize == bufSize && newUsage == usage));
 
+	// ATI interprets unsynchronized access differently; (un)mapping does not sync
+	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
+
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
 	if (newData == nullptr && newSize == bufSize && newUsage == usage)
 		return true;
 
 	if (immutableStorage && bufSize != 0) {
-		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x)] cannot recreate persistent storage buffer", __func__, (unsigned long) bufSize, usage);
+		LOG_L(L_ERROR, "[VBO::%s({cur,new}size={" _STPF_ "," _STPF_ "},{cur,new}usage={0x%x,0x%x},data=%p)] cannot recreate persistent storage buffer", __func__, bufSize, newSize, usage, newUsage, newData);
 		return false;
 	}
 
@@ -168,7 +172,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	// for easier handling convert the glMapBuffer ones here
 	switch (access) {
 		case GL_WRITE_ONLY: {
-			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~((GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT) * immutableStorage);
@@ -176,7 +180,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 			#endif
 		} break;
 		case GL_READ_WRITE: {
-			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);
@@ -184,7 +188,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 			#endif
 		} break;
 		case GL_READ_ONLY: {
-			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);
@@ -238,15 +242,6 @@ void VBO::Invalidate()
 		return;
 	}
 #endif
-	if (globalRendering->atiHacks) {
-		Unbind();
-		glDeleteBuffers(1, &vboId);
-		glGenBuffers(1, &vboId);
-		Bind();
-		bufSize = -bufSize; // else New() would early-exit
-		New(-bufSize, usage, nullptr);
-		return;
-	}
 
 	// note: allocating memory doesn't actually block the memory it just makes room in _virtual_ memory space
 	New(bufSize, usage, nullptr);

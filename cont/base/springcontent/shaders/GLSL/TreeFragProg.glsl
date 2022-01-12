@@ -7,9 +7,12 @@ uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 
 uniform float groundShadowDensity;
+uniform float gammaExponent;
 
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
+
+uniform vec4 alphaTestCtrl;
 
 uniform vec4 fogColor;
 
@@ -27,8 +30,6 @@ void main() {
 	#if (TREE_SHADOW == 1)
 	// per-fragment
 	vec4 vertexShadowPos = shadowMatrix * vVertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	float shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), groundShadowDensity);
 	#else
@@ -38,9 +39,17 @@ void main() {
 	vec4 diffuseCol = texture(diffuseTex, vTexCoord) * vBaseColor;
 	vec3 shadeInt = mix(groundAmbientColor.rgb, vec3(1.0, 1.0, 1.0), shadowCoeff);
 
+	{
+		float alphaTestGreater = float(diffuseCol.a > alphaTestCtrl.x) * alphaTestCtrl.y;
+		float alphaTestSmaller = float(diffuseCol.a < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+		if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+			discard;
+	}
 
 	fFragColor.rgb = diffuseCol.rgb * shadeInt.rgb;
 	fFragColor.rgb = mix(fogColor.rgb, fFragColor.rgb, vFogFactor);
+	fFragColor.rgb = pow(fFragColor.rgb, vec3(gammaExponent));
 
 	fFragColor.a = diffuseCol.a;
 }

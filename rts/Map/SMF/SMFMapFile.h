@@ -29,8 +29,8 @@ public:
 	void ReadHeightmap(float* sHeightMap, float* uHeightMap, float base, float mod);
 	void ReadFeatureInfo();
 	void ReadFeatureInfo(MapFeatureInfo* f);
-	void GetInfoMapSize(const std::string& name, MapBitmapInfo*) const;
-	bool ReadInfoMap(const std::string& name, void* data);
+	void GetInfoMapSize(const char* name, MapBitmapInfo*) const;
+	bool ReadInfoMap(const char* name, void* data);
 
 	int GetNumFeatures()     const { return featureHeader.numFeatures; }
 	int GetNumFeatureTypes() const { return featureHeader.numFeatureType; }
@@ -59,7 +59,7 @@ private:
 	SMFHeader header;
 	MapFeatureHeader featureHeader;
 
-	std::vector<std::string> featureTypes;
+	char featureTypes[16384][32];
 
 	int featureFileOffset = 0;
 };

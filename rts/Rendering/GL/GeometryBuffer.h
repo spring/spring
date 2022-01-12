@@ -19,7 +19,7 @@ namespace GL {
 			ATTACHMENT_COUNT   = 6,
 		};
 
-		GeometryBuffer(): name(nullptr), dead(false), bound(false) { Init(true); }
+		GeometryBuffer(const char* id): name(id) { Init(true); }
 		~GeometryBuffer() { Kill(true); }
 
 		void Init(bool ctor);
@@ -29,13 +29,13 @@ namespace GL {
 		void DetachTextures(const bool init);
 		void DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const;
 		void DrawDebug(const unsigned int texID) const { DrawDebug(texID, float2(0.0f, 0.0f), float2(1.0f, 1.0f)); }
-		void SetName(const char* s) { name = s; }
 
 		bool HasAttachments() const { return (bufferTextureIDs[0] != 0); }
 		bool Valid() const { return (buffer.IsValid()); }
 		bool Create(const int2 size);
 		bool Update(const bool init);
 
+		GLuint GetTextureTarget() const { return (msaa? GL_TEXTURE_2D_MULTISAMPLE: GL_TEXTURE_2D); }
 		GLuint GetBufferTexture(unsigned int idx) const { return bufferTextureIDs[idx]; }
 		GLuint GetBufferAttachment(unsigned int idx) const { return bufferAttachments[idx]; }
 
@@ -61,10 +61,11 @@ namespace GL {
 		int2 prevBufferSize;
 		int2 currBufferSize;
 
-		const char* name;
+		const char* name = "";
 
-		bool dead;
-		bool bound;
+		bool dead = false;
+		bool bound = false;
+		bool msaa = false;
 	};
 }
 

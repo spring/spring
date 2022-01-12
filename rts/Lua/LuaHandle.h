@@ -13,11 +13,6 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
-
-
 #define LUA_HANDLE_ORDER_RULES            100
 #define LUA_HANDLE_ORDER_UNITS            200
 #define LUA_HANDLE_ORDER_GAIA             300
@@ -52,11 +47,11 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-	#define PERMISSIONS_FUNCS(Name, type, dataArg, OVERRIDE) \
-		void Set ## Name(type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg; } \
-		type Get ## Name() const OVERRIDE { return GetLuaContextData(L)->dataArg; } \
-		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg;; } \
-		static type GetHandle ## Name(const lua_State* L) { return GetLuaContextData(L)->dataArg; }
+	#define PERMISSIONS_FUNCS(Name, type, val, OVERRIDE) \
+		void Set ## Name(type _ ## val)                {        GetLuaContextData(L)->val = _ ## val; } \
+		type Get ## Name(             ) const OVERRIDE { return GetLuaContextData(L)->val           ; } \
+		static void SetHandle ## Name(const lua_State* L, type _ ## val) {        GetLuaContextData(L)->val = _ ## val; } \
+		static type GetHandle ## Name(const lua_State* L               ) { return GetLuaContextData(L)->val           ; }
 
 		PERMISSIONS_FUNCS(FullRead,     bool, fullRead, override); // virtual function in CEventClient
 		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl, );
@@ -70,8 +65,6 @@ class CLuaHandle : public CEventClient
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
-
-		static bool GetHandleUserMode(lua_State* L) { return (GetHandle(L))->GetUserMode(); }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
@@ -89,20 +82,23 @@ class CLuaHandle : public CEventClient
 		// virtual bool PersistOnReload() const { return (GetName() == "LuaMenu"); }
 		virtual bool PersistOnReload() const { return false; }
 
-		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
+		// used by LuaSyncedTable and creg save
 		lua_State* GetLuaState() const { return L; }
+		lua_State* GetLuaGCState() const { return L_GC; }
+		// used by creg load
+		void SetLuaStates(lua_State* L_, lua_State* L_GC_) { L = L_; L_GC = L_GC_; }
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
-		LuaShaders& GetShaders(const lua_State* L = NULL) { return GetLuaContextData(L)->shaders; }
-		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
-		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
-		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
+		LuaShaders& GetShaders(const lua_State* L = nullptr) { return GetLuaContextData(L)->shaders; }
+		LuaTextures& GetTextures(const lua_State* L = nullptr) { return GetLuaContextData(L)->textures; }
+		LuaFBOs& GetFBOs(const lua_State* L = nullptr) { return GetLuaContextData(L)->fbos; }
+		LuaRBOs& GetRBOs(const lua_State* L = nullptr) { return GetLuaContextData(L)->rbos; }
 #endif
 
 	public: // call-ins
-		bool WantsEvent(const string& name) override { return HasCallIn(L, name); }
-		virtual bool HasCallIn(lua_State* L, const string& name);
-		virtual bool UpdateCallIn(lua_State* L, const string& name);
+		bool WantsEvent(const std::string& name) override { return HasCallIn(L, name); }
+		virtual bool HasCallIn(lua_State* L, const std::string& name) const;
+		virtual bool UpdateCallIn(lua_State* L, const std::string& name);
 
 		void Load(IArchive* archive) override;
 
@@ -129,15 +125,16 @@ class CLuaHandle : public CEventClient
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) override;
 
 		void UnitIdle(const CUnit* unit) override;
-		void UnitCommand(const CUnit* unit, const Command& command) override;
-		void UnitCmdDone(const CUnit* unit, const Command& command) override;
+		void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua) override;
+		void UnitCmdDone(const CUnit* unit, const Command& command                                              ) override;
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
 			float damage,
 			int weaponDefID,
 			int projectileID,
-			bool paralyzer) override;
+			bool paralyzer
+		) override;
 		void UnitStunned(const CUnit* unit, bool stunned) override;
 		void UnitExperience(const CUnit* unit, float oldExperience) override;
 		void UnitHarvestStorageFull(const CUnit* unit) override;
@@ -173,7 +170,8 @@ class CLuaHandle : public CEventClient
 			const CUnit* attacker,
 			float damage,
 			int weaponDefID,
-			int projectileID) override;
+			int projectileID
+		) override;
 
 		void ProjectileCreated(const CProjectile* p) override;
 		void ProjectileDestroyed(const CProjectile* p) override;
@@ -197,31 +195,38 @@ class CLuaHandle : public CEventClient
 		void MouseRelease(int x, int y, int button) override;
 		bool MouseWheel(bool up, float value) override;
 		bool IsAbove(int x, int y) override;
-		string GetTooltip(int x, int y) override;
+		std::string GetTooltip(int x, int y) override;
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) override;
 
 		bool CommandNotify(const Command& cmd) override;
 
-		bool AddConsoleLine(const string& msg, const string& section, int level) override;
+		bool AddConsoleLine(const std::string& msg, const std::string& section, int level) override;
 
 		bool GroupChanged(int groupID) override;
 
-		bool GameSetup(const string& state, bool& ready,
+		bool GameSetup(const std::string& state, bool& ready,
 		               const std::vector< std::pair<int, std::string> >& playerStates) override;
 
-		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
+		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize, size_t* outSize);
 
-		string WorldTooltip(const CUnit* unit,
-		                    const CFeature* feature,
-		                    const float3* groundPos) override;
+		std::string WorldTooltip(
+			const CUnit* unit,
+			const CFeature* feature,
+			const float3* groundPos
+		) override;
 
-		bool MapDrawCmd(int playerID, int type,
-		                const float3* pos0,
-		                const float3* pos1,
-		                const string* labe) override;
+		bool MapDrawCmd(
+			int playerID,
+			int type,
+			const float3* pos0,
+			const float3* pos1,
+			const std::string* label
+		) override;
 
 		void ViewResize() override;
+
+		void SunChanged() override;
 
 		void DrawGenesis() override;
 		void DrawWater() override;
@@ -236,6 +241,7 @@ class CLuaHandle : public CEventClient
 		void DrawWorldReflection() override;
 		void DrawWorldRefraction() override;
 		void DrawGroundPreForward() override;
+		void DrawGroundPostForward() override;
 		void DrawGroundPreDeferred() override;
 		void DrawGroundPostDeferred() override;
 		void DrawUnitsPostDeferred() override;
@@ -252,9 +258,9 @@ class CLuaHandle : public CEventClient
 
 		//FIXME void MetalMapChanged(const int x, const int z);
 
-		void CollectGarbage() override;
+		void CollectGarbage(bool forced) override;
 
-		void DownloadQueued(int ID, const string& archiveName, const string& archiveType) override;
+		void DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType) override;
 		void DownloadStarted(int ID) override;
 		void DownloadFinished(int ID) override;
 		void DownloadFailed(int ID, int errorID) override;
@@ -262,15 +268,15 @@ class CLuaHandle : public CEventClient
 
 	public: // Non-eventhandler call-ins
 		void Shutdown();
-		bool GotChatMsg(const string& msg, int playerID);
-		bool RecvLuaMsg(const string& msg, int playerID);
+		bool GotChatMsg(const std::string& msg, int playerID);
+		bool RecvLuaMsg(const std::string& msg, int playerID);
 
 	public: // custom call-in  (inter-script calls)
-		bool HasXCall(const string& funcName) { return HasCallIn(L, funcName); }
-		int XCall(lua_State* srcState, const string& funcName);
+		bool HasXCall(const std::string& funcName) const { return HasCallIn(L, funcName); }
+		int XCall(lua_State* srcState, const char* funcName);
 
 	protected:
-		CLuaHandle(const string& name, int order, bool userMode, bool synced);
+		CLuaHandle(const std::string& name, int order, bool userMode, bool synced);
 		virtual ~CLuaHandle();
 
 		void KillLua(bool inFreeHandler = false);
@@ -278,7 +284,7 @@ class CLuaHandle : public CEventClient
 		static void PushTracebackFuncToRegistry(lua_State* L);
 
 		bool AddBasicCalls(lua_State* L);
-		bool LoadCode(lua_State* L, const string& code, const string& debug);
+		bool LoadCode(lua_State* L, const std::string& code, const std::string& debug);
 		static bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
@@ -296,20 +302,22 @@ class CLuaHandle : public CEventClient
 		void RunDrawCallIn(const LuaHashString& hs);
 
 	protected:
-		bool userMode;
-		bool killMe; // set for handles that fail to RunCallIn
+		bool userMode = false;
+		bool killMe = false; // set for handles that fail to RunCallIn
+
+		int callinErrors = 0;
 
 		lua_State* L;
 		lua_State* L_GC;
 		luaContextData D;
 
-		string killMsg;
+		std::string killMsg;
 
-		vector<bool> watchUnitDefs;
-		vector<bool> watchFeatureDefs;
-		vector<bool> watchWeaponDefs; // for the Explosion call-in
-
-		int callinErrors;
+		std::vector<bool> watchUnitDefs;        // callin masks for Unit*Collision, UnitMoveFailed
+		std::vector<bool> watchFeatureDefs;     // callin masks for UnitFeatureCollision
+		std::vector<bool> watchProjectileDefs;  // callin masks for Projectile*
+		std::vector<bool> watchExplosionDefs;   // callin masks for Explosion
+		std::vector<bool> watchAllowTargetDefs; // callin masks for AllowWeapon*Target*
 
 	private: // call-outs
 		static int KillActiveHandle(lua_State* L);

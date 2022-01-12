@@ -7,15 +7,15 @@ const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
 
 uniform sampler2D diffuseTex;
 uniform sampler2D shadingTex;
-uniform samplerCube specularTex;
 uniform samplerCube reflectTex;
 #ifdef use_normalmapping
 uniform sampler2D normalMap;
 #endif
 
 uniform vec3 sunDir;
-uniform vec3 sunDiffuse;
-uniform vec3 sunAmbient;
+uniform vec3 sunDiffuse; // model
+uniform vec3 sunAmbient; // model
+uniform vec3 sunSpecular; // model
 
 #if (USE_SHADOWS == 1)
 uniform sampler2DShadow shadowTex;
@@ -23,6 +23,8 @@ uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 uniform float shadowDensity;
 #endif
+uniform float specularExponent;
+uniform float gammaExponent;
 
 uniform vec4 fogColor;
 // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
@@ -32,6 +34,8 @@ uniform vec4 fogColor;
 uniform vec4 teamColor;
 uniform vec4 nanoColor;
 // uniform float alphaPass;
+
+uniform vec4 alphaTestCtrl;
 
 // fwdDynLights[i] := {pos, dir, diffuse, specular, ambient, {fov, radius, -, -}}
 uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
@@ -62,8 +66,6 @@ layout(location = 0) out vec4 fragData[MDL_FRAGDATA_COUNT];
 float GetShadowCoeff(float zBias) {
 	#if (USE_SHADOWS == 1)
 	vec4 vertexShadowPos = shadowMatrix * worldPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 		vertexShadowPos.z  += zBias;
 
 	return mix(1.0, textureProj(shadowTex, vertexShadowPos), shadowDensity);
@@ -71,7 +73,7 @@ float GetShadowCoeff(float zBias) {
 	return 1.0;
 }
 
-vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
+vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specularColor) {
 	vec3 light = vec3(0.0);
 
 	#if (NUM_DYNAMIC_MODEL_LIGHTS > 0)
@@ -86,7 +88,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
 		vec4 lightAmbiColor = fwdDynLights[j + 4];
 
 		vec3 wsLightVec = normalize(wsLightPos.xyz - worldPos.xyz);
-		vec3 wsHalfVec = normalize((wsNormal + wsLightVec) * 0.5);
+		vec3 wsHalfVec = normalize(camDir + wsLightVec);
 
 		float lightAngle    = fwdDynLights[j + 5].x; // fov
 		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
@@ -147,13 +149,22 @@ void main(void)
 	vec4 diffuseColor = texture(diffuseTex, texCoord0);
 	vec4 shadingColor = texture(shadingTex, texCoord0);
 
-	vec3 specularColor = texture(specularTex, reflectDir).rgb * shadingColor.g * 4.0;
+	vec3 specularColor = sunSpecular * pow(max(0.001, dot(wsNormal, normalize(sunDir + cameraDir * -1.0))), specularExponent);
 	vec3  reflectColor = texture(reflectTex,  reflectDir).rgb;
 
 
 	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * shadingColor.a; // apply one-bit mask
 
+	#if (DEFERRED_MODE == 0)
+	float alphaTestGreater = float(alpha > alphaTestCtrl.x) * alphaTestCtrl.y;
+	float alphaTestSmaller = float(alpha < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+	if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+		discard;
+	#endif
+
+	specularColor *= (shadingColor.g * 4.0);
 	// no highlights if in shadow; decrease light to ambient level
 	specularColor *= shadow;
 	sunLightColor = mix(sunAmbient, sunLightColor, shadow);
@@ -169,7 +180,7 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 0)
-	fragColor.rgb += DynamicLighting(wsNormal, diffuseColor.rgb, vec4(specularColor, 4.0));
+	fragColor.rgb += DynamicLighting(wsNormal, cameraDir * -1.0, diffuseColor.rgb, vec4(specularColor, 4.0));
 	#endif
 
 	#if (DEFERRED_MODE == 1)
@@ -185,6 +196,7 @@ void main(void)
 	#else
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor); // fog
 	fragColor.rgb = mix(fragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 	fragColor.a   = alpha;
 	#endif
 }

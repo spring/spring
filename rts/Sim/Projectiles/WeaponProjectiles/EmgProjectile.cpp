@@ -9,7 +9,6 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/Sync/SyncTracer.h"
 
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, )
 
@@ -33,11 +32,6 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 	} else {
 		intensity = 0.0f;
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "New emg: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
-#endif
 }
 
 void CEmgProjectile::Update()
@@ -75,7 +69,10 @@ void CEmgProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 }
 
 int CEmgProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)

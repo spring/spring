@@ -61,33 +61,33 @@ class ASSIMP_API NullLogger
 public:
 
     /** @brief  Logs a debug message */
-    void OnDebug(const char* message) {
+    void OnDebug(const char* message) override {
         (void)message; //this avoids compiler warnings
     }
 
     /** @brief  Logs an info message */
-    void OnInfo(const char* message) {
+    void OnInfo(const char* message) override {
         (void)message; //this avoids compiler warnings
     }
 
     /** @brief  Logs a warning message */
-    void OnWarn(const char* message) {
+    void OnWarn(const char* message) override {
         (void)message; //this avoids compiler warnings
     }
 
     /** @brief  Logs an error message */
-    void OnError(const char* message) {
+    void OnError(const char* message) override {
         (void)message; //this avoids compiler warnings
     }
 
     /** @brief  Detach a still attached stream from logger */
-    bool attachStream(LogStream *pStream, unsigned int severity) {
+    bool attachStream(LogStream *pStream, unsigned int severity) override {
         (void)pStream; (void)severity; //this avoids compiler warnings
         return false;
     }
 
     /** @brief  Detach a still attached stream from logger */
-    bool detatchStream(LogStream *pStream, unsigned int severity) {
+    bool detatchStream(LogStream *pStream, unsigned int severity) override {
         (void)pStream; (void)severity; //this avoids compiler warnings
         return false;
     }

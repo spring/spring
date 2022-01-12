@@ -94,6 +94,7 @@ void LegacyTrackHandler::LoadDecalShaders()
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 10
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 11
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 12
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("gammaExponent");      // idx 13
 
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
@@ -103,6 +104,7 @@ void LegacyTrackHandler::LoadDecalShaders()
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform4f(4, invMapSize.x, invMapSize.y, invMapSize.z, invMapSize.w);
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, sunLighting->groundShadowDensity);
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(12, 1.0f);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(13, globalRendering->gammaExponent);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -205,7 +207,10 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
 					buffer->SafeAppend({curPart.pos2, curPart.texPos, 1.0f, curPartColor});
 					buffer->SafeAppend({nxtPart.pos2, nxtPart.texPos, 1.0f, nxtPartColor});
+
+					buffer->SafeAppend({nxtPart.pos2, nxtPart.texPos, 1.0f, nxtPartColor});
 					buffer->SafeAppend({nxtPart.pos1, nxtPart.texPos, 0.0f, nxtPartColor});
+					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
 				}
 
 				curPartColor[3] = nxtPartColor[3];
@@ -213,7 +218,7 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 			}
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 	}
 }
 
@@ -257,18 +262,16 @@ bool LegacyTrackHandler::GetDrawTracks() const
 
 void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 {
-	SCOPED_TIMER("Draw::World::Decals::Tracks");
-
 	if (!GetDrawTracks())
 		return;
 
 	#ifndef USE_DECALHANDLER_STATE
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glDepthMask(0);
-		glPolygonOffset(-10.0f, -20.0f);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->EnablePolyOfsFill();
+		glAttribStatePtr->DisableDepthMask();
+		glAttribStatePtr->PolygonOffset(-10.0f, -20.0f);
 
 		BindTextures();
 		BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
@@ -280,8 +283,8 @@ void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 		decalShaders[DECAL_SHADER_CURR]->Disable();
 		KillTextures();
 
-		glDisable(GL_POLYGON_OFFSET_FILL);
-		glDisable(GL_BLEND);
+		glAttribStatePtr->DisablePolyOfsFill();
+		glAttribStatePtr->DisableBlendMask();
 	}
 	#else
 	{
@@ -304,7 +307,7 @@ void LegacyTrackHandler::BindTextures()
 	}
 
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -316,7 +319,7 @@ void LegacyTrackHandler::KillTextures()
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -338,6 +341,7 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, camera->GetProjectionMatrix());
 		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(9, false, shadowHandler.GetShadowViewMatrixRaw());
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(10, shadowHandler.GetShadowParams());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(13, globalRendering->gammaExponent);
 	}
 	#endif
 }
@@ -416,6 +420,8 @@ void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
 	if (!unit->leaveTracks)
 		return;
 	if (!unitDef->IsGroundUnit())
+		return;
+	if (unit->IsInWater() && !unit->IsOnGround())
 		return;
 
 

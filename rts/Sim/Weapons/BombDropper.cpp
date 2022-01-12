@@ -9,7 +9,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 
@@ -150,6 +150,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponMuzzlePos;
+		params.end = currentTargetPos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
 		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;

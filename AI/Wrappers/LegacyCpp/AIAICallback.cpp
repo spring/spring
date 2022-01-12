@@ -289,8 +289,8 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 		const unsigned char cmd_opt = sAICallback->Unit_CurrentCommand_getOptions(skirmishAIId, unitId, c);
 
 		Command command(cmd_id, cmd_opt);
-		command.tag     = sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c);
-		command.timeOut = sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c);
+		command.SetTag(sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c));
+		command.SetTimeOut(sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c));
 
 		std::vector<float> params(sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, nullptr, 0));
 
@@ -298,7 +298,7 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 			const int numParams = sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
 
 			for (int p = 0; p < numParams; p++) {
-				command.params.push_back(params[p]);
+				command.PushParam(params[p]);
 			}
 		}
 

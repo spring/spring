@@ -7,15 +7,26 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 CR_BIND_DERIVED(CBuilding, CUnit, )
-CR_REG_METADATA(CBuilding, )
+CR_REG_METADATA(CBuilding, (
+	CR_IGNORED(blockMap), // reloaded in PostLoad
+	CR_POSTLOAD(PostLoad)
+))
+
+
+void CBuilding::PostLoad()
+{
+	blockMap = unitDef->GetYardMapPtr();
+}
+
 
 void CBuilding::PreInit(const UnitLoadParams& params)
 {
 	unitDef = params.unitDef;
+	blockMap = unitDef->GetYardMapPtr(); // null if empty
 	blockHeightChanges = unitDef->levelGround;
 
 	CUnit::PreInit(params);
@@ -35,7 +46,7 @@ void CBuilding::ForcedMove(const float3& newPos) {
 	// (always needs to be axis-aligned because yardmaps are not rotated)
 	heading = GetHeadingFromFacing(buildFacing);
 
-	UpdateDirVectors(false);
+	UpdateDirVectors(false, false);
 	SetVelocity(ZeroVector);
 
 	// update quadfield, etc.

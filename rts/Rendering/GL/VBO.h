@@ -18,8 +18,8 @@ public:
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO() { assert(vboId == 0); }
 
-	VBO& operator = (const VBO& other) = delete;
-	VBO& operator = (VBO&& other);
+	VBO& operator=(const VBO& other) = delete;
+	VBO& operator=(VBO&& other) noexcept;
 
 	// NOTE: if declared in global scope, user has to call these before exit
 	void Release() {
@@ -74,12 +74,14 @@ public:
 
 public:
 	mutable GLuint vboId = 0;
+
 	size_t bufSize = 0; // can be smaller than memSize
 	size_t memSize = 0; // actual length of <data>; only set when !isSupported
 
 	mutable GLenum curBoundTarget = 0;
 	GLenum defTarget = GL_ARRAY_BUFFER;
 	GLenum usage = GL_STREAM_DRAW;
+	GLuint mapUnsyncedBit = 0;
 
 public:
 	mutable bool bound = false;

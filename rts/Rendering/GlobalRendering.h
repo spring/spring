@@ -91,12 +91,12 @@ public:
 	/**
 	* @brief max view range in elmos
 	*/
-	static constexpr float MAX_VIEW_RANGE = 8000.0f;
+	static constexpr float MAX_VIEW_RANGE = 65536.0f;
 
 	/**
 	* @brief near z-plane distance in elmos
 	*/
-	static constexpr float NEAR_PLANE = 2.8f;
+	static constexpr float MIN_ZNEAR_DIST = 0.5f;
 
 
 	/// magic constant to reduce overblending on SMF maps
@@ -105,11 +105,12 @@ public:
 	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
 
-	static constexpr int minWinSizeX = 400;
-	static constexpr int minWinSizeY = 300;
+	static constexpr int MIN_WIN_SIZE_X = 400;
+	static constexpr int MIN_WIN_SIZE_Y = 300;
 
-	static constexpr unsigned int NUM_GL_TIMER_QUERIES = 2;
-	static constexpr unsigned int FRAME_TIME_QUERY_IDX = NUM_GL_TIMER_QUERIES - 1;
+	static constexpr unsigned int NUM_OPENGL_TIMER_QUERIES = 8;
+	static constexpr unsigned int FRAME_REF_TIME_QUERY_IDX = 0;
+	static constexpr unsigned int FRAME_END_TIME_QUERY_IDX = NUM_OPENGL_TIMER_QUERIES - 1;
 
 public:
 	/**
@@ -164,6 +165,8 @@ public:
 	float pixelX;
 	float pixelY;
 
+	float minViewRange;
+	float maxViewRange;
 	/**
 	 * @brief aspect ratio
 	 *
@@ -171,17 +174,8 @@ public:
 	 */
 	float aspectRatio;
 
-	/**
-	 * @brief view range
-	 *
-	 * Player's view range
-	 */
-	float zNear;
-	float viewRange;
+	float gammaExponent;
 
-
-	int forceCoreContext;
-	int forceSwapBuffers;
 
 	/**
 	 * @brief MSAA
@@ -200,6 +194,13 @@ public:
 	float maxTexAnisoLvl;
 
 
+	/**
+	 * @brief active video
+	 *
+	 * Whether the graphics need to be drawn
+	 */
+	bool active;
+
 	bool drawSky;
 	bool drawWater;
 	bool drawGround;
@@ -210,8 +211,9 @@ public:
 	 *
 	 * Whether debugging info is drawn
 	 */
-	bool drawdebug;
-	bool drawdebugtraceray;
+	bool drawDebug;
+	bool drawDebugTraceRay;
+	bool drawDebugCubeMap;
 
 	bool glDebug;
 	bool glDebugErrors;
@@ -220,14 +222,6 @@ public:
 	 * Does the user want team colored nanospray?
 	 */
 	bool teamNanospray;
-
-
-	/**
-	 * @brief active video
-	 *
-	 * Whether the graphics need to be drawn
-	 */
-	bool active;
 
 	/**
 	 * @brief compressTextures
@@ -249,13 +243,6 @@ public:
 
 
 	/**
-	 * @brief collection of some ATI bugfixes
-	 *
-	 * enables some ATI bugfixes
-	 */
-	bool atiHacks;
-
-	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *
 	 * Especially some ATI cards report that they support NPOTs, but don't (or just very limited).
@@ -272,6 +259,7 @@ public:
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
+	bool supportSeamlessCubeMaps;
 	bool supportFragDepthLayout;
 
 	/**
@@ -311,7 +299,7 @@ private:
 	SDL_GLContext glContexts[2];
 
 	// double-buffered; results from frame N become available on frame N+1
-	unsigned int glTimerQueries[NUM_GL_TIMER_QUERIES * 2];
+	unsigned int glTimerQueries[NUM_OPENGL_TIMER_QUERIES * 2];
 };
 
 extern CGlobalRendering* globalRendering;

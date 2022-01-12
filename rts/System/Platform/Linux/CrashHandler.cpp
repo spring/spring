@@ -8,13 +8,12 @@
 #include <cstdio>
 #include <string>
 
+#include <array>
 #include <deque>
-#include <map>
-#include <set>
 #include <vector>
 #include <new>
 
-#include <signal.h>
+#include <csignal>
 #include <execinfo.h>
 #include <SDL_events.h>
 #include <sys/resource.h> // getrlimits
@@ -22,8 +21,9 @@
 #include <libunwind.h>
 #include <dlfcn.h>
 
-#include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/SpringExitCode.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
@@ -37,14 +37,35 @@
 #include "System/Platform/Watchdog.h"
 #endif
 
+
 #if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
+#else
+// NB: Mac/CrashHandler.cpp #include's this compilation unit
+#define ADDR2LINE "atos"
 #endif
 
-static const int MAX_STACKTRACE_DEPTH = 100;
-static const std::string INVALID_LINE_INDICATOR = "#####";
-static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
+#if (defined(__FreeBSD__))
+// show function names, demangle
+#define ADDR2LINE_ARGS " -f -C"
+#else
+// unwind inlines, show addresses, see above
+#define ADDR2LINE_ARGS " -i -a  -f -C"
+#endif
 
+
+static constexpr int MAX_STACKTRACE_DEPTH = 100;
+static constexpr uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
+static const char* INVALID_LINE_INDICATOR = "#####";
+
+static const char* glDriverNames[] = {
+	"libGLcore.so",
+	"psb_dri.so",
+	"i965_dri.so",
+	"fglrx_dri.so",
+	"amdgpu_dri.so",
+	"libnvidia-glcore.so"
+};
 static const char* saiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* iaiLibWarning = "This stack trace indicates a problem with an AI Interface library.";
 static const char* oglLibWarning =
@@ -61,16 +82,18 @@ struct StackEntry {
 };
 
 struct StackFrame {
-	int                   level = 0;      // level in the original unwinding (inlined functions share the same level as their "caller")
-	void*                 ip = nullptr;   // instruction pointer from libunwind or backtrace()
-	std::string           mangled;        // mangled name retrieved from libunwind (not printed, memoized for debugging)
-	std::string           symbol;         // backtrace_symbols output
-	uintptr_t             addr = 0;       // translated address / load address for OS X
-	std::string           path;           // translated library or module path
+	int                     level = 0;    // level in the original unwinding (inlined functions share the same level as their "caller")
+	void*                   ip = nullptr; // instruction pointer from libunwind or backtrace()
+	uintptr_t               addr = 0;     // translated address / load address for OS X
+
+	std::string             mangled;      // mangled name retrieved from libunwind (not printed, memoized for debugging)
+	std::string             symbol;       // backtrace_symbols output
+	std::string             path;         // translated library or module path
 	std::vector<StackEntry> entries;      // function names and lines (possibly several inlined) retrieved from addr2line
 };
 
 typedef std::vector<StackFrame> StackTrace;
+typedef std::pair<std::string, uintptr_t> PathAddrPair;
 
 static int reentrances = 0;
 
@@ -266,65 +289,70 @@ static int CommonStringLength(const std::string& str1, const std::string& str2)
  * Finds the base memory address in the running process for all the libraries
  * involved in the crash.
  */
-static void FindBaseMemoryAddresses(const StackTrace& stacktrace, std::map<std::string, uintptr_t>& baseMemAddrPaths)
+static unsigned int FindBaseMemoryAddresses(const StackTrace& stacktrace, std::array<PathAddrPair, 1024>& baseMemAddrPaths)
 {
 	// store all paths which we have to find
-	std::set<std::string> nonFoundPaths;
+	std::array<PathAddrPair, 1024> notFoundPaths;
 
-	for (const StackFrame& sf: stacktrace) {
-		baseMemAddrPaths[sf.path] = 0;
-	}
+	unsigned int numAddrPairs = 0;
 
-	// pair<std::string, uintptr_t>
-	for (const auto& addrPair: baseMemAddrPaths) {
-		nonFoundPaths.insert(addrPair.first);
-	}
+	const auto AddressPred = [&](const StackFrame& sf) { baseMemAddrPaths[numAddrPairs++] = {sf.path, 0}; };
+	const auto SortCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first >  b.first); };
+	const auto FindCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first <  b.first); };
+	const auto  UniquePred = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first == b.first); };
 
-	// /proc/self/maps contains the base addresses for all loaded dynamic
-	// libaries of the current process + other stuff (which we are not interested in)
+	std::for_each(stacktrace.begin(), stacktrace.begin() + std::min(stacktrace.size(), baseMemAddrPaths.size()), AddressPred);
+	// sort in descending order, then reverse s.t. empty strings do not end up in front
+	std::sort(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs, SortCompare);
+	std::reverse(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs);
+
+	const auto begUniquePaths = baseMemAddrPaths.begin();
+	const auto endUniquePaths = std::unique(begUniquePaths, begUniquePaths + numAddrPairs, UniquePred);
+
+	std::for_each(begUniquePaths, begUniquePaths + (numAddrPairs = endUniquePaths - begUniquePaths), [&](const PathAddrPair& p) { notFoundPaths[&p - begUniquePaths] = p; });
+
+	// /proc/self/maps contains the base addresses for all loaded dynamic libs
+	// of the current process + other stuff (which we are not interested in)
 	FILE* mapsFile = fopen("/proc/self/maps", "rb");
 
 	if (mapsFile == nullptr)
-		return;
+		return 0;
 
 	// format of /proc/self/maps:
 	// (column names)  address           perms offset  dev   inode      pathname
 	// (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
 	// (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
-	unsigned long int memStartAddr;
-	unsigned long int binAddrOffset;
+	unsigned long int memStartAddr = 0;
+	unsigned long int binAddrOffset = 0;
 
 	char binPathName[512];
 	char binAddrLine[512];
 
 	// read and parse all lines
-	while (!nonFoundPaths.empty() && (fgets(binAddrLine, sizeof(binAddrLine) - 1, mapsFile) != nullptr)) {
+	while (numAddrPairs > 0 && fgets(binAddrLine, sizeof(binAddrLine) - 1, mapsFile) != nullptr) {
 		if (sscanf(binAddrLine, "%lx-%*x %*s %lx %*s %*u %s", &memStartAddr, &binAddrOffset, binPathName) != 3)
 			continue;
 
 		if (binAddrOffset != 0)
 			continue;
 
-		// start of binary's memory space
-		std::string matchingPath;
 
 		// go through all paths of the binaries involved in the stacktrace
 		// for each, check if the current line contains this binary
-		for (const std::string& nonFoundPath: nonFoundPaths) {
-			if (nonFoundPath == binPathName) {
-				matchingPath = nonFoundPath;
-				break;
-			}
-		}
+		const auto end = notFoundPaths.begin() + (endUniquePaths - begUniquePaths);
+		const auto iter = std::lower_bound(notFoundPaths.begin(), end, PathAddrPair{binPathName, 0}, FindCompare);
 
-		if (matchingPath.empty())
+		if (iter == end || iter->second == uintptr_t(-1) || iter->first != binPathName)
 			continue;
 
-		baseMemAddrPaths[matchingPath] = memStartAddr;
-		nonFoundPaths.erase(matchingPath);
+		baseMemAddrPaths[iter - notFoundPaths.begin()].second = memStartAddr;
+		notFoundPaths[iter - notFoundPaths.begin()].second = uintptr_t(-1);
+
+		numAddrPairs -= 1;
 	}
 
 	fclose(mapsFile);
+	return (endUniquePaths - begUniquePaths);
 }
 
 /**
@@ -390,16 +418,13 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 
 static bool ContainsDriverLib(const std::string& path)
 {
-	static const std::array<std::string, 6> glDrivers({
-		"libGLcore.so", "psb_dri.so", "i965_dri.so", "fglrx_dri.so", "amdgpu_dri.so", "libnvidia-glcore.so"
-	});
+	bool ret = false;
 
-	for (const std::string& driver: glDrivers) {
-		if (path.find(driver) != std::string::npos)
-			return true;
+	for (size_t i = 0, n = sizeof(glDriverNames) / sizeof(glDriverNames[0]); i < n && !ret; i++) {
+		ret = (strstr(path.c_str(), glDriverNames[i]) != nullptr);
 	}
 
-	return false;
+	return ret;
 }
 
 
@@ -464,24 +489,27 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 
 
 	// detect base memory-addresses of all libs found in the stacktrace
-	std::map<std::string, uintptr_t> baseMemAddrPaths;
+	std::array<PathAddrPair, 1024> baseMemAddrPaths;
 	std::deque<size_t> stackFrameIndices;
 
 	std::string       execCommandString;
 	std::stringstream execCommandBuffer;
 
-	FindBaseMemoryAddresses(stacktrace, baseMemAddrPaths);
-
-
 	LOG_L(L_DEBUG, "[%s][5]", __func__);
 
 	// finally translate it; nested s.t. the outer loop covers
 	// all the entries for one library (fewer addr2line calls)
-	for (const auto& baseMemAddrPair: baseMemAddrPaths) {
+	for (unsigned int j = 0, numAddrPairs = FindBaseMemoryAddresses(stacktrace, baseMemAddrPaths); j < numAddrPairs; j++) {
+		const PathAddrPair& baseMemAddrPair = baseMemAddrPaths[j];
+
 		const std::string& modulePath = baseMemAddrPair.first;
 		const std::string symbolFile = LocateSymbolFile(modulePath);
 
-		LOG_L(L_DEBUG, "[%s][6] modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
+		if (modulePath.empty()) {
+			LOG_L(L_ERROR, "[%s][6] addrPair=%u/%u modulePath=N/A (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, baseMemAddrPair.second, symbolFile.c_str());
+		} else {
+			LOG_L(L_DEBUG, "[%s][6] addrPair=%u/%u modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
+		}
 
 		{
 			stackFrameIndices.clear();
@@ -489,8 +517,8 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 			execCommandBuffer.str("");
 
 			execCommandBuffer << ADDR2LINE;
-			execCommandBuffer << " -i -a -f -C";
-			execCommandBuffer << " --exe=\"" << symbolFile << "\"";
+			execCommandBuffer << ADDR2LINE_ARGS;
+			execCommandBuffer << " -e \"" << symbolFile << "\"";
 
 			// insert requested addresses that should be translated by addr2line
 			for (size_t i = 0, n = stacktrace.size(); i < n; i++) {
@@ -582,7 +610,6 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 	}
 
 	LOG_L(L_DEBUG, "[%s][7]", __func__);
-	return;
 }
 
 
@@ -636,22 +663,17 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 
 
 
-__FORCE_ALIGN_STACK__
-static void ForcedExitAfterFiveSecs() {
-	spring::this_thread::sleep_for(std::chrono::seconds(5));
-	std::exit(-1);
-}
+static void ForcedExit(int secs)
+{
+	std::function<void()> func = [secs]() {
+		spring::this_thread::sleep_for(std::chrono::seconds(secs));
+		std::exit(spring::EXIT_CODE_KILLED);
+	};
+	spring::thread thread{func};
 
-__FORCE_ALIGN_STACK__
-static void ForcedExitAfterTenSecs() {
-	spring::this_thread::sleep_for(std::chrono::seconds(10));
-#if defined(__GNUC__)
-	std::_Exit(-1);
-#else
-	std::quick_exit(-1);
-#endif
+	assert(thread.joinable());
+	thread.detach();
 }
-
 
 typedef struct sigaction sigaction_t;
 typedef void (*sigact_handler_t)(int, siginfo_t*, void*);
@@ -767,7 +789,6 @@ namespace CrashHandler
 
 		StackTrace stacktrace;
 
-		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
 			void* iparray[MAX_STACKTRACE_DEPTH];
@@ -776,8 +797,8 @@ namespace CrashHandler
 			if (numLines > MAX_STACKTRACE_DEPTH)
 				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-			// give them meaningful names
-			ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
 		}
 
 		if (stacktrace.empty()) {
@@ -785,7 +806,6 @@ namespace CrashHandler
 			return;
 		}
 
-		// Translate it
 		TranslateStackTrace(stacktrace, logLevel);
 		LogStacktrace(logLevel, stacktrace);
 	}
@@ -817,53 +837,50 @@ namespace CrashHandler
      * Since the thread to be traced may be running, it requires a ThreadControls object in order to suspend/resume the thread.
      * @brief RemoteStacktrace
      */
-    void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName)
+    void SuspendedStacktrace(Threading::ThreadControls* ctls, const char* threadName)
     {
 #if !(DEDICATED || UNIT_TEST)
-        Watchdog::ClearTimer();
+		Watchdog::ClearTimer();
 #endif
-        assert(ctls != nullptr);
-        assert(ctls->handle != 0);
-        assert(!threadName.empty());
+		assert(ctls != nullptr);
+		assert(ctls->handle != 0);
+		assert(threadName[0] != 0);
 
-        LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
-        LOG_L(L_DEBUG, "SuspendedStacktrace[1]");
+		LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
+		LOG_L(L_DEBUG, "[%s][1]", __func__);
 
-        StackTrace stacktrace;
+		StackTrace stacktrace;
 
-        // Get untranslated stacktrace symbols
-        {
-            // process and analyse the raw stack trace
-            void* iparray[MAX_STACKTRACE_DEPTH];
+		{
+			// process and analyse the raw stack trace
+			void* iparray[MAX_STACKTRACE_DEPTH];
 
 			ctls->Suspend();
 			const int numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
 			ctls->Resume();
 
-            LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
+			LOG_L(L_DEBUG, "[%s][2]", __func__);
 
-            if (numLines > MAX_STACKTRACE_DEPTH)
-                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+			if (numLines > MAX_STACKTRACE_DEPTH)
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-			// give them meaningful names
-            ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
-        }
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+		}
 
-        if (stacktrace.empty()) {
-            LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
-            return;
-        }
+		if (stacktrace.empty()) {
+			LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
+			return;
+		}
 
-        LOG_L(L_DEBUG, "SuspendedStacktrace[3]");
+		LOG_L(L_DEBUG, "[%s][3]", __func__);
 
-        // Translate symbols into code line numbers
-        TranslateStackTrace(stacktrace, LOG_LEVEL_WARNING);
+		// Translate symbols into code line numbers
+		TranslateStackTrace(stacktrace, LOG_LEVEL_WARNING);
 
-        LOG_L(L_DEBUG, "SuspendedStacktrace[4]");
+		LOG_L(L_DEBUG, "[%s][4]", __func__);
 
-        // Print out the translated StackTrace
-        LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
-
+		LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
     }
 
 
@@ -873,47 +890,44 @@ namespace CrashHandler
 	 * provide siginfo_t and ucontext_t structures to help produce the trace using libunwind.
 	 * @brief PrepareStacktrace
 	 */
-    void HaltedStacktrace(const std::string& errstr, siginfo_t* siginfo, ucontext_t* ucontext)
+    void HaltedStacktrace(siginfo_t* siginfo, ucontext_t* ucontext, const char* signame)
     {
-        LOG_L(L_ERROR, "Halted Stacktrace for Spring %s using libunwind:", (SpringVersion::GetFull()).c_str());
+		LOG_L(L_ERROR, "Halted Stacktrace for Spring %s (%s) using libunwind:", (SpringVersion::GetFull()).c_str(), signame);
 
-        assert(siginfo != nullptr);
-        assert(ucontext != nullptr);
+		assert(siginfo != nullptr);
+		assert(ucontext != nullptr);
 
-        StackTrace stacktrace;
+		StackTrace stacktrace;
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[1]");
+		LOG_L(L_DEBUG, "[%s][1]", __func__);
 
-        // Get untranslated stacktrace symbols
-        {
-            // process and analyse the raw stack trace
-            void* iparray[MAX_STACKTRACE_DEPTH];
+		{
+			// process and analyse the raw stack trace
+			void* iparray[MAX_STACKTRACE_DEPTH];
+			const int numLines = thread_unwind(nullptr, iparray, stacktrace);
 
-            const int numLines = thread_unwind(nullptr, iparray, stacktrace);
+			LOG_L(L_DEBUG, "[%s][2]", __func__);
 
-            LOG_L(L_DEBUG, "HaltedStacktrace[2]");
+			if (numLines > MAX_STACKTRACE_DEPTH)
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-            if (numLines > MAX_STACKTRACE_DEPTH)
-                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
-
-			// give them meaningful names
-            ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
         }
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[3]");
+		LOG_L(L_DEBUG, "[%s][3]", __func__);
 
-        if (stacktrace.empty()) {
-            LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
-            return;
-        }
+		if (stacktrace.empty()) {
+			LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
+			return;
+		}
 
-        // Translate it
-        TranslateStackTrace(stacktrace, LOG_LEVEL_ERROR);
+		TranslateStackTrace(stacktrace, LOG_LEVEL_ERROR);
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[4]");
+		LOG_L(L_DEBUG, "[%s][4]", __func__);
 
-        // Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
-        LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
+		// Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
+		LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
     }
 
 
@@ -923,109 +937,88 @@ namespace CrashHandler
 
 	void HandleSignal(int signal, siginfo_t* siginfo, void* pctx)
 	{
-		if (signal == SIGINT) {
-			// ctrl+c = kill
-			LOG("caught SIGINT, aborting");
+		switch (signal) {
+			case SIGINT: {
+				// ctrl+c = kill
+				LOG("[%s] caught SIGINT, aborting", __func__);
 
-			// first try a clean exit
-			SDL_Event event;
-			event.type = SDL_QUIT;
-			SDL_PushEvent(&event);
+				// first try a clean exit
+				SDL_Event event;
+				event.type = SDL_QUIT;
+				SDL_PushEvent(&event);
 
-			// abort after 5sec
-			spring::thread(std::bind(&ForcedExitAfterFiveSecs));
-			spring::thread(std::bind(&ForcedExitAfterTenSecs));
-			return;
+				// force an exit if no such luck
+				ForcedExit(5);
+				return;
+			} break;
+			case SIGCONT: {
+				#ifndef DEDICATED
+				Watchdog::ClearTimers(false, false);
+				#endif
+				LOG("[%s] caught SIGCONT, resuming", __func__);
+				return;
+			} break;
+			default: {
+			} break;
 		}
 
-		// Turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
+
+		// turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
 		if ((++reentrances) >= 2) {
 			sigaction_t& sa = GetSigAction(nullptr);
 			sigaction(signal, &sa, nullptr);
 		}
 
-		ucontext_t* uctx = reinterpret_cast<ucontext_t*> (pctx);
-
 		logSinkHandler.SetSinking(false);
 
-		std::string error = strsignal(signal);
-		// append the signal name (it seems there is no OS function to map signum to signame :<)
-		if (signal == SIGSEGV) {
-			error += " (SIGSEGV)";
-		} else if (signal == SIGILL) {
-			error += " (SIGILL)";
-		} else if (signal == SIGPIPE) {
-			error += " (SIGPIPE)";
-		} else if (signal == SIGIO) {
-			error += " (SIGIO)";
-		} else if (signal == SIGABRT) {
-			error += " (SIGABRT)";
-		} else if (signal == SIGFPE) {
-			error += " (SIGFPE)";
-		} else if (signal == SIGBUS) {
-			error += " (SIGBUS)";
+
+		ucontext_t* uctx = reinterpret_cast<ucontext_t*>(pctx);
+
+		const char* sigdesc = strsignal(signal);
+		const char* signame = "";
+
+		// append the signal name (no OS function to map signum to signame)
+		switch (signal) {
+			case SIGSEGV: { signame = "SIGSEGV"; } break;
+			case SIGILL : { signame = "SIGILL" ; } break;
+			case SIGPIPE: { signame = "SIGPIPE"; } break;
+			case SIGIO  : { signame = "SIGIO"  ; } break;
+			case SIGFPE : { signame = "SIGFPE" ; } break; // causes endless loop, process never gets past the signal trigger
+			case SIGABRT: { signame = "SIGABRT"; } break; // same
+			case SIGBUS : { signame = "SIGBUS" ; } break;
+			default     : {                      } break;
 		}
-		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
 
-		const bool nonFatalSignal = false;
-		const bool fatalSignal =
-			(signal == SIGSEGV) ||
-			(signal == SIGILL)  ||
-			(signal == SIGPIPE) ||
-			(signal == SIGFPE)  || // causes a endless loop, and process never gets far the causing cmd :<
-			(signal == SIGABRT) || // same
-			(signal == SIGBUS);
-
-		bool keepRunning = false;
-		bool aiCrash = false;
-
-		if (fatalSignal)
-			keepRunning = false;
-		if (nonFatalSignal)
-			keepRunning = true;
+		LOG_L(L_ERROR, "%s in Spring %s", sigdesc, (SpringVersion::GetFull()).c_str());
 
 		// print stacktrace
 		PrepareStacktrace();
-		HaltedStacktrace(error, siginfo, uctx);
+		HaltedStacktrace(siginfo, uctx, signame);
 		CleanupStacktrace();
 
-		// try to clean up
-		if (keepRunning) {
-			bool cleanupOk = true;
+		if (signal != SIGIO) {
+			char buf[8192];
+			char* ptr = buf;
 
-			// try to cleanup AIs
-			if (aiCrash)
-				cleanupOk = false;
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s", "Spring has crashed:\n");
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", sigdesc);
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", "A stacktrace has been written to:\n");
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", (logOutput.GetFilePath()).c_str());
 
-			if (cleanupOk) {
-				logSinkHandler.SetSinking(true);
-			} else {
-				keepRunning = false;
-			}
-		}
-
-		if (!keepRunning) {
+			// fatal signal, try to clean up
 			Remove();
-
-			std::ostringstream buf;
-			buf << "Spring has crashed:\n"
-				<< error << ".\n\n"
-				<< "A stacktrace has been written to:\n"
-				<< "  " << logOutput.GetFilePath();
-
 			// exit if we cought a critical signal; don't handle any further signals when exiting
-			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH);
+			ErrorMessageBox(buf, "Spring crashed", MBF_OK | MBF_CRASH);
+		} else {
+			logSinkHandler.SetSinking(true);
 		}
 
-		// Re-enable signal handling for this signal
+		// re-enable signal handling for this signal
 		// FIXME: reentrances should be implemented using __thread
 		if (reentrances >= 2) {
 			sigaction_t& sa = GetSigAction(&HandleSignal);
 			sigaction(signal, &sa, nullptr);
 		}
-
-
-
 	}
 
 	void OutputStacktrace() {
@@ -1035,10 +1028,10 @@ namespace CrashHandler
 	}
 
 	void NewHandler() {
+		std::set_new_handler(nullptr); // prevent recursion; OST or EMB might perform hidden allocs
 		LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 		OutputStacktrace();
-
 		ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 	}
 
@@ -1059,6 +1052,8 @@ namespace CrashHandler
 		sigaction(SIGFPE,  &sa, nullptr); // div0 and more
 		sigaction(SIGABRT, &sa, nullptr);
 		sigaction(SIGINT,  &sa, nullptr);
+		// sigaction(SIGSTOP, &sa, nullptr); // cannot be caught
+		sigaction(SIGCONT, &sa, nullptr);
 		sigaction(SIGBUS,  &sa, nullptr); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 
 		std::set_new_handler(NewHandler);
@@ -1075,6 +1070,8 @@ namespace CrashHandler
 		sigaction(SIGFPE,  &sa, nullptr);
 		sigaction(SIGABRT, &sa, nullptr);
 		sigaction(SIGINT,  &sa, nullptr);
+		// sigaction(SIGSTOP, &sa, nullptr);
+		sigaction(SIGCONT, &sa, nullptr);
 		sigaction(SIGBUS,  &sa, nullptr);
 
 		std::set_new_handler(nullptr);

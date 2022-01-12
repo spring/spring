@@ -26,7 +26,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 		inViewQuads.reserve(32);
 	}
 	void DrawQuad(int x, int y) override {
-		inViewQuads.push_back({x, y});
+		inViewQuads.emplace_back(x, y);
 	}
 
 public:
@@ -59,7 +59,7 @@ static CGlobalUnsyncedRNG rng;
 static CAdvTreeSquareDrawer squareDrawer;
 
 
-CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
+CAdvTreeDrawer::CAdvTreeDrawer()
 {
 	LoadTreeShaders();
 
@@ -91,7 +91,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 	const static char* uniformNames[] = {
 		"cameraDirX",          // VP, idx  0
 		"cameraDirY",          // VP, idx  1
-		"$dummy$",             // VP, idx  2 (unused)
+		"alphaTestCtrl",       // FP, idx  2
 		"groundAmbientColor",  // FP, idx  3
 		"groundDiffuseColor",  // FP, idx  4
 		"alphaModifiers",      // VP, idx  5
@@ -104,10 +104,11 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		"shadowMatrix",        // VP, idx 10 (unused when TREE_SHADOW=0)
 		"shadowParams",        // VP, idx 11 (unused when TREE_SHADOW=0)
 		"groundShadowDensity", // FP, idx 12 (unused when TREE_SHADOW=0)
+		"gammaExponent",       // FP, idx 13
 
-		"treeMat",             // VP, idx 13
-		"viewMat",             // VP, idx 14
-		"projMat",             // VP, idx 15
+		"treeMat",             // VP, idx TREE_MAT_IDX
+		"viewMat",             // VP, idx VIEW_MAT_IDX
+		"projMat",             // VP, idx PROJ_MAT_IDX
 	};
 
 
@@ -128,9 +129,9 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 	tpb->Link();
 	tps->Link();
 
-	for (size_t i = 0; i < (sizeof(uniformNames) / sizeof(uniformNames[0])); i++) {
-		tpb->SetUniformLocation(uniformNames[i]);
-		tps->SetUniformLocation(uniformNames[i]);
+	for (const auto& uniformName: uniformNames) {
+		tpb->SetUniformLocation(uniformName);
+		tps->SetUniformLocation(uniformName);
 	}
 
 	for (Shader::IProgramObject* tp: {tpb, tps}) {
@@ -143,6 +144,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		tp->SetUniform1i(8, 1);
 		tp->SetUniform1i(9, 0);
 		tp->SetUniform1f(12, 1.0f - (sunLighting->groundShadowDensity * 0.5f));
+		tp->SetUniform1f(13, globalRendering->gammaExponent);
 		tp->Disable();
 		tp->Validate();
 	}
@@ -169,8 +171,7 @@ void CAdvTreeDrawer::Update()
 		}
 	}
 
-	for (int i = 0; i < 2; i++) {
-		std::vector<FallingTree>& v = fallingTrees[i];
+	for (std::vector<FallingTree>& v : fallingTrees) {
 
 		for (size_t n = 0; n < v.size(); /*no-op*/) {
 			FallingTree& ft = v[n];
@@ -252,7 +253,7 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex());
 
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0);
 
 		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(10, false, shadowHandler.GetShadowViewMatrixRaw());
 		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(11, shadowHandler.GetShadowParams());
@@ -264,7 +265,7 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 
 	const float3& cameraDirX = cam->GetRight();
 	const float3& cameraDirY = cam->GetUp();
-	const float3   fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3   fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 	const CMatrix44f& treeMat = CMatrix44f::Identity();
 	const CMatrix44f& viewMat = camera->GetViewMatrix();
@@ -273,14 +274,15 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(0, &cameraDirX.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(1, &cameraDirY.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(6, &fogParams.x);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(13, false, &treeMat.m[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(14, false, &viewMat.m[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(15, false, &projMat.m[0]);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(2, float4{0.5f, 1.0f, 0.0f, 0.0f}); // test > 0.5
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform1f(13, globalRendering->gammaExponent);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(TREE_MAT_IDX, false, &treeMat.m[0]);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(VIEW_MAT_IDX, false, &viewMat.m[0]);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(PROJ_MAT_IDX, false, &projMat.m[0]);
 
 
-	glDepthMask(GL_TRUE);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->DisableBlendMask();
 }
 
 void CAdvTreeDrawer::ResetDrawState()
@@ -291,11 +293,12 @@ void CAdvTreeDrawer::ResetDrawState()
 		// barkTex
 		// glActiveTexture(GL_TEXTURE1);
 
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE0);
 	} else {
 		glActiveTexture(GL_TEXTURE0);
 	}
 
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(2, float4{0.0f, 0.0f, 0.0f, 1.0f}); // no test
 	treeShaders[TREE_PROGRAM_ACTIVE]->Disable();
 	treeShaders[TREE_PROGRAM_ACTIVE] = nullptr;
 }
@@ -304,14 +307,13 @@ void CAdvTreeDrawer::ResetDrawState()
 void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
 void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->DisableCullFace();
 
-	glPolygonOffset(1, 1);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex()); // alpha-mask
+	glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex()); // alpha-mask; threshold set in ShadowHandler
 
 
 	const float3& cameraDirX = cam->GetRight();
@@ -325,10 +327,6 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(3, false, CMatrix44f::Identity());
-
-
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glEnable(GL_ALPHA_TEST);
 }
 
 void CAdvTreeDrawer::ResetShadowDrawState()
@@ -338,9 +336,8 @@ void CAdvTreeDrawer::ResetShadowDrawState()
 	treeShaders[TREE_PROGRAM_ACTIVE]->Disable();
 	treeShaders[TREE_PROGRAM_ACTIVE] = nullptr;
 
-	glEnable(GL_CULL_FACE);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
 
@@ -349,7 +346,7 @@ void CAdvTreeDrawer::ResetShadowDrawState()
 void CAdvTreeDrawer::DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const     int matUniformIdx = mix(13, 3, shadowHandler.InShadowPass());
+	const     int matUniformIdx = mix(TREE_MAT_IDX, 3, shadowHandler.InShadowPass());
 
 	for (const int2 idx: squareDrawer.inViewQuads) {
 		const float3 camPos  = cam->GetPos();
@@ -385,7 +382,7 @@ void CAdvTreeDrawer::DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo)
 
 void CAdvTreeDrawer::DrawFallingTrees(const CCamera* cam, Shader::IProgramObject* ipo) const
 {
-	const int matUniformIdx = mix(13, 3, shadowHandler.InShadowPass());
+	const int matUniformIdx = mix(TREE_MAT_IDX, 3, shadowHandler.InShadowPass());
 
 	// draw trees that have been marked as falling
 	for (int i = 0; i < 2; i++) {

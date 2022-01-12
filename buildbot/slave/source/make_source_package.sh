@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # tarball generation script
 
@@ -28,7 +28,7 @@ fi
 # Find correct working directory.
 # (Compatible with SConstruct, which is in trunk root)
 
-while [ ! -d installer ]; do
+while [ ! -d rts ]; do
 	if [ "${PWD}" = "/" ]; then
 		echo "Error: Could not find installer directory." >&2
 		echo "Make sure to run this script from a directory below your checkout directory." >&2
@@ -77,33 +77,37 @@ dir="spring_${versionString}"
 lzma="spring_${versionString}_src.tar.lzma"
 tgz="spring_${versionString}_src.tar.gz"
 
+
+echo 'Cleaning source dir'
+git clean -f -d -x
+git submodule foreach git clean -f -d -x
+
 echo 'Exporting checkout dir with LF line endings'
-git clone -s --recursive ${SOURCEROOT} ${OUTPUTDIR}/${dir}
+rsync -a --exclude .git --delete --delete-excluded ${SOURCEROOT}/ ${OUTPUTDIR}/${dir}/
 
 cd ${OUTPUTDIR}/${dir}
-
-# Checkout the release-version
-git checkout ${BRANCH}
 
 # Add the engine version info, as we can not fetch it through git
 # when using a source archive
 echo "${versionInfo}" > ./VERSION
-rm -rf	${dir}/.git \
-	${dir}/.gitignore \
-	${dir}/.gitmodules \
-	${dir}/.mailmap \
-	${dir}/tools/pr-downloader/src/lsl \
-	${dir}/tools/pr-downloader/src/lib/cimg
+echo "cleaning files"
+rm -rf .git \
+	.gitignore \
+	.gitmodules \
+	.mailmap \
+	tools/pr-downloader/src/lsl/lsl \
+	tools/pr-downloader/src/lsl/lslextract \
+	tools/pr-downloader/src/lsl/lslunitsync \
+	tools/pr-downloader/src/lib/cimg \
+	tools/pr-downloader/src/lib/libgit2
 
 cd ..
-# XXX use git-archive instead? (submodules may cause a bit trouble with it)
-# https://github.com/meitar/git-archive-all.sh/wiki
 
 echo "Creating .tar.lzma archive (${lzma})"
-tar -c --lzma -v -f "${OUTPUTDIR}/source/${lzma}" ${dir} --exclude=.git
+tar -c --lzma -v -f "${OUTPUTDIR}/source/${lzma}" ${dir}
 
 echo "Creating .tar.gz archive (${tgz})"
-tar -c --gzip -f  "${OUTPUTDIR}/source/${tgz}" ${dir} --exclude=.git
+tar -c --gzip -f "${OUTPUTDIR}/source/${tgz}" ${dir}
 
 echo "Cleaning up ${OUTPUTDIR}/${dir}"
 rm -rf "${OUTPUTDIR}/${dir}"

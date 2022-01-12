@@ -14,10 +14,13 @@
 #include "System/Log/ILog.h"
 
 constexpr VA_TYPE_0 VERTS[] = {
-	{{-1.0f, -1.0f, 0.0f}},
-	{{-1.0f, +1.0f, 0.0f}},
-	{{+1.0f, +1.0f, 0.0f}},
-	{{+1.0f, -1.0f, 0.0f}},
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+	{{-1.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f, -1.0f, 0.0f}}, // br
+	{{-1.0f, -1.0f, 0.0f}}, // bl
 };
 
 
@@ -41,7 +44,7 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 	//  then on the gpu instead.
 	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_R32F, texSize.x, texSize.y);
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CMetalExtractionTexture");
@@ -128,21 +131,21 @@ void CMetalExtractionTexture::Update()
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
 
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ZERO, GL_SRC_COLOR);
 	glBindTexture(GL_TEXTURE_2D, infoTex->GetTexture());
 
 	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glDisable(GL_BLEND);
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
 }

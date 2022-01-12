@@ -29,7 +29,7 @@ namespace creg {
 		PQueueType() : IType(sizeof(std::priority_queue<T, S, C>)) { }
 		~PQueueType() { }
 
-		void Serialize(ISerializer* s, void* inst) {
+		void Serialize(ISerializer* s, void* inst) override {
 			S& ct = Container(*(std::priority_queue<T, S, C>*)inst);
 			if (s->IsWriting()) {
 				int size = (int)ct.size();
@@ -49,7 +49,7 @@ namespace creg {
 				}
 			}
 		}
-		std::string GetName() const { return "priority_queue<" + DeduceType<T>::Get()->GetName() + ">"; }
+		std::string GetName() const override { return "priority_queue<" + DeduceType<T>::Get()->GetName() + ">"; }
 	};
 
 

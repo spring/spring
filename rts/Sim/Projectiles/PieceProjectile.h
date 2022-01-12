@@ -38,7 +38,7 @@ public:
 
 	void Update() override;
 	void Draw(GL::RenderDataBufferTC* va) const override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void DrawOnMinimap(GL::RenderDataBufferC* va) override;
 	void Collision() override;
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* f) override;

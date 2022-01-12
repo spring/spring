@@ -11,9 +11,10 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/creg/DefTypes.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 
@@ -56,16 +57,15 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 ))
 
 CSimpleParticleSystem::CSimpleParticleSystem()
-	: CProjectile()
-	, emitVector(ZeroVector)
+	: emitVector(ZeroVector)
 	, emitMul(1.0f, 1.0f, 1.0f)
 	, gravity(ZeroVector)
 	, particleSpeed(0.0f)
 	, particleSpeedSpread(0.0f)
 	, emitRot(0.0f)
 	, emitRotSpread(0.0f)
-	, texture(NULL)
-	, colorMap(NULL)
+	, texture(nullptr)
+	, colorMap(nullptr)
 	, directional(false)
 	, particleLife(0.0f)
 	, particleLifeSpread(0.0f)
@@ -103,13 +103,19 @@ void CSimpleParticleSystem::Draw(GL::RenderDataBufferTC* va) const
 				va->SafeAppend({interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color});
 				va->SafeAppend({interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color});
 				va->SafeAppend({interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color});
+
+				va->SafeAppend({interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color});
 				va->SafeAppend({interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color});
+				va->SafeAppend({interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color});
 			} else {
 				// in this case the particle's coor-system is degenerate
 				va->SafeAppend({interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color});
 				va->SafeAppend({interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color});
 				va->SafeAppend({interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color});
+
+				va->SafeAppend({interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color});
 				va->SafeAppend({interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color});
+				va->SafeAppend({interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color});
 			}
 		}
 	} else {
@@ -129,7 +135,10 @@ void CSimpleParticleSystem::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color});
 			va->SafeAppend({interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color});
 			va->SafeAppend({interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color});
+
+			va->SafeAppend({interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color});
 			va->SafeAppend({interPos - cameraRight + cameraUp, texture->xstart, texture->yend,   color});
+			va->SafeAppend({interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color});
 		}
 	}
 }
@@ -160,11 +169,11 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == NULL) {
+	if (colorMap == nullptr) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == NULL) {
+	if (texture == nullptr) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("simpleparticle");
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no texture specified", __FUNCTION__);
 	}
@@ -225,11 +234,11 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == NULL) {
+	if (colorMap == nullptr) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == NULL) {
+	if (texture == nullptr) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("sphereparticle");
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no texture specified", __FUNCTION__);
 	}

@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "System/Threading/ThreadPool.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
@@ -22,7 +23,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringThreading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
@@ -35,52 +35,69 @@
 #define NUL_RECTANGLE SRectangle(0, 0,             0,            0)
 #define MAP_RECTANGLE SRectangle(0, 0,  mapDims.mapx, mapDims.mapy)
 
+
 namespace QTPFS {
 	struct PMLoadScreen {
-		PMLoadScreen(): loading(true) {}
+	public:
+		PMLoadScreen() { loadMessages.reserve(8); }
 		~PMLoadScreen() { assert(loadMessages.empty()); }
 
-		void SetLoading(bool b) { loading = b; }
-		void AddLoadMessage(const std::string& msg) {
-			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
-			loadMessages.push_back(msg);
+		void Kill() { loading = false; }
+		void Show(const std::function<void(QTPFS::PathManager*)>& lf, QTPFS::PathManager* pm) {
+			Init(lf, pm);
+			Loop();
+			Join();
 		}
-		void SetLoadMessage(const std::string& msg) {
-			#ifdef QTPFS_NO_LOADSCREEN
-			LOG("%s", msg.c_str());
-			#else
-			loadscreen->SetLoadMessage(msg);
-			#endif
-		}
-		void SetLoadMessages() {
-			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 
-			while (!loadMessages.empty()) {
-				SetLoadMessage(loadMessages.front());
-				loadMessages.pop_front();
-			}
+		void AddMessage(std::string&& msg) {
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
+			loadMessages.emplace_back(std::move(msg));
+		}
+
+	private:
+		void Init(const std::function<void(QTPFS::PathManager*)>& lf, QTPFS::PathManager* pm) {
+			// must be set here to handle reloading
+			loading = true;
+			loadThread = spring::thread(std::bind(lf, pm));
 		}
 		void Loop() {
 			while (loading) {
 				spring::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 				// need this to be always executed after waking up
-				SetLoadMessages();
+				SetMessages();
 			}
 
 			// handle any leftovers
-			SetLoadMessages();
+			SetMessages();
+		}
+		void Join() {
+			loadThread.join();
+		}
+
+		void SetMessages() {
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
+
+			for (std::string& msg: loadMessages) {
+				#ifdef QTPFS_NO_LOADSCREEN
+				LOG("%s", msg.c_str());
+				#else
+				loadscreen->SetLoadMessage(std::move(msg));
+				#endif
+			}
+
+			loadMessages.clear();
 		}
 
 	private:
-		std::deque<std::string> loadMessages;
+		std::vector<std::string> loadMessages;
 		spring::mutex loadMessageMutex;
+		spring::thread loadThread;
 
-		volatile bool loading;
+		std::atomic<bool> loading = {false};
 	};
 
 	static PMLoadScreen pmLoadScreen;
-	static spring::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
 		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -90,6 +107,11 @@ namespace QTPFS {
 
 	unsigned int PathManager::LAYERS_PER_UPDATE;
 	unsigned int PathManager::MAX_TEAM_SEARCHES;
+
+	std::vector<NodeLayer> PathManager::nodeLayers;
+	std::vector<QTNode*> PathManager::nodeTrees;
+	std::vector<PathCache> PathManager::pathCaches;
+	std::vector< std::vector<IPathSearch*> > PathManager::pathSearches;
 }
 
 
@@ -102,7 +124,7 @@ QTPFS::PathManager::PathManager() {
 
 QTPFS::PathManager::~PathManager() {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		nodeTrees[layerNum]->Delete();
+		nodeTrees[layerNum]->Merge(nodeLayers[layerNum]);
 		nodeLayers[layerNum].Clear();
 
 		for (auto searchesIt = pathSearches[layerNum].begin(); searchesIt != pathSearches[layerNum].end(); ++searchesIt) {
@@ -116,7 +138,8 @@ QTPFS::PathManager::~PathManager() {
 	}
 
 	nodeTrees.clear();
-	nodeLayers.clear();
+	// reuse layer pools when reloading
+	// nodeLayers.clear();
 	pathCaches.clear();
 	pathSearches.clear();
 	pathTypes.clear();
@@ -129,15 +152,10 @@ QTPFS::PathManager::~PathManager() {
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	// at this point the thread is waiting, so notify it
-	// nodeLayers has been cleared already, guaranteeing
-	// that no "final" iteration shall execute
-	condThreadUpdate->notify_one();
-	updateThread->join();
-
-	delete updateThread;
-	delete mutexThreadUpdate;
-	delete condThreadUpdate;
-	delete condThreadUpdated;
+	// (nodeTrees has been cleared already, guaranteeing
+	// that no "final" iteration shall execute)
+	condThreadUpdate.notify_one();
+	updateThread.join();
 	#endif
 }
 
@@ -145,15 +163,13 @@ std::int64_t QTPFS::PathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		pmLoadThread = spring::thread(std::bind(&PathManager::Load, this));
-		pmLoadScreen.Loop();
-		pmLoadThread.join();
+		pmLoadScreen.Show(&PathManager::Load, this);
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		mutexThreadUpdate = new spring::mutex();
-		condThreadUpdate = new spring::condition_variable();
-		condThreadUpdated = new spring::condition_variable();
-		updateThread = new spring::thread(std::bind(&PathManager::ThreadUpdate, this));
+		mutexThreadUpdate = spring::mutex();
+		condThreadUpdate = spring::condition_variable();
+		condThreadUpdated = spring::condition_variable();
+		updateThread = spring::thread(std::bind(&PathManager::ThreadUpdate, this));
 		#endif
 	}
 
@@ -169,15 +185,13 @@ void QTPFS::PathManager::InitStatic() {
 }
 
 void QTPFS::PathManager::Load() {
-	pmLoadScreen.SetLoading(true);
-
 	// NOTE: offset *must* start at a non-zero value
 	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
 	numPathRequests   = 0;
 	maxNumLeafNodes   = 0;
 
-	nodeTrees.resize(moveDefHandler.GetNumMoveDefs(), NULL);
+	nodeTrees.resize(moveDefHandler.GetNumMoveDefs(), nullptr);
 	nodeLayers.resize(moveDefHandler.GetNumMoveDefs());
 	pathCaches.resize(moveDefHandler.GetNumMoveDefs());
 	pathSearches.resize(moveDefHandler.GetNumMoveDefs());
@@ -227,7 +241,7 @@ void QTPFS::PathManager::Load() {
 			}
 			#endif
 
-			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum();
+			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum(nodeLayers[layerNum]);
 			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
 		}
 
@@ -239,8 +253,9 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.AddLoadMessage("[" + std::string(__func__) + "] " + sumStr + memStr);
-		pmLoadScreen.SetLoading(false);
+
+		pmLoadScreen.AddMessage("[" + std::string(__func__) + "] " + sumStr + memStr);
+		pmLoadScreen.Kill();
 	}
 }
 
@@ -249,7 +264,7 @@ std::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
 		memFootPrint += nodeLayers[i].GetMemFootPrint();
-		memFootPrint += nodeTrees[i]->GetMemFootPrint();
+		memFootPrint += nodeTrees[i]->GetMemFootPrint(nodeLayers[i]);
 	}
 
 	// convert to megabytes
@@ -259,7 +274,7 @@ std::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 void QTPFS::PathManager::SpawnSpringThreads(MemberFunc f, const SRectangle& r) {
-	static std::vector<spring::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
+	static std::vector<spring::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), nullptr);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
 		threads[threadNum] = new spring::thread(std::bind(f, this, threadNum, threads.size(), r));
@@ -281,7 +296,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
 		sprintf(loadMsg, fmtString, __func__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 
 		#ifndef NDEBUG
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
@@ -291,7 +306,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 		for_mt(0, nodeLayers.size(), [&,loadMsg](const int layerNum){
 			#ifndef NDEBUG
 			sprintf(loadMsg, preFmtStr, layerNum, ThreadPool::GetThreadNum());
-			pmLoadScreen.AddLoadMessage(loadMsg);
+			pmLoadScreen.AddMessage(loadMsg);
 			#endif
 
 			// construct each tree from scratch IFF no cache-dir exists
@@ -305,18 +320,18 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 
 			const QTNode* tree = nodeTrees[layerNum];
 			const NodeLayer& layer = nodeLayers[layerNum];
-			const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
+			const unsigned int mem = (tree->GetMemFootPrint(layer) + layer.GetMemFootPrint()) / (1024 * 1024);
 
 			#ifndef NDEBUG
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-			pmLoadScreen.AddLoadMessage(loadMsg);
+			pmLoadScreen.AddMessage(loadMsg);
 			#endif
 		});
 	}
 	#else
 	{
 		sprintf(loadMsg, fmtString, __func__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 
 		SpawnSpringThreads(&PathManager::InitNodeLayersThread, rect);
 	}
@@ -347,7 +362,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
 		#ifndef NDEBUG
 		sprintf(loadMsg, preFmtStr, layerNum, threadNum);
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 
 		InitNodeLayer(layerNum, rect);
@@ -355,20 +370,20 @@ void QTPFS::PathManager::InitNodeLayersThread(
 
 		const QTNode* tree = nodeTrees[layerNum];
 		const NodeLayer& layer = nodeLayers[layerNum];
-		const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
+		const unsigned int mem = (tree->GetMemFootPrint(layer) + layer.GetMemFootPrint()) / (1024 * 1024);
 
 		#ifndef NDEBUG
 		sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 	}
 }
 
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& r) {
-	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
+	NodeLayer& nl = nodeLayers[layerNum];
 
-	nodeLayers[layerNum].Init(layerNum);
-	nodeLayers[layerNum].RegisterNode(nodeTrees[layerNum]);
+	nl.Init(layerNum);
+	nl.RegisterNode(nodeTrees[layerNum] = nl.AllocRootNode(nullptr, 0,  r.x1, r.z1,  r.x2, r.z2));
 }
 
 
@@ -443,7 +458,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	const bool needTesselation = nodeLayers[layerNum].Update(mr, md);
 
 	if (needTesselation && wantTesselation) {
-		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
+		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur, 0);
 		pathCaches[layerNum].MarkDeadPaths(mr);
 
 		#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -489,7 +504,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 		SRectangle ur = mr;
 
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
-			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
+			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur, 0);
 			pathCaches[layerNum].MarkDeadPaths(mr);
 
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -520,21 +535,21 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const {
 	const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
 	const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
-		mapCheckSumHexStr + "-" +
-		modCheckSumHexStr + "/";
+		mapCheckSumHexStr.substr(0, 16) + "-" +
+		modCheckSumHexStr.substr(0, 16) + "/";
 
-	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %s, mod-checksum %s)";
+	char loadMsg[1024] = {'\0'};
+	const char* fmtString = "[PathManager::%s] using cache-dir \"%s\" (map-checksum %s, mod-checksum %s)";
 
-	sprintf(loadMsg, fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
-	pmLoadScreen.AddLoadMessage(loadMsg);
+	snprintf(loadMsg, sizeof(loadMsg), fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
+	pmLoadScreen.AddMessage(loadMsg);
 
 	return dir;
 }
 
 void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	std::vector<std::string> fileNames(nodeTrees.size(), "");
-	std::vector<std::fstream*> fileStreams(nodeTrees.size(), NULL);
+	std::vector<std::fstream*> fileStreams(nodeTrees.size(), nullptr);
 	std::vector<unsigned int> fileSizes(nodeTrees.size(), 0);
 
 	if (!haveCacheDir) {
@@ -578,6 +593,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 			}
+
 			#else
 			assert(FileSystem::FileExists(fileNames[i]));
 			#endif
@@ -593,10 +609,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 		#ifndef NDEBUG
 		sprintf(loadMsg, fmtString, __func__, i, md->name.c_str());
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 
-		nodeTrees[i]->Serialize(*fileStreams[i], nodeLayers[i], &fileSizes[i], haveCacheDir);
+		nodeTrees[i]->Serialize(*fileStreams[i], nodeLayers[i], &fileSizes[i], 0, haveCacheDir);
 
 		fileStreams[i]->flush();
 		fileStreams[i]->close();
@@ -653,13 +669,13 @@ void QTPFS::PathManager::Update() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
 
-	std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
+	std::lock_guard<spring::mutex> lock(mutexThreadUpdate);
 
 	// allow ThreadUpdate to run one iteration
-	condThreadUpdate->notify_one();
+	condThreadUpdate.notify_one();
 
 	// wait for the ThreadUpdate iteration to finish
-	condThreadUpdated->wait(lock);
+	condThreadUpdated.wait(lock);
 
 	streflop::streflop_init<streflop::Simple>();
 	#else
@@ -671,17 +687,16 @@ __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
-		std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
+		std::lock_guard<spring::mutex> lock(mutexThreadUpdate);
 
 		// wait for green light from Update
-		condThreadUpdate->wait(lock);
+		condThreadUpdate.wait(lock);
 
 		// if we were notified from the destructor, then structures
 		// are no longer valid and there is no point to finish this
 		// iteration --> break early to avoid crashing
-		if (nodeLayers.empty()) {
+		if (nodeTrees.empty())
 			break;
-		}
 	#endif
 
 		// NOTE:
@@ -725,7 +740,7 @@ void QTPFS::PathManager::ThreadUpdate() {
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 		// tell Update we are finished with this iteration
-		condThreadUpdated->notify_one();
+		condThreadUpdated.notify_one();
 	}
 	#endif
 }
@@ -837,7 +852,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 		// re-request LIVE paths that were marked as DEAD by a TerrainChange
 		// for each of these now-dead paths, reset the active point-idx to 0
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
-			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, true);
+			QueueSearch(deadPathsIt->second, nullptr, moveDef, ZeroVector, ZeroVector, -1.0f, true);
 		}
 
 		pathCache.KillDeadPaths();
@@ -870,19 +885,19 @@ unsigned int QTPFS::PathManager::QueueSearch(
 	IPath* newPath = new IPath();
 	IPathSearch* newSearch = new PathSearch(PATH_SEARCH_ASTAR);
 
-	assert(newPath != NULL);
-	assert(newSearch != NULL);
+	assert(newPath != nullptr);
+	assert(newSearch != nullptr);
 
-	if (oldPath != NULL) {
+	if (oldPath != nullptr) {
 		assert(oldPath->GetID() != 0);
 		// argument values are unused in this case
-		assert(object == NULL);
+		assert(object == nullptr);
 		assert(sourcePoint == ZeroVector);
 		assert(targetPoint == ZeroVector);
 		assert(radius == -1.0f);
 
 		const CSolidObject* obj = oldPath->GetOwner();
-		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
+		const float3& pos = (obj != nullptr)? obj->pos: oldPath->GetSourcePoint();
 
 		newPath->SetID(oldPath->GetID());
 		newPath->SetNextPointIndex(0);
@@ -911,7 +926,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetSourcePoint(sourcePoint);
 		newPath->SetTargetPoint(targetPoint);
 		newSearch->SetID(newPath->GetID());
-		newSearch->SetTeam((object != NULL)? object->team: teamHandler.ActiveTeams());
+		newSearch->SetTeam((object != nullptr)? object->team: teamHandler.ActiveTeams());
 	}
 
 	assert((pathCaches[moveDef->pathType].GetTempPath(newPath->GetID()))->GetID() == 0);
@@ -962,15 +977,15 @@ unsigned int QTPFS::PathManager::RequestPath(
 	float3 sourcePoint,
 	float3 targetPoint,
 	float radius,
-	bool synced)
-{
+	bool synced
+) {
 	// in misc since it is called from many points
 	SCOPED_TIMER("Misc::Path::RequestPath");
 
 	if (!IsFinalized())
 		return 0;
 
-	return (QueueSearch(NULL, object, moveDef, sourcePoint, targetPoint, radius, synced));
+	return (QueueSearch(nullptr, object, moveDef, sourcePoint, targetPoint, radius, synced));
 }
 
 

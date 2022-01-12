@@ -11,10 +11,13 @@
 #include "System/Log/ILog.h"
 
 constexpr VA_TYPE_0 VERTS[] = {
-	{{-1.0f, -1.0f, 0.0f}},
-	{{-1.0f, +1.0f, 0.0f}},
-	{{+1.0f, +1.0f, 0.0f}},
-	{{+1.0f, -1.0f, 0.0f}},
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+	{{-1.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f, -1.0f, 0.0f}}, // br
+	{{-1.0f, -1.0f, 0.0f}}, // bl
 };
 
 
@@ -37,7 +40,7 @@ CAirLosTexture::CAirLosTexture()
 	infoTexPBO.New(texSize.x * texSize.y * texChannels * 2, GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CAirLosTexture");
@@ -148,10 +151,10 @@ void CAirLosTexture::Update()
 
 	if (losHandler->globalLOS[gu->myAllyTeam]) {
 		fbo.Bind();
-		glViewport(0,0, texSize.x, texSize.y);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(0,0, texSize.x, texSize.y);
+		glAttribStatePtr->ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 		FBO::Unbind();
 
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -180,17 +183,17 @@ void CAirLosTexture::Update()
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
 
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->DisableBlendMask();
 
 	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
 

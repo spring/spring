@@ -45,6 +45,9 @@ CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modN
 
 CDemoRecorder::~CDemoRecorder()
 {
+	if (file == nullptr)
+		return;
+
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
@@ -56,7 +59,7 @@ CDemoRecorder::~CDemoRecorder()
 void CDemoRecorder::SetStream()
 {
 	demoStreams[isServerDemo].clear();
-	demoStreams[isServerDemo].reserve(5 * 1024 * 1024);
+	demoStreams[isServerDemo].reserve(8 * 1024 * 1024);
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -89,9 +92,9 @@ void CDemoRecorder::WriteDemoFile()
 		gzclose(file);
 	};
 
-	LOG("[%s] writing %s-demo \"%s\" (%u bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), static_cast<unsigned int>(data.size()));
+	LOG("[DemoRecorder::%s] writing %s-demo \"%s\" (" _STPF_ " bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), data.size());
 
-	#ifndef WIN32
+	#ifndef _WIN32
 	// NOTE: can not use ThreadPool for this directly here, workers are already gone
 	// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
 	ThreadPool::AddExtJob(spring::thread(std::move(func), file, std::ref(data)));
@@ -199,8 +202,9 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::vector<TeamStatistics>&
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
 
-	for (auto it = stats.cbegin(); it != stats.cend(); ++it)
-		teamStats[teamNum].push_back(*it);
+	for (const auto& stat: stats) {
+		teamStats[teamNum].push_back(stat);
+	}
 }
 
 
@@ -262,7 +266,7 @@ void CDemoRecorder::WriteWinnerList()
 	const size_t pos = demoStreams[isServerDemo].size();
 
 	// Write the array of winningAllyTeams.
-	for (size_t i = 0; i < winningAllyTeams.size(); i++) {
+	for (size_t i = 0; i < winningAllyTeams.size(); i++) { // NOLINT{modernize-loop-convert}
 		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&winningAllyTeams[i]), sizeof(unsigned char));
 	}
 

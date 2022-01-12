@@ -28,14 +28,16 @@ CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
 // returns absolute filename for given archive name, empty if not found
-static const std::string GetFileName(const std::string& name){
+static const std::string GetAbsFileName(const std::string& name) {
 	if (name.empty())
 		return name;
+
 	const std::string& filename = archiveScanner->ArchiveFromName(name);
+
 	if (filename == name)
 		return "";
-	const std::string& path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
+
+	return (archiveScanner->GetArchivePath(filename) + filename);
 }
 
 
@@ -46,7 +48,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	curSelect = nullptr;
 
 	agui::VerticalLayout* vl = new agui::VerticalLayout(this);
-	vl->SetBorder(1.2f);
+	vl->SetBorder(true);
 
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
@@ -59,9 +61,9 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	userMap = configHandler->GetString("LastSelectedMap");
 	userScript = configHandler->GetString("LastSelectedScript");
 
-	if (GetFileName(userMod).empty())
+	if (GetAbsFileName(userMod).empty())
 		userMod = NoModSelect;
-	if (GetFileName(userMap).empty())
+	if (GetAbsFileName(userMap).empty())
 		userMap = NoMapSelect;
 
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
@@ -99,10 +101,8 @@ void SelectionWidget::ShowDemoList(const std::function<void(const std::string&)>
 	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
 	const std::string dir = std::move(FileSystem::EnsurePathSepAtEnd("demos"));
 
-	const std::vector<std::string> demos(dataDirsAccess.FindFiles(cwd + dir, "*.sdfz", 0));
-
 	// FIXME: names overflow the box
-	for (const std::string& demo: demos) {
+	for (const std::string& demo: dataDirsAccess.FindFiles(cwd + dir, "*.sdfz", 0)) {
 		curSelect->list->AddItem(demo.substr(demo.find(dir) + 6), "");
 	}
 
@@ -154,20 +154,26 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	if (userMod == SelectionWidget::NoModSelect || userMap == SelectionWidget::NoMapSelect )
 		return;
 
-	vfsHandler->AddArchive(userMod, true);
-	vfsHandler->AddArchive(userMap, true);
+	vfsHandler->GrabLock();
+	vfsHandler->SetName("SelWidgetVFS");
+	// menu is only shown on startup, or after reload which already unmaps
+	vfsHandler->UnMapArchives(false);
+	// archives will be kept around for PreGame and stashed on reload
+	vfsHandler->AddArchiveWithDeps(userMod, false);
+	vfsHandler->AddArchiveWithDeps(userMap, false);
 
-	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
 
-	for (size_t i = 0; i < luaAIInfos.size(); i++) {
-		for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
+	for (const auto& infoItem: luaAIImplHandler.LoadInfoItems()) {
+		for (const auto& infoProp: infoItem) {
+			if (infoProp.key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				availableScripts.push_back(infoProp.GetValueAsString());
 		}
 	}
 
-	vfsHandler->RemoveArchive(userMap);
-	vfsHandler->RemoveArchive(userMod);
+
+	vfsHandler->ReMapArchives(false);
+	vfsHandler->SetName("SpringVFS");
+	vfsHandler->FreeLock();
 }
 
 void SelectionWidget::UpdateAvailableScripts()
@@ -176,24 +182,22 @@ void SelectionWidget::UpdateAvailableScripts()
 	// maybe also merge it with StartScriptGen.cpp
 
 	availableScripts.clear();
-	// load selected archives to get lua ais
+	availableScripts.reserve(16);
 
+	// load selected archives to get lua ais
 	AddAIScriptsFromArchive();
 
 	// add sandbox script to list
 	availableScripts.push_back(SandboxAI);
 
 	// add native ai's to the list, too (but second, lua ai's are prefered)
-	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
-	for (auto it = scriptList.cbegin(); it != scriptList.cend(); ++it) {
-		availableScripts.push_back(*it);
+	for (const auto& pair: CAIScriptHandler::Instance().GetScriptMap()) {
+		availableScripts.push_back(pair.first);
 	}
 
-	for (std::string &scriptName: availableScripts) {
-		if (scriptName == userScript) {
-			return;
-		}
-	}
+	if (std::find(availableScripts.begin(), availableScripts.end(), userScript) != availableScripts.end())
+		return;
+
 	SelectScript(SelectionWidget::NoScriptSelect);
 }
 
@@ -206,7 +210,7 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectScript, this, std::placeholders::_1));
 	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
-	for (std::string& scriptName: availableScripts) {
+	for (const std::string& scriptName: availableScripts) {
 		curSelect->list->AddItem(scriptName, "");
 	}
 

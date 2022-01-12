@@ -24,9 +24,9 @@ public:
 	 * Just dlcloses the shared object
 	 * @brief unload
 	 */
-	virtual void Unload();
+	virtual void Unload() override;
 
-	virtual bool LoadFailed();
+	virtual bool LoadFailed() override;
 
 	/**
 	 * @brief Destructor
@@ -38,7 +38,7 @@ public:
 	 * @param symbol Function (symbol) to locate
 	 * @return void pointer to the function if found, NULL otherwise
 	 */
-	virtual void* FindAddress(const char* symbol);
+	virtual void* FindAddress(const char* symbol) override;
 
 private:
 	/**

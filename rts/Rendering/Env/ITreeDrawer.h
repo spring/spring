@@ -28,6 +28,8 @@ public:
 	void DrawShadow();
 	void DrawTree(const CFeature* f, bool setupState, bool resetState);
 
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 	virtual void DrawPass() = 0;
 	virtual void DrawShadowPass() = 0;
 	virtual void Update() override {}

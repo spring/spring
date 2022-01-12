@@ -3,6 +3,8 @@ uniform mat4 shadowProjMat;
 uniform mat4 modelMat;
 uniform mat4 pieceMats[128];
 uniform vec4 shadowParams;
+uniform vec4 upperClipPlane;
+uniform vec4 lowerClipPlane;
 
 
 layout(location = 0) in vec3 positionAttr;
@@ -13,6 +15,7 @@ layout(location = 4) in vec2 texCoor0Attr;
 // layout(location = 5) in vec2 texCoor1Attr;
 layout(location = 6) in uint pieceIdxAttr;
 
+out float gl_ClipDistance[2];
 out vec2 vTexCoord;
 
 
@@ -27,10 +30,11 @@ void main() {
 
 	vec4 vertexPos = vec4(positionAttr, 1.0);
 	vec4 vertexShadowPos = shadowViewMat * modelPieceMat * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	gl_Position = shadowProjMat * vertexShadowPos;
+
+	gl_ClipDistance[0] = dot(upperClipPlane, vertexPos);
+	gl_ClipDistance[1] = dot(lowerClipPlane, vertexPos);
 
 	vTexCoord = texCoor0Attr;
 }

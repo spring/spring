@@ -9,7 +9,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CResourceBar* resourceBar = nullptr;
 
@@ -73,8 +73,7 @@ void CResourceBar::Draw()
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
 
 
 	const float metalx = box.x1 + 0.01f;
@@ -120,9 +119,9 @@ void CResourceBar::Draw()
 	}
 	{
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->Submit(GL_QUADS);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->Submit(GL_TRIANGLES);
 		shader->Disable();
 	}
 

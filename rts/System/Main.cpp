@@ -6,7 +6,7 @@
 	https://springrts.com/
 */
 
-
+#include "System/ExportDefines.h"
 #include "System/SpringApp.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
@@ -17,10 +17,11 @@
 
 #include <clocale>
 #include <cstdlib>
+#include <cstdint>
 
-#ifdef WIN32
-	#include "lib/SOP/SOP.hpp" // NvOptimus
-#endif
+// https://stackoverflow.com/a/27881472/9819318
+EXTERNALIZER_B EXPORT_CLAUSE uint32_t NvOptimusEnablement = 0x00000001;         EXTERNALIZER_E //Optimus/NV use discrete GPU hint
+EXTERNALIZER_B EXPORT_CLAUSE uint32_t AmdPowerXpressRequestHighPerformance = 1; EXTERNALIZER_E // AMD use discrete GPU hint
 
 int Run(int argc, char* argv[])
 {
@@ -34,7 +35,7 @@ int Run(int argc, char* argv[])
 #endif
 
 	// already the default, but be explicit for locale-dependent functions (atof,strtof,...)
-	setlocale(LC_NUMERIC, "C");
+	setlocale(LC_ALL, "C");
 
 	Threading::DetectCores();
 	Threading::SetMainThread();
@@ -42,26 +43,6 @@ int Run(int argc, char* argv[])
 	SpringApp app(argc, argv);
 	return (app.Run());
 }
-
-
-/**
- * Always run on dedicated GPU
- * @return true when restart is required with new env vars
- */
-#if !defined(PROFILE) && !defined(HEADLESS)
-static bool SetNvOptimusProfile(const std::string& processFileName)
-{
-#ifdef WIN32
-	if (SOP_CheckProfile("Spring"))
-		return false;
-
-	// on Windows execvp breaks lobbies (new process: new PID)
-	return (false && (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE));
-#endif
-	return false;
-}
-#endif
-
 
 
 /**
@@ -74,27 +55,12 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
  */
 int main(int argc, char* argv[])
 {
-// PROFILE builds exit on execv ...
-// HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
-#if !defined(PROFILE) && !defined(HEADLESS)
-	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
-		// prepare for restart
-		std::vector<std::string> args(argc - 1);
-
-		for (int i = 1; i < argc; i++)
-			args[i - 1] = argv[i];
-
-		// ExecProc normally does not return; if it does the retval is an error-string
-		ErrorMessageBox(Platform::ExecuteProcess(argv[0], args), "Execv error:", MBF_OK | MBF_EXCL);
-	}
-#endif
-
 	return (Run(argc, argv));
 }
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

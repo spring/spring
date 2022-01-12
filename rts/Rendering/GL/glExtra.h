@@ -5,6 +5,7 @@
 
 #include "myGL.h"
 #include "RenderDataBufferFwd.hpp"
+#include "WideLineAdapterFwd.hpp"
 
 class CWeapon;
 struct WeaponDef;
@@ -12,19 +13,6 @@ struct WeaponDef;
 namespace Shader {
 	struct IProgramObject;
 };
-
-
-// Draw a circle on top of the map surface (ground/water).
-typedef void (*SurfaceCircleFuncVA)(CVertexArray* va, const float4& center, const float4& color, unsigned int res);
-typedef void (*SurfaceCircleFuncRB)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
-
-extern SurfaceCircleFuncVA glSurfaceCircleVA;
-extern SurfaceCircleFuncRB glSurfaceCircleRB;
-
-extern void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func);
-extern void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func);
-
-
 
 
 extern void glSetupRangeRingDrawState();
@@ -51,6 +39,24 @@ extern void glBallisticCircle(
 	const float3& params,
 	const float4& color
 );
+extern void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const CWeapon* weapon,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+);
+extern void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+);
 
 
 
@@ -58,13 +64,26 @@ extern void glBallisticCircle(
 extern void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t coneDivs, const float4& color);
 
 typedef void (*DrawVolumeFunc)(const void* data);
+// default implementation draws a circle on top of the world
+// map surface (ground/water); expects center.w to be radius
+typedef void (*DrawSurfaceCircleFunc)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
+typedef void (*DrawSurfaceCircleWFunc)(GL::WideLineAdapterC* wla, const float4& center, const float4& color, unsigned int res);
+
+extern DrawSurfaceCircleFunc glSurfaceCircle;
+extern DrawSurfaceCircleWFunc glSurfaceCircleW;
+
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
+extern void SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc func, DrawSurfaceCircleWFunc funcw);
+
 
 template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQuadC(const TQuad& quad, const TColor& color, TRenderBuffer* buffer) {
-	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color});
-	buffer->SafeAppend({{quad.x1, quad.y2, 0.0f}, color});
-	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color});
-	buffer->SafeAppend({{quad.x2, quad.y1, 0.0f}, color});
+	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color}); // tl
+	buffer->SafeAppend({{quad.x1, quad.y2, 0.0f}, color}); // bl
+	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color}); // br
+
+	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color}); // br
+	buffer->SafeAppend({{quad.x2, quad.y1, 0.0f}, color}); // tr
+	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color}); // tl
 }
 
 

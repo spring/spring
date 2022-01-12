@@ -26,8 +26,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 ))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
-	: CProjectile()
-	, length(0.0f)
+	: length(0.0f)
 	, width(0.0f)
 	, alpha(0.0f)
 	, alphaDecay(0.0f)
@@ -98,7 +97,10 @@ void CExploSpikeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
 	va->SafeAppend({drawPos + l - w, let->xend,   let->ystart, col});
 	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
+
+	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
 	va->SafeAppend({drawPos - l + w, let->xstart, let->yend,   col});
+	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
 	#undef let
 }
 

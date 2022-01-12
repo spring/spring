@@ -61,6 +61,24 @@ static const char* GLUniformTypeToString(const GLenum uType)
 	return "unknown";
 }
 
+static const char* GetMatTypeName(LuaMatType type)
+{
+	const char* typeName = "Unknown";
+
+	switch (type) {
+		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
+		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
+		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
+		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
+		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
+
+		case LUAMAT_TYPE_COUNT: {
+		} break;
+	}
+
+	return typeName;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -268,6 +286,10 @@ void LuaMaterial::Parse(
 		}
 
 		// misc
+		if (key == "uuid") {
+			uuid = luaL_checkint(L, -1);
+			continue;
+		}
 		if (key == "order") {
 			order = luaL_checkint(L, -1);
 			continue;
@@ -323,10 +345,54 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 
 	if (cullingMode != prev.cullingMode) {
 		if (cullingMode != 0) {
-			glEnable(GL_CULL_FACE);
-			glCullFace(cullingMode);
+			glAttribStatePtr->EnableCullFace();
+			glAttribStatePtr->CullFace(cullingMode);
 		} else {
-			glDisable(GL_CULL_FACE);
+			glAttribStatePtr->DisableCullFace();
+		}
+	}
+}
+
+void LuaMaterial::ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const
+{
+	const LuaMatShader&   matShader   =  shaders[deferredPass];
+	const LuaMatUniforms& matUniforms = uniforms[deferredPass];
+
+	const auto& objUniforms = matUniforms.objectUniforms[objType];
+	const auto& objUniformsIt = objUniforms.find(objId);
+
+	if (objUniformsIt == objUniforms.end())
+		return;
+
+	// apply custom per-object LuaMaterial uniforms (if any)
+	// can stop at first empty slot, Clear ensures contiguity
+	for (const LuaMatUniform& u: objUniformsIt->second) {
+		switch (u.loc) {
+			case -3: {   return; } break;
+			case -2: {
+				if ((u.loc = glGetUniformLocation(matShader.openglID, u.name)) == -1) {
+					LOG_L(L_WARNING, "[LuaMaterial::%s(objId=%d objType=%d)][uuid=%d] uniform \"%s\" not present in %s shader for material %s", __func__, objId, objType, uuid, u.name, deferredPass? "deferred": "forward", GetMatTypeName(type));
+					continue;
+				}
+			} break;
+			case -1: { continue; } break;
+			default: {           } break;
+		}
+
+		switch (u.type) {
+			case GL_INT       : { glUniform1iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC2  : { glUniform2iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC3  : { glUniform3iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC4  : { glUniform4iv      (u.loc, u.size       , u.data.i); } break;
+
+			case GL_FLOAT     : { glUniform1fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC2: { glUniform2fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC3: { glUniform3fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC4: { glUniform4fv      (u.loc, u.size       , u.data.f); } break;
+
+			case GL_FLOAT_MAT3: { glUniformMatrix3fv(u.loc, u.size, false, u.data.f); } break;
+			case GL_FLOAT_MAT4: { glUniformMatrix4fv(u.loc, u.size, false, u.data.f); } break;
+			default           : {                                                     } break;
 		}
 	}
 }
@@ -419,24 +485,6 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 	return 0;
 }
 
-static const char* GetMatTypeName(LuaMatType type)
-{
-	const char* typeName = "Unknown";
-
-	switch (type) {
-		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
-		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
-		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
-		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
-		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
-
-		case LUAMAT_TYPE_COUNT: {
-		} break;
-	}
-
-	return typeName;
-}
-
 
 void LuaMaterial::Print(const string& indent) const
 {
@@ -444,6 +492,7 @@ void LuaMaterial::Print(const string& indent) const
 	(x==GL_FRONT) ? "front" : (x==GL_BACK) ? "back" : (x!=0) ? "false" : "unknown"
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
+	LOG("%suuid = %i", indent.c_str(), uuid);
 	LOG("%sorder = %i", indent.c_str(), order);
 
 	shaders[LuaMatShader::LUASHADER_PASS_FWD].Print(indent, false);
@@ -574,9 +623,8 @@ void LuaMatUniforms::AutoLink(LuaMatShader* shader)
 
 void LuaMatUniforms::Validate(LuaMatShader* s)
 {
-	constexpr const char* fmts[3] = {
+	constexpr const char* fmts[2] = {
 		"[LuaMatUniforms::%s] engine shaders prohibit the usage of uniform \"%s\"",
-		"[LuaMatUniforms::%s] missing \"TeamColor\" uniform",
 		"[LuaMatUniforms::%s] incorrect uniform-type for \"%s\" at location %d (declared %s, expected %s)",
 	};
 
@@ -591,11 +639,6 @@ void LuaMatUniforms::Validate(LuaMatShader* s)
 
 		return;
 	}
-
-	// print warning when teamcolor is not bound
-	if (!teamColor.IsValid())
-		LOG_L(L_WARNING, fmts[1], __func__);
-
 
 	const decltype(GetEngineNameUniformPairs())& uniforms = GetEngineNameUniformPairs();
 	      decltype(uniforms.end()) uniformsIt;
@@ -631,7 +674,7 @@ void LuaMatUniforms::Validate(LuaMatShader* s)
 		if (au.type == expectedType)
 			continue;
 
-		LOG_L(L_WARNING, fmts[2], __func__, au.name, uniformLoc,  GLUniformTypeToString(au.type), GLUniformTypeToString(expectedType));
+		LOG_L(L_WARNING, fmts[1], __func__, au.name, uniformLoc,  GLUniformTypeToString(au.type), GLUniformTypeToString(expectedType));
 	}
 }
 

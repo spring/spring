@@ -15,8 +15,8 @@ public:
 	VerticalLayout(GuiElement* parent = NULL);
 
 private:
-	virtual void DrawSelf();
-	virtual void GeometryChangeSelf();
+	virtual void DrawSelf() override;
+	virtual void GeometryChangeSelf() override;
 };
 
 }

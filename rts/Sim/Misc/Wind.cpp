@@ -6,109 +6,122 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/ContainerUtil.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
-CR_BIND(CWind, )
+CR_BIND(EnvResourceHandler, )
 
-CR_REG_METADATA(CWind, (
-	CR_MEMBER(maxWind),
-	CR_MEMBER(minWind),
+CR_REG_METADATA(EnvResourceHandler, (
+	CR_MEMBER(curTidalStrength),
+	CR_MEMBER(curWindStrength),
+	CR_MEMBER(minWindStrength),
+	CR_MEMBER(maxWindStrength),
 
-	CR_MEMBER(curWind),
-	CR_MEMBER(curStrength),
-	CR_MEMBER(curDir),
+	CR_MEMBER(curWindVec),
+	CR_MEMBER(curWindDir),
 
-	CR_MEMBER(newWind),
-	CR_MEMBER(oldWind),
-	CR_MEMBER(status),
+	CR_MEMBER(newWindVec),
+	CR_MEMBER(oldWindVec),
 
-	CR_MEMBER(windGenIDs)
+	CR_MEMBER(windDirTimer),
+
+	CR_MEMBER(allGeneratorIDs),
+	CR_MEMBER(newGeneratorIDs)
 ))
 
 
-// update all units every 15 secs
-static const int WIND_UPDATE_RATE = 15 * GAME_SPEED;
+EnvResourceHandler envResHandler;
 
-CWind wind;
 
-void CWind::LoadWind(float minw, float maxw)
+void EnvResourceHandler::ResetState()
 {
-	minWind = std::min(minw, maxw);
-	maxWind = std::max(minw, maxw);
-	curWind = float3(minWind, 0.0f, 0.0f);
-	oldWind = curWind;
+	curTidalStrength = 0.0f;
+	curWindStrength = 0.0f;
+	minWindStrength = 0.0f;
+	maxWindStrength = 100.0f;
+
+	curWindDir = RgtVector;
+	curWindVec = ZeroVector;
+	newWindVec = ZeroVector;
+	oldWindVec = ZeroVector;
+
+	windDirTimer = 0;
+
+	allGeneratorIDs.clear();
+	allGeneratorIDs.reserve(256);
+	newGeneratorIDs.clear();
+	newGeneratorIDs.reserve(256);
 }
 
-void CWind::ResetState()
+void EnvResourceHandler::LoadWind(float minStrength, float maxStrength)
 {
-	maxWind = 100.0f;
-	minWind = 0.0f;
-	curStrength = 0.0f;
-	curDir = RgtVector;
-	curWind = ZeroVector;
-	newWind = ZeroVector;
-	oldWind = ZeroVector;
-	status = 0;
-	windGenIDs.clear();
+	minWindStrength = std::min(minStrength, maxStrength);
+	maxWindStrength = std::max(minStrength, maxStrength);
+
+	curWindVec = mix(curWindDir * GetAverageWindStrength(), RgtVector * GetAverageWindStrength(), curWindDir == RgtVector);
+	oldWindVec = curWindVec;
 }
 
 
-bool CWind::AddUnit(CUnit* u) {
+bool EnvResourceHandler::AddGenerator(CUnit* u) {
 	// duplicates should never happen, no need to check
-	spring::VectorInsertUnique(windGenIDs, u->id);
-
-	// start pointing in direction of wind
-	u->UpdateWind(curDir.x, curDir.z, curStrength);
-	return true;
+	return (spring::VectorInsertUnique(newGeneratorIDs, u->id));
 }
 
-bool CWind::DelUnit(CUnit* u) {
-	return (spring::VectorErase(windGenIDs, u->id));
+bool EnvResourceHandler::DelGenerator(CUnit* u) {
+	// id is never present in both
+	return (spring::VectorErase(newGeneratorIDs, u->id) || spring::VectorErase(allGeneratorIDs, u->id));
 }
 
 
 
-void CWind::Update()
+void EnvResourceHandler::Update()
 {
 	// zero-strength wind does not need updates
-	if (maxWind <= 0.0f)
+	if (maxWindStrength <= 0.0f)
 		return;
 
-	if (status == 0) {
-		oldWind = curWind;
-		newWind = oldWind;
+	if (windDirTimer == 0) {
+		oldWindVec = curWindVec;
+		newWindVec = oldWindVec;
 
 		// generate new wind direction
 		float newStrength = 0.0f;
 
 		do {
-			newWind.x -= (gsRNG.NextFloat() - 0.5f) * maxWind;
-			newWind.z -= (gsRNG.NextFloat() - 0.5f) * maxWind;
-			newStrength = newWind.Length();
+			newWindVec.x -= (gsRNG.NextFloat() - 0.5f) * maxWindStrength;
+			newWindVec.z -= (gsRNG.NextFloat() - 0.5f) * maxWindStrength;
+			newStrength = newWindVec.Length();
 		} while (newStrength == 0.0f);
 
-		// normalize and clamp s.t. minWind <= strength <= maxWind
-		newWind /= newStrength;
-		newWind *= (newStrength = Clamp(newStrength, minWind, maxWind));
+		// normalize and clamp s.t. minWindStrength <= strength <= maxWindStrength
+		newWindVec /= newStrength;
+		newWindVec *= (newStrength = Clamp(newStrength, minWindStrength, maxWindStrength));
 
 		// update generators
-		for (const int unitID: windGenIDs) {
-			(unitHandler.GetUnit(unitID))->UpdateWind(newWind.x, newWind.z, newStrength);
+		for (const int unitID: allGeneratorIDs) {
+			(unitHandler.GetUnit(unitID))->UpdateWind(newWindVec.x, newWindVec.z, newStrength);
 		}
 	} else {
-		const float mod = smoothstep(0.0f, 1.0f, status / float(WIND_UPDATE_RATE));
+		const float mod = smoothstep(0.0f, 1.0f, windDirTimer / float(WIND_UPDATE_RATE));
 
 		// blend between old & new wind directions
-		// note: only generators added on simframes when
-		// status != 0 receive a snapshot of the blended
-		// direction
-		curWind = mix(oldWind, newWind, mod);
-		curStrength = curWind.LengthNormalize();
+		// note: generators added on simframes when timer is 0
+		// do not receive a snapshot of the blended direction
+		curWindVec = mix(oldWindVec, newWindVec, mod);
+		curWindStrength = curWindVec.LengthNormalize();
 
-		curDir = curWind;
-		curWind = curDir * (curStrength = Clamp(curStrength, minWind, maxWind));
+		curWindDir = curWindVec;
+		curWindVec = curWindDir * (curWindStrength = Clamp(curWindStrength, minWindStrength, maxWindStrength));
+
+		for (const int unitID: newGeneratorIDs) {
+			// make newly added generators point in direction of wind
+			(unitHandler.GetUnit(unitID))->UpdateWind(curWindDir.x, curWindDir.z, curWindStrength);
+			allGeneratorIDs.push_back(unitID);
+		}
+
+		newGeneratorIDs.clear();
 	}
 
-	status = (status + 1) % (WIND_UPDATE_RATE + 1);
+	windDirTimer = (windDirTimer + 1) % (WIND_UPDATE_RATE + 1);
 }
 

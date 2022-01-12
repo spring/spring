@@ -33,6 +33,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -42,7 +43,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/BuildingMaskMap.h"
+#include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -168,6 +169,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitHealth);
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
+	REGISTER_LUA_CFUNC(SetUnitUseWeapons);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitWeaponDamages);
 	REGISTER_LUA_CFUNC(SetUnitMaxRange);
@@ -179,6 +181,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStealth);
 	REGISTER_LUA_CFUNC(SetUnitSonarStealth);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetUnitUseAirLos);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
@@ -200,6 +203,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetUnitPieceVisible);
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitPieceMatrix);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
@@ -218,11 +222,13 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddUnitResource);
 	REGISTER_LUA_CFUNC(UseUnitResource);
 
-	REGISTER_LUA_CFUNC(RemoveBuildingDecal);
+	REGISTER_LUA_CFUNC(AddObjectDecal);
+	REGISTER_LUA_CFUNC(RemoveObjectDecal);
 	REGISTER_LUA_CFUNC(AddGrass);
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetFeatureUseAirLos);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureMaxHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -243,9 +249,11 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeaturePieceCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetFeaturePieceVisible);
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetProjectileUseAirLos);
 	REGISTER_LUA_CFUNC(SetProjectileMoveControl);
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
@@ -269,6 +277,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	//FIXME: REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	//FIXME: REGISTER_LUA_CFUNC(SetUnitCOBValue);
 
+	REGISTER_LUA_CFUNC(UnitFinishCommand);
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
@@ -294,6 +303,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
 
+	REGISTER_LUA_CFUNC(SetTidal);
+	REGISTER_LUA_CFUNC(SetWind);
+
 	REGISTER_LUA_CFUNC(SetSquareBuildingMask);
 
 	REGISTER_LUA_CFUNC(UnitWeaponFire);
@@ -315,7 +327,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RemoveUnitCmdDesc);
 
 	REGISTER_LUA_CFUNC(SetNoPause);
-	REGISTER_LUA_CFUNC(SetUnitToFeature);
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 	REGISTER_LUA_CFUNC(SetRadarErrorParams);
@@ -518,12 +529,11 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 
 	o->SetDirVectorsEuler(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 
-	if (isFeature) {
-		// not a hack: ForcedSpin() and CalculateTransform() calculate a
-		// transform based only on frontdir and assume the helper y-axis
-		// points up
+	// not a hack: ForcedSpin() and CalculateTransform() calculate a
+	// transform based only on frontdir and assume the helper y-axis
+	// points up
+	if (isFeature)
 		static_cast<CFeature*>(o)->UpdateTransform(o->pos, true);
-	}
 
 	return 0;
 }
@@ -619,11 +629,35 @@ static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* ob
 	return 0;
 }
 
+static int SetSolidObjectPieceVisible(lua_State* L, CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 2);
+	if (lmp == nullptr)
+		luaL_argerror(L, 2, "invalid piece");
+
+	lmp->scriptSetVisible = luaL_checkboolean(L, 3);
+	return 0;
+}
+
+
 static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
 {
 	if (o == nullptr)
 		return 0;
+
 	o->alwaysVisible = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+static int SetWorldObjectUseAirLos(lua_State* L, CWorldObject* o, const char* caller)
+{
+	if (o == nullptr)
+		return 0;
+
+	o->useAirLos = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -996,7 +1030,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 	LuaRulesParams::Param& param = params[key];
 
 	// set the value of the parameter
-	if (lua_isnumber(L, valIndex)) {
+	if (lua_israwnumber(L, valIndex)) {
 		param.valueInt = lua_tofloat(L, valIndex);
 		param.valueString.resize(0);
 	} else if (lua_isstring(L, valIndex)) {
@@ -1036,8 +1070,6 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 	} else {
 		param.los = luaL_optint(L, losIndex, param.los);
 	}
-
-	return;
 }
 
 
@@ -1661,6 +1693,18 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 }
 
 
+int LuaSyncedCtrl::SetUnitUseWeapons(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->forceUseWeapons = luaL_optboolean(L, 2, unit->forceUseWeapons);
+	unit->allowUseWeapons = luaL_optboolean(L, 3, unit->allowUseWeapons);
+	return 0;
+}
+
 int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
@@ -1855,34 +1899,40 @@ int LuaSyncedCtrl::SetUnitArmored(lua_State* L)
 
 static unsigned char ParseLosBits(lua_State* L, int index, unsigned char bits)
 {
-	if (lua_isnumber(L, index)) {
+	if (lua_isnumber(L, index))
 		return (unsigned char)lua_tonumber(L, index);
-	}
-	else if (lua_istable(L, index)) {
+
+	if (lua_istable(L, index)) {
 		for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2)) { luaL_error(L, "bad key type");   }
 			if (!lua_isboolean(L, -1))   { luaL_error(L, "bad value type"); }
-			const string key = lua_tostring(L, -2);
+
 			const bool set = lua_toboolean(L, -1);
-			if (key == "los") {
-				if (set) { bits |=  LOS_INLOS; }
-				else     { bits &= ~LOS_INLOS; }
-			}
-			else if (key == "radar") {
-				if (set) { bits |=  LOS_INRADAR; }
-				else     { bits &= ~LOS_INRADAR; }
-			}
-			else if (key == "prevLos") {
-				if (set) { bits |=  LOS_PREVLOS; }
-				else     { bits &= ~LOS_PREVLOS; }
-			}
-			else if (key == "contRadar") {
-				if (set) { bits |=  LOS_CONTRADAR; }
-				else     { bits &= ~LOS_CONTRADAR; }
+
+			switch (hashString(lua_tostring(L, -2))) {
+				case hashString("los"): {
+					if (set) { bits |=  LOS_INLOS; }
+					else     { bits &= ~LOS_INLOS; }
+				} break;
+				case hashString("radar"): {
+					if (set) { bits |=  LOS_INRADAR; }
+					else     { bits &= ~LOS_INRADAR; }
+				} break;
+				case hashString("prevLos"): {
+					if (set) { bits |=  LOS_PREVLOS; }
+					else     { bits &= ~LOS_PREVLOS; }
+				} break;
+				case hashString("contRadar"): {
+					if (set) { bits |=  LOS_CONTRADAR; }
+					else     { bits &= ~LOS_CONTRADAR; }
+				} break;
+				default: {
+				} break;
 			}
 		}
 		return bits;
 	}
+
  	luaL_error(L, "ERROR: expected number or table");
 	return 0;
 }
@@ -1900,10 +1950,10 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	const unsigned short losStatus = unit->losStatus[allyTeam];
-	const unsigned char  oldMask = losStatus >> 8;
+	const unsigned char losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldMask = losStatus >> LOS_MASK_SHIFT;
 	const unsigned char  newMask = ParseLosBits(L, 3, oldMask);
-	const unsigned short state = (newMask << 8) | (losStatus & 0x00FF);
+	const unsigned char state = (newMask << LOS_MASK_SHIFT) | (losStatus & 0x0F);
 
 	unit->losStatus[allyTeam] = state;
 	unit->SetLosStatus(allyTeam, unit->CalcLosStatus(allyTeam));
@@ -1924,11 +1974,11 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	const unsigned short losStatus = unit->losStatus[allyTeam];
-	const unsigned char  oldState = losStatus & 0xFF;
+	const unsigned char losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldState = losStatus & 0x0F;
 	const unsigned char  newState = ParseLosBits(L, 3, oldState);
 
-	unit->SetLosStatus(allyTeam, (losStatus & 0xFF00) | newState);
+	unit->SetLosStatus(allyTeam, (losStatus & 0xF0) | newState);
 	return 0;
 }
 
@@ -1990,6 +2040,11 @@ int LuaSyncedCtrl::SetUnitSonarStealth(lua_State* L)
 int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 {
 	return (SetWorldObjectAlwaysVisible(L, ParseUnit(L, __func__, 1), __func__));
+}
+
+int LuaSyncedCtrl::SetUnitUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseUnit(L, __func__, 1), __func__));
 }
 
 
@@ -2223,23 +2278,7 @@ int LuaSyncedCtrl::SetUnitFlanking(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __func__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	if (lua_isnumber(L, 2))
-		unit->travel = lua_tofloat(L, 2);
-
-	if (lua_isnumber(L, 3))
-		unit->travelPeriod = lua_tofloat(L, 3);
-
-	return 0;
-}
-
-
+int LuaSyncedCtrl::SetUnitTravel(lua_State* L) { return 0; } // DEPRECATED
 int LuaSyncedCtrl::SetUnitFuel(lua_State* L) { return 0; } // DEPRECATED
 
 
@@ -2250,7 +2289,7 @@ int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->neutral = luaL_checkboolean(L, 2);
+	unit->SetNeutral(luaL_checkboolean(L, 2));
 	return 0;
 }
 
@@ -2267,7 +2306,8 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		unit->DropCurrentAttackTarget();
 		lua_pushboolean(L, true);
 		return 1;
-	} if (args >= 4 && !lua_isboolean(L, 3)) {
+	}
+	if (args >= 4 && !lua_isboolean(L, 3)) {
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
@@ -2443,6 +2483,10 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	return (SetSolidObjectPieceCollisionVolumeData(L, ParseUnit(L, __func__, 1)));
 }
 
+int LuaSyncedCtrl::SetUnitPieceVisible(lua_State* L)
+{
+	return (SetSolidObjectPieceVisible(L, ParseUnit(L, __func__, 1)));
+}
 
 
 int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
@@ -2452,32 +2496,35 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const std::string& key = luaL_checkstring(L, 2);
 	const int radius = Clamp(luaL_checkint(L, 3), 0, MAX_UNIT_SENSOR_RADIUS);
 
-	if (key == "los") {
-		unit->ChangeLos(unit->realLosRadius = radius, unit->realAirLosRadius);
-		lua_pushnumber(L, unit->losRadius);
-	} else if (key == "airLos") {
-		unit->ChangeLos(unit->realAirLosRadius = radius, radius);
-		lua_pushnumber(L, unit->airLosRadius);
-	} else if (key == "radar") {
-		unit->radarRadius = radius;
-		lua_pushnumber(L, unit->radarRadius);
-	} else if (key == "sonar") {
-		unit->sonarRadius = radius;
-		lua_pushnumber(L, unit->sonarRadius);
-	} else if (key == "seismic") {
-		unit->seismicRadius = radius;
-		lua_pushnumber(L, unit->seismicRadius);
-	} else if (key == "radarJammer") {
-		unit->jammerRadius = radius;
-		lua_pushnumber(L, unit->jammerRadius);
-	} else if (key == "sonarJammer") {
-		unit->sonarJamRadius = radius;
-		lua_pushnumber(L, unit->sonarJamRadius);
-	} else {
-		luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString("los"): {
+			unit->ChangeLos(unit->realLosRadius = radius, unit->realAirLosRadius);
+			lua_pushnumber(L, unit->losRadius);
+		} break;
+		case hashString("airLos"): {
+			unit->ChangeLos(unit->realLosRadius, unit->realAirLosRadius = radius);
+			lua_pushnumber(L, unit->airLosRadius);
+		} break;
+		case hashString("radar"): {
+			lua_pushnumber(L, unit->radarRadius = radius);
+		} break;
+		case hashString("sonar"): {
+			lua_pushnumber(L, unit->sonarRadius = radius);
+		} break;
+		case hashString("seismic"): {
+			lua_pushnumber(L, unit->seismicRadius = radius);
+		} break;
+		case hashString("radarJammer"): {
+			lua_pushnumber(L, unit->jammerRadius = radius);
+		} break;
+		case hashString("sonarJammer"): {
+			lua_pushnumber(L, unit->sonarJamRadius = radius);
+		} break;
+		default: {
+			luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
+		} break;
 	}
 
 	return 1;
@@ -2491,9 +2538,18 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->posErrorVector = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	unit->posErrorDelta = float3(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7));
+	unit->posErrorVector.x = luaL_optfloat(L, 2, unit->posErrorVector.x);
+	unit->posErrorVector.y = luaL_optfloat(L, 3, unit->posErrorVector.y);
+	unit->posErrorVector.z = luaL_optfloat(L, 4, unit->posErrorVector.z);
+	unit->posErrorDelta.x = luaL_optfloat(L, 5, unit->posErrorDelta.x);
+	unit->posErrorDelta.y = luaL_optfloat(L, 6, unit->posErrorDelta.y);
+	unit->posErrorDelta.z = luaL_optfloat(L, 7, unit->posErrorDelta.z);
+
 	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
+
+	if (lua_isnumber(L, 9) && lua_isboolean(L, 10))
+		unit->SetPosErrorBit(Clamp(lua_tointeger(L, 9), 0, teamHandler.ActiveAllyTeams()), lua_toboolean(L, 10));
+
 	return 0;
 }
 
@@ -2505,8 +2561,8 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 
 	if (unit == nullptr)
 		return 0;
-	if (unit->moveType == nullptr)
-		return 0;
+
+	assert(unit->moveType != nullptr);
 
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 
@@ -2763,7 +2819,18 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 
 /******************************************************************************/
 
-int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
+int LuaSyncedCtrl::AddObjectDecal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	groundDecals->AddSolidObject(unit);
+	return 0;
+}
+
+int LuaSyncedCtrl::RemoveObjectDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
@@ -2844,7 +2911,9 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature =  true;
+
 	FeatureLoadParams  params;
+	params.parentObj   = nullptr;
 	params.featureDef  = featureDef;
 	params.unitDef     = nullptr;
 	params.pos         = pos;
@@ -2908,6 +2977,11 @@ int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 	return (SetWorldObjectAlwaysVisible(L, ParseFeature(L, __func__, 1), __func__));
 }
 
+int LuaSyncedCtrl::SetFeatureUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseFeature(L, __func__, 1), __func__));
+}
+
 
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
@@ -2952,8 +3026,11 @@ int LuaSyncedCtrl::SetFeatureResources(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	feature->resources.metal  = std::max(0.0f, luaL_checknumber(L, 2));
-	feature->resources.energy = std::max(0.0f, luaL_checknumber(L, 3));
+	feature->defResources.metal  = std::max(0.0f, luaL_optfloat(L, 6, feature->defResources.metal));
+	feature->defResources.energy = std::max(0.0f, luaL_optfloat(L, 7, feature->defResources.energy));
+
+	feature->resources.metal  = Clamp(luaL_checknumber(L, 2), 0.0f, feature->defResources.metal );
+	feature->resources.energy = Clamp(luaL_checknumber(L, 3), 0.0f, feature->defResources.energy);
 
 	feature->reclaimTime = Clamp(luaL_optnumber(L, 4, feature->reclaimTime), 1.0f, 1000000.0f);
 	feature->reclaimLeft = Clamp(luaL_optnumber(L, 5, feature->reclaimLeft), 0.0f,       1.0f);
@@ -3151,6 +3228,10 @@ int LuaSyncedCtrl::SetFeaturePieceCollisionVolumeData(lua_State* L)
 	return (SetSolidObjectPieceCollisionVolumeData(L, ParseFeature(L, __func__, 1)));
 }
 
+int LuaSyncedCtrl::SetFeaturePieceVisible(lua_State* L)
+{
+	return (SetSolidObjectPieceVisible(L, ParseFeature(L, __func__, 1)));
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -3159,6 +3240,12 @@ int LuaSyncedCtrl::SetProjectileAlwaysVisible(lua_State* L)
 {
 	return (SetWorldObjectAlwaysVisible(L, ParseProjectile(L, __func__, 1), __func__));
 }
+
+int LuaSyncedCtrl::SetProjectileUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseProjectile(L, __func__, 1), __func__));
+}
+
 
 int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
 {
@@ -3206,7 +3293,7 @@ int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 {
 	CProjectile* pro = ParseProjectile(L, __func__, 1);
-	CWeaponProjectile* wpro = NULL;
+	CWeaponProjectile* wpro = nullptr;
 
 	if (pro == nullptr)
 		return 0;
@@ -3229,7 +3316,7 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 			const int type = luaL_checkint(L, 3);
 
 			CWorldObject* oldTargetObject = wpro->GetTargetObject();
-			CWorldObject* newTargetObject = NULL;
+			CWorldObject* newTargetObject = nullptr;
 
 			switch (type) {
 				case 'u': { newTargetObject = ParseUnit(L, __func__, 2); } break;
@@ -3251,8 +3338,8 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 				wpro->SetTargetObject(newTargetObject);
 			}
 
-			assert(newTargetObject == NULL || newTargetObject->id == id);
-			lua_pushboolean(L, oldTargetObject != NULL || newTargetObject != nullptr);
+			assert(newTargetObject == nullptr || newTargetObject->id == id);
+			lua_pushboolean(L, oldTargetObject != nullptr || newTargetObject != nullptr);
 			return 1;
 		} break;
 
@@ -3388,14 +3475,14 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	if (lua_isstring(L, 2)) {
-		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+		cegID = explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2));
 	} else {
 		cegID = luaL_checknumber(L, 2);
 	}
 
 	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
 	if (explGenHandler.GetGenerator(cegID) != nullptr)
-		proj->SetCustomExplosionGeneratorID(cegID);
+		proj->SetCustomExpGenID(cegID);
 
 	lua_pushnumber(L, cegID);
 	return 1;
@@ -3447,6 +3534,21 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 /******************************************************************************/
 
+int LuaSyncedCtrl::UnitFinishCommand(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+
+	CUnit* unit = ParseUnit(L, __func__, 1);
+	if (unit == nullptr)
+		luaL_error(L, "[%s] invalid unitID", __func__);
+
+	CCommandAI* cai = unit->commandAI;
+	if (!cai->commandQue.empty())
+		cai->FinishCommand();
+
+	return 0;
+}
+
 int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
@@ -3454,7 +3556,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
-		luaL_error(L, "Invalid unitID given to GiveOrderToUnit()");
+		luaL_error(L, "[%s] invalid unitID", __func__);
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
@@ -3464,10 +3566,10 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	}
 
 	if (inGiveOrder)
-		luaL_error(L, "GiveOrderToUnit() recursion is not permitted");
+		luaL_error(L, "[%s] recursion not permitted", __func__);
 
 	inGiveOrder = true;
-	unit->commandAI->GiveCommand(cmd);
+	unit->commandAI->GiveCommand(cmd, -1, true, true);
 	inGiveOrder = false;
 
 	lua_pushboolean(L, true);
@@ -3480,27 +3582,25 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
-	ParseUnitMap(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
+	std::vector<CUnit*> units;
 
-	if (unitCount <= 0) {
+	ParseUnitMap(L, __func__, 1, units);
+
+	if (units.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderToUnitMap() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
 
 	inGiveOrder = true;
 	int count = 0;
-	for (int i = 0; i < unitCount; i++) {
-		CUnit* unit = units[i];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			unit->commandAI->GiveCommand(cmd);
+			unit->commandAI->GiveCommand(cmd, -1, true, true);
 			count++;
 		}
 	}
@@ -3516,27 +3616,26 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
-	ParseUnitArray(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
+	std::vector<CUnit*> units;
 
-	if (unitCount <= 0) {
+	ParseUnitArray(L, __func__, 1, units);
+
+	if (units.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int i = 0; i < unitCount; i++) {
-		CUnit* unit = units[i];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			unit->commandAI->GiveCommand(cmd);
+			unit->commandAI->GiveCommand(cmd, -1, true, true);
 			count++;
 		}
 	}
@@ -3552,32 +3651,27 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
-	// units
-	vector<CUnit*> units;
+	std::vector<CUnit*> units;
+	std::vector<Command> commands;
+
 	ParseUnitMap(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
-
-	// commands
-	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
-	const int commandCount = (int)commands.size();
 
-	if ((unitCount <= 0) || (commandCount <= 0)) {
+	if (units.empty() || commands.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderArrayToUnitMap() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int u = 0; u < unitCount; u++) {
-		CUnit* unit = units[u];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			for (int c = 0; c < commandCount; c++) {
-				unit->commandAI->GiveCommand(commands[c]);
+			for (const Command& c: commands) {
+				unit->commandAI->GiveCommand(c, -1, true, true);
 			}
 			count++;
 		}
@@ -3594,43 +3688,38 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
+	std::vector<CUnit*> units;
+	std::vector<Command> commands;
+
 	ParseUnitArray(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
-
-	// commands
-	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
-	const int commandCount = (int)commands.size();
 
-	bool pairwise = luaL_optboolean(L, 3, false);
-
-	if ((unitCount <= 0) || (commandCount <= 0)) {
+	if (units.empty() || commands.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderArrayToUnitArray() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
-	if (pairwise) {
-		for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
-			CUnit* unit = units[x];
+
+	if (luaL_optboolean(L, 3, false)) {
+		// pairwise
+		for (size_t i = 0, n = std::min(units.size(), commands.size()); i < n; ++i) {
+			CUnit* unit = units[i];
 			if (CanControlUnit(L, unit)) {
-				unit->commandAI->GiveCommand(commands[x]);
+				unit->commandAI->GiveCommand(commands[i], -1, true, true);
 				count++;
 			}
 		}
-	}
-	else {
-		for (int u = 0; u < unitCount; u++) {
-			CUnit* unit = units[u];
+	} else {
+		for (CUnit* unit: units) {
 			if (CanControlUnit(L, unit)) {
-				for (int c = 0; c < commandCount; c++) {
-					unit->commandAI->GiveCommand(commands[c]);
+				for (const Command& c: commands) {
+					unit->commandAI->GiveCommand(c, -1, true, true);
 				}
 				count++;
 			}
@@ -4135,6 +4224,21 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedCtrl::SetTidal(lua_State* L)
+{
+	envResHandler.LoadTidal(luaL_optnumber(L, 1, envResHandler.GetCurrentTidalStrength()));
+	return 0;
+}
+
+int LuaSyncedCtrl::SetWind(lua_State* L)
+{
+	envResHandler.LoadWind(luaL_optnumber(L, 1, envResHandler.GetMinWindStrength()), luaL_optnumber(L, 2, envResHandler.GetMaxWindStrength()));
+	return 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 {
 	const int x = luaL_checkint(L, 1);
@@ -4172,6 +4276,7 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 	return 0;
 }
 
+// NB: not permanent
 int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
@@ -4484,15 +4589,9 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 	const float damage = luaL_optfloat(L,  9, 0.0f);
 	const float dmgMod = luaL_optfloat(L, 10, 1.0f);
 
-	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
-
-	if (lua_isstring(L, 1)) {
-		// args from Lua are assumed not to include the prefix
-		// (Spawn*C*EG implies only custom generators can fire)
-		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
-	} else {
-		cegID = luaL_checknumber(L, 1);
-	}
+	// args from Lua are assumed not to include the prefix
+	// (Spawn*C*EG implies only custom generators can fire)
+	const unsigned int cegID = lua_isstring(L, 1)? explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 1)): luaL_checkint(L, 1);
 
 	lua_pushboolean(L, explGenHandler.GenExplosion(cegID, pos, dir, damage, radius, dmgMod, nullptr, nullptr));
 	lua_pushnumber(L, cegID);
@@ -4534,16 +4633,6 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
-{
-	if (!FullCtrl(L))
-		return 0;
-
-	CUnit::SetSpawnFeature(luaL_checkboolean(L, 1));
-	return 0;
-}
-
-
 int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 {
 	if (!FullCtrl(L))
@@ -4553,15 +4642,15 @@ int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 
 	// NOTE: for testing, should be using modrules.tdf
 	if (gs->cheatEnabled) {
-		if (lua_isnumber(L, 2)) {
+		if (lua_isnumber(L, 2))
 			CUnit::SetExpPowerScale(lua_tofloat(L, 2));
-		}
-		if (lua_isnumber(L, 3)) {
+
+		if (lua_isnumber(L, 3))
 			CUnit::SetExpHealthScale(lua_tofloat(L, 3));
-		}
-		if (lua_isnumber(L, 4)) {
+
+		if (lua_isnumber(L, 4))
 			CUnit::SetExpReloadScale(lua_tofloat(L, 4));
-		}
+
 	}
 	return 0;
 }
@@ -4636,7 +4725,7 @@ static int ParseStringVector(lua_State* L, int index, vector<string>& strvec)
 	while (true) {
 		lua_rawgeti(L, index, i);
 		if (lua_isstring(L, -1)) {
-			strvec.push_back(lua_tostring(L, -1));
+			strvec.emplace_back(lua_tostring(L, -1));
 			lua_pop(L, 1);
 			i++;
 		} else {
@@ -4711,7 +4800,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	SCommandDescription cmdDesc = *cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
-	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);
+	unit->commandAI->UpdateCommandDescription(cmdDescIdx, std::move(cmdDesc));
 	return 0;
 }
 
@@ -4745,7 +4834,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 	SCommandDescription cd;
 
 	ParseCommandDescription(L, tableIdx, cd);
-	unit->commandAI->InsertCommandDescription(cmdDescIdx, cd);
+	unit->commandAI->InsertCommandDescription(cmdDescIdx, std::move(cd));
 	return 0;
 }
 

@@ -40,11 +40,10 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FastMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Sound/ISoundChannels.h"
-#include "System/Sync/SyncTracer.h"
 
 #endif
 
@@ -551,16 +550,22 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 		} break;
 
 		default: {
+			if ((sfxType & SFX_GLOBAL) != 0) {
+				// emit defined explosion-generator (can only be custom, not standard)
+				// index is made valid by callee, an ID of -1 means CEG failed to load
+				explGenHandler.GenExplosion(sfxType - SFX_GLOBAL, absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
+				return true;
+			}
 			if ((sfxType & SFX_CEG) != 0) {
 				// emit defined explosion-generator (can only be custom, not standard)
 				// index is made valid by callee, an ID of -1 means CEG failed to load
-				explGenHandler.GenExplosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
+				explGenHandler.GenExplosion(ud->GetModelExpGenID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
 				return true;
 			}
 
 			if ((sfxType & SFX_FIRE_WEAPON) != 0) {
 				// make a weapon fire from the piece
-				const unsigned index = sfxType - SFX_FIRE_WEAPON;
+				const unsigned int index = sfxType - SFX_FIRE_WEAPON;
 
 				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("[US::EmitSFX::FIRE_WEAPON] invalid weapon index");
@@ -695,11 +700,6 @@ void CUnitScript::Explode(int piece, int flags)
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
 	const float3 absPos = unit->GetObjectSpacePos(relPos);
-
-#ifdef TRACE_SYNC
-	tracefile << "Cob explosion: ";
-	tracefile << absPos.x << " " << absPos.y << " " << absPos.z << " " << piece << " " << flags << "\n";
-#endif
 
 	// do an explosion at the location first
 	if (!(flags & PF_NoHeatCloud))
@@ -940,10 +940,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UPRIGHT:
 		return !!unit->upright;
 	case POW:
-		return int(math::pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
-	case PRINT:
-		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
-		break;
+		return int(math::pow((p1 * 1.0f) / COBSCALE, (p2 * 1.0f) / COBSCALE) * COBSCALE);
+	case PRINT: {
+		const char*   unitName = unit->unitDef->name.c_str();
+		const char* scriptName = unit->unitDef->scriptName.c_str();
+
+		LOG("[UnitScript::PRINT][unit=%s script=%s] p1=%d p2=%d p3=%d p4=%d", unitName, scriptName, p1, p2, p3, p4);
+	} break;
 	case HEADING: {
 		if (p1 <= 0)
 			return unit->heading;
@@ -958,7 +961,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case TARGET_ID: {
 		if (size_t(p1 - 1) < unit->weapons.size()) {
 			const CWeapon* w = unit->weapons[p1 - 1];
-			auto curTarget = w->GetCurrentTarget();
+			const auto curTarget = w->GetCurrentTarget();
 			switch (curTarget.type) {
 				case Target_Unit:      return curTarget.unit->id;
 				case Target_None:      return -1;
@@ -1290,26 +1293,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	default:
-		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB global vars are deprecated");
-			return 0;
-		}
-		else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB team vars are deprecated");
-			return 0;
-		}
-		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB allyteam vars are deprecated");
-			return 0;
-		}
-		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB unit vars are deprecated");
-			return 0;
-		}
-		else {
-			ShowUnitScriptError("[US::GetUnitVal] CobError: unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " +
-			IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
-		}
+		ShowUnitScriptError("[US::GetUnitVal] unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " + IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
 	}
 #endif
 
@@ -1401,7 +1385,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case YARD_OPEN: {
-			if (unit->blockMap != nullptr) {
+			if (unit->GetBlockMap() != nullptr) {
 				// note: if this unit is a factory, engine-controlled
 				// OpenYard() and CloseYard() calls can interfere with
 				// the yardOpen state (they probably should be removed
@@ -1425,11 +1409,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case ARMORED: {
-			if (param) {
-				unit->curArmorMultiple = unit->armoredMultiple;
-			} else {
-				unit->curArmorMultiple = 1;
-			}
+			unit->curArmorMultiple = mix(1.0f, unit->armoredMultiple, param != 0);
 			unit->armoredState = (param != 0);
 		} break;
 
@@ -1438,8 +1418,12 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case MAX_SPEED: {
-			// interpret negative values as non-persistent changes
-			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
+			if (param >= 0) {
+				unit->moveType->SetMaxSpeed(param / float(COBSCALE));
+			} else {
+				// temporarily (until the next command is issued) change unit's speed
+				unit->moveType->SetWantedMaxSpeed(-param / float(COBSCALE));
+			}
 		} break;
 
 		case CLOAKED: {
@@ -1455,16 +1439,14 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case HEADING: {
-			unit->SetHeading(param % COBSCALE, !unit->upright);
+			unit->SetHeading(param % COBSCALE, !unit->upright && unit->IsOnGround(), false);
 		} break;
 		case LOS_RADIUS: {
-			unit->ChangeLos(param, unit->realAirLosRadius);
-			unit->realLosRadius = param;
+			unit->ChangeLos(unit->realLosRadius = param, unit->realAirLosRadius);
 		} break;
 
 		case AIR_LOS_RADIUS: {
-			unit->ChangeLos(unit->realLosRadius, param);
-			unit->realAirLosRadius = param;
+			unit->ChangeLos(unit->realLosRadius, unit->realAirLosRadius = param);
 		} break;
 
 		case RADAR_RADIUS: {
@@ -1534,33 +1516,19 @@ void CUnitScript::SetUnitVal(int val, int param)
 			unit->flankingBonusMobilityAdd = (param / (float)COBSCALE);
 		} break;
 		case FLANK_B_MAX_DAMAGE: {
-			float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage)*0.5f;
-			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage)*0.5f;
+			const float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage) * 0.5f;
+			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage) * 0.5f;
 		} break;
 
 		case FLANK_B_MIN_DAMAGE: {
-			float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE)*0.5f;
-			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE)*0.5f;
+			const float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE) * 0.5f;
+			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE) * 0.5f;
 		} break;
 
 		default: {
-			if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB global vars are deprecated");
-			}
-			else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB team vars are deprecated");
-			}
-			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB allyteam vars are deprecated");
-			}
-			else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB unit vars are deprecated");
-			}
-			else {
-				ShowUnitScriptError("[US::SetUnitVal] CobError: unknown set-constant " + IntToString(val));
-			}
+			ShowUnitScriptError("[US::SetUnitVal] unknown set-constant " + IntToString(val));
 		}
 	}
 #endif

@@ -6,25 +6,57 @@
 #include <string>
 
 
+struct SaveFileData {
+	std::string name; // "saves/quicksave.ssf"
+	std::string args; // "-y"
+};
+
 class ILoadSaveHandler
 {
 public:
-	static ILoadSaveHandler* Create(bool usecreg);
+	static ILoadSaveHandler* CreateHandler(const std::string& saveFile);
+
+	static bool CreateSave(const std::string& saveFile, const std::string& saveArgs);
+	static bool CreateSave(SaveFileData fileData) {
+		if (fileData.name.empty())
+			return false;
+
+		return (CreateSave(fileData.name, fileData.args));
+	}
 
 protected:
 	static std::string FindSaveFile(const std::string& file);
 
 public:
-	virtual ~ILoadSaveHandler();
+	virtual ~ILoadSaveHandler() = default;
 
 	virtual void SaveGame(const std::string& file) = 0;
-	/// load things such as map and mod, needed to fire up the engine
-	virtual void LoadGameStartInfo(const std::string& file) = 0;
+	/// load scriptText and (for creg saves) {map,mod}Name needed to fire up the engine
+	virtual bool LoadGameStartInfo(const std::string& file) = 0;
 	virtual void LoadGame() = 0;
 
+	void SaveInfo(const std::string& _mapName, const std::string& _modName) {
+		mapName = _mapName;
+		modName = _modName;
+	}
+
+	const std::string& GetScriptText() const { return scriptText; }
+
+protected:
 	std::string scriptText;
 	std::string mapName;
 	std::string modName;
 };
+
+
+class DummyLoadSaveHandler: public ILoadSaveHandler {
+public:
+	void SaveGame(const std::string& file) override {}
+	bool LoadGameStartInfo(const std::string& file) override { return false; }
+	void LoadGame() override {}
+};
+
+
+extern SaveFileData globalSaveFileData;
 
 #endif // _LOAD_SAVE_HANDLER_H

@@ -11,9 +11,9 @@ namespace Shader {
 namespace GL {
 	struct RenderDataBuffer;
 	template<typename T> struct TRenderDataBuffer;
+	template<typename T> struct WideLineAdapter;
 
 	typedef TRenderDataBuffer<VA_TYPE_0> RenderDataBuffer0;
-	typedef TRenderDataBuffer<VA_TYPE_N> RenderDataBufferN;
 	typedef TRenderDataBuffer<VA_TYPE_C> RenderDataBufferC;
 	typedef TRenderDataBuffer<VA_TYPE_T> RenderDataBufferT;
 
@@ -23,6 +23,10 @@ namespace GL {
 
 	typedef TRenderDataBuffer<VA_TYPE_2d0> RenderDataBuffer2D0;
 	typedef TRenderDataBuffer<VA_TYPE_2dT> RenderDataBuffer2DT;
+
+	typedef TRenderDataBuffer<VA_TYPE_L> RenderDataBufferL;
+
+	typedef WideLineAdapter<VA_TYPE_C> WideLineAdapterC;
 };
 
 #endif

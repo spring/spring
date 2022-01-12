@@ -4,7 +4,7 @@
 #define RECTANGLE_H
 
 #include "type2.h"
-#include "myMath.h"
+#include "SpringMath.h"
 #include "System/creg/creg_cond.h"
 
 struct SRectangle {

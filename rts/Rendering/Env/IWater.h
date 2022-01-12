@@ -15,12 +15,12 @@ public:
 		WATER_RENDERER_LUA        = 0,
 		WATER_RENDERER_REFLECTIVE = 1,
 		WATER_RENDERER_DYNAMIC    = 2,
-		WATER_RENDERER_REFL_REFR  = 3,
+		WATER_RENDERER_REFRACTIVE = 3,
 		WATER_RENDERER_BUMPMAPPED = 4,
 		NUM_WATER_RENDERERS       = 5,
 	};
 
-	IWater();
+	IWater(bool wantEvents = true);
 	virtual ~IWater() {}
 
 	virtual void Draw() {}
@@ -60,9 +60,9 @@ protected:
 	void DrawRefractions(bool drawGround, bool drawSky);
 
 protected:
-	bool drawReflection;
-	bool drawRefraction;
-	bool wireFrameMode;
+	bool drawReflection = false;
+	bool drawRefraction = false;
+	bool wireFrameMode = false;
 };
 
 extern IWater* water;

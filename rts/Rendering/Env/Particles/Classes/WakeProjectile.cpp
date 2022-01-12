@@ -9,7 +9,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
@@ -88,7 +88,10 @@ void CWakeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
 	va->SafeAppend({drawPos + dir1 - dir2, wt->xstart, wt->yend,   col});
 	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
+
+	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
 	va->SafeAppend({drawPos - dir1 + dir2, wt->xend,   wt->ystart, col});
+	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
 	#undef wt
 }
 

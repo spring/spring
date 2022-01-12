@@ -8,7 +8,8 @@
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
 #include "System/CRC.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 
 CR_BIND(MoveDef, ())
@@ -20,10 +21,13 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(speedModClass),
 	CR_MEMBER(terrainClass),
 
+	CR_MEMBER(pathType),
+
 	CR_MEMBER(xsize),
 	CR_MEMBER(xsizeh),
 	CR_MEMBER(zsize),
 	CR_MEMBER(zsizeh),
+
 	CR_MEMBER(depth),
 	CR_MEMBER(depthModParams),
 	CR_MEMBER(maxSlope),
@@ -31,26 +35,26 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(crushStrength),
 	CR_MEMBER(speedModMults),
 
-	CR_MEMBER(pathType),
+	CR_MEMBER(heatMod),
+	CR_MEMBER(flowMod),
+	CR_MEMBER(heatProduced),
 
 	CR_MEMBER(followGround),
-	CR_MEMBER(subMarine),
+	CR_MEMBER(isSubmarine),
 
 	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(allowTerrainCollisions),
 	CR_MEMBER(allowRawMovement),
 
 	CR_MEMBER(heatMapping),
-	CR_MEMBER(flowMapping),
-	CR_MEMBER(heatMod),
-	CR_MEMBER(flowMod),
-	CR_MEMBER(heatProduced)
+	CR_MEMBER(flowMapping)
 ))
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
-	CR_MEMBER(moveDefNames),
-	CR_MEMBER(checksum)
+	CR_MEMBER(nameMap),
+	CR_MEMBER(mdCounter),
+	CR_MEMBER(mdChecksum)
 ))
 
 
@@ -99,33 +103,31 @@ void MoveDefHandler::Init(LuaParser* defsParser)
 	const LuaTable& rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 
 	if (!rootTable.IsValid())
-		throw content_error("Error loading movement definitions");
+		throw content_error("[MoveDefHandler] error loading MoveDef entries");
+	if (rootTable.GetLength() > moveDefs.size())
+		throw content_error("[MoveDefHandler] too many MoveDef entries");
 
 	CRC crc;
 
-	for (int tt = 0; tt < CMapInfo::NUM_TERRAIN_TYPES; ++tt) {
-		const CMapInfo::TerrainType& terrType = mapInfo->terrainTypes[tt];
-
+	for (const CMapInfo::TerrainType& terrType: mapInfo->terrainTypes) {
 		crc << terrType.tankSpeed << terrType.kbotSpeed;
 		crc << terrType.hoverSpeed << terrType.shipSpeed;
 	}
 
-	moveDefs.clear();
-	moveDefs.reserve(rootTable.GetLength());
-	moveDefNames.clear();
-	moveDefNames.reserve(rootTable.GetLength());
 
-	for (size_t num = 1; /* no test */; num++) {
-		const LuaTable& moveDefTable = rootTable.SubTable(num);
+	nameMap.clear();
+	nameMap.reserve(rootTable.GetLength());
+
+	for (unsigned int moveDefID = 0; /* no test */; moveDefID++) {
+		const LuaTable& moveDefTable = rootTable.SubTable(moveDefID + 1);
 
 		if (!moveDefTable.IsValid())
 			break;
 
-		moveDefs.emplace_back(moveDefTable, num);
-		const MoveDef& md = moveDefs.back();
-		moveDefNames[md.name] = md.pathType;
+		moveDefs[mdCounter] = {moveDefTable};
+		nameMap[hashString(moveDefs[mdCounter].name.c_str())] = (moveDefs[mdCounter].pathType = moveDefID);
 
-		crc << md.GetCheckSum();
+		crc << moveDefs[mdCounter++].CalcCheckSum();
 	}
 
 	CMoveMath::noHoverWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
@@ -135,15 +137,15 @@ void MoveDefHandler::Init(LuaParser* defsParser)
 	crc << CMoveMath::waterDamageCost;
 	crc << CMoveMath::noHoverWaterMove;
 
-	checksum = crc.GetDigest();
+	mdChecksum = crc.GetDigest();
 }
 
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	const auto it = moveDefNames.find(name);
+	const auto it = nameMap.find(hashString(name.c_str()));
 
-	if (it == moveDefNames.end())
+	if (it == nameMap.end())
 		return nullptr;
 
 	return &moveDefs[it->second];
@@ -152,38 +154,6 @@ MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 
 
 MoveDef::MoveDef()
-	: name("")
-
-	, speedModClass(MoveDef::Tank)
-	, terrainClass(MoveDef::Mixed)
-
-	, xsize(0)
-	, xsizeh(0)
-	, zsize(0)
-	, zsizeh(0)
-
-	, depth(0.0f)
-	, maxSlope(1.0f)
-	, slopeMod(0.0f)
-
-	, crushStrength(0.0f)
-
-	, pathType(0)
-
-	, heatMod(0.05f)
-	, flowMod(1.0f)
-
-	, heatProduced(GAME_SPEED)
-
-	, followGround(true)
-	, subMarine(false)
-
-	, avoidMobilesOnPath(true)
-	, allowTerrainCollisions(true)
-	, allowRawMovement(false)
-
-	, heatMapping(true)
-	, flowMapping(true)
 {
 	depthModParams[DEPTHMOD_MIN_HEIGHT] = 0.0f;
 	depthModParams[DEPTHMOD_MAX_HEIGHT] = std::numeric_limits<float>::max();
@@ -198,11 +168,8 @@ MoveDef::MoveDef()
 	speedModMults[SPEEDMOD_MOBILE_NUM_MULTS] = 0.0f;
 }
 
-MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
-	*this = MoveDef();
-
+MoveDef::MoveDef(const LuaTable& moveDefTable): MoveDef() {
 	name          = StringToLower(moveDefTable.GetString("name", ""));
-	pathType      = moveDefID - 1;
 	crushStrength = moveDefTable.GetFloat("crushStrength", 10.0f);
 
 	const LuaTable& depthModTable = moveDefTable.SubTable("depthModParams");
@@ -212,9 +179,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	const float maxWaterDepth = moveDefTable.GetFloat("maxWaterDepth", GetDefaultMaxWaterDepth());
 
 	switch ((speedModClass = ParseSpeedModClass(name, moveDefTable))) {
-		case MoveDef::Tank: {
-			// fall-through
-		}
+		case MoveDef::Tank: // fall-through
 		case MoveDef::KBot: {
 			depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                        0.0f ));
 			depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       depthModTable.GetFloat("maxHeight",           std::numeric_limits<float>::max() ));
@@ -236,8 +201,10 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 		} break;
 
 		case MoveDef::Ship: {
-			depth     = minWaterDepth;
-			subMarine = moveDefTable.GetBool("subMarine", false);
+			depth    = minWaterDepth;
+			// maxSlope = "n/a";
+
+			isSubmarine = moveDefTable.GetBool("subMarine", false);
 		} break;
 	}
 
@@ -368,7 +335,15 @@ bool MoveDef::TestMoveSquareRange(
 }
 
 
-float MoveDef::CalcFootPrintRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
+
+float MoveDef::CalcFootPrintMinExteriorRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
+float MoveDef::CalcFootPrintMaxInteriorRadius(float scale) const { return ((std::max(xsize, zsize) * 0.5f * SQUARE_SIZE) * scale); }
+float MoveDef::CalcFootPrintAxisStretchFactor() const
+{
+	return (std::abs(xsize - zsize) * 1.0f / (xsize + zsize));
+}
+
+
 float MoveDef::GetDepthMod(float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
@@ -397,7 +372,7 @@ float MoveDef::GetDepthMod(float height) const {
 	return (1.0f / scale);
 }
 
-unsigned int MoveDef::GetCheckSum() const {
+unsigned int MoveDef::CalcCheckSum() const {
 	unsigned int sum = 0;
 
 	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&speedModClass);

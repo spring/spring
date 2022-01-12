@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, )
 CR_REG_METADATA(CPlasmaRepulser, (
@@ -40,6 +40,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 
 
 struct ShieldSegmentCollectionPool {
+	CR_DECLARE_STRUCT(ShieldSegmentCollectionPool)
 public:
 	void InsertCollection(CPlasmaRepulser* r) {
 		if (sscs.empty())
@@ -73,7 +74,19 @@ private:
 	std::vector<ShieldSegmentCollection> sscs;
 };
 
+
+CR_BIND(ShieldSegmentCollectionPool, )
+CR_REG_METADATA(ShieldSegmentCollectionPool, (
+	CR_MEMBER(idcs),
+	CR_MEMBER(sscs)
+))
+
 static ShieldSegmentCollectionPool sscPool;
+
+void CPlasmaRepulser::SerializeShieldSegmentCollectionPool(creg::ISerializer* s)
+{
+	s->SerializeObjectInstance(&sscPool, sscPool.GetClass());
+}
 
 
 
@@ -86,9 +99,8 @@ CPlasmaRepulser::~CPlasmaRepulser()
 
 void CPlasmaRepulser::Init()
 {
-	radius = weaponDef->shieldRadius;
-	sqRadius = radius * radius;
-	curPower = mix(99999999999.0f, weaponDef->shieldStartingPower, weaponDef->shieldPower != 0.0f);
+	sqRadius = Square(radius = weaponDef->shieldRadius);
+	curPower = mix(10.0f * 1000.0f * 1000.0f, weaponDef->shieldStartingPower, weaponDef->shieldPower != 0.0f);
 
 	collisionVolume.InitSphere(radius);
 
@@ -101,8 +113,14 @@ void CPlasmaRepulser::Init()
 
 bool CPlasmaRepulser::IsRepulsing(CWeaponProjectile* p) const
 {
-	return weaponDef->shieldRepulser && std::find(repulsedProjectiles.begin(), repulsedProjectiles.end(), p) != repulsedProjectiles.end();
+	return (weaponDef->shieldRepulser && std::find(repulsedProjectiles.begin(), repulsedProjectiles.end(), p) != repulsedProjectiles.end());
 }
+
+bool CPlasmaRepulser::IgnoreInteriorHit(CWeaponProjectile* p) const
+{
+	return (weaponDef->exteriorShield && !IsRepulsing(p));
+}
+
 
 bool CPlasmaRepulser::IsActive() const
 {
@@ -134,7 +152,6 @@ void CPlasmaRepulser::Update()
 	}
 
 	UpdateWeaponVectors();
-	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
 
 	if (weaponMuzzlePos != lastMuzzlePos)
 		quadField.MovedRepulser(this);
@@ -142,7 +159,7 @@ void CPlasmaRepulser::Update()
 	deltaMuzzlePos = mix(weaponMuzzlePos - lastMuzzlePos, deltaMuzzlePos, lastMuzzlePos == ZeroVector);
 	lastMuzzlePos = weaponMuzzlePos;
 
-	#if 0 
+	#if 0
 	segmentCollections[this].UpdateColor();
 	#endif
 	sscPool.UpdateCollection(this);
@@ -252,9 +269,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPo
 	if (teamHandler.Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
-	if (weaponDef->shieldPower > 0.0f)
-		curPower -= (shieldDamage * damageMultiplier);
-
+	curPower -= (shieldDamage * damageMultiplier * (weaponDef->shieldPower > 0.0f));
 	return true;
 }
 

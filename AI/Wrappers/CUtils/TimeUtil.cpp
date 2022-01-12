@@ -5,7 +5,7 @@
 #include <time.h>
 
 
-#if       defined WIN32
+#if       defined _WIN32
 
 /*
  * This emulates the POSIX gettimeofday(timeval, timezone) function on Windows.
@@ -73,9 +73,9 @@ int gettimeofday(struct timeval* tv, struct timezone* tz) {
 	return 0;
 }
 
-#else  // defined WIN32
+#else  // defined _WIN32
 #include <sys/time.h>
-#endif // defined WIN32
+#endif // defined _WIN32
 
 
 unsigned long timeUtil_getCurrentTimeMillis() {

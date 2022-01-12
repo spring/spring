@@ -6,7 +6,6 @@
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "DynWater.h"
-#include "RefractWater.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Map/ReadMap.h"
@@ -29,44 +28,48 @@ CONFIG(int, Water)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
 .description("Defines the type of water rendering. Can be set in game. Options are: 0 = No water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");
 
+
+static std::array<int, 4> waterModes = {{0}};
+
+static IWater tmpRenderer(false);
+static bool allowedModes[IWater::NUM_WATER_RENDERERS] = {
+	true,
+	true,
+	false,
+	true,
+	true,
+};
+
 IWater* water = nullptr;
-static std::vector<int> waterModes;
 
 
-IWater::IWater()
-	: drawReflection(false)
-	, drawRefraction(false)
-	, wireFrameMode(false)
+
+IWater::IWater(bool wantEvents)
 {
-	CExplosionCreator::AddExplosionListener(this);
+	if (wantEvents)
+		CExplosionCreator::AddExplosionListener(this);
 }
 
 
 void IWater::PushWaterMode(int nxtRendererMode)
 {
-	waterModes.push_back(nxtRendererMode);
+	if (waterModes[0] == int(waterModes.size() - 1))
+		return;
+
+	waterModes[ ++waterModes[0] ] = nxtRendererMode;
 }
 
 void IWater::ApplyPushedChanges(CGame* game) {
-	for (auto i = waterModes.cbegin(); i != waterModes.cend(); ++i) {
-		water = GetWater(water, *i);
+	for (int i = 1, n = waterModes[0]; i <= n; i++) {
+		water = GetWater(water, waterModes[i]);
 		LOG("Set water rendering mode to %i (%s)", water->GetID(), water->GetName());
 	}
 
-	waterModes.clear();
+	waterModes.fill(0);
 }
 
 IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 {
-	static IWater tmpRenderer;
-	static bool allowedModes[NUM_WATER_RENDERERS] = {
-		true,
-		false,
-		false,
-		false,
-		true,
-	};
-
 	IWater* nxtRenderer = nullptr;
 
 	// -1 cycles
@@ -101,7 +104,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 					nxtRenderer = new CDynWater();
 				} catch (const content_error& ex) {
 					spring::SafeDelete(nxtRenderer);
-					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s", ex.what());
+					LOG_L(L_ERROR, "[%s] loading Dynamic Water failed, error: %s", __func__, ex.what());
 				}
 			} break;
 
@@ -110,25 +113,25 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 					nxtRenderer = new CBumpWater();
 				} catch (const content_error& ex) {
 					spring::SafeDelete(nxtRenderer);
-					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s", ex.what());
+					LOG_L(L_ERROR, "[%s] loading Bumpmapped Water failed, error: %s", __func__, ex.what());
 				}
 			} break;
 
-			case WATER_RENDERER_REFL_REFR: {
+			case WATER_RENDERER_REFRACTIVE: {
 				try {
-					nxtRenderer = new CRefractWater();
+					nxtRenderer = new CAdvWater(true);
 				} catch (const content_error& ex) {
 					spring::SafeDelete(nxtRenderer);
-					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s", ex.what());
+					LOG_L(L_ERROR, "[%s] loading Refractive Water failed, error: %s", __func__, ex.what());
 				}
 			} break;
 
 			case WATER_RENDERER_REFLECTIVE: {
 				try {
-					nxtRenderer = new CAdvWater();
+					nxtRenderer = new CAdvWater(false);
 				} catch (const content_error& ex) {
 					spring::SafeDelete(nxtRenderer);
-					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s", ex.what());
+					LOG_L(L_ERROR, "[%s] loading Reflective Water failed, error: %s", __func__, ex.what());
 				}
 			} break;
 		}

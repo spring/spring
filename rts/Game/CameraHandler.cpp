@@ -19,7 +19,7 @@
 #include "Players/Player.h"
 #include "UI/UnitTracker.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "System/StringHash.h"
 #include "System/Config/ConfigHandler.h"
@@ -136,6 +136,9 @@ void CCameraHandler::Init()
 
 		RegisterAction("viewsave");
 		RegisterAction("viewload");
+
+		RegisterAction("camtimefactor");
+		RegisterAction("camtimeexponent");
 
 		SortRegisteredActions();
 	}
@@ -403,7 +406,6 @@ void CCameraHandler::SaveView(const std::string& name)
 	vd["mode"] = currCamCtrlNum;
 
 	camControllers[currCamCtrlNum]->GetState(vd);
-	return;
 }
 
 bool CCameraHandler::LoadView(const std::string& name)
@@ -450,7 +452,7 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {
 	const auto it = sm.find("mode");
 
-	if (it != sm.end()) {
+	if (it != sm.cend()) {
 		const unsigned int camMode = it->second;
 		const unsigned int oldMode = currCamCtrlNum;
 
@@ -506,12 +508,12 @@ void CCameraHandler::PushAction(const Action& action)
 		case hashString("viewsave"): {
 			if (!action.extra.empty()) {
 				SaveView(action.extra);
-				LOG("Saved view: %s", action.extra.c_str());
+				LOG("[CamHandler::%s] saved view \"%s\"", __func__, action.extra.c_str());
 			}
 		} break;
 		case hashString("viewload"): {
-			if (!LoadView(action.extra))
-				LOG_L(L_WARNING, "Loading view failed!");
+			if (LoadView(action.extra))
+				LOG("[CamHandler::%s] loaded view \"%s\"", __func__, action.extra.c_str());
 
 		} break;
 
@@ -520,6 +522,19 @@ void CCameraHandler::PushAction(const Action& action)
 		} break;
 		case hashString("togglecammode"): {
 			ToggleState();
+		} break;
+
+		case hashString("camtimefactor"): {
+			if (!action.extra.empty())
+				camTransState.timeFactor = std::atof(action.extra.c_str());
+
+			LOG("[CamHandler::%s] set transition-time factor to %f", __func__, camTransState.timeFactor);
+		} break;
+		case hashString("camtimeexponent"): {
+			if (!action.extra.empty())
+				camTransState.timeExponent = std::atof(action.extra.c_str());
+
+			LOG("[CamHandler::%s] set transition-time exponent to %f", __func__, camTransState.timeExponent);
 		} break;
 	}
 }
@@ -532,7 +547,7 @@ bool CCameraHandler::LoadViewData(const ViewData& vd)
 
 	const auto it = vd.find("mode");
 
-	if (it != vd.end()) {
+	if (it != vd.cend()) {
 		const unsigned int camMode = it->second;
 		const unsigned int curMode = currCamCtrlNum;
 

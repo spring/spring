@@ -31,7 +31,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/UnpackPacket.h"
@@ -75,7 +75,7 @@ void CGame::SendClientProcUsage()
 
 		if (playing) {
 			const float simProcUsage = (profiler.GetTimePercentage("Sim"));
-			const float drawProcUsage = (profiler.GetTimePercentage("Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+			const float drawProcUsage = (profiler.GetTimePercentage("Draw") / std::max(1.0f, globalRendering->FPS)) * CGlobalUnsynced::minDrawFPS;
 			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too
@@ -175,7 +175,7 @@ void CGame::UpdateNumQueuedSimFrames()
 	} else {
 		// Modified SPRING95 behaviour
 		// Aim at staying 2 sim frames behind.
-		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (numQueuedFrames/2) - 1;
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (numQueuedFrames / 2) - 1;
 	}
 
 	// await one sim frame if queue is dry
@@ -208,7 +208,7 @@ void CGame::UpdateNetMessageProcessingTimeLeft()
 	} else {
 		// ensure ClientReadNet returns at least every 15 simframes
 		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
+		msgProcTimeLeft = (GAME_SPEED / float(CGlobalUnsynced::minDrawFPS) * gs->wantedSpeedFactor) * 1000.0f;
 	}
 }
 
@@ -223,7 +223,7 @@ float CGame::GetNetMessageProcessingTimeLimit() const
 	const float minDrawFPS   =         CGlobalUnsynced::reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
 
-	return Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	return Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / CGlobalUnsynced::minDrawFPS);
 }
 
 void CGame::ClientReadNet()
@@ -260,7 +260,7 @@ void CGame::ClientReadNet()
 			std::shared_ptr<const netcode::RawPacket> peekPacket = clientNet->Peek(0);
 
 			if (peekPacket != nullptr && peekPacket->data[0] == NETMSG_SYNCRESPONSE) {
-				if (haveServerDemo && haveClientDemo && gs->godMode) {
+				if (haveServerDemo && haveClientDemo && gs->godMode != 0) {
 					assert(configHandler->GetBool("DemoFromDemo"));
 
 					const  int32_t syncFrameNum = *reinterpret_cast<const int32_t*>(peekPacket->data + sizeof(uint8_t) + sizeof(uint8_t));
@@ -516,6 +516,8 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_PATH_CHECKSUM] invalid player-number %i", __func__, playerNum);
 					break;
 				}
+				if (pathManager->GetPathFinderType() == NOPFS_TYPE)
+					break;
 
 				const std::uint32_t playerCheckSum = *reinterpret_cast<const std::uint32_t*>(&inbuf[2]);
 				const std::uint32_t localCheckSum = pathManager->GetPathCheckSum();
@@ -535,20 +537,23 @@ void CGame::ClientReadNet()
 				} else {
 					if (playerCheckSum != localCheckSum) {
 						LOG_L(L_WARNING, fmtStrs[1], playerCheckSum, pType, playerNum, pName, localCheckSum);
+						pathManager->RemoveCacheFiles();
 					}
 				}
 			} break;
 
 			case NETMSG_KEYFRAME: {
-				const int32_t serverFrameNum = *(int32_t*)(inbuf + 1);
+				if (!gameOver) {
+					const int32_t serverFrameNum = *(int32_t*)(inbuf + 1);
 
-				if (gs->frameNum != (serverFrameNum - 1)) {
-					LOG_L(L_ERROR, "[Game::%s] keyframe difference: %i (client: %d, server: %d)", __func__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
-					break;
+					if (gs->frameNum != (serverFrameNum - 1)) {
+						LOG_L(L_ERROR, "[Game::%s] keyframe difference: %i (client: %d, server: %d)", __func__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
+						break;
+					}
+
+					// fall-through and run SimFrame() iff this message really came from the server
+					clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 				}
-
-				// fall-through and run SimFrame() iff this message really came from the server
-				clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1000.0f;
@@ -615,19 +620,21 @@ void CGame::ClientReadNet()
 					uint16_t packetSize; pckt >> packetSize;
 					uint8_t playerNum; pckt >> playerNum;
 
-					const uint32_t numParams = (packetSize - 9) / sizeof(float);
-
 					if (!playerHandler.IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					int32_t cmdID;
-					uint8_t cmdOpt;
+					int32_t cmdTimeOut;
+					uint8_t cmdOptions;
+					uint32_t numParams;
 
 					pckt >> cmdID;
-					pckt >> cmdOpt;
+					pckt >> cmdTimeOut;
+					pckt >> cmdOptions;
+					pckt >> numParams;
 
-					Command c(cmdID, cmdOpt);
-					c.params.reserve(numParams);
+					Command c(cmdID, cmdOptions);
+					c.SetTimeOut(cmdTimeOut);
 
 					for (uint32_t a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
@@ -654,22 +661,23 @@ void CGame::ClientReadNet()
 					if (!playerHandler.IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 
+					const CPlayer* netPlayer = playerHandler.Player(playerNum);
+					const CUnit* unit = nullptr;
+
 					selectedUnitIDs.reserve(numUnitIDs);
 
 					for (uint32_t a = 0; a < numUnitIDs; ++a) {
 						int16_t unitID; pckt >> unitID;
-						const CUnit* unit = unitHandler.GetUnit(unitID);
 
-						if (unit == nullptr) {
-							// unit was destroyed in simulation (without its ID being recycled)
-							// after sending a command but before receiving it back, more likely
-							// to happen in high-latency situations
-							// LOG_L(L_WARNING, "[NETMSG_SELECT] invalid unitID (%i) from player %i", unitID, playerNum);
+						// unit was destroyed in simulation (without its ID being recycled)
+						// after sending a command but before receiving it back, more likely
+						// to happen in high-latency situations
+						// LOG_L(L_WARNING, "[NETMSG_SELECT] invalid unitID (%i) from player %i", unitID, playerNum);
+						if ((unit = unitHandler.GetUnit(unitID)) == nullptr)
 							continue;
-						}
 
-						// if in godMode, this is always true for any player
-						if (playerHandler.Player(playerNum)->CanControlTeam(unit->team))
+						// if in (full) godMode, this is always true for any player
+						if (netPlayer->CanControlTeam(unit->team))
 							selectedUnitIDs.push_back(unitID);
 					}
 
@@ -685,39 +693,47 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
 
-					int16_t psize; pckt >> psize;
-					uint8_t player; pckt >> player;
-					uint8_t aiID; pckt >> aiID;
-					int16_t unitid;
+					int16_t pcktSize; pckt >> pcktSize;
+					uint8_t playerID; pckt >> playerID;
 
-					if (!playerHandler.IsValidPlayer(player))
+					uint8_t aiInstID; pckt >> aiInstID;
+					uint8_t aiTeamID; pckt >> aiTeamID;
+					int16_t   unitID; pckt >>   unitID;
+
+					if (!playerHandler.IsValidPlayer(playerID))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> unitid;
-					if (unitid < 0 || static_cast<size_t>(unitid) >= unitHandler.MaxUnits())
+					if (unitID < 0 || static_cast<size_t>(unitID) >= unitHandler.MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
 					int32_t cmdID;
-					uint8_t cmdOpt;
+					int32_t cmdTimeOut;
+					uint8_t cmdOptions;
+					uint32_t numParams;
 
 					pckt >> cmdID;
-					pckt >> cmdOpt;
+					pckt >> cmdTimeOut;
+					pckt >> cmdOptions;
+					pckt >> numParams;
 
-					Command c(cmdID, cmdOpt);
+					Command c(cmdID, cmdOptions);
+					c.SetTimeOut(cmdTimeOut);
 
-					if (packetCode == NETMSG_AICOMMAND_TRACKED)
-						pckt >> c.aiCommandId;
+					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
+						pckt >> cmdID;
+						c.SetAICmdID(cmdID);
+					}
 
 					// insert the command parameters
-					for (int16_t a = 0; a < ((psize - 11) / 4); ++a) {
+					for (uint32_t a = 0; a < numParams; ++a) {
 						float param;
 						pckt >> param;
 						c.PushParam(param);
 					}
 
 					// command originating from SkirmishAI or LuaUnsyncedCtrl
-					selectedUnitsHandler.AINetOrder(unitid, player, c);
-					AddTraffic(player, packetCode, dataLength);
+					selectedUnitsHandler.AINetOrder(unitID, aiTeamID, playerID, c);
+					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());
 				}
@@ -727,8 +743,8 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 
-					uint8_t player;
-					uint8_t aiID;
+					uint8_t playerID;
+					uint8_t aiInstID;
 					uint8_t pairwise;
 					uint32_t sameCmdID;
 					uint8_t sameCmdOpt;
@@ -737,12 +753,12 @@ void CGame::ClientReadNet()
 					int16_t unitCount;
 					int16_t commandCount;
 
-					pckt >> player;
+					pckt >> playerID;
 
-					if (!playerHandler.IsValidPlayer(player))
+					if (!playerHandler.IsValidPlayer(playerID))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> aiID;
+					pckt >> aiInstID;
 					pckt >> pairwise;
 					pckt >> sameCmdID;
 					pckt >> sameCmdOpt;
@@ -753,6 +769,7 @@ void CGame::ClientReadNet()
 
 					// parse the unit list
 					pckt >> unitCount;
+					unitIDs.reserve(unitCount);
 
 					for (int16_t u = 0; u < unitCount; u++) {
 						int16_t unitID;
@@ -762,24 +779,23 @@ void CGame::ClientReadNet()
 
 					// parse the command list
 					pckt >> commandCount;
+					commands.reserve(commandCount);
 
 					for (int16_t c = 0; c < commandCount; c++) {
 						int32_t cmdID;
 						uint8_t cmdOpt;
-						uint16_t paramCount;
+						uint16_t paramCount = 0;
 
 						if ((cmdID = sameCmdID) == 0)
 							pckt >> cmdID;
-
 						if ((cmdOpt = sameCmdOpt) == 0xFF)
 							pckt >> cmdOpt;
-
-						Command cmd(cmdID, cmdOpt);
-
 						if ((paramCount = sameCmdParamSize) == 0xFFFF)
 							pckt >> paramCount;
 
-						for (int16_t p = 0; p < paramCount; p++) {
+						Command cmd(cmdID, cmdOpt);
+
+						for (uint16_t p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
 							cmd.PushParam(param);
@@ -787,19 +803,21 @@ void CGame::ClientReadNet()
 						commands.push_back(cmd);
 					}
 
-					// apply the commands
+					assert(aiInstID == MAX_AIS);
+
+					// apply the "AI" commands (which actually originate from LuaUnsyncedCtrl)
 					if (pairwise) {
 						for (int16_t x = 0; x < std::min(unitCount, commandCount); ++x) {
-							selectedUnitsHandler.AINetOrder(unitIDs[x], player, commands[x]);
+							selectedUnitsHandler.AINetOrder(unitIDs[x], aiInstID, playerID, commands[x]);
 						}
 					} else {
 						for (int16_t c = 0; c < commandCount; c++) {
 							for (int16_t u = 0; u < unitCount; u++) {
-								selectedUnitsHandler.AINetOrder(unitIDs[u], player, commands[c]);
+								selectedUnitsHandler.AINetOrder(unitIDs[u], aiInstID, playerID, commands[c]);
 							}
 						}
 					}
-					AddTraffic(player, packetCode, dataLength);
+					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMANDS] exception \"%s\"", __func__, ex.what());
 				}
@@ -1180,7 +1198,7 @@ void CGame::ClientReadNet()
 					pckt >> aiTeamNum;
 					pckt >> aiName;
 
-					CTeam* tai = teamHandler.Team(aiTeamNum);
+					CTeam* aiTeam = teamHandler.Team(aiTeamNum);
 
 					if (playerNum == gu->myPlayerNum) {
 						// local player
@@ -1194,29 +1212,28 @@ void CGame::ClientReadNet()
 							#endif
 						} else {
 							// we will end up here for local AIs defined mid-game, eg. with /aicontrol
-							// copy, aiData will be invalid after the next line
-							const std::string aiName = aiData.name + " ";
-
+							wordCompletion.AddWord(aiData.name + " ", false, false, false);
 							skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
-							wordCompletion.AddWord(aiName, false, false, false);
 						}
 					} else {
 						SkirmishAIData aiData;
+						aiData.hostPlayer = playerNum;
 						aiData.team       = aiTeamNum;
 						aiData.name       = aiName;
-						aiData.hostPlayer = playerNum;
-						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
+						aiData.shortName  = "n/a"; // determines validity for GetSkirmishAI
+
 						wordCompletion.AddWord(aiData.name + " ", false, false, false);
+						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
 					}
 
-					if (!tai->HasLeader())
-						tai->SetLeader(playerNum);
+					if (!aiTeam->HasLeader())
+						aiTeam->SetLeader(playerNum);
 
 					CPlayer::UpdateControlledTeams();
 					playerHandler.Player(playerNum)->NotifyPlayerChanged();
 
 					if (playerNum == gu->myPlayerNum) {
-						LOG("Skirmish AI being created for team %i ...", aiTeamNum);
+						LOG("[Game::%s] local skirmish AI being created for team %i ...", __func__, aiTeamNum);
 						eoh->CreateSkirmishAI(aiNum);
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -1246,30 +1263,32 @@ void CGame::ClientReadNet()
 				const size_t numPlayersInAITeam  = playerHandler.NumActivePlayersInTeam(aiTeamId);
 				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
 
-				CTeam* tai                       = teamHandler.Team(aiTeamId);
+				CTeam* aiTeam                    = teamHandler.Team(aiTeamId);
 
 				aiData->status = newState;
 
+				constexpr const char* types[] = {"remote", "local"};
+
 				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(aiNum);
-				} else if (newState == SKIRMAISTATE_DEAD) {
+					continue;
+				}
+
+				if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
-							LOG("Skirmish AI \"%s\" being reloaded for team %i ...", aiData->name.c_str(), aiTeamId);
+							LOG("[Game::%s] %s skirmish AI \"%s\" being created for team %i", __func__, types[true], aiData->name.c_str(), aiTeamId);
 							eoh->CreateSkirmishAI(aiNum);
 						}
 					} else {
-						const std::string aiInstanceName = aiData->name;
+						// this could be done in the above function as well, team has no controller left now
+						if ((numPlayersInAITeam + numAIsInAITeam) == 1)
+							aiTeam->SetLeader(-1);
+
+						LOG("[Game::%s] %s skirmish AI \"%s\" (ID: %i) being removed from team %i", __func__, types[isLocal], aiData->name.c_str(), aiNum, aiTeamId);
 
 						wordCompletion.RemoveWord(aiData->name + " ");
 						skirmishAIHandler.RemoveSkirmishAI(aiNum);
-
-						// not valid anymore after RemoveSkirmishAI()
-						aiData = nullptr;
-
-						// this could be done in the above function as well, team has no controller left now
-						if ((numPlayersInAITeam + numAIsInAITeam) == 1)
-							tai->SetLeader(-1);
 
 						CPlayer::UpdateControlledTeams();
 						playerHandler.Player(playerNum)->NotifyPlayerChanged();
@@ -1287,6 +1306,19 @@ void CGame::ClientReadNet()
 					} else {
 						LOG("Skirmish AI \"%s\" (ID:%i) took over control of team %i", aiData->name.c_str(), aiNum, aiTeamId);
 					}
+
+					continue;
+				}
+
+				if (newState == SKIRMAISTATE_ALIVE) {
+					// short-name and version of the AI is unsynced data, only available on the AI host
+					LOG(
+						"[Game::%s] %s skirmish AI \"%s\" (ID: %i, Short-Name: \"%s\", Version: \"%s\") took over control of team %i",
+						__func__, types[isLocal],
+						isLocal? aiData->name.c_str(): "n/a", aiNum,
+						isLocal? aiData->shortName.c_str(): "n/a",
+						isLocal? aiData->version.c_str(): "n/a", aiTeamId
+					);
 				}
 			} break;
 

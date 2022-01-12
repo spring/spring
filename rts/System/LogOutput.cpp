@@ -64,12 +64,12 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 	#endif
 	#if !defined(DEBUG)
 	// Always show at least INFO level of these sections
-	enabledSections += "Sound,";
+	enabledSections += "Sound:35,VFS:30";
 	#endif
 	enabledSections += StringToLower(configHandler->GetString("LogSections"));
 #endif
 
-	if (getenv("SPRING_LOG_SECTIONS") != NULL) {
+	if (getenv("SPRING_LOG_SECTIONS") != nullptr) {
 		// allow disabling all sections from the env var by setting it to "none"
 		envSections += getenv("SPRING_LOG_SECTIONS");
 		envSections = StringToLower(envSections);
@@ -90,13 +90,13 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 
 	// n=1 because <enabledSections> always starts with a ',' (if non-empty)
 	for (size_t n = 1; n < enabledSections.size(); ) {
-		const size_t k = enabledSections.find(",", n);
+		const size_t k = enabledSections.find(',', n);
 
 		if (k != std::string::npos) {
 			const std::string& sub = enabledSections.substr(n, k - n);
 
 			if (!sub.empty()) {
-				const size_t sepChr = sub.find(":");
+				const size_t sepChr = sub.find(':');
 
 				const std::string& logSec = (sepChr != std::string::npos)? sub.substr(         0,            sepChr): sub;
 				const std::string& logLvl = (sepChr != std::string::npos)? sub.substr(sepChr + 1, std::string::npos):  "";
@@ -122,81 +122,6 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 	return sectionLevelMap;
 }
 
-/**
- * @brief initialize the log sections
- *
- * This writes a list of all available and all enabled sections to the log.
- *
- * Log sections can be enabled using the configuration key "LogSections",
- * or the environment variable "SPRING_LOG_SECTIONS".
- *
- * Both specify a comma-separated list of sections that should be enabled.
- * The lists from both sources are combined, there is no overriding.
- *
- * A section that is enabled by default, can not be disabled.
- */
-static void InitializeLogSections()
-{
-	// the new systems (ILog.h) log-sub-systems are called sections
-	const auto& registeredSections = log_filter_section_getRegisteredSet();
-
-	// enabled sections is a superset of the ones specified in the
-	// environment and the ones specified in the configuration file.
-	const auto& enabledSections = GetEnabledSections();
-
-	std::stringstream availableLogSectionsStr;
-	std::stringstream enabledLogSectionsStr;
-
-	availableLogSectionsStr << "Available log sections: ";
-	enabledLogSectionsStr << "Enabled log sections: ";
-
-	unsigned int numRegisteredSections = 0;
-	unsigned int numEnabledSections = 0;
-
-	for (auto si = registeredSections.begin(); si != registeredSections.end(); ++si) {
-		numRegisteredSections++;
-
-		availableLogSectionsStr << ((numRegisteredSections > 1)? ", ": "");
-		availableLogSectionsStr << *si;
-
-		// enabled sections (keys) are in lower-case
-		const auto sectionIter = enabledSections.find(StringToLower(*si));
-
-		// skip if section is registered but not enabled
-		if (sectionIter == enabledSections.end())
-			continue;
-
-		// user-specified wanted level for this section
-		const int sectionLevel = sectionIter->second;
-
-		if (sectionLevel >= LOG_LEVEL_NONE)
-			continue;
-
-		// find the nearest lower known log-level (in descending order)
-		const int logLevel = log_util_getNearestLevel(sectionLevel);
-
-		// levels can't go lower than this
-		if (logLevel < 0)
-			continue;
-
-		log_filter_section_setMinLevel(logLevel, *si);
-
-		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
-		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";
-
-		numEnabledSections++;
-	}
-
-	LOG("%s", (availableLogSectionsStr.str()).c_str());
-	LOG("%s", (enabledLogSectionsStr.str()).c_str());
-
-	LOG("Enable or disable log sections using the LogSections configuration key");
-	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
-	LOG("  Use \"none\" to disable the default log sections.");
-}
-
-
-
 
 CLogOutput logOutput;
 
@@ -210,9 +135,6 @@ CLogOutput::CLogOutput()
 	SetFileName("infolog.txt");
 }
 
-CLogOutput::~CLogOutput()
-{
-}
 
 void CLogOutput::SetFileName(std::string fname)
 {
@@ -250,7 +172,7 @@ void CLogOutput::RotateLogFile() const
 
 void CLogOutput::Initialize()
 {
-	assert(configHandler != NULL);
+	assert(configHandler != nullptr);
 
 	if (IsInitialized())
 		return;
@@ -261,13 +183,77 @@ void CLogOutput::Initialize()
 		RotateLogFile();
 
 	log_filter_setRepeatLimit(configHandler->GetInt("LogRepeatLimit")); // all sinks
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
-	InitializeLogSections();
+	log_file_addLogFile(filePath.c_str(), nullptr, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 
 	LOG("LogOutput initialized. Logging to %s", filePath.c_str());
 }
 
 
+/**
+ * @brief initialize the log sections
+ *
+ * This writes a list of all available and all enabled sections to the log.
+ *
+ * Log sections can be enabled using the configuration key "LogSections",
+ * or the environment variable "SPRING_LOG_SECTIONS".
+ *
+ * Both specify a comma-separated list of sections that should be enabled.
+ * The lists from both sources are combined, there is no overriding.
+ *
+ * A section that is enabled by default, can not be disabled.
+ */
+void CLogOutput::LogSectionInfo()
+{
+	// the new systems (ILog.h) log-sub-systems are called sections
+	const char** registeredSections = log_filter_section_getRegisteredSet();
+
+	// enabled sections is a superset of the ones specified in the
+	// environment and the ones specified in the configuration file.
+	const auto& enabledSections = GetEnabledSections();
+
+	std::stringstream availableLogSectionsStr;
+	std::stringstream   enabledLogSectionsStr;
+
+	for (int i = 0, n = log_filter_section_getNumRegisteredSections(); i < n; i++) {
+		const char* regSec = registeredSections[i];
+
+		availableLogSectionsStr << "\n    ";
+		availableLogSectionsStr << "[A] " << regSec;
+
+		// enabled sections (keys) are in lower-case
+		const auto sectionIter = enabledSections.find(StringToLower(regSec));
+
+		// skip if section is registered but not enabled
+		if (sectionIter == enabledSections.end())
+			continue;
+
+		// user-specified wanted level for this section
+		const int sectionLevel = sectionIter->second;
+
+		if (sectionLevel >= LOG_LEVEL_NONE)
+			continue;
+
+		// find the nearest lower known log-level (in descending order)
+		const int logLevel = log_util_getNearestLevel(sectionLevel);
+
+		// levels can't go lower than this
+		if (logLevel < 0)
+			continue;
+
+		log_filter_section_setMinLevel(logLevel, regSec);
+
+		enabledLogSectionsStr << "\n    ";
+		enabledLogSectionsStr << "[E] " << regSec << " (" << log_util_levelToString(logLevel) << ")";
+	}
+
+	LOG("============== <Log Sections ([A]vailable, [E]nabled)> ==============");
+	LOG("  %s%s", (availableLogSectionsStr.str()).c_str(), (enabledLogSectionsStr.str()).c_str());
+	LOG("  ");
+	LOG("  Enable or disable log sections using the LogSections configuration key");
+	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
+	LOG("  Use \"none\" to disable the default log sections.");
+	LOG("============== </Log Sections> ==============\n");
+}
 
 void CLogOutput::LogConfigInfo()
 {
@@ -281,23 +267,23 @@ void CLogOutput::LogConfigInfo()
 		LOG("  %s = %s", it.first.c_str(), it.second.c_str());
 	}
 
-	LOG("============== </User Config> ==============");
+	LOG("============== </User Config> ==============\n");
 
 }
 
 void CLogOutput::LogSystemInfo()
 {
 	LOG("============== <User System> ==============");
-	LOG("  Spring %s", SpringVersion::GetFull().c_str());
-	LOG("    Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("     Compiler Version: %s", SpringVersion::GetCompiler().c_str());
-	LOG("     Operating System: %s", Platform::GetOS().c_str());
-	LOG("     Binary Word Size: %s", Platform::GetWordSizeStr().c_str());
-	LOG("     Deque Chunk Size: %u", Platform::DequeChunkSize());
-	LOG("        Process Clock: %s", spring_clock::GetName());
-	LOG("   Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
-	LOG("    Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
-	LOG("============== </User System> ==============");
+	LOG("  Spring Engine Version: %s", SpringVersion::GetFull().c_str());
+	LOG("      Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("       Compiler Version: %s", SpringVersion::GetCompiler().c_str());
+	LOG("       Operating System: %s", Platform::GetOSDisplayStr().c_str());
+	LOG("        Hardware Config: %s", Platform::GetHardwareStr().c_str());
+	LOG("       Binary Word Size: %s", Platform::GetWordSizeStr().c_str());
+	LOG("          Process Clock: %s", spring_clock::GetName());
+	LOG("     Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG("      Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+	LOG("============== </User System> ==============\n");
 }
 
 void CLogOutput::LogExceptionInfo(const char* src, const char* msg)

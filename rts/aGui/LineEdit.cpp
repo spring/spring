@@ -42,15 +42,14 @@ void LineEdit::DrawSelf()
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
-	DrawBox(GL_TRIANGLE_STRIP);
+	DrawBox();
 
-	glLineWidth(1.49f);
 	if (hasFocus) {
 		gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_LINE_LOOP, 0, 2);
+		DrawOutline();
 	} else {
 		gui->SetColor(0.5f, 0.5f, 0.5f, opacity);
-		DrawBox(GL_LINE_LOOP, 0, 2);
+		DrawOutline();
 	}
 
 	std::string tempText;
@@ -96,6 +95,10 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 			}
 			break;
 		}
+		case SDL_TEXTINPUT: {
+			content.insert(cursorPos, ev.text.text);
+			cursorPos+=strlen(ev.text.text);
+		} break;
 		case SDL_KEYDOWN: {
 			if (!hasFocus) {
 				break;
@@ -141,15 +144,6 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 				case SDLK_RETURN: {
 					DefaultAction.emit();
 					return true;
-				}
-				default:
-				{
-					auto currentUnicode = ev.key.keysym.sym;
-					// only ASCII supported ATM
-					if ((currentUnicode >= 32) && (currentUnicode <= 126)) {
-						char buf[2] = { (const char)currentUnicode, 0 };
-						content.insert(cursorPos++, buf);
-					}
 				}
 			}
 			break;

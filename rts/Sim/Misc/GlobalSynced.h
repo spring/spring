@@ -11,6 +11,12 @@ class CGameSetup;
 class CTeam;
 class CPlayer;
 
+enum {
+	GODMODE_ATC_BIT = 1 << 0, // allied team control
+	GODMODE_ETC_BIT = 1 << 1, // enemy team control
+	GODMODE_MAX_VAL = GODMODE_ATC_BIT | GODMODE_ETC_BIT, // full team control
+};
+
 /**
  * @brief Global synced data
  *
@@ -35,6 +41,15 @@ public:
 	// remains true until first SimFrame call
 	bool PreSimFrame() const { return (frameNum == -1); }
 
+private:
+	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum = 1;
+
 public:
 	/**
 	* @brief frame number
@@ -42,6 +57,14 @@ public:
 	* Stores the current frame number
 	*/
 	int frameNum = -1;
+
+	/**
+	* @brief god mode
+	*
+	* Whether god-mode is enabled, which allows all players (even spectators)
+	* to control all units.
+	*/
+	int godMode = 0;
 
 
 	/**
@@ -73,14 +96,6 @@ public:
 	bool paused = false;
 
 	/**
-	* @brief god mode
-	*
-	* Whether god-mode is enabled, which allows all players (even spectators)
-	* to control all units.
-	*/
-	bool godMode = false;
-
-	/**
 	* @brief cheat enabled
 	*
 	* Whether cheating is enabled
@@ -107,15 +122,6 @@ public:
 	* Whether or not LuaGaia is enabled
 	*/
 	bool useLuaGaia = true;
-
-private:
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum = 1;
 };
 
 

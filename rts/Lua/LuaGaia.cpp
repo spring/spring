@@ -24,26 +24,19 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
 static spring::mutex m_singleton;
 
-DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
+DECL_LOAD_SPLIT_HANDLER(CLuaGaia, luaGaia)
 DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaGaia::CLuaGaia(): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
+CLuaGaia::CLuaGaia(bool onlySynced): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
 	if (!IsValid())
 		return;
 
-	SetFullCtrl(true);
-	SetFullRead(true);
-	SetCtrlTeam(CEventClient::AllAccessTeam);
-	SetReadTeam(CEventClient::AllAccessTeam);
-	SetReadAllyTeam(CEventClient::AllAccessTeam);
-	SetSelectTeam(teamHandler.GaiaTeamID());
-
-	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP_BASE);
+	Init(onlySynced);
 }
 
 CLuaGaia::~CLuaGaia()
@@ -52,8 +45,29 @@ CLuaGaia::~CLuaGaia()
 }
 
 
+std::string CLuaGaia::GetUnsyncedFileName() const
+{
+	return LuaGaiaUnsyncedFilename;
+}
+
+std::string CLuaGaia::GetSyncedFileName() const
+{
+	return LuaGaiaSyncedFilename;
+}
+
+std::string CLuaGaia::GetInitFileModes() const
+{
+	return SPRING_VFS_MAP_BASE;
+}
+
+int CLuaGaia::GetInitSelectTeam() const
+{
+	return teamHandler.GaiaTeamID();
+}
+
+
 bool CLuaGaia::CanLoadHandler()
 {
-	return (gs->useLuaGaia && (vfsHandler->FileExists(LuaGaiaSyncedFilename, CVFSHandler::Map) || vfsHandler->FileExists(LuaGaiaUnsyncedFilename, CVFSHandler::Map)));
+	return (gs->useLuaGaia && (vfsHandler->FileExists(LuaGaiaSyncedFilename, CVFSHandler::Map) == 1 || vfsHandler->FileExists(LuaGaiaUnsyncedFilename, CVFSHandler::Map) == 1));
 }
 

@@ -6,11 +6,10 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Rendering/GlobalRendering.h"
 
-#include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -19,6 +18,7 @@
 #include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
+#include <array>
 #include <cassert>
 
 
@@ -41,13 +41,12 @@ static void FIND_MAP_TEXTURE(std::string* filePath, const std::string& defaultDi
 
 
 
-CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
+CMapInfo::CMapInfo(const std::string& mapFileName, const string& mapHumanName): mapInfoParser(mapFileName)
 {
-	map.name = mapName;
+	map.name = mapHumanName;
 
-	mapInfoParser = new MapParser(mapInfoFile);
-	if (!mapInfoParser->IsValid())
-		throw content_error("[MapInfo] info-parser for map \"" + mapName + "\" (\"" + mapInfoFile + "\") invalid: \"" + mapInfoParser->GetErrorLog() + "\"");
+	if (!mapInfoParser.IsValid())
+		throw content_error("[MapInfo] info-parser for map \"" + map.name + "\" (\"" + mapFileName + "\") invalid: \"" + mapInfoParser.GetErrorLog() + "\"");
 
 	LuaParser resParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	LuaTable resTable;
@@ -70,8 +69,7 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadPFSConstants();
 	ReadSound();
 
-	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
-	// delete mapInfoParser;
+	//FIXME save all mapParser data in an array, so we can destroy the lua context (to save mem)?
 }
 
 CMapInfo::~CMapInfo()
@@ -80,19 +78,12 @@ CMapInfo::~CMapInfo()
 	delete efxprops;
 	efxprops = nullptr;
 #endif
-	delete mapInfoParser;
-	mapInfoParser = nullptr;
 }
 
-std::string CMapInfo::GetStringValue(const std::string& key) const
-{
-	assert(mapInfoParser->GetRoot().IsValid());
-	return mapInfoParser->GetRoot().GetString(key, "");
-}
 
 void CMapInfo::ReadGlobal()
 {
-	const LuaTable& topTable = mapInfoParser->GetRoot();
+	const LuaTable& topTable = mapInfoParser.GetRoot();
 
 	map.description  = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
@@ -122,14 +113,14 @@ void CMapInfo::ReadGlobal()
 void CMapInfo::ReadGui()
 {
 	// GUI
-	gui.autoShowMetal = mapInfoParser->GetRoot().GetBool("autoShowMetal", true);
+	gui.autoShowMetal = mapInfoParser.GetRoot().GetBool("autoShowMetal", true);
 }
 
 
 void CMapInfo::ReadAtmosphere()
 {
 	// MAP\ATMOSPHERE
-	const LuaTable& atmoTable = mapInfoParser->GetRoot().SubTable("atmosphere");
+	const LuaTable& atmoTable = mapInfoParser.GetRoot().SubTable("atmosphere");
 	atmosphere_t& atmo = atmosphere;
 
 	atmo.minWind = atmoTable.GetFloat("minWind", 5.0f);
@@ -158,7 +149,7 @@ void CMapInfo::ReadAtmosphere()
 
 void CMapInfo::ReadSplats()
 {
-	const LuaTable& splatsTable = mapInfoParser->GetRoot().SubTable("splats");
+	const LuaTable& splatsTable = mapInfoParser.GetRoot().SubTable("splats");
 
 	splats.texScales = splatsTable.GetFloat4("texScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
 	splats.texMults  = splatsTable.GetFloat4("texMults",  float4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -166,8 +157,8 @@ void CMapInfo::ReadSplats()
 
 void CMapInfo::ReadGrass()
 {
-	const LuaTable& grassTable = mapInfoParser->GetRoot().SubTable("grass");
-	const LuaTable& mapResTable = mapInfoParser->GetRoot().SubTable("resources");
+	const LuaTable& grassTable = mapInfoParser.GetRoot().SubTable("grass");
+	const LuaTable& mapResTable = mapInfoParser.GetRoot().SubTable("resources");
 
 	grass.bladeWaveScale   = grassTable.GetFloat("bladeWaveScale", 1.0f);
 	grass.bladeWidth       = grassTable.GetFloat("bladeWidth", 0.7f);
@@ -182,7 +173,7 @@ void CMapInfo::ReadGrass()
 
 void CMapInfo::ReadLight()
 {
-	const LuaTable& lightTable = mapInfoParser->GetRoot().SubTable("lighting");
+	const LuaTable& lightTable = mapInfoParser.GetRoot().SubTable("lighting");
 
 	// read the float4 direction first; keep it if the float3 value does not exist
 	light.sunDir =  lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, 1.0f));
@@ -208,7 +199,7 @@ void CMapInfo::ReadLight()
 
 void CMapInfo::ReadWater()
 {
-	const LuaTable& wt = mapInfoParser->GetRoot().SubTable("water");
+	const LuaTable& wt = mapInfoParser.GetRoot().SubTable("water");
 
 	water.fluidDensity = wt.GetFloat("fluidDensity", 960.0f * 0.25f);
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
@@ -325,7 +316,7 @@ static bool ParseSplatDetailNormalTexture(const LuaTable& table, const T key, st
 void CMapInfo::ReadSMF()
 {
 	// SMF specific settings
-	const LuaTable& mapResTable = mapInfoParser->GetRoot().SubTable("resources");
+	const LuaTable& mapResTable = mapInfoParser.GetRoot().SubTable("resources");
 	const LuaTable& sdnTexTable = mapResTable.SubTable("splatDetailNormalTex");
 
 	const std::array<std::pair<std::string*, std::string>, 9> texNames = {{
@@ -371,7 +362,7 @@ void CMapInfo::ReadSMF()
 
 
 	// overrides for compiled parameters
-	const LuaTable& smfTable = mapInfoParser->GetRoot().SubTable("smf");
+	const LuaTable& smfTable = mapInfoParser.GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
 	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
@@ -401,7 +392,7 @@ void CMapInfo::ReadSMF()
 
 void CMapInfo::ReadTerrainTypes()
 {
-	const LuaTable& terrTypeTable = mapInfoParser->GetRoot().SubTable("terrainTypes");
+	const LuaTable& terrTypeTable = mapInfoParser.GetRoot().SubTable("terrainTypes");
 
 	for (int tt = 0; tt < NUM_TERRAIN_TYPES; tt++) {
 		TerrainType& terrType = terrainTypes[tt];
@@ -428,7 +419,7 @@ void CMapInfo::ReadTerrainTypes()
 
 void CMapInfo::ReadPFSConstants()
 {
-	const LuaTable& pfsTable = (mapInfoParser->GetRoot()).SubTable("pfs");
+	const LuaTable& pfsTable = (mapInfoParser.GetRoot()).SubTable("pfs");
 //	const LuaTable& legacyTable = pfsTable.SubTable("legacyConstants");
 	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfsConstants");
 
@@ -448,7 +439,7 @@ void CMapInfo::ReadPFSConstants()
 void CMapInfo::ReadSound()
 {
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	const LuaTable& soundTable = mapInfoParser->GetRoot().SubTable("sound");
+	const LuaTable& soundTable = mapInfoParser.GetRoot().SubTable("sound");
 
 	efxprops = new EAXSfxProps();
 
@@ -459,14 +450,14 @@ void CMapInfo::ReadSound()
 
 	const LuaTable& filterTable = soundTable.SubTable("passfilter");
 
-	for (auto it = nameToALFilterParam.cbegin(); it != nameToALFilterParam.cend(); ++it) {
-		const std::string& name = it->first;
+	for (const auto& item: nameToALFilterParam) {
+		const std::string& name = item.first;
 		const int luaType = filterTable.GetType(name);
 
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint param = it->second;
+		const ALuint param = item.second;
 		const unsigned type = alParamType[param];
 
 		switch (type) {
@@ -479,14 +470,14 @@ void CMapInfo::ReadSound()
 
 	soundTable.SubTable("reverb");
 
-	for (auto it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
-		const std::string& name = it->first;
+	for (const auto& item: nameToALFilterParam) {
+		const std::string& name = item.first;
 		const int luaType = filterTable.GetType(name);
 
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint param = it->second;
+		const ALuint param = item.second;
 		const unsigned type = alParamType[param];
 
 		switch (type) {

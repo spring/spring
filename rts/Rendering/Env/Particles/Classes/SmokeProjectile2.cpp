@@ -32,7 +32,6 @@ CR_REG_METADATA(CSmokeProjectile2,
 
 
 CSmokeProjectile2::CSmokeProjectile2():
-	CProjectile(),
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -87,7 +86,7 @@ void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile2::Update()
 {
 	wantedPos += speed;
-	wantedPos += wind.GetCurrentWind() * age * 0.05f;
+	wantedPos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
 
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;
@@ -108,13 +107,16 @@ void CSmokeProjectile2::Draw(GL::RenderDataBufferTC* va) const
 	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
+
 	if (interAge < 0.05f) {
-		alpha = (unsigned char) (interAge * 19 * 127);
+		alpha = (unsigned char) (     interAge  * 19 * 127);
 	} else {
-		alpha = (unsigned char) ((1 - interAge) * 127);
+		alpha = (unsigned char) ((1 - interAge)      * 127);
 	}
+
 	const float rglow = std::max(0.f, (1 - (interAge * glowFalloff))        * 127);
 	const float gglow = std::max(0.f, (1 - (interAge * glowFalloff * 2.5f)) * 127);
+
 	col[0] = (unsigned char) (color * alpha + rglow);
 	col[1] = (unsigned char) (color * alpha + gglow);
 	col[2] = (unsigned char) std::max(0.f, color * alpha - gglow * 0.5f);
@@ -129,7 +131,10 @@ void CSmokeProjectile2::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({interPos - pos2, st->xstart, st->ystart, col});
 	va->SafeAppend({interPos + pos1, st->xend,   st->ystart, col});
 	va->SafeAppend({interPos + pos2, st->xend,   st->yend,   col});
+
+	va->SafeAppend({interPos + pos2, st->xend,   st->yend,   col});
 	va->SafeAppend({interPos - pos1, st->xstart, st->yend,   col});
+	va->SafeAppend({interPos - pos2, st->xstart, st->ystart, col});
 	#undef st
 }
 

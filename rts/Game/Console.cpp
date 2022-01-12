@@ -18,11 +18,15 @@ void CommandReceiver::SortRegisteredActions() { gameCommandConsole.SortCommandMa
 
 void CommandConsole::SortCommandMap()
 {
-	const auto pred = [](const CmdPair& a, const CmdPair& b) { return (a.first < b.first); };
-	std::sort(commandMap.begin(), commandMap.end(), pred);
-	const auto iter = std::unique(commandMap.begin(), commandMap.end());
+	const auto cmpPred = [](const CmdPair& a, const CmdPair& b) { return (a.first <  b.first); };
+	const auto dupPred = [](const CmdPair& a, const CmdPair& b) { return (a.first == b.first); };
 
-	commandMap.erase(iter, commandMap.end());
+	std::sort(commandMap.begin(), commandMap.end(), cmpPred);
+
+	const auto end = commandMap.end();
+	const auto iter = std::unique(commandMap.begin(), end, dupPred);
+
+	commandMap.erase(iter, end);
 }
 
 bool CommandConsole::ExecuteAction(const Action& action)

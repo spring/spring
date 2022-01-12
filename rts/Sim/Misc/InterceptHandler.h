@@ -14,7 +14,7 @@ class float3;
 
 class CInterceptHandler : public CObject, spring::noncopyable
 {
-	CR_DECLARE(CInterceptHandler)
+	CR_DECLARE_DERIVED(CInterceptHandler)
 
 public:
 	void Update(bool forced);
@@ -24,7 +24,7 @@ public:
 
 	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 
 private:
 	std::deque<CWeapon*> interceptors;

@@ -6,7 +6,6 @@
 #include "Game/Camera.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -24,7 +23,7 @@ CR_REG_METADATA(CNanoProjectile,
 ))
 
 
-CNanoProjectile::CNanoProjectile(): CProjectile()
+CNanoProjectile::CNanoProjectile()
 {
 	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -34,7 +33,7 @@ CNanoProjectile::CNanoProjectile(): CProjectile()
 }
 
 CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
-	: CProjectile(pos, speed, NULL, false, false, false)
+	: CProjectile(pos, speed, nullptr, false, false, false)
 	, deathFrame(gs->frameNum + lifeTime)
 	, color(c)
 {
@@ -60,15 +59,20 @@ void CNanoProjectile::Update()
 void CNanoProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	const auto* gfxt = projectileDrawer->gfxtex;
+
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
 }
 
-void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CNanoProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::green);
+	va->SafeAppend({pos        , color});
+	va->SafeAppend({pos + speed, color});
 }
 
 

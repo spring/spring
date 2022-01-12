@@ -9,27 +9,27 @@ class CFreeController : public CCameraController {
 public:
 	CFreeController();
 
-	const std::string GetName() const { return "free"; }
+	const std::string GetName() const override { return "free"; }
 
 	void Move(const float3& move, bool tilt, bool strafe, bool upDown);
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override;
+	void MouseMove(float3 move) override;
+	void ScreenEdgeMove(float3 move) override;
+	void MouseWheelMove(float move) override;
 
-	bool DisableTrackingByKey() { return false; }
+	bool DisableTrackingByKey() override { return false; }
 
-	void Update();
-	float3 GetDir() const;
-	
-	void SetPos(const float3& newPos);
-	void SetTrackingInfo(const float3& pos, float radius);
-	float3 SwitchFrom() const;
-	void SwitchTo(const int oldCam, const bool showText);
+	void Update() override;
+	float3 GetDir() const override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
+	void SetPos(const float3& newPos) override;
+	void SetTrackingInfo(const float3& pos, float radius) override;
+	float3 SwitchFrom() const override;
+	void SwitchTo(const int oldCam, const bool showText) override;
+
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
 private:
 	float3 vel;      // velocity

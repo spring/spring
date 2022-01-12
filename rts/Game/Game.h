@@ -3,6 +3,7 @@
 #ifndef _GAME_H
 #define _GAME_H
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -27,7 +28,7 @@ private:
 	CR_DECLARE_STRUCT(CGame)
 
 public:
-	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	CGame(const std::string& mapFileName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
 	void KillLua(bool dtor);
 
@@ -39,7 +40,7 @@ public:
 	};
 
 public:
-	void LoadGame(const std::string& mapName);
+	void Load(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
@@ -54,7 +55,7 @@ private:
 	void PreLoadRendering();
 	void PostLoadRendering();
 	void LoadInterface();
-	void LoadLua();
+	void LoadLua(bool onlySynced, bool onlyUnsynced);
 	void LoadSkirmishAIs();
 	void LoadFinalize();
 	void PostLoad();
@@ -65,9 +66,11 @@ private:
 	void KillSimulation();
 
 public:
-	volatile bool IsFinishedLoading() const { return finishedLoading; }
+	bool IsDoneLoading() const { return loadDone; }
+	bool IsClientPaused() const { return paused; }
+	bool IsSimLagging(float maxLatency = 500.0f) const;
+	bool IsSavedGame() const { return (saveFileHandler != nullptr); }
 	bool IsGameOver() const { return gameOver; }
-	bool IsLagging(float maxLatency = 500.0f) const;
 
 	const spring::unordered_map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
@@ -88,8 +91,8 @@ public:
 
 	void ParseInputTextGeometry(const std::string& geo);
 
-	void ReloadGame();
-	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
+	void Reload();
+	void Save(std::string&& fileName, std::string&& saveArgs);
 
 	void ResizeEvent() override;
 
@@ -210,10 +213,10 @@ private:
 	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
 	/// for reloading the savefile
-	ILoadSaveHandler* saveFile;
+	ILoadSaveHandler* saveFileHandler;
 
-	volatile bool finishedLoading = false;
-	bool gameOver = false;
+	std::atomic<bool> loadDone = {false};
+	std::atomic<bool> gameOver = {false};
 };
 
 

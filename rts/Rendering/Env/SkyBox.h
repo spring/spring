@@ -33,16 +33,17 @@ private:
 	void LoadBuffer();
 
 private:
-	MapTexture skyTex;
-	GL::RenderDataBuffer skyBox;
-
-
 	struct SkyBoxVertType {
 		float2 xy;
 		float3 tc;
 	};
 
 	typedef Shader::ShaderInput SkyBoxAttrType;
+	typedef GL::TRenderDataBuffer<SkyBoxVertType> SkyBoxBuffer;
+
+
+	MapTexture skyTex;
+	SkyBoxBuffer skyBox;
 
 
 	SkyBoxVertType* vtxPtr = nullptr;

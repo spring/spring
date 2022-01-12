@@ -59,6 +59,10 @@ public:
 	void PushMode();
 	void PopMode();
 
+	void SetTransitionParams(float factor, float expon) {
+		camTransState.timeFactor   = factor;
+		camTransState.timeExponent =  expon;
+  }
 	void CameraTransition(float nsecs);
 	void UpdateTransition();
 
@@ -72,6 +76,9 @@ public:
 
 	int GetModeIndex(const std::string& modeName) const;
 	unsigned int GetCurrentControllerNum() const { return currCamCtrlNum; }
+
+	float GetTransitionTimeFactor() const { return camTransState.timeFactor; }
+	float GetTransitionTimeExponent() const { return camTransState.timeExponent; }
 
 
 	/**
@@ -110,6 +117,7 @@ private:
 
 		float timeStart = 0.0f;
 		float timeEnd = 0.0f;
+		// configurable parameters
 		float timeFactor = 0.0f;
 		float timeExponent = 0.0f;
 	};

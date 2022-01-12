@@ -54,7 +54,7 @@ public:
 		int id;
 	};
 
-	int GetRawLines(std::deque<RawLine>& copy);
+	size_t GetRawLines(std::vector<RawLine>& copy);
 
 private:
 	static constexpr size_t maxMsgCount = 10;
@@ -67,8 +67,10 @@ private:
 
 	std::array<float3, maxMsgCount> lastMsgPositions;
 
-	std::deque<RawLine> rawData;
-	std::deque<InfoLine> data;
+	std::vector<RawLine> tmpLines;
+	std::vector<InfoLine> tmpInfoLines;
+	std::deque<RawLine> rawLines;
+	std::deque<InfoLine> infoLines;
 
 	std::string prvSection;
 	std::string prvMessage;

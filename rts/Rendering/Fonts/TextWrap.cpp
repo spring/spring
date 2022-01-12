@@ -4,7 +4,7 @@
 #include "glFont.h"
 #include "FontLogSection.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 
 
@@ -318,7 +318,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 	std::list<word>::iterator wi = words.begin();
 
 	std::list<line> lines;
-	lines.push_back(line());
+	lines.emplace_back();
 	currLine = &(lines.back());
 	currLine->start = words.begin();
 
@@ -329,7 +329,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 			currLine->end = wi;
 
 			// start a new line after the '\n'
-			lines.push_back(line());
+			lines.emplace_back();
 			currLineValid = false;
 			currLine = &(lines.back());
 			currLine->start = wi;
@@ -377,7 +377,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 				while (wi != words.end() && wi->isSpace)
 					wi = words.erase(wi);
 
-				lines.push_back(line());
+				lines.emplace_back();
 				currLineValid = false;
 				currLine = &(lines.back());
 				currLine->start = wi;

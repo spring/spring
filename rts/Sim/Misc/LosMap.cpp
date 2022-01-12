@@ -6,7 +6,7 @@
 #include "LosMap.h"
 #include "LosHandler.h"
 #include "Map/ReadMap.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"

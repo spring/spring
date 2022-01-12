@@ -66,7 +66,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Move";
 		c.tooltip   = c.name + ": Order ready built units to move to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canPatrol) {
@@ -79,7 +79,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order ready built units to patrol to one or more waypoints";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canFight) {
@@ -92,7 +92,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order ready built units to take action while moving to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canGuard) {
@@ -105,7 +105,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order ready built units to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	CFactory* fac = static_cast<CFactory*>(owner);
@@ -134,7 +134,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
 			buildOptions[c.id] = 0;
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 	}
 }
@@ -146,8 +146,6 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	const int cmdID = c.GetID();
 
 	// move is always allowed for factories (passed to units it produces)
-	if (cmdID == CMD_SET_WANTED_MAX_SPEED)
-		return;
 	if ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))
 		return;
 
@@ -169,12 +167,12 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			return;
 		}
 
-		if (!(c.options & SHIFT_KEY) && (cmdID == CMD_WAIT || cmdID == CMD_SELFD)) {
+		if (!(c.GetOpts() & SHIFT_KEY) && (cmdID == CMD_WAIT || cmdID == CMD_SELFD)) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
 
-		if (!(c.options & SHIFT_KEY)) {
+		if (!(c.GetOpts() & SHIFT_KEY)) {
  			waitCommandsAI.ClearUnitQueue(owner, newUnitCommands);
 			CCommandAI::ClearCommandDependencies();
 			newUnitCommands.clear();
@@ -227,15 +225,15 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	int& numQueued = boi->second;
 	int numItems = 1;
 
-	if (c.options & SHIFT_KEY)   { numItems *= 5; }
-	if (c.options & CONTROL_KEY) { numItems *= 20; }
+	if (c.GetOpts() & SHIFT_KEY)   { numItems *= 5; }
+	if (c.GetOpts() & CONTROL_KEY) { numItems *= 20; }
 
-	if (c.options & RIGHT_MOUSE_KEY) {
+	if (c.GetOpts() & RIGHT_MOUSE_KEY) {
 		numQueued -= numItems;
 		numQueued  = std::max(numQueued, 0);
 
 		int numToErase = numItems;
-		if (c.options & ALT_KEY) {
+		if (c.GetOpts() & ALT_KEY) {
 			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
 				if (commandQue[cmdNum].GetID() == cmdID) {
 					commandQue[cmdNum] = Command(CMD_STOP);
@@ -253,24 +251,24 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		UpdateIconName(cmdID, numQueued);
 		SlowUpdate();
 	} else {
-		if (c.options & ALT_KEY) {
+		if (c.GetOpts() & ALT_KEY) {
 			for (int a = 0; a < numItems; ++a) {
 				if (repeatOrders) {
 					Command nc(c);
-					nc.options |= INTERNAL_ORDER;
+					nc.SetOpts(nc.GetOpts() | INTERNAL_ORDER);
 					if (commandQue.empty()) {
 						commandQue.push_front(nc);
 					} else {
-						commandQue.insert(commandQue.begin()+1, nc);
+						commandQue.insert(commandQue.begin() + 1, nc);
 					}
 				} else {
 					commandQue.push_front(c);
 				}
 			}
-			if (!repeatOrders) {
-				CFactory* fac = static_cast<CFactory*>(owner);
-				fac->StopBuild();
-			}
+
+			if (!repeatOrders)
+				static_cast<CFactory*>(owner)->StopBuild();
+
 		} else {
 			for (int a = 0; a < numItems; ++a) {
 				commandQue.push_back(c);
@@ -329,7 +327,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, int& numQueued
 	// NOTE: the queue should not be empty at this point!
 	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (!repeatOrders || (buildCommand.options & INTERNAL_ORDER))
+	if (!repeatOrders || buildCommand.IsInternalOrder())
 		numQueued--;
 
 	UpdateIconName(buildCommand.GetID(), numQueued);
@@ -390,8 +388,7 @@ void CFactoryCAI::SlowUpdate()
 				} break;
 				default: {
 					CCommandAI::SlowUpdate();
-					break;
-				}
+				} break;
 			}
 		}
 
@@ -413,35 +410,36 @@ void CFactoryCAI::ExecuteStop(Command& c)
 
 int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
-	if (pointed) {
-		if (teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (owner->unitDef->canGuard) {
-				return CMD_GUARD;
-			}
-		}
-	}
-	return CMD_MOVE;
+	if (pointed == nullptr)
+		return CMD_MOVE;
+
+	if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam))
+		return CMD_MOVE;
+
+	if (!owner->unitDef->canGuard)
+		return CMD_MOVE;
+
+	return CMD_GUARD;
 }
 
 
 void CFactoryCAI::UpdateIconName(int cmdID, const int& numQueued)
 {
-	for (auto pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
-		const SCommandDescription* cd = *pci;
+	for (const SCommandDescription*& cd: possibleCommands) {
 		if (cd->id != cmdID)
 			continue;
 
 		char t[32];
 		SNPRINTF(t, 10, "%d", numQueued);
 
-		SCommandDescription c = *cd;
-		c.params.clear();
+		SCommandDescription ucd = *cd;
+		ucd.params.clear();
 
 		if (numQueued > 0)
-			c.params.push_back(t);
+			ucd.params.push_back(t);
 
-		commandDescriptionCache->DecRef(*cd);
-		*pci = commandDescriptionCache->GetPtr(c);
+		commandDescriptionCache.DecRef(*cd);
+		cd = commandDescriptionCache.GetPtr(std::move(ucd));
 		break;
 	}
 

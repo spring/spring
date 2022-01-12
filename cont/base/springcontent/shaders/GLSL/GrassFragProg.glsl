@@ -8,16 +8,19 @@ uniform sampler2D bladeTex;
 uniform sampler2DShadow shadowMap;
 uniform float groundShadowDensity;
 #endif
+uniform float specularExponent;
+uniform float gammaExponent;
 uniform float infoTexIntensityMul;
 
 #ifdef HAVE_INFOTEX
 uniform sampler2D infoMap;
 #endif
 
-uniform samplerCube specularTex;
-uniform vec3 specularLightColor;
-uniform vec3 ambientLightColor;
+uniform vec3 diffuseLightColor; // model (unused)
+uniform vec3 specularLightColor; // model
+uniform vec3 ambientLightColor; // model
 uniform vec3 camDir;
+uniform vec3 sunDir;
 uniform vec4 fogColor;
 
 
@@ -47,12 +50,12 @@ void main() {
 	matColor.rgb *= texture(grassShadingTex, shadingTexCoords.pq).rgb;
 	matColor.rgb *= texture(shadingTex, shadingTexCoords.st).rgb * 2.0;
 
-
+	// TODO: make camDir point at a vertex
 	vec3 reflectDir = reflect(camDir, normalize(wsNormal));
-	vec3 specular   = texture(specularTex, reflectDir).rgb;
+	vec3 specular   = specularLightColor * pow(max(0.001, dot(wsNormal, normalize(sunDir + camDir * -1.0))), specularExponent);
 
 	// TODO: make specular distr. customizable?
-	fragColor.rgb = matColor.rgb * ambientDiffuseLightTerm + 0.1 * specular * specularLightColor;
+	fragColor.rgb = matColor.rgb * ambientDiffuseLightTerm + 0.1 * specular;
 	fragColor.a   = matColor.a;
 
 #ifdef HAVE_SHADOWS
@@ -67,5 +70,6 @@ void main() {
 #endif
 
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 }
 

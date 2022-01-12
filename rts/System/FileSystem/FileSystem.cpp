@@ -12,9 +12,10 @@
 
 #include "System/SpringRegex.h"
 
-#include <unistd.h>
 #ifdef _WIN32
 #include <io.h>
+#else
+#include <unistd.h>
 #endif
 
 ////////////////////////////////////////
@@ -196,7 +197,7 @@ std::string FileSystem::GetExtension(const std::string& path)
 {
 	const std::string fileName = GetFilename(path);
 	size_t l = fileName.length();
-//#ifdef WIN32
+//#ifdef _WIN32
 	//! windows eats dots and spaces at the end of filenames
 	while (l > 0) {
 		const char prevChar = fileName[l-1];
@@ -246,22 +247,16 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 std::string& FileSystem::FixSlashes(std::string& path)
 {
 	const char sep = GetNativePathSeparator();
-	for (size_t i = 0; i < path.size(); ++i) {
-		if (path[i] == '/' || path[i] == '\\') {
-			path[i] = sep;
-		}
-	}
+	const auto P = [](const char c) { return (c == '/' || c == '\\'); };
+
+	std::replace_if(std::begin(path), std::end(path), P, sep);
 
 	return path;
 }
 
 std::string& FileSystem::ForwardSlashes(std::string& path)
 {
-	for (size_t i = 0; i < path.size(); ++i) {
-		if (path[i] == '\\') {
-			path[i] = '/';
-		}
-	}
+	std::replace(std::begin(path), std::end(path), '\\', '/');
 
 	return path;
 }

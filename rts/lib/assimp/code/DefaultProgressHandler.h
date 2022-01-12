@@ -55,7 +55,7 @@ class DefaultProgressHandler
     : public ProgressHandler    {
 
 
-    virtual bool Update(float /*percentage*/) {
+    virtual bool Update(float /*percentage*/) override {
         return false;
     }
 

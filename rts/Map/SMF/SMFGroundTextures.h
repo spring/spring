@@ -15,16 +15,22 @@ class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
 	CSMFGroundTextures(CSMFReadMap* rm);
-	~CSMFGroundTextures() { pbo.Release(); }
+	~CSMFGroundTextures();
 
-	void DrawUpdate();
-	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID);
-	bool GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel);
-	void BindSquareTexture(int texSquareX, int texSquareY);
+	void DrawUpdate() override;
+	void DrawUpdateSquare(int texSquareX, int texSquareY) override;
+
+	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID) override;
+	bool GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel) override;
+
+	void BindSquareTextureArray() const override;
+	void UnBindSquareTextureArray() const override;
+
+	unsigned int GetSquareMipLevel(unsigned int i) const override { return squares[i].GetMipLevel(); }
 
 protected:
 	void LoadTiles(CSMFMapFile& file);
-	void LoadSquareTextures(const int mipLevel);
+	void LoadSquareTextures(const int minLevel, const int maxLevel);
 	void ConvolveHeightMap(const int mapWidth, const int mipLevel);
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
@@ -75,7 +81,8 @@ private:
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
-	int tileTexFormat;
+	unsigned int tileArrayTex = 0;
+	unsigned int tileTexFormat = 0;
 };
 
 #endif // _BF_GROUND_TEXTURES_H_

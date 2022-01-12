@@ -19,6 +19,7 @@ class CTeamHandler
 
 public:
 	void LoadFromSetup(const CGameSetup* setup);
+	void SetDefaultStartPositions(const CGameSetup* setup);
 	void ResetState() {
 		teams.clear();
 		allyTeams.clear();

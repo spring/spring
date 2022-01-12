@@ -15,7 +15,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Net/GameServer.h"
 #include "Game/GameSetup.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <vector>
 
@@ -38,18 +38,14 @@ bool CAICheats::OnlyPassiveCheats()
 	// and the only client) if used by an AI
 	if (gameServer == nullptr)
 		return true;
-	// assumes AI's dont count toward numPlayers
-	if ((CGameSetup::GetPlayerStartingData()).size() == 1)
-		return false;
-
-	// disable it in case we are not sure
-	return true;
+	// assumes AI's dont count toward numPlayers and disable it in case we are not sure
+	return ((CGameSetup::GetPlayerStartingData()).size() != 1);
 }
 
 void CAICheats::EnableCheatEvents(bool enable)
 {
 	// enable sending of EnemyCreated, etc. events
-	ai->SetCheatEventsEnabled(enable);
+	ai->SetCheatEvents(enable);
 }
 
 
@@ -125,7 +121,7 @@ float3 CAICheats::GetUnitVelocity(int unitId) const
 }
 
 
-static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = nullptr)
 {
 	int a = 0;
 

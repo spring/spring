@@ -134,7 +134,7 @@ void CBasicMeshDrawer::Update(const DrawPass::e& drawPass) {
 
 	patchVisTestDrawer.ResetState(activeCam, meshPatch, numPatchesX);
 
-	activeCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	activeCam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(activeCam, &patchVisTestDrawer, 1e9, PATCH_SIZE);
 
 	drawPassLOD = CalcDrawPassLOD(activeCam, drawPass);
@@ -576,8 +576,8 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 		float mapRayDist = 0.0f;
 
-		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
-			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, readMap->GetCurrMinHeight());
+		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
+			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), readMap->GetCurrMinHeight());
 		if (mapRayDist < 0.0f)
 			return lodIndx;
 
@@ -689,7 +689,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 
 	{
 		// invert culling; index-pattern for T and R borders is also inverted
-		glFrontFace(GL_CW);
+		glAttribStatePtr->FrontFace(GL_CW);
 
 		if (drawPass != DrawPass::Shadow) {
 			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare( px  ,  0); DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], activeCam, MAP_BORDER_T); }
@@ -700,7 +700,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 		}
 	}
 	{
-		glFrontFace(GL_CCW);
+		glAttribStatePtr->FrontFace(GL_CCW);
 
 		if (drawPass != DrawPass::Shadow) {
 			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare(px, npym1); DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], activeCam, MAP_BORDER_B); }

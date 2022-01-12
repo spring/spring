@@ -140,16 +140,16 @@ namespace QTPFS {
 			const float3& sourcePoint,
 			const float3& targetPoint,
 			const SRectangle& searchArea
-		);
+		) override;
 		bool Execute(
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
-		);
-		void Finalize(IPath* path);
-		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
-		PathSearchTrace::Execution* GetExecutionTrace() { return searchExec; }
+		) override;
+		void Finalize(IPath* path) override;
+		bool SharedFinalize(const IPath* srcPath, IPath* dstPath) override;
+		PathSearchTrace::Execution* GetExecutionTrace() override { return searchExec; }
 
-		const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const;
+		const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const override;
 
 		static void InitGlobalQueue(unsigned int n) { openNodes.reserve(n); }
 		static void FreeGlobalQueue() { openNodes.clear(); }
@@ -185,7 +185,7 @@ namespace QTPFS {
 		float3 srcPoint;
 		float3 tgtPoint;
 
-		float3 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+		float2 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
 
 		float gDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
 		float hDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];

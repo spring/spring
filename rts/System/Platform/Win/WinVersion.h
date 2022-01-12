@@ -5,7 +5,9 @@
 
 #include <string>
 
-std::string GetOSDisplayString();
-std::string GetHardwareInfoString();
+namespace windows {
+	std::string GetDisplayString(bool getName, bool getVersion, bool getExtra);
+	std::string GetHardwareString();
+};
 
 #endif

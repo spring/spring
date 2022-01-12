@@ -4,8 +4,6 @@
 
 #include <cstdlib>
 #include <cmath>
-#include <al.h>
-#include <alc.h>
 #include <alext.h>
 
 #ifdef ALC_SOFT_loopback
@@ -37,7 +35,8 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
@@ -50,21 +49,6 @@ spring::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: curDevice(nullptr)
-	, curContext(nullptr)
-	, sdlDeviceID(0)
-
-	, masterVolume(0.0f)
-
-	, pitchAdjustMode(0)
-	, frameSize(-1)
-
-	, listenerNeedsUpdate(false)
-	, mute(false)
-	, appIsIconified(false)
-
-	, soundThreadQuit(false)
-	, canLoadDefs(false)
 {
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
@@ -89,10 +73,10 @@ void CSound::Init()
 		pitchAdjustMode = configHandler->GetInt("PitchAdjust");
 		frameSize = -1;
 
-		listenerNeedsUpdate = false;
 		mute = false;
 		appIsIconified = false;
 
+		updateListener = false;
 		soundThreadQuit = false;
 		canLoadDefs = false;
 	}
@@ -110,6 +94,9 @@ void CSound::Init()
 
 		soundMap.clear();
 		soundMap.reserve(256);
+		preloadSet.clear();
+		preloadSet.reserve(16);
+		failureSet.clear();
 
 		defaultItemNameMap.clear();
 		soundItemDefsMap.clear();
@@ -167,38 +154,66 @@ void CSound::Cleanup() {
 
 bool CSound::HasSoundItem(const std::string& name) const
 {
+	// soundMap can be concurrently touched by GetSoundId if preloading
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+
 	if (soundMap.find(name) != soundMap.end())
 		return true;
 
 	return (soundItemDefsMap.find(StringToLower(name)) != soundItemDefsMap.end());
 }
 
+bool CSound::PreloadSoundItem(const std::string& name)
+{
+	#if 0
+	ThreadPool::Enqueue([name]() { sound->GetSoundId(name); });
+	#else
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+	return ((preloadSet.insert(name)).second);
+	#endif
+}
+
+
+size_t CSound::GetDefSoundId(const std::string& name)
+{
+	// only attempt to load if sounds.lua has an entry for this sound
+	if (!HasSoundItem(name))
+		return 0;
+
+	return (GetSoundId(name));
+}
+
 size_t CSound::GetSoundId(const std::string& name)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
+	// do not preload-loop forever, erase even if the sound fails to load
+	// note: this breaks the name reference, has to be done when returning
+	// regular GetSoundId calls will pre-empt any preload items
 	if (soundSources.empty())
-		return 0;
+		return (preloadSet.erase(name), 0);
 
-	const auto it = soundMap.find(name);
-	if (it != soundMap.end())
-		return it->second;
+	const auto soundMapIt = soundMap.find(name);
+	if (soundMapIt != soundMap.end())
+		return (preloadSet.erase(name), soundMapIt->second);
 
 	const auto itemDefIt = soundItemDefsMap.find(StringToLower(name));
 
 	if (itemDefIt != soundItemDefsMap.end())
-		return MakeItemFromDef(itemDefIt->second);
+		return (preloadSet.erase(name), MakeItemFromDef(itemDefIt->second));
 
+	// name does not match any sounds.lua item, interpret as raw file reference
 	if (LoadSoundBuffer(name) > 0) {
-		// maybe raw filename?
-		SoundItemNameMap temp = defaultItemNameMap;
-		temp["file"] = name;
-		return MakeItemFromDef(temp);
+		SoundItemNameMap itemMap = defaultItemNameMap;
+		itemMap.erase("file");
+		itemMap.insert("file", name);
+		return (preloadSet.erase(name), MakeItemFromDef(itemMap));
 	}
 
 	LOG_L(L_ERROR, "[Sound::%s] could not find sound \"%s\"", __func__, name.c_str());
-	return 0;
+	return (preloadSet.erase(name), 0);
 }
+
 
 SoundItem* CSound::GetSoundItem(size_t id) {
 	// id==0 is a special id and invalid
@@ -219,10 +234,11 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		return nullptr;
 
 	// find a free source; pointer remains valid until thread exits
-	for (CSoundSource& src: soundSources) {
-		if (!src.IsPlaying(false))
-			return &src;
-	}
+	const auto pred = [](const CSoundSource& src) { return (!src.IsPlaying(false)); };
+	const auto iter = std::find_if(soundSources.begin(), soundSources.end(), pred);
+
+	if (iter != soundSources.end())
+		return &(*iter);
 
 	// check the next best free source
 	CSoundSource* bestSrc = nullptr;
@@ -233,10 +249,11 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		if (!src.IsPlaying(true))
 			return &src;
 		#endif
-		if (src.GetCurrentPriority() <= bestPriority) {
-			bestSrc = &src;
-			bestPriority = src.GetCurrentPriority();
-		}
+		if (src.GetCurrentPriority() > bestPriority)
+			continue;
+
+		bestSrc = &src;
+		bestPriority = src.GetCurrentPriority();
 	}
 
 	return bestSrc;
@@ -247,9 +264,9 @@ void CSound::PitchAdjust(const float newPitch)
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	switch (pitchAdjustMode) {
-		case 1: { CSoundSource::SetPitch(std::sqrt(newPitch)); } break;
-		case 2: { CSoundSource::SetPitch(          newPitch ); } break;
-		default: {} break;
+		case  1: { CSoundSource::SetPitch(std::sqrt(newPitch)); } break;
+		case  2: { CSoundSource::SetPitch(          newPitch ); } break;
+		default: {                                              } break;
 	}
 }
 
@@ -257,64 +274,62 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (key == "snd_volmaster") {
-		masterVolume = std::atoi(value.c_str()) * 0.01f;
+	switch (hashString(key.c_str())) {
+		case hashString("snd_volmaster"): {
+			masterVolume = std::atoi(value.c_str()) * 0.01f;
 
-		if (!mute && !appIsIconified)
-			alListenerf(AL_GAIN, masterVolume);
+			if (!mute && !appIsIconified)
+				alListenerf(AL_GAIN, masterVolume);
 
-		return;
-	}
-	if (key == "snd_eaxpreset") {
-		efx.SetPreset(value);
-		return;
-	}
-	if (key == "snd_filter") {
-		float gainlf = 1.0f;
-		float gainhf = 1.0f;
-		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
-		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
-		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
-		efx.CommitEffects();
-		return;
-	}
-	if (key == "UseEFX") {
-		if (std::atoi(value.c_str()) != 0) {
-			efx.Enable();
-		} else {
-			efx.Disable();
-		}
-		return;
-	}
-	if (key == "snd_volgeneral") {
-		Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volunitreply") {
-		Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volbattle") {
-		Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volui") {
-		Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volmusic") {
-		Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "PitchAdjust") {
-		const int tempPitchAdjustMode = std::atoi(value.c_str());
+		} break;
+		case hashString("snd_eaxpreset"): {
+			efx.SetPreset(value);
+		} break;
+		case hashString("snd_filter"): {
+			float gainlf = 1.0f;
+			float gainhf = 1.0f;
+			sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
+			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN  ] = gainlf;
+			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
+			efx.CommitEffects();
+		} break;
 
-		// reset adjustment factor if disabling
-		if (tempPitchAdjustMode == 0)
-			PitchAdjust(1.0f);
+		case hashString("UseEFX"): {
+			if (std::atoi(value.c_str()) != 0) {
+				efx.Enable();
+			} else {
+				efx.Disable();
+			}
+		} break;
 
-		pitchAdjustMode = tempPitchAdjustMode;
-		return;
+		case hashString("snd_volgeneral"): {
+			Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volunitreply"): {
+			Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volbattle"): {
+			Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volui"): {
+			Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volmusic"): {
+			Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+
+		case hashString("PitchAdjust"): {
+			const int tempPitchAdjustMode = std::atoi(value.c_str());
+
+			// reset adjustment factor if disabling
+			if (tempPitchAdjustMode == 0)
+				PitchAdjust(1.0f);
+
+			pitchAdjustMode = tempPitchAdjustMode;
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
@@ -435,6 +450,9 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	LOAD_PROC(alcRenderSamplesSOFT);
 #undef LOAD_PROC
 
+	if (!configHandler->GetBool("UseSDLAudio"))
+		return;
+
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
 		LOG("[Sound::%s] failed to initialize SDL audio, error:  \"%s\"", __func__, SDL_GetError());
 		return;
@@ -512,6 +530,8 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	attrs[6] = 0; // end of list
 
 
+	LOG("[Sound::%s] opening loopback device", __func__);
+
 	// initialize OpenAL loopback device, using our format attributes
 	if ((curDevice = alcLoopbackOpenDeviceSOFT(nullptr)) == nullptr) {
 		LOG("[Sound::%s] failed to create loopback device", __func__);
@@ -544,7 +564,6 @@ void CSound::InitThread(int cfgMaxSounds)
 
 	{
 		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-		assert(curDevice == nullptr && curContext == nullptr);
 		// if empty, open default device
 		std::string configDeviceName;
 
@@ -553,6 +572,9 @@ void CSound::InitThread(int cfgMaxSounds)
 		// call IsSet; we do not want to create a default for snd_device
 		if (configHandler->IsSet("snd_device"))
 			configDeviceName = configHandler->GetString("snd_device");
+
+		assert(curDevice == nullptr);
+		assert(curContext == nullptr);
 
 		OpenLoopbackDevice(configDeviceName);
 
@@ -646,6 +668,7 @@ void CSound::UpdateThread(int cfgMaxSounds)
 	while (!soundThreadQuit) {
 		// update at roughly 30Hz
 		spring::this_thread::sleep_for(std::chrono::milliseconds(1000 / GAME_SPEED));
+
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}
@@ -677,8 +700,15 @@ void CSound::Update()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (CSoundSource& source: soundSources)
+	// limit consumption-rate to prevent source starvation
+	// lock is held, size can not be changed except by loop
+	for (size_t i = 0, n = std::min(size_t(4), preloadSet.size()); i < n; i++) {
+		GetSoundId(*preloadSet.begin());
+	}
+
+	for (CSoundSource& source: soundSources) {
 		source.Update();
+	}
 
 	CheckError("[Sound::Update]");
 	UpdateListenerReal();
@@ -705,23 +735,14 @@ size_t CSound::MakeItemFromDef(const SoundItemNameMap& itemDef)
 	return itemID;
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup)
-{
-	myPos  = campos;
-	camDir = camdir;
-	camUp  = camup;
-	listenerNeedsUpdate = true;
-}
-
 
 void CSound::UpdateListenerReal()
 {
 	// call from sound thread, cause OpenAL calls tend to cause L2 misses and so are slow (no reason to call them from mainthread)
-	if (!listenerNeedsUpdate)
+	if (!updateListener)
 		return;
 
-	// not 100% threadsafe, but worst case we would skip a single listener update (and it runs at multiple Hz!)
-	listenerNeedsUpdate = false;
+	updateListener = false;
 
 	const float3 myPosInMeters = myPos * ELMOS_TO_METERS;
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
@@ -773,7 +794,7 @@ void CSound::PrintDebugInfo()
 
 bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 {
-	//! can be called from LuaUnsyncedCtrl too
+	// can be called from LuaUnsyncedCtrl too
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	defsParser->Execute();
@@ -806,14 +827,14 @@ bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 				bufmap["name"] = name;
 
 				if (name == "default") {
-					defaultItemNameMap = bufmap;
-					defaultItemNameMap.erase("name"); //must be empty for default item
+					defaultItemNameMap = std::move(bufmap);
+					defaultItemNameMap.erase("name"); // must be empty for default item
 					defaultItemNameMap.erase("file");
 					continue;
 				}
 
 				if (soundItemDefsMap.find(name) != soundItemDefsMap.end())
-					LOG_L(L_WARNING, "[%s] sound %s gets overwritten by %s", __func__, name.c_str(), fileName.c_str());
+					LOG_L(L_WARNING, "[%s] sound %s overwrites %s", __func__, fileName.c_str(), name.c_str());
 
 				if (!buf.KeyExists("file")) {
 					// no file, drop
@@ -821,35 +842,36 @@ bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 					continue;
 				}
 
-				soundItemDefsMap[name] = bufmap;
+				soundItemDefsMap[name] = std::move(bufmap);
 
 				if (!buf.KeyExists("preload"))
 					continue;
 
-				MakeItemFromDef(bufmap);
+				MakeItemFromDef(soundItemDefsMap[name]);
 			}
 
 			LOG("[%s] parsed %i sounds from %s", __func__, (int)keys.size(), fileName.c_str());
 		}
 	}
 
-	//FIXME why do sounds w/o an own soundItemDef create (!=pointer) a new one from the defaultItemNameMap?
-	for (auto it = soundItemDefsMap.begin(); it != soundItemDefsMap.end(); ++it) {
-		SoundItemNameMap& snddef = it->second;
+	for (auto& pair: soundItemDefsMap) {
+		SoundItemNameMap& snddef = pair.second;
 
-		if (snddef.find("name") == snddef.end()) {
-			// uses defaultItemNameMap! update it!
-			const std::string file = snddef["file"];
+		if (snddef.find("name") != snddef.end())
+			continue;
 
-			snddef = defaultItemNameMap;
-			snddef["file"] = file;
-		}
+		// uses defaultItemNameMap! update it!
+		const std::string file = snddef["file"];
+
+		//FIXME why do sounds w/o an own soundItemDef create (!=pointer) a new one from the defaultItemNameMap?
+		snddef = defaultItemNameMap;
+		snddef["file"] = file;
 	}
 
 	return true;
 }
 
-//! only used internally, locked in caller's scope
+// only used internally, locked in caller's scope
 size_t CSound::LoadSoundBuffer(const std::string& path)
 {
 	const size_t id = SoundBuffer::GetId(path);
@@ -857,42 +879,40 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	if (id > 0)
 		return id; // file is loaded already
 
-	// reused across loads (safe, caller locks)
-	static std::vector<std::uint8_t> buf;
-
+	// do not keep generating AL buffers for files that previously failed to load, etc
+	if (failureSet.find(path) != failureSet.end())
+		return 0;
 
 	CFileHandler file("", "");
 
-	buf.clear();
-	buf.reserve(1024 * 1024);
+	loadBuffer.clear();
+	loadBuffer.reserve(1024 * 1024);
 
-	file.GetBuffer() = std::move(buf);
+	file.GetBuffer() = std::move(loadBuffer);
 	file.Open(path, SPRING_VFS_RAW_FIRST);
 
 	// steal back
-	buf = std::move(file.GetBuffer());
+	loadBuffer = std::move(file.GetBuffer());
 
 	if (!file.FileExists()) {
 		LOG_L(L_ERROR, "[%s] unable to open audio file \"%s\"", __func__, path.c_str());
+		failureSet.insert(path);
 		return 0;
 	}
 
-	if (buf.empty()) {
+	if (loadBuffer.empty()) {
 		// copy file into buffer manually if not in VFS
-		buf.resize(file.FileSize());
-		file.Read(buf.data(), file.FileSize());
+		loadBuffer.resize(file.FileSize());
+		file.Read(loadBuffer.data(), loadBuffer.size());
 	}
 
 
 	SoundBuffer soundBuf;
 	const std::string& soundExt = file.GetFileExt();
 
-	bool success = false;
-
-	// TODO: load asynchronously
 	switch (soundExt[0]) {
-		case 'w': { success = soundBuf.LoadWAV   (path, buf); } break; // wav
-		case 'o': { success = soundBuf.LoadVorbis(path, buf); } break; // ogg
+		case 'w': { soundBuf.LoadWAV   (path, loadBuffer); } break; // wav
+		case 'o': { soundBuf.LoadVorbis(path, loadBuffer); } break; // ogg
 		default : {
 			LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, soundExt.c_str());
 		} break;
@@ -900,8 +920,9 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	CheckError("[Sound::LoadSoundBuffer]");
 
-	if (!success) {
+	if (soundBuf.GetLength() <= 0.0f) {
 		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
+		failureSet.insert(path);
 		return 0;
 	}
 

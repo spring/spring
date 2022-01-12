@@ -1,6 +1,6 @@
 uniform sampler2D alphaMaskTex;
 
-uniform vec2 alphaParams;
+uniform vec2 alphaTestCtrl;
 
 
 in vec2 vTexCoord;
@@ -13,7 +13,7 @@ layout(depth_unchanged) out float gl_FragDepth;
 
 
 void main() {
-	if ((texture(alphaMaskTex, vTexCoord).a * vBaseColor.a) <= alphaParams.x)
+	if ((texture(alphaMaskTex, vTexCoord).a * vBaseColor.a) <= alphaTestCtrl.x)
 		discard;
 
 	gl_FragDepth = gl_FragCoord.z;

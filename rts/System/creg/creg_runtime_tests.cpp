@@ -2,7 +2,7 @@
 
 #include "creg_runtime_tests.h"
 #include "creg_cond.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include <vector>
@@ -203,7 +203,7 @@ static bool TestCregClasses3()
 
 			prevMember = memberMap[i];
 			if (prevMember == &alignmentFixMember)
-				prevMember = NULL;
+				prevMember = nullptr;
 		}
 
 

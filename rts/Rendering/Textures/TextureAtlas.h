@@ -110,7 +110,7 @@ protected:
 	bool CreateTexture();
 
 protected:
-	IAtlasAllocator* atlasAllocator;
+	IAtlasAllocator* atlasAllocator = nullptr;
 
 	struct MemTex {
 	public:
@@ -147,13 +147,13 @@ protected:
 	spring::unordered_map<std::string, size_t> files;
 	spring::unordered_map<std::string, AtlasedTexture> textures;
 
-	unsigned int atlasTexID;
+	unsigned int atlasTexID = 0;
 
-	//! set to true to write finalized texture atlas to disk
+	bool initialized = false;
+	bool freeTexture = true; // free texture on atlas destruction?
+
+	// set to true to write finalized texture atlas to disk
 	static bool debug;
-
-	bool initialized;
-	bool freeTexture; //! free texture on atlas destruction?
 };
 
 #endif // TEXTURE_ATLAS_H

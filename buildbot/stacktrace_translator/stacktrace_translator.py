@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Tobi Vollebregt
 # Thanks to bibim for providing the perl source of his translator.
 # requires mingw32-binutils and p7zip to work
@@ -11,8 +11,8 @@ from subprocess import Popen, PIPE
 
 
 # Paths to required helper programs.
-ADDR2LINE = r'/usr/bin/i686-w64-mingw32-addr2line'
-SEVENZIP = r'/usr/bin/7za'
+ADDR2LINE = '/usr/bin/addr2line'
+SEVENZIP = '/usr/bin/7za'
 
 # Everything before the first occurence of this is stripped
 # from paths returned by addr2line.
@@ -31,7 +31,7 @@ PIDFILE = os.path.expanduser('~/run/stacktrace_translator.pid')
 LISTEN_ADDR = ('127.0.0.1', 8000)
 
 # path to test file
-TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{release}93.2.1-56-gdca244e_spring_dbg.7z")
+TESTFILE = os.path.join(WWWROOT, "default/master/105.0/win64/105.0_win64_spring_dbg.7z")
 
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
@@ -66,6 +66,7 @@ RE_VERSION_LINES = [
 	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
 		r'%sStacktrace for %s:%s',
 		r'%sStacktrace \([a-zA-Z0-9 ]+\) for %s:%s',
+		r'%s[CrashHandler] Error: Segmentation fault in %s%s',
 
 		## legacy version patterns
 		r'%s%s has crashed\.%s',
@@ -152,8 +153,8 @@ def detect_version_details(infolog):
 
 	These should be fine:
 
-		>>> detect_version_details('Segmentation fault (SIGSEGV) in spring 91.0 (OMP)')
-		('default', 'master', '91.0')
+		>>> detect_version_details('[CrashHandler] Error: Segmentation fault in Spring 105.0')
+		('default', 'master', '105.0')
 
 		>>> detect_version_details('Segmentation fault (SIGSEGV) in spring 93.2.1-82-g863e91e release (Debug OMP)')
 		('default', 'release', '93.2.1-82-g863e91e')
@@ -167,6 +168,7 @@ def detect_version_details(infolog):
 		Traceback (most recent call last):
 			...
 		FatalError: Unable to find detailed version in infolog
+
 	'''
 	version = None
 	branch = None
@@ -179,9 +181,7 @@ def detect_version_details(infolog):
 	else:
 		fatal('Unable to find detailed version in infolog')
 	if not branch: branch = 'master'
-	# FIXME: config support (how does a version string with config currently look like?!)
 	return 'default', branch, version
-
 
 def collect_stackframes(infolog):
 	'''\
@@ -210,9 +210,9 @@ def get_modules(dbgfile):
 	'''
 	returns a list of all available files in a 7z archive
 		>>> get_modules(TESTFILE)
-		['AI/Interfaces/C/0.1/AIInterface.dbg', 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg', 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/E323AI/3.25.0/SkirmishAI.dbg', 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg', 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/RAI/0.601/SkirmishAI.dbg', 'AI/Skirmish/Shard/dev/SkirmishAI.dbg', 'spring.dbg', 'springserver.dbg', 'unitsync.dbg']
+		['AI/Interfaces/C/0.1/AIInterface.dbg', 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg', 'AI/Skirmish/CircuitAI/stable/SkirmishAI.dbg', 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg', 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/Shard/dev/SkirmishAI.dbg', 'mapcompile.dbg', 'mapdecompile.dbg', 'spring.dbg', 'unitsync.dbg']
 	'''
-	sevenzip = Popen([SEVENZIP, 'l', dbgfile], stdout = PIPE, stderr = PIPE)
+	sevenzip = Popen([SEVENZIP, 'l', dbgfile], stdout = PIPE, stderr = PIPE, universal_newlines=True)
 	stdout, stderr = sevenzip.communicate()
 	if stderr:
 		log.debug('%s stderr: %s' % (SEVENZIP, stderr))
@@ -231,8 +231,8 @@ def collect_modules(config, branch, rev, platform, dbgsymdir = None):
 	'''\
 	Collect modules for which debug data is available.
 	Return dict which maps (simplified) module name to debug symbol filename.
-		>>> collect_modules('default', 'release', '93.2.1-56-gdca244e', 'win32')
-		{'Java/AIInterface.dll': 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'unitsync.dll': 'unitsync.dbg', 'spring.exe': 'spring.dbg', 'CppTestAI': 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg/SkirmishAI.dll', 'E323AI': 'AI/Skirmish/E323AI/3.25.0/SkirmishAI.dbg/SkirmishAI.dll', 'AAI': 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg/SkirmishAI.dll', 'Shard': 'AI/Skirmish/Shard/dev/SkirmishAI.dbg/SkirmishAI.dll', 'RAI': 'AI/Skirmish/RAI/0.601/SkirmishAI.dbg/SkirmishAI.dll', 'C/AIInterface.dll': 'AI/Interfaces/C/0.1/AIInterface.dbg', 'KAIK': 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg/SkirmishAI.dll', 'NullAI': 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg/SkirmishAI.dll'}
+		>>> collect_modules('default', 'master', '105.0', 'win64')
+		('/home/buildbot/www/default/master/105.0/win64/105.0_win64_spring_dbg.7z', {'C/AIInterface.dll': 'AI/Interfaces/C/0.1/AIInterface.dbg', 'Java/AIInterface.dll': 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg', 'AI/Skirmish/CircuitAI/stable/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/CircuitAI/stable/SkirmishAI.dbg', 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg', 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/Shard/dev/SkirmishAI.dbg/SkirmishAI.dll': 'AI/Skirmish/Shard/dev/SkirmishAI.dbg', 'mapcompile.exe': 'mapcompile.dbg', 'mapdecompile.exe': 'mapdecompile.dbg', 'spring.exe': 'spring.dbg', 'unitsync.dll': 'unitsync.dbg'})
 	'''
 	log.info('Checking debug data availability...')
 
@@ -258,8 +258,8 @@ def collect_modules(config, branch, rev, platform, dbgsymdir = None):
 	modules = {}
 
 	for module in archivefiles:
-		if module == 'spring.dbg':
-			modules["spring.exe"] = module
+		if module in ('spring.dbg', 'mapcompile.dbg', 'mapdecompile.dbg'):
+			modules[module[:-4] + ".exe"] = module
 		elif module == 'unitsync.dbg':
 			modules["unitsync.dll"] = module
 		elif module.startswith('AI/Interfaces'):
@@ -269,7 +269,7 @@ def collect_modules(config, branch, rev, platform, dbgsymdir = None):
 			name = module.split('/')[2]
 			modules[module + '/SkirmishAI.dll'] = module
 		else:
-			log.error("no match found: "+module)
+			log.error("no match found: " + module)
 	log.info('\t[OK]')
 	return dbgfile, modules
 
@@ -277,13 +277,13 @@ def translate_module_addresses(module, debugarchive, addresses, debugfile):
 	'''\
 	Translate addresses in a module to (module, address, filename, lineno) tuples
 	by invoking addr2line exactly once on the debugging symbols for that module.
-		>>> translate_module_addresses( 'spring.dbg', TESTFILE, ['0x0'])
+		>>> translate_module_addresses( 'spring.dbg', TESTFILE, ['0x0'], 'spring.dbg')
 		[('spring.dbg', '0x0', '??', 0)]
 	'''
 	with NamedTemporaryFile() as tempfile:
 		log.info('\tExtracting debug symbols for module %s from archive %s...' % (module, os.path.basename(debugfile)))
 		# e = extract without path, -so = write output to stdout, -y = yes to all questions
-		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile, debugarchive], stdout = tempfile, stderr = PIPE)
+		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile, debugarchive], stdout = tempfile, stderr = PIPE, universal_newlines=True)
 		stdout, stderr = sevenzip.communicate()
 		if stderr:
 			log.debug('%s stderr: %s' % (SEVENZIP, stderr))
@@ -297,7 +297,7 @@ def translate_module_addresses(module, debugarchive, addresses, debugfile):
 		else:
 			cmd = [ADDR2LINE, '-e', tempfile.name]
 		log.debug('\tCommand line: ' + ' '.join(cmd))
-		addr2line = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE)
+		addr2line = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE, universal_newlines=True)
 		if addr2line.poll() == None:
 			stdout, stderr = addr2line.communicate('\n'.join(addresses))
 		else:

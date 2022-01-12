@@ -28,7 +28,7 @@ public:
 	 */
 	virtual int GetErrorNumber() const;
 
-	virtual const char* what() const throw();
+	virtual const char* what() const throw() override;
 }; // class AIException
 
 }  // namespace springai

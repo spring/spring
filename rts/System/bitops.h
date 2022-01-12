@@ -37,6 +37,21 @@ static inline unsigned int next_power_of_2(unsigned int x)
 #endif
 }
 
+static inline unsigned int log_base_2(unsigned int value) {
+	constexpr unsigned int mantissaShift = 23;
+	constexpr unsigned int exponentBias = 126;
+	union U {
+		unsigned int x;
+		float y;
+	} u = {0};
+
+	// value is constrained to [0,32]
+	u.y = static_cast<float>(value - 1);
+
+	// extract exponent bit
+	return (((u.x & (0xFF << mantissaShift)) >> mantissaShift) - exponentBias);
+}
+
 /**
  * @brief Count bits set
  * @param w Number in which to count bits

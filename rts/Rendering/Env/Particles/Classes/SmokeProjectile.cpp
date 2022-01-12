@@ -30,8 +30,6 @@ CR_REG_METADATA(CSmokeProjectile,
 
 
 CSmokeProjectile::CSmokeProjectile():
-	CProjectile(),
-
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -84,7 +82,7 @@ void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile::Update()
 {
 	pos += speed;
-	pos += wind.GetCurrentWind() * age * 0.05f;
+	pos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
 	age += ageSpeed;
 	size += sizeExpansion;
 	size += ((startSize - size) * 0.2f * (size < startSize));
@@ -112,7 +110,10 @@ void CSmokeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
 	va->SafeAppend({drawPos + pos1, st->xend,   st->ystart, col});
 	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
+
+	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
 	va->SafeAppend({drawPos - pos1, st->xstart, st->yend,   col});
+	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
 	#undef st
 }
 

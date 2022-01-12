@@ -82,7 +82,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if ((showReadyBox && InBox(mx, my, readyBox)) || !gs->PreSimFrame())
 		return (!Ready(false));
 
-	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * camera->GetFarPlaneDist() * 1.4f, false);
 
 	if (dist < 0.0f)
 		return true;
@@ -99,7 +99,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 #if 0
 void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IProgramObject* shader) const
 {
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
@@ -112,8 +112,8 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 
 	// draw starting-rectangle restrictions
 	for (int a = 0; a < 10; ++a) {
-		float3 pos1(bx + (a    ) * dx, 0.0f, by);
-		float3 pos2(bx + (a + 1) * dx, 0.0f, by);
+		float3 pos1(bx + (a    ) * dx, 0.0f, by); // tl
+		float3 pos2(bx + (a + 1) * dx, 0.0f, by); // tr
 
 		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
@@ -121,7 +121,11 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+
 
 		pos1 = float3(bx + (a    ) * dx, 0.0f, by + dy * 10.0f);
 		pos2 = float3(bx + (a + 1) * dx, 0.0f, by + dy * 10.0f);
@@ -131,7 +135,11 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+
 
 		pos1 = float3(bx, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx, 0.0f, by + dy * (a + 1));
@@ -141,7 +149,11 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+
 
 		pos1 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a + 1));
@@ -151,16 +163,19 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
 	}
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-	buffer->Submit(GL_QUADS);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 }
 #endif
 
@@ -186,27 +201,26 @@ void CStartPosSelecter::Draw()
 	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) * globalRendering->pixelY;
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
 
 	{
 		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	{
 		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	{
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->Submit(GL_QUADS);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->Submit(GL_TRIANGLES);
 		shader->Disable();
 	}
 

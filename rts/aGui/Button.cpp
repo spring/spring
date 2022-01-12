@@ -29,27 +29,23 @@ void Button::DrawSelf()
 	const float opacity = Opacity();
 	gui->SetColor(0.8f, 0.8f, 0.8f, opacity);
 
-	DrawBox(GL_TRIANGLE_STRIP);
+	DrawBox();
 
 	gui->SetColor(1.0f, 1.0f, 1.0f, 0.1f);
 	if (clicked) {
-		glBlendFunc(GL_ONE, GL_ONE); // additive blending
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
 		gui->SetColor(0.2f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_TRIANGLE_STRIP);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gui->SetColor(1.0f, 0.0f, 0.0f, opacity/2.f);
-		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP, 0, 2);
-		glLineWidth(1.0f);
+		DrawBox();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(1.0f, 0.0f, 0.0f, opacity / 2.0f);
+		DrawOutline();
 	} else if (hovered) {
-		glBlendFunc(GL_ONE, GL_ONE); // additive blending
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
 		gui->SetColor(0.0f, 0.0f, 0.2f, opacity);
-		DrawBox(GL_TRIANGLE_STRIP);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gui->SetColor(1.0f, 1.0f, 1.0f, opacity/2.0f);
-		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP, 0, 2);
-		glLineWidth(1.0f);
+		DrawBox();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
+		DrawOutline();
 	}
 
 	gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);

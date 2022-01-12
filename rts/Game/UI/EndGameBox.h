@@ -15,12 +15,12 @@ public:
 	CEndGameBox(const std::vector<unsigned char>& winningAllyTeams);
 	~CEndGameBox();
 
-	virtual bool MousePress(int x, int y, int button);
-	virtual void MouseMove(int x, int y, int dx, int dy, int button);
-	virtual void MouseRelease(int x, int y, int button);
-	virtual void Draw();
-	virtual bool IsAbove(int x, int y);
-	virtual std::string GetTooltip(int x, int y);
+	virtual bool MousePress(int x, int y, int button) override;
+	virtual void MouseMove(int x, int y, int dx, int dy, int button) override;
+	virtual void MouseRelease(int x, int y, int button) override;
+	virtual void Draw() override;
+	virtual bool IsAbove(int x, int y) override;
+	virtual std::string GetTooltip(int x, int y) override;
 
 	static bool enabled;
 	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == nullptr) new CEndGameBox(winningAllyTeams);}

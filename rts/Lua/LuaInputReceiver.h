@@ -16,16 +16,16 @@ class CLuaInputReceiver : public CInputReceiver
 
 		static CLuaInputReceiver* GetInstace();
 
-		bool KeyPressed(int key, bool isRepeat);
-		bool KeyReleased(int key);
+		bool KeyPressed(int key, bool isRepeat) override;
+		bool KeyReleased(int key) override;
 
-		bool MousePress(int x, int y, int button);
-		void MouseMove(int x, int y, int dx, int dy, int button);
-		void MouseRelease(int x, int y, int button);
-		bool IsAbove(int x, int y);
-		std::string GetTooltip(int x,int y);
+		bool MousePress(int x, int y, int button) override;
+		void MouseMove(int x, int y, int dx, int dy, int button) override;
+		void MouseRelease(int x, int y, int button) override;
+		bool IsAbove(int x, int y) override;
+		std::string GetTooltip(int x,int y) override;
 
-		void Draw();
+		void Draw() override;
 };
 
 #define luaInputReceiver CLuaInputReceiver::GetInstace()

@@ -3,6 +3,7 @@
 #ifndef GUI_SOUND_SET_H
 #define GUI_SOUND_SET_H
 
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 

@@ -43,6 +43,7 @@ public:
 		activeSkirmishAIs.clear();
 	}
 
+	void PostLoad();
 	/** Called just before all the units are destroyed. */
 	void PreDestroy();
 
@@ -83,20 +84,20 @@ public:
 	// Skirmish AI stuff
 	void CreateSkirmishAI(const uint8_t skirmishAIId);
 	/**
-	 * Sets a local Skirmish AI dieing.
+	 * Sets a local Skirmish AI to block events.
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
-	 * @param skirmishAIId index of the AI to mark as dieing
+	 * @param skirmishAIId index of the AI for which to block events
 	 * @see CSkirmishAIHandler::SetLocalKillFlag()
 	 * @see DestroySkirmishAI()
 	 */
-	void SetSkirmishAIDieing(const uint8_t skirmishAIId) { hostSkirmishAIs[skirmishAIId].SetDieing(); }
+	void BlockSkirmishAIEvents(const uint8_t skirmishAIId) { hostSkirmishAIs[skirmishAIId].SetBlockEvents(true); }
 	/**
 	 * Destructs a local Skirmish AI for real.
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
-	 * @see SetSkirmishAIDieing()
+	 * @see BlockSkirmishAIEvents()
 	 * @see CSkirmishAIHandler::SetLocalKillFlag()
 	 */
 	void DestroySkirmishAI(const uint8_t skirmishAIId);

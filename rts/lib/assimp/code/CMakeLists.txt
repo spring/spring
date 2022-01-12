@@ -43,7 +43,7 @@
 # 3) Add libassimp using the file lists (eliminates duplication of file names between
 #    source groups and library command)
 #
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 3.9 )
 SET( HEADER_PATH ../include/assimp )
 
 SET( COMPILER_HEADERS
@@ -481,8 +481,8 @@ if (ASSIMP_BUILD_IFC_IMPORTER)
     set_source_files_properties(IFCReaderGen1.cpp IFCReaderGen2.cpp PROPERTIES COMPILE_FLAGS "/bigobj")
   elseif(CMAKE_COMPILER_IS_MINGW)
     set_source_files_properties(IFCReaderGen1.cpp IFCReaderGen2.cpp PROPERTIES COMPILE_FLAGS "-O2 -Wa,-mbig-obj")
-  endif()
-endif (ASSIMP_BUILD_IFC_IMPORTER)
+  endif ()
+endif ()
 
 ADD_ASSIMP_IMPORTER( XGL
   XGLLoader.cpp
@@ -811,22 +811,22 @@ if(MSVC10)
   option( VC10_STDINT_FIX "Fix for VC10 Compiler regarding pstdint.h redefinition errors" OFF )
   if( VC10_STDINT_FIX )
     ADD_DEFINITIONS( -D_STDINT )
-  endif( VC10_STDINT_FIX )
-endif(MSVC10)
+  endif ()
+endif ()
 
 ADD_DEFINITIONS( -DASSIMP_BUILD_DLL_EXPORT )
 
 if ( MSVC )
   ADD_DEFINITIONS( -D_SCL_SECURE_NO_WARNINGS )
   ADD_DEFINITIONS( -D_CRT_SECURE_NO_WARNINGS )
-endif ( MSVC )
+endif ()
 
 if (UNZIP_FOUND)
   SET (unzip_compile_SRCS "")
-else (UNZIP_FOUND)
+else ()
   SET (unzip_compile_SRCS ${unzip_SRCS})
   INCLUDE_DIRECTORIES( "../contrib/unzip/" )
-endif (UNZIP_FOUND)
+endif ()
 
 MESSAGE(STATUS "Enabled formats:${ASSIMP_IMPORTERS_ENABLED}")
 MESSAGE(STATUS "Disabled formats:${ASSIMP_IMPORTERS_DISABLED}")
@@ -877,7 +877,7 @@ if(ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
   set(ASSIMP_ANDROID_JNIIOSYSTEM_PATH port/AndroidJNI)
   add_subdirectory(../${ASSIMP_ANDROID_JNIIOSYSTEM_PATH}/ ../${ASSIMP_ANDROID_JNIIOSYSTEM_PATH}/)
   target_link_libraries(assimp android_jniiosystem)
-endif(ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
+endif ()
 
 IF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
   TARGET_LINK_LIBRARIES(assimp optimized ${C4D_RELEASE_LIBRARIES})
@@ -901,11 +901,11 @@ if( MSVC )
     set(MSVC_PREFIX "vc120")
   elseif( MSVC14 )
     set(MSVC_PREFIX "vc140")
-  else()
+  else ()
     set(MSVC_PREFIX "vc150")
-  endif()
+  endif ()
   set(LIBRARY_SUFFIX "${ASSIMP_LIBRARY_SUFFIX}-${MSVC_PREFIX}-mt" CACHE STRING "the suffix for the assimp windows library")
-endif()
+endif ()
 
 SET_TARGET_PROPERTIES( assimp PROPERTIES
   VERSION ${ASSIMP_VERSION}
@@ -915,16 +915,16 @@ SET_TARGET_PROPERTIES( assimp PROPERTIES
 
 if (FALSE AND APPLE)
   SET_TARGET_PROPERTIES( assimp PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${ASSIMP_LIB_INSTALL_DIR}")
-endif()
+endif ()
 
 # Build against external unzip, or add ../contrib/unzip so
 # assimp can #include "unzip.h"
 if (UNZIP_FOUND)
   INCLUDE_DIRECTORIES(${UNZIP_INCLUDE_DIRS})
   TARGET_LINK_LIBRARIES(assimp ${UNZIP_LIBRARIES})
-else (UNZIP_FOUND)
+else ()
   INCLUDE_DIRECTORIES("../")
-endif (UNZIP_FOUND)
+endif ()
 
 # Add RT-extension library for glTF importer with Open3DGC-compression.
 IF (RT_FOUND AND ASSIMP_IMPORTER_GLTF_USE_OPEN3DGC)
@@ -942,7 +942,7 @@ ENDIF (RT_FOUND AND ASSIMP_IMPORTER_GLTF_USE_OPEN3DGC)
   # INSTALL(FILES ${HEADER_PATH}/${ASSIMP_ANDROID_JNIIOSYSTEM_PATH}/AndroidJNIIOSystem.h
     # DESTINATION ${ASSIMP_INCLUDE_INSTALL_DIR}
     # COMPONENT assimp-dev)
-# endif(ASSIMP_ANDROID_JNIIOSYSTEM)
+# endif ()
 
 if(FALSE AND MSVC AND ASSIMP_INSTALL_PDB)
   IF(CMAKE_GENERATOR MATCHES "^Visual Studio")
@@ -976,4 +976,4 @@ if (ASSIMP_COVERALLS)
         "${COVERAGE_SRCS}" # The source files.
         ON                 # If we should upload.
         "${PROJECT_SOURCE_DIR}/cmake-modules/") # (Optional) Alternate project cmake module path.
-endif()
+endif ()

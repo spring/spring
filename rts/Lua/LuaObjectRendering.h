@@ -11,10 +11,13 @@ struct lua_State;
 template<LuaObjType T> class LuaObjectRendering;
 
 class LuaObjectRenderingImpl {
+#if __GNUC__ == 11
+public:
+#else
 private:
 	friend class LuaObjectRendering<LUAOBJ_UNIT>;
 	friend class LuaObjectRendering<LUAOBJ_FEATURE>;
-
+#endif
 	static void CreateMatRefMetatable(lua_State* L);
 	static void PushFunction(lua_State* L, int (*fnPntr)(lua_State*), const char* fnName);
 
@@ -39,6 +42,10 @@ private:
 	static int SetMaterial(lua_State* L);
 	static int SetMaterialLastLOD(lua_State* L);
 	static int SetMaterialDisplayLists(lua_State* L) { return 0; }
+	static int SetDeferredMaterialUniform(lua_State* L);
+	static int SetForwardMaterialUniform(lua_State* L);
+	static int ClearDeferredMaterialUniform(lua_State* L);
+	static int ClearForwardMaterialUniform(lua_State* L);
 
 	static int SetUnitLuaDraw(lua_State* L);
 	static int SetFeatureLuaDraw(lua_State* L);
@@ -71,6 +78,11 @@ public:
 
 		PUSH_FUNCTION(SetMaterialLastLOD);
 		PUSH_FUNCTION(SetMaterialDisplayLists);
+
+		PUSH_FUNCTION(SetDeferredMaterialUniform);
+		PUSH_FUNCTION(SetForwardMaterialUniform);
+		PUSH_FUNCTION(ClearDeferredMaterialUniform);
+		PUSH_FUNCTION(ClearForwardMaterialUniform);
 
 		PUSH_FUNCTION(SetPieceList);
 
@@ -141,6 +153,32 @@ private:
 	static int SetMaterialDisplayLists(lua_State* L) {
 		LuaObjectRenderingImpl::PushObjectType(T);
 		const int ret = LuaObjectRenderingImpl::SetMaterialDisplayLists(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
+	}
+
+	static int SetDeferredMaterialUniform(lua_State* L) {
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::SetDeferredMaterialUniform(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
+	}
+	static int SetForwardMaterialUniform(lua_State* L) {
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::SetForwardMaterialUniform(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
+	}
+
+	static int ClearDeferredMaterialUniform(lua_State* L) {
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::ClearDeferredMaterialUniform(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
+	}
+	static int ClearForwardMaterialUniform(lua_State* L) {
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::ClearForwardMaterialUniform(L);
 		LuaObjectRenderingImpl::PopObjectType();
 		return ret;
 	}

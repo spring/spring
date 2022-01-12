@@ -3,40 +3,16 @@
 
 #include "glExtra.h"
 #include "RenderDataBuffer.hpp"
+#include "WideLineAdapter.hpp"
 
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Threading/ThreadPool.h"
 
-// center.w is radius
-static void DefSurfaceCircleVA(CVertexArray* va, const float4& center, const float4& color, unsigned int res)
-{
-	#if 0
-	float3 pos0;
-	float3 pos1;
-
-	for (unsigned int i = 0; i < res; ++i) {
-		const float step0 = ( i           ) * 1.0f / res;
-		const float step1 = ((i + 1) % res) * 1.0f / res;
-
-		pos0.x = center.x + (fastmath::sin(math::TWOPI * step0) * center.w);
-		pos0.z = center.z + (fastmath::cos(math::TWOPI * step0) * center.w);
-
-		pos1.x = center.x + (fastmath::sin(math::TWOPI * step1) * center.w);
-		pos1.z = center.z + (fastmath::cos(math::TWOPI * step1) * center.w);
-
-		pos0.y = CGround::GetHeightAboveWater(pos0.x, pos0.z, false) + 5.0f;
-		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 5.0f;
-
-		va->AddVertexC(pos0, SColor(&color.x));
-		va->AddVertexC(pos1, SColor(&color.x));
-	}
-	#endif
-}
-
-static void DefSurfaceCircleRB(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res)
+template<class T>
+static void WorldDrawSurfaceCircle(T* rb, const float4& center, const float4& color, unsigned int res)
 {
 	float3 pos0;
 	float3 pos1;
@@ -60,28 +36,29 @@ static void DefSurfaceCircleRB(GL::RenderDataBufferC* rb, const float4& center, 
 	}
 }
 
+void SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc func, DrawSurfaceCircleWFunc funcw) {
+	glSurfaceCircle = (func == nullptr) ? WorldDrawSurfaceCircle<GL::RenderDataBufferC> : func;
+	glSurfaceCircleW = (funcw == nullptr) ? WorldDrawSurfaceCircle<GL::WideLineAdapterC> : funcw;
+}
 
-SurfaceCircleFuncVA glSurfaceCircleVA = DefSurfaceCircleVA;
-SurfaceCircleFuncRB glSurfaceCircleRB = DefSurfaceCircleRB;
-
-void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func) { glSurfaceCircleVA = (func == nullptr)? DefSurfaceCircleVA: func; }
-void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func) { glSurfaceCircleRB = (func == nullptr)? DefSurfaceCircleRB: func; }
+DrawSurfaceCircleFunc glSurfaceCircle = WorldDrawSurfaceCircle<GL::RenderDataBufferC>;
+DrawSurfaceCircleWFunc glSurfaceCircleW = WorldDrawSurfaceCircle<GL::WideLineAdapterC>;
 
 
 
 
 // default for glBallisticCircle
-void glSetupRangeRingDrawState() { glDisable(GL_DEPTH_TEST); }
-void glResetRangeRingDrawState() { glEnable(GL_DEPTH_TEST); }
+void glSetupRangeRingDrawState() { glAttribStatePtr->DisableDepthTest(); }
+void glResetRangeRingDrawState() { glAttribStatePtr->EnableDepthTest(); }
 // default for glDrawCone
-void glSetupWeaponArcDrawState() { glEnable(GL_CULL_FACE); }
-void glResetWeaponArcDrawState() { glDisable(GL_CULL_FACE); }
+void glSetupWeaponArcDrawState() { glAttribStatePtr->EnableCullFace(); }
+void glResetWeaponArcDrawState() { glAttribStatePtr->DisableCullFace(); }
 
 
 
-
+template<class T>
 static void glBallisticCircle(
-	GL::RenderDataBufferC* rdBuffer,
+	T* rdBuffer,
 	const CWeapon* weapon,
 	const WeaponDef* weaponDef,
 	uint32_t circleRes,
@@ -182,7 +159,7 @@ static void glBallisticCircle(
  *  Draws a trigonometric circle in 'circleRes' steps, with a slope modifier
  */
 void glBallisticCircle(
-	GL::RenderDataBufferC* rdBuffer,
+	GL::WideLineAdapterC* rdBuffer,
 	const CWeapon* weapon,
 	uint32_t circleRes,
 	uint32_t lineMode,
@@ -205,6 +182,30 @@ void glBallisticCircle(
 	glBallisticCircle(rdBuffer,  nullptr, weaponDef,  circleRes, lineMode,  center, params, color);
 }
 
+void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const CWeapon* weapon,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(wla,  weapon, weapon->weaponDef,  circleRes, lineMode,  center, params, color);
+}
+
+void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(wla,  nullptr, weaponDef,  circleRes, lineMode,  center, params, color);
+}
+
 
 
 
@@ -215,9 +216,9 @@ void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t con
 	const float radsPerDiv = math::TWOPI * invConeDiv;
 
 	switch (cullFace) {
-		case GL_FRONT: { glCullFace(cullFace); } break;
-		case GL_BACK : { glCullFace(cullFace); } break;
-		default      : {                       } break;
+		case GL_FRONT: { glAttribStatePtr->CullFace(cullFace); } break;
+		case GL_BACK : { glAttribStatePtr->CullFace(cullFace); } break;
+		default      : {                                       } break;
 	}
 
 	#if 0
@@ -255,35 +256,35 @@ void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t con
 
 void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 {
-	glDepthMask(GL_FALSE);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_DEPTH_CLAMP_NV);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthClamp();
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-		glEnable(GL_STENCIL_TEST);
-		glStencilMask(0x1);
-		glStencilFunc(GL_ALWAYS, 0, 0x1);
-		glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+		glAttribStatePtr->EnableStencilTest();
+		glAttribStatePtr->StencilMask(0x1);
+		glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0x1);
+		glAttribStatePtr->StencilOper(GL_KEEP, GL_INCR, GL_KEEP);
 		drawFunc(data); // draw
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
-	glStencilFunc(GL_NOTEQUAL, 0, 0x1);
-	glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
+	glAttribStatePtr->StencilFunc(GL_NOTEQUAL, 0, 0x1);
+	glAttribStatePtr->StencilOper(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_FRONT);
 
 	drawFunc(data);   // draw
 
-	glDisable(GL_DEPTH_CLAMP_NV);
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthClamp();
+	glAttribStatePtr->DisableStencilTest();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->EnableDepthTest();
 }
 
 
@@ -517,8 +518,8 @@ void gleGenMeshBuffers(unsigned int* meshData) {
 	}
 
 	{
-		for (size_t n = 0; n < CYL_INDCS.size(); n++) { CYL_INDCS[n] += (BOX_VERTS.size()                   ); }
-		for (size_t n = 0; n < SPH_INDCS.size(); n++) { SPH_INDCS[n] += (BOX_VERTS.size() + CYL_VERTS.size()); }
+		for (uint32_t& vtxIdx: CYL_INDCS) { vtxIdx += (BOX_VERTS.size()                   ); }
+		for (uint32_t& vtxIdx: SPH_INDCS) { vtxIdx += (BOX_VERTS.size() + CYL_VERTS.size()); }
 
 		// IBO
 		glGenBuffers(1, &meshData[1]);

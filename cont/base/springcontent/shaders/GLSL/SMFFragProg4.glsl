@@ -8,9 +8,9 @@ const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
 
 
 
-uniform sampler2D diffuseTex;
-uniform sampler2D normalsTex;
-uniform sampler2D detailTex;
+uniform sampler2DArray diffuseTex;
+uniform sampler2D      normalsTex;
+uniform sampler2D      detailTex;
 
 uniform vec2 normalTexGen;   // either 1.0/mapSize (when NPOT are supported) or 1.0/mapSizePO2
 uniform vec2 specularTexGen; // 1.0/mapSize
@@ -21,6 +21,10 @@ uniform vec3 groundSpecularColor;
 uniform float groundSpecularExponent;
 uniform float groundShadowDensity;
 
+uniform float gammaExponent;
+
+uniform vec4 alphaTestCtrl;
+
 uniform vec2 mapHeights; // min & max height on the map
 
 uniform vec4 lightDir;
@@ -30,6 +34,8 @@ uniform vec4 fogColor;
 uniform mat4 viewMat;
 
 uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
+
+uniform ivec4 texSquare;
 
 
 
@@ -130,7 +136,7 @@ vec3 GetFragmentNormal(vec2 uv) {
 	#ifdef SSMF_UNCOMPRESSED_NORMALS
 	normal = normalize(texture(normalsTex, uv).xyz);
 	#else
-	normal.xz = texture(normalsTex, uv).ra;
+	normal.xz = texture(normalsTex, uv).rg;
 	normal.y  = sqrt(1.0 - dot(normal.xz, normal.xz));
 	#endif
 	return normal;
@@ -243,7 +249,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 }
 
 
-vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
+vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specularColor) {
 	vec3 light = vec3(0.0);
 
 	#ifndef SMF_SPECULAR_LIGHTING
@@ -263,7 +269,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
 		vec4 lightAmbiColor = fwdDynLights[j + 4];
 
 		vec3 wsLightVec = normalize(wsLightPos.xyz - vertexPos.xyz);
-		vec3 wsHalfVec = normalize((wsNormal + wsLightVec) * 0.5);
+		vec3 wsHalfVec = normalize(camDir + wsLightVec);
 
 		float lightAngle    = fwdDynLights[j + 5].x; // fov
 		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
@@ -371,10 +377,10 @@ void main() {
 
 		detailColor = vec4(splatDetailStrength.y);
 
-		// convert the splat detail normal to worldspace,
-		// then mix it with the regular one (note: needs
-		// another normalization?)
-		normalVec = mix(normalVec, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
+		// convert the splat detail normal to world-space, then
+		// mix it with the regular one, then normalize it again
+		// to get correct specular and diffuse highlights
+		normalVec = normalize(mix(normalVec, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x));
 	}
 	#endif
 
@@ -384,7 +390,7 @@ void main() {
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normalVec), 0.001, 1.0);
 	#endif
 
-	vec4  diffuseColor = texture(diffuseTex, diffTexCoords);
+	vec4  diffuseColor = textureLod(diffuseTex, vec3(diffTexCoords, texSquare.z), texSquare.w);
 	vec4 specularColor = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionColor = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -418,8 +424,6 @@ void main() {
 	#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
 	{
 		vec4 vertexShadowPos = shadowMat * vertexPos;
-			vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-			vertexShadowPos.xy += shadowParams.xy;
 
 		// shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
 		shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), groundShadowDensity);
@@ -433,6 +437,15 @@ void main() {
 
 		fragColor.rgb = (diffuseColor.rgb + detailColor.rgb) * shadeInt.rgb;
 		fragColor.a = shadeInt.a;
+	}
+	#endif
+	#ifndef DEFERRED_MODE
+	{
+		float alphaTestGreater = float(fragColor.a > alphaTestCtrl.x) * alphaTestCtrl.y;
+		float alphaTestSmaller = float(fragColor.a < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+		if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+			discard;
 	}
 	#endif
 
@@ -463,7 +476,7 @@ void main() {
 		float specularPow = max(0.0, pow(cosAngleSpecular, specularExp));
 
 		fragColor.rgb += (specularColor.rgb * specularPow * shadowCoeff);
-		fragColor.rgb += DynamicLighting(normalVec, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
+		fragColor.rgb += DynamicLighting(normalVec, cameraDir * -1.0, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
 	#endif
 
 
@@ -476,6 +489,7 @@ void main() {
 	fragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 	#endif
 }
 

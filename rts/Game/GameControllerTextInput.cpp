@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <SDL2/SDL_keyboard.h>
+#include <SDL_keyboard.h>
 
 #include "GameControllerTextInput.h"
 #include "Action.h"
@@ -70,13 +70,16 @@ void GameControllerTextInput::Draw() {
 		Shader::IProgramObject* shader = buffer->GetShader();
 
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos             , inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->Submit(GL_QUADS);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tl
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // bl
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // br
+
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // br
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tr
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tl
+		buffer->Submit(GL_TRIANGLES);
 		shader->Disable();
 	}
 
@@ -123,7 +126,7 @@ bool GameControllerTextInput::SendPromptInput() {
 		return false;
 
 	std::string msg = userInput;
-	std::string pfx = "";
+	std::string pfx;
 
 	if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 		pfx = userInput.substr(0, 2);
@@ -416,7 +419,7 @@ bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Actio
 			continue;
 
 		// the key was used, ignore it (ex: alt+a)
-		ignoreNextChar = keyCodes->IsPrintable(key);
+		ignoreNextChar = keyCodes.IsPrintable(key);
 		break;
 	}
 
@@ -427,7 +430,7 @@ bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Actio
 bool GameControllerTextInput::ConsumeReleasedKey(int key) const {
 	if (!userWriting)
 		return false;
-	if (keyCodes->IsPrintable(key))
+	if (keyCodes.IsPrintable(key))
 		return true;
 
 	return (key == SDLK_RETURN || key == SDLK_BACKSPACE || key == SDLK_DELETE || key == SDLK_HOME || key == SDLK_END || key == SDLK_RIGHT || key == SDLK_LEFT);

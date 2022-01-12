@@ -6,12 +6,18 @@ set(FILES
 	shaders/GLSL/bumpWaterFS.glsl
 	shaders/GLSL/bumpWaterCoastBlurVS.glsl
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
+	shaders/GLSL/ReflectiveWaterVertProg.glsl
+	shaders/GLSL/ReflectiveWaterFragProg.glsl
+	shaders/GLSL/RefractiveWaterVertProg.glsl
+	shaders/GLSL/RefractiveWaterFragProg.glsl
 	shaders/GLSL/ColVolDebugVertProg.glsl
 	shaders/GLSL/ColVolDebugFragProg.glsl
 	shaders/GLSL/infoHeight.lua
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
+	shaders/GLSL/MiniMapVertProg.glsl
+	shaders/GLSL/MiniMapFragProg.glsl
 	shaders/GLSL/MapShadowGenVertProg.glsl
 	shaders/GLSL/MapShadowGenFragProg.glsl
 	shaders/GLSL/ModelShadowGenVertProg.glsl
@@ -44,12 +50,10 @@ set(FILES
 	shaders/ARB/waterDynNormal.vp
 	shaders/ARB/waterDynNormal.fp
 	shaders/ARB/waterDynWave3.vp
-	shaders/ARB/water.fp
 	shaders/ARB/dwAddSplash.vp
 	shaders/ARB/waterDynNT.vp
 	shaders/ARB/waterDynWave.vp
 	shaders/ARB/waterDyn.fp
-	shaders/ARB/waterRefractTR.fp
 	shaders/ARB/dwAddSplash.fp
 	shaders/ARB/waterDyn.vp
 	shaders/ARB/waterDynWave.fp
@@ -179,5 +183,5 @@ set(FILES
 	LuaIntro/Addons/bg_texture.lua
 )
 
-CreateBaseContentArchive("base" "springcontent.sdz" "${FILES}")
+create_base_content_archive("base" "springcontent.sdz" "${FILES}")
 

@@ -7,6 +7,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/bitops.h"
 
@@ -47,8 +48,8 @@ void DebugDrawerAI::Draw() {
 	if (skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty())
 		return;
 
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT);
+	glAttribStatePtr->DisableDepthTest();
 
 	// draw data for the (AI) team being spectated
 	GL::RenderDataBufferC* bufferC = GL::GetRenderBufferC();
@@ -57,7 +58,7 @@ void DebugDrawerAI::Draw() {
 	graphs[gu->myTeam].Draw(bufferC, bufferC->GetShader());
 	texsets[gu->myTeam].Draw(bufferT, bufferT->GetShader());
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -154,7 +155,7 @@ void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
 
 	Graph::GraphLine& line = lines[lineNum];
 
-	line.lineData.push_back(float3(x, y, 0.0f));
+	line.lineData.emplace_back(x, y, 0.0f);
 	line.lineMin.x = std::min(line.lineMin.x, x);
 	line.lineMin.y = std::min(line.lineMin.y, y);
 	line.lineMax.x = std::max(line.lineMax.x, x);
@@ -240,8 +241,8 @@ void DebugDrawerAI::Graph::Clear() {
 
 void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramObject* shader) {
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	unsigned char color[4];
 
@@ -289,6 +290,9 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 
 	{
 		if (!lines.empty()) {
+			GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+			wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+
 			int lineNum = 0;
 			float linePad = (1.0f / lines.size()) * 0.5f;
 
@@ -312,7 +316,7 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 				color[2] = line.lineColor.z * 255;
 				color[3] = 255;
 
-				glLineWidth(line.lineWidth);
+				wla->SetWidth(line.lineWidth);
 
 				for (auto pit = data.begin(); pit != data.end(); ++pit) {
 					auto npit = pit; ++npit;
@@ -322,12 +326,11 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 					const float px2 = (npit == data.end()) ? px1 : ((npit->x - minScale.x) / scale.x) * size.x;
 					const float py2 = (npit == data.end()) ? py1 : ((npit->y - minScale.y) / scale.y) * size.y;
 
-					buffer->SafeAppend({pos + float3(px1, py1, 0.0f), {color}});
-					buffer->SafeAppend({pos + float3(px2, py2, 0.0f), {color}});
+					wla->SafeAppend({pos + float3(px1, py1, 0.0f), {color}});
+					wla->SafeAppend({pos + float3(px2, py2, 0.0f), {color}});
 				}
 
-				buffer->Submit(GL_LINE_STRIP);
-				glLineWidth(1.0f);
+				wla->Submit(GL_LINE_STRIP);
 
 				lineNum += 1;
 			}
@@ -400,8 +403,8 @@ void DebugDrawerAI::TexSet::Draw(GL::RenderDataBufferT* buffer, Shader::IProgram
 		return;
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -411,11 +414,14 @@ void DebugDrawerAI::TexSet::Draw(GL::RenderDataBufferT* buffer, Shader::IProgram
 		const float3& size = tex.GetSize();
 
 		glBindTexture(GL_TEXTURE_2D, tex.GetID());
-		buffer->SafeAppend({pos,                                0.0f, 1.0f});
-		buffer->SafeAppend({pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f});
-		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f});
-		buffer->SafeAppend({pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({pos,                                0.0f, 1.0f}); // tl
+		buffer->SafeAppend({pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f}); // tr
+		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f}); // br
+
+		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f}); // br
+		buffer->SafeAppend({pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f}); // bl
+		buffer->SafeAppend({pos,                                0.0f, 1.0f}); // tl
+		buffer->Submit(GL_TRIANGLES);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		const float tx = pos.x + size.x * 0.5f - ((tex.GetLabelWidth () * 0.5f) / globalRendering->viewSizeX) * size.x;

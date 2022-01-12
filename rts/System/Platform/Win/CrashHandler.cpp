@@ -26,7 +26,7 @@
 #define SYMLENGTH 4096
 #endif
 
-#define MAX_FRAMES 1024
+#define MAX_FRAMES 256
 #define DBG_LOG_RAW_LINE(level, fmt, ...) do {                               \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, fmt, ##__VA_ARGS__); \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, "\n"              ); \
@@ -55,7 +55,7 @@ struct StacktraceLine {
 #endif
 };
 
-static std::vector<StacktraceLine> stacktraceLines;
+static StacktraceLine stacktraceLines[MAX_FRAMES];
 
 
 static CRITICAL_SECTION stackLock;
@@ -186,7 +186,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
 	memset(modName, 0, sizeof(modName));
-	memset(stacktraceLines.data(), 0, stacktraceLines.size() * sizeof(StacktraceLine));
+	memset(stacktraceLines, 0, sizeof(stacktraceLines));
 	assert(logFile != nullptr);
 
 	// NOTE: this line is parsed by the stacktrans script
@@ -267,7 +267,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		machineType = IMAGE_FILE_MACHINE_AMD64;
 		frame.AddrPC.Offset = context.Rip;
 		frame.AddrStack.Offset = context.Rsp;
-		frame.AddrFrame.Offset = context.Rsp;
+		frame.AddrFrame.Offset = context.Rbp;
 		#else
 		#error "CrashHandler: Unsupported platform"
 		#endif
@@ -283,10 +283,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 
 	while (StackWalk64(machineType, process, thread, &frame, &context, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
-		#if 0
-		if (frame.AddrFrame.Offset == 0)
-			break;
-		#endif
 		if (numFrames >= MAX_FRAMES)
 			break;
 
@@ -298,7 +294,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		}
 
 
-		StacktraceLine& stl = stacktraceLines[numFrames];
+		StacktraceLine& stl = stacktraceLines[numFrames++];
 
 #ifdef _MSC_VER
 		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
@@ -349,9 +345,9 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			glLibFound |= (strstr(modName, "ig4") != nullptr);
 			// OpenGL lib names (Intel)
 			glLibFound |= (strstr(modName, "ig75icd32.dll") != nullptr);
+			// Windows driver store, i.e. "..\DriverStore\FileRepository\...\ig9.dll"
+			glLibFound |= (strstr(modName, "DriverStore") != nullptr);
 		}
-
-		++numFrames;
 	}
 
 
@@ -368,6 +364,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	for (int i = 0; i < numFrames; ++i) {
 		const StacktraceLine& stl = stacktraceLines[i];
+
 		switch (stl.type) {
 #ifdef _MSC_VER
 			case 0: {
@@ -436,6 +433,7 @@ void OutputStacktrace() {
 
 
 void NewHandler() {
+	std::set_new_handler(nullptr); // prevent recursion; OST or EMB might perform hidden allocs
 	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 	OutputStacktrace();
@@ -500,10 +498,6 @@ void Install()
 	SetUnhandledExceptionFilter(ExceptionHandler);
 	signal(SIGABRT, SigAbrtHandler);
 	std::set_new_handler(NewHandler);
-
-	// pre-allocate since doing so after a bad_alloc exception can fail
-	// NB: MAX_FRAMES * sizeof(StacktraceLine) is too big for the stack
-	stacktraceLines.resize(MAX_FRAMES);
 }
 
 /** Uninstall crash handler. */

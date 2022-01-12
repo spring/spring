@@ -16,7 +16,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CONFIG(int, TreeRadius)
 	.defaultValue(1250) // elmos before density reduction
@@ -49,6 +49,7 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
+	configHandler->NotifyOnChange(this, {"TreeRadius"});
 
 	baseTreeDistance = configHandler->GetInt("TreeRadius");
 	drawTreeDistance = Clamp(baseTreeDistance, 1.0f, CGlobalRendering::MAX_VIEW_RANGE);
@@ -59,13 +60,21 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 }
 
 ITreeDrawer::~ITreeDrawer() {
-	eventHandler.RemoveClient(this);
+	configHandler->RemoveObserver(this);
 	configHandler->Set("TreeRadius", int(baseTreeDistance));
+
+	eventHandler.RemoveClient(this);
 }
 
 
 float ITreeDrawer::IncrDrawDistance() { return (drawTreeDistance = Clamp(baseTreeDistance *= 1.25f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
 float ITreeDrawer::DecrDrawDistance() { return (drawTreeDistance = Clamp(baseTreeDistance *= 0.80f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
+
+void ITreeDrawer::ConfigNotify(const std::string& key, const std::string& value)
+{
+	baseTreeDistance = float(std::max(0, std::atoi(value.c_str())));
+	drawTreeDistance = Clamp(baseTreeDistance, 1.0f, CGlobalRendering::MAX_VIEW_RANGE);
+}
 
 
 void ITreeDrawer::AddTrees()
@@ -164,18 +173,15 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 
 
 void ITreeDrawer::SetupState() const {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.005f);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void ITreeDrawer::ResetState() const {
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -226,7 +232,7 @@ void ITreeDrawer::DrawTree(const CFeature* f, bool setupState, bool resetState)
 	}
 
 	// TODO: check if in shadow-pass
-	atd->DrawTree(f->pos, fd->drawType, 13);
+	atd->DrawTree(f->pos, fd->drawType, CAdvTreeDrawer::TREE_MAT_IDX);
 
 	if (resetState) {
 		atd->ResetDrawState();

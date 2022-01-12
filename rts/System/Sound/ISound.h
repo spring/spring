@@ -30,6 +30,8 @@ public:
 	virtual void Kill() {}
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;
+	virtual bool PreloadSoundItem(const std::string& name) = 0;
+	virtual size_t GetDefSoundId(const std::string& name) = 0;
 	virtual size_t GetSoundId(const std::string& name) = 0;
 
 

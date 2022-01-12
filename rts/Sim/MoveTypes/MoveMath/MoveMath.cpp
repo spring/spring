@@ -121,9 +121,11 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		const int zOffset = z * mapDims.mapx;
 
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
-			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
-			for (const CSolidObject* collidee: cell) {
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CSolidObject* collidee = cell[i];
+
 				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
 					continue;
 
@@ -188,10 +190,8 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// owner would need to be accessible, but the path-estimator
 	// defs are not tied to any collider instances
 	//
-	#define IS_SUBMARINE(md) ((md) != nullptr && (md)->subMarine)
-	const bool colliderIsSub = IS_SUBMARINE(&colliderMD);
-	const bool collideeIsSub = IS_SUBMARINE(collidee->moveDef);
-	#undef IS_SUBMARINE
+	const bool colliderIsSub = colliderMD.isSubmarine;
+	const bool collideeIsSub = collidee->moveDef != nullptr && collidee->moveDef->isSubmarine;
 
 	if (colliderIsSub)
 		return (!collidee->IsUnderWater() && !collideeIsSub);
@@ -256,10 +256,10 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 	BlockType r = BLOCK_NONE;
 
-	const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
+	const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
 
-	for (const CSolidObject* collidee: cell) {
-		r |= ObjectBlockType(moveDef, collidee, collider);
+	for (size_t i = 0, n = cell.size(); i < n; i++) {
+		r |= ObjectBlockType(moveDef, cell[i], collider);
 	}
 
 	return r;
@@ -281,9 +281,11 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 		const int zOffset = z * mapDims.mapx;
 
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
-			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
-			for (CSolidObject* collidee: cell) {
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				CSolidObject* collidee = cell[i];
+
 				if (collidee->tempNum == tempNum)
 					continue;
 

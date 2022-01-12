@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <memory.h>
 #include <algorithm>
@@ -297,8 +297,6 @@ CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 __FORCE_ALIGN_STACK__
 static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
-	//SCOPED_TIMER("CMatrix44f::MM-Mul");
-
 	const __m128 m1c1 = _mm_loadu_ps(&m1.md[0][0]);
 	const __m128 m1c2 = _mm_loadu_ps(&m1.md[1][0]);
 	const __m128 m1c3 = _mm_loadu_ps(&m1.md[2][0]);
@@ -393,7 +391,7 @@ float4 CMatrix44f::operator* (const float4 v) const
 	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
-	return float4(fout[0], fout[1], fout[2], fout[3]);
+	return {fout[0], fout[1], fout[2], fout[3]};
 	#endif
 }
 

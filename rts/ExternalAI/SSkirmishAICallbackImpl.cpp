@@ -44,7 +44,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for quadField.GetFeaturesExact(pos, radius)
 #include "System/SafeCStrings.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
 
@@ -113,8 +113,13 @@ static const CUnit* getUnit(int unitId) {
 	return (unitHandler.GetUnit(unitId));
 }
 
-static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
-	return teamHandler.AlliedTeams(unit->team, AI_TEAM_IDS[skirmishAIId]);
+static bool isUnitInLos(int skirmishAIId, const CUnit* unit) {
+	const int teamId = AI_TEAM_IDS[skirmishAIId];
+	if (teamHandler.AlliedTeams(unit->team, teamId))
+		return true;
+
+	const int allyID = teamHandler.AllyTeam(teamId);
+	return (unit->losStatus[allyID] & LOS_INLOS);
 }
 
 static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
@@ -190,7 +195,7 @@ static int teamModParamLosMask(int skirmishAIId, const CTeam* team) {
 	return losMask;
 }
 
-static inline int gameModParamLosMask(void) {
+static inline int gameModParamLosMask() {
 	return LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 }
 
@@ -432,13 +437,6 @@ EXPORT(int) skirmishAiCallback_Engine_executeCommand(
 			SetCommonCmdParams(&cmd, rc, unitId, groupId);
 			ret = skirmishAiCallback_Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, aiCmdId, &cmd);
 		} break;
-		case COMMAND_UNIT_SET_WANTED_MAX_SPEED: {
-			SSetWantedMaxSpeedUnitCommand cmd;
-			cmd.wantedMaxSpeed = rc->params[0];
-
-			SetCommonCmdParams(&cmd, rc, unitId, groupId);
-			ret = skirmishAiCallback_Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, aiCmdId, &cmd);
-		} break;
 		case COMMAND_UNIT_LOAD_UNITS: {
 			if (rc->numParams > 0) {
 				std::vector<int> tmpUnitIds(rc->numParams);
@@ -611,7 +609,7 @@ EXPORT(int) skirmishAiCallback_Engine_executeCommand(
 		case COMMAND_UNIT_BUILD: {
 			SBuildUnitCommand cmd;
 
-			cmd.toBuildUnitDefId = -rc->id;
+			cmd.toBuildUnitDefId = -rc->id[0];
 
 			if (rc->numParams >= 3) {
 				cmd.buildPos_posF3 = rc->params;
@@ -628,7 +626,7 @@ EXPORT(int) skirmishAiCallback_Engine_executeCommand(
 		default:
 		case COMMAND_UNIT_CUSTOM: {
 			SCustomUnitCommand cmd;
-			cmd.cmdId       = rc->id;
+			cmd.cmdId       = rc->id[0];
 			cmd.params_size = rc->numParams;
 			cmd.params      = rc->params;
 
@@ -801,14 +799,15 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)  \
 			case COMMAND_CALL_LUA_ ## HANDLENAME: {  \
 				SCallLua ## HandleName ## Command* cmd = static_cast<SCallLua ## HandleName ## Command*>(commandData);  \
-				const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);  \
-				if (cmd->ret_outData != NULL) {  \
-					if (outData != NULL) {  \
-						const int len = std::min(int(strlen(outData)), MAX_RESPONSE_SIZE - 1);  \
-						strncpy(cmd->ret_outData, outData, len);  \
-						cmd->ret_outData[len] = '\0';  \
-					} else {  \
-						cmd->ret_outData[0] = '\0';  \
+				size_t len = 0;                                                                                         \
+				const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize, &len);                       \
+				if (cmd->ret_outData != NULL) {                                                                         \
+					if (outData != NULL) {                                                                              \
+						len = std::min(len, size_t(MAX_RESPONSE_SIZE - 1));                                             \
+						strncpy(cmd->ret_outData, outData, len);                                                        \
+						cmd->ret_outData[len] = '\0';                                                                   \
+					} else {                                                                                            \
+						cmd->ret_outData[0] = '\0';                                                                     \
 					}  \
 				}  \
 			} break;
@@ -837,9 +836,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 		} break;
 
 		case COMMAND_DRAWER_PATH_FINISH: {
-			//const SFinishPathDrawerCommand* cmd =
-			//		(SFinishPathDrawerCommand*) commandData;
-			clb->LineDrawerFinishPath();
+			// noop
 		} break;
 
 		case COMMAND_DRAWER_PATH_DRAW_LINE: {
@@ -1146,7 +1143,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 
 			// check if data is a known command
 			if (newCommand(commandData, commandTopic, unitHandler.MaxUnits(), &c)) {
-				c.aiCommandId = commandId;
+				c.SetAICmdID(commandId);
 
 				const SStopUnitCommand* cmd = static_cast<SStopUnitCommand*>(commandData);
 
@@ -1421,19 +1418,19 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId
 	// fill up writeableDataDirs until teamId index is in there
 	// if it is not yet
 	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)skirmishAIId; ++wdd) {
-		writeableDataDirs.push_back("");
+		writeableDataDirs.emplace_back("");
 	}
 
 	if (writeableDataDirs[skirmishAIId].empty()) {
 		char tmpRes[1024];
 
 		if (!skirmishAiCallback_DataDirs_locatePath(skirmishAIId, tmpRes, sizeof(tmpRes), "", true, true, true, false)) {
-			char errorMsg[sizeof(tmpRes)];
-			SNPRINTF(errorMsg, sizeof(tmpRes),
+			char errorMsg[1093];
+			SNPRINTF(errorMsg, sizeof(errorMsg),
 					"Unable to create writable data-dir for Skirmish AI (ID:%i): %s",
 					skirmishAIId, tmpRes);
 			skirmishAiCallback_Log_exception(skirmishAIId, errorMsg, 1, true);
-			return NULL;
+			return nullptr;
 		} else {
 			writeableDataDirs[skirmishAIId] = tmpRes;
 		}
@@ -1450,10 +1447,8 @@ EXPORT(bool) skirmishAiCallback_Cheats_isEnabled(int skirmishAIId) {
 
 EXPORT(bool) skirmishAiCallback_Cheats_setEnabled(int skirmishAIId, bool enabled)
 {
-	AI_CHEAT_FLAGS[skirmishAIId].first = enabled;
-
-	if (enabled && !AI_CHEAT_FLAGS[skirmishAIId].second) {
-		LOG("SkirmishAI (ID = %i, team ID = %i) is using cheats!", skirmishAIId, AI_TEAM_IDS[skirmishAIId]);
+	if ((AI_CHEAT_FLAGS[skirmishAIId].first = enabled) && !AI_CHEAT_FLAGS[skirmishAIId].second) {
+		LOG("[%s] SkirmishAI (id %i, team %i) is using cheats!", __func__, skirmishAIId, AI_TEAM_IDS[skirmishAIId]);
 		AI_CHEAT_FLAGS[skirmishAIId].second = true;
 	}
 
@@ -1731,19 +1726,9 @@ EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) { return 0.0
 EXPORT(float) skirmishAiCallback_Gui_getScreenX(int skirmishAIId) { return 0.0f; }
 EXPORT(float) skirmishAiCallback_Gui_getScreenY(int skirmishAIId) { return 0.0f; }
 
-EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* return_posF3_out) {
-	// DEPRECATED
-	return_posF3_out[0] = 0.0f;
-	return_posF3_out[1] = 0.0f;
-	return_posF3_out[2] = 0.0f;
-}
+EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* dir) {} // DEPRECATED
+EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* pos) {} // DEPRECATED
 
-EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* return_posF3_out) {
-	// DEPRECATED
-	return_posF3_out[0] = 0.0f;
-	return_posF3_out[1] = 0.0f;
-	return_posF3_out[2] = 0.0f;
-}
 
 
 
@@ -3013,44 +2998,46 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(
 	int yardMapMaxSize
 ) {
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<YardMapStatus>& yardMapInternal = unitDef->GetYardMap();
+	const YardMapStatus* udYardMap = unitDef->GetYardMapPtr();
 
-	int yardMapSize = yardMapInternal.size();
+	int yardMapSize = unitDef->yardmap.size();
 
-	if ((yardMap != NULL) && !yardMapInternal.empty()) {
-		yardMapSize = std::min(int(yardMapInternal.size()), yardMapMaxSize);
+	if (yardMap != nullptr && udYardMap != nullptr) {
+		yardMapSize = std::min(yardMapSize, yardMapMaxSize);
 
 		const int xsize = unitDef->xsize;
 		const int zsize = unitDef->zsize;
-		int2 xdir(1,0);
-		int2 zdir(0,1);
-		int row_width = xsize;
-		int startidx = 0; // position of yardMapInternal[0] in the new destination array
+
+		int2 xdir(1, 0);
+		int2 zdir(0, 1);
+
+		int rowWidth = xsize;
+		int startIdx = 0; // position of udYardMap[0] in the new destination array
 
 		switch (facing) {
 			case FACING_SOUTH:
 				xdir = int2( 1, 0);
 				zdir = int2( 0, 1);
-				row_width = xsize;
-				startidx  = 0; // topleft
+				rowWidth = xsize;
+				startIdx  = 0; // topleft
 				break;
 			case FACING_NORTH:
 				xdir = int2(-1, 0);
 				zdir = int2( 0,-1);
-				row_width = xsize;
-				startidx  = (xsize * zsize) - 1; // bottomright
+				rowWidth = xsize;
+				startIdx  = (xsize * zsize) - 1; // bottomright
 				break;
 			case FACING_EAST:
 				xdir = int2( 0, 1);
 				zdir = int2(-1, 0);
-				row_width = zsize;
-				startidx  = (xsize - 1) * zsize; // bottomleft
+				rowWidth = zsize;
+				startIdx  = (xsize - 1) * zsize; // bottomleft
 				break;
 			case FACING_WEST:
 				xdir = int2( 0,-1);
 				zdir = int2( 1, 0);
-				row_width = zsize;
-				startidx  = zsize - 1;  // topright
+				rowWidth = zsize;
+				startIdx  = zsize - 1;  // topright
 				break;
 			default:
 				assert(false);
@@ -3061,9 +3048,9 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(
 			for (int x = 0; x < xsize; ++x) {
 				const int xt = xdir.x * x + xdir.y * z;
 				const int zt = zdir.x * x + zdir.y * z;
-				const int idx = startidx + xt + zt * row_width;
+				const int idx = startIdx + xt + zt * rowWidth;
 				assert(idx >= 0 && idx < yardMapSize);
-				yardMap[idx] = (short) yardMapInternal[x + z * xsize];
+				yardMap[idx] = (short) udYardMap[x + z * xsize];
 			}
 		}
 	}
@@ -3101,7 +3088,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getMinTransportSize(int skirmishAIId, int
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAirBase(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->isAirBase;
+	return false; // DEPRECATED
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getTransportMass(int skirmishAIId, int unitDefId) {
@@ -3305,7 +3292,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getBuildOptions(
 
 	size_t unitDefIdsSize = unitDefIdsRealSize;
 
-	if (unitDefIds != NULL) {
+	if (unitDefIds != nullptr) {
 		unitDefIdsSize = std::min(unitDefIdsRealSize, unitDefIdsMaxSize);
 
 		auto bb = bo.cbegin();
@@ -3385,7 +3372,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAII
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_isSubMarine(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->subMarine;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->isSubmarine;
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_MoveData_getName(int skirmishAIId, int unitDefId) {
@@ -3395,11 +3382,11 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_MoveData_getName(int skirmishAIId
 
 
 EXPORT(int) skirmishAiCallback_UnitDef_getWeaponMounts(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->weapons.size();
+	return getUnitDefById(skirmishAIId, unitDefId)->NumWeapons();
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_WeaponMount_getName(int skirmishAIId, int unitDefId, int weaponMountId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).name.c_str();
+	return ""; // getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).name.c_str();
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getWeaponDef(int skirmishAIId, int unitDefId, int weaponMountId) {
@@ -3520,22 +3507,23 @@ EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getParams(
 	int unitId,
 	int supportedCommandId,
 	const char** params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
-	const std::vector<std::string> ps = GetCallBack(skirmishAIId)->GetUnitCommands(unitId)->at(supportedCommandId)->params;
-	const int paramsRealSize = ps.size();
+	/*const*/ CAICallback* cb = GetCallBack(skirmishAIId);
+	const std::vector<const SCommandDescription*>* cq = cb->GetUnitCommands(unitId);
+	const std::vector<std::string>& ps = cq->at(supportedCommandId)->params;
 
-	size_t paramsSize = paramsRealSize;
+	const int cqNumParams = ps.size();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (int p = 0; p < paramsSize; p++) {
-			params[p] = ps.at(p).c_str();
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
+			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return paramsSize;
+	return retNumParams;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getStockpile(int skirmishAIId, int unitId) {
@@ -3627,17 +3615,17 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int skirmishAIId, int u
 
 EXPORT(short) skirmishAiCallback_Unit_CurrentCommand_getOptions(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).options : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetOpts() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTag(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).tag : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetTag() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).timeOut : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetTimeOut() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getParams(
@@ -3645,27 +3633,26 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getParams(
 	int unitId,
 	int commandId,
 	float* params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
 
 	if (!CHECK_COMMAND_ID(q, commandId))
 		return -1;
 
-	const std::vector<float>& ps = q->at(commandId).params;
-	const int paramsRealSize = ps.size();
-
-	size_t paramsSize = paramsRealSize;
+	const int cqNumParams = q->at(commandId).GetNumParams();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
+		const float* cmdParams = q->at(commandId).GetParams();
 
-		for (size_t p = 0; p < paramsSize; p++) {
-			params[p] = ps.at(p);
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
+			params[i] = cmdParams[i];
 		}
 	}
 
-	return paramsSize;
+	return retNumParams;
 }
 
 #undef CHECK_COMMAND_ID
@@ -3898,7 +3885,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
 	const CUnit* unit = getUnit(unitId);
 
-	if (unit != nullptr && (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)))
+	if (unit != nullptr && (skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || isUnitInLos(skirmishAIId, unit)))
 		return unit->weapons.size();
 
 	return 0;
@@ -3910,7 +3897,7 @@ EXPORT(int) skirmishAiCallback_Unit_getWeapon(int skirmishAIId, int unitId, int 
 	if (unit == nullptr || ((size_t)weaponMountId >= unit->weapons.size()))
 		return -1;
 
-	if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || isUnitInLos(skirmishAIId, unit))
 		return weaponMountId;
 
 	return -1;
@@ -4813,9 +4800,12 @@ EXPORT(bool) skirmishAiCallback_WeaponDef_isDynDamageInverted(int skirmishAIId, 
 	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageInverted;
 }
 
-EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId,
-		const char** keys, const char** values) {
-
+EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(
+	int skirmishAIId,
+	int weaponDefId,
+	const char** keys,
+	const char** values
+) {
 	const auto& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
@@ -4913,21 +4903,22 @@ EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 	return GetCallBack(skirmishAIId)->IsDebugDrawerEnabled();
 }
 
-EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIdsMaxSize) {
-	const std::vector<CGroup*>& gs = grouphandlers[AI_TEAM_IDS[skirmishAIId]]->groups;
-	const int groupIdsRealSize = gs.size();
+EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int maxGroups) {
+	const CGroupHandler& gh = uiGroupHandlers[ AI_TEAM_IDS[skirmishAIId] ];
+	const std::vector<CGroup>& gs = gh.GetGroups();
 
-	int groupIdsSize = groupIdsRealSize;
+	const int numGroups = gs.size();
+	int numGroupsRet = numGroups;
 
 	if (groupIds != nullptr) {
-		groupIdsSize = std::min(groupIdsRealSize, groupIdsMaxSize);
+		numGroupsRet = std::min(numGroups, maxGroups);
 
-		for (int g = 0; g < groupIdsSize; ++g) {
-			groupIds[g] = gs[g]->id;
+		for (int i = 0; i < numGroupsRet; ++i) {
+			groupIds[i] = gs[i].id;
 		}
 	}
 
-	return groupIdsSize;
+	return numGroupsRet;
 }
 
 EXPORT(int) skirmishAiCallback_Group_getSupportedCommands(int skirmishAIId, int groupId) {
@@ -4959,29 +4950,26 @@ EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(
 	int groupId,
 	int supportedCommandId,
 	const char** params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
 	const std::vector<std::string>& ps = GetCallBack(skirmishAIId)->GetGroupCommands(groupId)->at(supportedCommandId)->params;
-	const int paramsRealSize = ps.size();
-
-	size_t paramsSize = paramsRealSize;
+	const int cqNumParams = ps.size();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (size_t p = 0; p < paramsSize; ++p) {
-			params[p] = ps.at(p).c_str();
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
+			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return paramsSize;
+	return retNumParams;
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	//TODO: need to add support for new gui
 	return (guihandler->GetOrderPreview()).GetID();
 }
 
@@ -4989,50 +4977,46 @@ EXPORT(short) skirmishAiCallback_Group_OrderPreview_getOptions(int skirmishAIId,
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).options;
+	return (guihandler->GetOrderPreview()).GetOpts();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getTag(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).tag;
+	return (guihandler->GetOrderPreview()).GetTag();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getTimeOut(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).timeOut;
+	return (guihandler->GetOrderPreview()).GetTimeOut();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getParams(
 	int skirmishAIId,
 	int groupId,
 	float* params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	const std::vector<float>& ps = guihandler->GetOrderPreview().params;
-	const int paramsRealSize = ps.size();
-
-	size_t paramsSize = paramsRealSize;
+	const Command& guiCommand = guihandler->GetOrderPreview();
+	const int cqNumParams = guiCommand.GetNumParams();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		// TODO: need to add support for new gui
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
+		const float* cmdParams = guiCommand.GetParams();
 
-		for (int p = 0; p < paramsSize; p++) {
-			params[p] = ps[p];
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
+			params[i] = cmdParams[i];
 		}
 	}
 
-	return paramsSize;
+	return retNumParams;
 }
 
 EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) {

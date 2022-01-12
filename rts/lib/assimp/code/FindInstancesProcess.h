@@ -116,15 +116,15 @@ public:
 public:
     // -------------------------------------------------------------------
     // Check whether step is active in given flags combination
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
     // Execute step on a given scene
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
     // -------------------------------------------------------------------
     // Setup properties prior to executing the process
-    void SetupProperties(const Importer* pImp);
+    void SetupProperties(const Importer* pImp) override;
 
 private:
 

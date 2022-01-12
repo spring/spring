@@ -44,6 +44,11 @@ public:
 	bool GetKeys(std::vector<int>& data) const;
 	bool GetKeys(std::vector<std::string>& data) const;
 
+	bool GetPairs(std::vector<std::pair<int, float>>& data) const { return false; } // TODO
+	bool GetPairs(std::vector<std::pair<int, std::string>>& data) const;
+	bool GetPairs(std::vector<std::pair<std::string, float>>& data) const;
+	bool GetPairs(std::vector<std::pair<std::string, std::string>>& data) const;
+
 	bool GetMap(spring::unordered_map<int, float>& data) const;
 	bool GetMap(spring::unordered_map<int, std::string>& data) const;
 	bool GetMap(spring::unordered_map<std::string, float>& data) const;
@@ -121,13 +126,14 @@ private:
 public:
 	LuaParser() = default;
 	LuaParser(const std::string& fileName, const std::string& fileModes, const std::string& accessModes, const boolean& synced = {false}, const boolean& setup = {true});
-	LuaParser(const std::string& textChunk, const std::string& accessModes, const boolean& synced = {false}, const boolean& setup = {true});
+	LuaParser(const std::string& textChunk, const std::string& accessModes, int = 0, const boolean& synced = {false}, const boolean& setup = {true});
 	~LuaParser();
 
-	void SetupLua(bool synced);
+	void SetupLua(bool isSyncedCtxt, bool isDefsParser);
 
 	bool Execute();
-	bool IsValid() const { return (L != nullptr); }
+	bool IsValid() const { return (L != nullptr); } // true if nothing failed during Execute
+	bool NoTable() const { return (errorLog.find("no return table") == 0); } // parser is still valid if true
 
 	LuaTable GetRoot();
 	LuaTable SubTableExpr(const std::string& expr) {
@@ -161,7 +167,7 @@ public:
 	const std::string accessModes;
 
 private:
-	void SetupEnv(bool synced);
+	void SetupEnv(bool isSyncedCtxt, bool isDefsParser);
 	void PushParam();
 
 	void AddTable(LuaTable* tbl);

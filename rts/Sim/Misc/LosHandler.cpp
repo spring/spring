@@ -88,7 +88,7 @@ void ILosType::Init(const int mipLevel_, LosType type_)
 	type = type_;
 	algoType = ((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE);
 
-
+	freeIDs.reserve(4096);
 	losMaps.resize(teamHandler.ActiveAllyTeams());
 
 	const float* ctrHeightMap = readMap->GetCenterHeightMapSynced();
@@ -731,10 +731,11 @@ void CLosHandler::Kill()
 	}
 	LOG_L(L_WARNING, "LosHandler MemUsage: ~%.1fMB", memUsage / (1024.f * 1024.f));*/
 
-	LOG("LosHandler stats: total instances=%u; shared=%.0f%%; from cache=%.0f%%",
-		unsigned(ILosType::cacheHits + ILosType::cacheFails),
+	LOG("[LosHandler::%s] raycast instance cache-{hits,misses}={%u,%u}; shared=%.0f%%; cached=%.0f%%",
+		__func__, unsigned(ILosType::cacheHits), unsigned(ILosType::cacheFails),
 		100.0f * float(ILosType::cacheHits - ILosType::cacheRefs) / (ILosType::cacheHits + ILosType::cacheFails),
-		100.0f * float(ILosType::cacheRefs) / (ILosType::cacheHits + ILosType::cacheFails));
+		100.0f * float(ILosType::cacheRefs) / (ILosType::cacheHits + ILosType::cacheFails)
+	);
 
 	losTypes.fill(nullptr);
 }

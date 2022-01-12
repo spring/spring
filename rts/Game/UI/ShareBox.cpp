@@ -2,21 +2,24 @@
 
 #include "ShareBox.h"
 
+#include <cmath>
+
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Rendering/Fonts/glFont.h"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keycode.h>
-
 
 #define MAX_SHARE_TEAMS (teamHandler.ActiveTeams() - 1)
 int CShareBox::lastShareTeam = 0;
@@ -106,9 +109,7 @@ CShareBox::CShareBox()
 	}
 }
 
-CShareBox::~CShareBox()
-{
-}
+CShareBox::~CShareBox() = default;
 
 void CShareBox::Draw()
 {
@@ -120,8 +121,7 @@ void CShareBox::Draw()
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
 
 	{
 		// outer box
@@ -178,19 +178,19 @@ void CShareBox::Draw()
 	}
 	{
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->Submit(GL_QUADS);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->Submit(GL_TRIANGLES);
 
 		// show "share units" tickmark
 		if (shareUnits) {
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.01f, box.y1 + unitBox.y1 + 0.025f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.02f, box.y1 + unitBox.y1 + 0.010f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.03f, box.y1 + unitBox.y1 + 0.040f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+			wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.01f, box.y1 + unitBox.y1 + 0.025f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.02f, box.y1 + unitBox.y1 + 0.010f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.03f, box.y1 + unitBox.y1 + 0.040f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
 
-			glLineWidth(3);
-			buffer->Submit(GL_LINE_STRIP);
-			glLineWidth(1);
+			wla->Submit(GL_LINE_STRIP);
 		}
 
 		shader->Disable();
@@ -390,7 +390,7 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 		float tsz = sz / float(MAX_SHARE_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)(scr / tsz + 0.5), MAX_SHARE_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_SHARE_TEAMS - numTeamsDisp));
 		return;
 	}
 

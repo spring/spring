@@ -60,7 +60,7 @@ mkdir -p ${TMP_PATH}
 
 #absolute path to the minimal portable (engine, unitsync + ais)
 MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_${PLATFORM}-minimal-portable.7z
-INSTALLER_FILENAME=${TMP_PATH}/spring_${VERSION}_${PLATFORM}.exe
+# INSTALLER_FILENAME=${TMP_PATH}/spring_${VERSION}_${PLATFORM}.exe
 DEBUG_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_spring_dbg.7z
 UNITTEST_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_UnitTests.7z
 MIN_PORTABLE_ZIP=${TMP_PATH}/spring_${VERSION}_${PLATFORM}_minimal-portable.zip
@@ -84,14 +84,6 @@ cd ${SOURCEDIR}
 rm -f ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
-
-# create installer
-./installer/make_installer.sh
-
-# move installer to rsync-directory
-mv ./installer/spring*.exe ${INSTALLER_FILENAME}
-
-./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
 
 # create a file which contains the latest version of a branch
 echo ${VERSION} > ${TMP_BASE}/${CONFIG}/${BRANCH}/LATEST_${PLATFORM}

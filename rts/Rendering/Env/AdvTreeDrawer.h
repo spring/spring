@@ -53,6 +53,10 @@ public:
 		float fallAngle;
 	};
 
+	static constexpr int TREE_MAT_IDX = 14;
+	static constexpr int VIEW_MAT_IDX = 15;
+	static constexpr int PROJ_MAT_IDX = 16;
+
 private:
 	enum TreeShaderProgram {
 		TREE_PROGRAM_BASIC  = 0, // shader (V) without self-shadowing

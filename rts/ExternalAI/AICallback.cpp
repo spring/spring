@@ -13,6 +13,7 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Map/MapInfo.h"
@@ -39,7 +40,6 @@
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
-#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -64,7 +64,7 @@
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler.MaxUnits())
-#define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
+#define CHECK_GROUPID(id) (uiGroupHandlers[team].HasGroup(id))
 // With some hacking you can raise an abort (assert) instead of ignoring the id,
 //#define CHECK_UNITID(id) (assert(id > 0 && id < unitHandler.MaxUnits()), true)
 // ...or disable the check altogether for release.
@@ -118,10 +118,7 @@ CUnit* CAICallback::GetInLosAndRadarUnit(int unitId) const {
 }
 
 
-CAICallback::CAICallback(int teamId)
-	: team(teamId)
-	, allowOrders(true)
-	, gh(grouphandlers[teamId])
+CAICallback::CAICallback(int teamId): team(teamId)
 {}
 
 void CAICallback::SendStartPos(bool ready, float3 startPos)
@@ -292,7 +289,7 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 
 int CAICallback::CreateGroup()
 {
-	const CGroup* g = gh->CreateNewGroup();
+	const CGroup* g = uiGroupHandlers[team].CreateNewGroup();
 	return g->id;
 }
 
@@ -301,10 +298,7 @@ void CAICallback::EraseGroup(int groupId)
 	if (!CHECK_GROUPID(groupId))
 		return;
 
-	if (gh->groups[groupId] == nullptr)
-		return;
-
-	gh->RemoveGroup(gh->groups[groupId]);
+	uiGroupHandlers[team].RemoveGroup(uiGroupHandlers[team].GetGroup(groupId));
 }
 
 bool CAICallback::AddUnitToGroup(int unitId, int groupId)
@@ -314,7 +308,7 @@ bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 	if (unit == nullptr)
 		return false;
 
-	return (CHECK_GROUPID(groupId) && gh->groups[groupId] != nullptr && unit->SetGroup(gh->groups[groupId]));
+	return (CHECK_GROUPID(groupId) && unit->SetGroup(uiGroupHandlers[team].GetGroup(groupId)));
 }
 
 bool CAICallback::RemoveUnitFromGroup(int unitId)
@@ -324,7 +318,7 @@ bool CAICallback::RemoveUnitFromGroup(int unitId)
 	if (unit == nullptr)
 		return false;
 
-	unit->SetGroup(0);
+	unit->SetGroup(nullptr);
 	return true;
 }
 
@@ -335,7 +329,7 @@ int CAICallback::GetUnitGroup(int unitId)
 	if (unit == nullptr)
 		return -1;
 
-	const CGroup* group = unit->group;
+	const CGroup* group = unit->GetGroup();
 
 	if (group != nullptr)
 		return group->id;
@@ -372,7 +366,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 	if (unit->team != team)
 		return -5;
 
-	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(), c->aiCommandId, c->options, c->params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), team, unitId, c->GetID(false), c->GetID(true), c->GetTimeOut(), c->GetOpts(), c->GetNumParams(), c->GetParams()));
 	return 0;
 }
 
@@ -472,7 +466,7 @@ float CAICallback::GetUnitMaxHealth(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				maxHealth = unit->maxHealth;
 			} else {
 				const float scale = (decoyDef->health / unitDef->health);
@@ -501,7 +495,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				speed = unitDef->speed;
 			} else {
 				speed = decoyDef->speed;
@@ -529,7 +523,7 @@ float CAICallback::GetUnitPower(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				power = unit->power;
 			} else {
 				const float scale = (decoyDef->power / unitDef->power);
@@ -569,7 +563,7 @@ float CAICallback::GetUnitMaxRange(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				maxRange = unit->maxRange;
 			} else {
 				maxRange = decoyDef->maxWeaponRange;
@@ -601,7 +595,7 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 			if (((losStatus & LOS_INLOS) != 0) ||
 					((losStatus & prevMask) == prevMask)) {
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (decoyDef == NULL) {
+				if (decoyDef == nullptr) {
 					def = unitDef;
 				} else {
 					def = decoyDef;
@@ -935,19 +929,19 @@ float CAICallback::GetExtractorRadius() const {
 }
 
 float CAICallback::GetMinWind() const {
-	return wind.GetMinWind();
+	return envResHandler.GetMinWindStrength();
 }
 
 float CAICallback::GetMaxWind() const {
-	return wind.GetMaxWind();
+	return envResHandler.GetMaxWindStrength();
 }
 
 float CAICallback::GetCurWind() const {
-	return wind.GetCurrentStrength();
+	return envResHandler.GetCurrentWindStrength();
 }
 
 float CAICallback::GetTidalStrength() const {
-	return mapInfo->map.tidalStrength;
+	return envResHandler.GetCurrentTidalStrength();
 }
 
 float CAICallback::GetGravity() const {
@@ -1005,11 +999,6 @@ float CAICallback::GetElevation(float x, float z)
 void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
 {
 	lineDrawer.StartPath(pos, color);
-}
-
-void CAICallback::LineDrawerFinishPath()
-{
-	lineDrawer.FinishPath();
 }
 
 void CAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
@@ -1103,7 +1092,7 @@ void CAICallback::DrawUnit(
 
 bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int facing)
 {
-	CFeature* blockingF = NULL;
+	CFeature* blockingF = nullptr;
 	BuildInfo bi(unitDef, pos, facing);
 	bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 	return !!CGameHelper::TestUnitBuildSquare(bi, blockingF, teamHandler.AllyTeam(team), false);
@@ -1112,7 +1101,7 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int faci
 
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitDef, const float3& pos, float searchRadius, int minDist, int facing)
 {
-	return CGameHelper::ClosestBuildSite(team, unitDef, pos, searchRadius, minDist, facing);
+	return CGameHelper::ClosestBuildPos(team, unitDef, pos, searchRadius, minDist, facing);
 }
 
 
@@ -1220,7 +1209,7 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs)
 		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
-		// if array is NULL, caller only wants to know the number of features
+		// if array is nullptr, caller only wants to know the number of features
 		if (featureIds != nullptr)
 			featureIds[numFeatureIDs] = f->id;
 
@@ -1246,7 +1235,7 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs, const float3& p
 		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
-		// if array is NULL, caller only wants to know the number of features
+		// if array is nullptr, caller only wants to know the number of features
 		if (featureIds != nullptr)
 			featureIds[numFeatureIDs] = f->id;
 
@@ -1339,7 +1328,7 @@ bool CAICallback::GetValue(int id, void* data)
 			*(unsigned int*) data = readMap->GetMapChecksum();
 		} break;
 		case AIVAL_DEBUG_MODE: {
-			*(bool*) data = globalRendering->drawdebug;
+			*(bool*) data = globalRendering->drawDebug;
 		} break;
 
 		case AIVAL_GAME_PAUSED: {
@@ -1350,7 +1339,7 @@ bool CAICallback::GetValue(int id, void* data)
 		} break;
 
 		case AIVAL_GUI_VIEW_RANGE: {
-			*(float*) data = globalRendering->viewRange;
+			*(float*) data = camera->GetFarPlaneDist();
 		} break;
 		case AIVAL_GUI_SCREENX: {
 			*(float*) data = globalRendering->viewSizeX;
@@ -1487,7 +1476,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
 			LOG("Skirmish AI controlling team %i paused the game, reason: %s",
 					team,
-					cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
+					cmdData->reason != nullptr ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
 		} break;
@@ -1591,7 +1580,7 @@ float CAICallback::GetUnitDefRadius(int def)
 float CAICallback::GetUnitDefHeight(int def)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
-	S3DModel* mdl = ud->LoadModel();
+	const S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }
 
@@ -1616,7 +1605,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				} else {
 					const UnitDef* unitDef = unit->unitDef;
 					const UnitDef* decoyDef = unitDef->decoyDef;
-					if (decoyDef == NULL) {
+					if (decoyDef == nullptr) {
 						(*(const UnitDef**)data) = unitDef;
 					} else {
 						(*(const UnitDef**)data) = decoyDef;
@@ -1654,7 +1643,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 }
 
 
-int CAICallback::GetFileSize(const char *filename)
+int CAICallback::GetFileSize(const char* filename)
 {
 	CFileHandler fh (filename);
 
@@ -1727,13 +1716,13 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 float3 CAICallback::GetMousePos() {
 	verify();
 	if (gu->myAllyTeam == teamHandler.AllyTeam(team))
-		return inMapDrawer->GetMouseMapPos();
+		return mouse->GetWorldMapPos();
 
 	return ZeroVector;
 }
 
 
-void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, bool includeAllies)
+void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int maxPoints, bool includeAllies)
 {
 	verify();
 
@@ -1741,26 +1730,29 @@ void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, boo
 	// information for the AIs ally team will not be available to
 	// prevent cheating.
 	/*
-	if (gu->myAllyTeam != teamHandler.AllyTeam(team)) {
+	if (gu->myAllyTeam != teamHandler.AllyTeam(team))
 		return 0;
-	}
 	*/
 
-	std::list<int> includeTeamIDs;
-	// include our team
-	includeTeamIDs.push_back(team);
+	std::array<int, MAX_TEAMS> includeTeamIDs;
 
-	// include the team colors of all our allies
-	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
-		if (teamHandler.AlliedTeams(team, t)) {
-			includeTeamIDs.push_back(t);
-		}
+	// include our team; first non-entry is indicated by -1
+	includeTeamIDs[0] = team;
+	includeTeamIDs[1] = -1;
+
+	// include the teams of all our allies, exclude Gaia
+	for (int i = 1, t = 0, n = std::min(teamHandler.ActiveTeams(), MAX_TEAMS - 1); t < n; ++t) {
+		if (!teamHandler.AlliedTeams(team, t))
+			continue;
+
+		includeTeamIDs[i++] = t;
+		includeTeamIDs[i  ] = -1;
 	}
 
-	inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs);
+	inMapDrawer->GetPoints(pm, maxPoints, includeTeamIDs);
 }
 
-void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool includeAllies)
+void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int maxLines, bool includeAllies)
 {
 	verify();
 
@@ -1768,23 +1760,26 @@ void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool 
 	// information for the AIs ally team will not be available to
 	// prevent cheating.
 	/*
-	if (gu->myAllyTeam != teamHandler.AllyTeam(team)) {
+	if (gu->myAllyTeam != teamHandler.AllyTeam(team))
 		return 0;
-	}
 	*/
 
-	std::list<int> includeTeamIDs;
-	// include our team
-	includeTeamIDs.push_back(team);
+	std::array<int, MAX_TEAMS> includeTeamIDs;
 
-	// include the team colors of all our allies
-	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
-		if (teamHandler.AlliedTeams(team, t)) {
-			includeTeamIDs.push_back(t);
-		}
+	// include our team; first non-entry is indicated by -1
+	includeTeamIDs[0] = team;
+	includeTeamIDs[1] = -1;
+
+	// include the teams of all our allies, exclude Gaia
+	for (int i = 1, t = 0, n = std::min(teamHandler.ActiveTeams(), MAX_TEAMS - 1); t < n; ++t) {
+		if (!teamHandler.AlliedTeams(team, t))
+			continue;
+
+		includeTeamIDs[i++] = t;
+		includeTeamIDs[i  ] = -1;
 	}
 
-	inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs);
+	inMapDrawer->GetLines(lm, maxLines, includeTeamIDs);
 }
 
 
@@ -1817,12 +1812,12 @@ const float3* CAICallback::GetStartPos()
 
 
 
-#define AICALLBACK_CALL_LUA(HandleName)                                              \
-	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize) { \
-		if (lua ## HandleName == nullptr)                                            \
-			return NULL;                                                             \
-                                                                                     \
-		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize);       \
+#define AICALLBACK_CALL_LUA(HandleName)                                                               \
+	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize, size_t* outSize) { \
+		if (lua ## HandleName == nullptr)                                                             \
+			return nullptr;                                                                           \
+                                                                                                      \
+		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize, outSize);               \
 	}
 
 AICALLBACK_CALL_LUA(Rules)

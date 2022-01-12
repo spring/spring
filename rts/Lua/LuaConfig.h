@@ -7,4 +7,7 @@
 // indices in LuaSynced** API functions
 #define LUA_WEAPON_BASE_INDEX 1
 
+// starting index for command descriptions
+#define CMD_INDEX_OFFSET 1
+
 #endif // LUA_CONFIG_H

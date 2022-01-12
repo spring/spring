@@ -26,8 +26,6 @@ void main() {
 		vertexPos.xyz += (cameraDirY * vtxNormalAttr.y);
 
 	vec4 vertexShadowPos = shadowViewMat * treeMat * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	gl_Position = shadowProjMat * vertexShadowPos;
 

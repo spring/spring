@@ -112,7 +112,7 @@ public:
 	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex.GetID(); }
 
 public:
-	void DrawMinimap() const override;
+	void BindMiniMapTextures() const override;
 	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
 	void InitGroundDrawer() override;
@@ -123,8 +123,8 @@ public:
 	void GetFeatureInfo(MapFeatureInfo* f) override; // returns all feature info in MapFeatureInfo[NumFeatures]
 	const char* GetFeatureTypeName(int typeID) override;
 
-	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) override;
-	void FreeInfoMap(const std::string& name, unsigned char* data) override;
+	unsigned char* GetInfoMap(const char* name, MapBitmapInfo* bm) override;
+	void FreeInfoMap(const char* name, unsigned char* data) override;
 
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp

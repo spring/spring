@@ -187,6 +187,8 @@ public:
 	bool avoidFeature;      // if true, try to avoid features while aiming
 	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
 	bool avoidGround;       // if true, try to avoid ground while aiming
+	bool avoidCloaked;      // if true, try to avoid cloaked units while aiming
+
 	/**
 	 * If nonzero, targetting units will TryTarget at the edge of collision sphere
 	 * (radius*tag value, [-1;1]) instead of its centre.
@@ -219,67 +221,44 @@ public:
 	spring::unordered_map<std::string, std::string> customParams;
 
 	struct Visuals {
-		Visuals()
-			: color(ZeroVector)
-			, color2(ZeroVector)
-			, model(NULL)
-			, colorMap(NULL)
-			, explosionScar(true)
-			, smokeTrail(false)
-			, texture1(NULL)
-			, texture2(NULL)
-			, texture3(NULL)
-			, texture4(NULL)
-			, tilelength(0.0f)
-			, scrollspeed(0.0f)
-			, pulseSpeed(0.0f)
-			, laserflaresize(0.0f)
-			, thickness(0.0f)
-			, corethickness(0.0f)
-			, lodDistance(0)
-			, beamdecay(0.0f)
-			, stages(0)
-			, alphaDecay(0.0f)
-			, sizeDecay(0.0f)
-			, separation(0.0f)
-			, noGap(true)
-			, alwaysVisible(true)
-		{}
-
 		float3 color;
 		float3 color2;
 
-		S3DModel* model;
+		S3DModel* model = nullptr;
+		CColorMap* colorMap = nullptr;
+
+		AtlasedTexture* texture1 = nullptr;
+		AtlasedTexture* texture2 = nullptr;
+		AtlasedTexture* texture3 = nullptr;
+		AtlasedTexture* texture4 = nullptr;
+
 		std::string modelName;
 		std::string texNames[4];
+		std::string colorMapStr;
 		std::string ptrailExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use during flight
 		std::string impactExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use on impact
 		std::string bounceExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use when bouncing
-		CColorMap* colorMap;
+
+		int lodDistance = 0;
+		int stages = 0;
+
+		float tilelength = 0.0f;
+		float scrollspeed = 0.0f;
+		float pulseSpeed = 0.0f;
+		float laserflaresize = 0.0f;
+		float thickness = 0.0f;
+		float corethickness = 0.0f;
+		float beamdecay = 0.0f;
+		float alphaDecay = 0.0f;
+		float sizeDecay = 0.0f;
+		float separation = 0.0f;
 
 		/// TODO: make the scar-type configurable
-		bool explosionScar;
-		bool smokeTrail;
+		bool explosionScar = true;
+		bool smokeTrail = false;
 
-		AtlasedTexture* texture1;
-		AtlasedTexture* texture2;
-		AtlasedTexture* texture3;
-		AtlasedTexture* texture4;
-		float tilelength;
-		float scrollspeed;
-		float pulseSpeed;
-		float laserflaresize;
-		float thickness;
-		float corethickness;
-		int   lodDistance;
-		float beamdecay;
-
-		int stages;
-		float alphaDecay;
-		float sizeDecay;
-		float separation;
-		bool noGap;
-		bool alwaysVisible;
+		bool noGap = true;
+		bool alwaysVisible = true;
 	};
 	Visuals visuals;
 

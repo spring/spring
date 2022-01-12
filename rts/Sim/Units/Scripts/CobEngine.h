@@ -47,6 +47,8 @@ public:
 
 		runningThreadIDs.reserve(512);
 		waitingThreadIDs.reserve(512);
+
+		threadCounter = 0;
 	}
 	void Kill() {
 		// threadInstances is never explicitly iterated, so

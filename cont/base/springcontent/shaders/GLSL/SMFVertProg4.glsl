@@ -3,7 +3,7 @@
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
 
-uniform ivec2 texSquare;
+uniform ivec4 texSquare;     // x, y, y * X + x (index into diffuseTex), mip
 uniform vec3 cameraPos;
 uniform vec4 lightDir;       // mapInfo->light.sunDir
 uniform vec3 fogParams;      // .x := start, .y := end, .z := viewrange
@@ -32,7 +32,7 @@ void main() {
 	halfDir.xyz = normalize(lightDir.xyz + viewDir.xyz);
 
 	vertexPos = vec4(vertexPosAttr, 1.0);
-	diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - texSquare;
+	diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - texSquare.xy;
 
 	gl_Position = viewProjMat * vertexPos;
 	gl_ClipDistance[SMF_CLIP_PLANE_IDX] = dot(clipPlane, vertexPos);

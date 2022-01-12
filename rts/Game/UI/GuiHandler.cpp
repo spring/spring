@@ -23,6 +23,8 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -39,7 +41,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"
 #include "System/StringUtil.h"
@@ -73,10 +75,9 @@ CGuiHandler::CGuiHandler()
 	miniMapMarker = configHandler->GetBool("MiniMapMarker");
 	invertQueueKey = configHandler->GetBool("InvertQueueKey");
 
-	failedSound = sound->GetSoundId("FailedCommand");
+	failedSound = sound->GetDefSoundId("FailedCommand");
+
 }
-
-
 
 bool CGuiHandler::GetQueueKeystate() const
 {
@@ -730,13 +731,11 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 
 	// build a set to better find unwanted commands
-	for (unsigned int i = 0; i < removeCmds.size(); i++) {
-		const size_t index = removeCmds[i];
-
-		if (index < cmds.size()) {
-			removeIDs.insert(index);
+	for (int removeCmd : removeCmds) {
+		if (removeCmd < cmds.size()) {
+			removeIDs.insert(removeCmd);
 		} else {
-			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, int(index));
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, removeCmd);
 		}
 	}
 
@@ -751,68 +750,64 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	cmds = tmpCmds;
 
 	// add the custom commands
-	for (unsigned int i = 0; i < customCmds.size(); i++) {
-		customCmds[i].hidden = true;
-		cmds.push_back(customCmds[i]);
+	for (auto& customCmd : customCmds) {
+		customCmd.hidden = true;
+		cmds.push_back(customCmd);
 	}
 	const size_t cmdCount = cmds.size();
 
 	// set commands to onlyTexture
-	for (unsigned int i = 0; i < onlyTextureCmds.size(); i++) {
-		const size_t index = onlyTextureCmds[i];
-
-		if (index < cmdCount) {
-			cmds[index].onlyTexture = true;
+	for (int onlyTextureCmd : onlyTextureCmds) {
+		if (onlyTextureCmd < cmdCount) {
+			cmds[onlyTextureCmd].onlyTexture = true;
 		} else {
-			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, int(index));
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, onlyTextureCmd);
 		}
 	}
 
 	// retexture commands
-	for (unsigned int i = 0; i < reTextureCmds.size(); i++) {
-		const size_t index = reTextureCmds[i].cmdIndex;
+	for (const auto& reTextureCmd : reTextureCmds) {
+		const size_t index = reTextureCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].iconname = reTextureCmds[i].texture;
+			cmds[index].iconname = reTextureCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// reNamed commands
-	for (unsigned int i = 0; i < reNamedCmds.size(); i++) {
-		const size_t index = reNamedCmds[i].cmdIndex;
+	for (const auto& reNamedCmd : reNamedCmds) {
+		const size_t index = reNamedCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].name = reNamedCmds[i].texture;
+			cmds[index].name = reNamedCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reTooltip commands
-	for (unsigned int i = 0; i < reTooltipCmds.size(); i++) {
-		const size_t index = reTooltipCmds[i].cmdIndex;
+	for (const auto& reTooltipCmd : reTooltipCmds) {
+		const size_t index = reTooltipCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].tooltip = reTooltipCmds[i].texture;
+			cmds[index].tooltip = reTooltipCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reParams commands
-	for (unsigned int i = 0; i < reParamsCmds.size(); i++) {
-		const size_t index = reParamsCmds[i].cmdIndex;
+	for (const auto& reParamsCmd: reParamsCmds) {
+		const size_t index = reParamsCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			const auto& params = reParamsCmds[i].params;
-
-			for (auto pit = params.cbegin(); pit != params.cend(); ++pit) {
-				const size_t p = pit->first;
+			for (const auto& param: reParamsCmd.params) {
+				const size_t p = param.first;
 
 				if (p < cmds[index].params.size()) {
-					cmds[index].params[p] = pit->second;
+					cmds[index].params[p] = param.second;
 				}
 			}
 		} else {
@@ -823,8 +818,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 	int nextPos = 0;
 	// build the iconList from the map
-	for (auto mit = iconMap.cbegin(); mit != iconMap.cend(); ++mit) {
-		const int iconPos = mit->first;
+	for (const auto& item: iconMap) {
+		const int iconPos = item.first;
 
 		if (iconPos < nextPos)
 			continue;
@@ -836,7 +831,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			}
 		}
 
-		iconList.push_back(mit->second); // cmdIndex
+		iconList.push_back(item.second); // cmdIndex
 		nextPos = iconPos + 1;
 	}
 
@@ -907,7 +902,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser)
 {
-	commandsToGive.push_back(std::pair<const Command, bool>(cmd, fromUser));
+	commandsToGive.emplace_back(std::pair<const Command, bool>(cmd, fromUser));
 }
 
 
@@ -1092,8 +1087,8 @@ bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 	const CUnit* targetUnit = nullptr;
 	const CFeature* targetFeature = nullptr;
 
-	const float viewRange = globalRendering->viewRange * 1.4f;
-	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
+	const float viewRange = camera->GetFarPlaneDist() * 1.4f;
+	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, nullptr, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
 	if (dist <= 0.0f)
@@ -1278,10 +1273,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 			Command c(cd.id);
 
 			if (cd.id != CMD_STOP) {
-				c.options = CreateOptions(rightMouseButton);
+				c.SetOpts(CreateOptions(rightMouseButton));
 
 				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE)))
-					c.options = c.options ^ SHIFT_KEY;
+					c.SetOpts(c.GetOpts() ^ SHIFT_KEY);
 			}
 
 			GiveCommand(c);
@@ -1353,7 +1348,7 @@ bool CGuiHandler::SetActiveCommand(
 	bool shift
 ) {
 	// use the button value instead of rightMouseButton
-	const bool effectiveRMB = (button == SDL_BUTTON_LEFT) ? false : true;
+	const bool effectiveRMB = button != SDL_BUTTON_LEFT;
 
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
@@ -1493,8 +1488,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 
 	depth++;
 
-	for (size_t p = 0; p < cmds.size(); p++) {
-		std::string copy = cmds[p];
+	for (std::string copy: cmds) {
 
 		ModGroup inMods;  // must match for the action to execute
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
@@ -1608,7 +1602,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 		if ((ir == minimap) && (minimap->FullProxy())) {
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 		} else {
-			const float viewRange = globalRendering->viewRange * 1.4f;
+			const float viewRange = camera->GetFarPlaneDist() * 1.4f;
 			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, nullptr, unit, feature, true);
 			const float3 hit = cameraPos + mouseDir * dist;
 
@@ -1848,23 +1842,23 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 				if ((cmdDesc.id < 0) || (cmdDesc.id == CMD_STOCKPILE)) {
 					if (action.extra == "+5") {
-						c.options = SHIFT_KEY;
+						c.SetOpts(SHIFT_KEY);
 					} else if (action.extra == "+20") {
-						c.options = CONTROL_KEY;
+						c.SetOpts(CONTROL_KEY);
 					} else if (action.extra == "+100") {
-						c.options = SHIFT_KEY | CONTROL_KEY;
+						c.SetOpts(SHIFT_KEY | CONTROL_KEY);
 					} else if (action.extra == "-1") {
-						c.options = RIGHT_MOUSE_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY);
 					} else if (action.extra == "-5") {
-						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY);
 					} else if (action.extra == "-20") {
-						c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | CONTROL_KEY);
 					} else if (action.extra == "-100") {
-						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY);
 					}
 				}
 				else if (action.extra.find("queued") != std::string::npos) {
-					c.options |= SHIFT_KEY;
+					c.SetOpts(c.GetOpts() | SHIFT_KEY);
 				}
 
 				GiveCommand(c);
@@ -1905,7 +1899,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					Command c(cd.id, 0, value = Clamp(value, minV, maxV));
 
 					if (action.extra.find("queued") != std::string::npos)
-						c.options = SHIFT_KEY;
+						c.SetOpts(SHIFT_KEY);
 
 					GiveCommand(c);
 					break;
@@ -2034,7 +2028,7 @@ Command CGuiHandler::GetOrderPreview()
 
 inline Command CheckCommand(Command c) {
 	// always allow queued commands, since conditions may change s.t. the command becomes valid
-	if (selectedUnitsHandler.selectedUnits.empty() || (c.options & SHIFT_KEY))
+	if (selectedUnitsHandler.selectedUnits.empty() || (c.GetOpts() & SHIFT_KEY))
 		return c;
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
@@ -2111,17 +2105,17 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_MAP: {
-			float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * globalRendering->viewRange * 1.4f), false);
+			float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * camera->GetFarPlaneDist() * 1.4f), false);
 
 			if (dist < 0.0f)
-				dist = CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, cameraPos.y + (mouseDir.y * globalRendering->viewRange * 1.4f));
+				dist = CGround::LinePlaneCol(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, cameraPos.y + (mouseDir.y * camera->GetFarPlaneDist() * 1.4f));
 
 			return CheckCommand(Command(commands[tempInCommand].id, CreateOptions(button), cameraPos + (mouseDir * dist)));
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
+			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, unitdef->floatOnWater, false);
 
 			if (dist < 0.0f)
 				return defaultRet;
@@ -2136,7 +2130,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[SDL_BUTTON_LEFT].camPos;
 				const float3 camTraceDir = mouse->buttons[SDL_BUTTON_LEFT].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float isectDist = CGround::LineGroundWaterCol(camTracePos, camTraceDir, traceDist, unitdef->floatOnWater, false);
 
 				GetBuildPositions(BuildInfo(unitdef, camTracePos + camTraceDir * isectDist, buildFacing), bi, cameraPos, mouseDir);
@@ -2171,7 +2165,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, true);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, true);
 
 			if (unit == nullptr)
 				return defaultRet;
@@ -2187,7 +2181,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			const float traceDist = globalRendering->viewRange * 1.4f;
+			const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 			const float isectDist = TraceRay::GuiTraceRay(cameraPos, mouseDir, traceDist, nullptr, unit, feature, true);
 
 			if (isectDist > (traceDist - 300.0f))
@@ -2207,7 +2201,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const float3 camTracePos = mouse->buttons[button].camPos;
 			const float3 camTraceDir = mouse->buttons[button].dir;
 
-			const float traceDist = globalRendering->viewRange * 1.4f;
+			const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 			const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 			      float outerDist = -1.0f;
 
@@ -2219,7 +2213,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			Command c(commands[tempInCommand].id, CreateOptions(button), innerPos);
 
-			if (mouse->buttons[button].movement > 30) {
+			if (mouse->buttons[button].movement > mouse->dragFrontCommandThreshold) {
 				// only create the front if the mouse has moved enough
 				if ((outerDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * traceDist, false)) < 0.0f)
 					outerDist = CGround::LinePlaneCol(cameraPos, mouseDir, traceDist, innerPos.y);
@@ -2248,12 +2242,12 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			if (mouse->buttons[button].movement < 4) {
+			if (mouse->buttons[button].movement <= mouse->dragCircleCommandThreshold) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
-				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
+				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, true);
 
-				if (dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
+				if (dist2 > (camera->GetFarPlaneDist() * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
 					return defaultRet;
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
@@ -2281,7 +2275,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[button].camPos;
 				const float3 camTraceDir = mouse->buttons[button].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 				      float outerDist = -1.0f;
 
@@ -2306,11 +2300,11 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			if (mouse->buttons[button].movement < 16) {
+			if (mouse->buttons[button].movement <= mouse->dragBoxCommandThreshold) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float outerDist = TraceRay::GuiTraceRay(cameraPos, mouseDir, traceDist, nullptr, unit, feature, true);
 
 				if (outerDist > (traceDist - 300.0f))
@@ -2331,7 +2325,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[button].camPos;
 				const float3 camTraceDir = mouse->buttons[button].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 				      float outerDist = -1.0f;
 
@@ -2403,7 +2397,7 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 		const CUnit* unit = nullptr;
 		const CFeature* feature = nullptr;
 
-		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, startInfo.def->floatOnWater);
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, startInfo.def->floatOnWater);
 
 		if (unit != nullptr) {
 			other.def = unit->unitDef;
@@ -2412,10 +2406,10 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 		} else {
 			const Command c = CGameHelper::GetBuildCommand(cameraPos, mouseDir);
 
-			if (c.GetID() < 0 && c.params.size() == 4) {
+			if (c.GetID() < 0 && c.GetNumParams() == 4) {
 				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
-				other.buildFacing = int(c.params[3]);
+				other.buildFacing = int(c.GetParam(3));
 			}
 		}
 	}
@@ -2522,19 +2516,16 @@ void CGuiHandler::Draw()
 	if ((iconsCount <= 0) && (luaUI == nullptr))
 		return;
 
-	glPushAttrib(GL_ENABLE_BIT);
+	glAttribStatePtr->PushEnableBit();
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GEQUAL, 0.01f);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (iconsCount > 0)
 		DrawMenu();
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -2578,8 +2569,11 @@ bool CGuiHandler::DrawMenuUnitBuildIcon(const Box& iconBox, GL::RenderDataBuffer
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 
 	return true;
 }
@@ -2742,8 +2736,11 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 
 	if (tex2.empty())
 		return true; // success, no second texture to draw
@@ -2765,8 +2762,11 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 	rdBuffer->SafeAppend({{x1, y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x2, y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x2, y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{x2, y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x1, y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{x1, y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 	return true;
 }
 
@@ -2776,7 +2776,10 @@ void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL:
 	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
 }
 
 
@@ -2869,8 +2872,9 @@ void CGuiHandler::DrawMenu()
 	Shader::IProgramObject* shaderC  = bufferC->GetShader(); // used for everything else
 
 	shaderC->Enable();
-	shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 
 	const float boxAlpha = mix(frameAlpha, guiAlpha, frameAlpha < 0.0f);
@@ -2910,8 +2914,11 @@ void CGuiHandler::DrawMenu()
 		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
+
+		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
-		bufferC->Submit(GL_QUADS);
+		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
+		bufferC->Submit(GL_TRIANGLES);
 	}
 
 	// filter invalid icons
@@ -2928,7 +2935,7 @@ void CGuiHandler::DrawMenu()
 	{
 		for (bool outline: {true, false}) {
 			// LED outlines and filled interiors; latter must come second
-			glPolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
+			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
 
 			for (int iconIdx: menuIconIndices) {
 				const IconInfo& icon = icons[iconIdx];
@@ -2942,14 +2949,15 @@ void CGuiHandler::DrawMenu()
 				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
 			}
 
-			bufferC->Submit(GL_QUADS);
+			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
 		}
 	}
 	{
 		shaderC->Disable();
 		shaderTC->Enable();
-		shaderTC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderTC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderTC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderTC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 		// icon textures (TODO: atlas these)
 		for (int iconIdx: menuIconIndices) {
@@ -2968,11 +2976,12 @@ void CGuiHandler::DrawMenu()
 			);
 		}
 
+		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shaderTC->Disable();
 		shaderC->Enable();
 	}
 	{
-		glBlendFunc(GL_ONE, GL_ONE);
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
 
 		// (default and custom) icon background highlights; use additive blending
 		for (int iconIdx: menuIconIndices) {
@@ -2989,11 +2998,11 @@ void CGuiHandler::DrawMenu()
 			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, 0.0f);
 		}
 
-		bufferC->Submit(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		bufferC->Submit(GL_TRIANGLES);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	{
-		glPolygonMode(GL_FRONT_AND_BACK, polyModes[1]);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[1]);
 
 		// (default and custom) icon frame highlights
 		for (int iconIdx: menuIconIndices) {
@@ -3065,12 +3074,12 @@ void CGuiHandler::DrawMenu()
 		}
 
 		// should be submitted as GL_LINE_LOOP, but this is faster
-		bufferC->Submit(GL_QUADS);
-		glPolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
+		bufferC->Submit(GL_TRIANGLES);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
 	if (numDisabledIcons > 0) {
-		glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		glAttribStatePtr->BlendFunc(GL_DST_COLOR, GL_ZERO);
 
 		// darken disabled commands
 		for (int iconIdx: menuIconIndices) {
@@ -3084,11 +3093,14 @@ void CGuiHandler::DrawMenu()
 			bufferC->SafeAppend({{b.x1, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x2, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x2, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
+
+			bufferC->SafeAppend({{b.x2, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x1, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
+			bufferC->SafeAppend({{b.x1, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 		}
 
-		bufferC->Submit(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		bufferC->Submit(GL_TRIANGLES);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	{
@@ -3107,8 +3119,9 @@ void CGuiHandler::DrawMenu()
 			const bool highlightIcon = ((mouseIconIdx == arrowIconIdx) || (icon.commandsID == inCommand)) && (!customCommand || !cmdDesc.params.empty());
 
 			(this->*drawFunc)(icon.visual, arrowColors[highlightIcon], bufferC);
-			bufferC->Submit(GL_POLYGON);
 		}
+
+		bufferC->Submit(GL_TRIANGLES);
 	}
 
 
@@ -3132,6 +3145,7 @@ void CGuiHandler::DrawMenu()
 	// submits for us
 	DrawMenuNumberInput(bufferC);
 
+	shaderC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shaderC->Disable();
 	font->DrawBufferedGL4();
 }
@@ -3152,9 +3166,12 @@ void CGuiHandler::DrawMenuName(GL::RenderDataBufferC* rdBuffer) const
 		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+
+		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		// done by caller
-		// rdBuffer->Submit(GL_QUADS);
+		// rdBuffer->Submit(GL_TRIANGLES);
 
 		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, menuName);
 	} else {
@@ -3195,9 +3212,12 @@ void CGuiHandler::DrawMenuSelectionInfo(GL::RenderDataBufferC* rdBuffer) const
 		rdBuffer->SafeAppend({{x1, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x1, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x2, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+
+		rdBuffer->SafeAppend({{x2, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x2, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+		rdBuffer->SafeAppend({{x1, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		// done by caller
-		// rdBuffer->Submit(GL_QUADS);
+		// rdBuffer->Submit(GL_TRIANGLES);
 
 		smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
 		smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM | FONT_BUFFERED, buf.str());
@@ -3228,18 +3248,24 @@ void CGuiHandler::DrawMenuNumberInput(GL::RenderDataBufferC* rdBuffer) const
 	rdBuffer->SafeAppend({{0.235f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.235f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.250f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.250f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.250f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.235f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 
 	rdBuffer->SafeAppend({{0.750f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.750f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.765f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.765f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.765f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.750f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 
 	rdBuffer->SafeAppend({{0.25f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.25f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.75f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.75f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.75f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{0.25f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
+	// rdBuffer->Submit(GL_TRIANGLES);
 
 
 	rdBuffer->SafeAppend({{slideX + 0.015f, 0.55f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}});
@@ -3263,11 +3289,25 @@ void CGuiHandler::DrawMenuPrevArrow(const Box& iconBox, const SColor& color, GL:
 	const float ySize = 0.125f * math::fabs(iconBox.y2 - iconBox.y1);
 	const float xSiz2 = 2.0f * xSize;
 
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color});
+	#if 0
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	#else
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	#endif
 }
 
 void CGuiHandler::DrawMenuNextArrow(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer) const
@@ -3277,11 +3317,25 @@ void CGuiHandler::DrawMenuNextArrow(const Box& iconBox, const SColor& color, GL:
 	const float ySize = 0.125f * math::fabs(iconBox.y2 - iconBox.y1);
 	const float xSiz2 = 2.0f * xSize;
 
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color});
+	#if 0
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	#else
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	#endif
 }
 
 
@@ -3336,7 +3390,10 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, colors[c]});
+
+			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, colors[c]});
+			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 		}
 	}
 }
@@ -3345,13 +3402,13 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 /******************************************************************************/
 /******************************************************************************/
 
-static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::RenderDataBufferC* rb, const float3& pos)
+static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::WideLineAdapterC* wla, const float3& pos)
 {
 	const auto DrawCircleIf = [&](const float4& center, const float* color) {
 		if (center.w <= 0.0f)
 			return false;
 
-		glSurfaceCircleRB(rb, center, color, 40);
+		glSurfaceCircleW(wla, center, color, 40);
 		return true;
 	};
 
@@ -3364,7 +3421,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 
 	// draw shield range for immobile units
 	if (shieldWD != nullptr)
-		glSurfaceCircleRB(rb, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
+		glSurfaceCircleW(wla, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
 
 	// draw sensor and jammer ranges
 	if (unitDef->onoffable || unitDef->activateWhenBuilt) {
@@ -3390,7 +3447,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 	if (exploWD == nullptr)
 		return;
 
-	glSurfaceCircleRB(rb, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
+	glSurfaceCircleW(wla, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
 }
 
 
@@ -3413,7 +3470,7 @@ static void DrawWeaponAngleCone(
 	mat.RotateZ(-headingPitch.y);
 	mat.Scale({xlen, yzlen, yzlen});
 
-	ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * mat);
+	ipo->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix() * mat);
 
 	glDrawCone(rdb, GL_FRONT, 64, {1.0f, 0.0f, 0.0f, 0.25f}); // back-faces (inside) in red
 	glDrawCone(rdb, GL_BACK , 64, {0.0f, 1.0f, 0.0f, 0.25f}); // front-faces (outside) in green
@@ -3438,12 +3495,13 @@ static inline void DrawUnitWeaponAngleCones(const CUnit* unit, GL::RenderDataBuf
 }
 
 
-static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject*)
+static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject*)
 {
-	glBallisticCircle(rdb, unit->weapons[0],  40, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+	glBallisticCircleW(wla, unit->weapons[0],  40, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
 }
-static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
+static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo)
 {
+	// never invoked on minimap
 	DrawUnitWeaponAngleCones(unit, rdb, ipo);
 }
 
@@ -3453,6 +3511,7 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 	const UnitDef* buildeeDef,
 	const DrawFunc unitDrawFunc,
 	GL::RenderDataBufferC* rdb,
+	GL::WideLineAdapterC* wla,
 	Shader::IProgramObject* ipo,
 	bool drawSelecteeShapes, // rings for pass 1, cones for pass 2
 	bool drawPointeeRing,
@@ -3466,18 +3525,18 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 	drawBuildeeRings &= (unitDrawFunc == DrawUnitWeaponRangeRingFunc);
 
 	if (drawPointeeRing)
-		unitDrawFunc(pointeeUnit, rdb, ipo);
+		unitDrawFunc(pointeeUnit, rdb, wla, ipo);
 
 	if (drawBuildeeRings) {
 		// draw (primary) weapon range for queued turrets
 		for (const BuildInfo& bi: biQueue) {
-			if (buildeeDef->weapons.empty())
+			if (!buildeeDef->HasWeapons())
 				continue;
 
-			const UnitDefWeapon& udw = buildeeDef->weapons[0];
+			const UnitDefWeapon& udw = buildeeDef->GetWeapon(0);
 			const WeaponDef* wd = udw.def;
 
-			glBallisticCircle(rdb, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
+			glBallisticCircleW(wla, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
 		}
 	}
 
@@ -3500,14 +3559,14 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 			if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 
-			unitDrawFunc(unit, rdb, ipo);
+			unitDrawFunc(unit, rdb, wla, ipo);
 		}
 	}
 
 	// unlike rings, cones are not batched for simplicity
 	// buffer will just be empty here if drawing the latter
-	assert(unitDrawFunc != DrawUnitWeaponAngleConeFunc || rdb->NumElems() == 0);
-	rdb->Submit(GL_LINES);
+	assert(unitDrawFunc != DrawUnitWeaponAngleConeFunc || wla->NumElems() == 0);
+	wla->Submit(GL_LINES);
 }
 
 
@@ -3516,15 +3575,10 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 void CGuiHandler::DrawMapStuff(bool onMiniMap)
 {
 	if (!onMiniMap) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_FALSE);
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_ALPHA_TEST);
-	} else {
-		// TODO: grab the minimap transform
-		return;
+		glAttribStatePtr->EnableDepthTest();
+		glAttribStatePtr->DisableDepthMask();
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 
@@ -3552,6 +3606,19 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
+	const int xScale = onMiniMap? minimap->GetSizeX(): globalRendering->viewSizeX;
+	const int yScale = onMiniMap? minimap->GetSizeY(): globalRendering->viewSizeY;
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
+	// no alpha-test if drawing on world, does not seem essential
+	// shader->SetUniform("u_alpha_test_ctrl", 0.5f, 0.0f, 0.0f, 1.0f * onMiniMap);
+	wla->Setup(buffer, xScale, yScale, 1.0f, projMat * viewMat, onMiniMap);
 
 
 	if (activeMousePress) {
@@ -3573,16 +3640,16 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
-					if (mouse->buttons[button].movement > 30) {
+					if (mouse->buttons[button].movement > mouse->dragFrontCommandThreshold) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
 
-						if (cmdDesc.params.size() > 0)
+						if (!cmdDesc.params.empty())
 							maxSize = atof(cmdDesc.params[0].c_str());
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 
-						DrawFormationFrontOrder(button, maxSize, sizeDiv, onMiniMap, tracePos, traceDir);
+						DrawFormationFrontOrder(buffer, wla, shader, tracePos, traceDir, button, maxSize, sizeDiv, onMiniMap);
 					}
 				} break;
 
@@ -3595,11 +3662,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					if (cmdDesc.params.size() == 1)
 						maxRadius = atof(cmdDesc.params[0].c_str());
 
-					if (mouse->buttons[button].movement > 4) {
+					if (mouse->buttons[button].movement > mouse->dragCircleCommandThreshold) {
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
-						const float traceDist = globalRendering->viewRange * 1.4f;
+						const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 						const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 						      float outerDist = -1.0f;
 
@@ -3637,31 +3704,34 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						}
 
 						if (!onMiniMap) {
-							DrawSelectCircle(buffer, shader, {innerPos, radius}, color);
+							DrawSelectCircle(buffer, wla, shader, {innerPos, radius}, color);
 						} else {
-							glColor4f(color[0], color[1], color[2], 0.5f);
-							glBegin(GL_TRIANGLE_FAN);
-
 							constexpr int divs = 256;
+
 							for (int i = 0; i <= divs; ++i) {
 								const float radians = math::TWOPI * (float)i / (float)divs;
-								float3 p(innerPos.x, 0.0f, innerPos.z);
-								p.x += (fastmath::sin(radians) * radius);
-								p.z += (fastmath::cos(radians) * radius);
-								glVertex3f(p.x, p.y, p.z);
+
+								float3 p;
+								p.x = innerPos.x + (fastmath::sin(radians) * radius);
+								p.z = innerPos.z + (fastmath::cos(radians) * radius);
+
+								buffer->SafeAppend({p, {color[0], color[1], color[2], 0.5f}});
 							}
-							glEnd();
+
+							assert(shader->IsBound());
+							// must waste a submit, code below assumes LINES
+							buffer->Submit(GL_TRIANGLE_FAN);
 						}
 					}
 				} break;
 
 				case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
 					// draw rectangular area-command
-					if (mouse->buttons[button].movement >= 16) {
+					if (mouse->buttons[button].movement > mouse->dragBoxCommandThreshold) {
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
-						const float traceDist = globalRendering->viewRange * 1.4f;
+						const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 						const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 						      float outerDist = -1.0f;
 
@@ -3674,15 +3744,19 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
 						if (!onMiniMap) {
-							DrawSelectBox(buffer, shader, innerPos, outerPos);
+							DrawSelectBox(buffer, wla, shader, innerPos, outerPos);
 						} else {
-							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-							glBegin(GL_QUADS);
-							glVertex3f(innerPos.x, 0.0f, innerPos.z);
-							glVertex3f(outerPos.x, 0.0f, innerPos.z);
-							glVertex3f(outerPos.x, 0.0f, outerPos.z);
-							glVertex3f(innerPos.x, 0.0f, outerPos.z);
-							glEnd();
+							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{outerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+
+							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{innerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+
+							assert(shader->IsBound());
+							// must waste a submit, code below assumes LINES
+							buffer->Submit(GL_TRIANGLES);
 						}
 					}
 				} break;
@@ -3691,10 +3765,10 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	}
 
 	if (!onMiniMap) {
-		glBlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
-		glLineWidth(cmdColors.SelectedLineWidth());
+		glAttribStatePtr->BlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
+		wla->SetWidth(cmdColors.SelectedLineWidth());
 	} else {
-		glLineWidth(1.49f);
+		wla->SetWidth(1.49f);
 	}
 
 
@@ -3703,7 +3777,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	const CUnit* pointeeUnit = nullptr;
 	const UnitDef* buildeeDef = nullptr;
 
-	const float maxTraceDist = globalRendering->viewRange * 1.4f;
+	const float maxTraceDist = camera->GetFarPlaneDist() * 1.4f;
 	      float rayTraceDist = -1.0f;
 
 
@@ -3731,11 +3805,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			if (enemyUnit && decoyDef != nullptr)
 				unitDef = decoyDef;
 
-			DrawUnitDefRanges(unit, unitDef, buffer, pointeeUnit->pos);
+			DrawUnitDefRanges(unit, unitDef, wla, pointeeUnit->pos);
 
 			// draw decloak distance
 			if (pointeeUnit->decloakDistance > 0.0f) {
-				if (pointeeUnit->unitDef->decloakSpherical && globalRendering->drawdebug) {
+				if (pointeeUnit->unitDef->decloakSpherical && globalRendering->drawDebug) {
 					CMatrix44f mat;
 					mat.Translate(pointeeUnit->midPos);
 					mat.RotateX(-90.0f * math::DEG_TO_RAD);
@@ -3745,8 +3819,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 					cvShader->Enable();
 					cvShader->SetUniformMatrix4fv(0, false, mat);
-					cvShader->SetUniformMatrix4fv(1, false, camera->GetViewMatrix());
-					cvShader->SetUniformMatrix4fv(2, false, camera->GetProjectionMatrix());
+					cvShader->SetUniformMatrix4fv(1, false, viewMat);
+					cvShader->SetUniformMatrix4fv(2, false, projMat);
 					cvShader->SetUniform4fv(3, cmdColors.rangeDecloak);
 
 					// spherical
@@ -3755,9 +3829,10 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					gleBindMeshBuffers(nullptr);
 
 					cvShader->Disable();
+					shader->Enable();
 				} else {
 					// cylindrical
-					glSurfaceCircleRB(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
+					glSurfaceCircleW(wla, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
 				}
 			}
 
@@ -3773,7 +3848,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 				const float4& color = colors[!enemyUnit || (w == nullptr) || w->numStockpiled > 0];
 
-				glSurfaceCircleRB(buffer, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
+				glSurfaceCircleW(wla, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
 			}
 		}
 	}
@@ -3798,7 +3873,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (radius <= 0.0f)
 					continue;
 
-				glSurfaceCircleRB(buffer, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
+				glSurfaceCircleW(wla, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
 			}
 		}
 
@@ -3833,11 +3908,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 
 			for (const BuildInfo& bi: buildInfoQueue) {
-				DrawUnitDefRanges(nullptr, buildeeDef, buffer, bi.pos);
+				DrawUnitDefRanges(nullptr, buildeeDef, wla, bi.pos);
 
 				// draw extraction range
 				if (buildeeDef->extractRange > 0.0f)
-					glSurfaceCircleRB(buffer, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
+					glSurfaceCircleW(wla, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
 
 				// draw interceptor range
 				const WeaponDef* wd = buildeeDef->stockpileWeaponDef;
@@ -3845,26 +3920,21 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (wd == nullptr || !wd->interceptor)
 					continue;
 
-				glSurfaceCircleRB(buffer, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
+				glSurfaceCircleW(wla, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
 			}
 		}
 	}
 
 
-	if (buffer->NumElems() > 0) {
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		buffer->Submit(GL_LINES);
-		shader->Disable();
+	if (wla->NumElems() > 0) {
+		assert(shader->IsBound());
+		wla->Submit(GL_LINES);
 	}
-
 
 	if (rayTraceDist > 0.0f) {
 		assert(activeBuildCommand);
 		assert(buildeeDef != nullptr);
 
-		// TODO: grab the minimap transform
 		if (!buildInfoQueue.empty()) {
 			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
 
@@ -3927,12 +3997,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			};
 
 			unitDrawer->DrawStaticModelBatch<BuildInfo>(buildInfoQueue, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
+			shader->Enable(); // restore
 
-
-			glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
+			glAttribStatePtr->BlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 		}
 	}
-
 
 	{
 		// draw range circles (for immobile units) if attack orders are imminent
@@ -3940,9 +4009,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 		const bool  activeAttackCmd  = (haveActiveCommand && commands[inCommand].id == CMD_ATTACK);
 		const bool defaultAttackCmd  = (inCommand == -1 && defaultCmd > 0 && commands[defaultCmd].id == CMD_ATTACK);
-		const bool  drawPointeeRing  = (pointeeUnit != nullptr && pointeeUnit->maxRange > 0.0f);
+		const bool  drawPointeeRing  = (pointeeUnit != nullptr && !pointeeUnit->weapons.empty());
 		const bool  drawBuildeeRings = (activeBuildCommand && rayTraceDist > 0.0f);
-		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawDebug);
 
 
 		if (activeAttackCmd || defaultAttackCmd || drawPointeeRing || drawBuildeeRings) {
@@ -3950,27 +4019,23 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			static constexpr decltype(&glResetRangeRingDrawState  ) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
 			static constexpr decltype(&DrawUnitWeaponRangeRingFunc)       unitDrawFuncs[] = {&DrawUnitWeaponRangeRingFunc, &DrawUnitWeaponAngleConeFunc};
 
-			shader->Enable();
-			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+			assert(shader->IsBound());
 
 			for (int i = 0; i < (1 + drawWeaponCones); i++) {
 				setupDrawStateFuncs[i]();
-				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
+				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, wla, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
 				resetDrawStateFuncs[i]();
 			}
-
-			shader->Disable();
 		}
 	}
 
 
-	glLineWidth(1.0f);
-
 	if (!onMiniMap) {
-		glDepthMask(GL_TRUE);
-		glDisable(GL_BLEND);
+		glAttribStatePtr->EnableDepthMask();
+		glAttribStatePtr->DisableBlendMask();
 	}
+
+	shader->Disable();
 }
 
 
@@ -4026,19 +4091,19 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	markerMat.RotateY(-360.0f * (spinTime * 0.5f) * math::DEG_TO_RAD);
 
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * markerMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix() * markerMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 	buffer->SafeAppend(markerVerts, sizeof(markerVerts) / sizeof(markerVerts[0]));
 	buffer->SafeAppend(markerIndcs, sizeof(markerIndcs) / sizeof(markerIndcs[0]));
 	buffer->SubmitIndexed(GL_TRIANGLES);
 	shader->Disable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -4091,32 +4156,31 @@ void CGuiHandler::DrawCentroidCursor()
 	if (mc == nullptr)
 		return;
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 	mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 }
 
 
 void CGuiHandler::DrawFormationFrontOrder(
+	GL::RenderDataBufferC* buffer,
+	GL::WideLineAdapterC* wla,
+	Shader::IProgramObject* shader,
+	const float3& cameraPos,
+	const float3& mouseDir,
 	int button,
 	float maxSize,
 	float sizeDiv,
-	bool onMinimap,
-	const float3& cameraPos,
-	const float3& mouseDir
+	bool onMiniMap
 ) {
-	// TODO: grab the minimap transform
-	if (onMinimap)
-		return;
-
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 
-	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * camera->GetFarPlaneDist() * 1.4f, false);
 
 	if (buttonDist < 0.0f)
 		return;
 
-	const float cameraDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+	const float cameraDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * camera->GetFarPlaneDist() * 1.4f, false);
 
 	if (cameraDist < 0.0f)
 		return;
@@ -4125,6 +4189,7 @@ void CGuiHandler::DrawFormationFrontOrder(
 	float3 pos2 = cameraPos + (mouseDir * cameraDist);
 
 	ProcessFrontPositions(pos1, pos2);
+
 
 	const float3 zdir = ((pos1 - pos2).cross(UpVector)).ANormalize();
 	const float3 xdir = zdir.cross(UpVector);
@@ -4135,44 +4200,47 @@ void CGuiHandler::DrawFormationFrontOrder(
 	}
 
 
-	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
-	Shader::IProgramObject* shader = buffer->GetShader();
-
 	constexpr float4 color = {0.5f, 1.0f, 0.5f, 0.5f};
 
-	#if 0
-	if (onMinimap) {
+	assert(shader->IsBound());
+
+	if (onMiniMap) {
 		pos1 += (pos1 - pos2);
-		buffer->SafeAppend({pos1, {&color.x}});
-		buffer->SafeAppend({pos2, {&color.x}});
-		glLineWidth(2.0f);
-		buffer->Submit(GL_LINES);
+		wla->SetWidth(2.0f);
+		wla->SafeAppend({pos1, {&color.x}});
+		wla->SafeAppend({pos2, {&color.x}});
+		wla->Submit(GL_LINES);
+		wla->SetWidth(1.0f);
 		return;
 	}
-	#endif
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	{
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-
 		// direction arrow
-		buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 + xdir * 25.0f + zdir *  50.0f, {&color.x}});
+		{
+			buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
 
-		buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 40.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
-		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 25.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
+		}
+		{
+			buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 40.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
 
-		glDisable(GL_DEPTH_TEST);
-		buffer->Submit(GL_QUADS);
-		glEnable(GL_DEPTH_TEST);
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
+		}
+
+		glAttribStatePtr->DisableDepthTest();
+		buffer->Submit(GL_TRIANGLES);
+		glAttribStatePtr->EnableDepthTest();
 	}
 
 	pos1 += (pos1 - pos2);
@@ -4197,8 +4265,7 @@ void CGuiHandler::DrawFormationFrontOrder(
 			buffer->SafeAppend({p + UpVector * 100.0f, {&color.x}});
 		}
 
-		buffer->Submit(GL_QUAD_STRIP);
-		shader->Disable();
+		buffer->Submit(GL_TRIANGLE_STRIP);
 	}
 }
 
@@ -4240,6 +4307,8 @@ static void DrawCylinderShape(const void* data)
 	const float step = math::TWOPI / cylData->divs;
 
 	{
+		assert(cylData->shader->IsBound());
+
 		// sides
 		for (int i = 0; i <= cylData->divs; i++) {
 			const float radians = step * (i % cylData->divs);
@@ -4250,10 +4319,7 @@ static void DrawCylinderShape(const void* data)
 			cylData->buffer->SafeAppend({{x, params.y, z}, color});
 		}
 
-		cylData->shader->Enable();
-		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		cylData->buffer->Submit(GL_QUAD_STRIP);
+		cylData->buffer->Submit(GL_TRIANGLE_STRIP);
 	}
 	{
 		// top
@@ -4291,40 +4357,55 @@ static void DrawBoxShape(const void* data)
 	const float3&  maxs = boxData->maxs;
 	const SColor& color = boxData->color;
 
-	boxData->shader->Enable();
-	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	assert(boxData->shader->IsBound());
 
-	// top
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
-	// bottom
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
-	boxData->buffer->Submit(GL_QUADS);
+	{
+		// top
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
 
-	// sides
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->Submit(GL_QUAD_STRIP);
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+	}
+	{
+		// bottom
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	}
+	boxData->buffer->Submit(GL_TRIANGLES);
+
+	{
+		// sides
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	}
+
+	boxData->buffer->Submit(GL_TRIANGLE_STRIP);
 	// leave enabled for DrawSelectBox corner-posts
 	// boxData->shader->Disable();
 }
 
 
-void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float4& pos, const float* color)
+void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo, const float4& pos, const float* color)
 {
 	CylinderData cylData;
 	cylData.center.x = pos.x;
@@ -4338,8 +4419,10 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 	cylData.shader = ipo;
 
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		assert(ipo->IsBound());
+
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 		glDrawVolume(DrawCylinderShape, &cylData);
 	}
@@ -4347,21 +4430,20 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 		assert(ipo->IsBound());
 
 		// draw the center line
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLineWidth(2.0f);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		wla->SetWidth(2.0f);
 
 		const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
 
-		rdb->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
-		rdb->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
-		rdb->Submit(GL_LINES);
-		ipo->Disable();
+		wla->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
+		wla->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
+		wla->Submit(GL_LINES);
 
-		glLineWidth(1.0f);
+		wla->SetWidth(1.0f);
 	}
 }
 
-void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float3& pos0, const float3& pos1)
+void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo, const float3& pos0, const float3& pos1)
 {
 	constexpr float4 colors[] = {{1.0f, 0.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 0.0f, 0.0f}};
 
@@ -4372,10 +4454,11 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 	boxData.buffer = rdb;
 	boxData.shader = ipo;
 
-	glEnable(GL_BLEND);
+	assert(ipo->IsBound());
+	glAttribStatePtr->EnableBlendMask();
 
 	if (!invColorSelect) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDrawVolume(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
@@ -4391,23 +4474,24 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
 		const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
 
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		wla->SetWidth(2.0f);
+
 		assert(ipo->IsBound());
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLineWidth(2.0f);
+		wla->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner1                    , {0.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner1 + UpVector * 128.0f, {0.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner2                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner2 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->Submit(GL_LINES);
+		// leave enabled for caller (DrawMap)
+		// ipo->Disable();
 
-		rdb->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner1                    , {0.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner1 + UpVector * 128.0f, {0.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner2                    , {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner2 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->Submit(GL_LINES);
-		ipo->Disable();
-
-		glLineWidth(1.0f);
+		wla->SetWidth(1.0f);
 	}
 }
 

@@ -3,11 +3,11 @@
 #ifndef COB_THREAD_H
 #define COB_THREAD_H
 
+#include <string>
+#include <array>
+
 #include "CobInstance.h"
 #include "Lua/LuaRules.h"
-
-#include <string>
-#include <vector>
 
 class CCobFile;
 class CCobInstance;
@@ -98,9 +98,41 @@ public:
 	CCobFile* cobFile = nullptr;
 
 protected:
+	struct CallInfo {
+		CR_DECLARE_STRUCT(CallInfo)
+		int functionId = -1;
+		int returnAddr = -1;
+		int stackTop = -1;
+	};
+
 	void LuaCall();
 
-	inline int POP();
+	bool PushCallStack(CallInfo v) { return (callStackSize < callStack.size() && PushCallStackRaw(v)); }
+	bool PushDataStack(     int v) { return (dataStackSize < dataStack.size() && PushDataStackRaw(v)); }
+
+	bool PushCallStackRaw(CallInfo v) { assert(callStackSize < callStack.size()); callStack[callStackSize++] = v; return true; }
+	bool PushDataStackRaw(     int v) { assert(dataStackSize < dataStack.size()); dataStack[dataStackSize++] = v; return true; }
+
+	CallInfo& PushCallStackRef() {
+		if (callStackSize < callStack.size())
+			return (PushCallStackRefRaw());
+		return callStack[0];
+	}
+	CallInfo& PushCallStackRefRaw() {
+		assert(callStackSize < callStack.size());
+		return callStack[callStackSize++];
+	}
+
+	int LocalFunctionID() const { return callStack[callStackSize - (callStackSize > 0)].functionId; }
+	int LocalReturnAddr() const { return callStack[callStackSize - (callStackSize > 0)].returnAddr; }
+	int LocalStackFrame() const { return callStack[callStackSize - (callStackSize > 0)].stackTop  ; }
+
+	int PopDataStack() {
+		if (dataStackSize > 0)
+			return dataStack[--dataStackSize];
+
+		return 0;
+	}
 
 protected:
 	int id = -1;
@@ -115,19 +147,16 @@ protected:
 	int waitAxis = -1;
 	int waitPiece = -1;
 
+	int callStackSize = 0;
+	int dataStackSize = 0;
+
 	int errorCounter = 100;
 
 	int luaArgs[MAX_LUA_COB_ARGS] = {0};
 
-	struct CallInfo {
-		CR_DECLARE_STRUCT(CallInfo)
-		int functionId;
-		int returnAddr;
-		int stackTop;
-	};
 
-	std::vector<CallInfo> callStack;
-	std::vector<int> dataStack;
+	std::array<CallInfo, 64> callStack;
+	std::array<int, 1024> dataStack;
 	// std::vector<int> execTrace;
 
 	State state = Init;

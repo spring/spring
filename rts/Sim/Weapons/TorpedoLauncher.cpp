@@ -7,7 +7,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, )
 CR_REG_METADATA(CTorpedoLauncher,(

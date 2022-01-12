@@ -117,7 +117,7 @@ namespace nv_dds
             CSurface(const CSurface &copy): CSurface() { *this = copy; }
             CSurface(CSurface &&surf): CSurface() { *this = std::move(surf); }
             CSurface &operator= (const CSurface &rhs);
-            CSurface &operator= (CSurface &&rhs);
+            CSurface &operator= (CSurface &&rhs) noexcept;
             virtual ~CSurface() { clear(); }
 
             operator unsigned char*() const;
@@ -148,11 +148,11 @@ namespace nv_dds
             CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
             CTexture(const CTexture &copy): CTexture() { *this = copy; }
             CTexture(CTexture &&text): CTexture() { *this = std::move(text); }
-            CTexture &operator= (const CTexture &rhs);
-            CTexture &operator= (CTexture &&rhs);
+            CTexture &operator=(const CTexture &rhs);
+            CTexture &operator=(CTexture &&rhs) noexcept;
 
-            void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            void clear();
+            void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels) override;
+            void clear() override;
 
             inline const CSurface &get_mipmap(unsigned int index) const
             {

@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_Rendering
+set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/AVIGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugColVolDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugDrawerAI.cpp"
@@ -21,7 +21,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/DynWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/GrassDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/MapRendering.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/RefractWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyLight.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SunLighting.cpp"
@@ -57,11 +56,12 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/GeometryBuffer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glStateDebug.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/LightHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GL/AttribState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/MatrixState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/RenderDataBuffer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArray.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VAO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VBO.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GL/WideLineAdapter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glExtra.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/myGL.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalRendering.cpp"
@@ -92,7 +92,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/IModelParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/S3OParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Models/ModelRenderContainer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Screenshot.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/GLSLCopyState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/LuaShaderContainer.cpp"

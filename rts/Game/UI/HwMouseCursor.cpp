@@ -5,7 +5,7 @@
 
 #if defined(__APPLE__) || defined(HEADLESS)
 	// FIXME: no hardware cursor support for macs
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	#include <windows.h>
 	#include "System/Input/MouseInput.h"
 	typedef unsigned char byte;
@@ -19,7 +19,7 @@
 
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <SDL_config.h>
 #include <SDL_syswm.h>
@@ -54,7 +54,7 @@ public:
 };
 
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 
 
 class HardwareCursor: public IHardwareCursor {
@@ -195,7 +195,7 @@ void IHardwareCursor::Free(IHardwareCursor* hwc) {
 #if defined(__APPLE__) || defined(HEADLESS)
 
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 
 
 void HardwareCursor::Init(CMouseCursor::HotSpot hs)

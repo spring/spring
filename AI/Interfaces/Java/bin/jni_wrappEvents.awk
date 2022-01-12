@@ -306,7 +306,7 @@ function printNativeEventCase(evtIndex) {
 
 		paramsEvt = paramsEvt ", " name_jni;
 	}
-	sub(/^\, /, "", paramsEvt);
+	sub(/^, /, "", paramsEvt);
 	if (eNameLowerized == "init") {
 		sub(/evt->callback/, "skirmishAIId_callback[evt->skirmishAIId]", paramsEvt);
 	}
@@ -425,7 +425,7 @@ function printJavaEvent(evtIndex) {
 
 		paramsTypes = paramsTypes ", " type_java " " name_c;
 	}
-	sub(/^\, /, "", paramsTypes);
+	sub(/^, /, "", paramsTypes);
 	if (eNameLowerized == "init") {
 		paramsTypes = "int skirmishAIId, AICallback callback";
 	}

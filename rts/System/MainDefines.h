@@ -23,7 +23,7 @@
 #endif
 
 
-#if (defined(__alpha__) || defined(__arm__) || defined(__aarch64__) || defined(__mips__) || defined(__powerpc__) || defined(__sparc__) || defined(__m68k__) || defined(__ia64__))
+#if (defined(__alpha__) || defined(__arm__) || defined(__aarch64__) || defined(__mips__) || defined(__powerpc__) || defined(__sparc__) || defined(__m68k__) || defined(__ia64__) || defined(__e2k__))
 #define __is_x86_arch__ 0
 #elif (defined(__i386__) || defined(__x86_64__) || defined(__amd64__) || defined(_M_AMD64) || defined(_M_IX86) || defined(_M_X64))
 #define __is_x86_arch__ 1
@@ -33,7 +33,7 @@
 
 
 /* define a common indicator for 32bit or 64bit-ness */
-#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
+#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9) || defined(__e2k__)
 #define __arch64__
 #define __archBits__ 64
 #else
@@ -63,8 +63,18 @@
 
 #if defined(_MSC_VER)
 	#define _threadlocal __declspec(thread)
+#elif defined(__clang__)
+	// clang's __thread does not allow objects with non-trivial dtors
+	#define _threadlocal thread_local
 #else
 	#define _threadlocal __thread
+#endif
+
+
+#ifdef __GNUC__
+	#define _deprecated __attribute__ ((deprecated))
+#else
+	#define _deprecated
 #endif
 
 

@@ -109,7 +109,10 @@ void CRepulseGfx::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({drawPos + xdirDS * (dx + 0) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x    ],  txo + (ry        ) * txs, tyo + (rx        ) * tys,  col});
 			va->SafeAppend({drawPos + xdirDS * (dx + 0) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x    ],  txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys,  col});
 			va->SafeAppend({drawPos + xdirDS * (dx + 1) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x + 1],  txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys,  col});
+
+			va->SafeAppend({drawPos + xdirDS * (dx + 1) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x + 1],  txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys,  col});
 			va->SafeAppend({drawPos + xdirDS * (dx + 1) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x + 1],  txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys,  col});
+			va->SafeAppend({drawPos + xdirDS * (dx + 0) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x    ],  txo + (ry        ) * txs, tyo + (rx        ) * tys,  col});
 		}
 	}
 
@@ -128,25 +131,42 @@ void CRepulseGfx::Draw(GL::RenderDataBufferTC* va) const
 	xdirDS = xdir * drawsize;
 	ydirDS = ydir * drawsize;
 
-	va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
-	va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+	{
+		va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
-	va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	}
+	{
+		va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
-	va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	}
+	{
+		va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
-	va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
-	va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	}
+	{
+		va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+		va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+
+		va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+		va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	}
 }
 
 void CRepulseGfx::Update()

@@ -179,9 +179,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		unsigned int currentNumUnits = receivingTeam->GetNumUnits();
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits())
 			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
-		}
 
 		// make sure square is entirely on the map
 		const int sqSize = math::ceil(math::sqrt((float) numRequestedUnits));
@@ -191,7 +190,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		pos.z = Clamp(pos.z, sqHalfMapSize, float3::maxzpos - sqHalfMapSize - 1);
 
 		for (int a = 1; a <= numRequestedUnits; ++a) {
-			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
+			Watchdog::ClearTimers(false, true);
+
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
@@ -226,9 +226,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits())
 			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
-		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
 		const FeatureDef* featureDef = featureDefHandler->GetFeatureDef(objectName, false);
@@ -255,7 +254,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 
-					Watchdog::ClearPrimaryTimers();
+					Watchdog::ClearTimers(false, true);
 
 					const UnitLoadParams unitParams = {
 						unitDef,
@@ -301,10 +300,11 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 					const float3 featurePos = float3(px, CGround::GetHeightReal(px, pz), pz);
 
-					Watchdog::ClearPrimaryTimers();
+					Watchdog::ClearTimers(false, true);
 					FeatureLoadParams params = {
-						featureDef,
 						nullptr,
+						nullptr,
+						featureDef,
 
 						featurePos,
 						ZeroVector,

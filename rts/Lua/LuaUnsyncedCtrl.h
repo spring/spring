@@ -163,9 +163,11 @@ class LuaUnsyncedCtrl {
 		static int SetLogSectionFilterLevel(lua_State* L);
 
 		static int ClearWatchDogTimer(lua_State* L);
+		static int GarbageCollectCtrl(lua_State* L);
 
 		static int PreloadUnitDefModel(lua_State* L);
 		static int PreloadFeatureDefModel(lua_State* L);
+		static int PreloadSoundItem(lua_State* L);
 
 		static int CreateDecal(lua_State* L);
 		static int DestroyDecal(lua_State* L);

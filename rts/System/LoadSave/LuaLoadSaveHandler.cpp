@@ -42,8 +42,8 @@ static const char* FILE_HEIGHTMAP    = PREFIX"heightmap.0";
 
 
 CLuaLoadSaveHandler::CLuaLoadSaveHandler()
-	: savefile(NULL)
-	, loadfile(NULL)
+	: savefile(nullptr)
+	, loadfile(nullptr)
 {
 }
 
@@ -56,10 +56,10 @@ CLuaLoadSaveHandler::~CLuaLoadSaveHandler()
 
 void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 {
-	const std::string realname = dataDirsAccess.LocateFile(file, FileQueryFlags::WRITE).c_str();
+	const std::string realname = dataDirsAccess.LocateFile(file, FileQueryFlags::WRITE);
 
 	filename = file;
-	savefile = NULL;
+	savefile = nullptr;
 
 	try {
 		// Remove any existing file
@@ -67,7 +67,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 
 		// Open the zip
 		if (realname.empty() ||
-				(savefile = zipOpen(realname.c_str(), APPEND_STATUS_CREATE)) == NULL) {
+				(savefile = zipOpen(realname.c_str(), APPEND_STATUS_CREATE)) == nullptr) {
 			throw content_error("Unable to open save file \"" + filename + "\"");
 		}
 
@@ -96,9 +96,9 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 	}
 
 	// Failure => cleanup
-	if (savefile != NULL) {
-		zipClose(savefile, NULL);
-		savefile = NULL;
+	if (savefile != nullptr) {
+		zipClose(savefile, nullptr);
+		savefile = nullptr;
 		FileSystem::Remove(realname);
 	}
 }
@@ -155,7 +155,7 @@ void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, con
 {
 	std::string failedOperation;
 
-	if (Z_OK != zipOpenNewFileInZip(savefile, file, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
+	if (Z_OK != zipOpenNewFileInZip(savefile, file, nullptr, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_BEST_COMPRESSION)) {
 		failedOperation = "open";
 	}
 	else if (Z_OK != zipWriteInFileInZip(savefile, data, size)) {
@@ -177,17 +177,16 @@ void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, con
 }
 
 
-void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
+bool CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	filename = file;
-	const std::string realfile = dataDirsAccess.LocateFile(FindSaveFile(file));
+	const std::string saveFileName = FindSaveFile(filename = file);
+	const std::string realFileName = dataDirsAccess.LocateFile(saveFileName);
 
-	loadfile = archiveLoader.OpenArchive(realfile, "sdz");
-	if (!loadfile || !loadfile->IsOpen()) {
+	if ((loadfile = archiveLoader.OpenArchive(realFileName, "sdz")) == nullptr || !loadfile->IsOpen())
 		throw content_error("Unable to open savegame \"" + filename + "\"");
-	}
 
 	scriptText = LoadEntireFile(FILE_STARTSCRIPT);
+	return true;
 }
 
 
@@ -247,8 +246,9 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
 	std::vector<std::uint8_t> buf;
-	if (loadfile->GetFile(file, buf)) {
+
+	if (loadfile->GetFile(file, buf))
 		return std::string((char*) &*buf.begin(), buf.size());
-	}
+
 	return "";
 }

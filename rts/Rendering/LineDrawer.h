@@ -3,7 +3,9 @@
 #ifndef _LINE_DRAWER_H
 #define _LINE_DRAWER_H
 
+#include <array>
 #include <vector>
+#include <array>
 
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/VertexArrayTypes.h"
@@ -11,7 +13,18 @@
 
 class CLineDrawer {
 public:
-	CLineDrawer();
+	CLineDrawer() {
+		for (size_t i = 0; i < regularLines.size(); i++) {
+			regularLines[i].reserve(64);
+			stippleLines[i].reserve(64);
+		}
+	}
+
+	enum LineWidth {
+		Default   = 0,
+		QueuedCmd = 1
+	};
+
 
 	void Configure(
 		bool useColorRestarts,
@@ -19,12 +32,13 @@ public:
 		const float* restartColor,
 		float restartAlpha
 	);
+	void SetWidth(LineWidth w) { width = w; }
 
+	void DrawAll(bool onMiniMap);
 	void SetupLineStipple();
 	void UpdateLineStipple();
-	               
+
 	void StartPath(const float3& pos, const float* color);
-	void FinishPath() const { /*noop, left for compatibility*/ };
 	void DrawLine(const float3& endPos, const float* color);
 	void DrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
 	void DrawIconAtLastPos(int cmdID);
@@ -33,31 +47,37 @@ public:
 	/// same as restart; only way for this to work would be using glGet so it's left broken
 	void RestartSameColor() { Restart(); }
 	void RestartWithColor(const float* color);
+
 	const float3& GetLastPos() const { return lastPos; }
 
-	void DrawAll(bool onMiniMap);
+	bool HaveRegularLines() const { for (auto& v: regularLines) { if (!v.empty()) return true; } return false; }
+	bool HaveStippleLines() const { for (auto& v: stippleLines) { if (!v.empty()) return true; } return false; }
 
 private:
-	bool lineStipple;
-	bool useColorRestarts;
-	bool useRestartColor;
+	bool lineStipple = false;
+	bool useColorRestarts = false;
+	bool useRestartColor = false;
 
-	float restartAlpha;
-	float stippleTimer;
+	float restartAlpha = 0.0f;
+	float stippleTimer = 0.0f;
+
+	LineWidth width = Default;
 
 	float3 lastPos;
 
-	const float* restartColor;
-	const float* lastColor;
-	
-	// queue all lines and draw them in one go later
-	struct LinePair {
-		unsigned int glType;
-		std::vector<VA_TYPE_C> verts;
-	};
+	const float* restartColor = nullptr;
+	const float* lastColor = nullptr;
 
-	std::vector<LinePair> regularLines;
-	std::vector<LinePair> stippleLines;
+	typedef std::vector<VA_TYPE_C> Line;
+
+	// queue all lines and draw them in one go later
+	// even := GL_LINE_LOOP, odd := GL_LINES (useColorRestarts)
+	// width:
+	// [0,1] := 1.0f or 2.5f on minimap
+	// [2,3] := cmdColors.QueuedLineWidth() or 2.5f on minimap
+
+	std::array<std::vector<Line>, 4> regularLines;
+	std::array<std::vector<Line>, 4> stippleLines;
 };
 
 
@@ -103,14 +123,14 @@ inline void CLineDrawer::StartPath(const float3& pos, const float* color)
 
 inline void CLineDrawer::DrawLine(const float3& endPos, const float* color)
 {
-	LinePair* ptr = (lineStipple)? &stippleLines.back(): &regularLines.back();
-	LinePair& p = *ptr;
+	const int idx = width * 2 + useColorRestarts;
+	Line& line = (lineStipple)? stippleLines[idx].back(): regularLines[idx].back();
 
 	if (!useColorRestarts) {
-		p.verts.push_back({endPos, color});
+		line.push_back({endPos, color});
 	} else {
-		p.verts.push_back({lastPos, useRestartColor? restartColor: SColor{color[0], color[1], color[2], color[3] * restartAlpha}});
-		p.verts.push_back({endPos, color});
+		line.push_back({lastPos, useRestartColor? restartColor: SColor{color[0], color[1], color[2], color[3] * restartAlpha}});
+		line.push_back({endPos, color});
 	}
 
 	lastPos = endPos;

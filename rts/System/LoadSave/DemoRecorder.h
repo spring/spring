@@ -18,8 +18,33 @@
 class CDemoRecorder : public CDemo
 {
 public:
+	CDemoRecorder() { memset(&fileHeader, 0, sizeof(fileHeader)); }
 	CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo);
+
+	CDemoRecorder(const CDemoRecorder&) = delete;
+	CDemoRecorder(CDemoRecorder&& r) { *this = std::move(r); }
+
 	~CDemoRecorder();
+
+
+	CDemoRecorder& operator = (const CDemoRecorder&) = delete;
+	CDemoRecorder& operator = (CDemoRecorder&& r) {
+		memcpy(&fileHeader, &r.fileHeader, sizeof(fileHeader));
+		memset(&r.fileHeader, 0, sizeof(fileHeader));
+
+		std::swap(file, r.file);
+
+		std::swap(demoName, r.demoName);
+		std::swap(playerStats, r.playerStats);
+		std::swap(teamStats, r.teamStats);
+		std::swap(winningAllyTeams, r.winningAllyTeams);
+
+		std::swap(isServerDemo, r.isServerDemo);
+		return *this;
+	}
+
+
+	bool IsValid() const { return (file != nullptr); }
 
 	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
@@ -46,13 +71,13 @@ private:
 	void WriteDemoFile();
 
 private:
-	gzFile file;
+	gzFile file = nullptr;
 
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;
 
-	bool isServerDemo;
+	bool isServerDemo = false;
 };
 
 

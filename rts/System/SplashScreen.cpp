@@ -223,8 +223,8 @@ void ShowSplashScreen(
 	// slower than location-based SetUniform, but works without pre-initializing uniforms via CreateShader
 	// template expects a TV but argument is const TV*, tell compiler it needs to invoke matrix::operator()
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 	shader->SetUniform("u_tex0", 0);
 	shader->Disable();
 
@@ -232,7 +232,7 @@ void ShowSplashScreen(
 	glActiveTexture(GL_TEXTURE0);
 
 	for (spring_time t0 = spring_now(), t1 = t0; !testDoneFunc(); t1 = spring_now()) {
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, splashTex);
 
 		shader->Enable();

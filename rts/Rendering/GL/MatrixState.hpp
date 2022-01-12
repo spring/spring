@@ -50,7 +50,8 @@ namespace GL {
 	};
 
 
-	void SetMatrixStatePointer(bool mainThread);
+	MatrixState* SetMatrixStatePointer(bool mainThread);
+	MatrixState* GetMatrixStatePointer();
 
 
 	void MatrixMode(unsigned int glMode);
@@ -59,8 +60,12 @@ namespace GL {
 	const CMatrix44f& GetMatrix();
 	const CMatrix44f& GetMatrix(unsigned int glMode);
 
+	void PushMatrix(const CMatrix44f& m);
 	void PushMatrix();
 	void PopMatrix();
+
+	// inlined to avoid multiple definitions
+	inline void PushIdentityMatrix() { PushMatrix(CMatrix44f::Identity()); }
 
 	void MultMatrix(const CMatrix44f& m);
 	void LoadMatrix(const CMatrix44f& m);
@@ -76,5 +81,6 @@ namespace GL {
 	void RotateZ(float a);
 }
 
+#define glMatrixStatePtr GL::GetMatrixStatePointer()
 #endif
 

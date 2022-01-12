@@ -4,7 +4,6 @@
 #define STARBURST_PROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include <vector>
 
 
 class CSmokeTrailProjectile;
@@ -32,41 +31,50 @@ public:
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
+	void UpdateTargeting();
 	void UpdateTrajectory();
+
+	void InitTracerParts();
+	void UpdateTracerPart();
+	void UpdateSmokeTrail();
 
 private:
 	float3 aimError;
-	float tracking;
-	bool ignoreError;
-	bool doturn;
-	float maxGoodDif;
-	float maxSpeed;
-	float acceleration;
-	float distanceToTravel;
-
-	int uptime;
-	int age;
-
 	float3 oldSmoke;
 	float3 oldSmokeDir;
-	CSmokeTrailProjectile* smokeTrail;
 
-	int numParts;
-	int missileAge;
-	unsigned int curTracerPart;
+	float tracking = 0.0f;
+	float maxGoodDif = 0.0f;
+	float maxSpeed = 0.0f;
+	float acceleration = 0.0f;
+	float distanceToTravel = 0.0f;
+
+	int uptime = 0;
+	int trailAge = 0;
+	int numParts = 0;
+	int missileAge = 0;
+	unsigned int curTracerPart = 0;
+
+	bool ignoreError = false;
+	bool turnToTarget = true;
+	bool leaveSmokeTrail = false;
+
+	static constexpr unsigned int NUM_TRACER_PARTS = 3;
+	static constexpr unsigned int MAX_NUM_AGEMODS = 20;
+	static constexpr unsigned int SMOKE_INTERVAL = 8;
 
 	struct TracerPart {
 		CR_DECLARE_STRUCT(TracerPart)
 
 		float3 pos;
 		float3 dir;
-		float speedf;
-		std::vector<float> ageMods;
-		unsigned int numAgeMods;
+		float speedf = 0.0f;
+		float ageMods[MAX_NUM_AGEMODS] = {1.0f};
+		unsigned int numAgeMods = 0;
 	};
 
-	static const unsigned int NUM_TRACER_PARTS = 5;
 	TracerPart tracerParts[NUM_TRACER_PARTS];
+	CSmokeTrailProjectile* smokeTrail = nullptr;
 };
 
 #endif /* STARBURST_PROJECTILE_H */

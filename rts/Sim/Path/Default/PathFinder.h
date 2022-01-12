@@ -4,7 +4,6 @@
 #define PATH_FINDER_H
 
 #include <vector>
-#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
@@ -30,8 +29,8 @@ public:
 
 protected:
 	/// Performs the actual search.
-	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
+	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner) override;
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner) override;
 
 	/**
 	 * Test the availability and value of a square,
@@ -45,14 +44,14 @@ protected:
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod
-	);
+	) override;
 	/**
 	 * Recreates the path found by pathfinder.
 	 * Starting at goalSquare and tracking backwards.
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
+	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const override;
 
 	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
@@ -60,7 +59,7 @@ protected:
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) const {
+	) const override {
 		// only cache in Estimator! (cause of flow & heatmapping etc.)
 		return dummyCacheItem;
 	}
@@ -73,7 +72,7 @@ protected:
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) { }
+	) override { }
 
 private:
 	void TestNeighborSquares(

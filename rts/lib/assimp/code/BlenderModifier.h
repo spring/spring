@@ -122,7 +122,7 @@ class BlenderModifier_Mirror : public BlenderModifier
 public:
 
     // --------------------
-    virtual bool IsActive( const ModifierData& modin);
+    virtual bool IsActive( const ModifierData& modin) override;
 
     // --------------------
     virtual void DoIt(aiNode& out,
@@ -130,7 +130,7 @@ public:
         const ElemBase& orig_modifier,
         const Scene& in,
         const Object& orig_object
-    ) ;
+    ) override ;
 };
 
 // -------------------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ class BlenderModifier_Subdivision : public BlenderModifier
 public:
 
     // --------------------
-    virtual bool IsActive( const ModifierData& modin);
+    virtual bool IsActive( const ModifierData& modin) override;
 
     // --------------------
     virtual void DoIt(aiNode& out,
@@ -149,7 +149,7 @@ public:
         const ElemBase& orig_modifier,
         const Scene& in,
         const Object& orig_object
-    ) ;
+    ) override ;
 };
 
 

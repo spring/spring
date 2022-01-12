@@ -8,7 +8,7 @@
 #include "System/Misc/BitwiseEnum.h"
 #include "System/UnorderedSet.hpp"
 
-#include <string>
+#include <vector>
 
 class CUnit;
 class CBuilder;
@@ -22,7 +22,7 @@ struct UnitDef;
 class CBuilderCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CBuilderCAI)
+	CR_DECLARE_DERIVED(CBuilderCAI)
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();
@@ -30,19 +30,19 @@ public:
 	static void InitStatic();
 	void PostLoad();
 
-	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
-	void SlowUpdate();
+	int GetDefaultCmd(const CUnit* unit, const CFeature* feature) override;
+	void SlowUpdate() override;
 
-	void FinishCommand();
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void BuggerOff(const float3& pos, float radius);
+	void FinishCommand() override;
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
+	void BuggerOff(const float3& pos, float radius) override;
 	bool TargetInterceptable(const CUnit* unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
-	void ExecutePatrol(Command& c);
-	void ExecuteFight(Command& c);
-	void ExecuteGuard(Command& c);
-	void ExecuteStop(Command& c);
+	void ExecutePatrol(Command& c) override;
+	void ExecuteFight(Command& c) override;
+	void ExecuteGuard(Command& c) override;
+	void ExecuteStop(Command& c) override;
 	virtual void ExecuteRepair(Command& c);
 	virtual void ExecuteCapture(Command& c);
 	virtual void ExecuteReclaim(Command& c);
@@ -55,9 +55,9 @@ public:
 	/**
 	 * Checks if a unit is being reclaimed by a friendly con.
 	 */
-	static bool IsUnitBeingReclaimed(const CUnit* unit, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
+	static bool IsUnitBeingReclaimed(const CUnit* unit, const CUnit* friendUnit = nullptr);
+	static bool IsFeatureBeingReclaimed(int featureId, const CUnit* friendUnit = nullptr);
+	static bool IsFeatureBeingResurrected(int featureId, const CUnit* friendUnit = nullptr);
 
 	bool IsInBuildRange(const CWorldObject* obj) const;
 	bool IsInBuildRange(const float3& pos, const float radius) const;
@@ -68,6 +68,8 @@ public:
 	static spring::unordered_set<int> reclaimers;
 	static spring::unordered_set<int> featureReclaimers;
 	static spring::unordered_set<int> resurrecters;
+
+	static std::vector<int> removees;
 
 private:
 	enum ReclaimOptions {

@@ -3,7 +3,7 @@
 #include "Projectile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -25,8 +25,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
+
+	CR_IGNORED(createMe),
 	CR_MEMBER(deleteMe),
-	CR_IGNORED(callEvent), // we want the render event called for all projectiles
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),
@@ -36,10 +37,10 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
 
+	CR_MEMBER(myrange),
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
 	CR_MEMBER(sortDistOffset),
-	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -48,6 +49,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
+	CR_IGNORED(renderIndex),
 
 	CR_MEMBER(quads)
 ))
@@ -55,33 +57,8 @@ CR_REG_METADATA(CProjectile,
 
 
 CProjectile::CProjectile()
-	: synced(false)
-	, weapon(false)
-	, piece(false)
-	, hitscan(false)
-
-	, luaDraw(false)
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-
-	, castShadow(false)
-	, drawSorted(true)
-
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDist(0.0f)
-	, sortDistOffset(0.0f)
-	, tempNum(0)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	: myrange(0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 }
 
@@ -100,27 +77,8 @@ CProjectile::CProjectile(
 	, piece(isPiece)
 	, hitscan(isHitScan)
 
-	, luaDraw(false)
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-
-	, castShadow(false)
-	, drawSorted(true)
-
-	, dir(ZeroVector) // set via Init()
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDistOffset(0.f)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	, myrange(/*params.weaponDef->range*/0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(owner, ZeroVector);
@@ -129,12 +87,10 @@ CProjectile::CProjectile(
 
 CProjectile::~CProjectile()
 {
-	if (synced) {
-		quadField.RemoveProjectile(this);
-#ifdef TRACE_SYNC
-		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-#endif
-	}
+	if (!synced)
+		return;
+
+	quadField.RemoveProjectile(this);
 }
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)
@@ -180,9 +136,10 @@ void CProjectile::Delete()
 }
 
 
-void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::whiteA);
+	va->SafeAppend({pos        , color4::whiteA});
+	va->SafeAppend({pos + speed, color4::whiteA});
 }
 
 
@@ -221,3 +178,4 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
+

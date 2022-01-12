@@ -1,4 +1,4 @@
 ### Generic Java Skirmish AI config
 #
 
-ConfigureJavaSkirmishAI("")
+configure_java_skirmish_ai("")

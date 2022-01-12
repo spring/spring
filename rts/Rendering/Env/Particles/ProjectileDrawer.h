@@ -10,6 +10,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 #include "System/UnorderedSet.hpp"
@@ -19,7 +20,6 @@ class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-class IModelRenderContainer;
 class LuaTable;
 
 namespace Shader {
@@ -46,14 +46,14 @@ public:
 	void UpdateTextures();
 
 
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderProjectileCreated(const CProjectile* projectile);
-	void RenderProjectileDestroyed(const CProjectile* projectile);
+	void RenderProjectileCreated(const CProjectile* projectile) override;
+	void RenderProjectileDestroyed(const CProjectile* projectile) override;
 
 
 	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
@@ -154,15 +154,15 @@ private:
 
 	VAO flyingPieceVAO;
 
+	ProjectileDistanceComparator zSortCmp;
+
 
 	std::vector<const AtlasedTexture*> smokeTextures;
 
-	/// projectiles without a model
+	/// projectiles without a model, e.g. nano-particles
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
-
-	ProjectileDistanceComparator zSortCmp;
+	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
 
 	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
 	/// used to render particle effects in back-to-front order

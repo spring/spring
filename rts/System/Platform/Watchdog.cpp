@@ -17,7 +17,9 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/Threading.h"
+#include "System/StringHash.h"
 #include "System/Threading/SpringThreading.h"
+#include "System/UnorderedMap.hpp"
 
 CONFIG(int, HangTimeout).defaultValue(10).minimumValue(-1).maximumValue(600)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
@@ -31,48 +33,42 @@ namespace Watchdog
 	static unsigned int curorder = 0;
 
 	struct WatchDogThreadInfo {
-		WatchDogThreadInfo()
-			: threadid(0)
-			, numreg(0)
-			, timer(spring_notime)
-		{}
+		WatchDogThreadInfo() { ResetThreadInfo(); }
 
+		void ResetThreadInfo() {
+			timer = spring_notime;
+
+			thread = {};
+			threadid = {0};
+			numreg = {0};
+		}
 		void ResetThreadControls() {
-			#ifndef WIN32
-			// this is not auto-destructed (!)
+			#ifndef _WIN32
 			ctls.reset();
 			#endif
 		}
 
 		void SetThreadControls()
 		{
-			#ifndef WIN32
-			const auto& c = Threading::GetCurrentThreadControls();
-			assert(c.get() != nullptr);
-			// copy shared_ptr object, not shared_ptr*
-			ctls = c;
+			#ifndef _WIN32
+			ctls = Threading::GetCurrentThreadControls();
 			#endif
 		}
 
-		volatile Threading::NativeThreadHandle thread;
-		volatile Threading::NativeThreadId threadid;
-		volatile unsigned int numreg;
-
 		spring_time timer;
+
+		std::atomic<Threading::NativeThreadHandle> thread;
+		std::atomic<Threading::NativeThreadId> threadid;
+		std::atomic<unsigned int> numreg;
 
 		// not used on Windows
 		std::shared_ptr<Threading::ThreadControls> ctls;
 	};
 
 	struct WatchDogThreadSlot {
-		WatchDogThreadSlot()
-			: primary(false)
-			, active(false)
-			, regorder(0)
-		{}
-		volatile bool primary;
-		volatile bool active;
-		volatile unsigned int regorder;
+		std::atomic<bool> primary = {false};
+		std::atomic<bool> active = {false};
+		std::atomic<unsigned int> regorder = {0};
 	};
 
 	// NOTE:
@@ -82,11 +78,14 @@ namespace Watchdog
 	static WatchDogThreadInfo* registeredThreads[WDT_COUNT + 1] = {nullptr};
 	static WatchDogThreadSlot threadSlots[WDT_COUNT + 1];
 
-	static std::map<std::string, unsigned int> threadNameToNum;
+	// maps hash(name) to WTD_*
+	static spring::unsynced_map<unsigned int, unsigned int> threadNumTable;
 
 	static spring::thread hangDetectorThread;
+	static std::atomic<bool> hangDetectorThreadInterrupted = {false};
+
 	static spring_time hangTimeout = spring_msecs(0);
-	static volatile bool hangDetectorThreadInterrupted = false;
+
 
 	static inline void UpdateActiveThreads(Threading::NativeThreadId num) {
 		unsigned int active = WDT_COUNT;
@@ -155,10 +154,10 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
-					#ifdef WIN32
+					#ifdef _WIN32
 					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
 					#else
-					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), std::string(threadNames[i]));
+					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), threadNames[i]);
 					#endif
 				}
 
@@ -188,6 +187,8 @@ namespace Watchdog
 		for (i = 0; i < WDT_COUNT; ++i) {
 			const WatchDogThreadInfo* threadInfo = &registeredThreadsData[i];
 
+			// determine first inactive thread; stop if thread
+			// is already registered under a different wdt-num
 			if (threadInfo->numreg == 0)
 				inact = std::min(i, inact);
 			else if (Threading::NativeThreadIdsEqual(threadInfo->threadid, threadId))
@@ -230,7 +231,7 @@ namespace Watchdog
 		WatchDogThreadInfo* threadInfo = nullptr;
 
 		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
+			LOG_L(L_ERROR, "[Watchdog::%s] invalid thread number %u", __func__, num);
 			return false;
 		}
 
@@ -247,7 +248,7 @@ namespace Watchdog
 		}
 
 		if (0 == --(threadInfo->numreg))
-			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
+			threadInfo->ResetThreadInfo();
 
 		registeredThreads[num] = &registeredThreadsData[WDT_COUNT];
 		return true;
@@ -272,7 +273,7 @@ namespace Watchdog
 	}
 
 
-	void ClearTimer(bool disable, Threading::NativeThreadId* _threadId)
+	void ClearTimer(Threading::NativeThreadId* _threadId, bool disable)
 	{
 		// bail if Watchdog isn't running
 		if (!hangDetectorThread.joinable())
@@ -285,7 +286,7 @@ namespace Watchdog
 
 		Threading::NativeThreadId threadId;
 
-		if (_threadId) {
+		if (_threadId != nullptr) {
 			threadId = *_threadId;
 		} else {
 			threadId = Threading::GetCurrentThreadId();
@@ -305,6 +306,7 @@ namespace Watchdog
 			return;
 		}
 
+		// notime always satisfies !spring_istime
 		threadInfo->timer = disable ? spring_notime : spring_gettime();
 	}
 
@@ -326,33 +328,35 @@ namespace Watchdog
 		threadInfo->timer = disable ? spring_notime : spring_gettime();
 	}
 
-	void ClearTimer(const std::string& name, bool disable)
+	void ClearTimer(const char* name, bool disable)
 	{
 		if (!hangDetectorThread.joinable())
 			return;
 		if (Threading::IsWatchDogThread())
 			return;
 
-		const auto i = threadNameToNum.find(name);
+		const auto i = threadNumTable.find(hashString(name));
 		unsigned int num;
 		WatchDogThreadInfo* threadInfo;
 
-		if (i == threadNameToNum.end() || (num = i->second) >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s(name)] Invalid thread name \"%s\"", __func__, name.c_str());
+		if (i == threadNumTable.end() || (num = i->second) >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
+			LOG_L(L_ERROR, "[Watchdog::%s(name)] Invalid thread name \"%s\"", __func__, name);
 			return;
 		}
 
 		threadInfo->timer = disable ? spring_notime : spring_gettime();
 	}
 
-	void ClearPrimaryTimers(bool disable)
+	void ClearTimers(bool disable, bool primary)
 	{
+		// bail if Watchdog is not running
 		if (!hangDetectorThread.joinable())
-			return; //! Watchdog isn't running
+			return;
 
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
 			WatchDogThreadInfo* threadInfo = registeredThreads[i];
-			if (threadSlots[i].primary)
+
+			if (!primary || threadSlots[i].primary)
 				threadInfo->timer = disable ? spring_notime : spring_gettime();
 		}
 	}
@@ -365,7 +369,7 @@ namespace Watchdog
 		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
 			registeredThreads[i] = &registeredThreadsData[WDT_COUNT];
-			threadNameToNum[std::string(threadNames[i])] = i;
+			threadNumTable[hashString(threadNames[i])] = i;
 		}
 		memset(threadSlots, 0, sizeof(threadSlots));
 
@@ -393,7 +397,7 @@ namespace Watchdog
 		// start the watchdog thread
 		hangDetectorThread = std::move(spring::thread(&HangDetectorLoop));
 
-		LOG("[WatchDog%s] Installed (HangTimeout: %isec)", __func__, hangTimeoutSecs);
+		LOG("[WatchDog::%s] installed (hang-timeout: %is)", __func__, hangTimeoutSecs);
 	}
 
 
@@ -416,6 +420,6 @@ namespace Watchdog
 		for (unsigned int i = 0; i < WDT_COUNT; ++i)
 			registeredThreads[i] = &registeredThreadsData[WDT_COUNT];
 		memset(threadSlots, 0, sizeof(threadSlots));
-		threadNameToNum.clear();
+		threadNumTable.clear();
 	}
 }

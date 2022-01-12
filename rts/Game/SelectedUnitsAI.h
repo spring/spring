@@ -11,27 +11,25 @@
 class CUnit;
 
 
-/// Handling commands given to the currently  selected group of units.
+/// handles giving commands to the currently selected group of units.
 class CSelectedUnitsHandlerAI {
 public:
-	/* set<int> selUnits;
-
-	void AddUnit(int unit); (And include update() in game.cpp to call every frame)
-	void RemoveUnit(int unit);
-	*/
-
-	void GiveCommandNet(Command& c, int player);
+	bool GiveCommandNet(Command& c, int playerNum);
 
 private:
-	void CalculateGroupData(int player, bool queueing);
-	void MakeFormationFrontOrder(Command* c, int player);
-	void CreateUnitOrder(std::vector< std::pair<float, int> >& out, int player);
+	void CalculateGroupData(int playerNum, bool queueing);
+	void MakeFormationFrontOrder(Command* c, int playerNum);
+	void CreateUnitOrder(std::vector< std::pair<float, int> >& out, int playerNum);
+
 	float3 MoveToPos(float3 nextCornerPos, float3 dir, const CUnit* unit, Command* command, std::vector<std::pair<int, Command> >* frontcmds, bool* newline);
-	void AddUnitSetMaxSpeedCommandNet(CUnit* unit, unsigned char options);
-	void AddGroupSetMaxSpeedCommandNet(CUnit* unit, unsigned char options);
-	void SelectAttackNet(const Command& cmd, int player);
-	void SelectCircleUnits(const float3& pos, float radius, int player, std::vector<int>& units);
-	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int player, std::vector<int>& units);
+
+	void SetUnitWantedMaxSpeedNet(CUnit* unit);
+	void SetUnitGroupWantedMaxSpeedNet(CUnit* unit);
+
+	bool SelectAttackNet(const Command& cmd, int playerNum);
+	void SelectCircleUnits(const float3& pos, float radius, int playerNum, std::vector<int>& units);
+	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int playerNum, std::vector<int>& units);
+
 	float3 LastQueuePosition(const CUnit* unit);
 
 private:
@@ -46,7 +44,6 @@ private:
 	float groupMinMaxSpeed = 0.0f;
 	float groupColumnDist = 64.0f;
 
-	int formationNumColumns = 0;
 
 
 	std::vector< std::pair<float, int> > sortedUnitPairs; // <priority, unitID>

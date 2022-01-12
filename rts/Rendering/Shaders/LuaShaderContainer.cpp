@@ -135,8 +135,10 @@ static void ParseShaderTable(
 static void LoadTextures(Shader::IProgramObject* program, const LuaTable* root)
 {
 	const LuaTable& textures = root->SubTable("textures");
-	spring::unordered_map<int, std::string> data;
-	textures.GetMap(data);
+	std::vector<std::pair<int, std::string>> data;
+
+	data.reserve(8);
+	textures.GetPairs(data);
 
 	for (const auto& p: data) {
 		program->AddTextureBinding(p.first, p.second);

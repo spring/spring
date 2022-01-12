@@ -42,7 +42,7 @@ public:
 	virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) = 0;
 
 	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) = 0;
-	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) = 0;
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel = ZeroVector) = 0;
 
 	/**
 	 * @brief Start playing an ogg-file
@@ -68,8 +68,8 @@ public:
 
 protected:
 	virtual void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative) = 0;
-
 	virtual void SoundSourceFinished(CSoundSource* sndSource) = 0;
+
 	friend class CSoundSource;
 
 public:

@@ -28,7 +28,6 @@ class LuaUnsyncedRead {
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
-		static int GetHasLag(lua_State* L);
 		static int GetVideoCapturingMode(lua_State* L);
 
 		static int GetViewGeometry(lua_State* L);
@@ -109,6 +108,7 @@ class LuaUnsyncedRead {
 
 		static int GetFPS(lua_State* L);
 		static int GetGameSpeed(lua_State* L);
+		static int GetGameState(lua_State* L);
 
 		static int GetMouseState(lua_State* L);
 		static int GetMouseCursor(lua_State* L);

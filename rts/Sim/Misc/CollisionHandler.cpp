@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
 #include "Map/ReadMap.h" // mapDims
@@ -337,6 +336,7 @@ inline bool CCollisionHandler::Intersect(
 	// for all CSolidObject types
 	//
 	CMatrix44f mr = m;
+
 	mr.Translate(o->relMidPos * s);
 	mr.Translate(v->GetOffsets());
 
@@ -353,20 +353,19 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	bool intersect = false;
 
 	// minimum and maximum (x, y, z) coordinates of transformed ray
-	const float rminx = std::min(pi0.x, pi1.x), rminy = std::min(pi0.y, pi1.y), rminz = std::min(pi0.z, pi1.z);
-	const float rmaxx = std::max(pi0.x, pi1.x), rmaxy = std::max(pi0.y, pi1.y), rmaxz = std::max(pi0.z, pi1.z);
-
+	const float3 rmin = float3::min(pi0, pi1);
+	const float3 rmax = float3::max(pi0, pi1);
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
-	const float vminx = -v->GetHScales().x, vminy = -v->GetHScales().y, vminz = -v->GetHScales().z;
-	const float vmaxx =  v->GetHScales().x, vmaxy =  v->GetHScales().y, vmaxz =  v->GetHScales().z;
+	const float3 vmin = -v->GetHScales();
+	const float3 vmax =  v->GetHScales();
 
 	// check if ray segment misses (bounding box around) volume
 	// (if so, then no further intersection tests are necessary)
-	if (rmaxx < vminx || rminx > vmaxx)
+	if (rmax.x < vmin.x || rmin.x > vmax.x)
 		return false;
-	if (rmaxy < vminy || rminy > vmaxy)
+	if (rmax.y < vmin.y || rmin.y > vmax.y)
 		return false;
-	if (rmaxz < vminz || rminz > vmaxz)
+	if (rmax.z < vmin.z || rmin.z > vmax.z)
 		return false;
 
 	switch (v->GetVolumeType()) {
@@ -388,10 +387,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	}
 
 	if (q != nullptr) {
-		// transform intersection points (iff not a special
-		// case, otherwise calling code should not use them)
-		if (q->b0 == CQ_POINT_ON_RAY) { q->p0 = m.Mul(q->p0); }
-		if (q->b1 == CQ_POINT_ON_RAY) { q->p1 = m.Mul(q->p1); }
+		q->SwapParams();
+		q->Transform(m);
 	}
 
 	return intersect;
@@ -399,13 +396,13 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
 {
-	// transform the volume-space points into (unit) sphere-space (requires fewer
-	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
-	const float3 pii0 = pi0 * v->GetHIScales();
-	const float3 pii1 = pi1 * v->GetHIScales();
+	// transform the volume-space points into (unit) sphere-space; requires fewer
+	// float-ops than solving the surface equation for arbitrary ellipsoid volumes
+	const float3 upi0 = pi0 * v->GetHIScales();
+	const float3 upi1 = pi1 * v->GetHIScales();
 	const float rSq = 1.0f;
 
-	if (pii0.dot(pii0) <= rSq) {
+	if (upi0.dot(upi0) <= rSq) {
 		if (q != nullptr) {
 			// terminate early in the special case
 			// that ray-segment originated *in* <v>
@@ -413,21 +410,23 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			q->b0 = CQ_POINT_IN_VOL; q->p0 = ZeroVector;
 			q->b1 = CQ_POINT_IN_VOL; q->p1 = ZeroVector;
 		}
+
 		return true;
 	}
 
+
 	// get the ray direction in unit-sphere space
-	const float3 dir = (pii1 - pii0).SafeNormalize();
+	const float3 dir = (upi1 - upi0).SafeNormalize();
 
 	// solves [ x^2 + y^2 + z^2 == r^2 ] for t; closest
 	// point on ray is p(t) = p0 + (p1-p0)*t = p0 + d*t
 	// (A represents dir.dot(dir), which equals 1 since
 	// the ray direction is already normalized)
-	// const float A = (pii1 - pii0).dot(pii1 - pii0);
-	// const float B = 2.0f * pii0.dot(pii1 - pii0);
+	// const float A = (upi1 - upi0).dot(upi1 - upi0);
+	// const float B = 2.0f * upi0.dot(upi1 - upi0);
 	const float A = 1.0f;
-	const float B = 2.0f * pii0.dot(dir);
-	const float C = pii0.dot(pii0) - rSq;
+	const float B = 2.0f * upi0.dot(dir);
+	const float C = upi0.dot(upi0) - rSq;
 	const float D = (B * B) - (4.0f * A * C);
 
 	if (D < -COLLISION_VOLUME_EPS)
@@ -441,7 +440,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 		const float t0 = -B * 0.5f;
 		// const float t0 = -B / (2.0f * A);
 		// get the intersection point in sphere-space
-		const float3 pTmp = pii0 + (dir * t0);
+		const float3 pTmp = upi0 + (dir * t0);
 		// get the intersection point in volume-space
 		const float3 p0 = pTmp * v->GetHScales();
 		// get the distance from the start of the segment
@@ -467,8 +466,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 		// const float t0 = (-B + rD) / (2.0f * A);
 		// const float t1 = (-B - rD) / (2.0f * A);
 		// get the intersection points in sphere-space
-		const float3 pTmp0 = pii0 + (dir * t0);
-		const float3 pTmp1 = pii0 + (dir * t1);
+		const float3 pTmp0 = upi0 + (dir * t0);
+		const float3 pTmp1 = upi0 + (dir * t1);
 		// get the intersection points in volume-space
 		const float3 p0 = pTmp0 * v->GetHScales();
 		const float3 p1 = pTmp1 * v->GetHScales();
@@ -513,19 +512,16 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		return true;
 	}
 
-	// ray direction in volume-space
-	const float3 dir = (pi1 - pi0).SafeNormalize();
-
 	// ray direction in (unit) cylinder-space
-	float3 diir = ZeroVector;
+	float3 udir;
 
 	// ray terminals in (unit) cylinder-space
-	float3 pii0 = pi0;
-	float3 pii1 = pi1;
+	float3 upi0 = pi0;
+	float3 upi1 = pi1;
 
 	// end-cap plane normals in volume-space
-	float3 n0 = ZeroVector;
-	float3 n1 = ZeroVector;
+	float3 n0;
+	float3 n1;
 
 	// (unit) cylinder-space to volume-space transformation
 	float3 inv = OnesVector;
@@ -537,64 +533,64 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 	switch (pAx) {
 		case CollisionVolume::COLVOL_AXIS_X: {
-			pii0.y = pi0.y * ahis.y;
-			pii0.z = pi0.z * ahis.z;
-			pii1.y = pi1.y * ahis.y;
-			pii1.z = pi1.z * ahis.z;
+			upi0.y = pi0.y * ahis.y;
+			upi0.z = pi0.z * ahis.z;
+			upi1.y = pi1.y * ahis.y;
+			upi1.z = pi1.z * ahis.z;
 
 			inv.y = ahs.y;
 			inv.z = ahs.z;
-			diir = (pii1 - pii0).SafeNormalize();
+			udir = (upi1 - upi0).SafeNormalize();
 
 			n0.x = -1.0f; // left
 			n1.x =  1.0f; // right
 
 			// yz-surface equation params
-			a =  (diir.y * diir.y) + (diir.z * diir.z);
-			b = ((pii0.y * diir.y) + (pii0.z * diir.z)) * 2.0f;
-			c =  (pii0.y * pii0.y) + (pii0.z * pii0.z)  - 1.0f;
+			a =  (udir.y * udir.y) + (udir.z * udir.z);
+			b = ((upi0.y * udir.y) + (upi0.z * udir.z)) * 2.0f;
+			c =  (upi0.y * upi0.y) + (upi0.z * upi0.z)  - 1.0f;
 		} break;
 		case CollisionVolume::COLVOL_AXIS_Y: {
-			pii0.x = pi0.x * ahis.x;
-			pii0.z = pi0.z * ahis.z;
-			pii1.x = pi1.x * ahis.x;
-			pii1.z = pi1.z * ahis.z;
+			upi0.x = pi0.x * ahis.x;
+			upi0.z = pi0.z * ahis.z;
+			upi1.x = pi1.x * ahis.x;
+			upi1.z = pi1.z * ahis.z;
 
 			inv.x = ahs.x;
 			inv.z = ahs.z;
-			diir = (pii1 - pii0).SafeNormalize();
+			udir = (upi1 - upi0).SafeNormalize();
 
 			n0.y =  1.0f; // top
 			n1.y = -1.0f; // bottom
 
 			// xz-surface equation params
-			a =  (diir.x * diir.x) + (diir.z * diir.z);
-			b = ((pii0.x * diir.x) + (pii0.z * diir.z)) * 2.0f;
-			c =  (pii0.x * pii0.x) + (pii0.z * pii0.z)  - 1.0f;
+			a =  (udir.x * udir.x) + (udir.z * udir.z);
+			b = ((upi0.x * udir.x) + (upi0.z * udir.z)) * 2.0f;
+			c =  (upi0.x * upi0.x) + (upi0.z * upi0.z)  - 1.0f;
 		} break;
 		case CollisionVolume::COLVOL_AXIS_Z: {
-			pii0.x = pi0.x * ahis.x;
-			pii0.y = pi0.y * ahis.y;
-			pii1.x = pi1.x * ahis.x;
-			pii1.y = pi1.y * ahis.y;
+			upi0.x = pi0.x * ahis.x;
+			upi0.y = pi0.y * ahis.y;
+			upi1.x = pi1.x * ahis.x;
+			upi1.y = pi1.y * ahis.y;
 
 			inv.x = ahs.x;
 			inv.y = ahs.y;
-			diir = (pii1 - pii0).SafeNormalize();
+			udir = (upi1 - upi0).SafeNormalize();
 
 			n0.z =  1.0f; // front
 			n1.z = -1.0f; // back
 
 			// xy-surface equation params
-			a =  (diir.x * diir.x) + (diir.y * diir.y);
-			b = ((pii0.x * diir.x) + (pii0.y * diir.y)) * 2.0f;
-			c =  (pii0.x * pii0.x) + (pii0.y * pii0.y)  - 1.0f;
+			a =  (udir.x * udir.x) + (udir.y * udir.y);
+			b = ((upi0.x * udir.x) + (upi0.y * udir.y)) * 2.0f;
+			c =  (upi0.x * upi0.x) + (upi0.y * upi0.y)  - 1.0f;
 		} break;
 	}
 
 	// volume-space intersection points
-	float3 p0 = ZeroVector;
-	float3 p1 = ZeroVector;
+	float3 p0;
+	float3 p1;
 
 	int b0 = CQ_POINT_NO_INT;
 	int b1 = CQ_POINT_NO_INT;
@@ -614,15 +610,15 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			// quadratic eq.; one or two surface intersections
 			if (d < COLLISION_VOLUME_EPS) {
 				t0 = -b / (2.0f * a);
-				p0 = (pii0 + (diir * t0)) * inv;
+				p0 = (upi0 + (udir * t0)) * inv;
 				s0 = (p0 - pi0).SqLength();
 				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
 			} else {
 				rd = math::sqrt(d);
 				t0 = (-b - rd) / (2.0f * a);
 				t1 = (-b + rd) / (2.0f * a);
-				p0 = (pii0 + (diir * t0)) * inv;
-				p1 = (pii0 + (diir * t1)) * inv;
+				p0 = (upi0 + (udir * t0)) * inv;
+				p1 = (upi0 + (udir * t1)) * inv;
 				s0 = (p0 - pi0).SqLength();
 				s1 = (p1 - pi0).SqLength();
 				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
@@ -632,7 +628,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			if (b != 0.0f) {
 				// linear eq.; one surface intersection
 				t0 = -c / b;
-				p0 = (pii0 + (diir * t0)) * inv;
+				p0 = (upi0 + (udir * t0)) * inv;
 				s0 = (p0 - pi0).SqLength();
 				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
 			}
@@ -642,13 +638,13 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	if (b0 == CQ_POINT_NO_INT) {
 		// p0 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
-		// through front cap (plane)
+		// through front cap (plane) in unit-volume space
 		// NOTE: normal n0 and dir should not be orthogonal
-		dp = n0.dot(dir);
+		dp = n0.dot(udir);
 		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t0 = -(n0.dot(pi0) - ahs[pAx]) * rd;
-		p0 = pi0 + (dir * t0);
+		t0 = -(n0.dot(upi0) - ahs[pAx]) * rd;
+		p0 = (upi0 + (udir * t0)) * inv;
 		s0 = (p0 - pi0).SqLength();
 		ra =
 			(((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) +
@@ -658,13 +654,13 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	if (b1 == CQ_POINT_NO_INT) {
 		// p1 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
-		// through rear cap (plane)
+		// through rear cap (plane) in unit-volume space
 		// NOTE: normal n1 and dir should not be orthogonal
-		dp = n1.dot(dir);
+		dp = n1.dot(udir);
 		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t1 = -(n1.dot(pi0) - ahs[pAx]) * rd;
-		p1 = pi0 + (dir * t1);
+		t1 = -(n1.dot(upi0) - ahs[pAx]) * rd;
+		p1 = (upi0 + (udir * t1)) * inv;
 		s1 = (p1 - pi0).SqLength();
 		ra =
 			(((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) +

@@ -2,6 +2,9 @@
 
 #include "DemoReader.h"
 
+#include "Game/GameVersion.h"
+#include "Sim/Misc/GlobalConstants.h"
+
 #ifndef TOOLS
 #include "System/Config/ConfigHandler.h"
 CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to play every replay file (may crash / cause undefined behaviour in replays)");
@@ -11,48 +14,70 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
-#include "Game/GameVersion.h"
 
-#include <limits.h>
+#include <array>
+#include <climits>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
 
 
+static bool CheckDemoHeader(const DemoFileHeader& fileHeader)
+{
+	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) != 0)
+		return false;
+
+	if (fileHeader.version != DEMOFILE_VERSION)
+		return false;
+
+	if (fileHeader.headerSize != sizeof(DemoFileHeader))
+		return false;
+
+	if (fileHeader.playerStatElemSize != sizeof(PlayerStatistics))
+		return false;
+	if (fileHeader.teamStatElemSize != sizeof(TeamStatistics))
+		return false;
+
+	// do not compare Spring version in debug mode: we do not want to make
+	// debugging dev-version demos impossible (because the version differs
+	// each build)
+	#ifndef _DEBUG
+	return (!SpringVersion::IsRelease() || strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()) == 0);
+	#endif
+
+	return true;
+}
+
+
 CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDemo(new CGZFileHandler(filename, SPRING_VFS_PWD_ALL))
 {
-	if (!playbackDemo->FileExists()) {
-		// file not found -> exception
-		throw user_error(std::string("Demofile not found: ") + filename);
-	}
+	if (FileSystem::GetExtension(filename) != "sdfz")
+		throw content_error("Unknown demo extension: " + FileSystem::GetExtension(filename));
+
+	// file not found -> exception
+	if (!playbackDemo->FileExists())
+		throw user_error("Demofile not found: " + filename);
 
 	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
-	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
-		|| fileHeader.version != DEMOFILE_VERSION
-		|| fileHeader.headerSize != sizeof(fileHeader)
-		|| fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
-		|| fileHeader.teamStatElemSize != sizeof(TeamStatistics)
-		// Don't compare spring version in debug mode: we don't want to make
-		// debugging dev-version demos impossible (because the version is different
-		// each build.)
-#ifndef _DEBUG
-		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
-#endif
-		) {
-			const std::string demoMsg = std::string("Demofile ") + filename + " corrupt or created by a different version of Spring, expects version " + fileHeader.versionString + ".";
+	if (!CheckDemoHeader(fileHeader)) {
+			char buf[1024];
+			const char* fmt = "[%s] demo-file \"%s\" (%d bytes, magic \"%s\") corrupt or created by a different Spring version, expected \"%s\"";
+
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf, sizeof(buf) - 1, fmt, __func__, filename.c_str(), playbackDemo->FileSize(), fileHeader.magic, fileHeader.versionString);
+
 #ifndef TOOLS
 			if (!configHandler->GetBool("DisableDemoVersionCheck"))
-				throw std::runtime_error(demoMsg);
+				throw std::runtime_error(buf);
 #endif
-			LOG_L(L_WARNING, "%s", demoMsg.c_str());
+			LOG_L(L_WARNING, "%s", buf);
 	}
 
 	if (fileHeader.scriptSize != 0) {
-		std::vector<char> buf(fileHeader.scriptSize);
-		playbackDemo->Read(&buf[0], fileHeader.scriptSize);
-		setupScript = std::string(&buf[0], fileHeader.scriptSize);
+		setupScript.resize(fileHeader.scriptSize, 0);
+		playbackDemo->Read(const_cast<char*>(setupScript.data()), setupScript.size());
 	}
 
 	playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
@@ -61,13 +86,13 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDe
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoReadTime = curTime - 0.01f;
 
-	long curPos = playbackDemo->GetPos();
+	const long curPos = playbackDemo->GetPos();
 	playbackDemo->Seek(0, std::ios::end);
 	playbackDemoSize = playbackDemo->GetPos();
+
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize;
-	}
-	else {
+	} else {
 		// Spring crashed while recording the demo: replay until EOF,
 		// but at most filesize bytes to block watching demo of running game.
 		// For this we must determine the file size.
@@ -157,8 +182,11 @@ void CDemoReader::LoadStats()
 	{ // Team statistics follow player statistics.
 		teamStats.resize(fileHeader.numTeams);
 		// Read the array containing the number of team stats for each team.
-		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
-		playbackDemo->Read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
+		std::array<int, MAX_TEAMS> numStatsPerTeam;
+
+		assert(fileHeader.numTeams <= numStatsPerTeam.size());
+		numStatsPerTeam.fill(0);
+		playbackDemo->Read(reinterpret_cast<char*>(numStatsPerTeam.data()), fileHeader.numTeams);
 
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {

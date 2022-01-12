@@ -67,8 +67,8 @@ void CInfoConsole::Init()
 	logSinkHandler.AddSink(this);
 	eventHandler.AddClient(this);
 
-	rawData.clear();
-	data.clear();
+	rawLines.clear();
+	infoLines.clear();
 
 	lastMsgPositions.fill(ZeroVector);
 }
@@ -88,13 +88,20 @@ void CInfoConsole::Draw()
 		return;
 	if (smallFont == nullptr)
 		return;
-	if (data.empty())
-		return;
-
-	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 	// infoConsole exists before guiHandler does, but is never drawn during that period
 	assert(guihandler != nullptr);
+
+	{
+		// make copies s.t. mutex is not locked during glPrint calls
+		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+
+		if (infoLines.empty())
+			return;
+
+		tmpInfoLines.clear();
+		tmpInfoLines.insert(tmpInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
+	}
 
 	// always draw outlined text here, saves an ugly black background
 	// (the default console is practically no longer used in any case)
@@ -107,8 +114,8 @@ void CInfoConsole::Draw()
 	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 	smallFont->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
-		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, data[i].text);
+	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
+		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
 	}
 
 	smallFont->DrawBufferedGL4();
@@ -118,13 +125,14 @@ void CInfoConsole::Draw()
 
 void CInfoConsole::Update()
 {
-	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
-	if (data.empty())
+	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+
+	if (infoLines.empty())
 		return;
 
 	// pop old messages after timeout
-	if (data[0].timeout <= spring_gettime())
-		data.pop_front();
+	if (infoLines[0].timeout <= spring_gettime())
+		infoLines.pop_front();
 
 	if (smallFont == nullptr)
 		return;
@@ -137,76 +145,80 @@ void CInfoConsole::Update()
 	// height=0 will likely be the case on HEADLESS only
 	maxLines = (fontHeight > 0.0f)? math::floor(maxHeight / (fontSize * fontHeight)): 1;
 
-	for (size_t i = data.size(); i > maxLines; i--) {
-		data.pop_front();
+	for (size_t i = infoLines.size(); i > maxLines; i--) {
+		infoLines.pop_front();
 	}
 }
 
 void CInfoConsole::PushNewLinesToEventHandler()
 {
-	if (newLines == 0)
-		return;
-
-	std::deque<RawLine> newRawLines;
-
 	{
-		std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
+		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
 
-		const int count = (int)rawData.size();
-		const int start = count - newLines;
-		for (int i = start; i < count; i++) {
-			newRawLines.push_back(rawData[i]);
+		if (newLines == 0)
+			return;
+
+		const size_t lineCount = rawLines.size();
+		const size_t startLine = lineCount - std::min(lineCount, newLines);
+
+		tmpLines.clear();
+		tmpLines.reserve(lineCount - startLine);
+
+		for (size_t i = startLine; i < lineCount; i++) {
+			tmpLines.push_back(rawLines[i]);
 		}
+
 		newLines = 0;
 	}
 
-	for (const RawLine& rawLine: newRawLines) {
+	for (const RawLine& rawLine: tmpLines) {
 		eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
 	}
 }
 
 
-int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
+size_t CInfoConsole::GetRawLines(std::vector<RawLine>& lines)
 {
-	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
-	lines = rawData;
-	const int numNewLines = newLines;
-	newLines = 0;
-	return numNewLines;
+	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+
+	const size_t numNewLines = newLines;
+
+	lines.clear();
+	lines.assign(rawLines.begin(), rawLines.end());
+
+	return (newLines = 0, numNewLines);
 }
 
 
 void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& message)
 {
-	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
+	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
 
 	if (section == prvSection && message == prvMessage)
 		return;
 
 	newLines += (newLines < maxRawLines);
 
-	if (rawData.size() > maxRawLines)
-		rawData.pop_front();
+	if (rawLines.size() > maxRawLines)
+		rawLines.pop_front();
 
-	rawData.emplace_back(prvMessage = message, prvSection = section, level, rawId++);
+	rawLines.emplace_back(prvMessage = message, prvSection = section, level, rawId++);
 
 	if (smallFont == nullptr)
 		return;
 
 	// NOTE
-	//   do not remove elements from `data` here, ::Draw iterates over it
+	//   do not remove elements from infoLines here, ::Draw iterates over it
 	//   and can call LOG() which will end up back in ::RecordLogMessage
 	const std::string& wrappedText = smallFont->Wrap(message, fontSize, (width * globalRendering->viewSizeX) - (2 * border));
 	const std::u8string& unicodeText = toustring(wrappedText);
 
-	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(unicodeText));
-
-	for (auto& line: lines) {
+	for (auto& splitLine: smallFont->SplitIntoLines(unicodeText)) {
 		// add the line to the console
-		data.emplace_back();
+		infoLines.emplace_back();
 
-		InfoLine& l = data.back();
-		l.text    = std::move(line);
+		InfoLine& l = infoLines.back();
+		l.text    = std::move(splitLine);
 		l.timeout = spring_gettime() + spring_secs(lifetime);
 	}
 }

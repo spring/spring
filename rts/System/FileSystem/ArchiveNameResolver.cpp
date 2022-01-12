@@ -64,26 +64,27 @@ namespace ArchiveNameResolver {
 		std::string matchingVersion;
 		std::uint64_t matchingVersionInt = 0;
 
-		for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
-			if (lowerLazyName == StringToLower(it->GetShortName())) {
-				// find latest version of the game
-				std::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
+		for (const auto& archiveData: found) {
+			if (lowerLazyName != StringToLower(archiveData.GetShortName()))
+				continue;
 
-				if (versionInt > matchingVersionInt) {
-					matchingName = it->GetNameVersioned();
-					matchingVersion = it->GetVersion();
-					matchingVersionInt = versionInt;
-					continue;
-				}
+			// find latest version of the game
+			std::uint64_t versionInt = ExtractVersionNumber(archiveData.GetVersion());
 
-				if (versionInt == matchingVersionInt) {
-					// very bad solution, fails with `10.0` vs. `9.10`
-					const int compareInt = matchingVersion.compare(it->GetVersion());
-					if (compareInt <= 0) {
-						matchingName = it->GetNameVersioned();
-						matchingVersion = it->GetVersion();
-						//matchingVersionInt = versionInt;
-					}
+			if (versionInt > matchingVersionInt) {
+				matchingName = archiveData.GetNameVersioned();
+				matchingVersion = archiveData.GetVersion();
+				matchingVersionInt = versionInt;
+				continue;
+			}
+
+			if (versionInt == matchingVersionInt) {
+				// very bad solution, fails with `10.0` vs. `9.10`
+				const int compareInt = matchingVersion.compare(archiveData.GetVersion());
+				if (compareInt <= 0) {
+					matchingName = archiveData.GetNameVersioned();
+					matchingVersion = archiveData.GetVersion();
+					//matchingVersionInt = versionInt;
 				}
 			}
 		}
@@ -143,8 +144,8 @@ namespace ArchiveNameResolver {
 		std::string matchingName;
 		size_t matchingLength = 1e6;
 
-		for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
-			const std::string lowerMapName = StringToLower(*it);
+		for (const auto& mapName: found) {
+			const std::string lowerMapName = StringToLower(mapName);
 
 			// search for all wanted substrings
 			bool fits = true;
@@ -160,7 +161,7 @@ namespace ArchiveNameResolver {
 				// shortest fitting string wins
 				const int nameLength = lowerMapName.length();
 				if (nameLength < matchingLength) {
-					matchingName = *it;
+					matchingName = mapName;
 					matchingLength = nameLength;
 				}
 			}
@@ -193,6 +194,11 @@ namespace ArchiveNameResolver {
 	{
 		if (!ParseRapidUri(lazyName, tag))
 			return false;
+
+		// NB:
+		//   this returns tag as-is (e.g. "zk:stable", unversioned) if no matching rapid entry exists
+		//   non-rapid archives should never have names that match rapid tags, otherwise dependencies
+		//   like "rapid://zk:stable" would be ambiguous
 		tag = GetRapidPackageFromTag(tag);
 		return !tag.empty();
 	}

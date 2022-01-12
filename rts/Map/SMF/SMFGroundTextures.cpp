@@ -62,8 +62,14 @@ CSMFGroundTextures::GroundSquare::~GroundSquare()
 CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
 	LoadTiles(smfMap->GetMapFile());
-	LoadSquareTextures(3);
+	LoadSquareTextures(0, 3); // preload all levels
 	ConvolveHeightMap(mapDims.mapx, 1);
+}
+
+CSMFGroundTextures::~CSMFGroundTextures()
+{
+	pbo.Release();
+	glDeleteTextures(1, &tileArrayTex);
 }
 
 void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
@@ -73,8 +79,11 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
+	char tmp[512] = {0};
+
 	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
-		throw content_error("Error loading map: size from header doesn't match map size.");
+		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] header.{mapx=%d,mapy=%d} != mapDims.{mapx=%d,mapy=%d}", __func__, header.mapx, header.mapy, mapDims.mapx, mapDims.mapy);
+		throw content_error(tmp);
 	}
 
 	ifs->Seek(header.tilesPtr);
@@ -83,7 +92,8 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CSMFMapFile::ReadMapTileHeader(tileHeader, *ifs);
 
 	if (smfMap->tileCount <= 0) {
-		throw content_error("Error loading map: count of tiles is 0.");
+		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] smfMap->tileCount=%d <= 0", __func__, smfMap->tileCount);
+		throw content_error(tmp);
 	}
 
 	tileMap.clear();
@@ -94,24 +104,17 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
 
 	bool smtHeaderOverride = false;
-	int curTile = 0;
 
-	const std::string smfDir = FileSystem::GetDirectory(gameSetup->MapFile());
+	const std::string& smfDir = FileSystem::GetDirectory(gameSetup->MapFileName());
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	if (!smf.smtFileNames.empty()) {
-		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
-			LOG_L(L_WARNING,
-				"mismatched number of .smt file "
-				"references between the map's .smd (" _STPF_ ")"
-				" and header (%d); ignoring .smd overrides",
-				smf.smtFileNames.size(), tileHeader.numTileFiles);
-		} else {
-			smtHeaderOverride = true;
+		if (!(smtHeaderOverride = (smf.smtFileNames.size() == tileHeader.numTileFiles))) {
+			LOG_L(L_WARNING, "[SMFGroundTextures::%s] smtFileNames.size()=" _STPF_ " != tileHeader.numTileFiles=%d", __func__, smf.smtFileNames.size(), tileHeader.numTileFiles);
 		}
 	}
 
-	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
+	for (int a = 0, curTile = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles = 0;
 		char fileNameBuffer[256] = {0};
 
@@ -126,17 +129,15 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 		CFileHandler tileFile(smtFilePath);
 
-		if (!tileFile.FileExists()) {
-			// try absolute path
-			smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a];
-			tileFile.Open(smtFilePath);
-		}
+		// try absolute path
+		if (!tileFile.FileExists())
+			tileFile.Open(smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a]);
 
 		if (!tileFile.FileExists()) {
 			LOG_L(L_WARNING,
-				"could not find .smt tile-file \"%s\" "
-				"(ALL %d MISSING TILES WILL BE MADE RED)",
-				smtFilePath.c_str(), numSmallTiles);
+				"[SMFGroundTextures::%s] could not find .smt tile-file %d (\"%s\"; ALL %d SMALL TILES WILL BE MADE RED)",
+				__func__, a, smtFilePath.c_str(), numSmallTiles
+			);
 
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
@@ -147,14 +148,16 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		CSMFMapFile::ReadMapTileFileHeader(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
-			char t[500];
-			sprintf(t, "[CSMFGroundTextures] file \"%s\" does not match .smt format", smtFilePath.c_str());
-			throw content_error(t);
+			snprintf(
+				tmp, sizeof(tmp),
+				"[SMFGroundTextures::%s] tile-file %d (path=\"%s\" magic=\"%s\" version=%d tileSize=%d comprType=%d) does not match .smt format",
+				__func__, a, smtFilePath.c_str(), tfh.magic, tfh.version, tfh.tileSize, tfh.compressionType
+			);
+			throw content_error(tmp);
 		}
 
 		for (int b = 0; b < numSmallTiles; ++b) {
-			tileFile.Read(&tiles[curTile * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
-			curTile++;
+			tileFile.Read(&tiles[(curTile++) * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
 		}
 	}
 
@@ -171,16 +174,70 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 }
 
-void CSMFGroundTextures::LoadSquareTextures(const int mipLevel)
+void CSMFGroundTextures::LoadSquareTextures(const int minLevel, const int maxLevel)
 {
 	loadscreen->SetLoadMessage("Loading Square Textures");
 
-	for (int y = 0; y < smfMap->numBigTexY; ++y) {
-		for (int x = 0; x < smfMap->numBigTexX; ++x) {
-			// start at the lowest mip-level
-			LoadSquareTexture(x, y, mipLevel);
+
+	glGenTextures(1, &tileArrayTex);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, tileArrayTex);
+
+	const int bts = smfMap->bigTexSize;
+	const int ntx = smfMap->numBigTexX;
+	const int nty = smfMap->numBigTexY;
+
+	#if 0
+	glTexImage3D(
+		GL_TEXTURE_2D_ARRAY,
+		0,
+		tileTexFormat,
+		bts,
+		bts,
+		ntx * nty,
+		0,
+		GL_RGBA,
+		GL_UNSIGNED_BYTE,
+		nullptr
+	);
+	#else
+	glTexStorage3D(
+		GL_TEXTURE_2D_ARRAY,
+		1 + 3,
+		tileTexFormat,
+		bts, bts,
+		ntx * nty
+	);
+
+	{
+		#ifndef HEADLESS
+		GLint val = 0;
+		glGetTexParameteriv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_IMMUTABLE_FORMAT, &val);
+		assert(val == 1);
+		#endif
+	}
+
+	#endif
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR              );
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	if (smfMap->GetTexAnisotropyLevel(false) != 0.0f)
+		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, smfMap->GetTexAnisotropyLevel(false));
+
+	for (int i = minLevel; i <= maxLevel; i++) {
+		for (int y = 0; y < nty; ++y) {
+			for (int x = 0; x < ntx; ++x) {
+				LoadSquareTexture(x, y, i);
+			}
 		}
 	}
+
+	// prefer baked MIP's, seven levels are overkill
+	// glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
 void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLevel)
@@ -195,7 +252,7 @@ void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLeve
 	const int nb = nbx * nby;
 
 	// 64 is the heightmap square-size at MIP level 1 (bigSquareSize >> 1)
-	static const int mipSquareSize = 64;
+	constexpr int mipSquareSize = 64;
 
 	heightMaxima.clear();
 	heightMaxima.resize(nb, readMap->GetCurrMinHeight());
@@ -264,14 +321,15 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 	const int x = btx * smfMap->bigTexSize + (smfMap->bigTexSize >> 1);
 	const int y = bty * smfMap->bigTexSize + (smfMap->bigTexSize >> 1);
 	const int idx = (y >> 3) * smfMap->heightMapSizeX + (x >> 3);
-	const float3 bigTexSquarePos(x, hm[idx], y);
 
-	return (cam->InView(bigTexSquarePos, bigTexSquareRadius));
+	return (cam->InView({x * 1.0f, hm[idx], y * 1.0f}, bigTexSquareRadius));
 }
 
 void CSMFGroundTextures::DrawUpdate()
 {
 	const CCamera* cam = CCameraHandler::GetActiveCamera();
+
+	const float3& camPos = cam->GetPos();
 
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;
@@ -279,35 +337,35 @@ void CSMFGroundTextures::DrawUpdate()
 	const float vdiag = fastmath::apxsqrt(vsxSq + vsySq);
 
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
-		float dz = cam->GetPos().z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
+		float dz = camPos.z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
 		dz -= (SQUARE_SIZE << 6);
 		dz = std::max(0.0f, float(math::fabs(dz) - (SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < smfMap->numBigTexX; ++x) {
 			GroundSquare* square = &squares[y * smfMap->numBigTexX + x];
 
-			if (square->HasLuaTexture()) {
-				// no deletion or mip-level selection
+			// no deletion or mip-level selection
+			if (square->HasLuaTexture())
 				continue;
-			}
 
 			if (!TexSquareInView(x, y)) {
 				if ((square->GetMipLevel() < 3) && ((globalRendering->drawFrame - square->GetDrawFrame()) > 120)) {
 					// `unload` texture (load lowest mip-map) if
 					// the square wasn't visible for 120 vframes
-					LoadSquareTexture(x, y, 3);
+					square->SetMipLevel(3);
 				}
+
 				continue;
 			}
 
-			float dx = cam->GetPos().x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
+			float dx = camPos.x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
 			dx -= (SQUARE_SIZE << 6);
 			dx = std::max(0.0f, float(math::fabs(dx) - (SQUARE_SIZE << 6)));
 
-			const float hAvg =
-				(heightMaxima[y * smfMap->numBigTexX + x] +
-				 heightMinima[y * smfMap->numBigTexX + x]) / 2.0f;
-			const float dy = std::max(cam->GetPos().y - hAvg, 0.0f);
+			const float avgHeight = (heightMaxima[y * smfMap->numBigTexX + x] + heightMinima[y * smfMap->numBigTexX + x]) * 0.5f;
+			const float difHeight =  heightMaxima[y * smfMap->numBigTexX + x] - heightMinima[y * smfMap->numBigTexX + x];
+
+			const float dy = std::max(camPos.y - avgHeight, 0.0f);
 			const float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
 
 			// we work under the following assumptions:
@@ -319,18 +377,15 @@ void CSMFGroundTextures::DrawUpdate()
 			//    translates to a diameter of =~ sqrt2 * bigTexSize =~ 1400 pixels
 			//
 			//    half (vertical) FOV is 45 degs, for default and most other camera modes
-			int wantedLevel = 0;
-			float heightDiff =
-				heightMaxima[y * smfMap->numBigTexX + x] -
-				heightMinima[y * smfMap->numBigTexX + x];
 			int screenPixels = smfMap->bigTexSize;
+			int wantedLevel = 0;
 
 			if (dist > 0.0f) {
-				if (heightDiff > float(smfMap->bigTexSize)) {
+				if (difHeight > float(smfMap->bigTexSize)) {
 					// this means the heightmap chunk is taller than it is wide,
 					// so we use the tallness metric instead for calculating its
 					// on-screen size in pixels
-					screenPixels = (heightDiff) * (vdiag * 0.5f) / dist;
+					screenPixels = (difHeight) * (vdiag * 0.5f) / dist;
 				} else {
 					screenPixels = smfMap->bigTexSize * (vdiag * 0.5f) / dist;
 				}
@@ -350,9 +405,7 @@ void CSMFGroundTextures::DrawUpdate()
 			if (stretchFactors[y * smfMap->numBigTexX + x] > 16000 && wantedLevel > 0)
 				wantedLevel--;
 
-			if (square->GetMipLevel() != wantedLevel) {
-				LoadSquareTexture(x, y, wantedLevel);
-			}
+			square->SetMipLevel(wantedLevel);
 		}
 	}
 }
@@ -360,8 +413,11 @@ void CSMFGroundTextures::DrawUpdate()
 
 
 bool CSMFGroundTextures::SetSquareLuaTexture(int texSquareX, int texSquareY, int texID) {
-	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX) { return false; }
-	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY) { return false; }
+	#if 0
+	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX)
+		return false;
+	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY)
+		return false;
 
 	GroundSquare* square = &squares[texSquareY * smfMap->numBigTexX + texSquareX];
 
@@ -373,25 +429,34 @@ bool CSMFGroundTextures::SetSquareLuaTexture(int texSquareX, int texSquareY, int
 
 	square->SetLuaTexture(texID);
 	return (square->HasLuaTexture());
+	#endif
+	return false;
 }
 
 bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel) {
-	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX) { return false; }
-	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY) { return false; }
-	if (texMipLevel < 0 || texMipLevel > 3) { return false; }
+	#if 0
+	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX)
+		return false;
+	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY)
+		return false;
+	if (texMipLevel < 0 || texMipLevel > 3)
+		return false;
 
 	// no point extracting sub-rectangles from compressed data
-	if (texSizeX != (smfMap->bigTexSize >> texMipLevel)) { return false; }
-	if (texSizeY != (smfMap->bigTexSize >> texMipLevel)) { return false; }
+	if (texSizeX != (smfMap->bigTexSize >> texMipLevel))
+		return false;
+	if (texSizeY != (smfMap->bigTexSize >> texMipLevel))
+		return false;
 
-	static const GLenum ttarget = GL_TEXTURE_2D;
+	constexpr GLenum ttarget = GL_TEXTURE_2D;
+	constexpr GLbitfield access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT;
 
 	const int mipSqSize = smfMap->bigTexSize >> texMipLevel;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
 
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer());
+	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
 	glBindTexture(ttarget, texID);
@@ -400,7 +465,8 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 
 	pbo.Invalidate();
 	pbo.Unbind();
-	return true;
+	#endif
+	return false;
 }
 
 
@@ -447,7 +513,8 @@ void CSMFGroundTextures::ExtractSquareTiles(
 
 void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 {
-	constexpr GLenum ttarget = GL_TEXTURE_2D;
+	constexpr GLenum ttarget = GL_TEXTURE_2D_ARRAY;
+	constexpr GLbitfield access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT;
 
 	const int mipSqSize = smfMap->bigTexSize >> level;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
@@ -456,45 +523,40 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	square->SetMipLevel(level);
 	assert(!square->HasLuaTexture());
 
+
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer());
+	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
-	glDeleteTextures(1, square->GetTextureIDPtr());
-	glGenTextures(1, square->GetTextureIDPtr());
-	glBindTexture(ttarget, square->GetTextureID());
-	glTexParameteri(ttarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(ttarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(ttarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(ttarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glCompressedTexSubImage3D(
+		ttarget,
+		level,
 
-	if (smfMap->GetTexAnisotropyLevel(false) != 0.0f)
-		glTexParameterf(ttarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, smfMap->GetTexAnisotropyLevel(false));
+		0, 0, y * smfMap->numBigTexX + x, // xoffset, yoffset, zoffset=slice
+		mipSqSize, mipSqSize, 1, // width, height, depth
 
-	if (level < 2) {
-		glTexParameteri(ttarget, GL_TEXTURE_PRIORITY, 1);
-	} else {
-		glTexParameterf(ttarget, GL_TEXTURE_PRIORITY, 0.5f);
-	}
-
-	glCompressedTexImage2D(ttarget, 0, tileTexFormat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+		tileTexFormat,
+		numSqBytes,
+		pbo.GetPtr()
+	);
 
 	pbo.Invalidate();
 	pbo.Unbind();
 }
 
-void CSMFGroundTextures::BindSquareTexture(int texSquareX, int texSquareY)
+void CSMFGroundTextures::BindSquareTextureArray() const { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D_ARRAY, tileArrayTex); }
+void CSMFGroundTextures::UnBindSquareTextureArray() const { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D_ARRAY, 0); }
+
+void CSMFGroundTextures::DrawUpdateSquare(int texSquareX, int texSquareY)
 {
 	assert(texSquareX >= 0);
 	assert(texSquareY >= 0);
 	assert(texSquareX < smfMap->numBigTexX);
 	assert(texSquareY < smfMap->numBigTexY);
 
-	GroundSquare* square = &squares[texSquareY * smfMap->numBigTexX + texSquareX];
-	glBindTexture(GL_TEXTURE_2D, square->GetTextureID());
+	if (game->GetDrawMode() != Game::NormalDraw)
+		return;
 
-	if (game->GetDrawMode() == Game::NormalDraw) {
-		square->SetDrawFrame(globalRendering->drawFrame);
-	}
+	squares[texSquareY * smfMap->numBigTexX + texSquareX].SetDrawFrame(globalRendering->drawFrame);
 }

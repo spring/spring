@@ -11,7 +11,7 @@ class CStarburstLauncher: public CWeapon
 public:
 	CStarburstLauncher(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
-	float GetRange2D(const float yDiff) const override final;
+	float GetRange2D(float boost, float ydiff) const override final;
 
 private:
 	const float3& GetAimFromPos(bool useMuzzle = false) const override { return weaponMuzzlePos; }

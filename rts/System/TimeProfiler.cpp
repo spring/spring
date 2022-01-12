@@ -14,83 +14,21 @@
 	#include "System/Threading/ThreadPool.h"
 #endif
 
-static spring::mutex profileMutex;
-static spring::unordered_map<int, std::string> hashToName;
-static spring::unordered_map<int, int> refCounters;
+static spring::spinlock profileMutex;
+static spring::spinlock hashToNameMutex;
+static spring::unordered_map<unsigned, std::string> hashToName;
+static spring::unordered_map<unsigned, int> refCounters;
 
 static CGlobalUnsyncedRNG profileColorRNG;
 
-
-
-#if 0
-// unused
-BasicTimer::BasicTimer(const std::string& timerName)
-	: nameHash(HashString(timerName))
-	, startTime(spring_gettime())
-
-	, name(timerName)
-{
-	const auto iter = hashToName.find(nameHash);
-
-	if (iter == hashToName.end()) {
-		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
-	} else {
-#ifdef DEBUG
-		if (iter->second != timerName) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName.c_str(), iter->second.c_str());
-			assert(false);
-		}
-#endif
-	}
-}
-#endif
-
-BasicTimer::BasicTimer(const char* timerName)
-	: nameHash(HashString(timerName, std::string::npos))
-	, startTime(spring_gettime())
-
-	, name(timerName)
-{
-	const auto iter = hashToName.find(nameHash);
-
-	if (iter == hashToName.end()) {
-		hashToName.insert(std::pair<int, std::string>(nameHash, timerName));
-	} else {
-#ifdef DEBUG
-		if (iter->second != timerName) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, iter->second.c_str());
-			assert(false);
-		}
-#endif
-	}
-}
 
 spring_time BasicTimer::GetDuration() const
 {
 	return spring_difftime(spring_gettime(), startTime);
 }
 
-
-
-#if 0
-// unused
-ScopedTimer::ScopedTimer(const std::string& name, bool _autoShowGraph, bool _specialTimer)
-	: BasicTimer(name)
-
-	, autoShowGraph(_autoShowGraph)
-	, specialTimer(_specialTimer)
-{
-	auto iter = refCounters.find(nameHash);
-
-	if (iter == refCounters.end())
-		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
-
-	++(iter->second);
-}
-#endif
-
-ScopedTimer::ScopedTimer(const char* timerName, bool _autoShowGraph, bool _specialTimer)
-	: BasicTimer(timerName)
+ScopedTimer::ScopedTimer(const unsigned _nameHash, bool _autoShowGraph, bool _specialTimer)
+	: BasicTimer(_nameHash)
 
 	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
 	// note that address-comparison is intended here, timer names are (and must be) literals
@@ -100,7 +38,7 @@ ScopedTimer::ScopedTimer(const char* timerName, bool _autoShowGraph, bool _speci
 	auto iter = refCounters.find(nameHash);
 
 	if (iter == refCounters.end())
-		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
+		iter = refCounters.insert(std::pair<unsigned, int>(nameHash, 0)).first;
 
 	++(iter->second);
 }
@@ -114,27 +52,33 @@ ScopedTimer::~ScopedTimer()
 	assert(iter->second > 0);
 
 	if (--(iter->second) == 0) {
-		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, specialTimer, false);
+		profiler.AddTime(nameHash, startTime, GetDuration(), autoShowGraph, specialTimer, false);
 	}
 }
 
 
 
-ScopedOnceTimer::ScopedOnceTimer(const char* timerName)
-	: startTime(spring_gettime())
-	, name(timerName)
+ScopedOnceTimer::ScopedOnceTimer(const char* timerName, const char* timerFrmt): startTime(spring_gettime())
 {
+	strncpy(name, timerName, sizeof(name));
+	strncpy(frmt, timerFrmt, sizeof(frmt));
+
+	name[sizeof(name) - 1] = 0;
+	frmt[sizeof(frmt) - 1] = 0;
 }
 
-ScopedOnceTimer::ScopedOnceTimer(const std::string& timerName)
-	: startTime(spring_gettime())
-	, name(timerName)
+ScopedOnceTimer::ScopedOnceTimer(const std::string& timerName, const char* timerFrmt): startTime(spring_gettime())
 {
+	strncpy(name, timerName.c_str(), sizeof(name));
+	strncpy(frmt, timerFrmt        , sizeof(frmt));
+
+	name[sizeof(name) - 1] = 0;
+	frmt[sizeof(frmt) - 1] = 0;
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("[%s][%s] %ims", __func__, name.c_str(), int(GetDuration().toMilliSecsi()));
+	LOG(frmt, __func__, name, int(GetDuration().toMilliSecsi()));
 }
 
 spring_time ScopedOnceTimer::GetDuration() const
@@ -144,28 +88,15 @@ spring_time ScopedOnceTimer::GetDuration() const
 
 
 
-#if 0
-// unused
-ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool _autoShowGraph)
-	// can not call BasicTimer's other ctor, accesses global map
-	// collisions for MT timers do not need to be checked anyway
-	: BasicTimer(spring_gettime())
+ScopedMtTimer::ScopedMtTimer(unsigned _nameHash, bool _autoShowGraph)
+	: BasicTimer(_nameHash)
 	, autoShowGraph(_autoShowGraph)
 {
-	name = timerName;
-}
-#endif
-
-ScopedMtTimer::ScopedMtTimer(const char* timerName, bool _autoShowGraph)
-	: BasicTimer(spring_gettime())
-	, autoShowGraph(_autoShowGraph)
-{
-	name = timerName;
 }
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false, true);
+	profiler.AddTime(nameHash, startTime, GetDuration(), autoShowGraph, false, true);
 }
 
 
@@ -176,17 +107,26 @@ ScopedMtTimer::~ScopedMtTimer()
 
 CTimeProfiler::CTimeProfiler()
 {
+	// self
+	RegisterTimer("Misc::Profiler::AddTime");
+	// specials (conditional on LuaContextData)
+	RegisterTimer("Lua::Callins::Synced");
+	RegisterTimer("Lua::Callins::Unsynced");
+	RegisterTimer("Lua::CollectGarbage::Synced");
+	RegisterTimer("Lua::CollectGarbage::Unsynced");
 	ResetState();
 }
 
+#if 1
+CTimeProfiler::~CTimeProfiler() = default;
+#else
 CTimeProfiler::~CTimeProfiler()
 {
-	#if 0
 	// should not be needed, destructor runs after main returns and all threads are gone
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
-	#endif
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 }
+#endif
+
 
 CTimeProfiler& CTimeProfiler::GetInstance()
 {
@@ -194,13 +134,48 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 	return tp;
 }
 
+bool CTimeProfiler::RegisterTimer(const char* timerName)
+{
+	const unsigned nameHash = hashString(timerName);
+
+	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end()) {
+		hashToName.insert(nameHash, timerName);
+		return true;
+	}
+	if (iter->second == timerName)
+		return true;
+
+	LOG_L(L_ERROR, "[%s] timer hash collision: %s <=> %s", __func__, timerName, iter->second.c_str());
+	assert(false);
+	return false;
+}
+
+bool CTimeProfiler::UnRegisterTimer(const char* timerName)
+{
+	const unsigned nameHash = hashString(timerName);
+
+	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end())
+		return false;
+
+	hashToName.erase(iter);
+	return true;
+}
+
 
 void CTimeProfiler::ResetState() {
 	// grab lock; ThreadPool workers might already be running SCOPED_MT_TIMER
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 
 	profiles.clear();
+	profiles.reserve(128);
 	sortedProfiles.clear();
 	#ifdef THREADPOOL
 	threadProfiles.clear();
@@ -235,8 +210,7 @@ void CTimeProfiler::Update()
 	}
 
 	// FIXME: non-locking threadsafe
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 
 	UpdateRaw();
 	ResortProfilesRaw();
@@ -297,8 +271,21 @@ void CTimeProfiler::ResortProfilesRaw()
 		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
 
 		// either caller already has lock, or we are disabled and thread-safe
-		for (auto it = profiles.begin(); it != profiles.end(); ++it) {
-			sortedProfiles.emplace_back(it->first, it->second);
+		{
+			std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
+			for (const auto& profile: profiles) {
+				const auto iter = hashToName.find(profile.first);
+
+				if (iter == hashToName.end()) {
+					LOG_L(L_ERROR, "[%s] timer with hash %u wasn't registered", __func__, profile.first);
+					assert(false);
+					hashToName.insert(profile.first, "???");
+					continue;
+				}
+
+				sortedProfiles.emplace_back(iter->second, profile.second);
+			}
 		}
 
 		std::sort(sortedProfiles.begin(), sortedProfiles.end(), sortFunc);
@@ -312,8 +299,7 @@ void CTimeProfiler::RefreshProfiles()
 	assert(enabled);
 
 	// lock so nothing modifies *unsorted* profiles during the refresh
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 
 	RefreshProfilesRaw();
 }
@@ -322,12 +308,12 @@ void CTimeProfiler::RefreshProfilesRaw()
 {
 	// either called from ProfileDrawer or from Update; the latter
 	// makes the "/debuginfo profiling" command work when disabled
-	for (auto it = sortedProfiles.begin(); it != sortedProfiles.end(); ++it) {
-		TimeRecord& rec = it->second;
+	for (auto& sortedProfile: sortedProfiles) {
+		TimeRecord& rec = sortedProfile.second;
 
 		const bool showGraph = rec.showGraph;
 
-		rec = profiles[it->first];
+		rec = profiles[hashString(sortedProfile.first.c_str())];
 		rec.showGraph = showGraph;
 	}
 }
@@ -340,15 +326,14 @@ const CTimeProfiler::TimeRecord& CTimeProfiler::GetTimeRecord(const char* name) 
 	if (!enabled)
 		return (GetTimeRecordRaw(name));
 
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 
 	return (GetTimeRecordRaw(name));
 }
 
 
 void CTimeProfiler::AddTime(
-	const std::string& name,
+	const unsigned nameHash,
 	const spring_time startTime,
 	const spring_time deltaTime,
 	const bool showGraph,
@@ -362,22 +347,21 @@ void CTimeProfiler::AddTime(
 			return;
 
 		assert(!threadTimer);
-		AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
-		AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
+		AddTimeRaw(nameHash, startTime, deltaTime, showGraph, threadTimer);
+		AddTimeRaw(hashString("Misc::Profiler::AddTime"), t0, spring_now() - t0, false, false);
 		return;
 	}
 
 	// acquire lock at the start; one inserting thread could
 	// cause a profile rehash and invalidate <pi> for another
-	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-	while (!ulk.try_lock()) {}
+	std::lock_guard<spring::spinlock> lock(profileMutex);
 
-	AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
-	AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
+	AddTimeRaw(nameHash, startTime, deltaTime, showGraph, threadTimer);
+	AddTimeRaw(hashString("Misc::Profiler::AddTime"), t0, spring_now() - t0, false, false);
 }
 
 void CTimeProfiler::AddTimeRaw(
-	const std::string& name,
+	const unsigned nameHash,
 	const spring_time startTime,
 	const spring_time deltaTime,
 	const bool showGraph,
@@ -388,8 +372,8 @@ void CTimeProfiler::AddTimeRaw(
 		threadProfiles[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
 #endif
 
-	auto pi = profiles.find(name);
-	auto& p = (pi != profiles.end())? pi->second: profiles[name];
+	auto pi = profiles.find(nameHash);
+	auto& p = (pi != profiles.end()) ? pi->second: profiles[nameHash];
 
 	// these are 0 if just created, works for both paths
 	p.total   += deltaTime;
@@ -419,9 +403,9 @@ void CTimeProfiler::PrintProfilingInfo() const
 
 	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
 
-	for (auto pi = sortedProfiles.begin(); pi != sortedProfiles.end(); ++pi) {
-		const std::string& name = pi->first;
-		const TimeRecord& tr = pi->second;
+	for (const auto& sortedProfile: sortedProfiles) {
+		const std::string& name = sortedProfile.first;
+		const TimeRecord& tr = sortedProfile.second;
 
 		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.stats.y * 100);
 	}

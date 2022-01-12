@@ -100,7 +100,7 @@ public:
     * @return true if the process is present in this flag fields,
     *   false if not.
     */
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
 
     // -------------------------------------------------------------------
@@ -108,7 +108,7 @@ public:
     * The function is a request to the process to update its configuration
     * basing on the Importer's configuration property list.
     */
-    virtual void SetupProperties(const Importer* pImp);
+    virtual void SetupProperties(const Importer* pImp) override;
 
 
     //! Set the split limit - needed for unit testing
@@ -126,7 +126,7 @@ public:
     * At the moment a process is not supposed to fail.
     * @param pScene The imported data to work at.
     */
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
     // -------------------------------------------------------------------
     //! Apply the algorithm to a given mesh
@@ -165,14 +165,14 @@ public:
     *   combination of #aiPostProcessSteps.
     * @return true if the process is present in this flag fields, false if not.
     */
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
     /** Called prior to ExecuteOnScene().
     * The function is a request to the process to update its configuration
     * basing on the Importer's configuration property list.
     */
-    virtual void SetupProperties(const Importer* pImp);
+    virtual void SetupProperties(const Importer* pImp) override;
 
 
     //! Set the split limit - needed for unit testing
@@ -190,7 +190,7 @@ public:
     * At the moment a process is not supposed to fail.
     * @param pScene The imported data to work at.
     */
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
     // -------------------------------------------------------------------
     //! Apply the algorithm to a given mesh

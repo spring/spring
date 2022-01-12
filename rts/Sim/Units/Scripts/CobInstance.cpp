@@ -31,9 +31,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/StringUtil.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Sound/ISoundChannels.h"
-#include "System/Sync/SyncTracer.h"
 
 
 /******************************************************************************/
@@ -77,7 +76,17 @@ void CCobInstance::Init()
 void CCobInstance::PostLoad()
 {
 	assert(unit != nullptr);
+	assert(cobFile == nullptr);
+
 	cobFile = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
+
+	for (int threadID: threadIDs) {
+		CCobThread* t = cobEngine->GetThread(threadID);
+
+		t->cobInst = this;
+		t->cobFile = cobFile;
+	}
+
 	Init();
 }
 
@@ -501,17 +510,17 @@ int CCobInstance::RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& ar
 
 	// LOG_L(L_DEBUG, "Calling %s:%s", cobFile->name.c_str(), cobFile->scriptNames[functionId].c_str());
 
-	const int threadID = cobEngine->AddThread(std::move(CCobThread(this)));
-	CCobThread* newThread = cobEngine->GetThread(threadID);
-
+	// tick the thread locally in case we're recursively running this function and then the threads may reallocate
+	CCobThread newThread(this);
+	newThread.SetID(cobEngine->GenThreadID());
 
 	// make sure this is run even if the call terminates instantly
 	if (cb != CBNone)
-		newThread->SetCallback(cb, cbParam);
+		newThread.SetCallback(cb, cbParam);
 
-	newThread->Start(functionId, 0, args, false);
+	newThread.Start(functionId, 0, args, false);
 
-	if ((ret = newThread->Tick()) == 0) {
+	if ((ret = newThread.Tick()) == 0) {
 		// thread died already after one tick
 		// NOTE:
 		//   ticking can trigger recursion, for example FireWeapon ->
@@ -525,11 +534,11 @@ int CCobInstance::RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& ar
 		//
 		//   args[0] holds the number of input args
 		const unsigned int numArgs = args[0];
-		const unsigned int retArgs = newThread->CheckStack(numArgs, functionId != cobFile->scriptIndex[COBFN_StartMoving]);
+		const unsigned int retArgs = newThread.CheckStack(numArgs, functionId != cobFile->scriptIndex[COBFN_StartMoving]);
 
 		// retrieve output parameter values from stack
 		for (unsigned int i = 0, n = std::min(retArgs, MAX_COB_ARGS); i < n; ++i)
-			args[i] = newThread->GetStackVal(i);
+			args[i] = newThread.GetStackVal(i);
 
 		// set erroneous parameters to 0
 		for (unsigned int i = std::min(retArgs, MAX_COB_ARGS); i < numArgs; ++i)
@@ -537,9 +546,9 @@ int CCobInstance::RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& ar
 
 		// dtor runs the callback
 		if (retCode != nullptr)
-			*retCode = newThread->GetRetCode();
-
-		cobEngine->RemoveThread(newThread->GetID());
+			*retCode = newThread.GetRetCode();
+	} else {
+		cobEngine->AddThread(std::move(newThread));
 	}
 
 	// handle any spawned threads

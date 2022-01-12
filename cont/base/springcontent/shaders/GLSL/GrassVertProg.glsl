@@ -111,7 +111,6 @@ void main() {
 #if (defined(HAVE_SHADOWS) || defined(SHADOW_GEN))
 	vec4 vertexShadowPos = shadowMatrix * worldPos;
 
-	vertexShadowPos.xy += shadowParams.xy;
 	shadowTexCoords = vertexShadowPos;
 #endif
 

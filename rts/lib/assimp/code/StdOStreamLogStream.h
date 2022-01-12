@@ -67,7 +67,7 @@ public:
     ~StdOStreamLogStream();
 
     /** @brief  Writer  */
-    void write(const char* message);
+    void write(const char* message) override;
 
 private:
     std::ostream& mOstream;

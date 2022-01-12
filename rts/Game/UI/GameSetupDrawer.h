@@ -19,10 +19,10 @@ private:
 	GameSetupDrawer();
 	~GameSetupDrawer();
 
-	virtual void Draw();
+	virtual void Draw() override;
 
 	static GameSetupDrawer* instance;
-	bool lctrl_pressed;
+
 	spring_time readyCountdown;
 	spring_time lastTick;
 };

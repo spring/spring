@@ -3,7 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -19,7 +19,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
 
 
@@ -91,21 +91,27 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		SetRadiusAndHeight((targetPos - startPos).Length(), 0.0f);
 	}
 
-	collisionFlags = weaponDef->collisionFlags;
-	weaponNum = params.weaponNum;
+	{
+		myrange = weaponDef->range;
 
-	alwaysVisible = weaponDef->visuals.alwaysVisible;
-	ignoreWater = weaponDef->waterweapon;
+		collisionFlags = weaponDef->collisionFlags;
+		weaponNum = params.weaponNum;
 
-	CSolidObject* so = nullptr;
-	CWeaponProjectile* po = nullptr;
+		alwaysVisible = weaponDef->visuals.alwaysVisible;
+		ignoreWater = weaponDef->waterweapon;
+	}
 
-	if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
-		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
+	{
+		CSolidObject* so = nullptr;
+		CWeaponProjectile* po = nullptr;
 
-	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
-		po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
-		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
+		if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
+			AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
+
+		if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
+			po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
+			AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
+		}
 	}
 
 	if (params.model != nullptr) {
@@ -123,12 +129,15 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	if (ownerID != -1u && weaponNum != -1u) {
 		const CUnit* owner = unitHandler.GetUnit(ownerID);
+		const CWeapon* weapon = (owner != nullptr && weaponNum < owner->weapons.size())? owner->weapons[weaponNum]: nullptr;
 
-		if (owner != nullptr && weaponNum < owner->weapons.size()) {
-			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
+		if (weapon != nullptr) {
+			damages = DynDamageArray::IncRef(weapon->damages);
+
+			myrange = weapon->range;
 
 			// inherit from weapon instance if possible since Lua can change the flags at runtime
-			collisionFlags = owner->weapons[weaponNum]->collisionFlags;
+			collisionFlags = weapon->collisionFlags;
 		}
 	}
 
@@ -188,11 +197,12 @@ void CWeaponProjectile::Explode(
 
 	helper->Explosion(params);
 
-	if (!weaponDef->noExplode || TraveledRange()) {
-		// remove ourselves from the simulation (otherwise
-		// keep traveling and generating more explosions)
-		CProjectile::Collision();
-	}
+	if (weaponDef->noExplode && !TraveledRange())
+		return;
+
+	// remove ourselves from the simulation (otherwise
+	// keep traveling and generating more explosions)
+	CProjectile::Collision();
 }
 
 void CWeaponProjectile::Collision()
@@ -335,15 +345,10 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
-bool CWeaponProjectile::TraveledRange() const
+void CWeaponProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
-}
-
-
-void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
-{
-	points.AddVertexQC(pos, color4::yellow);
+	va->SafeAppend({pos        , color4::yellow});
+	va->SafeAppend({pos + speed, color4::yellow});
 }
 
 

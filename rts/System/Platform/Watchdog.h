@@ -17,20 +17,17 @@ enum WatchdogThreadnum {
 
 namespace Watchdog
 {
-	//! Installs the watchdog thread
+	// Installs the watchdog thread
 	void Install();
 	void Uninstall();
 
-	//! Call this to reset the watchdog timer of the current thread
-	void ClearTimer(bool disable = false, Threading::NativeThreadId* _threadId = nullptr);
+	// Call this to reset the watchdog timer of the current thread
+	void ClearTimer(Threading::NativeThreadId* _threadId = nullptr, bool disable = false);
 	void ClearTimer(const WatchdogThreadnum num, bool disable = false);
-	void ClearTimer(const std::string& name, bool disable = false);
-	inline void ClearTimer(const char* name, bool disable = false) {
-		ClearTimer(std::string(name), disable);
-	}
-	void ClearPrimaryTimers(bool disable = false);
+	void ClearTimer(const char* name, bool disable = false);
+	void ClearTimers(bool disable = false, bool primary = false);
 
-	//! Call these in the threads you want to monitor
+	// Call these in the threads you want to monitor
 	void RegisterThread(WatchdogThreadnum num, bool primary = false);
 	bool DeregisterThread(WatchdogThreadnum num);
 	bool DeregisterCurrentThread();

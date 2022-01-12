@@ -22,7 +22,7 @@ namespace creg
 		SetType() : IType(sizeof(T)) { }
 		~SetType() { }
 
-		void Serialize(ISerializer* s, void* instance)
+		void Serialize(ISerializer* s, void* instance) override
 		{
 			T& ct = *(T*)instance;
 			if (s->IsWriting()) {
@@ -42,7 +42,7 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() const { return "set<" + DeduceType<typename T::value_type>::Get()->GetName() + ">"; }
+		std::string GetName() const override { return "set<" + DeduceType<typename T::value_type>::Get()->GetName() + ">"; }
 	};
 
 

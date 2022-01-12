@@ -9,7 +9,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -427,6 +427,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 		assert(resurrecteeDef == resurrectee->unitDef);
 		resurrectee->SetSoloBuilder(this, resurrecteeDef);
+		resurrectee->SetHeading(curResurrectee->heading, !resurrectee->upright && resurrectee->IsOnGround(), false);
 
 		// TODO: make configurable if this should happen
 		resurrectee->health *= 0.05f;
@@ -440,10 +441,10 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 			Command& c = resurrecterCAI->commandQue.front();
 
-			if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+			if (c.GetID() != CMD_RESURRECT || c.GetNumParams() != 1)
 				continue;
 
-			if ((c.params[0] - unitHandler.MaxUnits()) != curResurrectee->id)
+			if ((c.GetParam(0) - unitHandler.MaxUnits()) != curResurrectee->id)
 				continue;
 
 			if (!teamHandler.Ally(allyteam, resurrecter->allyteam))
@@ -455,7 +456,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 			// prevent FinishCommand from removing this command when the
 			// feature is deleted, since it is needed to start the repair
 			// (WTF!)
-			c.params[0] = INT_MAX / 2;
+			c.SetParam(0, INT_MAX / 2);
 		}
 
 		// this takes one simframe to do the deletion
@@ -689,7 +690,7 @@ void CBuilder::StopBuild(bool callScript)
 	if (callScript)
 		script->StopBuilding();
 
-	ReleaseTempHoldFire();
+	SetHoldFire(false);
 }
 
 
@@ -719,28 +720,44 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// note: even if construction has already started,
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
-			CSolidObject* o = groundBlockingObjectMap.GroundBlocked(buildInfo.pos);
-			CUnit* u = nullptr;
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(buildInfo.pos);
 
-			if (o != nullptr) {
-				u = dynamic_cast<CUnit*>(o);
-			} else {
-				// <pos> might map to a non-blocking portion
-				// of the buildee's yardmap, fallback check
+			const CUnit* u = nullptr;
+
+			// look for any blocking assistable buildee at build.pos
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CUnit* cu = dynamic_cast<const CUnit*>(cell[i]);
+
+				if (cu == nullptr)
+					continue;
+				if (allyteam != cu->allyteam)
+					return false; // Enemy units that block always block the cell
+				if (!CanAssistUnit(cu, buildInfo.def))
+					continue;
+
+				u = cu;
+			}
+
+			// <pos> might map to a non-blocking portion
+			// of the buildee's yardmap, fallback check
+			if (u == nullptr)
 				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
+
+			if (u != nullptr) {
+				if (CanAssistUnit(u, buildInfo.def)) {
+					// StopBuild sets this to false, fix it here if picking up the same buildee again
+					terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
+
+					AddDeathDependence(curBuild = const_cast<CUnit*>(u), DEPENDENCE_BUILD);
+					ScriptStartBuilding(u->pos, false);
+					return true;
+				}
+
+				// let BuggerOff handle this case (TODO: non-landed aircraft should not count)
+				if (buildInfo.FootPrintOverlap(u->pos, u->GetFootPrint(SQUARE_SIZE * 0.5f)))
+					return false;
 			}
-
-			if (u != nullptr && CanAssistUnit(u, buildInfo.def)) {
-				// StopBuild sets this to false, fix it here if picking up the same buildee again
-				terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
-
-				AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
-				ScriptStartBuilding(u->pos, false);
-				return true;
-			}
-
-			return false;
-		}
+		} break;
 
 		case CGameHelper::BUILDSQUARE_RECLAIMABLE:
 			// caller should handle this

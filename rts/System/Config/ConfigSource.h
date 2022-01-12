@@ -54,8 +54,8 @@ class FileConfigSource : public ReadWriteConfigSource
 public:
 	FileConfigSource(const std::string& filename);
 
-	void SetString(const std::string& key, const std::string& value);
-	void Delete(const std::string& key);
+	void SetString(const std::string& key, const std::string& value) override;
+	void Delete(const std::string& key) override;
 
 	std::string GetFilename() const { return filename; }
 

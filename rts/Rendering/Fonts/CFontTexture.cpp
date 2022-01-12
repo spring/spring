@@ -20,6 +20,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -85,9 +86,9 @@ struct FontFace {
 };
 
 static spring::unsynced_set<CFontTexture*> allFonts;
-static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontCache;
+static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
 static spring::unsynced_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
-static spring::recursive_mutex m;
+static spring::recursive_mutex fontCacheMutex;
 
 
 
@@ -96,27 +97,60 @@ static spring::recursive_mutex m;
 class FtLibraryHandler {
 public:
 	FtLibraryHandler() {
-		const FT_Error error = FT_Init_FreeType(&lib);
+		char msgBuf[256] = {0};
+		char errBuf[256] = {0};
 
-		if (error)
-			throw std::runtime_error(std::string("FT_Init_FreeType failed:") + GetFTError(error));
+		{
+			const FT_Error error = FT_Init_FreeType(&lib);
+
+			FT_Int version[3];
+			FT_Library_Version(lib, &version[0], &version[1], &version[2]);
+
+			snprintf(msgBuf, sizeof(msgBuf), "%s::FreeTypeInit (version %d.%d.%d)", __func__, version[0], version[1], version[2]);
+			snprintf(errBuf, sizeof(errBuf), "[%s] FT_Init_FreeType failure \"%s\"", __func__, GetFTError(error));
+
+			if (error != 0)
+				throw std::runtime_error(errBuf);
+
+			// LOG_L(L_INFO, "%s", msgBuf);
+		}
 
         #ifdef USE_FONTCONFIG
-		if (!FcInit())
-			throw std::runtime_error("FontConfig failed");
+		if (!UseFontConfig())
+			return;
+
+		snprintf(msgBuf, sizeof(msgBuf), "%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+		snprintf(errBuf, sizeof(errBuf), "[%s] FcInit failure (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+
+		{
+			ScopedOnceTimer timer(msgBuf);
+
+			if (FcInit())
+				return;
+
+			throw std::runtime_error(errBuf);
+		}
 		#endif
 	}
 
 	~FtLibraryHandler() {
 		FT_Done_FreeType(lib);
+
 		#ifdef USE_FONTCONFIG
+		if (!UseFontConfig())
+			return;
+
 		FcFini();
 		#endif
 	}
 
+
+	static bool UseFontConfig() { return (configHandler == nullptr || configHandler->GetBool("UseFontConfigLib")); }
+
 	#ifdef USE_FONTCONFIG
-	bool CheckFontConfig() const { return (FcConfigUptoDate(nullptr)); }
-	bool BuildFontConfig(const char* osFontsDir) const {
+	// command-line GenFontConfig invocation checks
+	static bool CheckFontConfig() { return (UseFontConfig() && FcConfigUptoDate(nullptr)); }
+	static bool BuildFontConfig(const char* osFontsDir) {
 		// Windows users most likely don't have a fontconfig configuration file
 		// so manually add windows fonts dir and engine fonts dir to fontconfig
 		// so it can use them as fallback.
@@ -125,49 +159,23 @@ public:
 		FcConfigBuildFonts(nullptr);
 		return true;
 	}
+
 	#else
-	bool CheckFontConfig() const { return false; }
-	bool BuildFontConfig(const char*) const { return false; }
+
+	static bool CheckFontConfig() { return false; }
+	static bool BuildFontConfig(const char*) { return false; }
 	#endif
 
 	static FT_Library& GetLibrary() {
-		#ifndef WIN32
-		std::call_once(flag, []() {
-			singleton.reset(new FtLibraryHandler());
-		});
+		// caller holds fontCacheMutex
+		static FtLibraryHandler singleton;
 
-		#else
-
-		std::lock_guard<spring::recursive_mutex> lk(m);
-		if (flag) {
-			singleton.reset(new FtLibraryHandler());
-			flag = false;
-		}
-		#endif
-
-		return singleton->lib;
+		return singleton.lib;
 	};
 
 private:
 	FT_Library lib;
-
-	#ifndef WIN32
-	static std::once_flag flag;
-	#else
-	static bool flag;
-	#endif
-
-	static std::unique_ptr<FtLibraryHandler> singleton;
 };
-
-
-#ifndef WIN32
-std::once_flag FtLibraryHandler::flag;
-#else
-bool FtLibraryHandler::flag = true;
-#endif
-
-std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #endif
 
 
@@ -194,13 +202,15 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
-	auto it = fontCache.find(fontfile + IntToString(size));
-	if (it != fontCache.end() && !it->second.expired())
-		return it->second.lock();
+	const auto fontKey = fontfile + IntToString(size);
+	const auto fontIt = fontFaceCache.find(fontKey);
+
+	if (fontIt != fontFaceCache.end() && !fontIt->second.expired())
+		return fontIt->second.lock();
 
 	// get the file (no need to cache, takes too little time)
 	std::string fontPath(fontfile);
@@ -244,15 +254,13 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0)
 		throw content_error(fontfile + ": FT_Select_Charmap failed: " + GetFTError(error));
 
-	auto shFace = std::make_shared<FontFace>(face, fontMem);
-
-	fontCache[fontfile + IntToString(size)] = shFace;
-	return shFace;
+	return (fontFaceCache[fontKey] = std::make_shared<FontFace>(face, fontMem)).lock();
 }
 #endif
 
 
 #ifndef HEADLESS
+// NOLINTNEXTLINE{misc-misplaced-const}
 static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize)
 {
 #if defined(USE_FONTCONFIG)
@@ -298,7 +306,7 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 	FcFontSet* fs = FcFontSort(nullptr, pattern, FcFalse, nullptr, &res);
 
 	// dtors
-	auto del = [&](FcFontSet* fs){ FcFontSetDestroy(fs); };
+	auto del = [&](FcFontSet* fs) { FcFontSetDestroy(fs); };
 	std::unique_ptr<FcFontSet, decltype(del)> fs_(fs, del);
 	FcPatternDestroy(pattern);
 	FcCharSetDestroy(cset);
@@ -416,7 +424,7 @@ CFontTexture::~CFontTexture()
 
 void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 	for (auto& font: allFonts) {
 		font->UpdateGlyphAtlasTexture();
 	}
@@ -425,22 +433,26 @@ void CFontTexture::Update() {
 
 bool CFontTexture::GenFontConfig() {
 	#ifndef HEADLESS
-	#ifdef WIN32
 	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
-	FtLibraryHandler ftLibHandler;
 	char osFontsDir[32 * 1024];
 
+	#ifdef _WIN32
 	ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
+	#else
+	strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));
+	#endif
 
-	if (ftLibHandler.CheckFontConfig()) {
-		printf("[%s] fontconfig for directory %s up to date\n", __func__, osFontsDir);
+	FtLibraryHandler::GetLibrary();
+
+	if (FtLibraryHandler::CheckFontConfig()) {
+		printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
 		return true;
 	}
 
-	printf("[%s] creating fontconfig for directory %s\n", __func__, osFontsDir);
-	return (ftLibHandler.BuildFontConfig(osFontsDir));
+	printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
+	return (FtLibraryHandler::BuildFontConfig(osFontsDir));
 	#endif
-	#endif
+
 	return true;
 }
 
@@ -499,7 +511,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
@@ -748,7 +760,7 @@ void CFontTexture::ReallocAtlases(bool pre)
 void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	if (curTextureUpdate == lastTextureUpdate)
 		return;

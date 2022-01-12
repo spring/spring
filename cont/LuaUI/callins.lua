@@ -78,10 +78,18 @@ CallInsList = {
 	"DrawWorldShadow",
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
+	"DrawGroundPreForward",
+	"DrawGroundPostForward",
+	"DrawGroundPreDeferred",
+	"DrawGroundPostDeferred",
+	"DrawUnitsPostDeferred",
+	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",
 	"DrawScreenPost",
 	"DrawScreen",
 	"DrawInMiniMap",
+
+	"SunChanged",
 
 	"Explosion",
 	"ShockFront",

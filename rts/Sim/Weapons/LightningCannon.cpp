@@ -24,18 +24,13 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(
 		color = def->visuals.color;
 }
 
-float CLightningCannon::GetPredictedImpactTime(float3 p) const
-{
-	return 0;
-}
 
 void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 
-	curDir +=
-		(gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
+	curDir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	curDir.Normalize();
 
 	CUnit* hitUnit = nullptr;
@@ -67,6 +62,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 
 	if (hitUnit != nullptr)
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
+
 
 	const DamageArray& damageArray = damages->GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
 	const CExplosionParams params = {

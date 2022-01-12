@@ -28,7 +28,7 @@ GameSetupDrawer* GameSetupDrawer::instance = nullptr;
 void GameSetupDrawer::Enable()
 {
 	assert(instance == nullptr);
-	assert(gameSetup);
+	assert(gameSetup != nullptr);
 
 	instance = new GameSetupDrawer();
 }
@@ -53,15 +53,15 @@ GameSetupDrawer::GameSetupDrawer():
 	readyCountdown(spring_notime),
 	lastTick(spring_notime)
 {
-	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo)
-		new CStartPosSelecter();
+	if (gameSetup->hostDemo)
+		return;
+	if (gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame)
+		return;
 
-	lctrl_pressed = false;
+	new CStartPosSelecter();
 }
 
-GameSetupDrawer::~GameSetupDrawer()
-{
-}
+GameSetupDrawer::~GameSetupDrawer() = default;
 
 
 void GameSetupDrawer::Draw()

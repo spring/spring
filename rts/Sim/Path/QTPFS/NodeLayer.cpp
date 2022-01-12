@@ -10,24 +10,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 unsigned int QTPFS::NodeLayer::NUM_SPEEDMOD_BINS;
 float        QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE;
 float        QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE;
 
 
-
-QTPFS::NodeLayer::NodeLayer()
-	: layerNumber(0)
-	, numLeafNodes(0)
-	, updateCounter(0)
-	, xsize(0)
-	, zsize(0)
-	, maxRelSpeedMod(0.0f)
-	, avgRelSpeedMod(0.0f)
-{
-}
 
 void QTPFS::NodeLayer::InitStatic() {
 	NUM_SPEEDMOD_BINS  = std::max(  1u, mapInfo->pfs.qtpfs_constants.numSpeedModBins);
@@ -53,7 +42,16 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 	xsize = mapDims.mapx;
 	zsize = mapDims.mapy;
 
-	nodeGrid.resize(xsize * zsize, NULL);
+	nodeGrid.resize(xsize * zsize, nullptr);
+
+	{
+		// chunks are reserved OTF
+		nodeIndcs.clear();
+		nodeIndcs.resize(POOL_TOTAL_SIZE);
+
+		std::for_each(nodeIndcs.begin(), nodeIndcs.end(), [&](const unsigned int& i) { nodeIndcs[&i - &nodeIndcs[0]] = &i - &nodeIndcs[0]; });
+		std::reverse(nodeIndcs.begin(), nodeIndcs.end());
+	}
 
 	curSpeedMods.resize(xsize * zsize,  0);
 	oldSpeedMods.resize(xsize * zsize,  0);
@@ -78,15 +76,15 @@ void QTPFS::NodeLayer::Clear() {
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
 void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
-	layerUpdates.push_back(LayerUpdate());
-	LayerUpdate* layerUpdate = &(layerUpdates.back());
+	layerUpdates.emplace_back();
+	LayerUpdate& layerUpdate = layerUpdates.back();
 
 	// the first update MUST have a non-zero counter
 	// since all nodes are at 0 after initialization
-	layerUpdate->rectangle = r;
-	layerUpdate->speedMods.resize(r.GetArea());
-	layerUpdate->blockBits.resize(r.GetArea());
-	layerUpdate->counter = ++updateCounter;
+	layerUpdate.rectangle = r;
+	layerUpdate.speedMods.resize(r.GetArea());
+	layerUpdate.blockBits.resize(r.GetArea());
+	layerUpdate.counter = ++updateCounter;
 
 	// make a snapshot of the terrain-state within <r>
 	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
@@ -96,9 +94,9 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
 			const unsigned int chmx = Clamp(int(hmx), md->xsizeh, r.x2 - md->xsizeh - 1);
 			const unsigned int chmz = Clamp(int(hmz), md->zsizeh, r.z2 - md->zsizeh - 1);
 
-			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, hmx, hmz);
-			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
-			// layerUpdate->blockBits[recIdx] = CMoveMath::SquareIsBlocked(*md, hmx, hmz, NULL);
+			layerUpdate.speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, hmx, hmz);
+			layerUpdate.blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, nullptr);
+			// layerUpdate.blockBits[recIdx] = CMoveMath::SquareIsBlocked(*md, hmx, hmz, nullptr);
 		}
 	}
 }
@@ -122,7 +120,7 @@ bool QTPFS::NodeLayer::Update(
 	const std::vector<float>* luSpeedMods,
 	const std::vector<  int>* luBlockBits
 ) {
-	assert((luSpeedMods == NULL && luBlockBits == NULL) || (luSpeedMods != NULL && luBlockBits != NULL));
+	assert((luSpeedMods == nullptr && luBlockBits == nullptr) || (luSpeedMods != nullptr && luBlockBits != nullptr));
 
 	unsigned int numNewBinSquares = 0;
 	unsigned int numClosedSquares = 0;
@@ -146,8 +144,8 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int chmx = Clamp(int(hmx), md->xsizeh, r.x2 - md->xsizeh - 1);
 			const unsigned int chmz = Clamp(int(hmz), md->zsizeh, r.z2 - md->zsizeh - 1);
 
-			const float minSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, hmx, hmz): (*luSpeedMods)[recIdx];
-			const   int maxBlockBit = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
+			const float minSpeedMod = (luSpeedMods == nullptr)? CMoveMath::GetPosSpeedMod(*md, hmx, hmz): (*luSpeedMods)[recIdx];
+			const   int maxBlockBit = (luBlockBits == nullptr)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, nullptr): (*luBlockBits)[recIdx];
 			// NOTE:
 			//   movetype code checks ONLY the *CENTER* square of a unit's footprint
 			//   to get the current speedmod affecting it, and the default pathfinder
@@ -190,10 +188,9 @@ bool QTPFS::NodeLayer::Update(
 		}
 	}
 
-	if (globalUpdate && maxRelSpeedMod > 0.0f) {
-		// if at least one open square, set the new average
+	// if at least one open square, set the new average
+	if (globalUpdate && maxRelSpeedMod > 0.0f)
 		avgRelSpeedMod /= ((xsize * zsize) - numClosedSquares);
-	}
 
 	// if at least one square changed bin, we need to re-tesselate
 	// all nodes in the subtree of the deepest-level node that fully
@@ -243,7 +240,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 	const int xoff = (currFrameNum % ((mapDims.mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 	const int zoff = (currFrameNum / ((mapDims.mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	INode* n = NULL;
+	INode* n = nullptr;
 
 	{
 		// top-left quadrant: [0, mapDims.mapx >> 1) x [0, mapDims.mapy >> 1)
@@ -350,7 +347,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, mapDims.mapx);
 	const int zmin = std::max(ur.z1 - 1, 0), zmax = std::min(ur.z2 + 1, mapDims.mapy);
 
-	INode* n = NULL;
+	INode* n = nullptr;
 
 	for (int z = zmin; z < zmax; ) {
 		unsigned int zspan = zsize;
@@ -373,5 +370,4 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 		z += zspan;
 	}
 }
-
 

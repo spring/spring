@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <algorithm>
 #include "HorizontalLayout.h"
 
 #include "Gui.h"
@@ -14,12 +15,11 @@ HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 
 void HorizontalLayout::DrawSelf()
 {
-	if (borderWidth <= 0.0f)
+	if (!visibleBorder)
 		return;
 
-	glLineWidth(borderWidth);
 	gui->SetColor(1.0f, 1.0f, 1.0f, Opacity());
-	DrawBox(GL_LINE_LOOP, 0, 2);
+	DrawOutline();
 }
 
 void HorizontalLayout::GeometryChangeSelf()

@@ -18,14 +18,6 @@
 class FBO
 {
 public:
-	/**
-	 * @brief IsSupported
-	 *
-	 * if FrameBuffers are supported by the current platform (now checked on startup)
-	 */
-	static constexpr bool IsSupported() { return true; }
-
-
 	FBO(         ) { Init(false); }
 	FBO(bool noop) { Init( noop); }
 	~FBO() { Kill(); }
@@ -67,6 +59,13 @@ public:
 	 * @return whether a valid framebuffer exists
 	 */
 	bool IsValid() const;
+
+
+	void AttachTextures(const GLuint* ids, const GLenum* attachments, const GLenum texTarget, const unsigned int texCount, const int mipLevel = 0, const int zSlice = 0) {
+		for (unsigned int i = 0; i < texCount; i++) {
+			AttachTexture(ids[i], texTarget, attachments[i], mipLevel, zSlice);
+		}
+	}
 
 	/**
 	 * @brief AttachTexture

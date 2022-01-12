@@ -1315,7 +1315,7 @@
 // Support for the __thread keyword extension.
 #if !defined(ASIO_DISABLE_THREAD_KEYWORD_EXTENSION)
 # if defined(__linux__)
-#  if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#  if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__) || defined(__e2k__))
 #   if ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)) || (__GNUC__ > 3)
 #    if !defined(__INTEL_COMPILER) && !defined(__ICL) \
        && !(defined(__clang__) && defined(__ANDROID__))
@@ -1326,7 +1326,7 @@
 #    endif // defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1100)
            // && !(defined(__clang__) && defined(__ANDROID__))
 #   endif // ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)) || (__GNUC__ > 3)
-#  endif // defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#  endif // defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__) || defined(__e2k__))
 # endif // defined(__linux__)
 # if defined(ASIO_MSVC) && defined(ASIO_WINDOWS_RUNTIME)
 #  if (_MSC_VER >= 1700)

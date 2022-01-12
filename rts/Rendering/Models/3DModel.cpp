@@ -134,8 +134,7 @@ void S3DModel::UploadBuffers()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indcsBuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, vboNumIndcs * sizeof(uint32_t), nullptr, GL_STATIC_DRAW);
 
-		for (size_t i = 0, n = pieceObjects.size(); i < n; i++) {
-			const S3DModelPiece* omp = pieceObjects[i];
+		for (const S3DModelPiece* omp : pieceObjects) {
 
 			if (!omp->HasGeometryData())
 				continue;
@@ -284,19 +283,6 @@ void S3DModel::FlattenPieceTreeRec(S3DModelPiece* piece) {
 }
 
 
-void S3DModel::DeletePieces()
-{
-	assert(!pieceObjects.empty());
-
-	for (size_t n = 0; n < pieceObjects.size(); n++) {
-		spring::SafeDelete(pieceObjects[n]);
-	}
-
-	pieceObjects.clear();
-}
-
-
-
 /** ****************************************************************************************************
  * S3DModelPiece
  */
@@ -326,9 +312,9 @@ void S3DModelPiece::CreateShatterPieces()
 		return;
 
 	shatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	shatterIndices.New(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
+	shatterIndices.New(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexDrawIndexCount() * sizeof(unsigned int));
 	// spams performance warnings ("Buffer object 123 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_STREAM_DRAW) is being copied/moved from VIDEO memory to HOST memory.")
-	// shatterIndices.Resize(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
+	// shatterIndices.Resize(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexDrawIndexCount() * sizeof(unsigned int));
 
 	for (int i = 0; i < S3DModelPiecePart::SHATTER_VARIATIONS; ++i) {
 		CreateShatterPiece(i);
@@ -584,52 +570,36 @@ void LocalModel::UpdateBoundingVolume()
 	float3 bbMins = DEF_MIN_SIZE;
 	float3 bbMaxs = DEF_MAX_SIZE;
 
-	for (unsigned int n = 0; n < pieces.size(); n++) {
-		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
-		const S3DModelPiece* piece = pieces[n].original;
+	for (const auto& lmPiece: pieces) {
+		const CMatrix44f& matrix = lmPiece.GetModelSpaceMatrix();
+		const S3DModelPiece* piece = lmPiece.original;
 
 		// skip empty pieces or bounds will not be sensible
 		if (!piece->HasGeometryData())
 			continue;
 
-		#if 0
-		const unsigned int vcount = piece->GetVertexCount();
+		// transform only the corners of the piece's bounding-box
+		const float3 pMins = piece->mins;
+		const float3 pMaxs = piece->maxs;
+		const float3 verts[8] = {
+			// bottom
+			float3(pMins.x,  pMins.y,  pMins.z),
+			float3(pMaxs.x,  pMins.y,  pMins.z),
+			float3(pMaxs.x,  pMins.y,  pMaxs.z),
+			float3(pMins.x,  pMins.y,  pMaxs.z),
+			// top
+			float3(pMins.x,  pMaxs.y,  pMins.z),
+			float3(pMaxs.x,  pMaxs.y,  pMins.z),
+			float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
+			float3(pMins.x,  pMaxs.y,  pMaxs.z),
+		};
 
-		if (vcount >= 8) {
-		#endif
-			// transform only the corners of the piece's bounding-box
-			const float3 pMins = piece->mins;
-			const float3 pMaxs = piece->maxs;
-			const float3 verts[8] = {
-				// bottom
-				float3(pMins.x,  pMins.y,  pMins.z),
-				float3(pMaxs.x,  pMins.y,  pMins.z),
-				float3(pMaxs.x,  pMins.y,  pMaxs.z),
-				float3(pMins.x,  pMins.y,  pMaxs.z),
-				// top
-				float3(pMins.x,  pMaxs.y,  pMins.z),
-				float3(pMaxs.x,  pMaxs.y,  pMins.z),
-				float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
-				float3(pMins.x,  pMaxs.y,  pMaxs.z),
-			};
+		for (const float3& v: verts) {
+			const float3 vertex = matrix * v;
 
-			for (unsigned int k = 0; k < 8; k++) {
-				const float3 vertex = matrix * verts[k];
-
-				bbMins = float3::min(bbMins, vertex);
-				bbMaxs = float3::max(bbMaxs, vertex);
-			}
-		#if 0
-		} else {
-			// note: not as efficient because of branching and virtual calls
-			for (unsigned int k = 0; k < vcount; k++) {
-				const float3 vertex = matrix * piece->GetVertexPos(k);
-
-				bbMins = float3::min(bbMins, vertex);
-				bbMaxs = float3::max(bbMaxs, vertex);
-			}
+			bbMins = float3::min(bbMins, vertex);
+			bbMaxs = float3::max(bbMaxs, vertex);
 		}
-		#endif
 	}
 
 	// note: offset is relative to object->pos
@@ -661,7 +631,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	pos = piece->offset;
 	dir = piece->GetEmitDir();
 
-	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
+	pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
 
 	children.reserve(piece->children.size());
 }
@@ -692,7 +662,7 @@ void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 		dirty = false;
 		updateChildMatrices = true;
 
-		pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
+		pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
 	}
 
 	if (updateChildMatrices) {
@@ -703,8 +673,8 @@ void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 		}
 	}
 
-	for (size_t i = 0; i < children.size(); i++) {
-		children[i]->UpdateChildMatricesRec(updateChildMatrices);
+	for (auto& child : children) {
+		child->UpdateChildMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -715,7 +685,7 @@ void LocalModelPiece::UpdateParentMatricesRec() const
 
 	dirty = false;
 
-	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
+	pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
 	modelSpaceMat = pieceSpaceMat;
 
 	if (parent != nullptr)

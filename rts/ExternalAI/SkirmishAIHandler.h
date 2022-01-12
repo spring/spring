@@ -79,7 +79,7 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	const spring::unordered_map<uint8_t, SkirmishAIData>& GetAllSkirmishAIs() const { return skirmishAIDataMap; }
+	const spring::unordered_map<uint8_t, const SkirmishAIData*>& GetAllSkirmishAIs() const { return skirmishAIDataMap; }
 
 
 	/**
@@ -122,7 +122,8 @@ public:
 	 * @param aiData detailed info of the AI to create
 	 * @see EngineOutHandler::CreateSkirmishAI()
 	 */
-	void CreateLocalSkirmishAI(const SkirmishAIData& aiData);
+	void NetCreateLocalSkirmishAI(const SkirmishAIData& aiData);
+
 	/**
 	 * Returns detailed (including unsynced) data for a Skirmish AI to be
 	 * running on the local machine.
@@ -144,11 +145,11 @@ public:
 	void SetLocalKillFlag(const size_t skirmishAIId, const int reason);
 
 	/**
-	 * Returns a value explaining why a Skirmish AI is dieing, or a value < 0
+	 * Returns a value explaining why a Skirmish AI was killed, or a value < 0
 	 * if it is not.
 	 * @param skirmishAIId index of the AI in question
 	 * @return for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
-	 * @see IsSkirmishAIDieing()
+	 * @see HasLocalKillFlag()
 	 */
 	int GetLocalKillFlag(const size_t skirmishAIId) const { return aiKillFlags[skirmishAIId]; }
 
@@ -192,7 +193,7 @@ private:
 	/// temporarily stores reason for killing a Skirmish AI
 	std::array<int, MAX_AIS> aiKillFlags;
 
-	spring::unordered_map<uint8_t, SkirmishAIData> skirmishAIDataMap;
+	spring::unordered_map<uint8_t, const SkirmishAIData*> skirmishAIDataMap;
 	spring::unordered_set<std::string> luaAIShortNames;
 
 	// the current local AI ID that is executing, MAX_AIS if none (e.g. LuaUI)

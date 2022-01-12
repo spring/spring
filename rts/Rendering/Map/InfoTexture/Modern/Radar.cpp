@@ -13,10 +13,13 @@
 #include "System/Log/ILog.h"
 
 constexpr VA_TYPE_0 VERTS[] = {
-	{{-1.0f, -1.0f, 0.0f}},
-	{{-1.0f, +1.0f, 0.0f}},
-	{{+1.0f, +1.0f, 0.0f}},
-	{{+1.0f, -1.0f, 0.0f}},
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+	{{-1.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f, -1.0f, 0.0f}}, // br
+	{{-1.0f, -1.0f, 0.0f}}, // bl
 };
 
 
@@ -40,7 +43,7 @@ CRadarTexture::CRadarTexture()
 	infoTexPBO.New(texSize.x * texSize.y * texChannels * sizeof(uint16_t), GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CRadarTexture");
@@ -180,10 +183,10 @@ void CRadarTexture::Update()
 
 	if (losHandler->globalLOS[gu->myAllyTeam]) {
 		fbo.Bind();
-		glViewport(0,0, texSize.x, texSize.y);
-		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(0,0, texSize.x, texSize.y);
+		glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 		FBO::Unbind();
 
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -211,41 +214,38 @@ void CRadarTexture::Update()
 	// Faster than doing it on the CPU! And uploading it as shorts would be slow, cause the GPU
 	// has no native support for them and so the transformation would happen on the CPU, too.
 	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, uploadTexRadar);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RG, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, uploadTexJammer);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RG, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(arraySize));
+
 	infoTexPBO.Invalidate();
 	infoTexPBO.Unbind();
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->DisableBlendMask();
+
 	glActiveTexture(GL_TEXTURE2);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
 
 	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
-
-	// cleanup
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
 
 	// generate mipmaps
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
+

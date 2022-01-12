@@ -277,9 +277,10 @@ void main() {
 		normal = mix(normal, normalD, albedoD.a);
 	}
 
-	//if (albedo.a == 0.0) {
-	//	discard;
-	//}
+	// AlphaFunc(GL_LESS, 1.0)
+	if (albedo.a >= 1.0)
+		discard;
+
 
 	// transform normal to GroundNormal space
 	normal = normalize(normal);

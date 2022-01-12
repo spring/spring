@@ -7,46 +7,54 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+find_package_static(ZLIB REQUIRED)
 
-LIST(APPEND unitsync_libs ${CMAKE_DL_LIBS})
-LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
-LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
-LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
+list(APPEND unitsync_libs ${CMAKE_DL_LIBS})
+list(APPEND unitsync_libs 7zip lua headlessStubs archives)
+list(APPEND unitsync_libs ${ZLIB_LIBRARY})
+list(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
-IF (WIN32)
-	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
-ENDIF (WIN32)
+if (WIN32)
+	list(APPEND unitsync_libs ${IPHLPAPI_LIBRARY})
+	list(APPEND unitsync_libs ${WINMM_LIBRARY})
+endif ()
 
-IF    (MINGW OR MSVC)
+if    (WIN32)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
-	FIND_PACKAGE(SDL2 REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
-ELSE  (MINGW OR MSVC)
+	find_package(SDL2 REQUIRED)
+	include_directories(${SDL2_INCLUDE_DIR})
+	if (MSVC)
+		include_directories(${CMAKE_SOURCE_DIR}/include)
+	endif ()
+else ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
-ENDIF (MINGW OR MSVC)
+	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
+endif ()
 
 
-ADD_DEFINITIONS(-DUNITSYNC)
-ADD_DEFINITIONS(${PIC_FLAG})
-ADD_DEFINITIONS(-DNOT_USING_CREG)
-ADD_DEFINITIONS(-DHEADLESS)
-ADD_DEFINITIONS(-DNO_SOUND)
-ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
-#ADD_DEFINITIONS(-DENABLE_DEPRECATED_FUNCTIONS)
-REMOVE_DEFINITIONS(-DTHREADPOOL)
+add_definitions(-DUNITSYNC)
+if (NOT WIN32)
+	add_definitions(-fPIC)
+	add_definitions(${PIC_FLAG})
+endif ()
+add_definitions(-DNOT_USING_CREG)
+add_definitions(-DHEADLESS)
+add_definitions(-DNO_SOUND)
+add_definitions(-DBITMAP_NO_OPENGL)
+#add_definitions(-DENABLE_DEPRECATED_FUNCTIONS)
+remove_definitions(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
-INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT})
-Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
+include_directories(${ZLIB_INCLUDE_DIR})
+include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
+include_directories(${ENGINE_SRC_ROOT}/lib/lua/include)
+include_directories(${ENGINE_SRC_ROOT}/lib/7zip)
+include_directories(${ENGINE_SRC_ROOT})
+include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 
 set(main_files
@@ -60,6 +68,9 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/Map/MapParser.cpp"
 	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
 	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
+	"${ENGINE_SRC_ROOT}/Sim/Units/CommandAI/Command.cpp" ## LuaUtils::ParseCommand*
+	## -DUNITSYNC is not passed onto VFS code, which references globalConfig
+	"${ENGINE_SRC_ROOT}/System/GlobalConfig.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
@@ -84,10 +95,10 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/StringUtil.cpp"
 	)
 if (WIN32)
-	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
-else (WIN32)
-        LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
-endif (WIN32)
+	list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
+else ()
+        list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
+endif ()
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
@@ -102,28 +113,48 @@ set(unitsync_files
 
 # Add list of all exported functions to .def file to prevent decoration
 if (MSVC)
-	LIST(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
+	list(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
 endif ()
 
 # HACK unitsync should actually be MODULE (not SHARED),
 #   but the python bindings need it as SHARED,
 #   to be able to link to it
-ADD_LIBRARY(unitsync SHARED ${unitsync_files})
-Add_Dependencies(unitsync generateVersionFiles)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
+add_library(unitsync SHARED ${unitsync_files})
+add_dependencies(unitsync generateVersionFiles)
+target_link_libraries(unitsync ${unitsync_libs})
+
+
+# hide exported symbols
+# see nm -c libunitsync.so
+include(CMakePushCheckState)
+include(CheckCXXCompilerFlag)
+function(check_linker_flag flag out_var)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
+  check_cxx_compiler_flag("" ${out_var})
+  cmake_pop_check_state()
+endfunction()
+check_linker_flag("-Wl,--exclude-libs,ALL" LINKER_HAS_EXCLUDELIBS)
+if (LINKER_HAS_EXCLUDELIBS)
+	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--exclude-libs,ALL)
+else ()
+	message(WARNING "linker doesn't support -Wl,--exclude-libs,ALL this leads to a broken unitsync.so")
+endif ()
+
+
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
-endif (MINGW)
-FixLibName(unitsync)
+endif ()
+fix_lib_name(unitsync)
 
 install (TARGETS unitsync
 	RUNTIME DESTINATION ${LIBDIR}
 	LIBRARY DESTINATION ${LIBDIR})
 
-Add_Subdirectory(test)
+add_subdirectory(test)
 
-OPTION(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
-If     (UNITSYNC_PYTHON_BINDINGS)
+option(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
+if (UNITSYNC_PYTHON_BINDINGS)
 	# only add this if the submodule is present
-	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-EndIf()
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
+endif ()

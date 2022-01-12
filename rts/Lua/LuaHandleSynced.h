@@ -5,8 +5,6 @@
 
 #include <string>
 
-using std::string;
-
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
 #include "System/UnorderedMap.hpp"
@@ -26,15 +24,16 @@ class CUnsyncedLuaHandle : public CLuaHandle
 		bool DrawFeature(const CFeature* feature) override;
 		bool DrawShield(const CUnit* unit, const CWeapon* weapon) override;
 		bool DrawProjectile(const CProjectile* projectile) override;
+		bool DrawMaterial(const LuaMaterial* material) override;
 
 	public: // all non-eventhandler callins
 		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
 
 	protected:
-		CUnsyncedLuaHandle(CSplitLuaHandle* base, const string& name, int order);
+		CUnsyncedLuaHandle(CSplitLuaHandle* base, const std::string& name, int order);
 		virtual ~CUnsyncedLuaHandle();
 
-		bool Init(const string& code, const string& file);
+		bool Init(const std::string& code, const std::string& file);
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
 			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)) != nullptr);
@@ -53,17 +52,20 @@ class CSyncedLuaHandle : public CLuaHandle
 
 	public: // call-ins
 		bool CommandFallback(const CUnit* unit, const Command& cmd) override;
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) override;
+		bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) override;
 
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) override;
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) override;
 		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) override;
+		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) override;
+		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) override;
 		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) override;
 		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) override;
+		bool AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed) override;
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) override;
 		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) override;
-		bool AllowResourceLevel(int teamID, const string& type, float level) override;
+		bool AllowResourceLevel(int teamID, const std::string& type, float level) override;
 		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount) override;
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit) override;
 		bool AllowBuilderHoldFire(const CUnit* unit, int action) override;
@@ -114,13 +116,13 @@ class CSyncedLuaHandle : public CLuaHandle
 			const float3& hitPos
 		) override;
 
-		bool SyncedActionFallback(const string& line, int playerID) override;
+		bool SyncedActionFallback(const std::string& line, int playerID) override;
 
 	protected:
-		CSyncedLuaHandle(CSplitLuaHandle* base, const string& name, int order);
+		CSyncedLuaHandle(CSplitLuaHandle* base, const std::string& name, int order);
 		virtual ~CSyncedLuaHandle();
 
-		bool Init(const string& code, const string& file);
+		bool Init(const std::string& code, const std::string& file);
 
 		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
 			assert(dynamic_cast<CSyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
@@ -130,7 +132,7 @@ class CSyncedLuaHandle : public CLuaHandle
 	protected:
 		CSplitLuaHandle& base;
 
-		spring::unordered_map<string, string> textCommands; // name, help
+		spring::unordered_map<std::string, std::string> textCommands; // name, help
 
 	private:
 		int origNextRef;
@@ -151,8 +153,20 @@ class CSyncedLuaHandle : public CLuaHandle
 		static int SetWatchUnitDef(lua_State* L);
 		static int GetWatchFeatureDef(lua_State* L);
 		static int SetWatchFeatureDef(lua_State* L);
+		static int GetWatchExplosionDef(lua_State* L);
+		static int SetWatchExplosionDef(lua_State* L);
+		static int GetWatchProjectileDef(lua_State* L);
+		static int SetWatchProjectileDef(lua_State* L);
+		static int GetWatchAllowTargetDef(lua_State* L);
+		static int SetWatchAllowTargetDef(lua_State* L);
+
 		static int GetWatchWeaponDef(lua_State* L);
-		static int SetWatchWeaponDef(lua_State* L);
+		static int SetWatchWeaponDef(lua_State* L) {
+			SetWatchExplosionDef(L);
+			SetWatchProjectileDef(L);
+			SetWatchAllowTargetDef(L);
+			return 0;
+		}
 };
 
 
@@ -160,11 +174,11 @@ class CSyncedLuaHandle : public CLuaHandle
 class CSplitLuaHandle
 {
 	public: // Non-eventhandler call-ins
-		bool GotChatMsg(const string& msg, int playerID) {
+		bool GotChatMsg(const std::string& msg, int playerID) {
 			return syncedLuaHandle.GotChatMsg(msg, playerID) || unsyncedLuaHandle.GotChatMsg(msg, playerID);
 		}
 
-		bool RecvLuaMsg(const string& msg, int playerID) {
+		bool RecvLuaMsg(const std::string& msg, int playerID) {
 			return syncedLuaHandle.RecvLuaMsg(msg, playerID);
 		}
 
@@ -172,6 +186,10 @@ class CSplitLuaHandle
 		void CheckStack() {
 			syncedLuaHandle.CheckStack();
 			unsyncedLuaHandle.CheckStack();
+		}
+		void CollectGarbage(bool forced) {
+			syncedLuaHandle.CollectGarbage(forced);
+			unsyncedLuaHandle.CollectGarbage(forced);
 		}
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
@@ -190,12 +208,19 @@ class CSplitLuaHandle
 			return &ulh->base.syncedLuaHandle;
 		}
 
+		bool ReloadUnsynced() { return (FreeUnsynced(), LoadUnsynced()); }
+		bool SwapSyncedHandle(lua_State* L, lua_State* L_GC);
+		bool InitUnsynced();
+
 	protected:
-		CSplitLuaHandle(const string& name, int order);
+		CSplitLuaHandle(const std::string& name, int order);
 		virtual ~CSplitLuaHandle();
 
-		string LoadFile(const string& filename, const string& modes) const;
-		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);
+		std::string LoadFile(const std::string& filename, const std::string& modes) const;
+		bool InitSynced();
+		bool Init(bool onlySynced);
+		bool FreeUnsynced();
+		bool LoadUnsynced();
 
 		bool IsValid() const {
 			return (syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid());
@@ -227,6 +252,11 @@ class CSplitLuaHandle
 		// hooks to add code during initialization
 		virtual bool AddSyncedCode(lua_State* L) = 0;
 		virtual bool AddUnsyncedCode(lua_State* L) = 0;
+
+		virtual std::string GetUnsyncedFileName() const = 0;
+		virtual std::string GetSyncedFileName() const = 0;
+		virtual std::string GetInitFileModes() const = 0;
+		virtual int GetInitSelectTeam() const = 0;
 
 		// call-outs
 		static int LoadStringData(lua_State* L);

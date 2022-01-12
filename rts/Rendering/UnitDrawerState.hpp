@@ -56,6 +56,7 @@ public:
 	virtual void DisableShaders(const CUnitDrawer*) = 0;
 
 	virtual void SetSkyLight(const ISkyLight*) const = 0;
+	virtual void SetAlphaTest(const float4& params) const = 0;
 	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
 	virtual void SetNanoColor(const float4& color) const = 0;
 	virtual void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const = 0;
@@ -114,6 +115,7 @@ public:
 	void DisableShaders(const CUnitDrawer*) override {}
 
 	void SetSkyLight(const ISkyLight*) const override {}
+	void SetAlphaTest(const float4& params) const override {}
 	void SetTeamColor(int team, const float2 alpha) const override {}
 	void SetNanoColor(const float4& color) const override {}
 	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override {}
@@ -133,19 +135,17 @@ public:
 
 	void EnableTextures() const override {}
 	void DisableTextures() const override {}
-	void EnableShaders(const CUnitDrawer*) override { /*luaMatShader->Enable();*/ }
-	void DisableShaders(const CUnitDrawer*) override { /*luaMatShader->Disable();*/ }
+	void EnableShaders(const CUnitDrawer*) override {}
+	void DisableShaders(const CUnitDrawer*) override {}
 
 	void SetSkyLight(const ISkyLight*) const override {}
-	void SetTeamColor(int team, const float2 alpha) const override { /*luaMatShader->ExecuteInstanceTeamColor(nullptr, GetTeamColor(team, alpha.x));*/ }
+	void SetAlphaTest(const float4& params) const override {}
+	void SetTeamColor(int team, const float2 alpha) const override {} // handled via LuaObjectDrawer::SetObjectTeamColor
 	void SetNanoColor(const float4& color) const override {}
 	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }
-	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override { /*luaMatShader->ExecuteInstanceMatrices(nullptr);*/ }
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override {} // handled via LuaObjectDrawer::SetObjectMatrices
 	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
 	void SetBuildClipPlanes(const float4&, const float4&) const override {}
-
-private:
-	//LuaMatShader* luaMatShader = nullptr;
 };
 
 
@@ -167,6 +167,7 @@ public:
 	void DisableShaders(const CUnitDrawer*) override;
 
 	void SetSkyLight(const ISkyLight*) const override;
+	void SetAlphaTest(const float4& params) const override;
 	void SetTeamColor(int team, const float2 alpha) const override;
 	void SetNanoColor(const float4& color) const override;
 	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }

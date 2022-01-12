@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Input/KeyInput.h"
 
 
@@ -131,22 +131,26 @@ float CSpringController::ZoomIn(const float3& curCamPos, const float2& zoomParam
 	if (!cursorZoomIn)
 		return 0.25f;
 
-	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.0f, false);
+	float curGroundDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.0f, false);
 
-	if (zoomInDist <= 0.0f)
+	if (curGroundDist <= 0.0f)
+		curGroundDist = CGround::LinePlaneCol(curCamPos, mouse->dir, 150000.0f, readMap->GetCurrAvgHeight());
+	if (curGroundDist <= 0.0f)
 		return 0.25f;
 
 	// zoom in to cursor, then back out (along same dir) based on scaledMove
 	// to find where we want to place camera, but make sure the wanted point
 	// is always in front of curCamPos
-	const float3 zoomedCamPos =    curCamPos + mouse->dir * zoomInDist;
-	const float3 wantedCamPos = zoomedCamPos - mouse->dir * zoomInDist * zoomParams.y;
+	const float3 cursorVec = mouse->dir * curGroundDist;
+	const float3 wantedPos = curCamPos + cursorVec * (1.0f - zoomParams.y);
 
 	// figure out how far we will end up from the ground at new wanted point
-	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.0f, false);
+	float newGroundDist = CGround::LineGroundCol(wantedPos, wantedPos + dir * 150000.0f, false);
 
-	if (newDist > 0.0f)
-		pos = wantedCamPos + dir * (curDist = newDist);
+	if (newGroundDist <= 0.0f)
+		newGroundDist = CGround::LinePlaneCol(wantedPos, dir, 150000.0f, readMap->GetCurrAvgHeight());
+
+	pos = wantedPos + dir * (curDist = newGroundDist);
 
 	return 0.25f;
 }

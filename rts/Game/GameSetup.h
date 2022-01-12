@@ -3,6 +3,7 @@
 #ifndef _GAME_SETUP_H
 #define _GAME_SETUP_H
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,7 @@
 #include "System/UnorderedSet.hpp"
 #include "System/creg/creg_cond.h"
 
+class MapParser;
 class TdfParser;
 
 class CGameSetup
@@ -29,6 +31,7 @@ public:
 	CGameSetup& operator = (CGameSetup&& gs) {
 		fixedAllies = gs.fixedAllies;
 		useLuaGaia = gs.useLuaGaia;
+		luaDevMode = gs.luaDevMode;
 		noHelperAIs = gs.noHelperAIs;
 
 		ghostedBuildings = gs.ghostedBuildings;
@@ -81,6 +84,7 @@ public:
 	static bool LoadSavedScript(const std::string& file, const std::string& script);
 	static bool ScriptLoaded();
 
+	// these act on the global GameSetup instance
 	static const spring::unordered_map<std::string, std::string>& GetMapOptions();
 	static const spring::unordered_map<std::string, std::string>& GetModOptions();
 	static const std::vector<PlayerBase>& GetPlayerStartingData();
@@ -101,6 +105,11 @@ public:
 	 * is not known before CPreGame recieves the gamedata from the server.
 	 */
 	void LoadStartPositions(bool withoutMap = false);
+	/**
+	 * @brief Load startpositions from map
+	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+	 */
+	void LoadStartPositionsFromMap(int numTeams, const std::function<bool(MapParser& mapParser, int teamNum)>& startPosPred);
 
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
 		const auto it = restrictedUnits.find(name);
@@ -117,15 +126,9 @@ public:
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
 	const std::vector<std::string>& GetMutatorsCont() const { return mutatorsList; }
 
-	const std::string MapFile() const;
+	std::string MapFileName() const;
 
 private:
-	/**
-	 * @brief Load startpositions from map
-	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
-	 */
-	void LoadStartPositionsFromMap();
-
 	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
 	/**
 	 * @brief Load unit restrictions
@@ -174,6 +177,7 @@ public:
 
 	bool fixedAllies;
 	bool useLuaGaia;
+	bool luaDevMode;
 	bool noHelperAIs;
 
 	bool ghostedBuildings;

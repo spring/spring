@@ -69,7 +69,7 @@ void _wrap_glEnable(GLenum pname, std::string pstr, std::string location)
 	if (Threading::IsMainThread())
 		lastSet[pstr] = location;
 
-	glEnable(pname);
+	glAttribStatePtr->Enable(pname);
 }
 
 void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
@@ -77,7 +77,7 @@ void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
 	if (Threading::IsMainThread())
 		lastSet[pstr] = location;
 
-	glDisable(pname);
+	glAttribStatePtr->Disable(pname);
 }
 
 void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
@@ -88,7 +88,7 @@ void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 		lastSet["GL_BLEND_DST_RGB"] = location;
 		lastSet["GL_BLEND_DST_ALPHA"] = location;
 	}
-	glBlendFunc(sfactor, dfactor);
+	glAttribStatePtr->BlendFunc(sfactor, dfactor);
 }
 
 void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha, std::string location)
@@ -131,7 +131,7 @@ void _wrap_glDepthMask(GLboolean flag, std::string location)
 	if (Threading::IsMainThread())
 		lastSet["GL_DEPTH_WRITEMASK"] = location;
 
-	glDepthMask(flag);
+	glAttribStatePtr->DepthMask(flag);
 }
 
 
@@ -140,7 +140,7 @@ void _wrap_glDepthFunc(GLenum func, std::string location)
 	if (Threading::IsMainThread())
 		lastSet["GL_DEPTH_FUNC"] = location;
 
-	glDepthFunc(func);
+	glAttribStatePtr->DepthFunc(func);
 }
 
 void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha, std::string location)
@@ -148,7 +148,7 @@ void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean
 	if (Threading::IsMainThread())
 		lastSet["GL_COLOR_WRITEMASK"] = location;
 
-	glColorMask(red, green, blue, alpha);
+	glAttribStatePtr->ColorMask(red, green, blue, alpha);
 }
 
 void CGLStateChecker::VerifyState(std::string area) {

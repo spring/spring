@@ -3,8 +3,10 @@
 
 #include "InMapDrawView.h"
 #include "Rendering/Colors.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 
 #include "Game/Camera.h"
 #include "Game/InMapDrawModel.h"
@@ -96,17 +98,17 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 	std::vector<const CInMapDrawModel::MapPoint*>* visibleLabels = nullptr;
 
 	GL::RenderDataBufferTC* pointBuffer = nullptr;
-	GL::RenderDataBufferC* linesBuffer = nullptr;
+	GL::WideLineAdapterC* linesAdapter = nullptr;
 
-	void ResetState() {
+	void ResetState() override {
 		pointBuffer = nullptr;
-		linesBuffer = nullptr;
+		linesAdapter = nullptr;
 	}
-	void DrawQuad(int x, int y);
+	void DrawQuad(int x, int y) override ;
 
 private:
 	void DrawPoint(const CInMapDrawModel::MapPoint* point, GL::RenderDataBufferTC* buffer) const;
-	void DrawLine(const CInMapDrawModel::MapLine* line, GL::RenderDataBufferC* buffer) const;
+	void DrawLine(const CInMapDrawModel::MapLine* line, GL::WideLineAdapterC* wla) const;
 };
 
 
@@ -126,20 +128,33 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point, GL:
 	const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
 	const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
 
-	buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size,               0.25f, 1.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color});
-	buffer->SafeAppend({pos1 - xdir * size + ydir * size, 0.00f, 0.0f, color});
+	{
+		buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color}); // tl
+		buffer->SafeAppend({pos1 + xdir * size,               0.25f, 1.0f, color}); // tr
+		buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color}); // br
 
-	buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size,               0.75f, 1.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
-	buffer->SafeAppend({pos2 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color}); // br
+		buffer->SafeAppend({pos1 - xdir * size + ydir * size, 0.00f, 0.0f, color}); // bl
+		buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color}); // tl
+	}
+	{
+		buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 + xdir * size,               0.75f, 1.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
 
-	buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size,               0.25f, 1.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
-	buffer->SafeAppend({pos2 - xdir * size - ydir * size, 0.00f, 0.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
+	}
+	{
+		buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.25f, 1.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
+
+		buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size - ydir * size, 0.00f, 0.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
+	}
 
 	if (point->GetLabel().empty())
 		return;
@@ -147,11 +162,11 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point, GL:
 	visibleLabels->push_back(point);
 }
 
-void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line, GL::RenderDataBufferC* buffer) const
+void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line, GL::WideLineAdapterC* wla) const
 {
 	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler.Team(line->GetTeamID())->color;
-	buffer->SafeAppend({line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color});
-	buffer->SafeAppend({line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color});
+	wla->SafeAppend({line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color});
+	wla->SafeAppend({line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color});
 }
 
 
@@ -170,7 +185,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	//! draw line markers
 	for (const CInMapDrawModel::MapLine& li: dq->lines) {
 		if (li.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
-			DrawLine(&li, linesBuffer);
+			DrawLine(&li, linesAdapter);
 		}
 	}
 }
@@ -181,39 +196,40 @@ void CInMapDrawView::Draw()
 {
 	GL::RenderDataBufferTC* pointBuffer = GL::GetRenderBufferTC();
 	GL::RenderDataBufferC* linesBuffer = GL::GetRenderBufferC();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	Shader::IProgramObject* pointShader = pointBuffer->GetShader();
 	Shader::IProgramObject* linesShader = linesBuffer->GetShader();
+	wla->Setup(linesBuffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, camera->GetViewProjectionMatrix());
 
 	InMapDraw_QuadDrawer drawer;
 	drawer.visibleLabels = &visibleLabels;
 	drawer.pointBuffer = pointBuffer;
-	drawer.linesBuffer = linesBuffer;
+	drawer.linesAdapter = wla;
 
 	readMap->GridVisibility(nullptr, &drawer, 1e9, CInMapDrawModel::DRAW_QUAD_SIZE);
 
 
-	glDepthMask(GL_FALSE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+
 
 	{
 		// draw lines
-		glLineWidth(3.0f);
 		linesShader->Enable();
-		linesShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		linesShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		linesBuffer->Submit(GL_LINES);
+		linesShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		linesShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		wla->Submit(GL_LINES);
 		linesShader->Disable();
-		glLineWidth(1.0f);
 	}
 	{
 		// draw points
 		glBindTexture(GL_TEXTURE_2D, texture);
 		pointShader->Enable();
-		pointShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		pointShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		pointBuffer->Submit(GL_QUADS);
+		pointShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		pointShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		pointBuffer->Submit(GL_TRIANGLES);
 		pointShader->Disable();
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -238,5 +254,6 @@ void CInMapDrawView::Draw()
 		visibleLabels.clear();
 	}
 
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->EnableDepthMask();
 }
+

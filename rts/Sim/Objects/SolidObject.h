@@ -108,6 +108,8 @@ public:
 	virtual void Kill(CUnit* killer, const float3& impulse, bool crushed);
 	virtual int GetBlockingMapID() const { return -1; }
 
+	virtual const YardMapStatus* GetBlockMap() const { return nullptr; }
+
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir);
 
@@ -144,21 +146,23 @@ public:
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
 
-	void AddHeading(short deltaHeading, bool useGroundNormal) { SetHeading(heading + deltaHeading, useGroundNormal); }
-	void SetHeading(short worldHeading, bool useGroundNormal) {
+	void AddHeading(short deltaHeading, bool useGroundNormal, bool useObjectNormal) { SetHeading(heading + deltaHeading, useGroundNormal, useObjectNormal); }
+	void SetHeading(short worldHeading, bool useGroundNormal, bool useObjectNormal) {
 		heading = worldHeading;
 
-		UpdateDirVectors(useGroundNormal);
+		UpdateDirVectors(useGroundNormal, useObjectNormal);
 		UpdateMidAndAimPos();
 	}
 
 	// update object's <heading> from current frontdir
 	// should always be called after a SetDirVectors()
 	void SetHeadingFromDirection();
+	// update object's <buildFacing> from current heading
+	void SetFacingFromHeading();
 	// update object's local coor-sys from current <heading>
 	// (unlike ForcedSpin which updates from given <updir>)
 	// NOTE: movetypes call this directly
-	void UpdateDirVectors(bool useGroundNormal);
+	void UpdateDirVectors(bool useGroundNormal, bool useObjectNormal);
 
 	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
 	virtual CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const = 0;
@@ -223,14 +227,19 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
+
 	float3 GetDragAccelerationVec(const float4& params) const;
-	float3 GetWantedUpDir(bool useGroundNormal) const;
+	float3 GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const;
 
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
-	float CalcFootPrintRadius(float scale) const;
+	float CalcFootPrintMinExteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintMaxInteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintAxisStretchFactor() const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
+	bool FootPrintOnGround() const;
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
 	bool IsOnGround   () const { return (HasPhysicalStateBit(PSTATE_BIT_ONGROUND   )); }
@@ -355,8 +364,6 @@ public:
 	///< allyteam that this->team is part of
 	int allyteam = 0;
 
-	///< used to check if object has already been processed (in QuadField queries, etc)
-	int tempNum = 0;
 	///< [i] := frame on which hitModelPieces[i] was last hit
 	int pieceHitFrames[2] = {-1, -1};
 
@@ -369,8 +376,6 @@ public:
 
 	///< pieces that were last hit by a {[0] := unsynced, [1] := synced} projectile
 	const LocalModelPiece* hitModelPieces[2];
-	///< current (unrotated!) blockmap/yardmap of this object; null means no active yardmap (all squares blocked)
-	const YardMapStatus* blockMap = nullptr;
 
 	SolidObjectGroundDecal* groundDecal = nullptr;
 

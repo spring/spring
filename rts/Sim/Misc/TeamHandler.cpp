@@ -7,7 +7,6 @@
 #include "Game/GameSetup.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/StringUtil.h"
 
 
 CR_BIND(CTeamHandler, )
@@ -39,7 +38,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 	allyTeams = setup->GetAllyStartingDataCont();
 
-	const int numTeams = teams.size() + ((gs->useLuaGaia) ? 1 : 0);
+	const int numTeams = teams.size() + int(gs->useLuaGaia);
 	const int maxUnitsPerTeam = std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / numTeams));
 
 	for (size_t i = 0; i < teams.size(); ++i) {
@@ -86,6 +85,27 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		allyteam.allies.resize(allyTeams.size() + 1, false); // make Gaia every AT's enemy
 		allyteam.allies[gaiaAllyTeamID] = true; // set Gaia to be at peace with itself
+	}
+}
+
+void CTeamHandler::SetDefaultStartPositions(const CGameSetup* setup)
+{
+	if (setup->startPosType != CGameSetup::StartPos_ChooseInGame)
+		return;
+
+	for (int a = 0; a < ActiveTeams(); ++a) {
+		CTeam& team = teams[a];
+
+		if (team.gaia)
+			continue;
+		if (team.HasValidStartPos())
+			continue;
+
+		// if the player did not choose a start position (eg. if
+		// the game was force-started by the host before sending
+		// any), silently generate one for him
+		// TODO: notify Lua of this also?
+		team.SetDefaultStartPos();
 	}
 }
 

@@ -11,19 +11,16 @@
 #include "RenderDataBufferFwd.hpp"
 #include "Rendering/Shaders/Shader.h"
 
+#define SYNC_RENDER_BUFFERS 1
+
 namespace GL {
+	constexpr static int NUM_RENDER_BUFFERS = 3;
+
+
 	static_assert(sizeof(VA_TYPE_0) == sizeof(float3), "");
 	static_assert(sizeof(VA_TYPE_0) == (sizeof(float) * 3), "");
 	const static std::array<Shader::ShaderInput, 1> VA_TYPE_0_ATTRS = {{
 		{0,  3, GL_FLOAT,  (sizeof(float) * 3),  "a_vertex_xyz", VA_TYPE_OFFSET(float, 0)},
-	}};
-
-
-	static_assert(sizeof(VA_TYPE_N) == (sizeof(float3) * 2), "");
-	static_assert(sizeof(VA_TYPE_N) == (sizeof(float) * 6), ""); // 6 = 3 + 3
-	const static std::array<Shader::ShaderInput, 2> VA_TYPE_N_ATTRS = {{
-		{0,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_vertex_xyz", VA_TYPE_OFFSET(float, 0)},
-		{1,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_normal_xyz", VA_TYPE_OFFSET(float, 3)},
 	}};
 
 
@@ -90,17 +87,6 @@ namespace GL {
 	#endif
 
 
-	static_assert(sizeof(VA_TYPE_TNT) == (sizeof(float3) * 4 + sizeof(float) * 2), "");
-	static_assert(sizeof(VA_TYPE_TNT) == (sizeof(float) * 14), ""); // 14 = 3 + 2 + 3 + 3 + 3
-	const static std::array<Shader::ShaderInput, 5> VA_TYPE_TNT_ATTRS = {{
-		{0,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_vertex_xyz" , VA_TYPE_OFFSET(float,  0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_st" , VA_TYPE_OFFSET(float,  3)},
-		{2,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_normal_xyz" , VA_TYPE_OFFSET(float,  5)},
-		{3,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv1", VA_TYPE_OFFSET(float,  8)},
-		{4,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv2", VA_TYPE_OFFSET(float, 11)},
-	}};
-
-
 	static_assert(sizeof(VA_TYPE_2d0) == (sizeof(float) * 2), "");
 	const static std::array<Shader::ShaderInput, 1> VA_TYPE_2D0_ATTRS = {{
 		{0,  2, GL_FLOAT,  (sizeof(float) * 2),  "a_vertex_xy", VA_TYPE_OFFSET(float, 0)},
@@ -131,18 +117,27 @@ namespace GL {
 	#endif
 
 
+	static_assert(sizeof(VA_TYPE_L) == (sizeof(float) * (4 + 3 + 4) + sizeof(uint32_t) * (1 + 1)), "");
+	const static std::array<Shader::ShaderInput, 5> VA_TYPE_L_ATTRS = {{
+		{0,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_vertex_xyzw" , VA_TYPE_OFFSET(float,  0)},
+		{1,  3, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_normal_xyz"  , VA_TYPE_OFFSET(float,  4)},
+		{2,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_texcoor_stuv", VA_TYPE_OFFSET(float,  7)},
+		{3,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_color0_rgba" , VA_TYPE_OFFSET(float, 11)},
+		{4,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_color1_rgba" , VA_TYPE_OFFSET(float, 12)},
+	}};
+
+
 	const static size_t NUM_VA_TYPE_0_ATTRS = VA_TYPE_0_ATTRS.size(); // (sizeof(VA_TYPE_0_ATTRS) / sizeof(VA_TYPE_0_ATTRS[0]));
-	const static size_t NUM_VA_TYPE_N_ATTRS = VA_TYPE_N_ATTRS.size(); // (sizeof(VA_TYPE_N_ATTRS) / sizeof(VA_TYPE_N_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_C_ATTRS = VA_TYPE_C_ATTRS.size(); // (sizeof(VA_TYPE_C_ATTRS) / sizeof(VA_TYPE_C_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_FC_ATTRS = VA_TYPE_FC_ATTRS.size(); // (sizeof(VA_TYPE_FC_ATTRS) / sizeof(VA_TYPE_FC_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_T_ATTRS = VA_TYPE_T_ATTRS.size(); // (sizeof(VA_TYPE_T_ATTRS) / sizeof(VA_TYPE_T_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_T4_ATTRS = VA_TYPE_T4_ATTRS.size(); // (sizeof(VA_TYPE_T4_ATTRS) / sizeof(VA_TYPE_T4_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_TN_ATTRS = VA_TYPE_TN_ATTRS.size(); // (sizeof(VA_TYPE_TN_ATTRS) / sizeof(VA_TYPE_TN_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_TC_ATTRS = VA_TYPE_TC_ATTRS.size(); //  (sizeof(VA_TYPE_TC_ATTRS) / sizeof(VA_TYPE_TC_ATTRS[0]));
-	const static size_t NUM_VA_TYPE_TNT_ATTRS = VA_TYPE_TNT_ATTRS.size(); // (sizeof(VA_TYPE_TNT_ATTRS) / sizeof(VA_TYPE_TNT_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_2D0_ATTRS = VA_TYPE_2D0_ATTRS.size(); // (sizeof(VA_TYPE_2D0_ATTRS) / sizeof(VA_TYPE_2D0_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_2DT_ATTRS = VA_TYPE_2DT_ATTRS.size(); // (sizeof(VA_TYPE_2DT_ATTRS) / sizeof(VA_TYPE_2DT_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_2DTC_ATTRS = VA_TYPE_2DTC_ATTRS.size(); // (sizeof(VA_TYPE_2DTC_ATTRS) / sizeof(VA_TYPE_2DTC_ATTRS[0]));
+	const static size_t NUM_VA_TYPE_L_ATTRS = VA_TYPE_L_ATTRS.size(); // (sizeof(VA_TYPE_L_ATTRS) / sizeof(VA_TYPE_L_ATTRS[0]));
 
 
 	struct RenderDataBuffer {
@@ -159,8 +154,9 @@ namespace GL {
 
 			shader = std::move(rdb.shader);
 
-			inited = rdb.inited;
-			mapped = rdb.mapped;
+			inited    = rdb.inited;
+			mapped[0] = rdb.mapped[0];
+			mapped[1] = rdb.mapped[1];
 			return *this;
 		}
 
@@ -170,9 +166,9 @@ namespace GL {
 			if (inited)
 				return false;
 
-			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent, readable));
-			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent, readable));
-			shader = std::move(Shader::GLSLProgramObject());
+			elems = VBO(GL_ARRAY_BUFFER, persistent, readable);
+			indcs = VBO(GL_ELEMENT_ARRAY_BUFFER, persistent, readable);
+			shader = Shader::GLSLProgramObject();
 
 			elems.Generate();
 			indcs.Generate();
@@ -182,8 +178,9 @@ namespace GL {
 			SetElemBufferUsage(GL_STATIC_DRAW);
 			SetIndxBufferUsage(GL_STATIC_DRAW);
 
-			inited = true;
-			mapped = false;
+			inited    =  true;
+			mapped[0] = false;
+			mapped[1] = false;
 			return true;
 		}
 		bool Kill() {
@@ -196,8 +193,9 @@ namespace GL {
 			// do not delete the attached objects
 			shader.Release(false);
 
-			inited = false;
-			mapped = false;
+			inited    = false;
+			mapped[0] = false;
+			mapped[1] = false;
 			return true;
 		}
 
@@ -209,6 +207,27 @@ namespace GL {
 
 		void EnableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const;
 		void DisableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const;
+
+		static const char* GetShaderName(const char* s) {
+			switch (hashString(s)) {
+				case hashString("0"  ): case hashString("VA_TYPE_0"  ): { return "[VA_SHADER_0]"; } break;
+				case hashString("C"  ): case hashString("VA_TYPE_C"  ): { return "[VA_SHADER_C]"; } break;
+				case hashString("T"  ): case hashString("VA_TYPE_T"  ): { return "[VA_SHADER_T]"; } break;
+
+				case hashString("T4" ): case hashString("VA_TYPE_T4" ): { return "[VA_SHADER_T4]"; } break;
+				case hashString("TN" ): case hashString("VA_TYPE_TN" ): { return "[VA_SHADER_TN]"; } break;
+				case hashString("TC" ): case hashString("VA_TYPE_TC" ): { return "[VA_SHADER_TC]"; } break;
+
+				case hashString("2D0"): case hashString("VA_TYPE_2D0"): { return "[VA_SHADER_2D0]"; } break;
+				case hashString("2DT"): case hashString("VA_TYPE_2DT"): { return "[VA_SHADER_2DT]"; } break;
+
+				// VA_TYPE_L has no associated shader
+				default: {
+				} break;
+			}
+
+			return "";
+		}
 
 		static char* FormatShaderBase(
 			char* buf,
@@ -233,12 +252,6 @@ namespace GL {
 			char* ptr = &buf[0];
 			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_0");
 			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_0_ATTRS.size(), VA_TYPE_0_ATTRS.data(),  code, type, "VA_TYPE_0");
-			return ptr;
-		}
-		static char* FormatShaderN(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
-			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_N");
-			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_N_ATTRS.size(), VA_TYPE_N_ATTRS.data(),  code, type, "VA_TYPE_N");
 			return ptr;
 		}
 		static char* FormatShaderC(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
@@ -277,12 +290,6 @@ namespace GL {
 			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_TC_ATTRS.size(), VA_TYPE_TC_ATTRS.data(),  code, type, "VA_TYPE_TC");
 			return ptr;
 		}
-		static char* FormatShaderTNT(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
-			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_TNT");
-			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_TNT_ATTRS.size(), VA_TYPE_TNT_ATTRS.data(),  code, type, "VA_TYPE_TNT");
-			return ptr;
-		}
 		static char* FormatShader2D0(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
 			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_2D0");
@@ -301,12 +308,19 @@ namespace GL {
 			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_2DTC_ATTRS.size(), VA_TYPE_2DTC_ATTRS.data(),  code, type, "VA_TYPE_2DTC");
 			return ptr;
 		}
+		static char* FormatShaderL(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
+			char* ptr = &buf[0];
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_L");
+			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_L_ATTRS.size(), VA_TYPE_L_ATTRS.data(),  code, type, "VA_TYPE_L");
+			return ptr;
+		}
 
 		Shader::GLSLProgramObject* CreateShader(
 			size_t numObjects,
 			size_t numUniforms,
 			Shader::GLSLShaderObject* objects,
-			const Shader::ShaderInput* uniforms
+			const Shader::ShaderInput* uniforms,
+			const char* progName = ""
 		);
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
@@ -336,37 +350,23 @@ namespace GL {
 
 		// typed versions
 		void Upload0   (size_t numElems, size_t numIndcs,  const VA_TYPE_0*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_0_ATTRS.size()   ,  e, i, VA_TYPE_0_ATTRS.data()); }
-		void UploadN   (size_t numElems, size_t numIndcs,  const VA_TYPE_N*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_N_ATTRS.size()   ,  e, i, VA_TYPE_N_ATTRS.data()); }
 		void UploadC   (size_t numElems, size_t numIndcs,  const VA_TYPE_C*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_C_ATTRS.size()   ,  e, i, VA_TYPE_C_ATTRS.data()); }
 		void UploadFC  (size_t numElems, size_t numIndcs,  const VA_TYPE_C*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_FC_ATTRS.size()  ,  e, i, VA_TYPE_FC_ATTRS.data()); }
 		void UploadT   (size_t numElems, size_t numIndcs,  const VA_TYPE_T*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_T_ATTRS.size()   ,  e, i, VA_TYPE_T_ATTRS.data()); }
 		void UploadT4  (size_t numElems, size_t numIndcs,  const VA_TYPE_T4*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_T4_ATTRS.size()  ,  e, i, VA_TYPE_T4_ATTRS.data()); }
 		void UploadTN  (size_t numElems, size_t numIndcs,  const VA_TYPE_TN*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TN_ATTRS.size()  ,  e, i, VA_TYPE_TN_ATTRS.data()); }
 		void UploadTC  (size_t numElems, size_t numIndcs,  const VA_TYPE_TC*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TC_ATTRS.size()  ,  e, i, VA_TYPE_TC_ATTRS.data()); }
-		void UploadTNT (size_t numElems, size_t numIndcs,  const VA_TYPE_TNT*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TNT_ATTRS.size() ,  e, i, VA_TYPE_TNT_ATTRS.data()); }
 		void Upload2D0 (size_t numElems, size_t numIndcs,  const VA_TYPE_2d0*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2D0_ATTRS.size() ,  e, i, VA_TYPE_2D0_ATTRS.data()); }
 		void Upload2DT (size_t numElems, size_t numIndcs,  const VA_TYPE_2dT*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2DT_ATTRS.size() ,  e, i, VA_TYPE_2DT_ATTRS.data()); }
 		void Upload2DTC(size_t numElems, size_t numIndcs,  const VA_TYPE_2dTC* e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2DTC_ATTRS.size(),  e, i, VA_TYPE_2DTC_ATTRS.data()); }
-		#if 0
-		void Upload0   (size_t numElems, size_t numIndcs,  const VA_TYPE_0*    e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_0_ATTRS   ,  &e[0].p.x, i, VA_TYPE_0_ATTRS); }
-		void UploadN   (size_t numElems, size_t numIndcs,  const VA_TYPE_N*    e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_N_ATTRS   ,  &e[0].p.x, i, VA_TYPE_N_ATTRS); }
-		void UploadC   (size_t numElems, size_t numIndcs,  const VA_TYPE_C*    e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_C_ATTRS   ,  &e[0].p.x, i, VA_TYPE_C_ATTRS); }
-		void UploadFC  (size_t numElems, size_t numIndcs,  const VA_TYPE_C*    e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_FC_ATTRS  ,  &e[0].p.x, i, VA_TYPE_FC_ATTRS); }
-		void UploadT   (size_t numElems, size_t numIndcs,  const VA_TYPE_T*    e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_T_ATTRS   ,  &e[0].p.x, i, VA_TYPE_T_ATTRS); }
-		void UploadTN  (size_t numElems, size_t numIndcs,  const VA_TYPE_TN*   e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_TN_ATTRS  ,  &e[0].p.x, i, VA_TYPE_TN_ATTRS); }
-		void UploadTC  (size_t numElems, size_t numIndcs,  const VA_TYPE_TC*   e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_TC_ATTRS  ,  &e[0].p.x, i, VA_TYPE_TC_ATTRS); }
-		void UploadTNT (size_t numElems, size_t numIndcs,  const VA_TYPE_TNT*  e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_TNT_ATTRS ,  &e[0].p.x, i, VA_TYPE_TNT_ATTRS); }
-		void Upload2D0 (size_t numElems, size_t numIndcs,  const VA_TYPE_2d0*  e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_2D0_ATTRS ,  &e[0].x  , i, VA_TYPE_2D0_ATTRS); }
-		void Upload2DT (size_t numElems, size_t numIndcs,  const VA_TYPE_2dT*  e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_2DT_ATTRS ,  &e[0].x  , i, VA_TYPE_2DT_ATTRS); }
-		void Upload2DTC(size_t numElems, size_t numIndcs,  const VA_TYPE_2dTC* e, const uint32_t* i) { TUpload<float, uint32_t>(numElems, numIndcs, NUM_VA_TYPE_2DTC_ATTRS,  &e[0].x  , i, VA_TYPE_2DTC_ATTRS); }
-		#endif
+		void UploadL   (size_t numElems, size_t numIndcs,  const VA_TYPE_L*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_L_ATTRS.size()   ,  e, i, VA_TYPE_L_ATTRS.data()); }
 
 
-		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
-		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
+		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped[0] = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
+		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped[1] = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
 
-		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
-		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
+		void UnmapElems(bool unbind = false) { elems.UnmapBuffer(); if (unbind) { elems.Unbind(); } mapped[0] = false; }
+		void UnmapIndcs(bool unbind = false) { indcs.UnmapBuffer(); if (unbind) { indcs.Unbind(); } mapped[1] = false; }
 
 		VAO& GetArray() { return array; }
 		VBO& GetElems() { return elems; }
@@ -377,7 +377,7 @@ namespace GL {
 		template<typename T> size_t GetNumIndcs() const { return (indcs.GetSize() / sizeof(T)); }
 
 		bool IsInited() const { return inited; }
-		bool IsMapped() const { return mapped; }
+		bool IsMapped() const { return (mapped[0] || mapped[1]); }
 		bool IsPinned() const { return elems.immutableStorage; }
 
 	private:
@@ -404,14 +404,16 @@ namespace GL {
 
 		Shader::GLSLProgramObject shader;
 
-		bool inited = false;
-		bool mapped = false;
+		bool inited    = false;
+		bool mapped[2] = {false, false};
 	};
 
 
+
 	#ifdef HEADLESS
-	template<typename VertexArrayType> struct TRenderDataBuffer {
+	template<typename VA_TYPE> struct TRenderDataBuffer {
 	public:
+		typedef VA_TYPE VertexArrayType;
 		typedef uint32_t IndexArrayType;
 
 		TRenderDataBuffer() = default;
@@ -419,32 +421,65 @@ namespace GL {
 		TRenderDataBuffer(TRenderDataBuffer&& trdb) { *this = std::move(trdb); }
 
 		TRenderDataBuffer& operator = (const TRenderDataBuffer& trdb) = delete;
-		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) { std::swap(rdb, trdb.rdb); return *this; }
+		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) { std::swap(rawBuffer, trdb.rawBuffer); return *this; }
 
 		template<typename VertexAttribArray> void Setup(
-			RenderDataBuffer* rdbp,
-			const VertexAttribArray* vaap,
+			RenderDataBuffer* buffer,
+			const VertexAttribArray* attrs,
 			size_t numElems = 1 << 18,
 			size_t numIndcs = 1 << 16
 		) {
-			rdb = rdbp;
+			rawBuffer = buffer;
+		}
+		template<typename VertexAttribArray> void SetupStatic(
+			RenderDataBuffer* buffer,
+			const VertexAttribArray* attrs,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
+			rawBuffer = buffer;
 		}
 
-		void Reset() {}
+
+		VertexArrayType* BindMapElems(bool r = false, bool w = true) { return (static_cast<VertexArrayType*>(nullptr)); }
+		 IndexArrayType* BindMapIndcs(bool r = false, bool w = true) { return (static_cast< IndexArrayType*>(nullptr)); }
+
+		void UnmapUnbindElems() {}
+		void UnmapUnbindIndcs() {}
 
 
-		bool CheckSizeE(size_t ne) const { return false; }
-		bool CheckSizeI(size_t ni) const { return false; }
+		bool Wait() { return false; }
+		bool Sync() { return false; }
 
-		void Append(const VertexArrayType& e) {}
-		void Append(const  IndexArrayType  i) {}
+		void Reset() { Reset(0, 0); }
+		void Reset(size_t elemsPos, size_t indcsPos) {}
+
+
+		bool CheckSizeE(size_t ne, size_t pos) const { return false; }
+		bool CheckSizeI(size_t ni, size_t pos) const { return false; }
+
+
+		void Update(const VertexArrayType& e,            size_t pos) {}
+		void Update(const  IndexArrayType  i,            size_t pos) {}
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) {}
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) {}
+
+		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return false; }
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return false; }
+		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) { return false; }
+		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) { return false; }
+
+
+		void Append(const VertexArrayType& e           ) {}
+		void Append(const  IndexArrayType  i           ) {}
 		void Append(const VertexArrayType* e, size_t ne) {}
 		void Append(const  IndexArrayType* i, size_t ni) {}
 
-		void SafeAppend(const VertexArrayType& e) {}
-		void SafeAppend(const VertexArrayType* e, size_t ne) {}
-		void SafeAppend(const  IndexArrayType  i) {}
-		void SafeAppend(const  IndexArrayType* i, size_t ni) {}
+		bool SafeAppend(const VertexArrayType& e           ) { return false; }
+		bool SafeAppend(const  IndexArrayType  i           ) { return false; }
+		bool SafeAppend(const VertexArrayType* e, size_t ne) { return false; }
+		bool SafeAppend(const  IndexArrayType* i, size_t ni) { return false; }
+
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
 		void Submit(uint32_t primType) {}
@@ -453,20 +488,27 @@ namespace GL {
 
 		size_t NumElems() const { return 0; }
 		size_t NumIndcs() const { return 0; }
+		size_t SumElems() const { return 0; }
+		size_t SumIndcs() const { return 0; }
+		size_t NumSubmits(bool indexed) const { return 0; }
 
-		GL::RenderDataBuffer* GetBuffer() { return rdb; }
-		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
+		GL::RenderDataBuffer* GetBuffer() { return rawBuffer; }
+		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
+
+		VertexArrayType* GetElemsMap() { return nullptr; }
+		 IndexArrayType* GetIndcsMap() { return nullptr; }
 
 	private:
-		RenderDataBuffer* rdb = nullptr;
+		RenderDataBuffer* rawBuffer = nullptr;
 	};
 
 	#else
 
 	// typed persistent wrapper
-	template<typename VertexArrayType> struct TRenderDataBuffer {
+	template<typename VA_TYPE> struct TRenderDataBuffer {
 	public:
-		typedef uint32_t IndexArrayType;
+		typedef VA_TYPE VertexArrayType;
+		typedef uint32_t IndexArrayType; // GL_UNSIGNED_INT
 
 		TRenderDataBuffer() = default;
 		TRenderDataBuffer(const TRenderDataBuffer& trdb) = delete;
@@ -474,7 +516,7 @@ namespace GL {
 
 		TRenderDataBuffer& operator = (const TRenderDataBuffer& trdb) = delete;
 		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) {
-			std::swap(rdb, trdb.rdb);
+			std::swap(rawBuffer, trdb.rawBuffer);
 
 			std::swap(elemsMap, trdb.elemsMap);
 			std::swap(indcsMap, trdb.indcsMap);
@@ -485,74 +527,171 @@ namespace GL {
 			std::swap(prvIndxPos, trdb.prvIndxPos);
 			std::swap(curIndxPos, trdb.curIndxPos);
 			std::swap(sumIndxPos, trdb.sumIndxPos);
+
+			std::swap(numSubmits[0], trdb.numSubmits[0]);
+			std::swap(numSubmits[1], trdb.numSubmits[1]);
+
+			std::swap(glSyncObj, trdb.glSyncObj);
 			return *this;
 		}
 
 		// NOTE: potential mismatch between VertexArrayType and VertexAttribArray (std::array<T, N>)
 		template<typename VertexAttribArray> void Setup(
-			RenderDataBuffer* rdbp,
-			const VertexAttribArray* vaap,
+			RenderDataBuffer* buffer,
+			const VertexAttribArray* attribs,
 			size_t numElems = 1 << 18,
 			size_t numIndcs = 1 << 16
 		) {
-			rdb = rdbp;
+			rawBuffer = buffer;
 
-			rdb->Init(true);
-			rdb->TUpload<VertexArrayType, IndexArrayType, Shader::ShaderInput>(numElems, numIndcs, vaap->size(),  nullptr, nullptr, vaap->data());
+			rawBuffer->Init(true);
+			rawBuffer->TUpload<VertexArrayType, IndexArrayType, Shader::ShaderInput>(numElems, numIndcs, attribs->size(),  nullptr, nullptr, attribs->data());
 
-			elemsMap = rdb->MapElems<VertexArrayType>(true, true);
-			indcsMap = rdb->MapIndcs< IndexArrayType>(true, true); // null if numIndcs is 0
+			elemsMap = rawBuffer->MapElems<VertexArrayType>(true, true);
+			indcsMap = rawBuffer->MapIndcs< IndexArrayType>(true, true); // null if numIndcs is 0
 		}
+
+		template<typename VertexAttribArray> void SetupStatic(
+			RenderDataBuffer* buffer,
+			const VertexAttribArray* attribs,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
+			rawBuffer = buffer;
+
+			rawBuffer->Init(false);
+			rawBuffer->TUpload<VertexArrayType, IndexArrayType, Shader::ShaderInput>(numElems, numIndcs, attribs->size(),  nullptr, nullptr, attribs->data());
+		}
+
+
+		VertexArrayType* BindMapElems(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (elemsMap = rawBuffer->MapElems<VertexArrayType>(true, false, r, w)); }
+		 IndexArrayType* BindMapIndcs(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (indcsMap = rawBuffer->MapIndcs< IndexArrayType>(true, false, r, w)); }
+
+		void UnmapUnbindElems() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapElems(true); elemsMap = nullptr; }
+		void UnmapUnbindIndcs() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapIndcs(true); indcsMap = nullptr; }
+
+
+		static GLsync WaitSync(const GLsync& syncObj) {
+			#if (SYNC_RENDER_BUFFERS == 1)
+			#ifndef HEADLESS
+			constexpr GLuint64 NANOSECS_PER_SEC = 1000000000;
+
+			GLbitfield waitFlag = 0;
+			GLuint64 waitTime = 0;
+
+			assert(syncObj != 0);
+
+			for (int i = 0; i < 10; i++) {
+				const GLenum waitRet = glClientWaitSync(syncObj, waitFlag, waitTime);
+
+				if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED)
+					break;
+
+				if (waitRet == GL_WAIT_FAILED) {
+					assert(false);
+					break;
+				}
+
+				// start flushing
+				waitFlag = GL_SYNC_FLUSH_COMMANDS_BIT;
+				waitTime = NANOSECS_PER_SEC;
+			}
+
+			glDeleteSync(syncObj);
+			return {0};
+			#endif
+			#endif
+		}
+
+
+		// only wait on the first access this frame, and never indefinitely
+		bool Wait() { return (glSyncObj == 0 || (glSyncObj = WaitSync(glSyncObj)) == 0); }
+		bool Sync() { return (glSyncObj == 0 && (glSyncObj = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0)) != 0); }
 
 		void Reset() {
-			prvElemPos = 0;
-			curElemPos = 0;
-			sumElemPos = 0;
+			Reset(0, 0);
 
-			prvIndxPos = 0;
-			curIndxPos = 0;
-			sumIndxPos = 0;
+			numSubmits[0] = 0;
+			numSubmits[1] = 0;
+		}
+		void Reset(size_t elemsPos, size_t indcsPos) {
+			// there should never be data left unsubmitted
+			assert(NumElems() == 0);
+			assert(NumIndcs() == 0);
+
+			prvElemPos = elemsPos;
+			curElemPos = elemsPos;
+			sumElemPos = elemsPos;
+
+			prvIndxPos = indcsPos;
+			curIndxPos = indcsPos;
+			sumIndxPos = indcsPos;
 		}
 
 
-		bool CheckSizeE(size_t ne) const { return ((curElemPos + (ne - 1)) < rdb->GetNumElems<VertexArrayType>()); }
-		bool CheckSizeI(size_t ni) const { return ((curIndxPos + (ni - 1)) < rdb->GetNumIndcs< IndexArrayType>()); }
+		bool CheckSizeE(size_t ne, size_t pos) const { return (ne > 0 && ((pos + (ne - 1)) < rawBuffer->GetNumElems<VertexArrayType>())); }
+		bool CheckSizeI(size_t ni, size_t pos) const { return (ni > 0 && ((pos + (ni - 1)) < rawBuffer->GetNumIndcs< IndexArrayType>())); }
 
-		void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }
-		void AssertSizeI(size_t ni) const { assert(CheckSizeI(ni)); }
+		void AssertSizeE(size_t ne, size_t pos) const { assert(CheckSizeE(ne, pos)); }
+		void AssertSizeI(size_t ni, size_t pos) const { assert(CheckSizeI(ni, pos)); }
 
-		void Append(const VertexArrayType& e) { AssertSizeE(1); Append(&e, 1); }
-		void Append(const  IndexArrayType  i) { AssertSizeI(1); Append(&i, 1); }
-		void Append(const VertexArrayType* e, size_t ne) { std::memcpy(&elemsMap[curElemPos], e, ne * sizeof(VertexArrayType)); curElemPos += ne; }
-		void Append(const  IndexArrayType* i, size_t ni) { std::memcpy(&indcsMap[curIndxPos], i, ni * sizeof( IndexArrayType)); curIndxPos += ni; }
 
-		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
-		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (ne == 0 || !CheckSizeE(ne) || elemsMap == nullptr)
-				return;
-			Append(e, ne);
+		void Update(const VertexArrayType& e,            size_t pos) {      Update(&e,  1, pos);                                                               }
+		void Update(const  IndexArrayType  i,            size_t pos) {      Update(&i,  1, pos);                                                               }
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) { AssertSizeE(    ne, pos); std::memcpy(&elemsMap[pos], e, ne * sizeof(VertexArrayType)); }
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { AssertSizeI(    ni, pos); std::memcpy(&indcsMap[pos], i, ni * sizeof( IndexArrayType)); }
+
+		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return SafeUpdate(&e, 1, pos); }
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return SafeUpdate(&i, 1, pos); }
+		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
+			if (elemsMap == nullptr || !CheckSizeE(ne, pos))
+				return false;
+			return (Update(e, ne, pos), true);
 		}
-		void SafeAppend(const  IndexArrayType  i) { SafeAppend(&i, 1); }
-		void SafeAppend(const  IndexArrayType* i, size_t ni) {
-			if (ni == 0 || !CheckSizeI(ni) || indcsMap == nullptr)
-				return;
-			Append(i, ni);
+		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
+			if (indcsMap == nullptr || !CheckSizeI(ni, pos))
+				return false;
+			return (Update(i, ni, pos), true);
 		}
 
-		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->Submit(primType, dataIndx, dataSize); }
+
+		void Append(const VertexArrayType& e           ) { Append(&e,  1            );                   }
+		void Append(const  IndexArrayType  i           ) { Append(&i,  1            );                   }
+		void Append(const VertexArrayType* e, size_t ne) { Update( e, ne, curElemPos); curElemPos += ne; }
+		void Append(const  IndexArrayType* i, size_t ni) { Update( i, ni, curIndxPos); curIndxPos += ni; }
+
+		bool SafeAppend(const VertexArrayType& e           ) { return SafeAppend(&e, 1); }
+		bool SafeAppend(const VertexArrayType* e, size_t ne) {
+			if (elemsMap == nullptr || !CheckSizeE(ne, curElemPos))
+				return false;
+			return (Append(e, ne), true);
+		}
+		bool SafeAppend(const  IndexArrayType  i           ) { return SafeAppend(&i, 1); }
+		bool SafeAppend(const  IndexArrayType* i, size_t ni) {
+			if (indcsMap == nullptr || !CheckSizeI(ni, curIndxPos))
+				return false;
+			return (Append(i, ni), true);
+		}
+
+
+		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rawBuffer->Submit(primType, dataIndx, dataSize); }
 		void Submit(uint32_t primType) {
 			if (NumElems() > 0)
-				rdb->Submit(primType, prvElemPos, NumElems());
+				rawBuffer->Submit(primType, prvElemPos, NumElems());
 
+			numSubmits[0] += 1;
 			sumElemPos += NumElems();
 			prvElemPos = curElemPos;
 		}
-		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->SubmitIndexed(primType, dataIndx, dataSize); }
+		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rawBuffer->SubmitIndexed(primType, dataIndx, dataSize); }
 		void SubmitIndexed(uint32_t primType) {
 			if (NumIndcs() > 0)
-				rdb->SubmitIndexed(primType, prvIndxPos, NumIndcs());
+				rawBuffer->SubmitIndexed(primType, prvIndxPos, NumIndcs());
 
 			// TODO: allow multiple batches with the same set of indices?
+			numSubmits[1] += 1;
+			sumElemPos += NumElems();
+			prvElemPos = curElemPos;
 			sumIndxPos += NumIndcs();
 			prvIndxPos = curIndxPos;
 		}
@@ -561,17 +700,21 @@ namespace GL {
 		size_t NumIndcs() const { return (curIndxPos - prvIndxPos); }
 		size_t SumElems() const { return sumElemPos; }
 		size_t SumIndcs() const { return sumIndxPos; }
+		size_t NumSubmits(bool indexed) const { return numSubmits[indexed]; }
 
-		GL::RenderDataBuffer* GetBuffer() { return rdb; }
-		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
+		GL::RenderDataBuffer* GetBuffer() { return rawBuffer; }
+		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
+
+		VertexArrayType* GetElemsMap() { return elemsMap; }
+		 IndexArrayType* GetIndcsMap() { return indcsMap; }
 
 	private:
-		RenderDataBuffer* rdb = nullptr;
+		RenderDataBuffer* rawBuffer = nullptr;
 
 		VertexArrayType* elemsMap = nullptr;
 		IndexArrayType* indcsMap = nullptr;
 
-		// these must never exceed rdb->GetNum{Elems,Indcs}<{Vertex,Index}ArrayType>()
+		// these must never exceed rawBuffer->GetNum{Elems,Indcs}<{Vertex,Index}ArrayType>()
 		size_t prvElemPos = 0;
 		size_t curElemPos = 0;
 		size_t sumElemPos = 0;
@@ -579,6 +722,11 @@ namespace GL {
 		size_t prvIndxPos = 0;
 		size_t curIndxPos = 0;
 		size_t sumIndxPos = 0;
+
+		// [0] := non-indexed, [1] := indexed
+		size_t numSubmits[2] = {0, 0};
+
+		GLsync glSyncObj = 0;
 	};
 	#endif
 
@@ -589,7 +737,6 @@ namespace GL {
 
 
 	RenderDataBuffer0* GetRenderBuffer0();
-	RenderDataBufferN* GetRenderBufferN();
 	RenderDataBufferC* GetRenderBufferC();
 	RenderDataBufferC* GetRenderBufferFC();
 	RenderDataBufferT* GetRenderBufferT();
@@ -600,6 +747,8 @@ namespace GL {
 
 	RenderDataBuffer2D0* GetRenderBuffer2D0();
 	RenderDataBuffer2DT* GetRenderBuffer2DT();
+
+	RenderDataBufferL* GetRenderBufferL();
 };
 
 #endif

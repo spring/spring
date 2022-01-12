@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <array>
 #ifdef DEBUG
-	#include <string.h> // strncmp
+	#include <cstring> // strncmp
 #endif
 
 
@@ -88,7 +88,7 @@ std::string Shader::GetShaderSource(const std::string& srcData)
 
 	// otherwise assume srcData is the name of a file
 	std::string soPath = "shaders/" + srcData;
-	std::string soSource = "";
+	std::string soSource;
 
 	CFileHandler soFile(soPath);
 
@@ -115,7 +115,7 @@ std::string Shader::GetShaderVersionDirective(std::string& srcText)
 		srcText.erase(pos, eol - pos);
 	}
 
-	return (std::move(version));
+	return version;
 }
 
 /*****************************************************************/
@@ -242,13 +242,16 @@ namespace Shader {
 
 	void GLSLProgramObject::Enable() {
 		MaybeReload(false);
+		EnableRaw();
+	}
+
+	void GLSLProgramObject::EnableRaw() {
 		glUseProgram(glid);
 		IProgramObject::Enable();
 	}
-
-	void GLSLProgramObject::Disable() {
-		glUseProgram(0);
+	void GLSLProgramObject::DisableRaw() {
 		IProgramObject::Disable();
+		glUseProgram(0);
 	}
 
 
@@ -395,7 +398,7 @@ namespace Shader {
 		// recompile if post-reload <hash> has no entry in cache (id 0), validate on success
 		// then add the pre-reload <_hash, _glid> program pair unless it already has an entry
 		// TODO: get rid of validation warnings (deprecated vars, etc) forcing the "|| true"
-		valid = (UpdateProg(hash) && (CopyUniformsAndValidate(glid, _glid) || true));
+		valid = (UpdateProg(hash) && (CopyUniformsAndValidate(glid, _glid) || true)); // NOLINT{readability-simplify-boolean-expr}
 
 		if (useCache && shaderCache.Push(_hash, _glid))
 			return;
@@ -434,7 +437,7 @@ namespace Shader {
 	void GLSLProgramObject::SetShaderDefinitions(const std::string& defs) {
 		// NOTE: this does not preserve the #version pragma
 		for (IShaderObject*& so: shaderObjs) {
-			so->SetDefinitions(defs);
+			so->SetDefineStrings(defs);
 		}
 	}
 
@@ -545,7 +548,7 @@ namespace Shader {
 			programLog.append(shaderLog);
 		}
 
-		return (std::move(cso));
+		return cso;
 	}
 }
 

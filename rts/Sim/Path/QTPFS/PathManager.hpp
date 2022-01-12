@@ -70,6 +70,14 @@ namespace QTPFS {
 
 		int2 GetNumQueuedUpdates() const override;
 
+
+		const NodeLayer& GetNodeLayer(unsigned int pathType) const { return nodeLayers[pathType]; }
+		const QTNode* GetNodeTree(unsigned int pathType) const { return nodeTrees[pathType]; }
+		const PathCache& GetPathCache(unsigned int pathType) const { return pathCaches[pathType]; }
+
+		const spring::unordered_map<unsigned int, unsigned int>& GetPathTypes() const { return pathTypes; }
+		const spring::unordered_map<unsigned int, PathSearchTrace::Execution*>& GetPathTraces() const { return pathTraces; }
+
 	private:
 		void ThreadUpdate();
 		void Load();
@@ -140,10 +148,10 @@ namespace QTPFS {
 		std::string GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const;
 		void Serialize(const std::string& cacheFileDir);
 
-		std::vector<NodeLayer> nodeLayers;
-		std::vector<QTNode*> nodeTrees;
-		std::vector<PathCache> pathCaches;
-		std::vector< std::vector<IPathSearch*> > pathSearches;
+		static std::vector<NodeLayer> nodeLayers;
+		static std::vector<QTNode*> nodeTrees;
+		static std::vector<PathCache> pathCaches;
+		static std::vector< std::vector<IPathSearch*> > pathSearches;
 
 		spring::unordered_map<unsigned int, unsigned int> pathTypes;
 		spring::unordered_map<unsigned int, PathSearchTrace::Execution*> pathTraces;
@@ -168,10 +176,10 @@ namespace QTPFS {
 		bool haveCacheDir;
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		spring::thread* updateThread;
-		spring::mutex* mutexThreadUpdate;
-		spring::condition_variable* condThreadUpdate;
-		spring::condition_variable* condThreadUpdated;
+		spring::thread updateThread;
+		spring::mutex mutexThreadUpdate;
+		spring::condition_variable condThreadUpdate;
+		spring::condition_variable condThreadUpdated;
 		#endif
 	};
 }

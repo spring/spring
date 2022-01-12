@@ -3,6 +3,7 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
+#include <functional>
 #include <vector>
 
 #include "System/Object.h"
@@ -37,6 +38,9 @@ public:
 	void AimScriptFinished(bool retCode) { angleGood = retCode; }
 
 	bool HaveTarget() const { return (currentTarget.type != Target_None); }
+	bool HaveUnitTarget() const { return (currentTarget.type == Target_Unit); }
+	bool HavePosTarget() const { return (currentTarget.type == Target_Pos); }
+
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3& GetCurrentTargetPos() const { return currentTargetPos; }
 
@@ -72,9 +76,9 @@ public:
 	float TargetWeight(const CUnit* unit) const;
 
 	static float GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity);
-	static float GetLiveRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity) { return (w->GetRange2D(modHeightDiff)); }
+	static float GetLiveRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity) { return (w->GetRange2D(0.0f, modHeightDiff)); }
 
-	virtual float GetRange2D(const float yDiff) const;
+	virtual float GetRange2D(float boost, float ydiff) const;
 	virtual void UpdateProjectileSpeed(const float val) { projectileSpeed = val; }
 	virtual void UpdateRange(const float val) { range = val; }
 
@@ -88,7 +92,8 @@ public:
 	float SprayAngleExperience() const { return (sprayAngle * ExperienceErrorScale()); }
 	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
-	void StopAttackingAllyTeam(const int ally);
+	bool StopAttackingTargetIf(const std::function<bool(const SWeaponTarget&)>& pred);
+	bool StopAttackingAllyTeam(const int ally);
 
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
@@ -191,8 +196,6 @@ public:
 	float3 errorVectorAdd;
 
 	float muzzleFlareSize;                  // size of muzzle flare if drawn
-	int fireSoundId;
-	float fireSoundVolume;
 
 protected:
 	SWeaponTarget currentTarget;

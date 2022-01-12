@@ -16,12 +16,12 @@ public:
 	CDynWater();
 	~CDynWater();
 
-	void Draw();
-	void UpdateWater(CGame* game);
-	void Update();
-	void AddExplosion(const float3& pos, float strength, float size);
-	int GetID() const { return WATER_RENDERER_DYNAMIC; }
-	const char* GetName() const { return "dynamic"; }
+	void Draw() override;
+	void UpdateWater(CGame* game) override;
+	void Update() override;
+	void AddExplosion(const float3& pos, float strength, float size) override;
+	int GetID() const override { return WATER_RENDERER_DYNAMIC; }
+	const char* GetName() const override { return "dynamic"; }
 
 private:
 	void DrawReflection(CGame* game);

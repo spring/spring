@@ -11,23 +11,23 @@ public:
 	CFPSController();
 	~CFPSController();
 
-	const std::string GetName() const { return "fps"; }
+	const std::string GetName() const override { return "fps"; }
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move) { KeyMove(move); }
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override;
+	void MouseMove(float3 move) override;
+	void ScreenEdgeMove(float3 move) override { KeyMove(move); }
+	void MouseWheelMove(float move) override;
 
-	void SetPos(const float3& newPos);
-	void SetDir(const float3& newDir);
-	float3 SwitchFrom() const { return pos; }
-	void SwitchTo(const int oldCam, const bool showText);
+	void SetPos(const float3& newPos) override;
+	void SetDir(const float3& newDir) override;
+	float3 SwitchFrom() const override { return pos; }
+	void SwitchTo(const int oldCam, const bool showText) override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
 
-	void Update();
+	void Update() override;
 
 	void ConfigNotify(const std::string& key, const std::string& value);
 	void ConfigUpdate();

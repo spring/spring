@@ -21,48 +21,62 @@
 
 CModelLoader modelLoader;
 
+static C3DOParser g3DOParser;
+static CS3OParser gS3OParser;
+static CAssParser gAssParser;
 
-static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
-	spring::unordered_set<std::string> whitelist;
+
+static bool CheckAssimpWhitelist(const char* aiExt) {
+	constexpr std::array<const char*, 5> whitelist = {
+		"3ds"  , // 3DSMax
+		"dae"  , // Collada
+		"lwo"  , // LightWave
+		"obj"  ,
+		"blend", // Blender
+	};
+
+	const auto pred = [&aiExt](const char* wlExt) { return (strcmp(aiExt, wlExt) == 0); };
+	const auto iter = std::find_if(whitelist.begin(), whitelist.end(), pred);
+
+	return (iter != whitelist.end());
+}
+
+static void RegisterModelFormats(CModelLoader::FormatMap& formats) {
+	// file-extension should be lowercase
+	formats.insert("3do", MODELTYPE_3DO);
+	formats.insert("s3o", MODELTYPE_S3O);
 
 	std::string extension;
 	std::string extensions;
 	std::string enabledExtensions;
 
-	whitelist.insert("3ds"  ); // 3DSMax
-	whitelist.insert("dae"  ); // Collada
-	whitelist.insert("lwo"  ); // LightWave
-	whitelist.insert("obj"  );
-	whitelist.insert("blend"); // Blender
-
 	Assimp::Importer importer;
 	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
 	importer.GetExtensionList(extensions);
-
 	// do not ignore the last extension
-	extensions += ";";
+	extensions.append(";");
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
 
 	// split the list, strip off the "*." extension prefixes
-	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
+	while ((nxtIdx = extensions.find(';', curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
 		extension = extension.substr(extension.find("*.") + 2);
 		extension = StringToLower(extension);
 
 		curIdx = nxtIdx + 1;
 
-		if (whitelist.find(extension) == whitelist.end())
+		if (!CheckAssimpWhitelist(extension.c_str()))
 			continue;
 		if (formats.find(extension) != formats.end())
 			continue;
 
-		formats[extension] = MODELTYPE_ASS;
-		enabledExtensions += "*." + extension + ";";
+		formats.insert(extension, MODELTYPE_ASS);
+		enabledExtensions.append("*." + extension + ";");
 	}
 
-	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
+	LOG("[%s] supported (Assimp) model formats: %s", __func__, enabledExtensions.c_str());
 }
 
 static S3DModel CreateDummyModel(unsigned int id)
@@ -73,7 +87,7 @@ static S3DModel CreateDummyModel(unsigned int id)
 	model.type = MODELTYPE_3DO;
 	model.numPieces = 1;
 	// give it one empty piece
-	model.AddPiece(new S3DOPiece());
+	model.AddPiece(g3DOParser.AllocPiece());
 	model.GetRootPiece()->SetCollisionVolume(CollisionVolume('b', 'z', -UpVector, ZeroVector));
 	return model;
 }
@@ -96,7 +110,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 			const char* modelName = model->name.c_str();
 			const char* pieceName = modelPiece->name.c_str();
 
-			LOG_L(L_DEBUG, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+			LOG_L(L_DEBUG, formatStr, __func__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
 		}
 	}
 
@@ -109,21 +123,25 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 
 void CModelLoader::Init()
 {
-	// file-extension should be lowercase
-	formats["3do"] = MODELTYPE_3DO;
-	formats["s3o"] = MODELTYPE_S3O;
-
-	parsers[MODELTYPE_3DO] = new C3DOParser();
-	parsers[MODELTYPE_S3O] = new CS3OParser();
-	parsers[MODELTYPE_ASS] = new CAssParser();
-
-	RegisterAssimpModelFormats(formats);
+	RegisterModelFormats(formats);
+	InitParsers();
 
 	models.clear();
 	models.resize(MAX_MODEL_OBJECTS);
 
 	// dummy first model, legitimate model IDs start at 1
 	models[0] = std::move(CreateDummyModel(numModels = 0));
+}
+
+void CModelLoader::InitParsers()
+{
+	parsers[MODELTYPE_3DO] = &g3DOParser;
+	parsers[MODELTYPE_S3O] = &gS3OParser;
+	parsers[MODELTYPE_ASS] = &gAssParser;
+
+	for (IModelParser* p: parsers) {
+		p->Init();
+	}
 }
 
 void CModelLoader::Kill()
@@ -145,11 +163,13 @@ void CModelLoader::KillModels()
 
 void CModelLoader::KillParsers()
 {
-	for (auto& p: parsers) {
-		spring::SafeDelete(p.second);
+	for (IModelParser* p: parsers) {
+		p->Kill();
 	}
 
-	parsers.clear();
+	parsers[MODELTYPE_3DO] = nullptr;
+	parsers[MODELTYPE_S3O] = nullptr;
+	parsers[MODELTYPE_ASS] = nullptr;
 }
 
 
@@ -165,11 +185,11 @@ std::string CModelLoader::FindModelPath(std::string name) const
 	const std::string& fileExt = FileSystem::GetExtension(name);
 
 	if (fileExt.empty()) {
-		for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
-			const std::string& formatExt = it->first;
+		for (const auto& format: formats) {
+			const std::string& formatExt = format.first;
 
 			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
-				name += ("." + formatExt);
+				name.append("." + formatExt);
 				break;
 			}
 		}
@@ -242,8 +262,8 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 		std::lock_guard<spring::mutex> lock(mutex);
 
 		// search in cache first
-		for (unsigned int n = 0; n < 2; n++) {
-			S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
+		for (const auto& ref: refs) {
+			S3DModel* cachedModel = LoadCachedModel(*ref, preload);
 
 			if (cachedModel != nullptr)
 				return cachedModel;
@@ -331,19 +351,20 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 	S3DModel model;
 	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
 
-	if (parser != nullptr) {
-		try {
-			model = std::move(parser->Load(path));
-		} catch (const content_error& ex) {
-			{
-				std::lock_guard<spring::mutex> lock(mutex);
-				errors.emplace_back(name, ex.what());
-			}
-
-			model = std::move(CreateDummyModel(0));
-		}
-	} else {
+	if (parser == nullptr) {
 		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
+		return (CreateDummyModel(0));
+	}
+
+	try {
+		model = std::move(parser->Load(path));
+	} catch (const content_error& ex) {
+		{
+			std::lock_guard<spring::mutex> lock(mutex);
+			errors.emplace_back(name, ex.what());
+		}
+
+		model = std::move(CreateDummyModel(0));
 	}
 
 	return model;

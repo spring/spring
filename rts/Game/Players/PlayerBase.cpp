@@ -21,7 +21,7 @@ CR_REG_METADATA(PlayerBase, (
 
 
 
-PlayerBase::PlayerBase(): TeamController() {
+PlayerBase::PlayerBase() {
 	// NB: sync-safe so long as PlayerHandler destroys all players on reload
 	customValues.reserve(8);
 }

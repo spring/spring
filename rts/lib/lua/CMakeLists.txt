@@ -1,7 +1,7 @@
 # Spring supplied CMake build file
 
 # deactivate signaling-NANs for this library
-RemoveFlag("-fsignaling-nans")
+remove_flag("-fsignaling-nans")
 
 INCLUDE_DIRECTORIES(BEFORE ../streflop include)
 FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED) #FIXME: LuaUser.cpp requires glew...
@@ -51,7 +51,7 @@ endif ()
 
 if (UNIX)
 	SET_TARGET_PROPERTIES(lua PROPERTIES COMPILE_FLAGS "-DLUA_USE_MKSTEMP ${PIC_FLAG}")
-else (UNIX)
+else ()
 	SET_TARGET_PROPERTIES(lua PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
-endif (UNIX)
+endif ()
 

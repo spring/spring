@@ -1,4 +1,5 @@
 #include <string>
+#include "StringHash.h"
 
 #ifndef CHAR_BIT
 #define CHAR_BIT 8
@@ -20,4 +21,6 @@ unsigned HashString(const char* s, size_t n)
 
 	return hash;
 }
+
+static_assert(hashStringLower("abcdABCDwxyz") == hashStringLower("ABCDabcdWXYZ"), "hashStringLower does not work");
 
