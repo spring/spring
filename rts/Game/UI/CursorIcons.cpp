@@ -90,23 +90,29 @@ void CCursorIcons::DrawCursors()
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
-	const CMouseCursor* currentCursor = NULL;
+	const CMouseCursor* currentCursor = nullptr;
 
 	for (const auto& icon : icons) {
 		const int command = icon.cmd;
 		if (command != currentCmd) {
 			currentCmd = command;
 			currentCursor = GetCursor(currentCmd);
-			if (currentCursor != NULL) {
+			if (currentCursor != nullptr) {
 				currentCursor->BindTexture();
 			}
 		}
-		if (currentCursor != NULL) {
+		if (currentCursor != nullptr) {
 			const float3 winPos = camera->CalcWindowCoordinates(icon.pos);
 			if (winPos.z <= 1.0f) {
 				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
 			}
 		}
+	}
+
+	if (currentCursor != nullptr) {
+		//undo state change
+		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	DrawTexts(); // use the same transformation
@@ -123,7 +129,6 @@ void CCursorIcons::DrawTexts()
 	if (texts.empty())
 		return;
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	const float fontScale = 1.0f;

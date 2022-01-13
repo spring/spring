@@ -324,7 +324,6 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
-
 void CMouseCursor::DrawQuad(int x, int y) const
 {
 	if (frames.empty())
@@ -358,7 +357,6 @@ void CMouseCursor::DrawQuad(int x, int y) const
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
-
 
 void CMouseCursor::Update()
 {
