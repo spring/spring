@@ -20,7 +20,9 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
-CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs): hotSpot(hs)
+CMouseCursor::CMouseCursor(const std::string& name_, HotSpot hs)
+	: hotSpot(hs)
+	, name(name_)
 {
 	frames.reserve(8);
 	images.reserve(8);

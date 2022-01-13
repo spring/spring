@@ -35,6 +35,8 @@ public:
 	bool IsHWValid() const { return hwValid; }
 	bool IsValid() const { return (!frames.empty()); }
 
+	const std::string& GetName() const { return name; }
+	const HotSpot GetHotSpot() const { return hotSpot; }
 private:
 	struct ImageData;
 
@@ -68,6 +70,7 @@ private:
 		float startTime = 0.0f;
 		float endTime = 0.0f;
 	};
+	std::string name;
 
 	std::vector<ImageData> images;
 	std::vector<FrameData> frames;

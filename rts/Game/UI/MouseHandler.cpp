@@ -553,7 +553,7 @@ void CMouseHandler::DrawSelectionBox()
 		camPos + (camDirs[0] + camDirs[3] + camDirs[4]) * dirScale,
 	};
 
-	
+
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, boxVerts);
 	glDrawArrays(GL_LINE_LOOP, 0, 4);
@@ -989,13 +989,22 @@ bool CMouseHandler::ReplaceMouseCursor(
 	if (fileIt == cursorFileMap.end())
 		return false;
 
-	loadedCursors[fileIt->second] = CMouseCursor(newName, hotSpot);
+	auto& loadedCursor = loadedCursors[fileIt->second];
+
+	if (newName == loadedCursor.GetName() && hotSpot == loadedCursor.GetHotSpot()) //same
+		return false;
+
+	// hold on the destruction of old CMouseCursor() in this place. Otherwise bad things will happen.
+	volatile const auto oldCursor = std::move(loadedCursors[fileIt->second]);
+
+	// replace here so SetCursor() operates with new CMouseCursor() object
+	loadedCursor = CMouseCursor(newName, hotSpot);
 
 	// update current cursor if necessary
 	if (activeCursorIdx == fileIt->second)
 		SetCursor(activeCursorName, true);
 
-	return (loadedCursors[activeCursorIdx].IsValid());
+	return (/*oldCursor destructor runs here*/ loadedCursors[activeCursorIdx].IsValid());
 }
 
 
