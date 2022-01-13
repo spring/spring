@@ -1230,7 +1230,7 @@ void CGame::ClientReadNet()
 						aiTeam->SetLeader(playerNum);
 
 					CPlayer::UpdateControlledTeams();
-					eventHandler.PlayerChanged(playerNum);
+					playerHandler.Player(playerNum)->NotifyPlayerChanged();
 
 					if (playerNum == gu->myPlayerNum) {
 						LOG("[Game::%s] local skirmish AI being created for team %i ...", __func__, aiTeamNum);
@@ -1291,7 +1291,20 @@ void CGame::ClientReadNet()
 						skirmishAIHandler.RemoveSkirmishAI(aiNum);
 
 						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(playerNum);
+						playerHandler.Player(playerNum)->NotifyPlayerChanged();
+
+						LOG("Skirmish AI \"%s\" (ID:%i), which controlled team %i is now dead", aiData->name.c_str(), aiNum, aiTeamId);
+					}
+				} else if (newState == SKIRMAISTATE_ALIVE) {
+					if (isLocal) {
+						// short-name and version of the AI is unsynced data
+						// -> only available on the AI host
+						LOG("Skirmish AI \"%s\" (ID:%i, Short-Name:\"%s\", Version:\"%s\") took over control of team %i",
+							aiData->name.c_str(), aiNum,
+							aiData->shortName.c_str(),
+							aiData->version.c_str(), aiTeamId);
+					} else {
+						LOG("Skirmish AI \"%s\" (ID:%i) took over control of team %i", aiData->name.c_str(), aiNum, aiTeamId);
 					}
 
 					continue;

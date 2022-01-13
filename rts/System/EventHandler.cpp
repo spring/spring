@@ -520,6 +520,10 @@ void CEventHandler::TeamChanged(int teamID)
 	ITERATE_EVENTCLIENTLIST(TeamChanged, teamID);
 }
 
+void CEventHandler::SyncedPlayerChanged(int playerID)
+{
+	ITERATE_EVENTCLIENTLIST(SyncedPlayerChanged, playerID);
+}
 
 void CEventHandler::PlayerChanged(int playerID)
 {

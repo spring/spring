@@ -7,6 +7,7 @@
 #include "PlayerHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/MouseHandler.h"
@@ -88,6 +89,21 @@ void CPlayer::UpdateControlledTeams()
 	}
 }
 
+void CPlayer::NotifyPlayerChanged() const
+{
+	/* SyncedPlayerChanged is similar to PlayerChanged, but:
+	 * 1) is available in synced Lua,
+	 * 2) doesn't fire for replay-watching specs.
+	 *
+	 * This is a separate event because:
+	 * 1) exposing the full PlayerChanged to synced would lead to desynced replays,
+	 * 2) removing replay watchers from PlayerChanged would needlessly hurt unsynced Lua,
+	 * 3) sending the event only to unsynced would be inconsistent and opaque. */
+	if (gameSetup == nullptr || !gameSetup->hostDemo || IsFromDemo())
+		eventHandler.SyncedPlayerChanged(playerNum);
+
+	eventHandler.PlayerChanged(playerNum);
+}
 
 void CPlayer::StartSpectating()
 {
@@ -111,7 +127,7 @@ void CPlayer::StartSpectating()
 	}
 
 	StopControllingUnit();
-	eventHandler.PlayerChanged(playerNum);
+	NotifyPlayerChanged();
 }
 
 void CPlayer::JoinTeam(int newTeam)
@@ -134,7 +150,7 @@ void CPlayer::JoinTeam(int newTeam)
 		unitTracker.Disable();
 	}
 
-	eventHandler.PlayerChanged(playerNum);
+	NotifyPlayerChanged();
 }
 
 void CPlayer::GameFrame(int frameNum)

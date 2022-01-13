@@ -5,7 +5,8 @@ Spring changelog
 -- 107.0 --------------------------------------------------------
 Misc:
  - when watching a replay, you can now see everybody's whispers
-
+Lua:
+ - add SyncedPlayerChanged callin: similar to PlayerChanged, not called for demo-watching spectators but available for synced Lua
 
 -- 106.0 --------------------------------------------------------
 Sim:
