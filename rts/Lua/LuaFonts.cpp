@@ -273,7 +273,7 @@ int LuaFonts::WrapText(lua_State* L)
 	std::string text(luaL_checkstring(L, 2), lua_strlen(L, 2));
 
 	const float maxWidth   = luaL_checkfloat(L, 3);
-	const float maxHeight  = luaL_optfloat(L, 4, 1e9);
+	const float maxHeight  = luaL_optfloat(L, 4, CglFont::MAX_HEIGHT_DEFAULT);
 	const float size       = luaL_optfloat(L, 5, f->GetSize());
 
 	const int lines = f->WrapInPlace(text, size, maxWidth, maxHeight);

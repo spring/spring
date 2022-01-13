@@ -1,4 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+/// REMEMBER TO PORT BAR105 CHANGES!!!
 
 #include "TextWrap.h"
 #include "glFont.h"
@@ -322,7 +323,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 	currLine = &(lines.back());
 	currLine->start = words.begin();
 
-	for (; ;) {
+	for (;;) {
 		currLineValid = true;
 		if (wi->isLineBreak) {
 			currLine->forceLineBreak = true;

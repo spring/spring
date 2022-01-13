@@ -18,12 +18,13 @@ public:
 	virtual ~CTextWrap() {}
 
 	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight
-	inline int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = 1e9);
-	inline std::string Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = 1e9);
+	inline int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
+	inline std::string Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
 
 	static const char8_t ColorCodeIndicator  = 0xFF;
 	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
 
+	static constexpr float MAX_HEIGHT_DEFAULT = 1e4;
 public:
 	virtual float GetTextWidth(const std::string& text) = 0;
 
@@ -77,8 +78,8 @@ private:
 
 	void WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight);
 
-	int WrapInPlace(std::u8string& text, float fontSize,  float maxWidth, float maxHeight = 1e9);
-	std::u8string Wrap(const std::u8string& text, float fontSize, float maxWidth, float maxHeight = 1e9);
+	int WrapInPlace(std::u8string& text, float fontSize,  float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
+	std::u8string Wrap(const std::u8string& text, float fontSize, float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
 };
 
 // wrappers
