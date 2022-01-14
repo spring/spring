@@ -40,7 +40,7 @@ CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).descript
 
 CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+//CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
@@ -219,7 +219,7 @@ CGlobalRendering::CGlobalRendering()
 	, maxViewRange(MAX_VIEW_RANGE * 0.5f)
 	, aspectRatio(1.0f)
 
-	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
+	, forceDisableShaders(/*configHandler->GetInt("ForceDisableShaders")*/ false)
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
