@@ -128,7 +128,7 @@ void CubeMapHandler::Free() {
 
 void CubeMapHandler::UpdateReflectionTexture()
 {
-	if (!unitDrawer->UseAdvShading())
+	if (!unitDrawer->UseAdvShading() && !readMap->GetGroundDrawer()->UseAdvShading())
 		return;
 
 	// NOTE:
@@ -232,7 +232,6 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 		}
 
 		CCameraHandler::SetActiveCamera(prvCam->GetCamType());
-		prvCam->Update();
 	}
 
 	glPopAttrib();

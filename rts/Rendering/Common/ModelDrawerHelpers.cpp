@@ -1,4 +1,5 @@
 #include "ModelDrawerHelpers.h"
+#include "ModelDrawer.h"
 #include "System/float3.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"
@@ -31,13 +32,15 @@ void CModelDrawerHelper::EnableTexturesCommon()
 	if (shadowHandler.ShadowsLoaded())
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 
-	glActiveTexture(GL_TEXTURE3);
-	glEnable(GL_TEXTURE_CUBE_MAP);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
+	if (CModelDrawerConcept::UseAdvShading()) {
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
 
-	glActiveTexture(GL_TEXTURE4);
-	glEnable(GL_TEXTURE_CUBE_MAP);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
+		glActiveTexture(GL_TEXTURE4);
+		glEnable(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
+	}
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -51,11 +54,13 @@ void CModelDrawerHelper::DisableTexturesCommon()
 	if (shadowHandler.ShadowsLoaded())
 		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_CUBE_MAP);
+	if (CModelDrawerConcept::UseAdvShading()) {
+		glActiveTexture(GL_TEXTURE3);
+		glDisable(GL_TEXTURE_CUBE_MAP);
 
-	glActiveTexture(GL_TEXTURE4);
-	glDisable(GL_TEXTURE_CUBE_MAP);
+		glActiveTexture(GL_TEXTURE4);
+		glDisable(GL_TEXTURE_CUBE_MAP);
+	}
 
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
