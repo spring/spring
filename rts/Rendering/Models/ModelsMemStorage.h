@@ -39,7 +39,7 @@ public:
 		if (firstElem == MatricesMemStorage::INVALID_INDEX)
 			return;
 
-		matricesMemStorage.Free(firstElem, numElems);
+		matricesMemStorage.Free(firstElem, numElems, &CMatrix44f::Zero());
 	}
 
 	bool Valid() const { return firstElem != MatricesMemStorage::INVALID_INDEX;	}

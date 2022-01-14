@@ -332,7 +332,7 @@ public:
 	}
 
 	size_t Allocate(size_t numElems, bool withMutex = false);
-	void Free(size_t firstElem, size_t numElems);
+	void Free(size_t firstElem, size_t numElems, const T* T0 = nullptr);
 	const size_t GetSize() const { return data.size(); }
 	const std::vector<T>& GetData() const { return data; }
 	      std::vector<T>& GetData()       { return data; }
@@ -470,7 +470,7 @@ inline void StablePosAllocator<T>::CompactGaps()
 }
 
 template<typename T>
-inline void StablePosAllocator<T>::Free(size_t firstElem, size_t numElems)
+inline void StablePosAllocator<T>::Free(size_t firstElem, size_t numElems, const T* T0)
 {
 	assert(firstElem + numElems <= data.size());
 
@@ -478,14 +478,10 @@ inline void StablePosAllocator<T>::Free(size_t firstElem, size_t numElems)
 		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
 		return;
 	}
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-	memset(&data[firstElem], 0, numElems * sizeof(T)); //nullify elements just in case
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+
+	if (T0)
+		std::fill(data.begin() + firstElem, data.begin() + firstElem + numElems, *T0);
+
 	//lucky us, just remove trim the vector size
 	if (firstElem + numElems == data.size()) {
 		myLog("StablePosAllocator<T>::Free(%u, %u)", uint32_t(firstElem), uint32_t(numElems));
