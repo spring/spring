@@ -20,7 +20,7 @@ namespace Shader {
 	 * Very useful when you want to recompile an uber-shader
 	 * with a different #define-flagset.
 	 */
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates);
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, IProgramObject::UniformStates* uniformStates);
 }
 
 #endif //_GLSL_COPY_STATE_H
