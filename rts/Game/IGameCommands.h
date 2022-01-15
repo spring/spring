@@ -104,7 +104,7 @@ protected:
 	spring::unsynced_map<std::string, TActionExecutor*> actionExecutors;
 	std::vector< std::pair<std::string, TActionExecutor*> > sortedExecutors;
 
-	std::array<uint8_t, 16384> actionExecutorMem;
+	std::array<uint8_t, 18432> actionExecutorMem;
 
 	size_t actionExecMemIndex = 0;
 	// size_t numActionExecutors = 0;
