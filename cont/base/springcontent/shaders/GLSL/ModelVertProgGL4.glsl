@@ -87,7 +87,9 @@ layout(std140, binding = 0) readonly buffer MatrixBuffer {
 	mat4 mat[];
 };
 
-uniform int drawMode = 0;
+uniform int cameraMode = 0;
+uniform int matrixMode = 0;
+
 uniform mat4 staticModelMatrix = mat4(1.0);
 
 uniform vec4 clipPlane0 = vec4(0.0, 0.0, 0.0, 1.0); //upper construction clip plane
@@ -126,12 +128,14 @@ void TransformPlayerCamStaticMat(vec4 worldPos) {
 	gl_Position = cameraViewProj * worldPos;
 }
 
-#define GetPieceMatrix(staticModel) (mat[instData.x + pieceIndex + uint(!staticModel)])
+#define GetPieceMatrix(sm) (mat[instData.x + pieceIndex + uint(!sm)])
 
 void main(void)
 {
-	mat4 pieceMatrix = GetPieceMatrix(bool(drawMode < 0));
-	mat4 worldMatrix = (drawMode >= 0) ? mat[instData.x] : staticModelMatrix;
+	bool staticModel = (matrixMode > 0);
+
+	mat4 pieceMatrix = GetPieceMatrix(staticModel);
+	mat4 worldMatrix = staticModel ? staticModelMatrix : mat[instData.x]; //don't cover ARRAY_MATMODE yet
 
 	mat4 worldPieceMatrix = worldMatrix * pieceMatrix; // for the below
 
@@ -171,7 +175,7 @@ void main(void)
 	#endif
 
 
-	switch(drawMode) {
+	switch(cameraMode) {
 		case  1: // water reflection
 			TransformPlayerReflCam(worldPos);
 			break;

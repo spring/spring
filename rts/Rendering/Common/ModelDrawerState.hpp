@@ -25,11 +25,16 @@ enum ModelShaderProgram {
 	MODEL_SHADER_COUNT             = 4,
 };
 
-enum ShaderDrawingModes {
-	STATIC_MODEL = -1,
-	NORMAL_MODEL = 0,
-	REFLCT_MODEL = 1,
-	REFRAC_MODEL = 2,
+enum ShaderCameraModes {
+	NORMAL_CAMERA = 0,
+	REFLCT_CAMERA = 1,
+	REFRAC_CAMERA = 2,
+};
+
+enum ShaderMatrixModes {
+	NORMAL_MATMODE = 0,
+	STATIC_MATMODE = 1,
+	 ARRAY_MATMODE = 2, //future
 };
 
 enum ShaderShadingModes {
@@ -74,11 +79,20 @@ public:
 	virtual void SetColorMultiplier(float r, float g, float b, float a) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
 	};
-	virtual void SetDrawingMode(ShaderDrawingModes sdm = ShaderDrawingModes::NORMAL_MODEL) const {
+	virtual ShaderCameraModes SetCameraMode(ShaderCameraModes scm_ = ShaderCameraModes::NORMAL_CAMERA) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
+		std::swap(scm, scm_);
+		return scm_;
 	};
-	virtual void SetShadingMode(ShaderShadingModes sm = ShaderShadingModes::NORMAL_SHADING) const {
+	virtual ShaderMatrixModes SetMatrixMode(ShaderMatrixModes smm_ = ShaderMatrixModes::NORMAL_MATMODE) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
+		std::swap(smm, smm_);
+		return smm_;
+	};
+	virtual ShaderShadingModes SetShadingMode(ShaderShadingModes ssm_ = ShaderShadingModes::NORMAL_SHADING) const {
+		assert(false);  //doesn't make sense, except in GL4, overridden below
+		std::swap(ssm, ssm_);
+		return ssm_;
 	};
 	virtual void SetStaticModelMatrix(const CMatrix44f& mat) const {
 		assert(false);  //doesn't make sense, except in GL4, overridden below
@@ -109,6 +123,10 @@ public:
 	/// </summary>
 	inline static float4 alphaValues = {};
 protected:
+	mutable ShaderCameraModes  scm = ShaderCameraModes::NORMAL_CAMERA;
+	mutable ShaderShadingModes ssm = ShaderShadingModes::NORMAL_SHADING;
+	mutable ShaderMatrixModes  smm = ShaderMatrixModes::NORMAL_MATMODE;
+
 	std::array<Shader::IProgramObject*, MODEL_SHADER_COUNT> modelShaders;
 	mutable Shader::IProgramObject* modelShader = nullptr;
 };
@@ -206,8 +224,9 @@ public:
 
 	void SetColorMultiplier(float r, float g, float b, float a) const override;
 
-	void SetDrawingMode(ShaderDrawingModes sdm) const override;
-	void SetShadingMode(ShaderShadingModes sm) const override;
+	ShaderCameraModes SetCameraMode(ShaderCameraModes sdm_) const override;
+	ShaderMatrixModes SetMatrixMode(ShaderMatrixModes smm_) const override;
+	ShaderShadingModes SetShadingMode(ShaderShadingModes sm) const override;
 	void SetStaticModelMatrix(const CMatrix44f& mat) const override;
 	void SetClipPlane(uint8_t idx, const float4& cp = { 0.0f,  0.0f, 0.0f, 1.0f }) const override;
 private:

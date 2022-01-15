@@ -583,13 +583,13 @@ void CModelDrawerStateGL4::Enable(bool deferredPass, bool alphaPass) const
 	{
 	case CGame::GameDrawMode::gameReflectionDraw: {
 		glEnable(GL_CLIP_DISTANCE2);
-		SetDrawingMode(ShaderDrawingModes::REFLCT_MODEL);
+		SetCameraMode(ShaderCameraModes::REFLCT_CAMERA);
 	} break;
 	case CGame::GameDrawMode::gameRefractionDraw: {
 		glEnable(GL_CLIP_DISTANCE2);
-		SetDrawingMode(ShaderDrawingModes::REFRAC_MODEL);
+		SetCameraMode(ShaderCameraModes::REFRAC_CAMERA);
 	} break;
-	default: SetDrawingMode(ShaderDrawingModes::NORMAL_MODEL); break;
+	default: SetCameraMode(ShaderCameraModes::NORMAL_CAMERA); break;
 	}
 
 	float gtThreshold = mix(0.5, 0.1, static_cast<float>(alphaPass));
@@ -638,33 +638,50 @@ void CModelDrawerStateGL4::SetColorMultiplier(float r, float g, float b, float a
 	modelShader->SetUniform("colorMult", r, g, b, a);
 }
 
-void CModelDrawerStateGL4::SetDrawingMode(ShaderDrawingModes sdm) const
+ShaderCameraModes CModelDrawerStateGL4::SetCameraMode(ShaderCameraModes scm_) const
 {
 	assert(modelShader != nullptr);
 	assert(modelShader->IsBound());
 
-	modelShader->SetUniform("drawMode", static_cast<int>(sdm));
+	std::swap(scm, scm_);
+	modelShader->SetUniform("cameraMode", static_cast<int>(scm));
 
-	switch (sdm)
+	switch (scm)
 	{
-	case ShaderDrawingModes::REFLCT_MODEL:
+	case ShaderCameraModes::REFLCT_CAMERA:
 		SetClipPlane(2, { 0.0f,  1.0f, 0.0f, 0.0f });
 		break;
-	case ShaderDrawingModes::REFRAC_MODEL:
+	case ShaderCameraModes::REFRAC_CAMERA:
 		SetClipPlane(2, { 0.0f, -1.0f, 0.0f, 0.0f });
 		break;
 	default:
 		SetClipPlane(2  /* default, no clipping  */);
 		break;
 	}
+
+	return scm_; //old state
 }
 
-void CModelDrawerStateGL4::SetShadingMode(ShaderShadingModes sm) const
+ShaderMatrixModes CModelDrawerStateGL4::SetMatrixMode(ShaderMatrixModes smm_) const
 {
 	assert(modelShader != nullptr);
 	assert(modelShader->IsBound());
 
-	modelShader->SetUniform("shadingMode", static_cast<int>(sm));
+	std::swap(smm, smm_);
+	modelShader->SetUniform("matrixMode", static_cast<int>(smm));
+
+	return smm_; //old state
+}
+
+ShaderShadingModes CModelDrawerStateGL4::SetShadingMode(ShaderShadingModes ssm_) const
+{
+	assert(modelShader != nullptr);
+	assert(modelShader->IsBound());
+
+	std::swap(ssm, ssm_);
+	modelShader->SetUniform("shadingMode", static_cast<int>(ssm));
+
+	return ssm_; //old state
 }
 
 void CModelDrawerStateGL4::SetStaticModelMatrix(const CMatrix44f& mat) const

@@ -1253,8 +1253,8 @@ void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& bui
 	glEnable(GL_DEPTH_TEST);
 	SetupAlphaDrawing(false);
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
-	modelDrawerState->SetShadingMode(ShaderShadingModes::SKIP_SHADING);
+	const auto oldMM = modelDrawerState->SetMatrixMode(ShaderMatrixModes::STATIC_MATMODE);
+	const auto oldSM = modelDrawerState->SetShadingMode(ShaderShadingModes::SKIP_SHADING);
 	modelDrawerState->SetTeamColor(0);
 	modelDrawerState->SetColorMultiplier(0.9f, 0.9f, 0.9f, 0.3f);
 
@@ -1297,8 +1297,8 @@ void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& bui
 		CModelDrawerHelper::PopModelRenderState(prevModelType);
 
 	modelDrawerState->SetColorMultiplier();
-	modelDrawerState->SetDrawingMode();
-	modelDrawerState->SetShadingMode();
+	modelDrawerState->SetMatrixMode(oldMM);
+	modelDrawerState->SetShadingMode(oldSM);
 
 	smv.Unbind();
 
@@ -1436,7 +1436,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool d
 
 	const auto& deadGhostBuildings = modelDrawerData->GetDeadGhostBuildings(gu->myAllyTeam, modelType);
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
+	const auto oldMM = modelDrawerState->SetMatrixMode(ShaderMatrixModes::STATIC_MATMODE);
 	// deadGhostedBuildings
 	{
 		modelDrawerState->SetColorMultiplier(0.6f, 0.6f, 0.6f, IModelDrawerState::alphaValues.y);
@@ -1520,7 +1520,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool d
 	}
 
 	modelDrawerState->SetColorMultiplier(IModelDrawerState::alphaValues.x);
-	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
+	modelDrawerState->SetMatrixMode(oldMM); //reset is needed because other modelType's might be rendered afterwards
 	smv.Unbind();
 }
 
@@ -1530,7 +1530,7 @@ void CUnitDrawerGL4::DrawAlphaObjectsAux(int modelType) const
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
+	const auto oldMM = modelDrawerState->SetMatrixMode(ShaderMatrixModes::STATIC_MATMODE);
 
 	// NOTE: not type-sorted
 	for (const auto& unit : tmpAlphaUnits) {
@@ -1541,7 +1541,7 @@ void CUnitDrawerGL4::DrawAlphaObjectsAux(int modelType) const
 		DrawAlphaAIUnitBorder(unit);
 	}
 
-	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
+	modelDrawerState->SetMatrixMode(oldMM); //reset is needed because other modelType's might be rendered afterwards
 	smv.Unbind();
 }
 
@@ -1575,7 +1575,7 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 	auto& smv = S3DModelVAO::GetInstance();
 	smv.Bind();
 
-	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
+	const auto oldMM = modelDrawerState->SetMatrixMode(ShaderMatrixModes::STATIC_MATMODE);
 
 	// NOTE: not type-sorted
 	for (const auto& unit : tmpOpaqueUnits) {
@@ -1585,7 +1585,7 @@ void CUnitDrawerGL4::DrawOpaqueObjectsAux(int modelType) const
 		DrawOpaqueAIUnit(unit);
 	}
 
-	modelDrawerState->SetDrawingMode(); //reset is needed because other modelType's might be rendered afterwards
+	modelDrawerState->SetMatrixMode(oldMM); //reset is needed because other modelType's might be rendered afterwards
 
 	smv.Unbind();
 }

@@ -12,6 +12,7 @@
 
 bool CModelDrawerHelper::ObjectVisibleReflection(const float3& objPos, const float3& camPos, float maxRadius)
 {
+#if 0
 	if (objPos.y < 0.0f)
 		return (CGround::GetApproximateHeight(objPos.x, objPos.z, false) <= maxRadius);
 
@@ -22,6 +23,10 @@ bool CModelDrawerHelper::ObjectVisibleReflection(const float3& objPos, const flo
 	zeroPos += (objPos * (-camPos.y / dif));
 
 	return (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) <= maxRadius);
+#else
+	const float gh = CGround::GetApproximateHeight(objPos.x, objPos.z, false);
+	return gh + 2.0f * maxRadius > 0.0f;
+#endif
 }
 
 void CModelDrawerHelper::EnableTexturesCommon()
