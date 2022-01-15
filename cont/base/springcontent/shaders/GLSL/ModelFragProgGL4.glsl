@@ -97,7 +97,7 @@ void main(void)
 	vec4 texColor1 = texture(tex1, uvCoord.xy);
 	vec4 texColor2 = texture(tex2, uvCoord.xy);
 
-	float alpha = teamCol.a * texColor2.a;
+	float alpha = teamCol.a * float(texColor2.a >= 0.5);
 	if (AlphaDiscard(alpha))
 		discard;
 

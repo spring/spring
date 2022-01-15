@@ -1244,8 +1244,7 @@ void CUnitDrawerLegacy::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& 
 
 /***********************************************************************/
 
-// CUnitDrawerLegacy::DrawBuildIcons is seemingly unbeatable in terms of FPS
-/*
+// CUnitDrawerLegacy::DrawBuildIcons is seemingly unbeatable in terms of FPS ?
 void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const
 {
 	if (buildIcons.empty())
@@ -1256,7 +1255,8 @@ void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& bui
 
 	modelDrawerState->SetDrawingMode(ShaderDrawingModes::STATIC_MODEL);
 	modelDrawerState->SetShadingMode(ShaderShadingModes::SKIP_SHADING);
-	modelDrawerState->SetColorMultiplier(0.3f);
+	modelDrawerState->SetTeamColor(0);
+	modelDrawerState->SetColorMultiplier(0.9f, 0.9f, 0.9f, 0.3f);
 
 	int prevModelType = -1;
 	int prevTexType = -1;
@@ -1274,13 +1274,11 @@ void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& bui
 		if (!camera->InView(buildIcon.pos, model->GetDrawRadius()))
 			continue;
 
-		static CMatrix44f staticWorldMat;
+		CMatrix44f staticWorldMat;
 
-		staticWorldMat.LoadIdentity();
 		staticWorldMat.Translate(buildIcon.pos);
 		staticWorldMat.RotateY(-buildIcon.facing * math::DEG_TO_RAD * 90.0f);
 
-		modelDrawerState->SetTeamColor(buildIcon.team);
 		modelDrawerState->SetStaticModelMatrix(staticWorldMat);
 
 		if (prevModelType != model->type || prevTexType != model->textureType) {
@@ -1307,7 +1305,7 @@ void CUnitDrawerGL4::DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& bui
 	ResetAlphaDrawing(false);
 	glDisable(GL_DEPTH_TEST);
 }
-*/
+
 
 void CUnitDrawerGL4::DrawObjectsShadow(int modelType) const
 {

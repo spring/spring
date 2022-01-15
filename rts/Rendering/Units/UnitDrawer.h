@@ -226,7 +226,7 @@ public:
 	void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false) const = 0;
 	*/
 
-	//void DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const override;
+	void DrawBuildIcons(const std::set<CCursorIcons::BuildIcon>& buildIcons) const override;
 protected:
 	void DrawObjectsShadow(int modelType) const override;
 	void DrawOpaqueObjects(int modelType, bool drawReflection, bool drawRefraction) const override;
