@@ -45,6 +45,9 @@ public:
 public:
 	// lenghts & distances
 	static float inline modelDrawDist    = 0.0f;
+protected:
+	static constexpr int MT_CHUNK_OR_MIN_CHUNK_SIZE_SMMA = -128;
+	static constexpr int MT_CHUNK_OR_MIN_CHUNK_SIZE_UPDT = -256;
 };
 
 
@@ -164,17 +167,26 @@ template<typename T>
 inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 {
 	ScopedMatricesMemAlloc& smma = GetObjectMatricesMemAlloc(o);
-	smma[0] = o->GetTransformMatrix();
+
+	//FIX ME, too expensive
+	const auto  tmNew = o->GetTransformMatrix();
+	const auto& tmOld = const_cast<const ScopedMatricesMemAlloc&>(smma)[0];
+	if (tmNew != tmOld)
+		smma[0] = tmNew;
 
 	for (int i = 0; i < o->localModel.pieces.size(); ++i) {
-		auto& lmp = o->localModel.pieces[i];
+		const LocalModelPiece& lmp = o->localModel.pieces[i];
 
 		if (unlikely(!lmp.scriptSetVisible)) {
 			smma[i + 1] = CMatrix44f::Zero();
 			continue;
 		}
 
-		smma[i + 1] = lmp.GetModelSpaceMatrix();
+		//FIX ME, too expensive
+		const auto& pmNew = lmp.GetModelSpaceMatrix();
+		const auto& pmOld = const_cast<const ScopedMatricesMemAlloc&>(smma)[i + 1];
+		if (pmNew != pmOld)
+			smma[i + 1] = pmNew;
 	}
 }
 
@@ -205,9 +217,9 @@ inline void CModelDrawerDataBase<T>::UpdateCommon()
 	};
 
 	if (mtModelDrawer) {
-		for_mt(0, unsortedObjects.size(), [&updateBody](int k) {
+		for_mt_chunk(0, unsortedObjects.size(), [&updateBody](int k) {
 			updateBody(k);
-		});
+		}, CModelDrawerDataConcept::MT_CHUNK_OR_MIN_CHUNK_SIZE_SMMA);
 	}
 	else {
 		for (int k = 0; k < unsortedObjects.size(); ++k)

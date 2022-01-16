@@ -47,6 +47,8 @@ public:
 	uint32_t GetID() const { return id; }
 	uint32_t GetTarget() const { return target; }
 	uint32_t GetByteSize() const { return byteSize; }
+
+	virtual IStreamBufferConcept::Types GetBufferImplementation() const = 0;
 protected:
 	void CreateBuffer(uint32_t byteBufferSize, uint32_t newUsage);
 	void CreateBufferStorage(uint32_t byteBufferSize, uint32_t flags);
@@ -135,6 +137,7 @@ public:
 
 		if (deleteBuffer) this->DeleteBuffer();
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_BUFFERDATA; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
@@ -199,6 +202,7 @@ public:
 		}
 		if (deleteBuffer) this->DeleteBuffer();
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_BUFFERSUBDATA; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
@@ -259,6 +263,7 @@ public:
 		if (deleteBuffer)
 			this->DeleteBuffer();
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_MAPANDORPHAN; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
@@ -325,6 +330,7 @@ public:
 
 		this->DeleteBuffer(); //delete regardless because of immutability
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_MAPANDSYNC; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
@@ -395,7 +401,7 @@ public:
 			this->target,
 			0,
 			numBuffers * this->byteSize,
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | mix(GL_MAP_FLUSH_EXPLICIT_BIT, GL_MAP_COHERENT_BIT, coherent)
+			GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_PERSISTENT_BIT | mix(GL_MAP_FLUSH_EXPLICIT_BIT, GL_MAP_COHERENT_BIT, coherent)
 		));
 		assert(ptrBase);
 		this->Unbind();
@@ -410,11 +416,14 @@ public:
 			this->WaitBuffer(fence);
 		glFinish(); //just in case
 
+		this->Bind();
 		glUnmapBuffer(this->target);
+		this->Unbind();
 
 		this->DeleteBuffer(); //delete regardless because of immutability
 		ptrBase = nullptr;
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_PERSISTENTMAP; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
@@ -495,6 +504,7 @@ public:
 		spring::FreeAlignedMemory(ptrBase);
 		ptrBase = nullptr;
 	}
+	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_PINNEDMEMAMD; }
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);

@@ -8,7 +8,7 @@
 #include "System/float3.h"
 #include "System/float4.h"
 
-class CMatrix44f
+class /*alignas(64)*/ CMatrix44f
 {
 public:
 	CR_DECLARE_STRUCT(CMatrix44f)
@@ -85,6 +85,8 @@ public:
 	float3 Mul(const float3 v) const { return ((*this) * v); }
 	float4 Mul(const float4 v) const { return ((*this) * v); }
 
+	bool operator == (const CMatrix44f& rhs) const { return !(*this == rhs); }
+	bool operator != (const CMatrix44f& rhs) const;
 	/// matrix multiply
 	CMatrix44f  operator  *  (const CMatrix44f& mat) const;
 	CMatrix44f& operator >>= (const CMatrix44f& mat);

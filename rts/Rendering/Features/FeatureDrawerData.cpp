@@ -88,10 +88,10 @@ void CFeatureDrawerData::ConfigNotify(const std::string& key, const std::string&
 void CFeatureDrawerData::Update()
 {
 	if (mtModelDrawer) {
-		for_mt(0, unsortedObjects.size(), [this](const int k) {
+		for_mt_chunk(0, unsortedObjects.size(), [this](const int k) {
 			CFeature* f = unsortedObjects[k];
 			UpdateDrawPos(f);
-		});
+		}, CModelDrawerDataConcept::MT_CHUNK_OR_MIN_CHUNK_SIZE_UPDT);
 	}
 	else {
 		for (CFeature* f : unsortedObjects)

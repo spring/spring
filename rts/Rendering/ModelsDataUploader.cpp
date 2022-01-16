@@ -107,7 +107,7 @@ void MatrixUploader::InitDerived()
 		? IStreamBufferConcept::Types::SB_PERSISTENTMAP
 		: IStreamBufferConcept::Types::SB_BUFFERSUBDATA;
 
-	InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, sbType, true, 3);
+	InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, sbType, true, MatricesMemStorage::BUFFERING);
 }
 
 void MatrixUploader::KillDerived()
@@ -135,12 +135,43 @@ void MatrixUploader::UpdateDerived()
 
 	//update on the GPU
 	const CMatrix44f* clientPtr = matricesMemStorage.GetData().data();
-	CMatrix44f* mappedPtr = ssbo->Map(clientPtr, 0, storageElemCount);
 
-	if (!ssbo->HasClientPtr())
-		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(CMatrix44f));
+	if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP) {
+		const auto stt = matricesMemStorage.GetDirtyMap().begin();
+		const auto fin = matricesMemStorage.GetDirtyMap().end();
 
-	ssbo->Unmap();
+		auto beg = matricesMemStorage.GetDirtyMap().begin();
+		auto end = matricesMemStorage.GetDirtyMap().begin();
+
+		static const auto dirtyPred = [](uint8_t m) -> bool { return m > 0u; };
+		while (beg != fin) {
+			beg = std::find_if    (beg, fin, dirtyPred);
+			end = std::find_if_not(beg, fin, dirtyPred);
+
+			if (beg != fin) {
+				const uint32_t offs = static_cast<uint32_t>(std::distance(stt, beg));
+				const uint32_t size = static_cast<uint32_t>(std::distance(beg, end));
+
+				CMatrix44f* mappedPtr = ssbo->Map(clientPtr, offs, size);
+				memcpy(mappedPtr, clientPtr + offs, size * sizeof(CMatrix44f));
+				ssbo->Unmap();
+
+				std::transform(beg, end, beg, [](uint8_t v) { return (v - 1); }); //make it less dirty
+			}
+
+			beg = end; //rewind
+		}
+	}
+	else {
+		const CMatrix44f* clientPtr = matricesMemStorage.GetData().data();
+		CMatrix44f* mappedPtr = ssbo->Map(clientPtr, 0, storageElemCount);
+
+		if (!ssbo->HasClientPtr())
+			memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(CMatrix44f));
+
+		ssbo->Unmap();
+	}
+
 	ssbo->SwapBuffer();
 }
 

@@ -114,10 +114,10 @@ void CUnitDrawerData::Update()
 	};
 
 	if (mtModelDrawer) {
-		for_mt(0, unsortedObjects.size(), [this, &updateBody](const int k) {
+		for_mt_chunk(0, unsortedObjects.size(), [this, &updateBody](const int k) {
 			CUnit* unit = unsortedObjects[k];
 			updateBody(unit);
-		});
+		}, CModelDrawerDataConcept::MT_CHUNK_OR_MIN_CHUNK_SIZE_UPDT);
 	}
 	else {
 		for (CUnit* unit : unsortedObjects)

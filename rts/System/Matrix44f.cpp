@@ -8,11 +8,13 @@
 
 #include <memory.h>
 #include <algorithm>
+#include <cstring>
 
 CR_BIND(CMatrix44f, )
 
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m))
 
+static_assert(alignof(CMatrix44f) == 4);
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
 	memcpy(&m[0], &mat.m[0], sizeof(CMatrix44f));
@@ -354,6 +356,17 @@ static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44
 	_mm_storeu_ps(&mout->md[3][0], moutc4);
 }
 
+bool CMatrix44f::operator!=(const CMatrix44f& rhs) const
+{
+	if (this == &rhs)
+		return false;
+
+#if 1
+	return (std::memcmp(this, &rhs, sizeof(CMatrix44f)) != 0);
+#else
+	//DO SSE2
+#endif
+}
 
 CMatrix44f CMatrix44f::operator* (const CMatrix44f& m2) const
 {

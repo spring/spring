@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "ModelsMemStorageDefs.h"
 #include "System/Matrix44f.h"
@@ -14,7 +15,31 @@ class MatricesMemStorage : public StablePosAllocator<CMatrix44f> {
 public:
 	MatricesMemStorage()
 		: StablePosAllocator<CMatrix44f>(INIT_NUM_ELEMS)
+		, dirtyMap(INIT_NUM_ELEMS, BUFFERING)
 	{}
+	void Reset() override {
+		StablePosAllocator<CMatrix44f>::Reset();
+		dirtyMap.resize(GetSize(), BUFFERING);
+	}
+
+	size_t Allocate(size_t numElems, bool withMutex = false) override {
+		size_t res = StablePosAllocator<CMatrix44f>::Allocate(numElems, withMutex);
+		dirtyMap.resize(GetSize(), BUFFERING);
+
+		return res;
+	}
+	void Free(size_t firstElem, size_t numElems, const CMatrix44f* T0 = nullptr) override {
+		StablePosAllocator<CMatrix44f>::Free(firstElem, numElems, T0);
+		dirtyMap.resize(GetSize(), BUFFERING);
+	}
+private:
+	std::vector<uint8_t> dirtyMap;
+public:
+	const decltype(dirtyMap)& GetDirtyMap() const { return dirtyMap; }
+	      decltype(dirtyMap)& GetDirtyMap()       { return dirtyMap; }
+public:
+	//need to update buffer with matrices BUFFERING times, because the actual buffer is made of BUFFERING number of parts
+	static constexpr uint8_t BUFFERING = 3u;
 private:
 	static constexpr int INIT_NUM_ELEMS = 1 << 16u;
 };
@@ -62,16 +87,20 @@ public:
 	const CMatrix44f& operator[](std::size_t offset) const {
 		assert(firstElem != MatricesMemStorage::INVALID_INDEX);
 		assert(offset >= 0 && offset < numElems);
+
 		return matricesMemStorage[firstElem + offset];
 	}
 	CMatrix44f& operator[](std::size_t offset) {
 		assert(firstElem != MatricesMemStorage::INVALID_INDEX);
 		assert(offset >= 0 && offset < numElems);
+
+		matricesMemStorage.GetDirtyMap().at(firstElem + offset) = MatricesMemStorage::BUFFERING;
 		return matricesMemStorage[firstElem + offset];
 	}
 public:
 	static const ScopedMatricesMemAlloc& Dummy() {
 		static ScopedMatricesMemAlloc dummy;
+
 		return dummy;
 	};
 private:

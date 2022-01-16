@@ -231,7 +231,7 @@ bool CCollisionHandler::IntersectPieceTreeHelper(
 	CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 	CMatrix44f volMat = lmp->GetModelSpaceMatrix() * mat;
 
-	if (lmp->scriptSetVisible && !lmpVol->IgnoreHits()) {
+	if (lmp->GetScriptVisible() && !lmpVol->IgnoreHits()) {
 		volMat.Translate(lmpVol->GetOffsets());
 
 		CollisionQuery cq;

@@ -323,7 +323,7 @@ public:
 	StablePosAllocator(size_t initialSize) :StablePosAllocator() {
 		data.reserve(initialSize);
 	}
-	void Reset() {
+	virtual void Reset() {
 		CompactGaps();
 		//upon compaction all allocations should go away
 		assert(data.empty());
@@ -331,8 +331,8 @@ public:
 		assert(positionToSize.empty());
 	}
 
-	size_t Allocate(size_t numElems, bool withMutex = false);
-	void Free(size_t firstElem, size_t numElems, const T* T0 = nullptr);
+	virtual size_t Allocate(size_t numElems, bool withMutex = false);
+	virtual void Free(size_t firstElem, size_t numElems, const T* T0 = nullptr);
 	const size_t GetSize() const { return data.size(); }
 	const std::vector<T>& GetData() const { return data; }
 	      std::vector<T>& GetData()       { return data; }
