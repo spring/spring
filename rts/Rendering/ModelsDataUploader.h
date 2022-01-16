@@ -50,7 +50,7 @@ public:
 	std::size_t GetFeatureElemOffset(int32_t featureID) const;
 	std::size_t GetProjectileElemOffset(int32_t syncedProjectileID) const;
 protected:
-	void InitImpl(uint32_t bindingIdx_, uint32_t elemCount0_, uint32_t elemCountIncr_, uint8_t type);
+	void InitImpl(uint32_t bindingIdx_, uint32_t elemCount0_, uint32_t elemCountIncr_, uint8_t type, bool coherent, uint32_t numBuffers);
 	void KillImpl();
 
 	virtual std::size_t GetDefElemOffsetImpl(const S3DModel* model) const = 0;

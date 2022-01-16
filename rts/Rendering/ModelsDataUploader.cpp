@@ -40,7 +40,7 @@ inline bool TypedStorageBufferUploader<T, Derived>::Supported()
 }
 
 template<typename T, typename Derived>
-void TypedStorageBufferUploader<T, Derived>::InitImpl(uint32_t bindingIdx_, uint32_t elemCount0_, uint32_t elemCountIncr_, uint8_t type)
+void TypedStorageBufferUploader<T, Derived>::InitImpl(uint32_t bindingIdx_, uint32_t elemCount0_, uint32_t elemCountIncr_, uint8_t type, bool coherent, uint32_t numBuffers)
 {
 	if (!Supported())
 		return;
@@ -51,7 +51,7 @@ void TypedStorageBufferUploader<T, Derived>::InitImpl(uint32_t bindingIdx_, uint
 
 	assert(bindingIdx < -1u);
 
-	ssbo = IStreamBuffer<T>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, std::string(className), static_cast<IStreamBufferConcept::Types>(type));
+	ssbo = IStreamBuffer<T>::CreateInstance(GL_SHADER_STORAGE_BUFFER, elemCount0, std::string(className), static_cast<IStreamBufferConcept::Types>(type), true, coherent, numBuffers);
 	ssbo->BindBufferRange(bindingIdx);
 }
 
@@ -103,7 +103,11 @@ std::size_t TypedStorageBufferUploader<T, Derived>::GetProjectileElemOffset(int3
 
 void MatrixUploader::InitDerived()
 {
-	InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
+	const auto sbType = globalRendering->supportPersistentMapping
+		? IStreamBufferConcept::Types::SB_PERSISTENTMAP
+		: IStreamBufferConcept::Types::SB_BUFFERSUBDATA;
+
+	InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, sbType, true, 3);
 }
 
 void MatrixUploader::KillDerived()
@@ -118,15 +122,15 @@ void MatrixUploader::UpdateDerived()
 
 	SCOPED_TIMER("MatrixUploader::Update");
 
-	ssbo->UnbindBufferRange(bindingIdx);
-
 	//resize
 	const uint32_t elemCount = GetElemsCount();
 	const uint32_t storageElemCount = matricesMemStorage.GetSize();
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
+		ssbo->UnbindBufferRange(bindingIdx);
 		ssbo->Resize(newElemCount);
+		ssbo->BindBufferRange(bindingIdx);
 	}
 
 	//update on the GPU
@@ -137,7 +141,6 @@ void MatrixUploader::UpdateDerived()
 		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(CMatrix44f));
 
 	ssbo->Unmap();
-	ssbo->BindBufferRange(bindingIdx);
 	ssbo->SwapBuffer();
 }
 
@@ -229,7 +232,7 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CProjectile* p) const
 
 void ModelsUniformsUploader::InitDerived()
 {
-	InitImpl(MATUNI_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
+	InitImpl(MATUNI_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, 3);
 }
 
 void ModelsUniformsUploader::KillDerived()
@@ -244,15 +247,15 @@ void ModelsUniformsUploader::UpdateDerived()
 
 	SCOPED_TIMER("ModelsUniformsUploader::Update");
 
-	ssbo->UnbindBufferRange(bindingIdx);
-
 	//resize
 	const uint32_t elemCount = GetElemsCount();
 	const uint32_t storageElemCount = modelsUniformsStorage.Size();
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
+		ssbo->UnbindBufferRange(bindingIdx);
 		ssbo->Resize(newElemCount);
+		ssbo->BindBufferRange(bindingIdx);
 	}
 
 	//update on the GPU
@@ -263,7 +266,6 @@ void ModelsUniformsUploader::UpdateDerived()
 		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(ModelUniformData));
 
 	ssbo->Unmap();
-	ssbo->BindBufferRange(bindingIdx);
 	ssbo->SwapBuffer();
 }
 
