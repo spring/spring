@@ -15,7 +15,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
@@ -285,8 +285,12 @@ void CUnitDrawerLegacy::DrawUnitTrans(const CUnit* unit, uint32_t preList, uint3
 
 void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 {
-	CVertexArray* va = GetVertexArray();
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dT>();
+	auto& sh = rb.GetShader();
 
+	sh.Enable();
+
+	static constexpr uint8_t defaultColor[4] = { 255, 255, 255, 255 };
 	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon()) {
 
 		if (icon == nullptr)
@@ -294,42 +298,264 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 		if (units.empty())
 			continue;
 
-		va->Initialize();
-		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
 		icon->BindTexture();
 
 		for (const CUnit* unit : units) {
 			assert(unit->myIcon == icon);
-			DrawUnitMiniMapIcon(unit, va);
+			if (unit->noMinimap)
+				return;
+			if (unit->myIcon == nullptr)
+				return;
+			if (unit->IsInVoid())
+				return;
+
+			const uint8_t* color = &defaultColor[0];
+
+			if (!unit->isSelected) {
+				if (minimap->UseSimpleColors()) {
+					if (unit->team == gu->myTeam) {
+						color = minimap->GetMyTeamIconColor();
+					}
+					else if (teamHandler.Ally(gu->myAllyTeam, unit->allyteam)) {
+						color = minimap->GetAllyTeamIconColor();
+					}
+					else {
+						color = minimap->GetEnemyTeamIconColor();
+					}
+				}
+				else {
+					color = teamHandler.Team(unit->team)->color;
+				}
+			}
+
+			sh.SetUniform("ucolor", color[0], color[1], color[2], color[3]);
+
+			const float iconScale = CUnitDrawerHelper::GetUnitIconScale(unit);
+			const float3& iconPos = (!gu->spectatingFullView) ?
+				unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+				unit->GetObjDrawMidPos();
+
+			const float iconSizeX = (iconScale * minimap->GetUnitSizeX());
+			const float iconSizeY = (iconScale * minimap->GetUnitSizeY());
+
+			const float x0 = iconPos.x - iconSizeX;
+			const float x1 = iconPos.x + iconSizeX;
+			const float y0 = iconPos.z - iconSizeY;
+			const float y1 = iconPos.z + iconSizeY;
+
+			rb.AddQuadTriangles(
+				{ x0, y0, 0.0f, 0.0f },
+				{ x1, y0, 1.0f, 0.0f },
+				{ x1, y1, 1.0f, 1.0f },
+				{ x0, y1, 0.0f, 1.0f }
+			);
 		}
 
-		va->DrawArray2dTC(GL_QUADS);
+		rb.Submit(GL_TRIANGLES);
 	}
+
+	sh.Disable();
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+/*
 void CUnitDrawerLegacy::DrawUnitIcons() const
 {
+#if 0
+	if (game->hideInterface && modelDrawerData->iconHideWithUI)
+		return;
+#endif
+
 	// draw unit icons and radar blips
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.05f);
 
 	// A2C effectiveness is limited below four samples
 	if (globalRendering->msaaLevel >= 4)
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 
-	for (CUnit* u : modelDrawerData->GetUnsortedObjects()) {
-		if (!u->GetIsIcon())
+	for (CUnit* unit : modelDrawerData->GetUnsortedObjects()) {
+		if (!unit->GetIsIcon())
 			continue;
 
-		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS));
-		const unsigned short plosBits = (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+		const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
+		const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
 
-		DrawIcon(u, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR));
+		const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
+
+	// iconUnits should not never contain void-space units, see UpdateUnitIconState
+		assert(!unit->IsInVoid());
+
+		// If the icon is to be drawn as a radar blip, we want to get the default icon.
+		const icon::CIconData* iconData = nullptr;
+
+		if (useDefaultIcon) {
+			iconData = icon::iconHandler.GetDefaultIconData();
+		}
+		else {
+			iconData = unit->unitDef->iconType.GetIconData();
+		}
+
+		// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+		float3 pos = (!gu->spectatingFullView) ?
+			unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+			unit->GetObjDrawMidPos();
+
+		// make sure icon is above ground (needed before we calculate scale below)
+		const float h = CGround::GetHeightReal(pos.x, pos.z, false);
+
+		pos.y = std::max(pos.y, h);
+
+		// Calculate the icon size. It scales with:
+		//  * The square root of the camera distance.
+		//  * The mod defined 'iconSize' (which acts a multiplier).
+		//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
+		const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
+		const float iconScaleDist = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
+		float scale = iconData->GetSize() * iconScaleDist;
+
+		if (iconData->GetRadiusAdjust() && !useDefaultIcon)
+			scale *= (unit->radius / iconData->GetRadiusScale());
+
+		// make sure icon is not partly under ground
+		pos.y = std::max(pos.y, h + (unit->iconRadius = scale));
+
+		// use white for selected units
+		const uint8_t* colors[] = { teamHandler.Team(unit->team)->color, color4::white };
+		const uint8_t* color = colors[unit->isSelected];
+
+		glColor3ubv(color);
+
+		// calculate the vertices
+		const float3 dy = camera->GetUp() * scale;
+		const float3 dx = camera->GetRight() * scale;
+		const float3 vn = pos - dx;
+		const float3 vp = pos + dx;
+		const float3 vnn = vn - dy;
+		const float3 vpn = vp - dy;
+		const float3 vnp = vn + dy;
+		const float3 vpp = vp + dy;
+
+		// Draw the icon.
+		iconData->Draw(vnn, vpn, vnp, vpp);
 	}
+
+	glPopAttrib();
+}
+*/
+
+void CUnitDrawerLegacy::DrawUnitIcons() const
+{
+#if 0
+	if (game->hideInterface && modelDrawerData->iconHideWithUI)
+		return;
+#endif
+
+	// draw unit icons and radar blips
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
+	// A2C effectiveness is limited below four samples
+	if (globalRendering->msaaLevel >= 4)
+		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	auto& sh = rb.GetShader();
+	sh.Enable();
+	sh.SetUniform("alphaCtrl", 0.05f, 1.0f, 0.0f, 0.0f); // GL_GREATER > 0.05
+
+
+	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon())
+	{
+		if (icon == nullptr)
+			continue;
+		if (units.empty())
+			continue;
+
+		icon->BindTexture();
+
+		for (const CUnit* cu : units)
+		{
+			CUnit* unit = const_cast<CUnit*>(cu);
+
+			if (!unit->GetIsIcon())
+				continue;
+			if (unit->noDraw)
+				continue;
+			if (unit->IsInVoid())
+				continue;
+			if (unit->health <= 0 || unit->beingBuilt)
+				continue;
+
+			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
+			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+
+			const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
+
+			// iconUnits should not never contain void-space units, see UpdateUnitIconState
+			assert(!unit->IsInVoid());
+
+			// If the icon is to be drawn as a radar blip, we want to get the default icon.
+			const icon::CIconData* iconData = nullptr;
+
+			if (useDefaultIcon) {
+				iconData = icon::iconHandler.GetDefaultIconData();
+			}
+			else {
+				iconData = unit->unitDef->iconType.GetIconData();
+			}
+
+			// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+			float3 pos = (!gu->spectatingFullView) ?
+				unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+				unit->GetObjDrawMidPos();
+
+			// make sure icon is above ground (needed before we calculate scale below)
+			const float h = CGround::GetHeightReal(pos.x, pos.z, false);
+
+			pos.y = std::max(pos.y, h);
+
+			// Calculate the icon size. It scales with:
+			//  * The square root of the camera distance.
+			//  * The mod defined 'iconSize' (which acts a multiplier).
+			//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
+			const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
+			const float iconScaleDist = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
+			float scale = iconData->GetSize() * iconScaleDist;
+
+			if (iconData->GetRadiusAdjust() && !useDefaultIcon)
+				scale *= (unit->radius / iconData->GetRadiusScale());
+
+			// make sure icon is not partly under ground
+			pos.y = std::max(pos.y, h + (unit->iconRadius = scale));
+
+			// use white for selected units
+			const uint8_t* colors[] = { teamHandler.Team(unit->team)->color, color4::white };
+			const uint8_t* color = colors[unit->isSelected];
+
+			const float3 dy = camera->GetUp() * unit->iconRadius;
+			const float3 dx = camera->GetRight() * unit->iconRadius;
+			const float3 vn = pos - dx;
+			const float3 vp = pos + dx;
+			const float3 bl = vn - dy; // bottom-left
+			const float3 br = vp - dy; // bottom-right
+			const float3 tl = vn + dy; // top-left
+			const float3 tr = vp + dy; // top-right
+
+			rb.AddQuadTriangles(
+				{ tl, 0.0f, 0.0f, color },
+				{ tr, 1.0f, 0.0f, color },
+				{ br, 1.0f, 1.0f, color },
+				{ bl, 0.0f, 1.0f, color }
+			);
+		}
+		rb.Submit(GL_TRIANGLES);
+	}
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f);
+	sh.Disable();
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glPopAttrib();
 }
@@ -341,25 +567,23 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 
 	// draw unit icons and radar blips
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.05f);
 
-	CVertexArray* va = GetVertexArray();
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dTC>();
+	auto& sh = rb.GetShader();
+
+	sh.Enable();
+	sh.SetUniform("alphaCtrl", 0.05f, 1.0f, 0.0f, 0.0f); // GL_GREATER > 0.05
 
 	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon())
 	{
-
 		if (icon == nullptr)
 			continue;
 		if (units.empty())
 			continue;
 
-		va->Initialize();
-		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
 		icon->BindTexture();
 
 		for (const CUnit* unit : units)
@@ -374,12 +598,64 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
 			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
 
+			const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
+
 			assert(unit->myIcon == icon);
-			DrawIconScreenArray(unit, icon, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR), modelDrawerData->iconZoomDist, va);
+			// iconUnits should not never contain void-space units, see UpdateUnitIconState
+			assert(!unit->IsInVoid());
+
+			// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+			float3 pos = (!gu->spectatingFullView) ?
+				unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+				unit->GetObjDrawMidPos();
+
+			pos = camera->CalcWindowCoordinates(pos);
+			if (pos.z > 1.0f || pos.z < 0.0f)
+				return;
+
+			// use white for selected units
+			const uint8_t* srcColor = unit->isSelected ? color4::white : teamHandler.Team(unit->team)->color;
+			uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
+
+			float unitRadiusMult = icon->GetSize();
+			if (icon->GetRadiusAdjust() && !useDefaultIcon)
+				unitRadiusMult *= (unit->radius / icon->GetRadiusScale());
+			unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
+
+			// fade icons away in high zoom in levels
+			if (!unit->GetIsIcon()) {
+				if (modelDrawerData->iconZoomDist / unitRadiusMult < modelDrawerData->iconFadeVanish)
+					return;
+				else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && modelDrawerData->iconZoomDist / unitRadiusMult < modelDrawerData->iconFadeStart)
+					// alpha range [64, 255], since icons is unrecognisable with alpha < 64
+					color[3] = 64 + 191.0f * (modelDrawerData->iconZoomDist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
+			}
+
+			// calculate the vertices
+			const float offset = modelDrawerData->iconSizeBase / 2.0f * unitRadiusMult;
+
+			const float x0 = (pos.x - offset) / globalRendering->viewSizeX;
+			const float y0 = (pos.y + offset) / globalRendering->viewSizeY;
+			const float x1 = (pos.x + offset) / globalRendering->viewSizeX;
+			const float y1 = (pos.y - offset) / globalRendering->viewSizeY;
+
+			if (x1 < 0 && x0 > 1 && y0 < 0 && y1 > 1)
+				continue; // don't try to draw when totally outside the screen
+
+			rb.AddQuadTriangles(
+				{ x0, y0, 0.0f, 0.0f, &color[0] },
+				{ x1, y0, 1.0f, 0.0f, &color[0] },
+				{ x1, y1, 1.0f, 1.0f, &color[0] },
+				{ x0, y1, 0.0f, 1.0f, &color[0] }
+			);
 		}
 
-		va->DrawArray2dTC(GL_QUADS);
+		rb.Submit(GL_TRIANGLES);
 	}
+
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f);
+	sh.Disable();
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();
 }
 
@@ -642,158 +918,6 @@ void CUnitDrawerLegacy::DrawAlphaAIUnitBorder(const CUnitDrawerData::TempDrawUni
 	glColor4f(1.0f, 1.0f, 1.0f, IModelDrawerState::alphaValues.x);
 	glEnable(GL_TEXTURE_2D);
 }
-
-void CUnitDrawerLegacy::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
-{
-	if (unit->noMinimap)
-		return;
-	if (unit->myIcon == nullptr)
-		return;
-	if (unit->IsInVoid())
-		return;
-
-	const unsigned char defaultColor[4] = { 255, 255, 255, 255 };
-	const unsigned char* color = &defaultColor[0];
-
-	if (!unit->isSelected) {
-		if (minimap->UseSimpleColors()) {
-			if (unit->team == gu->myTeam) {
-				color = minimap->GetMyTeamIconColor();
-			}
-			else if (teamHandler.Ally(gu->myAllyTeam, unit->allyteam)) {
-				color = minimap->GetAllyTeamIconColor();
-			}
-			else {
-				color = minimap->GetEnemyTeamIconColor();
-			}
-		}
-		else {
-			color = teamHandler.Team(unit->team)->color;
-		}
-	}
-
-	const float iconScale = CUnitDrawerHelper::GetUnitIconScale(unit);
-	const float3& iconPos = (!gu->spectatingFullView) ?
-		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
-		unit->GetObjDrawMidPos();
-
-	const float iconSizeX = (iconScale * minimap->GetUnitSizeX());
-	const float iconSizeY = (iconScale * minimap->GetUnitSizeY());
-
-	const float x0 = iconPos.x - iconSizeX;
-	const float x1 = iconPos.x + iconSizeX;
-	const float y0 = iconPos.z - iconSizeY;
-	const float y1 = iconPos.z + iconSizeY;
-
-	unit->myIcon->DrawArray(va, x0, y0, x1, y1, color);
-}
-
-void CUnitDrawerLegacy::DrawIcon(CUnit* unit, bool useDefaultIcon)
-{
-	// iconUnits should not never contain void-space units, see UpdateUnitIconState
-	assert(!unit->IsInVoid());
-
-	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const icon::CIconData* iconData = nullptr;
-
-	if (useDefaultIcon) {
-		iconData = icon::iconHandler.GetDefaultIconData();
-	}
-	else {
-		iconData = unit->unitDef->iconType.GetIconData();
-	}
-
-	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
-	float3 pos = (!gu->spectatingFullView) ?
-		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
-		unit->GetObjDrawMidPos();
-
-	// make sure icon is above ground (needed before we calculate scale below)
-	const float h = CGround::GetHeightReal(pos.x, pos.z, false);
-
-	pos.y = std::max(pos.y, h);
-
-	// Calculate the icon size. It scales with:
-	//  * The square root of the camera distance.
-	//  * The mod defined 'iconSize' (which acts a multiplier).
-	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
-	const float iconScaleDist = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
-	float scale = iconData->GetSize() * iconScaleDist;
-
-	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
-		scale *= (unit->radius / iconData->GetRadiusScale());
-
-	// make sure icon is not partly under ground
-	pos.y = std::max(pos.y, h + (unit->iconRadius = scale));
-
-	// use white for selected units
-	const uint8_t* colors[] = { teamHandler.Team(unit->team)->color, color4::white };
-	const uint8_t* color = colors[unit->isSelected];
-
-	glColor3ubv(color);
-
-	// calculate the vertices
-	const float3 dy = camera->GetUp() * scale;
-	const float3 dx = camera->GetRight() * scale;
-	const float3 vn = pos - dx;
-	const float3 vp = pos + dx;
-	const float3 vnn = vn - dy;
-	const float3 vpn = vp - dy;
-	const float3 vnp = vn + dy;
-	const float3 vpp = vp + dy;
-
-	// Draw the icon.
-	iconData->Draw(vnn, vpn, vnp, vpp);
-}
-
-void CUnitDrawerLegacy::DrawIconScreenArray(const CUnit* unit, const icon::CIconData* icon, bool useDefaultIcon, const float dist, CVertexArray* va) const
-{
-	// iconUnits should not never contain void-space units, see UpdateUnitIconState
-	assert(!unit->IsInVoid());
-
-	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
-	float3 pos = (!gu->spectatingFullView) ?
-		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
-		unit->GetObjDrawMidPos();
-
-	pos = camera->CalcWindowCoordinates(pos);
-	if (pos.z > 1.0f || pos.z < 0.0f)
-		return;
-
-	// use white for selected units
-	const uint8_t* srcColor = unit->isSelected ? color4::white : teamHandler.Team(unit->team)->color;
-	uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
-
-	float unitRadiusMult = icon->GetSize();
-	if (icon->GetRadiusAdjust() && !useDefaultIcon)
-		unitRadiusMult *= (unit->radius / icon->GetRadiusScale());
-	unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
-
-	// fade icons away in high zoom in levels
-	if (!unit->GetIsIcon()) {
-		if (dist / unitRadiusMult < modelDrawerData->iconFadeVanish)
-			return;
-		else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && dist / unitRadiusMult < modelDrawerData->iconFadeStart)
-			// alpha range [64, 255], since icons is unrecognisable with alpha < 64
-			color[3] = 64 + 191.0f * (dist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
-	}
-
-	// calculate the vertices
-	const float offset = modelDrawerData->iconSizeBase / 2.0f * unitRadiusMult;
-
-	const float x0 = (pos.x - offset) / globalRendering->viewSizeX;
-	const float y0 = (pos.y + offset) / globalRendering->viewSizeY;
-	const float x1 = (pos.x + offset) / globalRendering->viewSizeX;
-	const float y1 = (pos.y - offset) / globalRendering->viewSizeY;
-
-	if (x1 < 0 || x0 > 1 || y0 < 0 || y1 > 1)
-		return; // don't try to draw outside the screen
-
-	// Draw the icon.
-	icon->DrawArray(va, x0, y0, x1, y1, color);
-}
-
 
 void CUnitDrawerLegacy::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall) const
 {
@@ -1108,7 +1232,7 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_TEXTURE_2D);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	CFeature* feature = nullptr;
 
@@ -1134,78 +1258,68 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 		&commands
 	);
 
-	if (canBuild) {
-		glColor4f(0.0f, 0.9f, 0.0f, 0.7f);
+	static constexpr float buildColorT[4]  = { 0.0f, 0.9f, 0.0f, 0.7f };
+	static constexpr float buildColorF[4]  = { 0.9f, 0.8f, 0.0f, 0.7f };
+	static constexpr float featureColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
+	static constexpr float illegalColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
+
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& sh = rb.GetShader();
+
+	sh.Enable();
+
+	const float* color = canBuild ? &buildColorT[0] : &buildColorF[0];
+	for (const auto& buildableSquare : buildableSquares) {
+		rb.AddQuadLines(
+			{ buildableSquare                                      , color },
+			{ buildableSquare + float3(SQUARE_SIZE, 0, 0          ), color },
+			{ buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), color },
+			{ buildableSquare + float3(0          , 0, SQUARE_SIZE), color }
+		);
 	}
-	else {
-		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
+
+	color = &featureColor[0];
+	for (const auto& featureSquare : featureSquares) {
+		rb.AddQuadLines(
+			{ featureSquare                                      , color },
+			{ featureSquare + float3(SQUARE_SIZE, 0, 0          ), color },
+			{ featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), color },
+			{ featureSquare + float3(0          , 0, SQUARE_SIZE), color }
+		);
 	}
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
-
-	for (uint32_t i = 0; i < buildableSquares.size(); i++) {
-		va->AddVertexQ0(buildableSquares[i]);
-		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0, 0));
-		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(buildableSquares[i] + float3(0, 0, SQUARE_SIZE));
+	color = &illegalColor[0];
+	for (const auto& illegalSquare : illegalSquares) {
+		rb.AddQuadLines(
+			{ illegalSquare                                      , color },
+			{ illegalSquare + float3(SQUARE_SIZE, 0, 0          ), color },
+			{ illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), color },
+			{ illegalSquare + float3(0          , 0, SQUARE_SIZE), color }
+		);
 	}
-	va->DrawArray0(GL_QUADS);
-
-
-	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
-
-	for (uint32_t i = 0; i < featureSquares.size(); i++) {
-		va->AddVertexQ0(featureSquares[i]);
-		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0, 0));
-		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(featureSquares[i] + float3(0, 0, SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
-
-	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
-
-	for (uint32_t i = 0; i < illegalSquares.size(); i++) {
-		va->AddVertexQ0(illegalSquares[i]);
-		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0, 0));
-		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(illegalSquares[i] + float3(0, 0, SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
+	rb.Submit(GL_LINES);
 
 	if (h < 0.0f) {
-		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
-		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
+		constexpr uint8_t s[4] = { 0,   0, 255, 128 }; // start color
+		constexpr uint8_t e[4] = { 0, 128, 255, 255 }; // end color
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(8, 0, VA_SIZE_C);
-		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
-		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
-		va->DrawArrayC(GL_LINES);
+		rb.AddVertex({ float3(x1, h, z1), s }); rb.AddVertex({ float3(x1, 0.f, z1), e });
+		rb.AddVertex({ float3(x1, h, z2), s }); rb.AddVertex({ float3(x1, 0.f, z2), e });
+		rb.AddVertex({ float3(x2, h, z2), s }); rb.AddVertex({ float3(x2, 0.f, z2), e });
+		rb.AddVertex({ float3(x2, h, z1), s }); rb.AddVertex({ float3(x2, 0.f, z1), e });
+		rb.Submit(GL_LINES);
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->AddVertexQC(float3(x1, 0.0f, z1), e);
-		va->AddVertexQC(float3(x1, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z1), e);
-		va->DrawArrayC(GL_LINE_LOOP);
+		rb.AddVertex({ float3(x1, 0.0f, z1), e });
+		rb.AddVertex({ float3(x1, 0.0f, z2), e });
+		rb.AddVertex({ float3(x2, 0.0f, z2), e });
+		rb.AddVertex({ float3(x2, 0.0f, z1), e });
+		rb.Submit(GL_LINE_LOOP);
 	}
 
+	sh.Disable();
+
 	glEnable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	// glDisable(GL_BLEND);
 
 	return canBuild;

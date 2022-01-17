@@ -39,6 +39,9 @@ public:
 	template <typename T>
 	void operator>>(std::vector<T>& vec)
 	{
+		if (vec.empty())
+			return;
+
 		const size_t size = vec.size() * sizeof(T);
 
 		if ((pckt->length - pos) < size)

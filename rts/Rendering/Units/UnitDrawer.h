@@ -186,11 +186,6 @@ protected:
 	void PopIndividualOpaqueState(const CUnit* unit, bool deferredPass) const;
 	void PopIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass) const;
 	void PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass) const;
-
-	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
-
-	static void DrawIcon(CUnit* unit, bool useDefaultIcon);
-	void DrawIconScreenArray(const CUnit* unit, const icon::CIconData* icon, bool useDefaultIcon, const float dist, CVertexArray* va) const;
 protected:
 
 };

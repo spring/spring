@@ -223,25 +223,25 @@ inline const std::string RenderBufferShader<VA_TYPE_N>::GetFragOutput()
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_T>::GetFragOutput()
 {
-	return "\toutColor = texture(tex, uv);";
+	return "\toutColor = texture(tex, vuv);";
 }
 
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_TN>::GetFragOutput()
 {
-	return "\toutColor = texture(tex, uv);";
+	return "\toutColor = texture(tex, vuv);";
 }
 
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_TC>::GetFragOutput()
 {
-	return "\toutColor = vcolor * texture(tex, uv);";
+	return "\toutColor = vcolor * texture(tex, vuv);";
 }
 
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_TNT>::GetFragOutput()
 {
-	return "\toutColor = texture(tex, uv);";
+	return "\toutColor = texture(tex, vuv);";
 }
 
 template<>
@@ -259,13 +259,13 @@ inline const std::string RenderBufferShader<VA_TYPE_2dC>::GetFragOutput()
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_2dT>::GetFragOutput()
 {
-	return "\toutColor = texture(tex, uv);";
+	return "\toutColor = texture(tex, vuv);";
 }
 
 template<>
 inline const std::string RenderBufferShader<VA_TYPE_2dTC>::GetFragOutput()
 {
-	return "\toutColor = vcolor * texture(tex, uv);";
+	return "\toutColor = vcolor * texture(tex, vuv);";
 }
 
 template <typename T>

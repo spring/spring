@@ -585,8 +585,8 @@ void CUnitDrawerData::PlayerChanged(int playerNum)
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	for (auto iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
-		(iconIt->second).clear();
+	for (auto& [icon, units] : unitsByIcon) {
+		units.clear();
 	}
 
 	for (CUnit* unit : unsortedObjects) {
