@@ -285,7 +285,9 @@ void CUnitDrawerLegacy::DrawUnitTrans(const CUnit* unit, uint32_t preList, uint3
 
 void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 {
-	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dT>();
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dTC>();
+	assert(rb.AssertSubmission());
+
 	auto& sh = rb.GetShader();
 
 	sh.Enable();
@@ -303,11 +305,11 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 		for (const CUnit* unit : units) {
 			assert(unit->myIcon == icon);
 			if (unit->noMinimap)
-				return;
+				continue;
 			if (unit->myIcon == nullptr)
-				return;
+				continue;
 			if (unit->IsInVoid())
-				return;
+				continue;
 
 			const uint8_t* color = &defaultColor[0];
 
@@ -328,8 +330,6 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 				}
 			}
 
-			sh.SetUniform("ucolor", color[0], color[1], color[2], color[3]);
-
 			const float iconScale = CUnitDrawerHelper::GetUnitIconScale(unit);
 			const float3& iconPos = (!gu->spectatingFullView) ?
 				unit->GetObjDrawErrorPos(gu->myAllyTeam) :
@@ -344,10 +344,10 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 			const float y1 = iconPos.z + iconSizeY;
 
 			rb.AddQuadTriangles(
-				{ x0, y0, 0.0f, 0.0f },
-				{ x1, y0, 1.0f, 0.0f },
-				{ x1, y1, 1.0f, 1.0f },
-				{ x0, y1, 0.0f, 1.0f }
+				{ x0, y0, 0.0f, 0.0f, color },
+				{ x1, y0, 1.0f, 0.0f, color },
+				{ x1, y1, 1.0f, 1.0f, color },
+				{ x0, y1, 0.0f, 1.0f, color }
 			);
 		}
 
@@ -357,93 +357,6 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 	sh.Disable();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-
-/*
-void CUnitDrawerLegacy::DrawUnitIcons() const
-{
-#if 0
-	if (game->hideInterface && modelDrawerData->iconHideWithUI)
-		return;
-#endif
-
-	// draw unit icons and radar blips
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-
-	// A2C effectiveness is limited below four samples
-	if (globalRendering->msaaLevel >= 4)
-		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
-
-	for (CUnit* unit : modelDrawerData->GetUnsortedObjects()) {
-		if (!unit->GetIsIcon())
-			continue;
-
-		const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
-		const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
-
-		const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
-
-	// iconUnits should not never contain void-space units, see UpdateUnitIconState
-		assert(!unit->IsInVoid());
-
-		// If the icon is to be drawn as a radar blip, we want to get the default icon.
-		const icon::CIconData* iconData = nullptr;
-
-		if (useDefaultIcon) {
-			iconData = icon::iconHandler.GetDefaultIconData();
-		}
-		else {
-			iconData = unit->unitDef->iconType.GetIconData();
-		}
-
-		// drawMidPos is auto-calculated now; can wobble on its own as pieces move
-		float3 pos = (!gu->spectatingFullView) ?
-			unit->GetObjDrawErrorPos(gu->myAllyTeam) :
-			unit->GetObjDrawMidPos();
-
-		// make sure icon is above ground (needed before we calculate scale below)
-		const float h = CGround::GetHeightReal(pos.x, pos.z, false);
-
-		pos.y = std::max(pos.y, h);
-
-		// Calculate the icon size. It scales with:
-		//  * The square root of the camera distance.
-		//  * The mod defined 'iconSize' (which acts a multiplier).
-		//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-		const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
-		const float iconScaleDist = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
-		float scale = iconData->GetSize() * iconScaleDist;
-
-		if (iconData->GetRadiusAdjust() && !useDefaultIcon)
-			scale *= (unit->radius / iconData->GetRadiusScale());
-
-		// make sure icon is not partly under ground
-		pos.y = std::max(pos.y, h + (unit->iconRadius = scale));
-
-		// use white for selected units
-		const uint8_t* colors[] = { teamHandler.Team(unit->team)->color, color4::white };
-		const uint8_t* color = colors[unit->isSelected];
-
-		glColor3ubv(color);
-
-		// calculate the vertices
-		const float3 dy = camera->GetUp() * scale;
-		const float3 dx = camera->GetRight() * scale;
-		const float3 vn = pos - dx;
-		const float3 vp = pos + dx;
-		const float3 vnn = vn - dy;
-		const float3 vpn = vp - dy;
-		const float3 vnp = vn + dy;
-		const float3 vpp = vp + dy;
-
-		// Draw the icon.
-		iconData->Draw(vnn, vpn, vnp, vpp);
-	}
-
-	glPopAttrib();
-}
-*/
 
 void CUnitDrawerLegacy::DrawUnitIcons() const
 {
@@ -462,10 +375,11 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	assert(rb.AssertSubmission());
+
 	auto& sh = rb.GetShader();
 	sh.Enable();
 	sh.SetUniform("alphaCtrl", 0.05f, 1.0f, 0.0f, 0.0f); // GL_GREATER > 0.05
-
 
 	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon())
 	{
@@ -572,6 +486,8 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2dTC>();
+	assert(rb.AssertSubmission());
+
 	auto& sh = rb.GetShader();
 
 	sh.Enable();
@@ -611,7 +527,7 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 
 			pos = camera->CalcWindowCoordinates(pos);
 			if (pos.z > 1.0f || pos.z < 0.0f)
-				return;
+				continue;
 
 			// use white for selected units
 			const uint8_t* srcColor = unit->isSelected ? color4::white : teamHandler.Team(unit->team)->color;
@@ -625,7 +541,7 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 			// fade icons away in high zoom in levels
 			if (!unit->GetIsIcon()) {
 				if (modelDrawerData->iconZoomDist / unitRadiusMult < modelDrawerData->iconFadeVanish)
-					return;
+					continue;
 				else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && modelDrawerData->iconZoomDist / unitRadiusMult < modelDrawerData->iconFadeStart)
 					// alpha range [64, 255], since icons is unrecognisable with alpha < 64
 					color[3] = 64 + 191.0f * (modelDrawerData->iconZoomDist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
@@ -1264,6 +1180,8 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	static constexpr float illegalColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	assert(rb.AssertSubmission());
+
 	auto& sh = rb.GetShader();
 
 	sh.Enable();

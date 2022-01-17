@@ -473,6 +473,15 @@ public:
 	size_t SumIndcs() const { return indcs.size(); }
 	size_t NumSubmits(bool indexed) const { return numSubmits[indexed]; }
 
+	//check everything is uploaded and submitted
+	bool AssertSubmission() const {
+		return
+			(indcs.size() - eboUploadIndex == 0) &&
+			(verts.size() - vboUploadIndex == 0) &&
+			(indcs.size() - eboStartIndex  == 0) &&
+			(verts.size() - vboStartIndex  == 0);
+	}
+
 	static Shader::IProgramObject& GetShader() { return shader.GetShader(); }
 private:
 	void CondInit();
@@ -567,17 +576,17 @@ inline void TypedRenderBuffer<T>::DrawArrays(uint32_t mode, bool rewind)
 {
 	UploadVBO();
 
-	size_t elemsCount = (verts.size() - vboStartIndex);
-	if (elemsCount <= 0)
+	size_t vertsCount = (verts.size() - vboStartIndex);
+	if (vertsCount <= 0)
 		return;
 
 	assert(vao.GetIdRaw() > 0);
 	vao.Bind();
-	glDrawArrays(mode, vbo->BufferElemOffset() + vboStartIndex, elemsCount);
+	glDrawArrays(mode, vbo->BufferElemOffset() + vboStartIndex, vertsCount);
 	vao.Unbind();
 
 	if (rewind)
-		vboStartIndex += elemsCount;
+		vboStartIndex += vertsCount;
 
 	numSubmits[0] += 1;
 }
@@ -588,19 +597,22 @@ inline void TypedRenderBuffer<T>::DrawElements(uint32_t mode, bool rewind)
 	UploadVBO();
 	UploadEBO();
 
-	size_t elemsCount = (indcs.size() - eboStartIndex);
-	if (elemsCount <= 0)
+	size_t indcsCount = (indcs.size() - eboStartIndex);
+	size_t vertsCount = (verts.size() - vboStartIndex);
+	if (indcsCount <= 0)
 		return;
 
 	#define BUFFER_OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
 	assert(vao.GetIdRaw() > 0);
 	vao.Bind();
-	glDrawElements(mode, elemsCount, GL_UNSIGNED_INT, BUFFER_OFFSET(uint32_t, ebo->BufferElemOffset() + eboStartIndex));
+	glDrawElements(mode, indcsCount, GL_UNSIGNED_INT, BUFFER_OFFSET(uint32_t, ebo->BufferElemOffset() + eboStartIndex));
 	vao.Unbind();
 	#undef BUFFER_OFFSET
 
-	if (rewind)
-		eboStartIndex += elemsCount;
+	if (rewind) {
+		eboStartIndex += indcsCount;
+		vboStartIndex += vertsCount;
+	}
 
 	numSubmits[1] += 1;
 }
