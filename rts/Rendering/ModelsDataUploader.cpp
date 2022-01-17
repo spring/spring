@@ -121,6 +121,7 @@ void MatrixUploader::UpdateDerived()
 		return;
 
 	SCOPED_TIMER("MatrixUploader::Update");
+	ssbo->UnbindBufferRange(bindingIdx);
 
 	//resize
 	const uint32_t elemCount = GetElemsCount();
@@ -128,15 +129,14 @@ void MatrixUploader::UpdateDerived()
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
-		ssbo->UnbindBufferRange(bindingIdx);
 		ssbo->Resize(newElemCount);
-		ssbo->BindBufferRange(bindingIdx);
 	}
 
 	//update on the GPU
 	const CMatrix44f* clientPtr = matricesMemStorage.GetData().data();
 
-	if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP) {
+	constexpr bool ENABLE_UPLOAD_OPTIMIZATION = true;
+	if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP && ENABLE_UPLOAD_OPTIMIZATION) {
 		const auto stt = matricesMemStorage.GetDirtyMap().begin();
 		const auto fin = matricesMemStorage.GetDirtyMap().end();
 
@@ -171,7 +171,7 @@ void MatrixUploader::UpdateDerived()
 
 		ssbo->Unmap();
 	}
-
+	ssbo->BindBufferRange(bindingIdx);
 	ssbo->SwapBuffer();
 }
 
@@ -277,6 +277,7 @@ void ModelsUniformsUploader::UpdateDerived()
 		return;
 
 	SCOPED_TIMER("ModelsUniformsUploader::Update");
+	ssbo->UnbindBufferRange(bindingIdx);
 
 	//resize
 	const uint32_t elemCount = GetElemsCount();
@@ -284,9 +285,7 @@ void ModelsUniformsUploader::UpdateDerived()
 	if (storageElemCount > elemCount) {
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
-		ssbo->UnbindBufferRange(bindingIdx);
 		ssbo->Resize(newElemCount);
-		ssbo->BindBufferRange(bindingIdx);
 	}
 
 	//update on the GPU
@@ -297,6 +296,7 @@ void ModelsUniformsUploader::UpdateDerived()
 		memcpy(mappedPtr, clientPtr, storageElemCount * sizeof(ModelUniformData));
 
 	ssbo->Unmap();
+	ssbo->BindBufferRange(bindingIdx);
 	ssbo->SwapBuffer();
 }
 
