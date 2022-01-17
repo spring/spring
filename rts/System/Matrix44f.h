@@ -8,7 +8,7 @@
 #include "System/float3.h"
 #include "System/float4.h"
 
-class /*alignas(64)*/ CMatrix44f
+class CMatrix44f
 {
 public:
 	CR_DECLARE_STRUCT(CMatrix44f)
@@ -147,7 +147,7 @@ public:
 
 public:
 	/// OpenGL ordered (ie. column-major)
-	union {
+	union alignas(64) {
 		float m[16];
 		float md[4][4]; // WARNING: it still is column-major, means md[j][i]!!!
 		float4 col[4];

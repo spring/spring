@@ -166,6 +166,7 @@ else  (UNIX AND NOT MINGW)
 	endif()
 
 	if(MSVC)
+		add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
 		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)

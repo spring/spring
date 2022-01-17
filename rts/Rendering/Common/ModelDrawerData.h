@@ -168,9 +168,11 @@ inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 {
 	ScopedMatricesMemAlloc& smma = GetObjectMatricesMemAlloc(o);
 
-	//FIX ME, too expensive
 	const auto  tmNew = o->GetTransformMatrix();
 	const auto& tmOld = const_cast<const ScopedMatricesMemAlloc&>(smma)[0];
+
+	// from one point it doesn't worth the comparison, cause units usually move
+	// but having not updated smma[0] allows for longer solid no-update areas in ModelsUniformsUploader::UpdateDerived()
 	if (tmNew != tmOld)
 		smma[0] = tmNew;
 
@@ -182,11 +184,9 @@ inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 			continue;
 		}
 
-		//FIX ME, too expensive
-		const auto& pmNew = lmp.GetModelSpaceMatrix();
-		const auto& pmOld = const_cast<const ScopedMatricesMemAlloc&>(smma)[i + 1];
-		if (pmNew != pmOld)
-			smma[i + 1] = pmNew;
+		const bool wasCustomDirty = lmp.SetGetCustomDirty(false);
+		if (wasCustomDirty)
+			smma[i + 1] = lmp.GetModelSpaceMatrix();
 	}
 }
 

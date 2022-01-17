@@ -445,7 +445,10 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
-	LocalModelPiece(): dirty(true) {}
+	LocalModelPiece()
+		: dirty(true)
+		, customDirty(true)
+	{}
 	LocalModelPiece(const S3DModelPiece* piece);
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
@@ -480,6 +483,7 @@ struct LocalModelPiece
 
 
 	void SetDirty();
+	bool SetGetCustomDirty(bool cd) const;
 	void SetPosOrRot(const float3& src, float3& dst); // anim-script only
 	void SetPosition(const float3& p) { SetPosOrRot(p, pos); } // anim-script only
 	void SetRotation(const float3& r) { SetPosOrRot(r, rot); } // anim-script only
@@ -520,7 +524,7 @@ private:
 	CollisionVolume colvol;
 
 	mutable bool dirty;
-
+	mutable bool customDirty;
 public:
 	bool scriptSetVisible; // TODO: add (visibility) maxradius!
 	bool blockScriptAnims; // if true, Set{Position,Rotation} are ignored for this piece

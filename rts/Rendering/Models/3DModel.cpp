@@ -590,9 +590,10 @@ void S3DModel::UploadToVBO(const std::vector<SVertexData>& vertices, const std::
  */
 
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
-	: colvol(piece->GetCollisionVolume())
+	: dirty(true)
+	, customDirty(true)
 
-	, dirty(true)
+	, colvol(piece->GetCollisionVolume())
 
 	, scriptSetVisible(true)
 	, blockScriptAnims(false)
@@ -616,12 +617,19 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 void LocalModelPiece::SetDirty() {
 	dirty = true;
+	SetGetCustomDirty(true);
 
 	for (LocalModelPiece* child: children) {
 		if (child->dirty)
 			continue;
 		child->SetDirty();
 	}
+}
+
+bool LocalModelPiece::SetGetCustomDirty(bool cd) const
+{
+	std::swap(cd, customDirty);
+	return cd;
 }
 
 void LocalModelPiece::SetPosOrRot(const float3& src, float3& dst) {

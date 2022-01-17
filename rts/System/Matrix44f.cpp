@@ -10,11 +10,14 @@
 #include <algorithm>
 #include <cstring>
 
+#include <xmmintrin.h>
+#include <emmintrin.h>
+
 CR_BIND(CMatrix44f, )
 
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m))
 
-static_assert(alignof(CMatrix44f) == 4);
+static_assert(alignof(CMatrix44f) == 64);
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
 	memcpy(&m[0], &mat.m[0], sizeof(CMatrix44f));
@@ -302,10 +305,11 @@ CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 __FORCE_ALIGN_STACK__
 static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
-	const __m128 m1c1 = _mm_loadu_ps(&m1.md[0][0]);
-	const __m128 m1c2 = _mm_loadu_ps(&m1.md[1][0]);
-	const __m128 m1c3 = _mm_loadu_ps(&m1.md[2][0]);
-	const __m128 m1c4 = _mm_loadu_ps(&m1.md[3][0]);
+	//alignof guarantees 16 byte alignment required by SSE2
+	const __m128 m1c1 = _mm_load_ps(&m1.md[0][0]);
+	const __m128 m1c2 = _mm_load_ps(&m1.md[1][0]);
+	const __m128 m1c3 = _mm_load_ps(&m1.md[2][0]);
+	const __m128 m1c4 = _mm_load_ps(&m1.md[3][0]);
 
 	// an optimization we assume
 	assert(m2.m[3] == 0.0f);
@@ -350,10 +354,10 @@ static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44
 	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c4, m2i11));
 	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c4, m2i15));
 
-	_mm_storeu_ps(&mout->md[0][0], moutc1);
-	_mm_storeu_ps(&mout->md[1][0], moutc2);
-	_mm_storeu_ps(&mout->md[2][0], moutc3);
-	_mm_storeu_ps(&mout->md[3][0], moutc4);
+	_mm_store_ps(&mout->md[0][0], moutc1);
+	_mm_store_ps(&mout->md[1][0], moutc2);
+	_mm_store_ps(&mout->md[2][0], moutc3);
+	_mm_store_ps(&mout->md[3][0], moutc4);
 }
 
 bool CMatrix44f::operator!=(const CMatrix44f& rhs) const
@@ -361,10 +365,28 @@ bool CMatrix44f::operator!=(const CMatrix44f& rhs) const
 	if (this == &rhs)
 		return false;
 
-#if 1
+#if 0
 	return (std::memcmp(this, &rhs, sizeof(CMatrix44f)) != 0);
 #else
-	//DO SSE2
+	//alignof guarantees 16 byte alignment required by SSE2
+	// goodbye strict alignment rule :(
+	const __m128i m0c1 = _mm_load_si128(reinterpret_cast<const __m128i*>(&md[0][0]));
+	const __m128i m0c2 = _mm_load_si128(reinterpret_cast<const __m128i*>(&md[1][0]));
+	const __m128i m0c3 = _mm_load_si128(reinterpret_cast<const __m128i*>(&md[2][0]));
+	const __m128i m0c4 = _mm_load_si128(reinterpret_cast<const __m128i*>(&md[3][0]));
+
+	const __m128i m1c1 = _mm_load_si128(reinterpret_cast<const __m128i*>(&rhs.md[0][0]));
+	const __m128i m1c2 = _mm_load_si128(reinterpret_cast<const __m128i*>(&rhs.md[1][0]));
+	const __m128i m1c3 = _mm_load_si128(reinterpret_cast<const __m128i*>(&rhs.md[2][0]));
+	const __m128i m1c4 = _mm_load_si128(reinterpret_cast<const __m128i*>(&rhs.md[3][0]));
+
+	static constexpr uint16_t BINEQ = 0xFFFF;
+
+	return
+		static_cast<uint16_t>(_mm_movemask_epi8(_mm_cmpeq_epi32(m0c1, m1c1))) != BINEQ ||
+		static_cast<uint16_t>(_mm_movemask_epi8(_mm_cmpeq_epi32(m0c2, m1c2))) != BINEQ ||
+		static_cast<uint16_t>(_mm_movemask_epi8(_mm_cmpeq_epi32(m0c3, m1c3))) != BINEQ ||
+		static_cast<uint16_t>(_mm_movemask_epi8(_mm_cmpeq_epi32(m0c4, m1c4))) != BINEQ;
 #endif
 }
 

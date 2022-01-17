@@ -571,8 +571,8 @@ void ProfileDrawer::DrawScreen()
 
 	font->End();
 
-	/*glMatrixMode(GL_PROJECTION);*/ glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);      glPopMatrix();
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);  glPopMatrix();
 }
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
