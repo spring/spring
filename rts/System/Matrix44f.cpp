@@ -422,11 +422,14 @@ CMatrix44f CMatrix44f::operator+(const CMatrix44f& mat) const
 		r[i + 3] = m[i + 3] + mat[i + 3];
 	}
 #else //brings spring's Matrix44 on par with Eigen in terms of perfomance
-	#define ADD_COLUMN(col) _mm_storeu_ps(&r.md[col][0], _mm_add_ps(_mm_loadu_ps(&md[col][0]), _mm_loadu_ps(&mat.md[col][0])))
+	#define ADD_COLUMN(col) \
+		 _mm_store_ps(&r.md[col][0], _mm_add_ps(_mm_load_ps(&md[col][0]), _mm_load_ps(&mat.md[col][0])))
+
 	ADD_COLUMN(0);
 	ADD_COLUMN(1);
 	ADD_COLUMN(2);
 	ADD_COLUMN(3);
+
 	#undef ADD_COLUMN
 #endif
 
@@ -445,10 +448,10 @@ float4 CMatrix44f::operator* (const float4 v) const
 	return out;
 	#else
 	__m128 out;
-	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_set1_ps(v.x)) ; // or _mm_load1_ps(&v.x)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_set1_ps(v.y))); // or _mm_load1_ps(&v.y)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_set1_ps(v.z))); // or _mm_load1_ps(&v.z)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
+	out =                 _mm_mul_ps(_mm_load_ps(&md[0][0]), _mm_set1_ps(v.x)) ; // or _mm_load1_ps(&v.x)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_load_ps(&md[1][0]), _mm_set1_ps(v.y))); // or _mm_load1_ps(&v.y)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_load_ps(&md[2][0]), _mm_set1_ps(v.z))); // or _mm_load1_ps(&v.z)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_load_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
 	return {fout[0], fout[1], fout[2], fout[3]};
