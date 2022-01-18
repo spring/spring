@@ -130,6 +130,7 @@ void MatrixUploader::UpdateDerived()
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
 		ssbo->Resize(newElemCount);
+		matricesMemStorage.SetAllDirty(); //Resize doesn't copy the data
 	}
 
 	//update on the GPU

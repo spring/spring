@@ -37,6 +37,7 @@ private:
 public:
 	const decltype(dirtyMap)& GetDirtyMap() const { return dirtyMap; }
 	      decltype(dirtyMap)& GetDirtyMap()       { return dirtyMap; }
+	void SetAllDirty();
 public:
 	//need to update buffer with matrices BUFFERING times, because the actual buffer is made of BUFFERING number of parts
 	static constexpr uint8_t BUFFERING = 3u;

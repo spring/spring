@@ -47,3 +47,8 @@ void MatricesMemStorage::SetDirty(bool d)
 	std::fill(dirtyMap.begin(), dirtyMap.end(), d);
 }
 */
+
+void MatricesMemStorage::SetAllDirty()
+{
+	std::fill(dirtyMap.begin(), dirtyMap.end(), BUFFERING);
+}
