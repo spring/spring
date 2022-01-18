@@ -306,6 +306,9 @@ Fixes:
  - fix Spring.{G,S}etConfigFloat not being callable
  - fix Spring.GetPlayerRoster sometimes excluding active players
 
+Unitsync:
+ ! deprecate IsSpringReleaseVersion() / GetSpringVersionPatchset()
+ ! remove a lot of deprecated functions
 
 -- 105.0 --------------------------------------------------------
  - special maintenance release: contains only bugfixes
