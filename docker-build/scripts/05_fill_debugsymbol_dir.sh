@@ -13,11 +13,9 @@ set +e
 for tostripfile in ${EXECUTABLES}; do
     if [ -f ${tostripfile} ]; then
         objdump -h ${tostripfile} | grep -q .gnu_debuglink
-		od=$?
-        objcopy --only-keep-debug ${tostripfile} > /dev/null
-		oc=$?
-		echo "od = $od"
-		echo "oc = $oc"
+        od=$?
+        objcopy --only-keep-debug ${tostripfile}>/dev/null 2>&1
+        oc=$?
         if [[ $od -ne 0 && $oc -eq 0 ]]; then
             debugfile=$(dirname $tostripfile)/$(echo $(basename $tostripfile) | cut -f 1 -d '.').dbg
             echo "stripping ${tostripfile}, producing ${debugfile}"
