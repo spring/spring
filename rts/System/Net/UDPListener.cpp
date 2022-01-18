@@ -101,7 +101,7 @@ std::string UDPListener::TryBindSocket(int port, std::shared_ptr<asio::ip::udp::
 		if (errorMsg.empty())
 			errorMsg = "Unknown problem";
 
-		LOG_L(L_ERROR, "[UDPListener::%s] binding UDP socket to IP %s failed: %s", __func__, ip.c_str(), errorMsg.c_str());
+		LOG_L(L_ERROR, "[UDPListener::%s] binding UDP socket to IP %s:%d failed: %s", __func__, ip.c_str(), port, errorMsg.c_str());
 	}
 
 	return errorMsg;
