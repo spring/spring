@@ -1527,7 +1527,7 @@ void CUnitDrawerGL4::DrawAlphaObjects(int modelType, bool drawReflection, bool d
 			staticWorldMat.LoadIdentity();
 			staticWorldMat.Translate(lgb->pos);
 
-			staticWorldMat.RotateY(math::DEG_TO_RAD * 90.0f);
+			staticWorldMat.RotateY(-lgb->buildFacing * math::DEG_TO_RAD * 90.0f);
 
 			const unsigned short losStatus = lgb->losStatus[gu->myAllyTeam];
 
