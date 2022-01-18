@@ -66,15 +66,6 @@ EXPORT(const char* ) GetNextError();
  */
 EXPORT(const char* ) GetSpringVersion();
 
-/**
- * @deprecated
- */
-EXPORT(const char* ) GetSpringVersionPatchset();
-
-/**
- * @deprecated
- */
-EXPORT(bool        ) IsSpringReleaseVersion();
 
 /**
  * @brief Initialize the unitsync library
@@ -1114,6 +1105,8 @@ EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
 /* deprecated functions */
 
 #ifdef ENABLE_DEPRECATED_FUNCTIONS
+EXPORT(const char* ) GetSpringVersionPatchset();
+EXPORT(bool        ) IsSpringReleaseVersion();
 #endif // ENABLE_DEPRECATED_FUNCTIONS
 /** @} */
 

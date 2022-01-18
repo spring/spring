@@ -313,16 +313,6 @@ EXPORT(const char*) GetSpringVersion()
 }
 
 
-EXPORT(const char*) GetSpringVersionPatchset()
-{
-	return "";
-}
-
-
-EXPORT(bool) IsSpringReleaseVersion()
-{
-	return false;
-}
 
 class UnitsyncConfigObserver
 {
@@ -2377,4 +2367,53 @@ EXPORT(const char*) GetMacAddrHash() {
 	memcpy(macAddrBuf.data(), macAddrHash.data(), std::min(macAddrHash.size(), macAddrBuf.size()));
 	return (macAddrBuf.data());
 }
+
+#ifdef ENABLE_DEPRECATED_FUNCTIONS
+// Helper class for popping up a MessageBox only once
+
+class CMessageOnce
+{
+public:
+	CMessageOnce(const std::string& message)
+		: message(message)
+	{
+		assert(!message.empty());
+	}
+
+	void print() {
+		if (!alreadyDone) {
+			alreadyDone = true;
+			LOG_L(L_WARNING, "%s", message.c_str());
+		}
+	}
+
+private:
+	bool alreadyDone = false;
+	const std::string message;
+};
+
+
+#define DEPRECATED \
+	static CMessageOnce msg( \
+			"The deprecated unitsync function " \
+			+ std::string(__FUNCTION__) + " was called." \
+			" Please update your lobby client"); \
+	msg.print(); \
+	SetLastError("deprecated unitsync function called: " \
+			+ std::string(__FUNCTION__))
+
+
+EXPORT(const char*) GetSpringVersionPatchset()
+{
+	DEPRECATED;
+	return "";
+}
+
+
+EXPORT(bool) IsSpringReleaseVersion()
+{
+	DEPRECATED;
+	return false;
+}
+#endif
 
