@@ -46,22 +46,6 @@ EXPORT(const char* ) GetNextError();
  * Returns a string specifying the synced part of the version of Spring used to
  * build this library with.
  *
- * After release 83:
- *   You may check for sync compatibility by using a string equality test with
- *   the return of this function.
- *   Release:
- *     Contains only the major version number, for example "83".
- *     You may combine this with the patch-set to get the full version,
- *     for example "83.2".
- *   Development:
- *     The full version, for example "83.0.1-13-g1234567 develop", and therefore
- *     it would not make sense to append the patch-set in such a case.
- *   Examples:
- *   - 83: any 83 release, for example 83.0 or 83.1
- *     this may only be on the the master or hotfix branch
- *   - 83.0.1-13-g1234567 develop: some dev-version after the 1st release of 83
- *     on the develop branch
- * After release 106.0:
  *    The full version, for example "104.0.1-2155-gddd1321651 develop" or "105.0"
  */
 EXPORT(const char* ) GetSpringVersion();
