@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "glstub.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,7 @@ GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBindBufferARB(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid *data, GLenum usage) {}
 GLAPI void APIENTRY glCopyBufferSubData(GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size) {}
-GLAPI void APIENTRY glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizei size) {}
+GLAPI void APIENTRY glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size) {}
 
 GLAPI void APIENTRY glGenVertexArrays(GLsizei n, GLuint* arrays) {}
 GLAPI void APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint* arrays) {}
@@ -168,12 +169,7 @@ GLAPI void APIENTRY glGetShaderSource(GLuint shader, GLsizei bufSize, GLsizei *l
 GLAPI void APIENTRY glCompileShader(GLuint shader) {}
 GLAPI void APIENTRY glGetShaderiv(GLuint shader, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glGetShaderInfoLog(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog) {}
-#ifdef __APPLE__
-// MacOS buildbot GL headers are ancient, need the extra const
-GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint *length) {}
-#else
-GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar* *string, const GLint *length) {}
-#endif
+GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length) {}
 
 GLAPI void APIENTRY glUniform1fARB(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2fARB(GLint location, GLfloat v0, GLfloat v1) {}

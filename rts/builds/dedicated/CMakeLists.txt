@@ -43,29 +43,6 @@ if    (UNIX AND NOT MINGW)
 	endif ()
 endif ()
 
-if    (WIN32 OR APPLE)
-	# Windows:
-	# We still need these header files,
-	# even if we are not going to link with SDL.
-	# We have them available anyway (mingwlibs).
-	# OS X:
-	# Cocoa requires the SDL libary, whenever the SDL headers are used,
-	# due to some #define magic, which is practically impossible to workaround.
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-	if (MSVC)
-		include_directories(${CMAKE_SOURCE_DIR}/include)
-	endif ()
-	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
-		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-	endif ()
-else ()
-	# Use a direct copy of the GL and SDL headers,
-	# as these may not be available on headless systems.
-	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif ()
-
-
 ### Assemble the incude dirs
 include_directories(${ENGINE_SRC_ROOT_DIR}/)
 include_directories(${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
@@ -163,6 +140,7 @@ set(engineDedicatedSources
 	)
 
 
+
 # Compile dedicated server executable
 add_executable(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
@@ -173,6 +151,9 @@ add_executable(engine-dedicated
 		${ENGINE_ICON}
 		main.cpp
 	)
+target_include_directories(engine-dedicated
+	PRIVATE ${SDL2_INCLUDE_DIR}
+)
 target_link_libraries(engine-dedicated ${engineDedicatedLibraries})
 if    (MINGW)
 	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${IPHLPAPI_LIBRARY} ${WINMM_LIBRARY})

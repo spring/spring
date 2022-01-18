@@ -19,20 +19,6 @@ if (WIN32)
 	list(APPEND unitsync_libs ${WINMM_LIBRARY})
 endif ()
 
-if    (WIN32)
-	# We still need these header files,
-	# even if we are not going to link with SDL.
-	# We have them available anyway (mingwlibs).
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-	if (MSVC)
-		include_directories(${CMAKE_SOURCE_DIR}/include)
-	endif ()
-else ()
-	# Use a direct copy of the GL and SDL headers,
-	# as these may not be available on headless systems.
-	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
-endif ()
 
 
 add_definitions(-DUNITSYNC)
@@ -122,7 +108,9 @@ endif ()
 add_library(unitsync SHARED ${unitsync_files})
 add_dependencies(unitsync generateVersionFiles)
 target_link_libraries(unitsync ${unitsync_libs})
-
+target_include_directories(unitsync
+	PRIVATE ${SDL2_INCLUDE_DIR}
+)
 
 # hide exported symbols
 # see nm -c libunitsync.so
