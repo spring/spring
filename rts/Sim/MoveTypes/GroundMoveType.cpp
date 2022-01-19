@@ -91,6 +91,9 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currWayPoint),
 	CR_MEMBER(nextWayPoint),
 
+	CR_MEMBER(earlyCurrWayPoint),
+	CR_MEMBER(earlyNextWayPoint),
+
 	CR_MEMBER(waypointDir),
 	CR_MEMBER(flatFrontDir),
 	CR_MEMBER(lastAvoidanceDir),
@@ -133,7 +136,6 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(atGoal),
 	CR_MEMBER(atEndOfPath),
-	CR_MEMBER(wantRepath),
 
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
@@ -763,7 +765,7 @@ bool CGroundMoveType::FollowPath()
 			atGoal |= (curGoalDistSq <= minGoalDistSq);
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) && !reversing && (ffd.dot(goalPos - opos) > 0.0f && ffd.dot(goalPos - (opos + ovel)) <= 0.0f));
 			atGoal |= ((curGoalDistSq <= spdGoalDistSq) &&  reversing && (ffd.dot(goalPos - opos) < 0.0f && ffd.dot(goalPos - (opos + ovel)) >= 0.0f));
-		
+
 			#ifdef PATHING_DEBUG
 			if (DEBUG_DRAWING_ENABLED) {
 				bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
