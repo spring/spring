@@ -40,6 +40,7 @@ private:
 	bool Init();                                    //!< Initializes engine
 	bool InitWindow(const char* title);             //!< Initializes window
 	bool InitPlatformLibs();
+	bool InitFonts();
 	bool InitFileSystem();
 	bool MainEventHandler(const SDL_Event& ev);     //!< Handles SDL input events
 	bool Update();                                  //!< Run simulation and rendering

@@ -35,6 +35,7 @@ public:
 
 	static bool ComparePaths(const std::string& path1, const std::string& path2);
 
+	static std::string GetSpringExecutableDir();
 	static std::string GetCwd();
 	static void ChDir(const std::string& dir);
 

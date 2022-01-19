@@ -111,8 +111,6 @@ public:
 
 			if (error != 0)
 				throw std::runtime_error(errBuf);
-
-			// LOG_L(L_INFO, "%s", msgBuf);
 		}
 
         #ifdef USE_FONTCONFIG
@@ -125,8 +123,15 @@ public:
 		{
 			ScopedOnceTimer timer(msgBuf);
 
-			if (FcInit())
-				return;
+			if (FcInit()) {
+				FcChar8* configName = FcConfigFilename(nullptr);
+				fcConfig = FcInitLoadConfig();
+				FcConfigParseAndLoad(fcConfig, configName, true);
+				if (FcConfigSetCurrent(fcConfig)) {
+					FtLibraryHandler::GenFontConfig(true);
+					return;
+				}
+			}
 
 			throw std::runtime_error(errBuf);
 		}
@@ -140,8 +145,44 @@ public:
 		if (!UseFontConfig())
 			return;
 
-		FcFini();
+		{
+			if (fcConfig)
+				FcConfigDestroy(fcConfig);
+			FcFini();
+		}
 		#endif
+	}
+
+	static bool GenFontConfig(bool fromCons) {
+	#ifndef HEADLESS
+		char osFontsDir[8192];
+
+		#ifdef _WIN32
+			ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
+		#else
+			strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));
+		#endif
+
+		// Needed in case it's called from FLAGS_gen_fontconfig
+		if (!fromCons)
+			FtLibraryHandler::GetLibrary();
+
+		if (FtLibraryHandler::CheckFontConfig()) {
+			if (!fromCons)
+				printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
+			else
+				LOG("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
+			return true;
+		}
+
+		if (!fromCons)
+			printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
+		else
+			LOG("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
+		return (FtLibraryHandler::BuildFontConfig(osFontsDir));
+	#endif
+
+		return true;
 	}
 
 
@@ -149,21 +190,23 @@ public:
 
 	#ifdef USE_FONTCONFIG
 	// command-line GenFontConfig invocation checks
-	static bool CheckFontConfig() { return (UseFontConfig() && FcConfigUptoDate(nullptr)); }
+	static bool CheckFontConfig() { return (UseFontConfig() && FcConfigUptoDate(fcConfig)); }
 	static bool BuildFontConfig(const char* osFontsDir) {
 		// Windows users most likely don't have a fontconfig configuration file
 		// so manually add windows fonts dir and engine fonts dir to fontconfig
 		// so it can use them as fallback.
-		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>(osFontsDir));
-		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
-		FcConfigBuildFonts(nullptr);
-		return true;
+
+		FcConfigAppFontAddDir(fcConfig, reinterpret_cast<const FcChar8*>("fonts"));
+		FcConfigAppFontAddDir(fcConfig, reinterpret_cast<const FcChar8*>(osFontsDir));
+
+		return FcConfigBuildFonts(fcConfig);
 	}
 
 	#else
 
 	static bool CheckFontConfig() { return false; }
 	static bool BuildFontConfig(const char*) { return false; }
+	static bool GenFontConfig(bool fromCons) { return false; }
 	#endif
 
 	static FT_Library& GetLibrary() {
@@ -172,12 +215,27 @@ public:
 
 		return singleton.lib;
 	};
+	static FcConfig* GetFcConfig() {
+		return fcConfig;
+	}
 
 private:
+	inline static FcConfig* fcConfig = nullptr;
 	FT_Library lib;
 };
 #endif
 
+
+
+bool FtLibraryHandlerProxy::GenFontConfig()
+{
+#ifndef HEADLESS
+	return FtLibraryHandler::GenFontConfig(false);
+#else
+	return false;
+#endif
+
+}
 
 
 
@@ -276,34 +334,58 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 	// create properties of the wanted font
 	FcPattern* pattern = FcPatternCreate();
 	{
-		FcValue v;
-		v.type = FcTypeBool;
-		v.u.b = FcTrue;
-		FcPatternAddWeak(pattern, FC_ANTIALIAS, v, FcFalse);
+		{
+			FcValue v;
+			v.type = FcTypeBool;
+			v.u.b = FcTrue;
+			FcPatternAddWeak(pattern, FC_ANTIALIAS, v, FcFalse);
+		}
 
-		FcPatternAddCharSet(pattern, FC_CHARSET, cset);
-		FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+		FcPatternAddCharSet(pattern, FC_CHARSET , cset);
+		FcPatternAddBool(   pattern, FC_SCALABLE, FcTrue);
+		FcPatternAddDouble( pattern, FC_SIZE    , static_cast<double>(origSize));
 
 		int weight = FC_WEIGHT_NORMAL;
 		int slant  = FC_SLANT_ROMAN;
+		FcBool outline = FcFalse;
+		FcChar8* family = nullptr;
+		FcChar8* foundry = nullptr;
+
 		{
 			const FcChar8* ftname = reinterpret_cast<const FcChar8*>("not used");
 			FcBlanks* blanks = FcBlanksCreate();
 			FcPattern* origPattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
 			FcBlanksDestroy(blanks);
 			if (origPattern) {
-				FcPatternGetInteger(origPattern, FC_WEIGHT, 0, &weight);
-				FcPatternGetInteger(origPattern, FC_SLANT,  0, &slant);
+				FcPatternGetInteger(origPattern, FC_WEIGHT , 0, &weight);
+				FcPatternGetInteger(origPattern, FC_SLANT  , 0, &slant);
+				FcPatternGetBool(   origPattern, FC_OUTLINE, 0, &outline);
+				FcPatternGetString( origPattern, FC_FAMILY , 0, &family);
+				FcPatternGetString( origPattern, FC_FOUNDRY, 0, &foundry);
+
 				FcPatternDestroy(origPattern);
 			}
 		}
 		FcPatternAddInteger(pattern, FC_WEIGHT, weight);
 		FcPatternAddInteger(pattern, FC_SLANT, slant);
+		FcPatternAddBool(pattern, FC_OUTLINE, outline);
+		if (family)
+			FcPatternAddString(pattern, FC_FAMILY, family);
+		if (foundry)
+			FcPatternAddString(pattern, FC_FOUNDRY, foundry);
+	}
+
+	FcDefaultSubstitute(pattern);
+	if (!FcConfigSubstitute(FtLibraryHandler::GetFcConfig(), pattern, FcMatchPattern))
+	{
+		FcPatternDestroy(pattern);
+		FcCharSetDestroy(cset);
+		return nullptr;
 	}
 
 	// search fonts that fit our request
 	FcResult res;
-	FcFontSet* fs = FcFontSort(nullptr, pattern, FcFalse, nullptr, &res);
+	FcFontSet* fs = FcFontSort(FtLibraryHandler::GetFcConfig(), pattern, FcFalse, nullptr, &res);
 
 	// dtors
 	auto del = [&](FcFontSet* fs) { FcFontSetDestroy(fs); };
@@ -436,33 +518,6 @@ void CFontTexture::Update() {
 		font->UpdateTexture();
 	}
 }
-
-
-bool CFontTexture::GenFontConfig() {
-	#ifndef HEADLESS
-	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
-	char osFontsDir[32 * 1024];
-
-	#ifdef _WIN32
-	ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
-	#else
-	strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));
-	#endif
-
-	FtLibraryHandler::GetLibrary();
-
-	if (FtLibraryHandler::CheckFontConfig()) {
-		printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
-		return true;
-	}
-
-	printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
-	return (FtLibraryHandler::BuildFontConfig(osFontsDir));
-	#endif
-
-	return true;
-}
-
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
@@ -812,4 +867,3 @@ void CFontTexture::UpdateTexture()
 	glPopAttrib();
 #endif
 }
-

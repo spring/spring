@@ -43,3 +43,5 @@ add_subdirectory(bitmaps)
 add_subdirectory(springcontent)
 add_subdirectory(maphelper)
 add_subdirectory(cursors)
+
+install(FILES "fontscache.bmp" DESTINATION "${DATADIR}/base")

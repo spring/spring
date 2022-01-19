@@ -18,6 +18,7 @@
 #include <cerrno>
 #include <cstring>
 #include "System/SpringRegex.h"
+#include "System/Platform/Misc.h"
 
 #ifndef _WIN32
 	#include <dirent.h>
@@ -407,6 +408,16 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 #endif
 }
 
+
+std::string FileSystemAbstraction::GetSpringExecutableDir()
+{
+	std::string springFullName = Platform::GetProcessExecutableFile();
+	std::size_t pos = springFullName.find_last_of("/\\");
+	if (pos != std::string::npos)
+		return EnsurePathSepAtEnd(springFullName.substr(0, pos));
+	else
+		return "";
+}
 
 std::string FileSystemAbstraction::GetCwd()
 {

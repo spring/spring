@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <iostream>
+#include <chrono>
 
 #include <SDL.h>
 #include <gflags/gflags.h>
@@ -50,6 +51,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Models/ModelsMemStorage.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -59,6 +61,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
+#include "System/ScopedResource.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
@@ -101,7 +104,7 @@ CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("
 CONFIG(unsigned, TextureMemPoolSize).defaultValue(512).minimumValue(1);
 CONFIG(bool, UseLuaMemPools).defaultValue(true).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
-CONFIG(bool, UseFontConfigLib).defaultValue(false).description("Whether the system fontconfig library (if present and enabled at compile-time) should be used for handling fonts.");
+CONFIG(bool, UseFontConfigLib).defaultValue(true).description("Whether the system fontconfig library (if present and enabled at compile-time) should be used for handling fonts.");
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
@@ -244,7 +247,7 @@ bool SpringApp::Init()
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 
 	UpdateInterfaceGeometry();
-	CglFont::LoadConfigFonts();
+	InitFonts();
 
 	ClearScreen();
 
@@ -309,6 +312,56 @@ bool SpringApp::InitPlatformLibs()
 #endif
 
 	return true;
+}
+
+bool SpringApp::InitFonts()
+{
+	std::string texPath = FileSystemAbstraction::GetSpringExecutableDir() + "base/fontscache.bmp";
+	texPath = FileSystem::ForwardSlashes(texPath);
+
+
+	// can't use shaders here because filesystem is not ready yet
+	// drawing w/o shader is meh, so use SDL renderer
+	const auto scopedSR = spring::ScopedResource(
+		SDL_CreateRenderer(globalRendering->GetWindow(0), -1, SDL_RENDERER_ACCELERATED),
+		[](SDL_Renderer* r) { SDL_DestroyRenderer(r); }
+	);
+
+	auto* surf = SDL_LoadBMP(texPath.c_str());
+	auto scopedTex = spring::ScopedResource(
+		surf ? SDL_CreateTextureFromSurface(scopedSR(), surf) : nullptr,
+		[](SDL_Texture* t) { SDL_DestroyTexture(t); }
+	);
+	SDL_FreeSurface(surf);
+
+
+	using namespace std::chrono_literals;
+	auto future = std::async(std::launch::async, [] {
+		return FtLibraryHandlerProxy::GenFontConfig();
+	});
+
+	for (;;) {
+		auto status = future.wait_for(16.6666ms); //60 FPS
+		if (status == std::future_status::ready) {
+			if (future.get() == false)
+				return false;
+
+			return CglFont::LoadConfigFonts();
+		}
+		else {
+			if (scopedTex())
+				SDL_RenderCopy(scopedSR(), scopedTex(), nullptr, nullptr);
+			else {
+				SDL_SetRenderDrawColor(scopedSR(), 0, 0, 0, 255);
+				SDL_RenderClear(scopedSR());
+			}
+
+			SDL_RenderPresent(scopedSR());
+
+			Watchdog::ClearTimer(WDT_MAIN);
+			SDL_PumpEvents();
+		}
+	}
 }
 
 bool SpringApp::InitFileSystem()
@@ -414,8 +467,18 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 #endif
 
 	if (FLAGS_gen_fontconfig) {
-		CFontTexture::GenFontConfig();
-		exit(spring::EXIT_CODE_SUCCESS);
+		{
+			spring_clock::PushTickRate();
+			spring_time::setstarttime(spring_time::gettime(true));
+		}
+		if (FtLibraryHandlerProxy::GenFontConfig()) {
+			printf("[FtLibraryHandler::GenFontConfig] is succesfull\n");
+			exit(spring::EXIT_CODE_SUCCESS);
+		}
+		else {
+			printf("[FtLibraryHandler::GenFontConfig] is unsuccesfull\n");
+			exit(spring::EXIT_CODE_FAILURE);
+		}
 	}
 
 	if (FLAGS_sync_version) {

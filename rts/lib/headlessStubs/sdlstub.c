@@ -342,6 +342,34 @@ extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
 extern DECLSPEC void SDLCALL SDL_StopTextInput(void) {
 }
 
+extern DECLSPEC SDL_Renderer* SDLCALL SDL_CreateRenderer(SDL_Window* window, int index, Uint32 flags) {
+	return NULL;
+}
+
+extern DECLSPEC void SDLCALL SDL_DestroyRenderer(SDL_Renderer* renderer) {}
+
+extern DECLSPEC SDL_Texture* SDLCALL SDL_CreateTextureFromSurface(SDL_Renderer* renderer, SDL_Surface* surface) {
+	return NULL;
+}
+
+extern DECLSPEC void SDLCALL SDL_DestroyTexture(SDL_Texture* texture) {}
+
+#define SDL_LoadBMP(file) (NULL)
+
+extern DECLSPEC int SDLCALL SDL_RenderCopy(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect* srcrect, const SDL_Rect* dstrect) {
+	return 0;
+}
+
+extern DECLSPEC int SDLCALL SDL_SetRenderDrawColor(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	return 0;
+}
+
+extern DECLSPEC int SDLCALL SDL_RenderClear(SDL_Renderer* renderer) {
+	return 0;
+}
+
+extern DECLSPEC void SDLCALL SDL_RenderPresent(SDL_Renderer* renderer) {}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
