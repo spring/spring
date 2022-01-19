@@ -270,10 +270,9 @@ class CSplitLuaHandle
 	public:
 		static void ClearGameParams() { spring::clear_unordered_map(gameParams); }
 		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
+		static LuaRulesParams::Params gameParams; // public for CREG
 
 	private:
-		//FIXME: add to CREG?
-		static LuaRulesParams::Params  gameParams;
 		friend class LuaSyncedCtrl;
 };
 

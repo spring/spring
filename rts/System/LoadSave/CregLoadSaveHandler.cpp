@@ -98,6 +98,8 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	}
 	s->SerializeObjectInstance(&commandDescriptionCache, commandDescriptionCache.GetClass());
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
+	std::unique_ptr<creg::IType> mapType = creg::DeduceType<decltype(CSplitLuaHandle::gameParams)>::Get();
+	mapType->Serialize(s, &CSplitLuaHandle::gameParams);
 }
 
 
