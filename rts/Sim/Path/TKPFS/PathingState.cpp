@@ -54,6 +54,12 @@ static const std::string GetCacheFileName(const std::string& fileHashCode, const
 
 void PathingState::KillStatic() { pathingStates = 0; }
 
+PathingState::PathingState()
+{
+	pathCache[0] = nullptr;
+	pathCache[1] = nullptr;
+}
+
 void PathingState::Init(std::vector<IPathFinder*> pathFinderlist, PathingState* parentState, unsigned int _BLOCK_SIZE, const std::string& peFileName, const std::string& mapFileName)
 {
 	BLOCK_SIZE = _BLOCK_SIZE;
@@ -159,8 +165,11 @@ void PathingState::Init(std::vector<IPathFinder*> pathFinderlist, PathingState* 
 
 void PathingState::Terminate()
 {
-	pcMemPool.free(pathCache[0]);
-	pcMemPool.free(pathCache[1]);
+	if (pathCache[0] != nullptr)
+		pcMemPool.free(pathCache[0]);
+	
+	if (pathCache[1] != nullptr)
+		pcMemPool.free(pathCache[1]);
 
 	//LOG("Pathing unporcessed updatedBlocks is %llu", updatedBlocks.size());
 
@@ -173,7 +182,8 @@ void PathingState::Terminate()
 	}
 
 	// allow our PNSB to be reused across reloads
-	nodeStateBuffers[instanceIndex] = std::move(blockStates);
+	if (instanceIndex < nodeStateBuffers.size())
+		nodeStateBuffers[instanceIndex] = std::move(blockStates);
 }
 
 void PathingState::AllocStateBuffer()

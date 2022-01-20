@@ -134,8 +134,10 @@ CPathManager::~CPathManager()
 	// 	lowResPE = nullptr;
 	// }
 
-	for (int i = 0; i<pathFinders.size(); ++i)
-		pathFinders[i]->Kill();
+	for (int i = 0; i<pathFinders.size(); ++i){
+		if (pathFinders[i] != nullptr)
+			pathFinders[i]->Kill();
+	}
 
 	pathFinders.clear();
 

@@ -61,7 +61,8 @@ void IPathFinder::Init(unsigned int _BLOCK_SIZE)
 void IPathFinder::Kill()
 {
 	// allow our PNSB to be reused across reloads
-	nodeStateBuffers[instanceIndex] = std::move(blockStates);
+	if (instanceIndex < nodeStateBuffers.size())
+		nodeStateBuffers[instanceIndex] = std::move(blockStates);
 }
 
 

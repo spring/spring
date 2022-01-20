@@ -24,6 +24,8 @@ class CPathFinder;
 class PathingState {
 public:
 
+	PathingState();
+
     void Init(std::vector<IPathFinder*> pathFinderlist, PathingState* parentState, unsigned int BLOCK_SIZE, const std::string& peFileName, const std::string& mapFileName);
 
     void Terminate();
