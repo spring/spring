@@ -44,4 +44,4 @@ add_subdirectory(springcontent)
 add_subdirectory(maphelper)
 add_subdirectory(cursors)
 
-install(FILES "fontscache.bmp" DESTINATION "${DATADIR}/base")
+#install(FILES "fontscache.bmp" DESTINATION "${DATADIR}/base")

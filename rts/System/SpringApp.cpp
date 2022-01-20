@@ -316,28 +316,12 @@ bool SpringApp::InitPlatformLibs()
 
 bool SpringApp::InitFonts()
 {
-	std::string texPath = FileSystemAbstraction::GetSpringExecutableDir() + "base/fontscache.bmp";
-	texPath = FileSystem::ForwardSlashes(texPath);
-
-
-	// can't use shaders here because filesystem is not ready yet
-	// drawing w/o shader is meh, so use SDL renderer
-	const auto scopedSR = spring::ScopedResource(
-		SDL_CreateRenderer(globalRendering->GetWindow(0), -1, SDL_RENDERER_ACCELERATED),
-		[](SDL_Renderer* r) { SDL_DestroyRenderer(r); }
-	);
-
-	auto* surf = SDL_LoadBMP(texPath.c_str());
-	auto scopedTex = spring::ScopedResource(
-		surf ? SDL_CreateTextureFromSurface(scopedSR(), surf) : nullptr,
-		[](SDL_Texture* t) { SDL_DestroyTexture(t); }
-	);
-	SDL_FreeSurface(surf);
-
+	FtLibraryHandlerProxy::InitFtLibrary();
+	const bool ret = CglFont::LoadConfigFonts();
 
 	using namespace std::chrono_literals;
 	auto future = std::async(std::launch::async, [] {
-		return FtLibraryHandlerProxy::GenFontConfig();
+		return FtLibraryHandlerProxy::CheckGenFontConfigFull(false);
 	});
 
 	for (;;) {
@@ -346,20 +330,12 @@ bool SpringApp::InitFonts()
 			if (future.get() == false)
 				return false;
 
-			return CglFont::LoadConfigFonts();
+			return ret;
 		}
 		else {
-			if (scopedTex())
-				SDL_RenderCopy(scopedSR(), scopedTex(), nullptr, nullptr);
-			else {
-				SDL_SetRenderDrawColor(scopedSR(), 0, 0, 0, 255);
-				SDL_RenderClear(scopedSR());
-			}
-
-			SDL_RenderPresent(scopedSR());
-
 			Watchdog::ClearTimer(WDT_MAIN);
 			SDL_PumpEvents();
+			globalRendering->SwapBuffers(true, true);
 		}
 	}
 }
@@ -466,12 +442,29 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	}
 #endif
 
+	if (FLAGS_isolation)
+		dataDirLocater.SetIsolationMode(true);
+
+	if (!FLAGS_isolation_dir.empty()) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
+	}
+
+	if (!FLAGS_write_dir.empty())
+		dataDirLocater.SetWriteDir(FLAGS_write_dir);
+
+	// if this fails, configHandler remains null
+	// logOutput's init depends on configHandler
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
+	FileSystemInitializer::InitializeLogOutput();
+
 	if (FLAGS_gen_fontconfig) {
 		{
 			spring_clock::PushTickRate();
 			spring_time::setstarttime(spring_time::gettime(true));
 		}
-		if (FtLibraryHandlerProxy::GenFontConfig()) {
+		FtLibraryHandlerProxy::InitFtLibrary();
+		if (FtLibraryHandlerProxy::CheckGenFontConfigFull(true)) {
 			printf("[FtLibraryHandler::GenFontConfig] is succesfull\n");
 			exit(spring::EXIT_CODE_SUCCESS);
 		}
@@ -486,19 +479,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		std::cout << SpringVersion::GetSync() << std::endl;
 		exit(spring::EXIT_CODE_SUCCESS);
 	}
-
-	if (FLAGS_isolation)
-		dataDirLocater.SetIsolationMode(true);
-
-
-	if (!FLAGS_isolation_dir.empty()) {
-		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
-	}
-
-	if (!FLAGS_write_dir.empty())
-		dataDirLocater.SetWriteDir(FLAGS_write_dir);
-
 
 	// Interface Documentations in JSON-Format
 	if (FLAGS_list_config_vars) {
@@ -534,11 +514,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	}
 
 	CTextureAtlas::SetDebug(FLAGS_textureatlas);
-
-	// if this fails, configHandler remains null
-	// logOutput's init depends on configHandler
-	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
-	FileSystemInitializer::InitializeLogOutput();
 }
 
 

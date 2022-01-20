@@ -20,7 +20,8 @@ struct FontFace;
 
 class FtLibraryHandlerProxy {
 public:
-	static bool GenFontConfig();
+	static void InitFtLibrary();
+	static bool CheckGenFontConfigFull(bool console);
 };
 
 
