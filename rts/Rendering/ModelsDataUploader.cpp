@@ -108,6 +108,12 @@ void MatrixUploader::InitDerived()
 		: IStreamBufferConcept::Types::SB_BUFFERSUBDATA;
 
 	InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, sbType, true, MatricesMemStorage::BUFFERING);
+	if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP && !ssbo->IsValid()) {
+		// some potatoe driver overestimated its support for SB_PERSISTENTMAP
+		// Redo with good old SB_BUFFERSUBDATA
+		KillImpl();
+		InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, MatricesMemStorage::BUFFERING);
+	}
 }
 
 void MatrixUploader::KillDerived()
@@ -130,6 +136,12 @@ void MatrixUploader::UpdateDerived()
 		const uint32_t newElemCount = AlignUp(storageElemCount, elemCountIncr);
 		LOG_L(L_DEBUG, "[%s::%s] sizing SSBO %s. New elements count = %u, elemCount = %u, storageElemCount = %u", className, __func__, "up", newElemCount, elemCount, storageElemCount);
 		ssbo->Resize(newElemCount);
+
+		if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP && !ssbo->IsValid()) {
+			KillImpl();
+			InitImpl(MATRIX_SSBO_BINDING_IDX, newElemCount, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, MatricesMemStorage::BUFFERING);
+		}
+
 		matricesMemStorage.SetAllDirty(); //Resize doesn't copy the data
 	}
 

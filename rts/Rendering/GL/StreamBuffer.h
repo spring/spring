@@ -101,6 +101,8 @@ public:
 	virtual void Init() = 0;
 	virtual void Kill(bool deleteBuffer) = 0;
 
+	virtual bool IsValid() const { return true; };
+
 	virtual void Resize(uint32_t numElems) {
 		Kill(false);
 
@@ -424,6 +426,10 @@ public:
 		ptrBase = nullptr;
 	}
 	IStreamBufferConcept::Types GetBufferImplementation() const override { return IStreamBufferConcept::Types::SB_PERSISTENTMAP; }
+
+	bool IsValid() const override {
+		return (ptrBase != nullptr);
+	}
 
 	T* Map(const T* clientPtr, uint32_t elemOffset, uint32_t elemCount) override {
 		IStreamBuffer<T>::Map(clientPtr, elemOffset, elemCount);
