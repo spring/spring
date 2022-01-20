@@ -1782,9 +1782,18 @@ bool CSplitLuaHandle::LoadUnsynced()
 
 bool CSplitLuaHandle::SwapSyncedHandle(lua_State* L, lua_State* L_GC)
 {
+	eventHandler.RemoveClient(&syncedLuaHandle);
+
 	LUA_CLOSE(&syncedLuaHandle.L);
 	syncedLuaHandle.SetLuaStates(L, L_GC);
-	return IsValid();
+
+	if (!IsValid()) {
+		return false;
+	}
+
+	// update which callins are present in the new state
+	eventHandler.AddClient(&syncedLuaHandle);
+	return true;
 }
 
 
