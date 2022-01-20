@@ -363,6 +363,8 @@ class CLuaHandle : public CEventClient
 
 		// FIXME needs access to L & RunCallIn
 		friend class CLuaRules;
+
+		friend class CLuaStateCollector;
 };
 
 

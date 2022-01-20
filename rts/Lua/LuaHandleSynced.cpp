@@ -1705,7 +1705,7 @@ bool CSplitLuaHandle::InitSynced(bool dryRun)
 		}
 	}
 
-	const bool haveSynced = syncedLuaHandle.Init(syncedCode, GetUnsyncedFileName());
+	const bool haveSynced = syncedLuaHandle.Init(syncedCode, GetSyncedFileName());
 
 	if (!IsValid() || !haveSynced) {
 		KillLua();

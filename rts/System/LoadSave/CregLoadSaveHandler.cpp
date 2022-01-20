@@ -109,9 +109,17 @@ class CLuaStateCollector
 
 public:
 	CLuaStateCollector() = default;
+	void Read(const CSplitLuaHandle* handle);
+	void Write(CSplitLuaHandle* handle);
+
 	bool valid;
 	lua_State* L = nullptr;
 	lua_State* L_GC = nullptr;
+	std::vector<bool> watchUnitDefs;        // callin masks for Unit*Collision, UnitMoveFailed
+	std::vector<bool> watchFeatureDefs;     // callin masks for UnitFeatureCollision
+	std::vector<bool> watchProjectileDefs;  // callin masks for Projectile*
+	std::vector<bool> watchExplosionDefs;   // callin masks for Explosion
+	std::vector<bool> watchAllowTargetDefs; // callin masks for AllowWeapon*Target*
 	void Serialize(creg::ISerializer* s);
 };
 
@@ -120,8 +128,41 @@ CR_REG_METADATA(CLuaStateCollector, (
 	CR_MEMBER(valid),
 	CR_IGNORED(L),
 	CR_IGNORED(L_GC),
+	CR_MEMBER(watchUnitDefs),
+	CR_MEMBER(watchFeatureDefs),
+	CR_MEMBER(watchProjectileDefs),
+	CR_MEMBER(watchExplosionDefs),
+	CR_MEMBER(watchAllowTargetDefs),
 	CR_SERIALIZER(Serialize)
 ))
+
+void CLuaStateCollector::Read(const CSplitLuaHandle* handle) {
+	valid = (handle != nullptr) && handle->syncedLuaHandle.IsValid();
+	if (!valid)
+		return;
+
+	L = handle->syncedLuaHandle.GetLuaState();
+	L_GC = handle->syncedLuaHandle.GetLuaGCState();
+	watchUnitDefs = handle->syncedLuaHandle.watchUnitDefs;
+	watchFeatureDefs = handle->syncedLuaHandle.watchFeatureDefs;
+	watchProjectileDefs = handle->syncedLuaHandle.watchProjectileDefs;
+	watchExplosionDefs = handle->syncedLuaHandle.watchExplosionDefs;
+	watchAllowTargetDefs = handle->syncedLuaHandle.watchAllowTargetDefs;
+
+	lua_gc(L_GC, LUA_GCCOLLECT, 0);
+}
+
+void CLuaStateCollector::Write(CSplitLuaHandle* handle) {
+	if ((handle == nullptr) || !handle->syncedLuaHandle.IsValid() || !valid)
+		return;
+
+	handle->SwapSyncedHandle(L, L_GC);
+	handle->syncedLuaHandle.watchUnitDefs = watchUnitDefs;
+	handle->syncedLuaHandle.watchFeatureDefs = watchFeatureDefs;
+	handle->syncedLuaHandle.watchProjectileDefs = watchProjectileDefs;
+	handle->syncedLuaHandle.watchExplosionDefs = watchExplosionDefs;
+	handle->syncedLuaHandle.watchAllowTargetDefs = watchAllowTargetDefs;
+}
 
 void CLuaStateCollector::Serialize(creg::ISerializer* s) {
 	if (!valid)
@@ -165,12 +206,7 @@ static void ReadString(std::istream& s, std::string& str)
 static void SaveLuaState(CSplitLuaHandle* handle, creg::COutputStreamSerializer& os, std::stringstream& oss)
 {
 	CLuaStateCollector lsc;
-	lsc.valid = (handle != nullptr) && handle->syncedLuaHandle.IsValid();
-	if (lsc.valid) {
-		lsc.L = handle->syncedLuaHandle.GetLuaState();
-		lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
-		lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
-	}
+	lsc.Read(handle);
 	os.SavePackage(&oss, &lsc, lsc.GetClass());
 }
 
@@ -187,12 +223,9 @@ static void LoadLuaState(CSplitLuaHandle* handle, creg::CInputStreamSerializer& 
 	assert(plsc && plsccls == CLuaStateCollector::StaticClass());
 	CLuaStateCollector* lsc = static_cast<CLuaStateCollector*>(plsc);
 
-	if ((handle != nullptr) && handle->syncedLuaHandle.IsValid() && lsc->valid)
-		handle->SwapSyncedHandle(lsc->L, lsc->L_GC);
+	lsc->Write(handle);
 
 	spring::SafeDelete(lsc);
-	return;
-
 }
 
 
