@@ -111,6 +111,7 @@ void MatrixUploader::InitDerived()
 	if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP && !ssbo->IsValid()) {
 		// some potatoe driver overestimated its support for SB_PERSISTENTMAP
 		// Redo with good old SB_BUFFERSUBDATA
+		LOG_L(L_ERROR, "[MatrixUploader::%s] OpenGL reported persistent mapping to be available, but initial mapping of buffer failed. Falling back.", __func__);
 		KillImpl();
 		InitImpl(MATRIX_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, MatricesMemStorage::BUFFERING);
 	}
@@ -138,6 +139,7 @@ void MatrixUploader::UpdateDerived()
 		ssbo->Resize(newElemCount);
 
 		if (ssbo->GetBufferImplementation() == IStreamBufferConcept::Types::SB_PERSISTENTMAP && !ssbo->IsValid()) {
+			LOG_L(L_ERROR, "[MatrixUploader::%s] OpenGL reported persistent mapping to be available, but mapping of buffer of %u size failed. Falling back.", __func__, uint32_t(newElemCount * sizeof(CMatrix44f)));
 			KillImpl();
 			InitImpl(MATRIX_SSBO_BINDING_IDX, newElemCount, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, MatricesMemStorage::BUFFERING);
 		}
