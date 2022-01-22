@@ -141,6 +141,14 @@ public:
 	int screenPosX;
 	int screenPosY;
 
+	/// the screen size in pixels
+	int screenFullSizeX;
+	int screenFullSizeY;
+
+	/// the screen offsets in pixels (in case display is not the first one)
+	int screenFullPosX;
+	int screenFullPosY;
+
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;

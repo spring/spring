@@ -3327,8 +3327,8 @@ int LuaUnsyncedCtrl::SetWindowGeometry(lua_State* L)
 	const int winRelPosY = luaL_checkint(L, 3);
 	const int winSizeX = luaL_checkint(L, 4);
 	const int winSizeY = luaL_checkint(L, 5);
-	const int fullScreen = luaL_checkboolean(L, 6);
-	const int borderless = luaL_checkboolean(L, 7);
+	const bool fullScreen = luaL_checkboolean(L, 6);
+	const bool borderless = luaL_checkboolean(L, 7);
 
 	const bool r = globalRendering->SetWindowPosHelper(displayIndex, winRelPosX, winRelPosY, winSizeX, winSizeY, fullScreen, borderless);
 	if (!r)

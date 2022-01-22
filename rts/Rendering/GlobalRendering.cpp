@@ -108,6 +108,10 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(screenSizeY),
 	CR_IGNORED(screenPosX),
 	CR_IGNORED(screenPosY),
+	CR_IGNORED(screenFullSizeX),
+	CR_IGNORED(screenFullSizeY),
+	CR_IGNORED(screenFullPosX),
+	CR_IGNORED(screenFullPosY),
 	CR_IGNORED(winPosX),
 	CR_IGNORED(winPosY),
 	CR_IGNORED(winSizeX),
@@ -193,6 +197,8 @@ CGlobalRendering::CGlobalRendering()
 
 	, screenSizeX(1)
 	, screenSizeY(1)
+	, screenFullSizeX(1)
+	, screenFullSizeY(1)
 
 	// window geometry
 	, winPosX(configHandler->GetInt("WindowPosX"))
@@ -1127,10 +1133,14 @@ void CGlobalRendering::GetScreenEffectiveBounds(SDL_Rect& r, const int* di, cons
 {
 	const int displayIndex = di ? *di : GetCurrentDisplayIndex();
 	const bool fullScreen_ = fs ? *fs : this->fullScreen;
+#if 1
 	if (fullScreen_)
 		SDL_GetDisplayBounds(displayIndex, &r);
 	else
 		SDL_GetDisplayUsableBounds(displayIndex, &r);
+#else
+	SDL_GetDisplayBounds(displayIndex, &r);
+#endif
 }
 
 
@@ -1178,6 +1188,8 @@ void CGlobalRendering::ReadWindowPosAndSize()
 #ifdef HEADLESS
 	screenSizeX = 8;
 	screenSizeY = 8;
+	screenFullSizeX = 8;
+	screenFullSizeY = 8;
 	winSizeX = 8;
 	winSizeY = 8;
 	winPosX = 0;
@@ -1188,11 +1200,20 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	SDL_Rect screenSize;
 	GetScreenEffectiveBounds(screenSize);
 
+	SDL_Rect screenFullSize;
+	static constexpr bool bogusFS = true;
+	GetScreenEffectiveBounds(screenFullSize, nullptr, &bogusFS);
+
 	// no other good place to set these
 	screenSizeX = screenSize.w;
 	screenSizeY = screenSize.h;
 	screenPosX  = screenSize.x;
 	screenPosY  = screenSize.y;
+
+	screenFullSizeX = screenFullSize.w;
+	screenFullSizeY = screenFullSize.h;
+	screenFullPosX  = screenFullSize.x;
+	screenFullPosY  = screenFullSize.y;
 
 	SDL_GetWindowBordersSize(sdlWindows[0], &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
 	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
