@@ -396,6 +396,8 @@ local function LoadFont(fontName)
     return nil  -- missing texture
   end
 
+--[[
+  FIXME-OPENGL4
   local fontLists
   if (strfind(options, "o")) then
     fontLists = MakeOutlineDisplayLists(fontSpecs)
@@ -405,6 +407,7 @@ local function LoadFont(fontName)
   if (not fontLists) then
     return nil  -- bad display lists
   end
+]]
 
   local font = {}
   font.name  = fontName
