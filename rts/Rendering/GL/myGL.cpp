@@ -15,6 +15,7 @@
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
+#include "Rendering/OGLDBInfo.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -22,6 +23,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
+#include "System/Platform/Misc.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
@@ -201,13 +203,12 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 
 
 
-bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
+bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2& ctxVer, bool extraChecks)
 {
 	assert(glVendor != nullptr);
 	assert(glRenderer != nullptr);
 
 	const std::string& _glVendor = StringToLower(glVendor);
-	// const std::string& _glRenderer = StringToLower(glRenderer);
 
 	// should be unreachable
 	// note that checking for Microsoft stubs is no longer required
@@ -215,6 +216,11 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	// drivers are installed)
 	if (_glVendor.find("unknown") != std::string::npos)
 		return false;
+
+	if (!extraChecks)
+		return true;
+
+	OGLDBInfo ogldbInfo{ std::string(glRenderer), Platform::GetOSFamilyStr() };
 
 	if (_glVendor.find("vmware") != std::string::npos) {
 		const char* msg =
@@ -225,6 +231,15 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
 		return true;
 	}
+
+#if 0
+	std::string msg;
+	if (ogldbInfo.GetResult(ctxVer, msg)) {
+		LOG_L(L_WARNING, "%s", msg.c_str());
+		Platform::MsgBox(msg.c_str(), "Warning", MBF_EXCL);
+		return true;
+	}
+#endif
 
 	return true;
 }

@@ -22,6 +22,7 @@
 
 #include "System/float3.h"
 #include "System/float4.h"
+#include "System/type2.h"
 
 #include "glStateDebug.h"
 
@@ -115,7 +116,7 @@ void glSafeDeleteProgram(GLuint program);
 bool CheckAvailableVideoModes();
 
 bool GetAvailableVideoRAM(GLint* memory, const char* glVendor);
-bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
+bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2& ctxVer, bool extraChecks);
 
 
 class CVertexArray;

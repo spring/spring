@@ -20,6 +20,7 @@
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "System/StringHash.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -64,6 +65,8 @@ CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0
 CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
 CONFIG(int, WindowPosX).defaultValue(0 ).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+
+CONFIG(int, RendererHash).defaultValue(-1).minimumValue(0).maximumValue(65535).description("Used to check driver database for OpenGL context information");
 
 
 /**
@@ -853,8 +856,12 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if (std::strcmp(globalRenderingInfo.glslVersion, "unknown") == 0)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 
-	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer))
+	int rendererHash = static_cast<uint16_t>(hashStringLower(grInfo.glVersion) ^ hashStringLower(grInfo.glVendor) ^ hashStringLower(grInfo.glRenderer));
+
+	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, configHandler->GetInt("RendererHash") != rendererHash))
 		throw unsupported_error("OpenGL drivers not installed, aborting");
+
+	configHandler->Set("RendererHash", rendererHash);
 
 	memset(grInfo.glVersionShort, 0, sizeof(grInfo.glVersionShort));
 	memset(grInfo.glslVersionShort, 0, sizeof(grInfo.glslVersionShort));
