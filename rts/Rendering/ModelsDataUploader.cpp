@@ -103,6 +103,9 @@ std::size_t TypedStorageBufferUploader<T, Derived>::GetProjectileElemOffset(int3
 
 void MatrixUploader::InitDerived()
 {
+	if (!Supported())
+		return;
+
 	const auto sbType = globalRendering->supportPersistentMapping
 		? IStreamBufferConcept::Types::SB_PERSISTENTMAP
 		: IStreamBufferConcept::Types::SB_BUFFERSUBDATA;
@@ -119,6 +122,9 @@ void MatrixUploader::InitDerived()
 
 void MatrixUploader::KillDerived()
 {
+	if (!Supported())
+		return;
+
 	KillImpl();
 }
 
@@ -278,11 +284,17 @@ std::size_t MatrixUploader::GetElemOffsetImpl(const CProjectile* p) const
 
 void ModelsUniformsUploader::InitDerived()
 {
+	if (!Supported())
+		return;
+
 	InitImpl(MATUNI_SSBO_BINDING_IDX, ELEM_COUNT0, ELEM_COUNTI, IStreamBufferConcept::Types::SB_BUFFERSUBDATA, true, 3);
 }
 
 void ModelsUniformsUploader::KillDerived()
 {
+	if (!Supported())
+		return;
+
 	KillImpl();
 }
 
