@@ -1607,14 +1607,9 @@ void CMiniMap::DrawUnitIcons() const
 	glTranslatef(0.0f, +1.0f, 0.0f);
 	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.0f);
-
 	unitDrawer->DrawUnitMiniMapIcons();
 
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D); //maybe later stages need it
 
 	glPopMatrix();
 }

@@ -186,6 +186,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
+	REGISTER_LUA_CFUNC(UnitIconSetDraw);
 
 	REGISTER_LUA_CFUNC(ExtractModArchiveFile);
 
@@ -1883,6 +1884,16 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 
 	lua_pushboolean(L, icon::iconHandler.FreeIcon(luaL_checkstring(L, 1)));
 	return 1;
+}
+
+int LuaUnsyncedCtrl::UnitIconSetDraw(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->drawIcon = luaL_checkboolean(L, 2);
 }
 
 

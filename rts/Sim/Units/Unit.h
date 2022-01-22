@@ -564,6 +564,7 @@ public:
 	UnitTrackStruct* myTrack = nullptr;
 	icon::CIconData* myIcon = nullptr;
 
+	bool drawIcon = true;
 private:
 	// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned = false;

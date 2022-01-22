@@ -260,6 +260,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDecalOwner);
 	REGISTER_LUA_CFUNC(GetDecalType);
 
+	REGISTER_LUA_CFUNC(UnitIconGetDraw);
+
 	return true;
 }
 
@@ -3014,3 +3016,12 @@ int LuaUnsyncedRead::GetDecalType(lua_State* L)
 	return 1;
 }
 
+int LuaUnsyncedRead::UnitIconGetDraw(lua_State* L) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	lua_pushboolean(L, unit->drawIcon);
+	return 1;
+}

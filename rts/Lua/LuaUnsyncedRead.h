@@ -188,6 +188,8 @@ class LuaUnsyncedRead {
 		static int GetDecalAlpha(lua_State* L);
 		static int GetDecalType(lua_State* L);
 		static int GetDecalOwner(lua_State* L);
+
+		static int UnitIconGetDraw(lua_State* L);
 };
 
 

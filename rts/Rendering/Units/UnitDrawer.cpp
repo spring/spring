@@ -291,6 +291,7 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 	auto& sh = rb.GetShader();
 
 	sh.Enable();
+	sh.SetUniform("alphaCtrl", 0.0f, 1.0f, 0.0f, 0.0f); // GL_GREATER > 0.0
 
 	static constexpr uint8_t defaultColor[4] = { 255, 255, 255, 255 };
 	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon()) {
@@ -307,6 +308,8 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 			if (unit->noMinimap)
 				continue;
 			if (unit->myIcon == nullptr)
+				continue;
+			if (!unit->drawIcon)
 				continue;
 			if (unit->IsInVoid())
 				continue;
@@ -354,6 +357,7 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 		rb.Submit(GL_TRIANGLES);
 	}
 
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f);
 	sh.Disable();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -398,9 +402,9 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 				continue;
 			if (unit->noDraw)
 				continue;
-			if (unit->IsInVoid())
+			if (!unit->drawIcon)
 				continue;
-			if (unit->health <= 0 || unit->beingBuilt)
+			if (unit->IsInVoid())
 				continue;
 
 			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
@@ -505,6 +509,8 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 		for (const CUnit* unit : units)
 		{
 			if (unit->noDraw)
+				continue;
+			if (!unit->drawIcon)
 				continue;
 			if (unit->IsInVoid())
 				continue;
