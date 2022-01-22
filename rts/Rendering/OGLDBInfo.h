@@ -25,6 +25,8 @@ public:
 		std::swap(maxVer, rhs.maxVer);
 		std::swap(id, rhs.id);
 		std::swap(drv, rhs.drv);
+
+		return *this;
 	}
 private:
 	std::string glRenderer;
