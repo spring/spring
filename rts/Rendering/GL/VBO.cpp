@@ -16,7 +16,7 @@
 #include "System/Log/ILog.h"
 #include "System/SpringMath.h"
 
-CONFIG(bool, UseVBO).defaultValue(true).safemodeValue(false);
+//CONFIG(bool, UseVBO).defaultValue(true).safemodeValue(false);
 CONFIG(bool, UsePBO).defaultValue(true).safemodeValue(false).headlessValue(false);
 
 
@@ -36,11 +36,11 @@ bool VBO::IsSupported(GLenum target) {
 	if (!isRangeMappingSupported) //TODO glBufferSubData() fallback ?
 		return false;
 
-	static bool isPBOSupported  = (GLEW_EXT_pixel_buffer_object && configHandler->GetBool("UsePBO"));
-	static bool isVBOSupported  = (GLEW_ARB_vertex_buffer_object && configHandler->GetBool("UseVBO"));
-	static bool isUBOSupported  = (GLEW_ARB_uniform_buffer_object && configHandler->GetBool("UseVBO"));
-	static bool isSSBOSupported = (GLEW_ARB_shader_storage_buffer_object && configHandler->GetBool("UseVBO"));
-	static bool isCopyBuffSupported = (GLEW_ARB_copy_buffer && configHandler->GetBool("UseVBO"));
+	static bool isPBOSupported  = (GLEW_EXT_pixel_buffer_object);
+	static bool isVBOSupported  = (GLEW_ARB_vertex_buffer_object);
+	static bool isUBOSupported  = (GLEW_ARB_uniform_buffer_object);
+	static bool isSSBOSupported = (GLEW_ARB_shader_storage_buffer_object);
+	static bool isCopyBuffSupported = (GLEW_ARB_copy_buffer);
 
 	switch (target) {
 	case GL_PIXEL_PACK_BUFFER:

@@ -688,7 +688,6 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
-	haveGL4 &= configHandler->GetBool("UseVBO");
 
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
