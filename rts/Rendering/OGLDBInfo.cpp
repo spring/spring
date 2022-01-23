@@ -36,8 +36,8 @@ OGLDBInfo::OGLDBInfo(const std::string& glRenderer_, const std::string& myOS_)
 
 		curl_easy_setopt(curlw.GetHandle(), CURLOPT_URL, oglInfoURL.c_str());
 
-		curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYPEER, FALSE);
-		curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYHOST, 2);
+		curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYHOST, 2L);
 
 		curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 		curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEDATA, (void*)&resultJSON);
