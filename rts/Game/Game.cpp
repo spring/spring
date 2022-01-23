@@ -440,6 +440,7 @@ void CGame::Load(const std::string& mapFileName)
 			ENTER_SYNCED_CODE();
 			eventHandler.GamePreload();
 			eventHandler.CollectGarbage(true);
+			readMap->UpdateHeightBounds(); //needed in case pre-game terraform changed the map
 			LEAVE_SYNCED_CODE();
 		}
 

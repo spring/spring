@@ -208,6 +208,7 @@ public:
 	unsigned int CalcHeightmapChecksum();
 	unsigned int CalcTypemapChecksum();
 
+	void UpdateHeightBounds();
 private:
 	void InitHeightBounds();
 	void UpdateHeightBounds(int syncFrame);

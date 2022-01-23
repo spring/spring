@@ -746,6 +746,22 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 #endif
 }
 
+void CReadMap::UpdateHeightBounds()
+{
+	const float* heightmap = GetCornerHeightMapSynced();
+
+	tempHeightBounds.x = std::numeric_limits<float>::max();
+	tempHeightBounds.y = std::numeric_limits<float>::lowest();
+
+	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
+		tempHeightBounds.x = std::min(tempHeightBounds.x, heightmap[i]);
+		tempHeightBounds.y = std::max(tempHeightBounds.y, heightmap[i]);
+	}
+
+	currHeightBounds.x = tempHeightBounds.x;
+	currHeightBounds.y = tempHeightBounds.y;
+}
+
 void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
