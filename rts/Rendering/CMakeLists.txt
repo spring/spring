@@ -131,6 +131,7 @@ set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitDrawerData.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ModelsDataUploader.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/OGLDBInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UniformConstants.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/VerticalSync.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WorldDrawer.cpp"
