@@ -232,14 +232,12 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2&
 		return true;
 	}
 
-#if 0
 	std::string msg;
 	if (ogldbInfo.GetResult(ctxVer, msg)) {
 		LOG_L(L_WARNING, "%s", msg.c_str());
 		Platform::MsgBox(msg.c_str(), "Warning", MBF_EXCL);
 		return true;
 	}
-#endif
 
 	return true;
 }
