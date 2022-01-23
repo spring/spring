@@ -320,7 +320,7 @@ bool SpringApp::InitFonts()
 	const bool ret = CglFont::LoadConfigFonts();
 
 	using namespace std::chrono_literals;
-	auto future = std::async(std::launch::async, []() {
+	auto future = std::async(std::launch::async, [] {
 		return FtLibraryHandlerProxy::CheckGenFontConfigFull(false);
 	});
 
