@@ -1894,6 +1894,7 @@ int LuaUnsyncedCtrl::UnitIconSetDraw(lua_State* L)
 		return 0;
 
 	unit->drawIcon = luaL_checkboolean(L, 2);
+	return 0;
 }
 
 
