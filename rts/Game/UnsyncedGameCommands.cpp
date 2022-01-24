@@ -3272,8 +3272,9 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case 2: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
-			case 3: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
+			case 2: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1,                       false); } break;
+			case 3: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str()),                       false); } break;
+			case 4: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str()), (bool)atoi(args[3].c_str())); } break;
 			default: {
 				LOG_L(L_WARNING, "/DumpState: wrong syntax");
 			} break;

@@ -11,6 +11,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -37,10 +38,86 @@ static std::fstream file;
 static int gMinFrameNum = -1;
 static int gMaxFrameNum = -1;
 static int gFramePeriod =  1;
+static bool onlyHash = true;
+
+namespace {
+	inline std::string TapFloats(const float v) {
+		std::ostringstream str;
+		if (onlyHash) {
+			str << reinterpret_cast<const uint32_t&>(v) << "\n";
+		}
+		else {
+			str << reinterpret_cast<const uint32_t&>(v) << " <"
+				<< v << ">\n";
+		}
+
+		return str.str();
+	}
+	inline std::string TapFloats(const float3& v) {
+		std::ostringstream str;
+		if (onlyHash) {
+			str << spring::LiteHash(v) << "\n";
+		}
+		else {
+			str << spring::LiteHash(v) << " <"
+				<< v.x << ", "
+				<< v.y << ", "
+				<< v.z << ">\n";
+		}
 
 
-void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
+		return str.str();
+	}
+	inline std::string TapFloats(const float4& v) {
+		std::ostringstream str;
+		if (onlyHash) {
+			str << spring::LiteHash(v) << "\n";
+		}
+		else {
+			str << spring::LiteHash(v) << " <"
+				<< v.x << ", "
+				<< v.y << ", "
+				<< v.z << ", "
+				<< v.w << ">\n";
+		}
+
+
+		return str.str();
+	}
+	inline std::string TapFloats(const CMatrix44f& v) {
+		std::ostringstream str;
+		if (onlyHash) {
+			str << spring::LiteHash(v) << "\n";
+		}
+		else {
+			str << spring::LiteHash(v) << " <"
+				<< v[0] << ", "
+				<< v[1] << ", "
+				<< v[2] << ", "
+				<< v[3] << "; "
+				<< v[4] << ", "
+				<< v[5] << ", "
+				<< v[6] << ", "
+				<< v[7] << "; "
+				<< v[8] << ", "
+				<< v[9] << ", "
+				<< v[10] << ", "
+				<< v[11] << "; "
+				<< v[12] << ", "
+				<< v[13] << ", "
+				<< v[14] << ", "
+				<< v[15] << ">\n";
+		}
+
+		return str.str();
+	}
+}
+
+
+void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod, bool outputFloats)
 {
+	onlyHash = !outputFloats;
+
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
 
@@ -102,8 +179,8 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	const ProjectileContainer& projectiles = projectileHandler.projectileContainers[true];
 
 	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
-	file << "\tunits: " << activeUnits.size() << "\n";
 
+	#define DUMP_MODEL_DATA
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
 	#define DUMP_UNIT_WEAPON_DATA
@@ -119,6 +196,53 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	//#define DUMP_SMOOTHMESH
 	#define DUMP_SMOOTHMESH_CHECKSUM
 
+	#ifdef DUMP_MODEL_DATA
+	if (gs->frameNum == gMinFrameNum) { //dump once
+		file << "\tmodels: " << activeUnits.size() << "\n";
+		for (const auto& m : modelLoader.GetModelsVec()) {
+			file << "\t\tID: " << m.id << " (name: " << m.name << ")\n";
+			file << "\t\tnumPieces: " << m.numPieces << "\n";
+			file << "\t\ttextureType: " << m.textureType << "\n";
+			file << "\t\tmodelType: " << m.type << "\n";
+			file << "\t\tradius: " << TapFloats(m.radius);
+			file << "\t\theight: " << TapFloats(m.height);
+			file << "\t\tmins: " << TapFloats(m.mins);
+			file << "\t\tmaxs: " << TapFloats(m.maxs);
+			file << "\t\trelMidPos: " << TapFloats(m.relMidPos);
+			file << "\t\tpieceObjects: " << m.pieceObjects.size() << "\n";
+			for (const auto* p : m.pieceObjects) {
+				file << "\t\t\tname: " << p->name << "\n";
+				file << "\t\t\tchildrenNum: " << p->children.size() << "\n";
+				file << "\t\t\tparentName: " << (p->parent ? p->parent->name : "(NULL)") << "\n";
+				file << "\t\t\thasBakedMat: " << p->HasBackedMat() << "\n";
+				file << "\t\t\tbposeMatrix: " << TapFloats(p->bposeMatrix);
+				file << "\t\t\tbakedMatrix: " << TapFloats(p->bakedMatrix);
+				file << "\t\t\toffset: " << TapFloats(p->offset);
+				file << "\t\t\tgoffset: " << TapFloats(p->goffset);
+				file << "\t\t\tscales: " << TapFloats(p->scales);
+				file << "\t\t\tscales: " << TapFloats(p->mins);
+				file << "\t\t\tscales: " << TapFloats(p->maxs);
+
+				file << "\t\t\tvertices.size(): " << p->GetVerticesVec().size() << "\n";
+				for (const auto& v : p->GetVerticesVec()) { //is it sync significant?
+					file << "\t\t\tpos: " << TapFloats(v.pos);
+				}
+
+				file << "\t\t\tindices.size(): " << p->GetIndicesVec().size() << "\n";
+				file << "\t\t\t";
+				for (const auto& i : p->GetIndicesVec()) { //is it sync significant?
+					file << i << ", ";
+				}
+				file << "\n";
+			}
+			file << "\n";
+			file << "\n";
+		}
+	}
+	#endif
+
+	file << "\tunits: " << activeUnits.size() << "\n";
+
 	#ifdef DUMP_UNIT_DATA
 	for (const CUnit* u: activeUnits) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
@@ -131,12 +255,13 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const float3& zdir = u->frontdir;
 
 		file << "\t\tunitID: " << u->id << " (name: " << u->unitDef->name << ")\n";
-		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << ">\n";
-		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << ">\n";
-		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << ">\n";
+		file << "\t\t\tpos: " << TapFloats(pos);
+		file << "\t\t\txdir: " << TapFloats(xdir);
+		file << "\t\t\tydir: " << TapFloats(ydir);
+		file << "\t\t\tzdir: " << TapFloats(zdir);
 		file << "\t\t\theading: " << int(u->heading) << ", mapSquare: " << u->mapSquare << "\n";
-		file << "\t\t\thealth: " << u->health << ", experience: " << u->experience << "\n";
+		file << "\t\t\thealth: " << TapFloats(u->health);
+		file << "\t\t\texperience: " << TapFloats(u->experience);
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
 		file << "\t\t\tphysicalState: " << u->physicalState << "\n";
 		file << "\t\t\tfireState: " << u->fireState << ", moveState: " << u->moveState << "\n";
@@ -150,8 +275,8 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 			const float3& prot = lmp.GetRotation();
 
 			file << "\t\t\t\tname: " << omp->name << " (parentName: " << ((par != nullptr)? par->name: "[null]") << ")\n";
-			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
-			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
+			file << "\t\t\t\tpos: " << TapFloats(ppos);
+			file << "\t\t\t\trot: " << TapFloats(prot);
 			file << "\t\t\t\tvisible: " << lmp.scriptSetVisible << "\n";
 			file << "\n";
 		}
@@ -167,11 +292,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 			const float3& rmp = w->relWeaponMuzzlePos;
 
 			file << "\t\t\t\tweaponID: " << w->weaponNum << " (name: " << w->weaponDef->name << ")\n";
-			file << "\t\t\t\tweaponDir: <" << w->weaponDir.x << ", " << w->weaponDir.y << ", " << w->weaponDir.z << ">\n";
-			file << "\t\t\t\tabsWeaponPos: <" << awp.x << ", " << awp.y << ", " << awp.z << ">\n";
-			file << "\t\t\t\trelAimFromPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
-			file << "\t\t\t\tabsWeaponMuzzlePos: <" << amp.x << ", " << amp.y << ", " << amp.z << ">\n";
-			file << "\t\t\t\trelWeaponMuzzlePos: <" << rmp.x << ", " << rmp.y << ", " << rmp.z << ">\n";
+			file << "\t\t\t\tweaponDir: " << TapFloats(w->weaponDir);
+			file << "\t\t\t\tabsWeaponPos: " << TapFloats(awp);
+			file << "\t\t\t\trelAimFromPos: " << TapFloats(rwp);
+			file << "\t\t\t\tabsWeaponMuzzlePos: " << TapFloats(amp);
+			file << "\t\t\t\trelWeaponMuzzlePos: " << TapFloats(rmp);
 			file << "\n";
 		}
 		#endif
@@ -202,10 +327,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const float3& oldSlowUpPos = amt->oldSlowUpdatePos;
 
 		file << "\t\t\tmoveType:\n";
-		file << "\t\t\t\tgoalPos: <" << goalPos.x << ", " << goalPos.y << ", " << goalPos.z << ">\n";
-		file << "\t\t\t\toldUpdatePos: <" << oldUpdatePos.x << ", " << oldUpdatePos.y << ", " << oldUpdatePos.z << ">\n";
-		file << "\t\t\t\toldSlowUpPos: <" << oldSlowUpPos.x << ", " << oldSlowUpPos.y << ", " << oldSlowUpPos.z << ">\n";
-		file << "\t\t\t\tmaxSpeed: " << amt->GetMaxSpeed() << ", maxWantedSpeed: " << amt->GetMaxWantedSpeed() << "\n";
+		file << "\t\t\t\tgoalPos: " << TapFloats(goalPos);
+		file << "\t\t\t\toldUpdatePos: " << TapFloats(oldUpdatePos);
+		file << "\t\t\t\toldSlowUpPos: " << TapFloats(oldSlowUpPos);
+		file << "\t\t\t\tmaxSpeed: " << TapFloats(amt->GetMaxSpeed());
+		file << "\t\t\t\tmaxWantedSpeed: " << TapFloats(amt->GetMaxWantedSpeed());
 		file << "\t\t\t\tprogressState: " << amt->progressState << "\n";
 		#endif
 	}
@@ -218,8 +344,9 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CFeature* f = featureHandler.GetFeature(featureID);
 
 		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
-		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
-		file << "\t\t\thealth: " << f->health << ", reclaimLeft: " << f->reclaimLeft << "\n";
+		file << "\t\t\tpos: " << TapFloats(f->pos);
+		file << "\t\t\thealth: " << TapFloats(f->health);
+		file << "\t\t\treclaimLeft: " << TapFloats(f->reclaimLeft);
 	}
 	#endif
 
@@ -228,9 +355,9 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	#ifdef DUMP_PROJECTILE_DATA
 	for (const CProjectile* p: projectiles) {
 		file << "\t\tprojectileID: " << p->id << "\n";
-		file << "\t\t\tpos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
-		file << "\t\t\tdir: <" << p->dir.x << ", " << p->dir.y << ", " << p->dir.z << ">\n";
-		file << "\t\t\tspeed: <" << p->speed.x << ", " << p->speed.y << ", " << p->speed.z << ">\n";
+		file << "\t\t\tpos: <" << TapFloats(p->pos);
+		file << "\t\t\tdir: <" << TapFloats(p->dir);
+		file << "\t\t\tspeed: <" << TapFloats(p->speed);
 		file << "\t\t\tweapon: " << p->weapon << ", piece: " << p->piece << "\n";
 		file << "\t\t\tcheckCol: " << p->checkCol << ", deleteMe: " << p->deleteMe << "\n";
 	}
@@ -243,10 +370,14 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CTeam* t = teamHandler.Team(a);
 
 		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
-		file << "\t\t\tmetal: " << float(t->res.metal) << ", energy: " << float(t->res.energy) << "\n";
-		file << "\t\t\tmetalPull: " << t->resPull.metal << ", energyPull: " << t->resPull.energy << "\n";
-		file << "\t\t\tmetalIncome: " << t->resIncome.metal << ", energyIncome: " << t->resIncome.energy << "\n";
-		file << "\t\t\tmetalExpense: " << t->resExpense.metal << ", energyExpense: " << t->resExpense.energy << "\n";
+		file << "\t\t\tmetal: " << TapFloats(t->res.metal);
+		file << "\t\t\tenergy: " << TapFloats(t->res.energy);
+		file << "\t\t\tmetalPull: " << TapFloats(t->resPull.metal);
+		file << "\t\t\tenergyPull: " << TapFloats(t->resPull.energy);
+		file << "\t\t\tmetalIncome: " << TapFloats(t->resIncome.metal);
+		file << "\t\t\tenergyIncome: " << TapFloats(t->resIncome.energy);
+		file << "\t\t\tmetalExpense: " << TapFloats(t->resExpense.metal);
+		file << "\t\t\tenergyExpense: " << TapFloats(t->resExpense.energy);
 	}
 	#endif
 

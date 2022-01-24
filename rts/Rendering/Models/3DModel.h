@@ -108,7 +108,7 @@ struct S3DModelPiece {
 		name.clear();
 		children.clear();
 
-		for (S3DModelPiecePart& p: shatterParts) {
+		for (S3DModelPiecePart& p : shatterParts) {
 			p.renderData.clear();
 		}
 
@@ -135,7 +135,7 @@ struct S3DModelPiece {
 	virtual float3 GetEmitDir() const;
 
 	// internal use
-	uint32_t GetVertexCount() const { return vertices.size();  }
+	uint32_t GetVertexCount() const { return vertices.size(); }
 	uint32_t GetVertexDrawIndexCount() const { return indices.size(); }
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
@@ -157,7 +157,7 @@ struct S3DModelPiece {
 	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
 
 	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
-
+	bool HasBackedMat() const { return hasBakedMat; }
 protected:
 	virtual void DrawForList() const = 0;
 public:
