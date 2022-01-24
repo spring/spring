@@ -57,6 +57,58 @@ namespace spring {
 			return HsiehHash(&s.data()[0], s.size(), 0);
 		}
 	};
+
+	static inline std::uint32_t LiteHash(const void* p, unsigned size, std::uint32_t cs0 = 0) {
+		std::uint32_t cs = cs0;
+
+		switch (size) {
+		case 1:
+			cs += *(const unsigned char*)p;
+			cs ^= cs << 10;
+			cs += cs >> 1;
+			break;
+		case 2:
+			cs += *(const unsigned short*)(const char*)p;
+			cs ^= cs << 11;
+			cs += cs >> 17;
+			break;
+		case 3:
+			// just here to make the switch statements contiguous (so it can be optimized)
+			for (unsigned i = 0; i < 3; ++i) {
+				cs += *(const unsigned char*)p + i;
+				cs ^= cs << 10;
+				cs += cs >> 1;
+			}
+			break;
+		case 4:
+			cs += *(const unsigned int*)(const char*)p;
+			cs ^= cs << 16;
+			cs += cs >> 11;
+			break;
+		default:
+		{
+			unsigned i = 0;
+			for (; i < (size & ~3) / 4; ++i) {
+				cs += *(reinterpret_cast<const unsigned int*>(p) + i);
+				cs ^= cs << 16;
+				cs += cs >> 11;
+			}
+			for (; i < size; ++i) {
+				cs += *(const unsigned char*)p + i;
+				cs ^= cs << 10;
+				cs += cs >> 1;
+			}
+			break;
+		}
+		}
+		return cs;
+	}
+
+	template<typename T>
+	static inline std::uint32_t LiteHash(const T& p, std::uint32_t cs0 = 0) { return LiteHash(&p, sizeof(T), cs0); }
+
+	template<typename T>
+	static inline std::uint32_t LiteHash(const T* p, std::uint32_t cs0 = 0) { return LiteHash( p, sizeof(T), cs0); }
 }
 
 #endif //_SPRING_HASH_H_

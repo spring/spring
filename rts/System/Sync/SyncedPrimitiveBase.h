@@ -46,8 +46,9 @@ namespace Sync {
 #ifdef SYNCCHECK
 		assert(CSyncChecker::InSyncedCode());
 		CSyncChecker::Sync(p, size);
-	#ifdef TRACE_SYNC_HEAVY
-		fprintf(stderr, "[Sync::%s] msg=%s chksum=%u\n", __func__, msg, CSyncChecker::GetChecksum());
+	#ifdef TRACE_SYNC
+		unsigned int crc = CSyncChecker::GetChecksum();
+		fprintf(stderr, "[Sync::%s] msg=%s chksum=%u\n", __func__, msg, crc);
 	#endif
 #endif
 	}

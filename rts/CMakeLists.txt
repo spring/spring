@@ -15,6 +15,11 @@ if (TRACE_SYNC)
 	add_definitions(-DTRACE_SYNC)
 endif (TRACE_SYNC)
 
+option(SYNC_HSIEH "Use HSIEH hash for sync checksums" FALSE)
+if (SYNC_HSIEH)
+	add_definitions(-DSYNC_HSIEH)
+endif (SYNC_HSIEH)
+
 option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
 	add_definitions(-DSYNCDEBUG)

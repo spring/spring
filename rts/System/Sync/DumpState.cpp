@@ -16,6 +16,8 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -25,8 +27,10 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Map/ReadMap.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
+#include "System/SpringHash.h"
 
 static std::fstream file;
 
@@ -52,6 +56,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	if (newFramePeriod >= 1) gFramePeriod = newFramePeriod;
 
 	if ((gMinFrameNum != oldMinFrameNum) || (gMaxFrameNum != oldMaxFrameNum)) {
+		LOG("[%s] dumping state (from %d to %d step %d)", __func__, gMinFrameNum, gMaxFrameNum, gFramePeriod);
 		// bounds changed, open a new file
 		if (file.is_open()) {
 			file.flush();
@@ -107,7 +112,12 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	#define DUMP_FEATURE_DATA
 	#define DUMP_PROJECTILE_DATA
 	#define DUMP_TEAM_DATA
-	// #define DUMP_ALLYTEAM_DATA
+	//#define DUMP_ALLYTEAM_DATA
+	#define DUMP_ALLYTEAM_DATA_CHECKSUM
+	//#define DUMP_HEIGHTMAP
+	#define DUMP_HEIGHTMAP_CHECKSUM
+	//#define DUMP_SMOOTHMESH
+	#define DUMP_SMOOTHMESH_CHECKSUM
 
 	#ifdef DUMP_UNIT_DATA
 	for (const CUnit* u: activeUnits) {
@@ -242,20 +252,114 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 	file << "\tallyteams: " << teamHandler.ActiveAllyTeams() << "\n";
 
-	#ifdef DUMP_ALLYTEAM_DATA
+	std::array<ILosType*, 7> losTypes = {
+		&losHandler->los,
+		&losHandler->airLos,
+		&losHandler->radar,
+		&losHandler->sonar,
+		&losHandler->seismic,
+		&losHandler->jammer,
+		&losHandler->sonarJammer
+	};
+	#if defined(DUMP_ALLYTEAM_DATA) || defined(DUMP_ALLYTEAM_DATA_CHECKSUM)
 	for (int a = 0; a < teamHandler.ActiveAllyTeams(); ++a) {
-		file << "\t\tallyteamID: " << a << ", LOS-map:" << "\n";
+		file << "\t\tallyteamID: " << a << "\n";
 
-		for (int y = 0; y < losHandler->losSizeY; ++y) {
-			file << " ";
+		for (int lti = 0; lti < losTypes.size(); ++lti) {
+			file << "\t\t\tLOS-map type:" << lti << "\n";
+			const auto lt = losTypes[lti];
+			const auto* lm = &lt->losMaps[a].front();
 
-			for (int x = 0; x < losHandler->losSizeX; ++x) {
-				file << "\t\t\t" << losHandler->losMaps[a][y * losHandler->losSizeX + x] << " ";
+			#ifdef DUMP_ALLYTEAM_DATA
+			file << "\t\t\t\t";
+			for (unsigned int i = 0; i < (lt->size.x * lt->size.y); i++) {
+				file << lm[i] << " ";
 			}
-
 			file << "\n";
+			#endif
+
+			#ifdef DUMP_ALLYTEAM_DATA_CHECKSUM
+			uint32_t adCs = 0;
+			for (unsigned int i = 0; i < (lt->size.x * lt->size.y); i++) {
+				adCs = spring::LiteHash(lm[i], adCs);
+			}
+			file << "\t\t\t\thash: " << adCs << "\n";
+			#endif
 		}
 	}
+	#endif
+
+	const auto heightmap = readMap->GetCornerHeightMapSynced();
+	const auto centerNormals = readMap->GetCenterNormalsSynced();
+	const auto faceNormals = readMap->GetFaceNormalsSynced();
+	#ifdef DUMP_HEIGHTMAP
+	file << "\theightmap as uint32t: " << "\n";
+	file << "\t\t";
+	for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+		file << *reinterpret_cast<const uint32_t*>(&heightmap[i]) << " ";
+	}
+	file << "\n";
+
+	file << "\tcenterNormals as uint32t: " << "\n";
+	file << "\t\t";
+	for (unsigned int i = 0; i < (mapDims.mapx * mapDims.mapy); i++) {
+		file << *reinterpret_cast<const uint32_t*>(&centerNormals[i].x) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&centerNormals[i].y) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&centerNormals[i].z) << " ";
+	}
+	file << "\n";
+
+	file << "\tfaceNormals as uint32t: " << "\n";
+	file << "\t\t";
+	for (unsigned int i = 0; i < (mapDims.mapx * mapDims.mapy); i++) {
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 0].x) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 0].y) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 0].z) << " ";
+
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 1].x) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 1].y) << " ";
+		file << *reinterpret_cast<const uint32_t*>(&faceNormals[i + 1].z) << " ";
+	}
+	file << "\n";
+
+	#endif
+
+	#ifdef DUMP_HEIGHTMAP_CHECKSUM
+	uint32_t hmCs = 0;
+	uint32_t cnCs = 0;
+	uint32_t fnCs = 0;
+	for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+		hmCs = spring::LiteHash(heightmap[i], hmCs);
+	}
+	for (unsigned int i = 0; i < (mapDims.mapx * mapDims.mapy); i++) {
+		cnCs = spring::LiteHash(centerNormals[i], cnCs);
+	}
+	for (unsigned int i = 0; i < (mapDims.mapx * mapDims.mapy); i++) {
+		fnCs = spring::LiteHash(faceNormals[i + 0], fnCs);
+		fnCs = spring::LiteHash(faceNormals[i + 1], fnCs);
+	}
+
+	file << "\theightmap checksum as uint32t: " << hmCs << "\n";
+	file << "\tcenterNormals checksum as uint32t: " << cnCs << "\n";
+	file << "\tfaceNormals checksum as uint32t: " << fnCs << "\n";
+	#endif
+
+	const auto smoothMesh = smoothGround.GetMeshData();
+	#ifdef DUMP_SMOOTHMESH
+	file << "\tsmoothMesh as uint32t: " << "\n";
+	file << "\t\t";
+	for (unsigned int i = 0; i < (smoothGround.GetMaxX() * smoothGround.GetMaxY()); i++) {
+		file << *reinterpret_cast<const uint32_t*>(&smoothMesh[i]) << " ";
+	}
+	file << "\n";
+	#endif
+
+	#ifdef DUMP_SMOOTHMESH_CHECKSUM
+	uint32_t smCs = 0;
+	for (unsigned int i = 0; i < (smoothGround.GetMaxX() * smoothGround.GetMaxY()); i++) {
+		smCs = spring::LiteHash(smoothMesh[i], smCs);
+	}
+	file << "\tsmoothMesh checksum as uint32t: " << smCs << "\n";
 	#endif
 
 	file.flush();
