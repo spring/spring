@@ -36,7 +36,8 @@ class S3DModelVAO {
 public:
 	static void Init();
 	static void Kill();
-	static S3DModelVAO& GetInstance() { return *instance; }
+	static S3DModelVAO& GetInstance() { assert(IsValid()); return *instance; }
+	static bool IsValid() { return instance != nullptr; }
 public:
 	static constexpr size_t INSTANCE_BUFFER_NUM_BATCHED = 2 << 15;
 	static constexpr size_t INSTANCE_BUFFER_NUM_IMMEDIATE = 2 << 10;

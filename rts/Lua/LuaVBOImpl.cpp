@@ -902,6 +902,11 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffs
 
 size_t LuaVBOImpl::ModelsVBO()
 {
+	if (!S3DModelVAO::InValid()) {
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] No ModelsVBO is available. Probably due to no GL4 support", __func__);
+		return 0;
+	}
+
 	return ModelsVBOImpl();
 }
 

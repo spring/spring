@@ -42,6 +42,7 @@ CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).descript
 CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 //CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisableGL4).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(1);
 
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
@@ -133,6 +134,7 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(forceDisablePersistentMapping),
 	CR_IGNORED(forceDisableShaders),
+	CR_IGNORED(forceDisableGL4),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
@@ -229,6 +231,7 @@ CGlobalRendering::CGlobalRendering()
 	, aspectRatio(1.0f)
 
 	, forceDisableShaders(/*configHandler->GetInt("ForceDisableShaders")*/ false)
+	, forceDisableGL4(configHandler->GetInt("ForceDisableGL4"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
@@ -701,7 +704,8 @@ void CGlobalRendering::SetGLSupportFlags()
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
-	haveGL4  &= !forceDisableShaders;
+	haveGL4 &=  !forceDisableGL4;
+
 
 	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
 				 (glRenderer.find("radeon ") != std::string::npos) || (glRenderer.find("amd ") != std::string::npos); //it's amazing how inconsistent AMD detection can be

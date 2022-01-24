@@ -190,6 +190,7 @@ public:
 
 	int forceDisablePersistentMapping;
 	int forceDisableShaders;
+	int forceDisableGL4;
 	int forceCoreContext;
 	int forceSwapBuffers;
 

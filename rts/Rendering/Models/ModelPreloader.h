@@ -2,11 +2,12 @@
 
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/3DModelVAO.h"
+#include "Rendering/GlobalRendering.h"
 
 class ModelPreloader {
 public:
 	static void Load() {
-		if (!enabled)
+		if (!globalRendering->haveGL4 || !enabled)
 			return;
 
 		// map features are loaded earlier in featureHandler.LoadFeaturesFromMap(); - not a big deal
@@ -19,6 +20,9 @@ public:
 		S3DModelVAO::Init(); //TODO figure out where to put S3DModelVAO::Kill();
 	}
 	static void Clean() {
+		if (!globalRendering->haveGL4 || !enabled)
+			return;
+
 		S3DModelVAO::Kill();
 	}
 private:
