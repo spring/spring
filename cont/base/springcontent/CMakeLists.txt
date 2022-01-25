@@ -14,6 +14,11 @@ endforeach()
 list(APPEND FILES
 	unittextures/tatex/PALETTE.PAL
 	mapgenerator/mapinfo_template.lua
+	objects3d/fir_tree_large.s3o
+	objects3d/fir_tree_medium.s3o
+	objects3d/fir_tree_small.s3o
+	objects3d/fir_tree_smallest.s3o
+	features/treetype.lua
 	EngineOptions.lua
 	gamedata/unitdefs.lua
 	gamedata/explosion_alias.lua
