@@ -1182,7 +1182,7 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 
 	static constexpr float buildColorT[4]  = { 0.0f, 0.9f, 0.0f, 0.7f };
 	static constexpr float buildColorF[4]  = { 0.9f, 0.8f, 0.0f, 0.7f };
-	static constexpr float featureColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
+	static constexpr float featureColor[4] = { 0.9f, 0.8f, 0.0f, 0.7f };
 	static constexpr float illegalColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
