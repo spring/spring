@@ -2,7 +2,7 @@
 
 #include "PathManager.h"
 #include "PathingState.h"
-#include "Sim/Path/Default/PathConstants.h"
+#include "PathConstants.h"
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "Sim/Path/Default/PathFlowMap.hpp"
@@ -174,19 +174,11 @@ std::uint32_t CPathManager::GetPathCheckSum() const {
 	//return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
-std::int64_t CPathManager::Finalize() {
+std::int64_t CPathManager::Finalize()
+{
 	const spring_time t0 = spring_gettime();
 
 	{
-		// maxResPF = &gMaxResPF;
-		// medResPE = &gMedResPE;
-		// lowResPE = &gLowResPE;
-
-		// maxResPF only runs on the main thread, so can be unsafe
-		// maxResPF->Init(false);
-		// medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe" , mapInfo->map.name);
-		// lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
-
 		std::vector<IPathFinder*> maxResList(pathFinderGroups);
 		std::vector<IPathFinder*> medResList(pathFinderGroups);
 
@@ -209,6 +201,19 @@ std::int64_t CPathManager::Finalize() {
 	return (dt.toMilliSecsi());
 }
 
+std::int64_t CPathManager::PostFinalizeRefresh()
+{
+	const spring_time t0 = spring_gettime();
+
+	if (finalized)
+	{
+		pathingStates[PATH_MED_RES].UpdateVertexPathCosts(-1);
+		pathingStates[PATH_LOW_RES].UpdateVertexPathCosts(-1);
+	}
+
+	const spring_time dt = spring_gettime() - t0;
+	return (dt.toMilliSecsi());
+}
 
 void CPathManager::FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser)
 {

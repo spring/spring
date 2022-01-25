@@ -24,6 +24,7 @@ public:
 	virtual std::uint32_t GetPathCheckSum() const { return 0; }
 
 	virtual std::int64_t Finalize() { return 0; }
+	virtual std::int64_t PostFinalizeRefresh() { return 0; }
 
 	/**
 	 * returns if a path was changed after RequestPath returned its pathID
