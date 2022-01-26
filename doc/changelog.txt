@@ -17,6 +17,9 @@ Maps:
 		- causticsResolution  (75.0)
 		- causticsStrength    (0.08)
 
+Misc:
+ - don't warn for archive checksum mismatch if server's checksum is zero
+
 -- 105.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features
