@@ -1435,12 +1435,17 @@ sha512::raw_digest CArchiveScanner::GetArchiveCompleteChecksumBytes(const std::s
 	return checksum;
 }
 
-
+static constexpr sha512::raw_digest EMPTY_DIGEST = {0x80, }; // 1000...000 hex
 void CArchiveScanner::CheckArchive(
 	const std::string& name,
 	const sha512::raw_digest& serverChecksum,
 	      sha512::raw_digest& clientChecksum
 ) {
+	/* Dedicated servers often don't actually have the content,
+	 * but this is fine as they just relay traffic - don't warn. */
+	if (serverChecksum == EMPTY_DIGEST)
+		return;
+
 	if ((clientChecksum = GetArchiveCompleteChecksumBytes(name)) == serverChecksum)
 		return;
 
