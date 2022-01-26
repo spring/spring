@@ -65,7 +65,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	groundTextures = new CSMFGroundTextures(smfMap);
 	meshDrawer = SwitchMeshDrawer(drawerMode);
 
-	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
+	smfRenderStates = { nullptr };
 	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL, false);
 	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false, false);
 	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true,  true);
@@ -122,7 +122,8 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
-	smfRenderStates.clear();
+
+	smfRenderStates = { nullptr };
 
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
@@ -522,7 +523,8 @@ void CSMFGroundDrawer::Update()
 
 void CSMFGroundDrawer::UpdateRenderState()
 {
-	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
+	for (int i = 0; i < smfRenderStates.size() - 1; ++i)
+		smfRenderStates[i]->Update(this, nullptr);
 }
 
 void CSMFGroundDrawer::SunChanged() {

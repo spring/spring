@@ -152,6 +152,10 @@ void SMFRenderStateGLSL::Update(
 	const CSMFGroundDrawer* smfGroundDrawer,
 	const LuaMapShaderData* luaMapShaderData
 ) {
+	if (!globalRendering->haveGLSL || !configHandler->GetBool("AdvMapShading")) {
+		return; //nothing to do here
+	}
+
 	if (useLuaShaders) {
 		assert(luaMapShaderData != nullptr);
 
