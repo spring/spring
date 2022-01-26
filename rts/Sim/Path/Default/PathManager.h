@@ -80,6 +80,7 @@ public:
 	std::uint32_t GetPathCheckSum() const override;
 
 	std::int64_t Finalize() override;
+	std::int64_t PostFinalizeRefresh() override;
 
 	void RemoveCacheFiles() override;
 	void Update() override;

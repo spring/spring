@@ -511,6 +511,21 @@ void CPathEstimator::Update()
 	if (updatedBlocks.empty())
 		return;
 
+	UpdateVertexPathCosts(blocksToUpdate);
+}
+
+void CPathEstimator::UpdateVertexPathCosts(int blocksToUpdate)
+{
+	const unsigned int numMoveDefs = moveDefHandler.GetNumMoveDefs();
+
+	if (numMoveDefs == 0)
+		return;
+
+	if (blocksToUpdate == -1)
+		blocksToUpdate = updatedBlocks.size() * numMoveDefs;
+
+	int consumeBlocks = int(blocksToUpdate != 0) * int(ceil(float(blocksToUpdate) / numMoveDefs)) * numMoveDefs;
+
 	consumedBlocks.clear();
 	consumedBlocks.reserve(consumeBlocks);
 
