@@ -523,8 +523,7 @@ void CSMFGroundDrawer::Update()
 
 void CSMFGroundDrawer::UpdateRenderState()
 {
-	for (int i = 0; i < smfRenderStates.size() - 1; ++i)
-		smfRenderStates[i]->Update(this, nullptr);
+	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 }
 
 void CSMFGroundDrawer::SunChanged() {
