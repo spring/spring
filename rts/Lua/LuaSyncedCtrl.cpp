@@ -636,7 +636,7 @@ static int SetSolidObjectPieceVisible(lua_State* L, CSolidObject* obj)
 	if (lmp == nullptr)
 		luaL_argerror(L, 2, "invalid piece");
 
-	lmp->scriptSetVisible = luaL_checkboolean(L, 3);
+	lmp->SetScriptVisible(luaL_checkboolean(L, 3));
 	return 0;
 }
 

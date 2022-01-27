@@ -277,7 +277,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod, bool 
 			file << "\t\t\t\tname: " << omp->name << " (parentName: " << ((par != nullptr)? par->name: "[null]") << ")\n";
 			file << "\t\t\t\tpos: " << TapFloats(ppos);
 			file << "\t\t\t\trot: " << TapFloats(prot);
-			file << "\t\t\t\tvisible: " << lmp.scriptSetVisible << "\n";
+			file << "\t\t\t\tvisible: " << lmp.GetScriptVisible() << "\n";
 			file << "\n";
 		}
 		#endif

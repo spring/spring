@@ -178,15 +178,17 @@ inline void CModelDrawerDataBase<T>::UpdateObjectSMMA(const T* o)
 
 	for (int i = 0; i < o->localModel.pieces.size(); ++i) {
 		const LocalModelPiece& lmp = o->localModel.pieces[i];
+		const bool wasCustomDirty = lmp.SetGetCustomDirty(false);
 
-		if (unlikely(!lmp.scriptSetVisible)) {
+		if (!wasCustomDirty)
+			continue;
+
+		if (unlikely(!lmp.GetScriptVisible())) {
 			smma[i + 1] = CMatrix44f::Zero();
 			continue;
 		}
 
-		const bool wasCustomDirty = lmp.SetGetCustomDirty(false);
-		if (wasCustomDirty)
-			smma[i + 1] = lmp.GetModelSpaceMatrix();
+		smma[i + 1] = lmp.GetModelSpaceMatrix();
 	}
 }
 

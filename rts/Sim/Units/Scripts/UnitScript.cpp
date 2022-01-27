@@ -426,7 +426,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 		return;
 	}
 
-	pieces[piece]->scriptSetVisible = visible;
+	pieces[piece]->SetScriptVisible(visible);
 }
 
 

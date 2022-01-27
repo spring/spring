@@ -513,6 +513,8 @@ struct LocalModelPiece
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
+	bool GetScriptVisible() const { return scriptSetVisible; }
+	void SetScriptVisible(bool b) { scriptSetVisible = b; SetGetCustomDirty(true); }
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
@@ -525,8 +527,9 @@ private:
 
 	mutable bool dirty;
 	mutable bool customDirty;
-public:
+
 	bool scriptSetVisible; // TODO: add (visibility) maxradius!
+public:
 	bool blockScriptAnims; // if true, Set{Position,Rotation} are ignored for this piece
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
