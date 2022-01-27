@@ -294,6 +294,10 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 	sh.SetUniform("alphaCtrl", 0.0f, 1.0f, 0.0f, 0.0f); // GL_GREATER > 0.0
 
 	static constexpr uint8_t defaultColor[4] = { 255, 255, 255, 255 };
+
+	if (!minimap->UseUnitIcons())
+		icon::iconHandler.GetDefaultIconData()->BindTexture();
+
 	for (const auto& [icon, units] : modelDrawerData->GetUnitsByIcon()) {
 
 		if (icon == nullptr)
@@ -301,7 +305,8 @@ void CUnitDrawerLegacy::DrawUnitMiniMapIcons() const
 		if (units.empty())
 			continue;
 
-		icon->BindTexture();
+		if (minimap->UseUnitIcons())
+			icon->BindTexture();
 
 		for (const CUnit* unit : units) {
 			assert(unit->myIcon == icon);
@@ -400,30 +405,8 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 
 			if (!unit->GetIsIcon())
 				continue;
-			if (unit->noDraw)
-				continue;
 			if (!unit->drawIcon)
 				continue;
-			if (unit->IsInVoid())
-				continue;
-
-			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
-			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
-
-			const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
-
-			// iconUnits should not never contain void-space units, see UpdateUnitIconState
-			assert(!unit->IsInVoid());
-
-			// If the icon is to be drawn as a radar blip, we want to get the default icon.
-			const icon::CIconData* iconData = nullptr;
-
-			if (useDefaultIcon) {
-				iconData = icon::iconHandler.GetDefaultIconData();
-			}
-			else {
-				iconData = unit->unitDef->iconType.GetIconData();
-			}
 
 			// drawMidPos is auto-calculated now; can wobble on its own as pieces move
 			float3 pos = (!gu->spectatingFullView) ?
@@ -441,10 +424,10 @@ void CUnitDrawerLegacy::DrawUnitIcons() const
 			//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
 			const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
 			const float iconScaleDist = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
-			float scale = iconData->GetSize() * iconScaleDist;
+			float scale = icon->GetSize() * iconScaleDist;
 
-			if (iconData->GetRadiusAdjust() && !useDefaultIcon)
-				scale *= (unit->radius / iconData->GetRadiusScale());
+			if (icon->GetRadiusAdjust() && icon != icon::iconHandler.GetDefaultIconData())
+				scale *= (unit->radius / icon->GetRadiusScale());
 
 			// make sure icon is not partly under ground
 			pos.y = std::max(pos.y, h + (unit->iconRadius = scale));
@@ -508,19 +491,8 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 
 		for (const CUnit* unit : units)
 		{
-			if (unit->noDraw)
-				continue;
 			if (!unit->drawIcon)
 				continue;
-			if (unit->IsInVoid())
-				continue;
-			if (unit->health <= 0 || unit->beingBuilt)
-				continue;
-
-			const unsigned short closBits = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS));
-			const unsigned short plosBits = (unit->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
-
-			const bool useDefaultIcon = !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR);
 
 			assert(unit->myIcon == icon);
 			// iconUnits should not never contain void-space units, see UpdateUnitIconState
@@ -540,7 +512,7 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 			uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
 
 			float unitRadiusMult = icon->GetSize();
-			if (icon->GetRadiusAdjust() && !useDefaultIcon)
+			if (icon->GetRadiusAdjust() && icon != icon::iconHandler.GetDefaultIconData())
 				unitRadiusMult *= (unit->radius / icon->GetRadiusScale());
 			unitRadiusMult = (unitRadiusMult - 1) * 0.75 + 1;
 
