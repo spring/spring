@@ -13,6 +13,9 @@ endforeach()
 
 list(APPEND FILES
 	unittextures/tatex/PALETTE.PAL
+	unittextures/tree_fir_tall_5_1.dds
+	unittextures/tree_fir_tall_5_2.dds
+	unittextures/tree_fir_tall_5_normal.dds
 	mapgenerator/mapinfo_template.lua
 	objects3d/fir_tree_large.s3o
 	objects3d/fir_tree_medium.s3o
