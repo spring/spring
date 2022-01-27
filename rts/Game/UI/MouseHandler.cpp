@@ -989,22 +989,23 @@ bool CMouseHandler::ReplaceMouseCursor(
 	if (fileIt == cursorFileMap.end())
 		return false;
 
-	auto& loadedCursor = loadedCursors[fileIt->second];
+	const auto* loadedCursor = loadedCursors.data() + fileIt->second;
 
-	if (newName == loadedCursor.GetName() && hotSpot == loadedCursor.GetHotSpot()) //same
-		return false;
+	if (newName == loadedCursor->GetName() && hotSpot == loadedCursor->GetHotSpot()) //same
+		return true;
 
-	// hold on the destruction of old CMouseCursor() in this place. Otherwise bad things will happen.
-	volatile const auto oldCursor = std::move(loadedCursors[fileIt->second]);
+	CMouseCursor newCursor = CMouseCursor(newName, hotSpot);
 
 	// replace here so SetCursor() operates with new CMouseCursor() object
-	loadedCursor = CMouseCursor(newName, hotSpot);
+	// hold on the destruction of old CMouseCursor() in this place. Otherwise bad things will happen.
+	std::swap(loadedCursors.at(fileIt->second), newCursor);
 
 	// update current cursor if necessary
 	if (activeCursorIdx == fileIt->second)
 		SetCursor(activeCursorName, true);
 
-	return (/*oldCursor destructor runs here*/ loadedCursors[activeCursorIdx].IsValid());
+	newCursor = {}; //now it's safe to kill old cursor
+	return (loadedCursors[activeCursorIdx].IsValid());
 }
 
 
