@@ -11,6 +11,7 @@
 	typedef unsigned char byte;
 #else
 	#include <X11/Xcursor/Xcursor.h>
+	#include <SDL_syswm.h>
 #endif
 
 #include "HwMouseCursor.h"
@@ -141,7 +142,7 @@ private:
 #else
 
 
-// X11
+// X11/Wayland
 class HardwareCursor: public IHardwareCursor {
 public:
 	void PushImage(int xsize, int ysize, const void* mem) override;
@@ -166,6 +167,8 @@ private:
 
 	int xmaxsize = 0;
 	int ymaxsize = 0;
+
+	SDL_SYSWM_TYPE subsystem;
 
 	std::vector<XcursorImage*> cimages;
 };
@@ -514,6 +517,16 @@ void HardwareCursor::Init(CMouseCursor::HotSpot hs)
 	hotSpot  = hs;
 	xmaxsize = 0;
 	ymaxsize = 0;
+
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+
+	if (SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
+		subsystem = info.subsystem;
+		if (subsystem == SDL_SYSWM_WAYLAND) {
+			LOG_L(L_WARNING, "HwMouseCursor: Hardware cursor for wayland is disabled");
+		}
+	}
 }
 
 void HardwareCursor::Kill()
@@ -528,7 +541,7 @@ void HardwareCursor::Kill()
 		SDL_VERSION(&info.version);
 
 		if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-			LOG_L(L_ERROR, "SDL error: can't get X11 window info");
+			LOG_L(L_ERROR, "SDL error: can't get window info");
 			return;
 		}
 
@@ -609,6 +622,9 @@ void HardwareCursor::PushFrame(int index, float delay)
 
 void HardwareCursor::Finish()
 {
+	if (subsystem == SDL_SYSWM_WAYLAND)
+		return;
+
 	if (cimages.empty())
 		return;
 
@@ -631,7 +647,7 @@ void HardwareCursor::Finish()
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
+		LOG_L(L_ERROR, "SDL error: can't get window info");
 		XcursorImagesDestroy(cis);
 		cimages.clear();
 		return;
@@ -648,7 +664,7 @@ void HardwareCursor::Bind()
 	SDL_VERSION(&info.version);
 
 	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
+		LOG_L(L_ERROR, "SDL error: can't get window info");
 		return;
 	}
 
