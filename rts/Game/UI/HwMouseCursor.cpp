@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/Win/win32.h"
+#include "System/TypeToStr.h"
 #include "Rendering/GlobalRendering.h"
 
 #if defined(__APPLE__) || defined(HEADLESS)
@@ -38,7 +39,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #if defined(__APPLE__) || defined(HEADLESS)
-class HardwareCursor: public IHardwareCursor {
+class HardwareCursorApple: public IHardwareCursor {
 public:
 	void PushImage(int xsize, int ysize, const void* mem) override {}
 	void PushFrame(int index, float delay) override {}
@@ -58,7 +59,7 @@ public:
 #elif defined(_WIN32)
 
 
-class HardwareCursor: public IHardwareCursor {
+class HardwareCursorWindows: public IHardwareCursor {
 public:
 	void PushImage(int xsize, int ysize, const void* mem) override;
 	void PushFrame(int index, float delay) override;
@@ -143,7 +144,7 @@ private:
 
 
 // X11/Wayland
-class HardwareCursor: public IHardwareCursor {
+class HardwareCursorX11: public IHardwareCursor {
 public:
 	void PushImage(int xsize, int ysize, const void* mem) override;
 	void PushFrame(int index, float delay) override;
@@ -172,19 +173,61 @@ private:
 
 	std::vector<XcursorImage*> cimages;
 };
+
+//TODO
+class HardwareCursorWayland : public IHardwareCursor {
+public:
+	void PushImage(int xsize, int ysize, const void* mem) override {}
+	void PushFrame(int index, float delay) override {}
+	void SetDelay(float delay) override {}
+	void SetHotSpot(CMouseCursor::HotSpot hs) override {}
+	void Finish() override {}
+
+	bool NeedsYFlip() const override { return false; }
+	bool IsValid() const override { return false; }
+
+	void Init(CMouseCursor::HotSpot hs) override {
+		LOG_L(L_WARNING, "[%s::%s] Hardware cursor for wayland is disabled", spring::TypeToCStr<decltype(*this)>(), __func__);
+	}
+	void Kill() override {}
+	void Bind() override {}
+};
 #endif
 
-
-
-
 IHardwareCursor* IHardwareCursor::Alloc(void* mem) {
-	static_assert(sizeof(HardwareCursor) <= CMouseCursor::HWC_MEM_SIZE, "");
-	return (new (mem) HardwareCursor());
+#if defined(__APPLE__) || defined(HEADLESS)
+	static_assert(sizeof(HardwareCursorApple  ) <= CMouseCursor::HWC_MEM_SIZE, "");
+	return (new (mem) HardwareCursorApple());
+#elif defined (_WIN32)
+	static_assert(sizeof(HardwareCursorWindows) <= CMouseCursor::HWC_MEM_SIZE, "");
+	return (new (mem) HardwareCursorWindows());
+#else //LINUX
+	static_assert(sizeof(HardwareCursorX11    ) <= CMouseCursor::HWC_MEM_SIZE, "");
+	static_assert(sizeof(HardwareCursorWayland) <= CMouseCursor::HWC_MEM_SIZE, "");
+
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+
+	if (SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
+		switch (info.subsystem)
+		{
+		case SDL_SYSWM_WAYLAND:
+			return (new (mem) HardwareCursorWayland());
+		case SDL_SYSWM_X11:
+			return (new (mem) HardwareCursorX11());
+		default: {
+			assert(false);
+		} break;
+		}
+	}
+#endif
+
+	return nullptr;
 }
 
 void IHardwareCursor::Free(IHardwareCursor* hwc) {
 	hwc->~IHardwareCursor();
-	memset(reinterpret_cast<char*>(hwc), 0, sizeof(HardwareCursor));
+	memset(reinterpret_cast<char*>(hwc), 0, CMouseCursor::HWC_MEM_SIZE);
 }
 
 
@@ -201,7 +244,7 @@ void IHardwareCursor::Free(IHardwareCursor* hwc) {
 #elif defined(_WIN32)
 
 
-void HardwareCursor::Init(CMouseCursor::HotSpot hs)
+void HardwareCursorWindows::Init(CMouseCursor::HotSpot hs)
 {
 	cursor = nullptr;
 	hotSpot = hs;
@@ -215,7 +258,7 @@ void HardwareCursor::Init(CMouseCursor::HotSpot hs)
 	hoty = 0;
 }
 
-void HardwareCursor::Kill()
+void HardwareCursorWindows::Kill()
 {
 	if (cursor != nullptr)
 		DestroyCursor(cursor);
@@ -227,7 +270,7 @@ void HardwareCursor::Kill()
 }
 
 
-void HardwareCursor::PushImage(int xsize, int ysize, const void* mem)
+void HardwareCursorWindows::PushImage(int xsize, int ysize, const void* mem)
 {
 	xmaxsize = std::max(xmaxsize, xsize);
 	ymaxsize = std::max(ymaxsize, ysize);
@@ -244,12 +287,12 @@ void HardwareCursor::PushImage(int xsize, int ysize, const void* mem)
 	framerates.push_back(std::max(int(CMouseCursor::DEF_FRAME_LENGTH * 60.0f), 1));
 }
 
-void HardwareCursor::SetDelay(float delay)
+void HardwareCursorWindows::SetDelay(float delay)
 {
 	framerates.back() = std::max(int(delay * 60.0f), 1);
 }
 
-void HardwareCursor::PushFrame(int index, float delay)
+void HardwareCursorWindows::PushFrame(int index, float delay)
 {
 	if (index >= imageCount)
 		return;
@@ -258,7 +301,7 @@ void HardwareCursor::PushFrame(int index, float delay)
 	framerates.push_back(std::max((int)(delay * 60.0f), 1));
 }
 
-void HardwareCursor::resizeImage(ImageData* image, int new_x, int new_y)
+void HardwareCursorWindows::resizeImage(ImageData* image, int new_x, int new_y)
 {
 	if (image->width == new_x && image->height == new_y)
 		return;
@@ -278,7 +321,7 @@ void HardwareCursor::resizeImage(ImageData* image, int new_x, int new_y)
 	image->height = new_y;
 }
 
-void HardwareCursor::buildIco(unsigned char* dst, ImageData& image)
+void HardwareCursorWindows::buildIco(unsigned char* dst, ImageData& image)
 {
 	const int xsize = image.width;
 	const int ysize = image.height;
@@ -379,7 +422,7 @@ static inline int GetBestCursorSize(const int minSize)
 }
 
 
-void HardwareCursor::Finish()
+void HardwareCursorWindows::Finish()
 {
 	if (frames.empty())
 		return;
@@ -487,14 +530,14 @@ void HardwareCursor::Finish()
 	icons.clear();
 }
 
-void HardwareCursor::Bind()
+void HardwareCursorWindows::Bind()
 {
 	#if 0
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
 	if (!SDL_GetWMInfo(&info)) {
-		LOG_L(L_ERROR, "SDL error: can't get window handle");
+		LOG_L(L_ERROR, "[%s::%s] SDL error: can't get window handle", spring::TypeToCStr<decltype(*this)>(), __func__);
 		return;
 	}
 
@@ -511,25 +554,15 @@ void HardwareCursor::Bind()
 #else
 
 
-void HardwareCursor::Init(CMouseCursor::HotSpot hs)
+void HardwareCursorX11::Init(CMouseCursor::HotSpot hs)
 {
 	cursor   = 0;
 	hotSpot  = hs;
 	xmaxsize = 0;
 	ymaxsize = 0;
-
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-
-	if (SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-		subsystem = info.subsystem;
-		if (subsystem == SDL_SYSWM_WAYLAND) {
-			LOG_L(L_WARNING, "HwMouseCursor: Hardware cursor for wayland is disabled");
-		}
-	}
 }
 
-void HardwareCursor::Kill()
+void HardwareCursorX11::Kill()
 {
 	for (XcursorImage* img: cimages)
 		XcursorImageDestroy(img);
@@ -541,7 +574,7 @@ void HardwareCursor::Kill()
 		SDL_VERSION(&info.version);
 
 		if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-			LOG_L(L_ERROR, "SDL error: can't get window info");
+			LOG_L(L_ERROR, "[%s::%s] SDL error: can't get window info", spring::TypeToCStr<decltype(*this)>(), __func__);
 			return;
 		}
 
@@ -550,7 +583,7 @@ void HardwareCursor::Kill()
 }
 
 
-void HardwareCursor::resizeImage(XcursorImage*& image, const int new_x, const int new_y)
+void HardwareCursorX11::resizeImage(XcursorImage*& image, const int new_x, const int new_y)
 {
 	if (int(image->width) == new_x && int(image->height) == new_y)
 		return;
@@ -575,7 +608,7 @@ void HardwareCursor::resizeImage(XcursorImage*& image, const int new_x, const in
 	image = new_image;
 }
 
-void HardwareCursor::PushImage(int xsize, int ysize, const void* mem)
+void HardwareCursorX11::PushImage(int xsize, int ysize, const void* mem)
 {
 	xmaxsize = std::max(xmaxsize, xsize);
 	ymaxsize = std::max(ymaxsize, ysize);
@@ -599,12 +632,12 @@ void HardwareCursor::PushImage(int xsize, int ysize, const void* mem)
 	cimages.push_back(image);
 }
 
-void HardwareCursor::SetDelay(float delay)
+void HardwareCursorX11::SetDelay(float delay)
 {
 	cimages.back()->delay = (XcursorUInt)(delay*1000.0f); //in millseconds
 }
 
-void HardwareCursor::PushFrame(int index, float delay)
+void HardwareCursorX11::PushFrame(int index, float delay)
 {
 	if (index >= int(cimages.size()))
 		return;
@@ -620,11 +653,8 @@ void HardwareCursor::PushFrame(int index, float delay)
 	}
 }
 
-void HardwareCursor::Finish()
+void HardwareCursorX11::Finish()
 {
-	if (subsystem == SDL_SYSWM_WAYLAND)
-		return;
-
 	if (cimages.empty())
 		return;
 
@@ -647,7 +677,7 @@ void HardwareCursor::Finish()
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-		LOG_L(L_ERROR, "SDL error: can't get window info");
+		LOG_L(L_ERROR, "[%s::%s] SDL error: can't get window info", spring::TypeToCStr<decltype(*this)>(), __func__);
 		XcursorImagesDestroy(cis);
 		cimages.clear();
 		return;
@@ -658,13 +688,13 @@ void HardwareCursor::Finish()
 	cimages.clear();
 }
 
-void HardwareCursor::Bind()
+void HardwareCursorX11::Bind()
 {
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
 	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
-		LOG_L(L_ERROR, "SDL error: can't get window info");
+		LOG_L(L_ERROR, "[%s::%s] SDL error: can't get window info", spring::TypeToCStr<decltype(*this)>(), __func__);
 		return;
 	}
 
