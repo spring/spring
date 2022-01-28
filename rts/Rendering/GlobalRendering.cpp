@@ -697,15 +697,9 @@ void CGlobalRendering::SetGLSupportFlags()
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
 
-	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
-	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
-	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
-
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
-	haveGL4 &=  !forceDisableGL4;
-
 
 	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
 				 (glRenderer.find("radeon ") != std::string::npos) || (glRenderer.find("amd ") != std::string::npos); //it's amazing how inconsistent AMD detection can be
@@ -752,6 +746,17 @@ void CGlobalRendering::SetGLSupportFlags()
 		}
 	}
 
+	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
+
+	if (int2 glslVerNum = { 0, 0 }; sscanf(&globalRenderingInfo.glslVersionShort[0], "%d.%d", &glslVerNum.x, &glslVerNum.y) == 2) {
+		// #version 430 is what engine shaders use
+		// but report < 150 as potato because only 150+ can reach same level of shading capabilities with extensions
+		haveGL4 &= (glslVerNum.x * 100 + glslVerNum.y >= 150);
+	}
+
+	haveGL4 &= !forceDisableGL4;
 
 	{
 		// use some ATI bugfixes?
