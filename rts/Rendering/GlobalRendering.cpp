@@ -872,11 +872,11 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 
 	int rendererHash = static_cast<uint16_t>(hashStringLower(grInfo.glVersion) ^ hashStringLower(grInfo.glVendor) ^ hashStringLower(grInfo.glRenderer));
-
-	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, configHandler->GetInt("RendererHash") != rendererHash))
-		throw unsupported_error("OpenGL drivers not installed, aborting");
-
+	int prevRendHash = configHandler->GetInt("RendererHash");
 	configHandler->Set("RendererHash", rendererHash);
+
+	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, prevRendHash != rendererHash))
+		throw unsupported_error("OpenGL drivers not installed, aborting");
 
 	memset(grInfo.glVersionShort, 0, sizeof(grInfo.glVersionShort));
 	memset(grInfo.glslVersionShort, 0, sizeof(grInfo.glslVersionShort));
