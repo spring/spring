@@ -61,7 +61,8 @@ public:
 	virtual void SetWaterline(float depth) { waterline = depth; }
 
 	virtual bool Update() = 0;
-	virtual void SlowUpdate();
+	virtual void SlowUpdate() {};
+	void UpdateCollisionMap();
 
 	virtual bool IsSkidding() const { return false; }
 	virtual bool IsFlying() const { return false; }
