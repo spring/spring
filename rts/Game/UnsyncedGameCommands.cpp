@@ -1327,6 +1327,8 @@ public:
 		buf >> msgTypeIdx;
 		buf >> msgSevrIdx;
 
+		globalRendering->glDebug = !globalRendering->glDebug;
+
 		globalRendering->ToggleGLDebugOutput(msgSrceIdx, msgTypeIdx, msgSevrIdx);
 		return true;
 	}
