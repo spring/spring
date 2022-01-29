@@ -1911,8 +1911,8 @@ void CLuaHandle::DrawInMiniMapBackground()
 void CLuaHandle::DrawObjectsLua(std::initializer_list<bool> bools, const char* func) {
 	LUA_CALL_IN_CHECK(L);
 	const int extraArgs = bools.size();
-	luaL_checkstack(L, 3 + extraArgs, func);
-	static const LuaHashString cmdStr(func);
+	luaL_checkstack(L, 2 + extraArgs, func);
+	const LuaHashString cmdStr(func);
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
