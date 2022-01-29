@@ -26,12 +26,12 @@ static const float MEDRES_SEARCH_DISTANCE_EXT = (MEDRES_SEARCH_DISTANCE * 0.4f) 
 // how many recursive refinement attempts NextWayPoint should make
 static constexpr unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static constexpr unsigned int PATHESTIMATOR_VERSION = 105;
+static constexpr unsigned int PATHESTIMATOR_VERSION = 106;
 
 static constexpr unsigned int MEDRES_PE_BLOCKSIZE = 16;
 static constexpr unsigned int LOWRES_PE_BLOCKSIZE = 32;
 
-static constexpr unsigned int SQUARES_TO_UPDATE = 10000;
+static constexpr unsigned int SQUARES_TO_UPDATE = 8000;
 static constexpr unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
 static constexpr unsigned int PATH_HEATMAP_XSCALE =  1; // wrt. mapDims.hmapx
