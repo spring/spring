@@ -88,6 +88,9 @@ namespace Platform
 	std::string GetSysInfoHash();
 	std::string GetMacAddrHash();
 
+	int SetEnvironment(const char* name, const char* value, int overwrite);
+	std::string GetEnvironment(const char* name);
+
 	bool Is64Bit();
 	bool Is32BitEmulation();
 	bool IsRunningInGDB();

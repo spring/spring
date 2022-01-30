@@ -517,6 +517,37 @@ namespace Platform
 	uint32_t NativeWordSize() { return (sizeof(void*)); }
 	uint32_t SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
 
+	int SetEnvironment(const char* name, const char* value, int overwrite)
+	{
+#ifdef _WIN32
+		int errcode = 0;
+		if (!overwrite) {
+			size_t envsize = 0;
+	#ifdef _MSC_VER
+			errcode = getenv_s(&envsize, NULL, 0, name);
+			if (errcode || envsize) return errcode;
+	#else
+			const char* val = getenv(name);
+			if (!val || strlen(val)) return -1;
+	#endif
+		}
+	#ifdef _MSC_VER
+		return _putenv_s(name, value);
+	#else
+		std::array<char, 1024> buffer = {0};
+		sprintf(buffer.data(), "%s = %s", name, value);
+		return putenv(buffer.data());
+	#endif
+#else
+		return setenv(name, value, overwrite);
+#endif // _WIN32
+	}
+
+	std::string GetEnvironment(const char* name)
+	{
+		const char* val = getenv(name);
+		return val ? std::string(val) : "";
+	}
 
 	bool Is64Bit() { return (NativeWordSize() == 8); }
 
