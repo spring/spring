@@ -11,8 +11,9 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "gpu", globalRenderingInfo.gpuName);
 	LuaPushNamedString(L, "gpuVendor", globalRenderingInfo.gpuVendor);
 	LuaPushNamedNumber(L, "gpuMemorySize", globalRenderingInfo.gpuMemorySize.x);
-	LuaPushNamedString(L, "glVersionShort", globalRenderingInfo.glVersionShort);
-	LuaPushNamedString(L, "glslVersionShort", globalRenderingInfo.glslVersionShort);
+	LuaPushNamedString(L, "glVersionShort", globalRenderingInfo.glVersionShort.data());
+	LuaPushNamedString(L, "glslVersionShort", globalRenderingInfo.glslVersionShort.data());
+	LuaPushNamedNumber(L, "glslVersionNum", globalRenderingInfo.glslVersionNum);
 
 	LuaPushNamedString(L, "glVersion", globalRenderingInfo.glVersion);
 	LuaPushNamedString(L, "glVendor", globalRenderingInfo.glVendor);
@@ -31,32 +32,16 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	lua_createtable(L, 0, globalRenderingInfo.availableVideoModes.size());
 	for (int i = 0; i < globalRenderingInfo.availableVideoModes.size(); ++i) {
 		lua_pushnumber(L, i + 1);
-
 		lua_createtable(L, 0, 6);
 
-		lua_pushsstring(L, "display");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].displayIndex);
-		lua_rawset(L, -3);
+		const auto& avm = globalRenderingInfo.availableVideoModes[i];
 
-		lua_pushsstring(L, "displayName");
-		lua_pushsstring(L, globalRenderingInfo.availableVideoModes[i].displayName.c_str());
-		lua_rawset(L, -3);
-
-		lua_pushsstring(L, "w");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].width);
-		lua_rawset(L, -3);
-
-		lua_pushsstring(L, "h");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].height);
-		lua_rawset(L, -3);
-
-		lua_pushsstring(L, "bpp");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].bpp);
-		lua_rawset(L, -3);
-
-		lua_pushsstring(L, "hz");
-		lua_pushnumber(L, globalRenderingInfo.availableVideoModes[i].refreshRate);
-		lua_rawset(L, -3);
+		LuaPushNamedNumber(L, "display", avm.displayIndex);
+		LuaPushNamedString(L, "displayName", avm.displayName);
+		LuaPushNamedNumber(L, "w", avm.width);
+		LuaPushNamedNumber(L, "h", avm.height);
+		LuaPushNamedNumber(L, "bpp", avm.bpp);
+		LuaPushNamedNumber(L, "hz", avm.refreshRate);
 
 		lua_rawset(L, -3);
 	}

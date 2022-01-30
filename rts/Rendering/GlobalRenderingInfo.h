@@ -29,8 +29,10 @@ struct GlobalRenderingInfo {
 
 	const char* sdlDriverName;
 
-	char glVersionShort[256];
-	char glslVersionShort[256];
+	std::array<char, 256> glVersionShort = { 0 };
+	std::array<char, 256> glslVersionShort = { 0 };
+
+	int glslVersionNum = 0;
 
 	bool glContextIsCore;
 	int2 glContextVersion;

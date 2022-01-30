@@ -745,17 +745,14 @@ void CGlobalRendering::SetGLSupportFlags()
 			break;
 		}
 	}
+	if (int2 glslVerNum = { 0, 0 }; sscanf(globalRenderingInfo.glslVersionShort.data(), "%d.%d", &glslVerNum.x, &glslVerNum.y) == 2) {
+		globalRenderingInfo.glslVersionNum = glslVerNum.x * 100 + glslVerNum.y;
+	}
 
 	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
-
-	if (int2 glslVerNum = { 0, 0 }; sscanf(&globalRenderingInfo.glslVersionShort[0], "%d.%d", &glslVerNum.x, &glslVerNum.y) == 2) {
-		// #version 430 is what engine shaders use
-		// but report < 150 as potato because only 150+ can reach same level of shading capabilities with extensions
-		haveGL4 &= (glslVerNum.x * 100 + glslVerNum.y >= 150);
-	}
-
+	haveGL4 &= (globalRenderingInfo.glslVersionNum >= 430); // #version 430 is what engine shaders use
 	haveGL4 &= !forceDisableGL4;
 
 	{
@@ -877,9 +874,6 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 
 	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, prevRendHash != rendererHash))
 		throw unsupported_error("OpenGL drivers not installed, aborting");
-
-	memset(grInfo.glVersionShort, 0, sizeof(grInfo.glVersionShort));
-	memset(grInfo.glslVersionShort, 0, sizeof(grInfo.glslVersionShort));
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
 	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
