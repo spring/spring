@@ -196,7 +196,8 @@ void CRoamMeshDrawer::Update()
 	Patch::UpdateVisibility(cam, patches, numPatchesX);
 
 	//Early bailout conditions:
-	if ((cam->GetPos().distance(lastCamPos[shadowPass]) < CAMERA_CHANGE_TRESHOLD) &&
+	if ((!forceNextTesselation[shadowPass]) &&
+		(cam->GetPos().distance(lastCamPos[shadowPass]) < CAMERA_CHANGE_TRESHOLD) &&
 		(cam->GetDir().distance(lastCamDir[shadowPass]) < CAMERA_CHANGE_TRESHOLD * 0.001f) &&
 		(heightMapChanged == false) &&
 		(smfGroundDrawer->GetGroundDetail() == lastGroundDetail[shadowPass])) {
