@@ -168,18 +168,32 @@ public:
 		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
 		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>(osFontsDir));
 
+		{
+			auto dirs = FcConfigGetCacheDirs(nullptr);
+			FcStrListFirst(dirs);
+			for (FcChar8* dir = FcStrListNext(dirs), *prevDir = nullptr; dir != nullptr && dir != prevDir; ) {
+				prevDir = dir;
+				if (console)
+					printf("[%s] Using Fontconfig cache dir \"%s\"\n", __func__, dir);
+				else
+					LOG("[%s] Using Fontconfig cache dir \"%s\"", __func__, dir);
+			}
+			FcStrListDone(dirs);
+		}
+
+
 		if (FtLibraryHandler::CheckFontConfig()) {
 			if (console)
 				printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
 			else
-				LOG("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
+				LOG("[%s] fontconfig for directory \"%s\" up to date", __func__, osFontsDir);
 			return true;
 		}
 
 		if (console)
 			printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
 		else
-			LOG("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
+			LOG("[%s] creating fontconfig for directory \"%s\"", __func__, osFontsDir);
 
 		return FcConfigBuildFonts(nullptr);
 	#endif
