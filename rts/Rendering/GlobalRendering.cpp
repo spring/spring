@@ -976,7 +976,7 @@ void CGlobalRendering::GetAllDisplayBounds(SDL_Rect& r) const
 		if (b[3] > mb[3]) mb[3] = b[3];
 	}
 
-	r = { mb[0], mb[1], mb[2] - mb[0], mb[3] - mb[0] };
+	r = { mb[0], mb[1], mb[2] - mb[0], mb[3] - mb[1] };
 }
 
 void CGlobalRendering::GetWindowPosSizeBounded(int& x, int& y, int& w, int& h) const
