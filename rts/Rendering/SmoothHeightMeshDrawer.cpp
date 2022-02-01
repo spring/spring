@@ -35,10 +35,10 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 			const float x = xq * quadSize;
 			const float z = zq * quadSize;
 
-			const float h1 = smoothGround.GetHeightAboveWater(x,            z           ) + yoffset;
-			const float h2 = smoothGround.GetHeightAboveWater(x + quadSize, z           ) + yoffset;
-			const float h3 = smoothGround.GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
-			const float h4 = smoothGround.GetHeightAboveWater(x,            z + quadSize) + yoffset;
+			const float h1 = smoothGround.GetHeight(x,            z           ) + yoffset;
+			const float h2 = smoothGround.GetHeight(x + quadSize, z           ) + yoffset;
+			const float h3 = smoothGround.GetHeight(x + quadSize, z + quadSize) + yoffset;
+			const float h4 = smoothGround.GetHeight(x,            z + quadSize) + yoffset;
 
 			va->AddVertexQ0(float3(x,            h1, z           ));
 			va->AddVertexQ0(float3(x + quadSize, h2, z           ));

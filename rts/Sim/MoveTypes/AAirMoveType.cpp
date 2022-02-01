@@ -50,7 +50,7 @@ static inline float AAMTGetGroundHeightAW(float x, float z) { return CGround::Ge
 static inline float AAMTGetGroundHeight  (float x, float z) { return CGround::GetHeightReal      (x, z); }
 static inline float AAMTGetSmoothGroundHeightAW(float x, float z) { return smoothGround.GetHeightAboveWater(x, z); }
 static inline float AAMTGetSmoothGroundHeight  (float x, float z) { return smoothGround.GetHeight          (x, z); }
-static inline float HAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetApproximateHeight(x, z)); }
+static inline float HAMTGetMaxGroundHeight(float x, float z) { return std::max(0.f, std::max(smoothGround.GetHeight(x, z), CGround::GetApproximateHeight(x, z))); }
 static inline float SAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetHeightAboveWater(x, z)); }
 
 static inline void AAMTEmitEngineTrail(CUnit* owner, unsigned int) {
@@ -65,7 +65,7 @@ AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6] = {
 	AAMTGetGroundHeightAW,       // canSubmerge=0 useSmoothMesh=0
 	AAMTGetGroundHeight  ,       // canSubmerge=1 useSmoothMesh=0
 	AAMTGetSmoothGroundHeightAW, // canSubmerge=0 useSmoothMesh=1
-	AAMTGetSmoothGroundHeight,   // canSubmerge=1 useSmoothMesh=1
+	AAMTGetSmoothGroundHeightAW, // canSubmerge=1 useSmoothMesh=1 : needs AW version to solve Seaplanes/SmoothHeightMesh bug - ref: https://github.com/beyond-all-reason/Beyond-All-Reason/issues/495
 	HAMTGetMaxGroundHeight,      // HoverAirMoveType::UpdateFlying
 	SAMTGetMaxGroundHeight,      // StrafeAirMoveType::UpdateFlying
 };
