@@ -112,7 +112,7 @@ public:
 	 * (for interpolation)
 	 */
 	float timeOffset;
-
+	float lastTimeOffset;
 	/**
 	 * @brief last frame time
 	 *
