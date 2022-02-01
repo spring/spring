@@ -91,6 +91,20 @@ std::int64_t CPathManager::Finalize() {
 	return (dt.toMilliSecsi());
 }
 
+std::int64_t CPathManager::PostFinalizeRefresh()
+{
+	const spring_time t0 = spring_gettime();
+
+	if (IsFinalized())
+	{
+		medResPE->UpdateVertexPathCosts(-1);
+		lowResPE->UpdateVertexPathCosts(-1);
+	}
+
+	const spring_time dt = spring_gettime() - t0;
+	return (dt.toMilliSecsi());
+}
+
 
 void CPathManager::FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser)
 {

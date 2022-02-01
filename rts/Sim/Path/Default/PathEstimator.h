@@ -58,6 +58,7 @@ public:
 	 * called every frame
 	 */
 	void Update();
+	void UpdateVertexPathCosts(int blocksToUpdate);
 
 	IPathFinder* GetParent() override { return parentPathFinder; }
 

@@ -7,7 +7,7 @@
 
 #include "Sim/Path/Default/IPath.h"
 #include "IPathFinder.h"
-#include "Sim/Path/Default/PathConstants.h"
+#include "PathConstants.h"
 #include "Sim/Path/Default/PathDataTypes.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Objects/SolidObject.h"

@@ -36,23 +36,23 @@
 namespace Assimp
 {
 
-const double fast_atof_table[16] =  {  // we write [16] here instead of [] to work around a swig bug
-    0.0,
-    0.1,
-    0.01,
-    0.001,
-    0.0001,
-    0.00001,
-    0.000001,
-    0.0000001,
-    0.00000001,
-    0.000000001,
-    0.0000000001,
-    0.00000000001,
-    0.000000000001,
-    0.0000000000001,
-    0.00000000000001,
-    0.000000000000001
+const float fast_atof_table[16] =  {  // we write [16] here instead of [] to work around a swig bug
+    0.0f,
+    0.1f,
+    0.01f,
+    0.001f,
+    0.0001f,
+    0.00001f,
+    0.000001f,
+    0.0000001f,
+    0.00000001f,
+    0.000000001f,
+    0.0000000001f,
+    0.00000000001f,
+    0.000000000001f,
+    0.0000000000001f,
+    0.00000000000001f,
+    0.000000000000001f
 };
 
 
@@ -310,6 +310,8 @@ inline const char* fast_atoreal_move(const char* c, Real& out, bool check_comma 
     {
         ++c;
 
+        // SPRING Note: we actually don't cast to double as said below, because we don't want desyncs
+
         // NOTE: The original implementation is highly inaccurate here. The precision of a single
         // IEEE 754 float is not high enough, everything behind the 6th digit tends to be more
         // inaccurate than it would need to be. Casting to double seems to solve the problem.
@@ -319,10 +321,10 @@ inline const char* fast_atoreal_move(const char* c, Real& out, bool check_comma 
         // number of digits to be read. AI_FAST_ATOF_RELAVANT_DECIMALS can be a value between
         // 1 and 15.
         unsigned int diff = AI_FAST_ATOF_RELAVANT_DECIMALS;
-        double pl = static_cast<double>( strtoul10_64 ( c, &c, &diff ));
+        Real pl = static_cast<Real>( strtoul10_64 ( c, &c, &diff ));
 
         pl *= fast_atof_table[diff];
-        f += static_cast<Real>( pl );
+        f += pl;
     }
     // For backwards compatibility: eat trailing dots, but not trailing commas.
     else if (*c == '.') {

@@ -14,7 +14,7 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "PathFinder.h"
 #include "Sim/Path/Default/IPath.h"
-#include "Sim/Path/Default/PathConstants.h"
+#include "PathConstants.h"
 #include "Sim/Path/Default/PathFinderDef.h"
 #include "Sim/Path/Default/PathLog.h"
 #include "Sim/Path/TKPFS/PathGlobal.h"
@@ -90,7 +90,7 @@ void PathingState::Init(std::vector<IPathFinder*> pathFinderlist, PathingState* 
 
 	{
 		pathFinders = pathFinderlist;
-		BLOCKS_TO_UPDATE = SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1;
+		BLOCKS_TO_UPDATE = (SQUARES_TO_UPDATE) / (BLOCK_SIZE * BLOCK_SIZE) + 1;
 
 		blockUpdatePenalty = 0;
 		nextOffsetMessageIdx = 0;
@@ -111,8 +111,8 @@ void PathingState::Init(std::vector<IPathFinder*> pathFinderlist, PathingState* 
 		consumedBlocks.clear();
 		offsetBlocksSortedByCost.clear();
 
-		updatedBlocksDelayTimeout = 0;
-		updatedBlocksDelayActive = false;
+		// updatedBlocksDelayTimeout = 0;
+		// updatedBlocksDelayActive = false;
 	}
 
 	PathingState*  childPE = this;
@@ -664,17 +664,20 @@ void PathingState::Update()
 
 	//LOG("PathingState::Update updatedBlocksDelayActive %d", (int)updatedBlocksDelayActive);
 
-	if (!updatedBlocksDelayActive){
-		updatedBlocksDelayTimeout = gs->frameNum + BLOCK_UPDATE_DELAY_FRAMES;
-		updatedBlocksDelayActive = true;
-		return;
-	}
+	UpdateVertexPathCosts(blocksToUpdate);
+}
 
-	//LOG("PathingState::Update frame %d next %d", gs->frameNum, updatedBlocksDelayTimeout);
+void PathingState::UpdateVertexPathCosts(int blocksToUpdate)
+{
+	const unsigned int numMoveDefs = moveDefHandler.GetNumMoveDefs();
 
-	if (gs->frameNum < updatedBlocksDelayTimeout)
+	if (numMoveDefs == 0)
 		return;
-	updatedBlocksDelayActive = false;
+
+	if (blocksToUpdate == -1)
+		blocksToUpdate = updatedBlocks.size() * numMoveDefs;
+
+	int consumeBlocks = int(blocksToUpdate != 0) * int(ceil(float(blocksToUpdate) / numMoveDefs)) * numMoveDefs;
 
 	consumedBlocks.clear();
 	consumedBlocks.reserve(consumeBlocks);

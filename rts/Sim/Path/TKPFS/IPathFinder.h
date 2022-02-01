@@ -7,7 +7,7 @@
 
 #include "Sim/Path/Default/IPath.h"
 #include "PathCache.h"
-#include "Sim/Path/Default/PathConstants.h"
+#include "PathConstants.h"
 #include "Sim/Path/Default/PathDataTypes.h"
 
 struct MoveDef;

@@ -250,7 +250,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawDebugTraceRay(false)
 	, drawDebugCubeMap(false)
 
-	, glDebug(false)
+	, glDebug(configHandler->GetBool("DebugGL"))
 	, glDebugErrors(false)
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
@@ -697,15 +697,9 @@ void CGlobalRendering::SetGLSupportFlags()
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
 
-	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
-	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
-	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
-
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
-	haveGL4 &=  !forceDisableGL4;
-
 
 	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
 				 (glRenderer.find("radeon ") != std::string::npos) || (glRenderer.find("amd ") != std::string::npos); //it's amazing how inconsistent AMD detection can be
@@ -751,7 +745,15 @@ void CGlobalRendering::SetGLSupportFlags()
 			break;
 		}
 	}
+	if (int2 glslVerNum = { 0, 0 }; sscanf(globalRenderingInfo.glslVersionShort.data(), "%d.%d", &glslVerNum.x, &glslVerNum.y) == 2) {
+		globalRenderingInfo.glslVersionNum = glslVerNum.x * 100 + glslVerNum.y;
+	}
 
+	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
+	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
+	haveGL4 &= (globalRenderingInfo.glslVersionNum >= 430); // #version 430 is what engine shaders use
+	haveGL4 &= !forceDisableGL4;
 
 	{
 		// use some ATI bugfixes?
@@ -867,14 +869,11 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 
 	int rendererHash = static_cast<uint16_t>(hashStringLower(grInfo.glVersion) ^ hashStringLower(grInfo.glVendor) ^ hashStringLower(grInfo.glRenderer));
-
-	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, configHandler->GetInt("RendererHash") != rendererHash))
-		throw unsupported_error("OpenGL drivers not installed, aborting");
-
+	int prevRendHash = configHandler->GetInt("RendererHash");
 	configHandler->Set("RendererHash", rendererHash);
 
-	memset(grInfo.glVersionShort, 0, sizeof(grInfo.glVersionShort));
-	memset(grInfo.glslVersionShort, 0, sizeof(grInfo.glslVersionShort));
+	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, prevRendHash != rendererHash))
+		throw unsupported_error("OpenGL drivers not installed, aborting");
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
 	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
@@ -1550,16 +1549,10 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 
 bool CGlobalRendering::ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx)
 {
-	const static bool dbgOutput = configHandler->GetBool("DebugGL");
 	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
-	if (!dbgOutput) {
-		LOG("[GR::%s] OpenGL debug-context not installed (dbgErrors=%d dbgTraces=%d)", __func__, glDebugErrors, dbgTraces);
-		return false;
-	}
-
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
-	if ((glDebug = !glDebug)) {
+	if (glDebug) {
 		const char* msgSrceStr = glDebugMessageSourceName  (msgSrceEnums[msgSrceIdx %= msgSrceEnums.size()]);
 		const char* msgTypeStr = glDebugMessageTypeName    (msgTypeEnums[msgTypeIdx %= msgTypeEnums.size()]);
 		const char* msgSevrStr = glDebugMessageSeverityName(msgSevrEnums[msgSevrIdx %= msgSevrEnums.size()]);
@@ -1580,6 +1573,7 @@ bool CGlobalRendering::ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int
 
 		LOG("[GR::%s] OpenGL debug-message callback disabled", __func__);
 	}
+	configHandler->Set("DebugGL", globalRendering->glDebug);
 	#endif
 
 	return true;

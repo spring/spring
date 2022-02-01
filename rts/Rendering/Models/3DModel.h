@@ -108,7 +108,7 @@ struct S3DModelPiece {
 		name.clear();
 		children.clear();
 
-		for (S3DModelPiecePart& p: shatterParts) {
+		for (S3DModelPiecePart& p : shatterParts) {
 			p.renderData.clear();
 		}
 
@@ -135,7 +135,7 @@ struct S3DModelPiece {
 	virtual float3 GetEmitDir() const;
 
 	// internal use
-	uint32_t GetVertexCount() const { return vertices.size();  }
+	uint32_t GetVertexCount() const { return vertices.size(); }
 	uint32_t GetVertexDrawIndexCount() const { return indices.size(); }
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
@@ -157,7 +157,7 @@ struct S3DModelPiece {
 	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
 
 	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
-
+	bool HasBackedMat() const { return hasBakedMat; }
 protected:
 	virtual void DrawForList() const = 0;
 public:
@@ -513,6 +513,8 @@ struct LocalModelPiece
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
+	bool GetScriptVisible() const { return scriptSetVisible; }
+	void SetScriptVisible(bool b) { scriptSetVisible = b; SetGetCustomDirty(true); }
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
@@ -525,8 +527,9 @@ private:
 
 	mutable bool dirty;
 	mutable bool customDirty;
-public:
+
 	bool scriptSetVisible; // TODO: add (visibility) maxradius!
+public:
 	bool blockScriptAnims; // if true, Set{Position,Rotation} are ignored for this piece
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces

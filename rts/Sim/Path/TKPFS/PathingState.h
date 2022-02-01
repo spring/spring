@@ -61,6 +61,8 @@ public:
 
     void Update();
 
+	void UpdateVertexPathCosts(int blocksToUpdate);
+
 	/**
 	 * This is called whenever the ground structure of the map changes
 	 * (for example on explosions and new buildings).
@@ -188,8 +190,8 @@ private:
     std::vector<SingleBlock> consumedBlocks;
 	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 
-	int updatedBlocksDelayTimeout = 0;
-	bool updatedBlocksDelayActive = false;
+	// int updatedBlocksDelayTimeout = (-1);
+	// bool updatedBlocksDelayActive = false;
 };
 
 }

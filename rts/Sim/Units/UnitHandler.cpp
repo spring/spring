@@ -467,6 +467,7 @@ void CUnitHandler::UpdateUnits()
 
 		unit->SanityCheck();
 		unit->Update();
+		unit->moveType->UpdateCollisionMap();
 		// unsynced; done on-demand when drawing unit
 		// unit->UpdateLocalModel();
 		unit->SanityCheck();

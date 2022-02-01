@@ -57,6 +57,7 @@ CMouseCursor::~CMouseCursor()
 
 
 CMouseCursor& CMouseCursor::operator = (CMouseCursor&& mc) noexcept {
+	name = std::move(mc.name);
 	images = std::move(mc.images);
 	frames = std::move(mc.frames);
 

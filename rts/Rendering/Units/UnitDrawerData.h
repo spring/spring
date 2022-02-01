@@ -125,13 +125,13 @@ private:
 
 	void UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits);
 
-	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
+	void UpdateUnitIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
 	void UpdateUnitIconStateScreen(CUnit* unit);
 	static void UpdateDrawPos(CUnit* unit);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+	bool DrawAsIconByDistance(const CUnit* unit, const float sqUnitCamDist) const;
 	//bool DrawAsIconScreen(CUnit* unit) const;
 public:
 	// lenghts & distances

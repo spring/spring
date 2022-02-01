@@ -109,7 +109,7 @@ static void DrawObjectDebugPieces(const CSolidObject* o)
 		const LocalModelPiece* lmp = o->localModel.GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 
-		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
+		if (!lmp->GetScriptVisible() || lmpVol->IgnoreHits())
 			continue;
 
 		if (setFadeColor && lmp == o->hitModelPieces[true])
