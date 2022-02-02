@@ -23,6 +23,10 @@ CONFIG(bool, EdgeMoveDynamic)
 	.defaultValue(true)
 	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
+CONFIG(bool, CamFrameTimeCorrection)
+.defaultValue(false)
+.description("Enable if you want smooth scrolling (AND NO PER FRAME SETCAMERATARGETS PLEASE!)");
+
 
 
 
@@ -650,6 +654,10 @@ void CCamera::ClipFrustumLines(const float zmin, const float zmax, bool neg)
 float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 {
 	float camDeltaTime = globalRendering->lastFrameTime;
+	bool CamFrameTimeCorrection = configHandler->GetBool("CamFrameTimeCorrection");
+	if (CamFrameTimeCorrection)
+		camDeltaTime = 1000.0f / std::fmax(globalRendering->FPS, 1.0f);
+	
 	float camMoveSpeed = 1.0f;
 
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
