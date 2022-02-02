@@ -619,6 +619,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	IStreamBufferConcept::PutBufferLocks();
 	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+	globalRendering->lastSwapBuffersEnd = spring_now();
 }
 
 void CGlobalRendering::SetGLTimeStamp(uint32_t queryIdx) const
