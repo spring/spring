@@ -664,6 +664,10 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("metalStorage",   ud.metalStorage);
 	ADD_FLOAT("energyStorage",  ud.energyStorage);
 
+	ADD_DEPRECATED_LUADEF_KEY("harvestStorage");
+	ADD_FLOAT("harvestMetalStorage", ud.harvestMetalStorage);
+	ADD_FLOAT("harvestEnergyStorage", ud.harvestEnergyStorage);
+
 	ADD_DEPRECATED_LUADEF_KEY("extractSquare");
 
 	ADD_FLOAT("power", ud.power);
