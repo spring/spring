@@ -170,8 +170,6 @@ else  (UNIX AND NOT MINGW)
 		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
-	else()
-		include_directories(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
 
