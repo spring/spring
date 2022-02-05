@@ -42,21 +42,21 @@ CommandDrawer* CommandDrawer::GetInstance() {
 
 
 
-void CommandDrawer::Draw(const CCommandAI* cai) const {
+void CommandDrawer::Draw(const CCommandAI* cai, int queueDrawDepth) const {
 	// note: {Air,Builder}CAI inherit from MobileCAI, so test that last
-	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai)); return; }
-	if ((dynamic_cast<const CBuilderCAI*>(cai)) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai)); return; }
-	if ((dynamic_cast<const CFactoryCAI*>(cai)) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai)); return; }
-	if ((dynamic_cast<const  CMobileCAI*>(cai)) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai)); return; }
+	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai), queueDrawDepth); return; }
+	if ((dynamic_cast<const CBuilderCAI*>(cai)) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai), queueDrawDepth); return; }
+	if ((dynamic_cast<const CFactoryCAI*>(cai)) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai), queueDrawDepth); return; }
+	if ((dynamic_cast<const  CMobileCAI*>(cai)) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai), queueDrawDepth); return; }
 
-	DrawCommands(cai);
+	DrawCommands(cai, queueDrawDepth);
 }
 
 
 
-void CommandDrawer::AddLuaQueuedUnit(const CUnit* unit) {
+void CommandDrawer::AddLuaQueuedUnit(const CUnit* unit, int queueDrawDepth) {
 	// needs to insert by id, pointers can become dangling
-	luaQueuedUnitSet.insert(unit->id);
+	luaQueuedUnitSet.insert({ unit->id, queueDrawDepth });
 }
 
 void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
@@ -79,23 +79,26 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	for (auto ui = luaQueuedUnitSet.cbegin(); ui != luaQueuedUnitSet.cend(); ++ui) {
-		const CUnit* unit = unitHandler.GetUnit(*ui);
+	for (const auto& [unitID, qDrawDepth] : luaQueuedUnitSet) {
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (unit == nullptr || unit->commandAI == nullptr)
 			continue;
 
-		Draw(unit->commandAI);
+		Draw(unit->commandAI, qDrawDepth);
 	}
 
 	glLineWidth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 }
 
-void CommandDrawer::DrawCommands(const CCommandAI* cai) const
+void CommandDrawer::DrawCommands(const CCommandAI* cai, int queueDrawDepth) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
+
+	if (queueDrawDepth <= 0)
+		queueDrawDepth = commandQue.size();
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
@@ -103,6 +106,9 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 
 	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (std::distance(commandQue.begin(), ci) > queueDrawDepth)
+			break;
+
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -143,10 +149,13 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 
 
 
-void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
+void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai, int queueDrawDepth) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
+
+	if (queueDrawDepth <= 0)
+		queueDrawDepth = commandQue.size();
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
@@ -154,6 +163,9 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 
 	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (std::distance(commandQue.begin(), ci) > queueDrawDepth)
+			break;
+
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -223,24 +235,30 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 
 
 
-void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
+void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, int queueDrawDepth) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
+
+	if (queueDrawDepth <= 0)
+		queueDrawDepth = commandQue.size();
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 
-	for (const Command& ci: commandQue) {
-		const int cmdID = ci.GetID();
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (std::distance(commandQue.begin(), ci) > queueDrawDepth)
+			break;
+
+		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
 			if (cai->buildOptions.find(cmdID) != cai->buildOptions.end()) {
 				BuildInfo bi;
 
-				if (!bi.Parse(ci))
+				if (!bi.Parse(*ci))
 					continue;
 
 				cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
@@ -259,17 +277,17 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.move);
 			} break;
 			case CMD_FIGHT:{
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.fight);
 			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.patrol);
 			} break;
 
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
 				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
@@ -277,30 +295,30 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			} break;
 
 			case CMD_RESTORE: {
-				const float3& endPos = ci.GetPos(0);
+				const float3& endPos = ci->GetPos(0);
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
 
 				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
+				glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 				lineDrawer.RestartWithColor(cmdColors.restore);
 			} break;
 
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {
-				if (ci.GetNumParams() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+				if (ci->GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
 					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 
 				} else {
-					assert(ci.GetNumParams() >= 3);
+					assert(ci->GetNumParams() >= 3);
 
-					const float x = ci.GetParam(0);
-					const float z = ci.GetParam(2);
+					const float x = ci->GetParam(0);
+					const float z = ci->GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
@@ -311,20 +329,20 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			case CMD_RESURRECT: {
 				const float* color = (cmdID == CMD_RECLAIM) ? cmdColors.reclaim
 				                                             : cmdColors.resurrect;
-				if (ci.GetNumParams() == 4) {
-					const float3& endPos = ci.GetPos(0);
+				if (ci->GetNumParams() == 4) {
+					const float3& endPos = ci->GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
 
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
+					glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(color);
 				} else {
-					assert(ci.GetParam(0) >= 0.0f);
+					assert(ci->GetParam(0) >= 0.0f);
 
-					const unsigned int id = std::max(0.0f, ci.GetParam(0));
+					const unsigned int id = std::max(0.0f, ci->GetParam(0));
 
 					if (id >= unitHandler.MaxUnits()) {
 						const CFeature* feature = featureHandler.GetFeature(id - unitHandler.MaxUnits());
@@ -344,21 +362,21 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 			case CMD_REPAIR:
 			case CMD_CAPTURE: {
-				const float* color = (ci.GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
+				const float* color = (ci->GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
 
-				if (ci.GetNumParams() == 4) {
-					const float3& endPos = ci.GetPos(0);
+				if (ci->GetNumParams() == 4) {
+					const float3& endPos = ci->GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
 
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.GetParam(3), cmdCircleResolution);
+					glSurfaceCircle(endPos, ci->GetParam(3), cmdCircleResolution);
 
 					lineDrawer.RestartWithColor(color);
 				} else {
-					if (ci.GetNumParams() >= 1) {
-						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+					if (ci->GetNumParams() >= 1) {
+						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
 						if (unit != nullptr)
 							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
@@ -368,18 +386,18 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			} break;
 
 			case CMD_LOAD_ONTO: {
-				const CUnit* unit = unitHandler.GetUnitUnsafe(ci.GetParam(0));
+				const CUnit* unit = unitHandler.GetUnitUnsafe(ci->GetParam(0));
 				lineDrawer.DrawLineAndIcon(cmdID, unit->pos, cmdColors.load);
 			} break;
 			case CMD_WAIT: {
-				DrawWaitIcon(ci);
+				DrawWaitIcon(*ci);
 			} break;
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci.GetID());
+				lineDrawer.DrawIconAtLastPos(ci->GetID());
 			} break;
 
 			default: {
-				DrawDefaultCommand(ci, owner);
+				DrawDefaultCommand(*ci, owner);
 			} break;
 		}
 	}
@@ -389,11 +407,14 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 
 
-void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
+void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai, int queueDrawDepth) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
 	const CCommandQueue& newUnitCommands = cai->newUnitCommands;
+
+	if (queueDrawDepth <= 0)
+		queueDrawDepth = newUnitCommands.size();
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
@@ -403,32 +424,35 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT))
 		DrawWaitIcon(commandQue.front());
 
-	for (const Command& ci: newUnitCommands) {
-		const int cmdID = ci.GetID();
+	for (auto ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
+		if (std::distance(newUnitCommands.begin(), ci) > queueDrawDepth)
+			break;
+
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.move);
 			} break;
 			case CMD_FIGHT: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.fight);
 			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
 			} break;
 
 			case CMD_ATTACK: {
-				if (ci.GetNumParams() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+				if (ci->GetNumParams() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
 					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 
 				} else {
-					assert(ci.GetNumParams() >= 3);
+					assert(ci->GetNumParams() >= 3);
 
-					const float x = ci.GetParam(0);
-					const float z = ci.GetParam(2);
+					const float x = ci->GetParam(0);
+					const float z = ci->GetParam(2);
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
@@ -436,7 +460,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			} break;
 
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.GetParam(0)));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->GetParam(0)));
 
 				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
@@ -444,21 +468,21 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			} break;
 
 			case CMD_WAIT: {
-				DrawWaitIcon(ci);
+				DrawWaitIcon(*ci);
 			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
 			} break;
 
 			default: {
-				DrawDefaultCommand(ci, owner);
+				DrawDefaultCommand(*ci, owner);
 			} break;
 		}
 
-		if ((cmdID < 0) && (ci.GetNumParams() >= 3)) {
+		if ((cmdID < 0) && (ci->GetNumParams() >= 3)) {
 			BuildInfo bi;
 
-			if (!bi.Parse(ci))
+			if (!bi.Parse(*ci))
 				continue;
 
 			cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
@@ -479,10 +503,13 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 
 
 
-void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
+void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai, int queueDrawDepth) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
+
+	if (queueDrawDepth <= 0)
+		queueDrawDepth = commandQue.size();
 
 	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 

@@ -779,8 +779,9 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 	if (lua_istable(L, 1)) {
 		// second arg indicates if table is a map
 		const int unitArg = luaL_optboolean(L, 2, false)? -2 : -1;
-		const int tableIdx = 1;
+		const int queueDrawDepth = luaL_optnumber(L, 3, -1); //same value for all
 
+		constexpr int tableIdx = 1;
 		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2))
 				continue;
@@ -790,13 +791,15 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 			if (unit == nullptr)
 				continue;
 
-			commandDrawer->AddLuaQueuedUnit(unit);
+			commandDrawer->AddLuaQueuedUnit(unit, queueDrawDepth);
 		}
 	} else {
 		const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
-		if (unit != nullptr)
-			commandDrawer->AddLuaQueuedUnit(unit);
+		if (unit != nullptr) {
+			const int queueDrawDepth = luaL_optnumber(L, 2, -1);
+			commandDrawer->AddLuaQueuedUnit(unit, queueDrawDepth);
+		}
 	}
 
 	return 0;

@@ -20,24 +20,24 @@ public:
 	// clear the set after WorldDrawer and MiniMap have both used it
 	void Update() { luaQueuedUnitSet.clear(); }
 
-	void Draw(const CCommandAI*) const;
+	void Draw(const CCommandAI*, int queueDrawDepth = -1) const;
 	void DrawLuaQueuedUnitSetCommands() const;
 	void DrawQuedBuildingSquares(const CBuilderCAI*) const;
 
-	void AddLuaQueuedUnit(const CUnit* unit);
+	void AddLuaQueuedUnit(const CUnit* unit, int queueDrawDepth = 0);
 
 private:
-	void DrawCommands(const CCommandAI*) const;
-	void DrawAirCAICommands(const CAirCAI*) const;
-	void DrawBuilderCAICommands(const CBuilderCAI*) const;
-	void DrawFactoryCAICommands(const CFactoryCAI*) const;
-	void DrawMobileCAICommands(const CMobileCAI*) const;
+	void DrawCommands(const CCommandAI*, int queueDrawDepth) const;
+	void DrawAirCAICommands(const CAirCAI*, int queueDrawDepth) const;
+	void DrawBuilderCAICommands(const CBuilderCAI*, int queueDrawDepth) const;
+	void DrawFactoryCAICommands(const CFactoryCAI*, int queueDrawDepth) const;
+	void DrawMobileCAICommands(const CMobileCAI*, int queueDrawDepth) const;
 
 	void DrawWaitIcon(const Command&) const;
 	void DrawDefaultCommand(const Command&, const CUnit*) const;
 
 private:
-	spring::unordered_set<int> luaQueuedUnitSet;
+	spring::unordered_set<std::pair<int, int>> luaQueuedUnitSet; //unitID, queueDepth (if > 0)
 	static constexpr uint32_t cmdCircleResolution = 100;
 };
 
