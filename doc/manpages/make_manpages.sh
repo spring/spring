@@ -41,11 +41,11 @@ else
 fi
 
 # Sanity check.
-if ! which ${EXEC_ASCIIDOC} > /dev/null; then
+if ! command -v ${EXEC_ASCIIDOC} > /dev/null; then
 	echo "Error: Could not find asciidoc." >&2
 	exit 1
 fi
-if ! which ${EXEC_XSLTPROC} > /dev/null; then
+if ! command -v ${EXEC_XSLTPROC} > /dev/null; then
 	echo "Error: Could not find xsltproc." >&2
 	exit 1
 fi
@@ -53,7 +53,7 @@ if [ ! -f ${XSL_DOCBOOK} ]; then
 	echo "Error: Could not find docbook.xsl." >&2
 	exit 1
 fi
-if ! which ${EXEC_7Z} > /dev/null; then
+if ! command -v ${EXEC_7Z} > /dev/null; then
 	echo "Error: Could not find 7z." >&2
 	exit 1
 fi

@@ -6,7 +6,7 @@
 Name
 ----
 ifdef::DEFAULT[{BINARY} - An open source RTS game engine - Default Engine]
-ifdef::LEGACY[{BINARY} - An open source RTS game engine - Legacy Engine]
+ifdef::OPENGL4[{BINARY} - An open source RTS game engine - OpenGL4 Engine]
 ifdef::HEADLESS[{BINARY} - An open source RTS game engine - Headless Engine]
 ifdef::DEDICATED[{BINARY} - An open source RTS game engine - Dedicated Server]
 
@@ -62,10 +62,10 @@ The engine can run graphics and simulation in two separate threads,
 depending on the game and engine settings.
 This will typically boost the performance on multi-core systems.
 endif::DEFAULT[]
-ifdef::LEGACY[]
+ifdef::OPENGL4[]
 This engine version runs graphics and simulation in a single thread,
 and may marginally increase the performance on single-core systems.
-endif::LEGACY[]
+endif::OPENGL4[]
 
 Options
 -------
@@ -289,7 +289,7 @@ The filename of such config files can be as following:
 See also
 --------
 ifndef::DEFAULT[spring(6)]
-ifndef::LEGACY[spring-opengl4(6)]
+ifndef::OPENGL4[spring-opengl4(6)]
 ifndef::HEADLESS[spring-headless(6)]
 ifndef::DEDICATED[spring-dedicated(6)]
 
