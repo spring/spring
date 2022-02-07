@@ -290,6 +290,9 @@ namespace springproc {
 		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using OS processor number.");
 		// already called
 		// setDefault();
+
+		numProcessors /= 2;
+		totalNumCores /= 2;
 	}
 
 	void CPUID::setDefault()
