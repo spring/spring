@@ -1,0 +1,36 @@
+## Makefile for libcpuid, MSVC compiler, X64
+
+all: libcpuid.lib
+
+ASM = ml64 /nologo
+CC = cl.exe /nologo /TC
+OPTFLAGS = /MT
+DEFINES = /D "VERSION=\"0.5.1\""
+OBJECTS = masm-x64.obj asm-bits.obj cpuid_main.obj libcpuid_util.obj recog_amd.obj recog_intel.obj rdtsc.obj
+
+libcpuid.lib: $(OBJECTS)
+	lib /nologo /MACHINE:AMD64 /out:libcpuid.lib $(OBJECTS) bufferoverflowU.lib
+
+masm-x64.obj: masm-x64.asm
+	$(ASM) /c masm-x64.asm
+
+asm-bits.obj: asm-bits.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c asm-bits.c
+
+cpuid_main.obj: cpuid_main.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c cpuid_main.c
+
+libcpuid_util.obj: libcpuid_util.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c libcpuid_util.c
+
+recog_amd.obj: recog_amd.c
+	$(CC) $(OPTFLAGS) $(DEFINES)  /c recog_amd.c
+
+recog_intel.obj: recog_intel.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c recog_intel.c
+
+rdtsc.obj: rdtsc.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c rdtsc.c
+
+clean:
+	del *.obj libcpuid.lib

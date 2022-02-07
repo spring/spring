@@ -1,0 +1,40 @@
+# Makefile for Win32
+#
+# This is required on machines with multiple versions of the Microsoft compiler
+#
+# E.g. if you have Visual Studio 2008 and compile libcpuid with it, the static lib
+# will not link in an executable, created through makefiles and MSVC 2003 (7.1).
+#
+# The solution is to use this custom makefile and compile libcpuid for MSVC 2003
+#
+
+all: libcpuid.lib
+
+CC = cl.exe /nologo /TC
+OPTFLAGS = /MT
+DEFINES = /D "VERSION=\"0.5.1\""
+OBJECTS = asm-bits.obj cpuid_main.obj libcpuid_util.obj recog_amd.obj recog_intel.obj rdtsc.obj
+
+libcpuid.lib: $(OBJECTS)
+	lib /nologo /out:libcpuid.lib $(OBJECTS)
+
+asm-bits.obj: asm-bits.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c asm-bits.c
+
+cpuid_main.obj: cpuid_main.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c cpuid_main.c
+
+libcpuid_util.obj: libcpuid_util.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c libcpuid_util.c
+
+recog_amd.obj: recog_amd.c
+	$(CC) $(OPTFLAGS) $(DEFINES)  /c recog_amd.c
+
+recog_intel.obj: recog_intel.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c recog_intel.c
+
+rdtsc.obj: rdtsc.c
+	$(CC) $(OPTFLAGS) $(DEFINES) /c rdtsc.c
+
+clean:
+	del *.obj libcpuid.lib

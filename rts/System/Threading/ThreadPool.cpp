@@ -455,7 +455,7 @@ void SetThreadCount(int wantedNumThreads)
 	const int curNumThreads = GetNumThreads(); // includes main
 	const int wtdNumThreads = Clamp(wantedNumThreads, 1, GetMaxThreads());
 
-	const char* fmts[4] = {
+	constexpr const char* fmts[] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d (init=%d)",
 		"[ThreadPool::%s][2] workers=%lu",
 		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{exec,wait}time={{%.3f, %.3f}, {%.3f, %.3f}}ms",

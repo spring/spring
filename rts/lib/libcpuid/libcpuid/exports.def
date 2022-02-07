@@ -1,0 +1,35 @@
+LIBRARY LIBCPUID
+
+EXPORTS
+cpuid_present @1
+cpu_exec_cpuid @2
+cpu_exec_cpuid_ext @3
+cpuid_get_raw_data @4
+cpuid_serialize_raw_data @5
+cpuid_deserialize_raw_data @6
+cpu_identify @7
+cpu_feature_str @8
+cpuid_error @9
+cpu_rdtsc @10
+cpu_tsc_mark @11
+cpu_tsc_unmark @12
+cpu_clock_by_mark @13
+cpu_clock_by_os @14
+cpu_clock_measure @15
+cpu_clock @16
+cpuid_lib_version @17
+cpuid_set_warn_function @18
+cpuid_set_verbosiness_level @19
+cpuid_get_cpu_list @20
+cpuid_free_cpu_list @21
+cpu_msr_driver_open @22
+cpu_rdmsr @23
+cpu_msrinfo @24
+cpu_msr_driver_close @25
+cpu_clock_by_ic @26
+cpuid_get_total_cpus @27
+cpu_msr_driver_open_core @28
+cpuid_get_vendor @29
+cpu_rdmsr_range @30
+cpuid_get_epc @31
+msr_serialize_raw_data @32

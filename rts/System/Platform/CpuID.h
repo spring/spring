@@ -17,17 +17,17 @@ namespace springproc {
 	/** Class to detect the processor topology, more specifically,
 	    for now it can detect the number of real (not hyper threaded
 	    core.
-	
+
 	    It uses 'cpuid' instructions to query the information. It
 	    implements both the new (i7 and above) and legacy (from P4 on
 	    methods).
-	    
-	    The implementation is done only for Intel processor for now, as at 
+
+	    The implementation is done only for Intel processor for now, as at
 	    the time of the writing it was not clear how to achieve a similar
 	    result for AMD CMT multithreading.
-	    
+
 	    This file is based on the following documentations from Intel:
-	    - "Intel® 64 Architecture Processor Topology Enumeration" 
+	    - "Intel® 64 Architecture Processor Topology Enumeration"
 	      (Kuo_CpuTopology_rc1.rh1.final.pdf)
 	    - "Intel® 64 and IA-32 Architectures Software Developer’s Manual
 	     Volume 3A: System Programming Guide, Part 1"
@@ -40,46 +40,46 @@ namespace springproc {
 	public:
 		CPUID();
 
-		/** Total number of cores in the system. This excludes SMT/HT 
+		/** Total number of cores in the system. This excludes SMT/HT
 		    cores. */
-		int getTotalNumCores() const { return totalNumCores; }
+		int GetNumPhysicalCores() const { return numPhysicalCores; }
 
 		/** Total number of physical processor dies in the system. */
-		int getTotalNumPackages() const { return totalNumPackages; }
+		int GetTotalNumPackages() const { return totalNumPackages; }
 
-		uint64_t getCoreAffinityMask(int x) const { return affinityMaskOfCores[x & (maxProcessors - 1)]; }
-		uint64_t getPackageAffinityMask(int x) { return affinityMaskOfPackages[x & (maxProcessors - 1)]; }
-
-	private:
-		void getIdsAmd();
-		void getIdsIntel();
-		void setDefault();
+		uint64_t GetCoreAffinityMask(int x) const { return affinityMaskOfCores[x & (MAX_PROCESSORS - 1)]; }
+		uint64_t GetPackageAffinityMask(int x) { return affinityMaskOfPackages[x & (MAX_PROCESSORS - 1)]; }
 
 	private:
-		void getIdsIntelEnumerate();
-
-		void getMasksIntelLeaf11Enumerate();
-		void getMasksIntelLeaf11();
-		void getMasksIntelLeaf1and4();
-
-		uint32_t getApicIdIntel();
+		void GetIdsAMD();
+		void GetIdsIntel();
+		void SetDefault();
 
 	private:
-		int numProcessors;
-		int totalNumCores;
+		void GetIdsIntelEnumerate();
+
+		void GetMasksIntelLeaf11Enumerate();
+		void GetMasksIntelLeaf11();
+		void GetMasksIntelLeaf1and4();
+
+		uint32_t GetApicIdIntel();
+
+	private:
+		int numLogicalCores;
+		int numPhysicalCores;
 		int totalNumPackages;
 
-		static constexpr int maxProcessors = 64;
+		static constexpr int MAX_PROCESSORS = 64;
 
 		/** Array of the size coreTotalNumber, containing for each
 		    core the affinity mask. */
-		uint64_t affinityMaskOfCores[maxProcessors];
-		uint64_t affinityMaskOfPackages[maxProcessors];
+		uint64_t affinityMaskOfCores[MAX_PROCESSORS];
+		uint64_t affinityMaskOfPackages[MAX_PROCESSORS];
 
 		////////////////////////
 		// Intel specific fields
 
-		uint32_t processorApicIds[maxProcessors];
+		uint32_t processorApicIds[MAX_PROCESSORS];
 
 		uint32_t shiftCore;
 		uint32_t shiftPackage;

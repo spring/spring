@@ -201,7 +201,7 @@ namespace Threading {
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
 		static springproc::CPUID cpuid;
-		return cpuid.getTotalNumCores();
+		return cpuid.GetNumPhysicalCores();
 	}
 
 	bool HasHyperThreading() { return (GetLogicalCpuCores() > GetPhysicalCpuCores()); }

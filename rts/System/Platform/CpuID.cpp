@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CpuID.h"
+#include "libcpuid/libcpuid/libcpuid.h"
 #include "System/MainDefines.h"
 #include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"
@@ -92,27 +93,49 @@ namespace springproc {
 	{
 		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
-		setDefault();
+		SetDefault();
+
+		// check for CPUID presence
+		if (!cpuid_present()) {
+			LOG_L(L_WARNING, "[CpuId] failed cpuid_present check");
+			return;
+		}
+
+		struct cpu_raw_data_t raw;
+		if (cpuid_get_raw_data(&raw) < 0) {
+			LOG_L(L_WARNING, "[CpuId] error: %s", cpuid_error());
+			return;
+		}
+
+		struct cpu_id_t data;
+		// identify the CPU, using the given raw data.
+		if (cpu_identify(&raw, &data) < 0) {
+			LOG_L(L_WARNING, "[CpuId] error: %s", cpuid_error());
+			return;
+		}
+
 		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
 
-		switch (regs[REG_EBX]) {
-			case 0x756e6547: {
-				// "Genu", from "GenuineIntel"
-				getIdsIntel();
+		switch (data.vendor) {
+			case VENDOR_INTEL: {
+				GetIdsIntel();
 			} break;
-			case 0x68747541: {
-				// "htuA" from "AuthenticAMD"
-				// TODO: AMD has also something similar to SMT (called CMT) in Bulldozer
-				// microarchitecture (FX processors).
-				getIdsAmd();
+			/*
+			// this does nothing smart for now. Makes no sense to call
+			case VENDOR_AMD: {
+				GetIdsAMD();
 			} break;
+			*/
+			case VENDOR_AMD: [[fallthrough]];
 			default: {
+				assert(data.num_logical_cpus == numLogicalCores);
+				numPhysicalCores = data.num_cores;
 			} break;
 		}
 	}
 
 	// Function based on Figure 1 from Kuo_CpuTopology_rc1.rh1.final.pdf
-	void CPUID::getIdsIntel()
+	void CPUID::GetIdsIntel()
 	{
 		int maxLeaf = 0;
 		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
@@ -128,26 +151,26 @@ namespace springproc {
 			if (regs[REG_EBX] != 0) {
 				hasLeaf11 = true;
 				LOG_L(L_DEBUG,"[CpuId] leaf 11 support");
-				getMasksIntelLeaf11();
-				getIdsIntelEnumerate();
+				GetMasksIntelLeaf11();
+				GetIdsIntelEnumerate();
 				return;
 			}
 		}
 
 		if (maxLeaf >= 4) {
 			LOG_L(L_DEBUG,"[CpuId] leaf 4 support");
-			getMasksIntelLeaf1and4();
-			getIdsIntelEnumerate();
+			GetMasksIntelLeaf1and4();
+			GetIdsIntelEnumerate();
 			return;
 		}
 
 		// Either it is a very old processor, or the cpuid instruction is disabled
 		// from BIOS. Print a warning and use default processor number
 		LOG_L(L_WARNING,"[CpuId] max cpuid leaf is less than 4! Using OS processor number.");
-		setDefault();
+		SetDefault();
 	}
 
-	void CPUID::getMasksIntelLeaf11Enumerate()
+	void CPUID::GetMasksIntelLeaf11Enumerate()
 	{
 		uint32_t currentLevel = 0;
 		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
@@ -186,9 +209,9 @@ namespace springproc {
 	// Implementing "Sub ID Extraction Parameters for x2APIC ID" from
 	// Kuo_CpuTopology_rc1.rh1.final.pdf
 
-	void CPUID::getMasksIntelLeaf11()
+	void CPUID::GetMasksIntelLeaf11()
 	{
-		getMasksIntelLeaf11Enumerate();
+		GetMasksIntelLeaf11Enumerate();
 
 		// determined the shifts, now compute the masks
 		maskVirtual =  ~((-1u) << shiftCore    );
@@ -196,7 +219,7 @@ namespace springproc {
 		maskPackage =   ((-1u) << shiftPackage );
 	}
 
-	void CPUID::getMasksIntelLeaf1and4()
+	void CPUID::GetMasksIntelLeaf1and4()
 	{
 		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
 
@@ -233,31 +256,31 @@ namespace springproc {
 		maskPackage =   ((-1u) << shiftPackage );
 	}
 
-	void CPUID::getIdsIntelEnumerate()
+	void CPUID::GetIdsIntelEnumerate()
 	{
 		const auto oldAffinity = Threading::GetAffinity();
 
-		for (int processor = 0; processor < numProcessors; processor++) {
+		for (int processor = 0; processor < numLogicalCores; processor++) {
 			Threading::SetAffinity(1u << processor, true);
 			spring::this_thread::yield();
-			processorApicIds[processor] = getApicIdIntel();
+			processorApicIds[processor] = GetApicIdIntel();
 		}
 
 		spring::unordered_set<uint32_t> cores;
 		spring::unordered_set<uint32_t> packages;
 
 		// determine the total number of cores
-		for (int processor = 0; processor < numProcessors; processor++) {
+		for (int processor = 0; processor < numLogicalCores; processor++) {
 			auto ret = cores.insert(processorApicIds[processor] >> shiftCore);
 			if (!ret.second)
 				continue;
 
 			affinityMaskOfCores[cores.size() - 1] = (1lu << processor);
 		}
-		totalNumCores = cores.size();
+		numPhysicalCores = cores.size();
 
 		// determine the total number of packages
-		for (int processor = 0; processor < numProcessors; processor++) {
+		for (int processor = 0; processor < numLogicalCores; processor++) {
 			auto ret = packages.insert(processorApicIds[processor] >> shiftPackage);
 			if (!ret.second)
 				continue;
@@ -270,7 +293,7 @@ namespace springproc {
 		Threading::SetAffinity(oldAffinity);
 	}
 
-	uint32_t CPUID::getApicIdIntel()
+	uint32_t CPUID::GetApicIdIntel()
 	{
 		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
@@ -285,34 +308,29 @@ namespace springproc {
 		return (regs[REG_EBX] >> 24);
 	}
 
-	void CPUID::getIdsAmd()
+	void CPUID::GetIdsAMD()
 	{
-		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using OS processor number.");
-		// already called
-		// setDefault();
-
-		numProcessors /= 2;
-		totalNumCores /= 2;
+		#pragma message ("TODO")
 	}
 
-	void CPUID::setDefault()
+	void CPUID::SetDefault()
 	{
-		numProcessors = Threading::GetLogicalCpuCores();
-		totalNumCores = numProcessors;
+		numLogicalCores = Threading::GetLogicalCpuCores();
+		numPhysicalCores = numLogicalCores >> 1; //In 2022 HyperThreading is likely more common rather than not
 		totalNumPackages = 1;
 
 		// affinity mask is a uint64_t, but spring uses uint32_t
-		assert(numProcessors <= (maxProcessors >> 1));
+		assert(numLogicalCores <= MAX_PROCESSORS);
 
-		static_assert(sizeof(affinityMaskOfCores   ) == (maxProcessors * sizeof(affinityMaskOfCores   [0])), "");
-		static_assert(sizeof(affinityMaskOfPackages) == (maxProcessors * sizeof(affinityMaskOfPackages[0])), "");
+		static_assert(sizeof(affinityMaskOfCores   ) == (MAX_PROCESSORS * sizeof(affinityMaskOfCores   [0])), "");
+		static_assert(sizeof(affinityMaskOfPackages) == (MAX_PROCESSORS * sizeof(affinityMaskOfPackages[0])), "");
 
 		memset(affinityMaskOfCores   , 0, sizeof(affinityMaskOfCores   ));
 		memset(affinityMaskOfPackages, 0, sizeof(affinityMaskOfPackages));
 		memset(processorApicIds      , 0, sizeof(processorApicIds      ));
 
 		// failed to determine CPU anatomy, just set affinity mask to (-1)
-		for (int i = 0; i < numProcessors; i++) {
+		for (int i = 0; i < numLogicalCores; i++) {
 			affinityMaskOfCores[i] = affinityMaskOfPackages[i] = -1;
 		}
 	}

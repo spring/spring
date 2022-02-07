@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 find_package_static(ZLIB REQUIRED)
 
+list(APPEND unitsync_libs cpuid)
 list(APPEND unitsync_libs ${CMAKE_DL_LIBS})
 list(APPEND unitsync_libs 7zip lua headlessStubs archives)
 list(APPEND unitsync_libs ${ZLIB_LIBRARY})
@@ -42,6 +43,7 @@ remove_definitions(-DTHREADPOOL)
 set(ENGINE_SRC_ROOT "../../rts")
 
 include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
+include_directories(${ENGINE_SRC_ROOT}/lib)
 include_directories(${ENGINE_SRC_ROOT}/lib/lua/include)
 include_directories(${ENGINE_SRC_ROOT}/lib/7zip)
 include_directories(${ENGINE_SRC_ROOT})

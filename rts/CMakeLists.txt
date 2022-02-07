@@ -50,6 +50,10 @@ include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${IL_INCLUDE_DIR})
 
+
+### libcpuid
+list(APPEND engineCommonLibraries "cpuid")
+
 ### Assemble common libraries
 add_subdirectory(System/Sound)
 if    (NO_SOUND)
