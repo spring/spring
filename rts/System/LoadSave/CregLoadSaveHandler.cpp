@@ -20,6 +20,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/BuildingMaskMap.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -85,6 +86,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
+	s->SerializeObjectInstance(&groundBlockingObjectMap, groundBlockingObjectMap.GetClass());
 	s->SerializeObjectInstance(&buildingMaskMap, buildingMaskMap.GetClass());
 	s->SerializeObjectInstance(&projectileHandler, projectileHandler.GetClass());
 	CPlasmaRepulser::SerializeShieldSegmentCollectionPool(s);
