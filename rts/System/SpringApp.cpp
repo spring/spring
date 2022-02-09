@@ -453,11 +453,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	if (!FLAGS_write_dir.empty())
 		dataDirLocater.SetWriteDir(FLAGS_write_dir);
 
-	// if this fails, configHandler remains null
-	// logOutput's init depends on configHandler
-	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
-	FileSystemInitializer::InitializeLogOutput();
-
 	if (FLAGS_gen_fontconfig) {
 		{
 			spring_clock::PushTickRate();
@@ -514,6 +509,11 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	}
 
 	CTextureAtlas::SetDebug(FLAGS_textureatlas);
+
+	// if this fails, configHandler remains null
+	// logOutput's init depends on configHandler
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
+	FileSystemInitializer::InitializeLogOutput();
 }
 
 
