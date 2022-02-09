@@ -58,8 +58,8 @@ public:
 	 * Called if a unit or feature does not define a custom volume.
 	 */
 	bool InitDefault(const float4& params) {
-		if (DefaultToSphere()) { InitSphere(params.x); return true; }
 		if (DefaultToFootPrint()) { InitBox(float3(params.z, params.y, params.w)); return true; }
+		if (DefaultToSphere()) { InitSphere(params.x); return true; }
 		return false;
 	}
 
