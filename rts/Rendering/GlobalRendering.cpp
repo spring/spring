@@ -1090,8 +1090,10 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 {
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
-	if (displayIdx < 0 || displayIdx >= numDisplays)
+	if (displayIdx < 0 || displayIdx >= numDisplays) {
+		LOG_L(L_WARNING, "[GR::%s] displayIdx(%d) is out of bounds (%d,%d)", __func__, displayIdx, 0, numDisplays - 1);
 		return false;
+	}
 
 	SDL_Rect db;
 	GetScreenEffectiveBounds(db, &displayIdx, &fs);
@@ -1099,11 +1101,19 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY };
 	const int2 brPos = { db.x + winRPosX + winSizeX_, db.y + winRPosY + winSizeY_ };
 
-	if ((tlPos.x < db.x) || (tlPos.y < db.y) || (tlPos.x > db.x + db.w) || (tlPos.y > db.y + db.h))
+	if ((tlPos.x < db.x) || (tlPos.y < db.y) || (brPos.x > db.x + db.w) || (brPos.y > db.y + db.h)) {
+		LOG_L(L_WARNING, "[GR::%s] Window TLBR(%d,%d,%d,%d) is out of display bounds(%d,%d,%d,%d)", __func__,
+			tlPos.x, tlPos.y, brPos.x    , brPos.y    ,
+			db.x   , db.y   , db.x + db.w, db.y + db.h);
 		return false;
+	}
 
-	if (fs && (winRPosX != 0 || winRPosY != 0 || winSizeX_ != db.w || winSizeY_ != db.h))
+	if (fs && (winRPosX != 0 || winRPosY != 0 || winSizeX_ != db.w || winSizeY_ != db.h)) {
+		LOG_L(L_WARNING, "[GR::%s] In fullscreen mode window geometry(%d,%d,%d,%d) must match display bounds(%d,%d,%d,%d)", __func__,
+			winRPosX, winRPosY, winSizeX_, winSizeY_,
+			0       ,        0,      db.w,      db.h);
 		return false;
+	}
 
 	configHandler->Set("WindowPosX", tlPos.x);
 	configHandler->Set("WindowPosY", tlPos.y);
