@@ -36,7 +36,6 @@ endif()
 add_definitions(-DNOT_USING_CREG)
 add_definitions(-DHEADLESS)
 add_definitions(-DNO_SOUND)
-add_definitions(-DBITMAP_NO_OPENGL)
 #add_definitions(-DENABLE_DEPRECATED_FUNCTIONS)
 remove_definitions(-DTHREADPOOL)
 

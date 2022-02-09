@@ -7,24 +7,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Description:
-// 
+//
 // Loads DDS images (DXTC1, DXTC3, DXTC5, RGB (888, 888X), and RGBA (8888) are
 // supported) for use in OpenGL. Image is flipped when its loaded as DX images
-// are stored with different coordinate system. If file has mipmaps and/or 
-// cubemaps then these are loaded as well. Volume textures can be loaded as 
+// are stored with different coordinate system. If file has mipmaps and/or
+// cubemaps then these are loaded as well. Volume textures can be loaded as
 // well but they must be uncompressed.
 //
-// When multiple textures are loaded (i.e a volume or cubemap texture), 
-// additional faces can be accessed using the array operator. 
+// When multiple textures are loaded (i.e a volume or cubemap texture),
+// additional faces can be accessed using the array operator.
 //
-// The mipmaps for each face are also stored in a list and can be accessed like 
-// so: image.get_mipmap() (which accesses the first mipmap of the first 
+// The mipmaps for each face are also stored in a list and can be accessed like
+// so: image.get_mipmap() (which accesses the first mipmap of the first
 // image). To get the number of mipmaps call the get_num_mipmaps function for
 // a given texture.
 //
 // Call the is_volume() or is_cubemap() function to check that a loaded image
 // is a volume or cubemap texture respectively. If a volume texture is loaded
-// then the get_depth() function should return a number greater than 1. 
+// then the get_depth() function should return a number greater than 1.
 // Mipmapped volume textures and DXTC compressed volume textures are supported.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@
 // function.
 //
 // The open function has also been updated to take an optional second parameter
-// specifying whether the image should be flipped on load. This defaults to 
+// specifying whether the image should be flipped on load. This defaults to
 // true.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,25 +62,25 @@
 // GLuint texobj;
 //
 // image.load("compressed.dds");
-// 
+//
 // glGenTextures(1, &texobj);
 // glEnable(GL_TEXTURE_2D);
 // glBindTexture(GL_TEXTURE_2D, texobj);
 //
-// glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, image.get_format(), 
-//     image.get_width(), image.get_height(), 0, image.get_size(), 
+// glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, image.get_format(),
+//     image.get_width(), image.get_height(), 0, image.get_size(),
 //     image);
 //
 // for (int i = 0; i < image.get_num_mipmaps(); i++)
 // {
 //     CSurface mipmap = image.get_mipmap(i);
 //
-//     glCompressedTexImage2DARB(GL_TEXTURE_2D, i+1, image.get_format(), 
-//         mipmap.get_width(), mipmap.get_height(), 0, mipmap.get_size(), 
+//     glCompressedTexImage2DARB(GL_TEXTURE_2D, i+1, image.get_format(),
+//         mipmap.get_width(), mipmap.get_height(), 0, mipmap.get_size(),
 //         mipmap);
-// } 
+// }
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Loading an uncompressed texture:
 //
 // CDDSImage image;
@@ -92,71 +92,71 @@
 // glEnable(GL_TEXTURE_2D);
 // glBindTexture(GL_TEXTURE_2D, texobj);
 //
-// glTexImage2D(GL_TEXTURE_2D, 0, image.get_components(), image.get_width(), 
+// glTexImage2D(GL_TEXTURE_2D, 0, image.get_components(), image.get_width(),
 //     image.get_height(), 0, image.get_format(), GL_UNSIGNED_BYTE, image);
 //
 // for (int i = 0; i < image.get_num_mipmaps(); i++)
 // {
-//     glTexImage2D(GL_TEXTURE_2D, i+1, image.get_components(), 
-//         image.get_mipmap(i).get_width(), image.get_mipmap(i).get_height(), 
+//     glTexImage2D(GL_TEXTURE_2D, i+1, image.get_components(),
+//         image.get_mipmap(i).get_width(), image.get_mipmap(i).get_height(),
 //         0, image.get_format(), GL_UNSIGNED_BYTE, image.get_mipmap(i));
 // }
 //
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Loading an uncompressed cubemap texture:
 //
 // CDDSImage image;
 // GLuint texobj;
 // GLenum target;
-// 
+//
 // image.load("cubemap.dds");
-// 
+//
 // glGenTextures(1, &texobj);
 // glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 // glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
-// 
+//
 // for (int n = 0; n < 6; n++)
 // {
 //     target = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB+n;
-// 
-//     glTexImage2D(target, 0, image.get_components(), image[n].get_width(), 
-//         image[n].get_height(), 0, image.get_format(), GL_UNSIGNED_BYTE, 
+//
+//     glTexImage2D(target, 0, image.get_components(), image[n].get_width(),
+//         image[n].get_height(), 0, image.get_format(), GL_UNSIGNED_BYTE,
 //         image[n]);
-// 
+//
 //     for (int i = 0; i < image[n].get_num_mipmaps(); i++)
 //     {
-//         glTexImage2D(target, i+1, image.get_components(), 
-//             image[n].get_mipmap(i).get_width(), 
+//         glTexImage2D(target, i+1, image.get_components(),
+//             image[n].get_mipmap(i).get_width(),
 //             image[n].get_mipmap(i).get_height(), 0,
 //             image.get_format(), GL_UNSIGNED_BYTE, image[n].get_mipmap(i));
 //     }
 // }
 //
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Loading a volume texture:
 //
 // CDDSImage image;
 // GLuint texobj;
-// 
+//
 // image.load("volume.dds");
-// 
+//
 // glGenTextures(1, &texobj);
 // glEnable(GL_TEXTURE_3D);
 // glBindTexture(GL_TEXTURE_3D, texobj);
-// 
+//
 // PFNGLTEXIMAGE3DPROC glTexImage3D;
-// glTexImage3D(GL_TEXTURE_3D, 0, image.get_components(), image.get_width(), 
-//     image.get_height(), image.get_depth(), 0, image.get_format(), 
+// glTexImage3D(GL_TEXTURE_3D, 0, image.get_components(), image.get_width(),
+//     image.get_height(), image.get_depth(), 0, image.get_format(),
 //     GL_UNSIGNED_BYTE, image);
-// 
+//
 // for (int i = 0; i < image.get_num_mipmaps(); i++)
 // {
-//     glTexImage3D(GL_TEXTURE_3D, i+1, image.get_components(), 
-//         image[0].get_mipmap(i).get_width(), 
-//         image[0].get_mipmap(i).get_height(), 
-//         image[0].get_mipmap(i).get_depth(), 0, image.get_format(), 
+//     glTexImage3D(GL_TEXTURE_3D, i+1, image.get_components(),
+//         image[0].get_mipmap(i).get_width(),
+//         image[0].get_mipmap(i).get_height(),
+//         image[0].get_mipmap(i).get_depth(), 0, image.get_format(),
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
 
@@ -197,7 +197,7 @@ void CDDSImage::create_textureFlat(unsigned int format, unsigned int components,
 
     // remove any existing images
     clear();
-    
+
     m_format = format;
     m_components = components;
     m_type = TextureFlat;
@@ -241,15 +241,15 @@ inline bool same_size(const CTexture &a, const CTexture &b)
 }
 
 void CDDSImage::create_textureCubemap(unsigned int format, unsigned int components,
-                                      const CTexture &positiveX, const CTexture &negativeX, 
-                                      const CTexture &positiveY, const CTexture &negativeY, 
+                                      const CTexture &positiveX, const CTexture &negativeX,
+                                      const CTexture &positiveY, const CTexture &negativeY,
                                       const CTexture &positiveZ, const CTexture &negativeZ)
 {
     assert(format != 0);
     assert(components != 0);
     assert(positiveX.get_depth() == 1);
 
-    // verify that all dimensions are the same 
+    // verify that all dimensions are the same
     assert(same_size(positiveX, negativeX));
     assert(same_size(positiveX, positiveY));
     assert(same_size(positiveX, negativeY));
@@ -286,7 +286,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 
 	// clear any previously loaded images
 	clear();
-    
+
 
 	// open file
 #if 0
@@ -474,7 +474,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 
 		if (flipImage)
 			flip(img);
-        
+
 		unsigned int w = clamp_size(width >> 1);
 		unsigned int h = clamp_size(height >> 1);
 		unsigned int d = clamp_size(depth >> 1);
@@ -548,7 +548,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 bool CDDSImage::write_texture(const CTexture &texture, FILE *fp) const
 {
     assert(get_num_mipmaps() == texture.get_num_mipmaps());
-    
+
     int res = fwrite(texture, 1, texture.get_size(), fp);
     if (res<0) {
         return false;
@@ -587,7 +587,7 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
         ddsh.dwFlags |= DDSF_PITCH;
         ddsh.dwPitchOrLinearSize = get_dword_aligned_linesize(get_width(), m_components * 8);
     }
-    
+
     if (m_type == Texture3D)
     {
         ddsh.dwFlags |= DDSF_DEPTH;
@@ -605,7 +605,7 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
     if (is_compressed())
     {
         ddsh.ddspf.dwFlags = DDSF_FOURCC;
-        
+
         if (m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
             ddsh.ddspf.dwFourCC = FOURCC_DXT1;
         if (m_format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
@@ -620,16 +620,16 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
         ddsh.ddspf.dwRBitMask = 0x00ff0000;
         ddsh.ddspf.dwGBitMask = 0x0000ff00;
         ddsh.ddspf.dwBBitMask = 0x000000ff;
- 
+
         if (m_components == 4)
         {
             ddsh.ddspf.dwFlags |= DDSF_ALPHAPIXELS;
             ddsh.ddspf.dwABitMask = 0xff000000;
         }
     }
-    
+
     ddsh.dwCaps1 = DDSF_TEXTURE;
-    
+
     if (m_type == TextureCubemap)
     {
         ddsh.dwCaps1 |= DDSF_COMPLEX;
@@ -658,7 +658,7 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
         fclose(fp);
         return false;
     }
-    
+
     // write dds header
     res = fwrite(&ddsh, 1, sizeof(DDS_HEADER), fp);
     if (res<0) {
@@ -684,11 +684,11 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
         {
             CTexture cubeFace; // copy
 
-            if (i == 2) 
+            if (i == 2)
                 cubeFace = m_images[3];
-            else if (i == 3) 
+            else if (i == 3)
                 cubeFace = m_images[2];
-            else 
+            else
                 cubeFace = m_images[i];
 
             if (flipImage) flip_texture(cubeFace);
@@ -719,7 +719,7 @@ bool CDDSImage::is_compressed() const
 		   (m_format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT));
 }
 
-#ifndef BITMAP_NO_OPENGL
+#ifndef HEADLESS
 
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 1D texture
@@ -735,14 +735,14 @@ bool CDDSImage::upload_texture1D() const
 
     if (is_compressed())
     {
-        glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format, 
+        glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format,
             baseImage.get_width(), 0, baseImage.get_size(), baseImage);
-        
+
         // load all mipmaps
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-            glCompressedTexImage1DARB(GL_TEXTURE_1D, i+1, m_format, 
+            glCompressedTexImage1DARB(GL_TEXTURE_1D, i+1, m_format,
                 mipmap.get_width(), 0, mipmap.get_size(), mipmap);
         }
     }
@@ -763,7 +763,7 @@ bool CDDSImage::upload_texture1D() const
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
-            glTexImage1D(GL_TEXTURE_1D, i+1, m_components, 
+            glTexImage1D(GL_TEXTURE_1D, i+1, m_components,
                 mipmap.get_width(), 0, m_format, GL_UNSIGNED_BYTE, mipmap);
         }
 
@@ -799,20 +799,20 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target) const
     assert(image.get_height() > 0);
     assert(image.get_width() > 0);
     assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE_NV ||
-        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && 
+        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
          target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB));
-    
+
     if (is_compressed())
     {
-        glCompressedTexImage2DARB(target, 0, m_format, image.get_width(), 
+        glCompressedTexImage2DARB(target, 0, m_format, image.get_width(),
             image.get_height(), 0, image.get_size(), image);
-        
+
         // load all mipmaps
         for (unsigned int i = 0; i < image.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = image.get_mipmap(i);
-            glCompressedTexImage2DARB(target, i+1, m_format, 
-                mipmap.get_width(), mipmap.get_height(), 0, 
+            glCompressedTexImage2DARB(target, i+1, m_format,
+                mipmap.get_width(), mipmap.get_height(), 0,
                 mipmap.get_size(), mipmap);
         }
     }
@@ -825,23 +825,23 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target) const
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-        glTexImage2D(target, 0, m_components, image.get_width(), 
-            image.get_height(), 0, m_format, GL_UNSIGNED_BYTE, 
+        glTexImage2D(target, 0, m_components, image.get_width(),
+            image.get_height(), 0, m_format, GL_UNSIGNED_BYTE,
             image);
 
         // load all mipmaps
         for (unsigned int i = 0; i < image.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = image.get_mipmap(i);
-            
-            glTexImage2D(target, i+1, m_components, mipmap.get_width(), 
-                mipmap.get_height(), 0, m_format, GL_UNSIGNED_BYTE, mipmap); 
+
+            glTexImage2D(target, i+1, m_components, mipmap.get_width(),
+                mipmap.get_height(), 0, m_format, GL_UNSIGNED_BYTE, mipmap);
         }
 
         if (alignment != -1)
             glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
     }
-    
+
     return true;
 }
 
@@ -854,21 +854,21 @@ bool CDDSImage::upload_texture3D() const
     assert(m_type == Texture3D);
 
     const CTexture &baseImage = m_images[0];
-    
+
     assert(baseImage.get_depth() >= 1);
 
     if (is_compressed())
     {
-        glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,  
+        glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,
             baseImage.get_width(), baseImage.get_height(), baseImage.get_depth(),
             0, baseImage.get_size(), baseImage);
-        
+
         // load all mipmap volumes
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-            glCompressedTexImage3DARB(GL_TEXTURE_3D, i+1, m_format, 
-                mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 
+            glCompressedTexImage3DARB(GL_TEXTURE_3D, i+1, m_format,
+                mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(),
                 0, mipmap.get_size(), mipmap);
         }
     }
@@ -881,24 +881,24 @@ bool CDDSImage::upload_texture3D() const
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-        glTexImage3D(GL_TEXTURE_3D, 0, m_components, baseImage.get_width(), 
-            baseImage.get_height(), baseImage.get_depth(), 0, m_format, 
+        glTexImage3D(GL_TEXTURE_3D, 0, m_components, baseImage.get_width(),
+            baseImage.get_height(), baseImage.get_depth(), 0, m_format,
             GL_UNSIGNED_BYTE, baseImage);
-        
+
         // load all mipmap volumes
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
-            glTexImage3D(GL_TEXTURE_3D, i+1, m_components, 
-                mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 0, 
+            glTexImage3D(GL_TEXTURE_3D, i+1, m_components,
+                mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 0,
                 m_format, GL_UNSIGNED_BYTE,  mipmap);
         }
 
         if (alignment != -1)
             glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
     }
-    
+
     return true;
 }
 
@@ -918,7 +918,7 @@ bool CDDSImage::upload_textureCubemap() const
 
     GLenum target;
 
-    // loop through cubemap faces and load them as 2D textures 
+    // loop through cubemap faces and load them as 2D textures
     for (unsigned int n = 0; n < 6; n++)
     {
         // specify cubemap face
@@ -930,7 +930,7 @@ bool CDDSImage::upload_textureCubemap() const
     return true;
 }
 
-#endif // !BITMAP_NO_OPENGL
+#endif // !HEADLESS
 
 ///////////////////////////////////////////////////////////////////////////////
 // clamps input size to [1-size]
@@ -951,7 +951,7 @@ inline unsigned int CDDSImage::clamp_size(unsigned int size) const
 inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height) const
 {
     return ((width+3)/4)*((height+3)/4)*
-        (m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);   
+        (m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -979,7 +979,7 @@ void CDDSImage::flip(CSurface &surface) const
             unsigned int offset = imagesize*n;
             unsigned char *top = (unsigned char*)surface + offset;
             unsigned char *bottom = top + (imagesize-linesize);
-    
+
             for (unsigned int i = 0; i < (surface.get_height() >> 1); i++)
             {
                 swap(bottom, top, linesize);
@@ -998,15 +998,15 @@ void CDDSImage::flip(CSurface &surface) const
 
         switch (m_format)
         {
-            case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: 
+            case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
                 blocksize = 8;
                 flipblocks = &CDDSImage::flip_blocks_dxtc1;
                 break;
-            case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: 
+            case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
                 blocksize = 16;
                 flipblocks = &CDDSImage::flip_blocks_dxtc3;
                 break;
-            case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: 
+            case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
                 blocksize = 16;
                 flipblocks = &CDDSImage::flip_blocks_dxtc5;
                 break;
@@ -1018,7 +1018,7 @@ void CDDSImage::flip(CSurface &surface) const
 
         DXTColBlock *top;
         DXTColBlock *bottom;
-    
+
         for (unsigned int j = 0; j < (yblocks >> 1); j++)
         {
             top = (DXTColBlock*)((unsigned char*)surface+ j * linesize);
@@ -1030,12 +1030,12 @@ void CDDSImage::flip(CSurface &surface) const
             swap(bottom, top, linesize);
         }
     }
-}    
+}
 
 void CDDSImage::flip_texture(CTexture &texture) const
 {
     flip(texture);
-    
+
     for (unsigned int i = 0; i < texture.get_num_mipmaps(); i++)
     {
         flip(texture.get_mipmap(i));
@@ -1098,7 +1098,7 @@ void CDDSImage::flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks) con
 void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block) const
 {
     unsigned char gBits[4][4];
-    
+
     const unsigned int mask = 0x00000007;          // bits = 00 00 01 11
     unsigned int bits = 0;
     memcpy(&bits, &block->row[0], sizeof(unsigned char) * 3);
@@ -1177,11 +1177,11 @@ void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks) con
 {
     DXTColBlock *curblock = line;
     DXT5AlphaBlock *alphablock;
-    
+
     for (unsigned int i = 0; i < numBlocks; i++)
     {
         alphablock = reinterpret_cast<DXT5AlphaBlock*>(curblock);
-        
+
         flip_dxt5_alpha(alphablock);
 
         curblock++;
@@ -1320,8 +1320,8 @@ CSurface &CSurface::operator=(CSurface &&rhs) noexcept
 ///////////////////////////////////////////////////////////////////////////////
 // returns a pointer to image
 CSurface::operator unsigned char*() const
-{ 
-    return m_pixels; 
+{
+    return m_pixels;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

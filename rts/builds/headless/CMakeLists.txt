@@ -9,7 +9,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 add_definitions(-DHEADLESS)
 add_definitions(-DNO_SOUND)
-add_definitions(-DBITMAP_NO_OPENGL)
 remove_definitions(-DAVI_CAPTURING)
 
 set(OpenGL_GL_PREFERENCE LEGACY)
