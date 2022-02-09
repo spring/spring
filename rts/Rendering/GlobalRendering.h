@@ -168,7 +168,7 @@ public:
 	int viewSizeY;
 
 	/// the window borders
-	std::array<int, 4> winBorder;
+	mutable std::array<int, 4> winBorder;
 
 	/// Some settings got changed need to adjust the way window is
 	unsigned int winChgFrame;
