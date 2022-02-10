@@ -90,6 +90,8 @@ public:
 	void UpdateGLGeometry();
 	void UpdateScreenMatrices();
 
+	void UpdateWindowBorders(SDL_Window* window) const;
+
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetMaxWinRes() const;
 	int2 GetCfgWinRes() const;

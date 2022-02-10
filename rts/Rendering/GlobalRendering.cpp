@@ -4,7 +4,6 @@
 
 #include <SDL.h>
 
-
 #include "GlobalRendering.h"
 #include "GlobalRenderingInfo.h"
 #include "Rendering/VerticalSync.h"
@@ -29,7 +28,10 @@
 #include "System/Platform/Threading.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Platform/errorhandler.h"
+#include "System/ScopedResource.h"
 #include "System/creg/creg_cond.h"
+
+#include <SDL_syswm.h>
 
 
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
@@ -69,6 +71,8 @@ CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position
 
 CONFIG(int, RendererHash).defaultValue(-1).minimumValue(0).maximumValue(65535).description("Used to check driver database for OpenGL context information");
 
+
+#define WINDOWS_NO_INVISIBLE_GRIPS 1
 
 /**
  * @brief global rendering
@@ -187,7 +191,6 @@ CR_REG_METADATA(CGlobalRendering, (
 
 void CGlobalRendering::InitStatic() { globalRendering = new (globalRenderingMem) CGlobalRendering(); }
 void CGlobalRendering::KillStatic() { globalRendering->PreKill();  spring::SafeDestruct(globalRendering); }
-
 
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
@@ -393,8 +396,8 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 		return nullptr;
 	}
 
-	if(!hidden)
-		SDL_GetWindowBordersSize(newWindow, &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
+	if (!hidden)
+		UpdateWindowBorders(newWindow);
 
 	return newWindow;
 }
@@ -996,11 +999,9 @@ void CGlobalRendering::GetWindowPosSizeBounded(int& x, int& y, int& w, int& h) c
 	if (!borderless && !fullScreen) {
 		// take borders into account
 		y = std::max(y, r.y + winBorder[0]);
-#if 0
 		x = std::max(x, r.x + winBorder[1]);
 		h = std::min(h, r.h - winBorder[2] - winBorder[0]);
 		w = std::min(w, r.w - winBorder[3] - winBorder[1]);
-#endif
 	}
 }
 
@@ -1088,31 +1089,35 @@ bool CGlobalRendering::ToggleWindowInputGrabbing()
 
 bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winRPosY, int winSizeX_, int winSizeY_, bool fs, bool bl) const
 {
-
+#ifndef HEADLESS
 	const int numDisplays = SDL_GetNumVideoDisplays();
 	if (displayIdx < 0 || displayIdx >= numDisplays) {
-		LOG_L(L_WARNING, "[GR::%s] displayIdx(%d) is out of bounds (%d,%d)", __func__, displayIdx, 0, numDisplays - 1);
+		LOG_L(L_ERROR, "[GR::%s] displayIdx(%d) is out of bounds (%d,%d)", __func__, displayIdx, 0, numDisplays - 1);
 		return false;
 	}
 
 	SDL_Rect db;
 	GetScreenEffectiveBounds(db, &displayIdx, &fs);
 
-	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY };
+	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY             };
 	const int2 brPos = { db.x + winRPosX + winSizeX_, db.y + winRPosY + winSizeY_ };
 
-	if ((tlPos.x < db.x) || (tlPos.y < db.y) || (brPos.x > db.x + db.w) || (brPos.y > db.y + db.h)) {
-		LOG_L(L_WARNING, "[GR::%s] Window TLBR(%d,%d,%d,%d) is out of display bounds(%d,%d,%d,%d)", __func__,
-			tlPos.x, tlPos.y, brPos.x    , brPos.y    ,
-			db.x   , db.y   , db.x + db.w, db.y + db.h);
-		return false;
+	//TODO fix me in case borders other than top one will get taken into account
+	const int2 tlWinPos = (!fs && !bl) ? tlPos - int2(winBorder[1], winBorder[0]) : tlPos;
+	const int2 brWinPos = (!fs && !bl) ? brPos - int2(winBorder[3], winBorder[2]) : brPos;
+
+
+	if ((tlWinPos.x < db.x) || (tlWinPos.y < db.y) || (brWinPos.x > db.x + db.w) || (brWinPos.y > db.y + db.h)) {
+		LOG_L(L_WARNING, "[GR::%s] Window TLBR(%d,%d,%d,%d), client area(%d,%d,%d,%d) is out of display bounds(%d,%d,%d,%d)", __func__,
+			tlWinPos.x, tlWinPos.y, brWinPos.x , brWinPos.y ,
+			tlPos.x   , tlPos.y   , brPos.x    , brPos.y    ,
+			db.x      , db.y      , db.x + db.w, db.y + db.h);
 	}
 
 	if (fs && (winRPosX != 0 || winRPosY != 0 || winSizeX_ != db.w || winSizeY_ != db.h)) {
-		LOG_L(L_WARNING, "[GR::%s] In fullscreen mode window geometry(%d,%d,%d,%d) must match display bounds(%d,%d,%d,%d)", __func__,
+		LOG_L(L_WARNING, "[GR::%s] In fullscreen mode window geometry(%d,%d,%d,%d) should match display bounds(%d,%d,%d,%d)", __func__,
 			winRPosX, winRPosY, winSizeX_, winSizeY_,
 			0       ,        0,      db.w,      db.h);
-		return false;
 	}
 
 	configHandler->Set("WindowPosX", tlPos.x);
@@ -1125,6 +1130,7 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 	configHandler->Set(ysKeys[fs], winSizeY_);
 	configHandler->Set("Fullscreen", fs);
 	configHandler->Set("WindowBorderless", bl);
+#endif
 
 	return true;
 }
@@ -1245,7 +1251,7 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	screenFullPosY  = screenFullSize.y;
 
 	if (!borderless)
-		SDL_GetWindowBordersSize(sdlWindows[0], &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
+		UpdateWindowBorders(sdlWindows[0]);
 
 	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
 	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
@@ -1323,6 +1329,62 @@ void CGlobalRendering::UpdateScreenMatrices()
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
 	screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
 	screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
+}
+
+void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
+{
+#ifndef HEADLESS
+	assert(window);
+
+	SDL_GetWindowBordersSize(window, &winBorder[0], &winBorder[1], &winBorder[2], &winBorder[3]);
+
+	#if defined(_WIN32) && (WINDOWS_NO_INVISIBLE_GRIPS == 1)
+	// W/A for 8 px Aero invisible borders https://github.com/libsdl-org/SDL/commit/7c60bec493404905f512c835f502f1ace4eff003
+	{
+		static auto scopedLib = spring::ScopedResource(
+			LoadLibrary("dwmapi.dll"),
+			[](HMODULE lib) { if (lib) FreeLibrary(lib); });
+
+		if (!scopedLib())
+			return;
+
+		using DwmGetWindowAttributeT = HRESULT WINAPI(
+			HWND,
+			DWORD,
+			PVOID,
+			DWORD
+		);
+
+		static auto* DwmGetWindowAttribute = reinterpret_cast<DwmGetWindowAttributeT*>(GetProcAddress(scopedLib(), "DwmGetWindowAttribute"));
+
+		if (!DwmGetWindowAttribute)
+			return;
+
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		SDL_GetWindowWMInfo(window, &wmInfo);
+		HWND& hwnd = wmInfo.info.win.window;
+
+		RECT rect, frame;
+
+		static constexpr DWORD DWMWA_EXTENDED_FRAME_BOUNDS = 9; // https://docs.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
+		DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(RECT));
+		GetWindowRect(hwnd, &rect);
+
+		winBorder[0] -= std::max(0l, frame.top - rect.top);
+		winBorder[1] -= std::max(0l, frame.left - rect.left);
+		winBorder[2] -= std::max(0l, rect.bottom - frame.bottom);
+		winBorder[3] -= std::max(0l, rect.right - frame.right);
+
+		LOG("[GR::%s] Working around Windows 10+ thick borders SDL2 issue, borders are slimmed by TLBR(%d,%d,%d,%d)", __func__,
+			std::max(0l, frame.top - rect.top),
+			std::max(0l, frame.left - rect.left),
+			std::max(0l, rect.bottom - frame.bottom),
+			std::max(0l, rect.right - frame.right)
+		);
+	}
+	#endif
+#endif
 }
 
 void CGlobalRendering::UpdateGLGeometry()
