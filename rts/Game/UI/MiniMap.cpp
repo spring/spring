@@ -1602,6 +1602,12 @@ void CMiniMap::DrawBackground() const
 
 void CMiniMap::DrawUnitIcons() const
 {
+	for (int i = 0; i < 4; ++i)
+		glDisable(GL_CLIP_PLANE0 + i);
+
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(curPos.x, curPos.y, curDim.x, curDim.y);
+
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
 	glTranslatef(0.0f, +1.0f, 0.0f);
@@ -1612,6 +1618,12 @@ void CMiniMap::DrawUnitIcons() const
 	glDisable(GL_TEXTURE_2D); //maybe later stages need it
 
 	glPopMatrix();
+
+	glDisable(GL_SCISSOR_TEST);
+
+	for (int i = 0; i < 4; ++i)
+		glEnable(GL_CLIP_PLANE0 + i);
+
 }
 
 
