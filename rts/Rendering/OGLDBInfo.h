@@ -15,7 +15,7 @@ public:
 	OGLDBInfo(OGLDBInfo&& rhs) noexcept { *this = std::move(rhs); }
 
 	bool IsReady(uint32_t waitTimeMS = 0) const;
-	bool GetResult(const int2& curCtx, std::string& msg);
+	bool GetResult(int2& maxCtx, std::string& url, std::string& drv);
 
 	OGLDBInfo& operator= (const OGLDBInfo&) = delete;
 	OGLDBInfo& operator= (OGLDBInfo&& rhs) {

@@ -190,6 +190,9 @@ class LuaUnsyncedRead {
 		static int GetDecalOwner(lua_State* L);
 
 		static int UnitIconGetDraw(lua_State* L);
+
+		static int MakeGLDBQuery(lua_State* L);
+		static int GetGLDBQuery(lua_State* L);
 };
 
 

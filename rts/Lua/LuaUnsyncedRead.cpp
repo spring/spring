@@ -36,6 +36,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/OGLDBInfo.h"
 #include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
@@ -66,6 +67,7 @@
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Platform/SDL1_keysym.h"
+#include "System/Platform/Misc.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
@@ -261,6 +263,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDecalType);
 
 	REGISTER_LUA_CFUNC(UnitIconGetDraw);
+
+	REGISTER_LUA_CFUNC(MakeGLDBQuery);
+	REGISTER_LUA_CFUNC(GetGLDBQuery);
 
 	return true;
 }
@@ -3038,5 +3043,67 @@ int LuaUnsyncedRead::UnitIconGetDraw(lua_State* L) {
 		return 0;
 
 	lua_pushboolean(L, unit->drawIcon);
+	return 1;
+}
+
+namespace {
+	struct LuaGLDBQuery {
+		inline static std::unique_ptr<OGLDBInfo> object = nullptr;
+	};
+};
+
+int LuaUnsyncedRead::MakeGLDBQuery(lua_State* L)
+{
+	const bool forced = luaL_optboolean(L, 1, false);
+	if (LuaGLDBQuery::object && forced) {
+		lua_pushboolean(L, false); //can't make another one (unless forced), old one is not consumed yet
+		return 1;
+	}
+
+	LuaGLDBQuery::object = std::make_unique<OGLDBInfo>(globalRenderingInfo.glRenderer, Platform::GetOSFamilyStr());
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaUnsyncedRead::GetGLDBQuery(lua_State* L)
+{
+	if (LuaGLDBQuery::object == nullptr) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	const bool blockingCall = luaL_optboolean(L, 1, true);
+
+	if (blockingCall || LuaGLDBQuery::object->IsReady()) {
+
+		int2 maxCtx = {0, 0};
+		std::string url;
+		std::string drv;
+
+		if (!LuaGLDBQuery::object->GetResult(maxCtx, url, drv)) {
+			LuaGLDBQuery::object = nullptr;
+			lua_pushnil(L);
+			return 1;
+		}
+
+		LuaGLDBQuery::object = nullptr;
+
+		if (maxCtx.x * 10 + maxCtx.y <= globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) {
+			lua_pushboolean(L, true ); // ready
+			lua_pushboolean(L, false); // drivers are ok
+			return 2;
+		}
+
+		lua_pushboolean(L, true); // ready
+		lua_pushboolean(L, true); // drivers are not ok
+		lua_pushinteger(L, maxCtx.x);
+		lua_pushinteger(L, maxCtx.y);
+		lua_pushstring(L, url.c_str());
+		lua_pushstring(L, drv.c_str());
+
+		return 6;
+	}
+
+	lua_pushboolean(L, false); // not ready, user should come back later
 	return 1;
 }

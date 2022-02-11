@@ -87,23 +87,16 @@ bool OGLDBInfo::IsReady(uint32_t waitTimeMS) const
 	return (status == std::future_status::ready);
 }
 
-bool OGLDBInfo::GetResult(const int2& curCtx, std::string& msg)
+bool OGLDBInfo::GetResult(int2& maxCtx_, std::string& url_, std::string& drv_)
 {
 	if (!fut.get())
 		return false;
 
-	constexpr const char* myfmt =
-R"(Spring detected that initialized OpenGL context version GL{}.{}
-is lower than the context your hardware can support.
+	constexpr const char* myfmt = R"(https://opengl.gpuinfo.org/displayreport.php?id={})";
 
-https://opengl.gpuinfo.org/displayreport.php?id={}
-shows driver '{}' supports OpenGL context version GL{}.{}
-Please update your drivers!)";
+	url_ = fmt::format(myfmt, id);
+	drv_ = drv;
+	maxCtx_ = maxVer;
 
-	if (10 * curCtx.x + curCtx.y < 10 * maxVer.x + maxVer.y) {
-		msg = fmt::format(myfmt, curCtx.x, curCtx.y, id, drv, maxVer.x, maxVer.y);
-		return true;
-	}
-
-	return false;
+	return true;
 }

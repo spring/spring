@@ -22,7 +22,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
-#include "System/Platform/Misc.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
