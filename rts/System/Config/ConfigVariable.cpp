@@ -94,6 +94,9 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 	if (d->GetReadOnly().IsSet()) {
 		KV(readOnly, d->GetReadOnly().Get());
 	}
+	if (d->GetDeprecated().IsSet()) {
+		KV(deprecated, d->GetDeprecated().Get());
+	}
 	if (d->GetDefaultValue().IsSet()) {
 		KV(defaultValue, Quote(d->GetType(), d->GetDefaultValue().ToString()));
 	}

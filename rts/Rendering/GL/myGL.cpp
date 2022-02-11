@@ -15,7 +15,6 @@
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
-#include "Rendering/OGLDBInfo.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -203,10 +202,9 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 
 
 
-bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2& ctxVer, bool extraChecks)
+bool ShowDriverWarning(const char* glVendor)
 {
 	assert(glVendor != nullptr);
-	assert(glRenderer != nullptr);
 
 	const std::string& _glVendor = StringToLower(glVendor);
 
@@ -217,11 +215,6 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2&
 	if (_glVendor.find("unknown") != std::string::npos)
 		return false;
 
-	if (!extraChecks)
-		return true;
-
-	OGLDBInfo ogldbInfo{ std::string(glRenderer), Platform::GetOSFamilyStr() };
-
 	if (_glVendor.find("vmware") != std::string::npos) {
 		const char* msg =
 			"Running Spring with virtualized drivers can result in severely degraded "
@@ -229,13 +222,6 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer, const int2&
 
 		LOG_L(L_WARNING, "%s", msg);
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
-		return true;
-	}
-
-	std::string msg;
-	if (ogldbInfo.GetResult(ctxVer, msg)) {
-		LOG_L(L_WARNING, "%s", msg.c_str());
-		Platform::MsgBox(msg.c_str(), "Warning", MBF_EXCL);
 		return true;
 	}
 

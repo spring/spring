@@ -2798,7 +2798,7 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 	for (ConfigVariable::MetaDataMap::const_iterator it = cfgmap.begin(); it != cfgmap.end(); ++it) {
 		const ConfigVariableMetaData* meta = it->second;
 
-		lua_createtable(L, 0, 9);
+		lua_createtable(L, 0, 11);
 
 			lua_pushliteral(L, "name");
 			lua_pushsstring(L, meta->GetKey());
@@ -2844,6 +2844,11 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 			if (meta->GetReadOnly().IsSet()) {
 				lua_pushliteral(L, "readOnly");
 				lua_pushboolean(L, !!meta->GetReadOnly().Get());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetDeprecated().IsSet()) {
+				lua_pushliteral(L, "readOnly");
+				lua_pushboolean(L, !!meta->GetDeprecated().Get());
 				lua_rawset(L, -3);
 			}
 

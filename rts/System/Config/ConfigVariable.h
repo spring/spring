@@ -53,6 +53,7 @@ public:
 	const OptionalInt& GetDeclarationLine() const { return declarationLine; }
 	const OptionalString& GetDescription() const { return description; }
 	const OptionalInt& GetReadOnly() const { return readOnly; }
+	const OptionalInt& GetDeprecated() const { return deprecated; }
 
 protected:
 	const char* key;
@@ -61,6 +62,7 @@ protected:
 	OptionalInt declarationLine;
 	OptionalString description;
 	OptionalInt readOnly;
+	OptionalInt deprecated;
 
 	template<typename F> friend class ConfigVariableBuilder;
 };
@@ -150,6 +152,7 @@ public:
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(description, std::string);
 	MAKE_CHAIN_METHOD(readOnly, bool);
+	MAKE_CHAIN_METHOD(deprecated, bool);
 	MAKE_CHAIN_METHOD(defaultValue, T);
 	MAKE_CHAIN_METHOD(minimumValue, T);
 	MAKE_CHAIN_METHOD(maximumValue, T);

@@ -55,6 +55,7 @@ protected:
 
 private:
 	void RemoveDefaults();
+	void RemoveDeprecated();
 
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
@@ -119,6 +120,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const std::vector<std::string>& locations, 
 
 	// Perform migrations that need to happen on every load.
 	RemoveDefaults();
+	RemoveDeprecated();
 }
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
@@ -168,6 +170,26 @@ void ConfigHandlerImpl::RemoveDefaults()
 				// (It will be the default for the next FileConfigSource.)
 				defaults[item.first] = item.second;
 			}
+		}
+	}
+}
+
+void ConfigHandlerImpl::RemoveDeprecated()
+{
+	std::vector<std::string> deprecatedVars;
+	for (const auto& [name, meta] : ConfigVariable::GetMetaDataMap()) {
+		if (meta->GetDeprecated().IsSet() && meta->GetDeprecated().Get() != 0) {
+			deprecatedVars.emplace_back(name);
+		}
+	}
+
+	for (auto source : sources) {
+		FileConfigSource* fcSrc = dynamic_cast<FileConfigSource*> (source);
+		if (fcSrc == nullptr)
+			continue;
+
+		for (const auto dv : deprecatedVars) {
+			fcSrc->Delete(dv);
 		}
 	}
 }
@@ -231,7 +253,7 @@ bool ConfigHandlerImpl::IsReadOnly(const std::string& key) const
 	if (meta == nullptr)
 		return false;
 
-	return (meta->GetReadOnly().Get());
+	return (meta->GetReadOnly().Get() || meta->GetDeprecated().Get());
 }
 
 std::string ConfigHandlerImpl::GetString(const std::string& key) const

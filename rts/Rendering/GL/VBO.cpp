@@ -17,6 +17,7 @@
 #include "System/SpringMath.h"
 
 //CONFIG(bool, UseVBO).defaultValue(true).safemodeValue(false);
+CONFIG(bool, UseVBO).deprecated(true);
 CONFIG(bool, UsePBO).defaultValue(true).safemodeValue(false).headlessValue(false);
 
 

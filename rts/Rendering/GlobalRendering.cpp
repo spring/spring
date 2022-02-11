@@ -69,7 +69,11 @@ CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0
 CONFIG(int, WindowPosX).defaultValue(0 ).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 
-CONFIG(int, RendererHash).defaultValue(-1).minimumValue(0).maximumValue(65535).description("Used to check driver database for OpenGL context information");
+//deprecated stuff
+CONFIG(int, RendererHash).deprecated(true);
+CONFIG(bool, FSAA).deprecated(true);
+CONFIG(int, FSAALevel).deprecated(true);
+CONFIG(bool, ForceDisableShaders).deprecated(true);
 
 
 #define WINDOWS_NO_INVISIBLE_GRIPS 1
@@ -875,11 +879,7 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if (std::strcmp(globalRenderingInfo.glslVersion, "unknown") == 0)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 
-	int rendererHash = static_cast<uint16_t>(hashStringLower(grInfo.glVersion) ^ hashStringLower(grInfo.glVendor) ^ hashStringLower(grInfo.glRenderer));
-	int prevRendHash = configHandler->GetInt("RendererHash");
-	configHandler->Set("RendererHash", rendererHash);
-
-	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer, grInfo.glContextVersion, prevRendHash != rendererHash))
+	if (!ShowDriverWarning(grInfo.glVendor))
 		throw unsupported_error("OpenGL drivers not installed, aborting");
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
