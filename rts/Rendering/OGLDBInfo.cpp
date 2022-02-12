@@ -3,6 +3,7 @@
 #include "../../tools/pr-downloader/src/Downloader/CurlWrapper.h"
 #include "../../tools/pr-downloader/src/lib/jsoncpp/include/json/reader.h"
 #include "System/StringUtil.h"
+#include "System/ScopedResource.h"
 
 #include "fmt/format.h"
 #include <sstream>
@@ -23,34 +24,38 @@ OGLDBInfo::OGLDBInfo(const std::string& glRenderer_, const std::string& myOS_)
 	, id{""}
 {
 	fut = std::async(std::launch::async, [this]() -> bool {
-		std::stringstream httpData;
+		try {
+			std::stringstream httpData;
 
-		CurlWrapper::InitCurl();
-		{
-			CurlWrapper curlw;
-
-			const std::string oglInfoURL = fmt::format(
-				R"(https://opengl.gpuinfo.org/backend/reports.php?draw=4&columns%5B1%5D%5Bdata%5D=renderer&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=true&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D={}&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=version&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=true&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=glversion&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=true&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=glslversion&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=true&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=contexttype&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=true&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=opengl&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B6%5D%5Bdata%5D=os&columns%5B6%5D%5Bname%5D=&columns%5B6%5D%5Bsearchable%5D=true&columns%5B6%5D%5Borderable%5D=true&columns%5B6%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B6%5D%5Bsearch%5D%5Bregex%5D=false&order%5B0%5D%5Bcolumn%5D=glversion&order%5B0%5D%5Bdir%5D=desc)",
-				curlw.escapeCurl(glRenderer)
+			spring::ScopedNullResource(
+				[]() { CurlWrapper::InitCurl(); },
+				[]() { CurlWrapper::KillCurl(); }
 			);
 
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_URL, oglInfoURL.c_str());
 
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYPEER, 0L);
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYHOST, 2L);
+			{
+				CurlWrapper curlw;
 
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEDATA, (void*)&httpData);
-			curl_easy_setopt(curlw.GetHandle(), CURLOPT_NOPROGRESS, 1L);
+				const std::string oglInfoURL = fmt::format(
+					R"(https://opengl.gpuinfo.org/backend/reports.php?draw=4&columns%5B1%5D%5Bdata%5D=renderer&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=true&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D={}&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=version&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=true&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=glversion&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=true&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=glslversion&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=true&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=contexttype&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=true&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=opengl&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B6%5D%5Bdata%5D=os&columns%5B6%5D%5Bname%5D=&columns%5B6%5D%5Bsearchable%5D=true&columns%5B6%5D%5Borderable%5D=true&columns%5B6%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B6%5D%5Bsearch%5D%5Bregex%5D=false&order%5B0%5D%5Bcolumn%5D=glversion&order%5B0%5D%5Bdir%5D=desc)",
+					curlw.escapeCurl(glRenderer)
+				);
 
-			const CURLcode curlres = curl_easy_perform(curlw.GetHandle());
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_URL, oglInfoURL.c_str());
 
-			if (curlres != CURLE_OK)
-				return false;
-		}
-		CurlWrapper::KillCurl(); //must come after curlw is destroyed
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYPEER, 0L);
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_SSL_VERIFYHOST, 2L);
 
-		try {
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_WRITEDATA, (void*)&httpData);
+				curl_easy_setopt(curlw.GetHandle(), CURLOPT_NOPROGRESS, 1L);
+
+				const CURLcode curlres = curl_easy_perform(curlw.GetHandle());
+
+				if (curlres != CURLE_OK)
+					return false;
+			}
+
 			Json::CharReaderBuilder reader;
 			Json::Value jsonData;
 			std::string errs;
@@ -77,6 +82,7 @@ OGLDBInfo::OGLDBInfo(const std::string& glRenderer_, const std::string& myOS_)
 			return false;
 		}
 	});
+
 	using namespace std::chrono_literals;
 	fut.wait_for(1ms);
 }

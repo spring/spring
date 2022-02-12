@@ -1377,10 +1377,10 @@ void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
 		winBorder[3] -= std::max(0l, rect.right - frame.right);
 
 		LOG("[GR::%s] Working around Windows 10+ thick borders SDL2 issue, borders are slimmed by TLBR(%d,%d,%d,%d)", __func__,
-			std::max(0l, frame.top - rect.top),
-			std::max(0l, frame.left - rect.left),
-			std::max(0l, rect.bottom - frame.bottom),
-			std::max(0l, rect.right - frame.right)
+			static_cast<int>(std::max(0l, frame.top - rect.top)),
+			static_cast<int>(std::max(0l, frame.left - rect.left)),
+			static_cast<int>(std::max(0l, rect.bottom - frame.bottom)),
+			static_cast<int>(std::max(0l, rect.right - frame.right))
 		);
 	}
 	#endif
