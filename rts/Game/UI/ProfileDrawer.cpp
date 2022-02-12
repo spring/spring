@@ -22,6 +22,7 @@
 #include "Sim/Weapons/WeaponMemPool.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/SafeUtil.h"
 #include "lib/lua/include/LuaUser.h" // spring_lua_alloc_get_stats
 
@@ -190,7 +191,7 @@ static void DrawThreadBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	const spring_time curTime = spring_now();
 	const spring_time maxTime = spring_secs(MAX_THREAD_HIST_TIME);
 
-	const size_t numThreads = profiler.GetNumThreadProfiles();
+	const size_t numThreads = std::min(profiler.GetNumThreadProfiles(), (size_t)ThreadPool::GetNumThreads());
 
 	{
 		// background
@@ -212,11 +213,14 @@ static void DrawThreadBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 		profiler.ToggleLock(true);
 
 		// bars for each pool-thread profile
-		int i = 0;
+		// Create a virtual row at the top to give some space to see the threads without the title getting in the way.
+		size_t i = 0;
+		size_t numRows = numThreads + 1;
 		for (auto& threadProf: profiler.GetThreadProfiles()) {
+			if (i >= numThreads) break;
 			float drawArea2[4] = {drawArea[0], 0.0f, drawArea[2], 0.0f};
-			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
-			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - (4 * globalRendering->pixelY);
+			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numRows) * i++;
+			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numRows) * i - (4 * globalRendering->pixelY);
 			DrawTimeSlices(threadProf, curTime, maxTime, drawArea2, {1.0f, 0.0f, 0.0f, 0.6f});
 		}
 
