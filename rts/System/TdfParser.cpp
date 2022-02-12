@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <vector>
+#include <regex>
 
 
 #include "Lua/LuaParser.h"
@@ -130,11 +131,30 @@ void TdfParser::ParseBuffer(const char* buf, size_t size) {
 	vfsHandler->SetName("TDFParserVFS");
 
 	{
-		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + buf + "]])";
+		std::string sbuf = std::string(buf);
+		EscapeSpecial(sbuf);
+
+		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + sbuf + "]])";
 
 		LuaParser luaParser(script, SPRING_VFS_BASE);
 		luaParser.Execute();
+
 		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
+
+		std::vector<TdfSection*> allSections = { GetRootSection() };
+		{
+			for (size_t i = 0; i < allSections.size(); ++i) {
+				for (auto& [name, sec] : allSections[i]->sections) {
+					allSections.push_back(sec);
+				}
+			}
+		}
+
+		for (TdfSection* section : allSections) {
+			for (auto& [k, v] : section->values) {
+				UnescapeSpecial(v);
+			}
+		}
 	}
 
 	vfsHandler->SetName("SpringVFS");
@@ -146,6 +166,18 @@ void TdfParser::LoadBuffer(const char* buf, size_t size)
 {
 	this->filename = "buffer";
 	ParseBuffer(buf, size);
+}
+
+void TdfParser::EscapeSpecial(std::string& buffer)
+{
+	buffer = std::regex_replace(buffer, std::regex("\\]\\]"), "\\]\\]");
+	buffer = std::regex_replace(buffer, std::regex("\\[\\["), "\\[\\[");
+}
+
+void TdfParser::UnescapeSpecial(std::string& buffer)
+{
+	buffer = std::regex_replace(buffer, std::regex("\\\\\\]\\\\\\]"), "]]");
+	buffer = std::regex_replace(buffer, std::regex("\\\\\\[\\\\\\["), "[[");
 }
 
 

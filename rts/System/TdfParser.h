@@ -51,6 +51,9 @@ public:
 	void LoadFile(std::string const& file);
 	void LoadBuffer(const char* buffer, size_t size);
 
+	static void EscapeSpecial(std::string& buffer);
+	static void UnescapeSpecial(std::string& buffer);
+
 	/**
 	 * Retreive a specific value from the file and returns it, returns the specified default value if not found.
 	 * @param defaultValue
