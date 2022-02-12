@@ -1293,7 +1293,19 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const final {
 		// toggle
-		ProfileDrawer::SetEnabled(globalRendering->drawDebug = !globalRendering->drawDebug);
+
+		int drawDebug = static_cast<int>(!globalRendering->drawDebug);
+		int draw4Real = static_cast<int>(drawDebug);
+
+		sscanf(action.GetArgs().c_str(), "%d %d", &drawDebug, &draw4Real);
+
+		globalRendering->drawDebug = static_cast<bool>(drawDebug);
+
+		if (draw4Real && globalRendering->drawDebug)
+			ProfileDrawer::SetEnabled(true );
+		else
+			ProfileDrawer::SetEnabled(false);
+
 		profiler.SetEnabled(globalRendering->drawDebug);
 		return true;
 	}
