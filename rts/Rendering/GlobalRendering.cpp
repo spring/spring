@@ -1341,7 +1341,7 @@ void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
 	#if defined(_WIN32) && (WINDOWS_NO_INVISIBLE_GRIPS == 1)
 	// W/A for 8 px Aero invisible borders https://github.com/libsdl-org/SDL/commit/7c60bec493404905f512c835f502f1ace4eff003
 	{
-		static auto scopedLib = spring::ScopedResource(
+		auto scopedLib = spring::ScopedResource(
 			LoadLibrary("dwmapi.dll"),
 			[](HMODULE lib) { if (lib) FreeLibrary(lib); });
 
