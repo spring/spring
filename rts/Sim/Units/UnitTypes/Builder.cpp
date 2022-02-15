@@ -149,118 +149,126 @@ bool CBuilder::UpdateTerraform(const Command&)
 
 	assert(!mapDamage->Disabled());
 
-	switch (terraformType) {
-		case Terraform_Building: {
-			if (curBuildee != nullptr) {
-				if (curBuildee->terraformLeft <= 0.0f)
-					terraformScale = 0.0f;
-				else
-					terraformScale = (terraformSpeed + terraformHelp) / curBuildee->terraformLeft;
+	static constexpr int b = 3;
 
-				curBuildee->terraformLeft -= (terraformSpeed + terraformHelp);
+	const auto SmoothBorders = [this, heightmap, &terraformScale]() {
+		// smooth the x-borders
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = 1; x <= 3; x++) {
+				if (tx1 - 3 >= 0) {
+					const float ch3 = heightmap[z * mapDims.mapxp1 + tx1];
+					const float ch = heightmap[z * mapDims.mapxp1 + tx1 - x];
+					const float ch2 = heightmap[z * mapDims.mapxp1 + tx1 - 3];
+					const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-				terraformHelp = 0.0f;
-				terraformScale = std::min(terraformScale, 1.0f);
-
-				// prevent building from timing out while terraforming for it
-				curBuildee->AddBuildPower(this, 0.0f);
-
-				for (int z = tz1; z <= tz2; z++) {
-					for (int x = tx1; x <= tx2; x++) {
-						const int idx = z * mapDims.mapxp1 + x;
-
-						readMap->AddHeight(idx, (curBuildee->pos.y - heightmap[idx]) * terraformScale);
-					}
+					readMap->AddHeight(z * mapDims.mapxp1 + tx1 - x, amount);
 				}
+				if (tx2 + 3 < mapDims.mapx) {
+					const float ch3 = heightmap[z * mapDims.mapxp1 + tx2];
+					const float ch = heightmap[z * mapDims.mapxp1 + tx2 + x];
+					const float ch2 = heightmap[z * mapDims.mapxp1 + tx2 + 3];
+					const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-				if (curBuildee->terraformLeft <= 0.0f) {
-					terraforming = false;
-
-					mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
-					curBuildee->groundLevelled = true;
-
-					if (eventHandler.TerraformComplete(this, curBuildee)) {
-						StopBuild();
-					}
+					readMap->AddHeight(z * mapDims.mapxp1 + tx2 + x, amount);
 				}
 			}
-		} break;
-		case Terraform_Restore: {
-			if (myTerraformLeft <= 0.0f)
+		}
+
+		// smooth the z-borders
+		for (int z = 1; z <= 3; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				if ((tz1 - 3) >= 0) {
+					const float ch3 = heightmap[(tz1)*mapDims.mapxp1 + x];
+					const float ch = heightmap[(tz1 - z) * mapDims.mapxp1 + x];
+					const float ch2 = heightmap[(tz1 - 3) * mapDims.mapxp1 + x];
+					const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+
+					readMap->AddHeight((tz1 - z) * mapDims.mapxp1 + x, adjust);
+				}
+				if ((tz2 + 3) < mapDims.mapy) {
+					const float ch3 = heightmap[(tz2)*mapDims.mapxp1 + x];
+					const float ch = heightmap[(tz2 + z) * mapDims.mapxp1 + x];
+					const float ch2 = heightmap[(tz2 + 3) * mapDims.mapxp1 + x];
+					const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+
+					readMap->AddHeight((tz2 + z) * mapDims.mapxp1 + x, adjust);
+				}
+			}
+		}
+	};
+
+	switch (terraformType) {
+	case Terraform_Building: {
+		if (curBuildee != nullptr) {
+			if (curBuildee->terraformLeft <= 0.0f)
 				terraformScale = 0.0f;
 			else
-				terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
+				terraformScale = (terraformSpeed + terraformHelp) / curBuildee->terraformLeft;
 
-			myTerraformLeft -= (terraformSpeed + terraformHelp);
+			curBuildee->terraformLeft -= (terraformSpeed + terraformHelp);
 
 			terraformHelp = 0.0f;
 			terraformScale = std::min(terraformScale, 1.0f);
 
+			// prevent building from timing out while terraforming for it
+			curBuildee->AddBuildPower(this, 0.0f);
+
 			for (int z = tz1; z <= tz2; z++) {
 				for (int x = tx1; x <= tx2; x++) {
-					int idx = z * mapDims.mapxp1 + x;
-					float ch = heightmap[idx];
-					float oh = readMap->GetOriginalHeightMapSynced()[idx];
+					const int idx = z * mapDims.mapxp1 + x;
 
-					readMap->AddHeight(idx, (oh - ch) * terraformScale);
+					readMap->AddHeight(idx, (curBuildee->pos.y - heightmap[idx]) * terraformScale);
 				}
 			}
+			SmoothBorders();
+			mapDamage->RecalcArea(tx1 - b, tx2 + b, tz1 - b, tz2 + b);
 
-			if (myTerraformLeft <= 0.0f) {
+			if (curBuildee->terraformLeft <= 0.0f) {
 				terraforming = false;
 
-				mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
-				StopBuild();
+				curBuildee->groundLevelled = true;
+
+				if (eventHandler.TerraformComplete(this, curBuildee)) {
+					StopBuild();
+				}
 			}
-		} break;
+		}
+	} break;
+	case Terraform_Restore: {
+		if (myTerraformLeft <= 0.0f)
+			terraformScale = 0.0f;
+		else
+			terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
+
+		myTerraformLeft -= (terraformSpeed + terraformHelp);
+
+		terraformHelp = 0.0f;
+		terraformScale = std::min(terraformScale, 1.0f);
+
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				int idx = z * mapDims.mapxp1 + x;
+				float ch = heightmap[idx];
+				float oh = readMap->GetOriginalHeightMapSynced()[idx];
+
+				readMap->AddHeight(idx, (oh - ch) * terraformScale);
+			}
+		}
+		SmoothBorders();
+		mapDamage->RecalcArea(tx1 - b, tx2 + b, tz1 - b, tz2 + b);
+
+		if (myTerraformLeft <= 0.0f) {
+			terraforming = false;
+
+			StopBuild();
+		}
+	} break;
 	}
 
 	ScriptDecloak(curBuildee, nullptr);
 	CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
-	// smooth the x-borders
-	for (int z = tz1; z <= tz2; z++) {
-		for (int x = 1; x <= 3; x++) {
-			if (tx1 - 3 >= 0) {
-				const float ch3 = heightmap[z * mapDims.mapxp1 + tx1    ];
-				const float ch  = heightmap[z * mapDims.mapxp1 + tx1 - x];
-				const float ch2 = heightmap[z * mapDims.mapxp1 + tx1 - 3];
-				const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-				readMap->AddHeight(z * mapDims.mapxp1 + tx1 - x, amount);
-			}
-			if (tx2 + 3 < mapDims.mapx) {
-				const float ch3 = heightmap[z * mapDims.mapxp1 + tx2    ];
-				const float ch  = heightmap[z * mapDims.mapxp1 + tx2 + x];
-				const float ch2 = heightmap[z * mapDims.mapxp1 + tx2 + 3];
-				const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
-
-				readMap->AddHeight(z * mapDims.mapxp1 + tx2 + x, amount);
-			}
-		}
-	}
-
-	// smooth the z-borders
-	for (int z = 1; z <= 3; z++) {
-		for (int x = tx1; x <= tx2; x++) {
-			if ((tz1 - 3) >= 0) {
-				const float ch3 = heightmap[(tz1    ) * mapDims.mapxp1 + x];
-				const float ch  = heightmap[(tz1 - z) * mapDims.mapxp1 + x];
-				const float ch2 = heightmap[(tz1 - 3) * mapDims.mapxp1 + x];
-				const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
-
-				readMap->AddHeight((tz1 - z) * mapDims.mapxp1 + x, adjust);
-			}
-			if ((tz2 + 3) < mapDims.mapy) {
-				const float ch3 = heightmap[(tz2    ) * mapDims.mapxp1 + x];
-				const float ch  = heightmap[(tz2 + z) * mapDims.mapxp1 + x];
-				const float ch2 = heightmap[(tz2 + 3) * mapDims.mapxp1 + x];
-				const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
-
-				readMap->AddHeight((tz2 + z) * mapDims.mapxp1 + x, adjust);
-			}
-		}
-	}
 
 	return true;
 }

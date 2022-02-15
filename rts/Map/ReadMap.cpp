@@ -58,7 +58,7 @@ CR_REG_METADATA(MapDimensions, (
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-	CR_IGNORED(updateHeightBounds),
+	CR_IGNORED(hmUpdated),
 	CR_IGNORED(processingHeightBounds),
 	CR_IGNORED(initHeightBounds),
 	CR_IGNORED(tempHeightBounds),
@@ -266,7 +266,7 @@ void CReadMap::PostLoad()
 
 	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
 
-	updateHeightBounds = true;
+	hmUpdated = true;
 }
 #endif //USING_CREG
 
@@ -508,10 +508,6 @@ void CReadMap::UpdateDraw(bool firstCall)
 
 void CReadMap::UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initialize)
 {
-	// do not bother with zero-area updates
-	if (hgtMapRect.GetArea() <= 0)
-		return;
-
 	const int2 mins = {hgtMapRect.x1 - 1, hgtMapRect.z1 - 1};
 	const int2 maxs = {hgtMapRect.x2 + 1, hgtMapRect.z2 + 1};
 
@@ -567,8 +563,8 @@ void CReadMap::UpdateHeightBounds(int syncFrame)
 		if (processingHeightBounds)
 			currHeightBounds = tempHeightBounds;
 
-		processingHeightBounds = updateHeightBounds;
-		updateHeightBounds = false;
+		processingHeightBounds = hmUpdated;
+		hmUpdated = false;
 	}
 
 	if (!processingHeightBounds)
@@ -963,7 +959,7 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect)
 			}
 			#endif
 
-			if (!HasHeightMapChanged({lmx, lmz})) {
+			if (!HasHeightMapViewChanged({lmx, lmz})) {
 				PushRect(subRect, hmx, hmz);
 				continue;
 			}
@@ -994,7 +990,7 @@ void CReadMap::InitHeightMapDigestVectors(const int2 losMapSize)
 }
 
 
-bool CReadMap::HasHeightMapChanged(const int2 losMapPos)
+bool CReadMap::HasHeightMapViewChanged(const int2 losMapPos)
 {
 #if (defined(USE_HEIGHTMAP_DIGESTS) && defined(USE_UNSYNCED_HEIGHTMAP))
 	const int2 losMapSize = losHandler->los.size;

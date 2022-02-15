@@ -380,8 +380,10 @@ void CSMFReadMap::CreateNormalTex()
 
 void CSMFReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 {
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	UpdateVertexNormalsUnsynced(update);
 	UpdateFaceNormalsUnsynced(update);
+#endif
 	UpdateNormalTexture(update);
 	UpdateShadingTexture(update);
 }
@@ -389,7 +391,6 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 
 void CSMFReadMap::UpdateVertexNormalsUnsynced(const SRectangle& update)
 {
-	#ifdef USE_UNSYNCED_HEIGHTMAP
 	const float*  shm = &cornerHeightMapSynced[0];
 		  float*  uhm = &cornerHeightMapUnsynced[0];
 		  float3* vvn = &visVertexNormals[0];
@@ -464,13 +465,12 @@ void CSMFReadMap::UpdateVertexNormalsUnsynced(const SRectangle& update)
 			vvn[vIdxTL] = vn.ANormalize();
 		}
 	});
-	#endif
 }
 
 
 void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 {
-	#ifdef USE_UNSYNCED_HEIGHTMAP
+
 	const float3* sfn = &faceNormalsSynced[0];
 	      float3* ufn = &faceNormalsUnsynced[0];
 	const float3* scn = &centerNormalsSynced[0];
@@ -495,7 +495,6 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 			memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 		}
 	}
-	#endif
 }
 
 

@@ -209,6 +209,8 @@ public:
 	unsigned int CalcTypemapChecksum();
 
 	void UpdateHeightBounds();
+
+	bool GetHeightMapUpdated() const { return hmUpdated; }
 private:
 	void InitHeightBounds();
 	void UpdateHeightBounds(int syncFrame);
@@ -219,7 +221,7 @@ private:
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
 	inline void HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect);
-	inline bool HasHeightMapChanged(const int2 losMapPos);
+	inline bool HasHeightMapViewChanged(const int2 losMapPos);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -280,7 +282,7 @@ private:
 	unsigned int mapChecksum = 0;
 
 	bool processingHeightBounds = false;
-	bool updateHeightBounds = false;
+	bool hmUpdated = false;
 
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
 	float2 tempHeightBounds; //< temporary minimum- and maximum-height
@@ -301,7 +303,7 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	// add=0 <--> x = x*0 + h =   h
 	// add=1 <--> x = x*1 + h = x+h
 	float newHeight = heightRef * add + h;
-	updateHeightBounds |= (newHeight != heightRef);
+	hmUpdated |= (newHeight != heightRef);
 	return (heightRef = newHeight);
 }
 
