@@ -27,10 +27,6 @@
 #endif
 
 
-
-
-
-
 namespace spring {
 #if   defined(_WIN32)
 	typedef CriticalSection mutex;
@@ -56,24 +52,29 @@ namespace spring {
 	typedef std::condition_variable_any condition_variable_any;
 
 
+	// updated as per https://rigtorp.se/spinlock/
 	class spinlock {
 	private:
-		std::atomic_flag state;
+		std::atomic<bool> state = {false};
 
 	public:
-		spinlock() {
-			state.clear();
-		}
-
 		void lock()
 		{
-			while (state.test_and_set(std::memory_order_acquire)) {
-				/* busy-wait */
+			// changed implementation from a test-and-set (TAS) to test and test-and-set (TTAS)
+			// this reduces cache coherency traffic on the processor
+			for(;;){
+				if (!state.exchange(true, std::memory_order_acquire)) {
+					break;
+				}
+				while (state.load(std::memory_order_relaxed)) {
+					// add a pause to allow yielding to an SMT/HT thread on the same core
+					_mm_pause();
+				}
 			}
 		}
 		void unlock()
 		{
-			state.clear(std::memory_order_release);
+			state.store(false, std::memory_order_release);
 		}
 	};
 
