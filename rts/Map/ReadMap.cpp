@@ -93,7 +93,6 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(sharedSlopeMaps),
 
 	CR_IGNORED(unsyncedHeightMapUpdates),
-	CR_IGNORED(unsyncedHeightMapUpdatesTemp),
 
 	/*
 	#ifdef USE_UNSYNCED_HEIGHTMAP
@@ -447,48 +446,8 @@ void CReadMap::UpdateDraw(bool firstCall)
 	if (unsyncedHeightMapUpdates.empty())
 		return;
 
-	#if 0
-	static CRectangleOverlapHandler unsyncedHeightMapUpdatesSwap;
-
-	{
-		if (!unsyncedHeightMapUpdates.empty())
-			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
-	}
-	{
-		if (!firstCall) {
-			if (!unsyncedHeightMapUpdatesTemp.empty()) {
-				unsyncedHeightMapUpdatesTemp.Process();
-
-				int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
-
-				while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
-					const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
-					updateArea -= rect.GetArea();
-
-					unsyncedHeightMapUpdatesSwap.push_back(rect);
-					unsyncedHeightMapUpdatesTemp.pop_front();
-				}
-			}
-		} else {
-			// first update is full map
-			unsyncedHeightMapUpdatesTemp.swap(unsyncedHeightMapUpdatesSwap);
-		}
-	}
-
-	if (!unsyncedHeightMapUpdatesTemp.empty())
-		unsyncedHeightMapUpdates.append(unsyncedHeightMapUpdatesTemp);
-
-	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
-	for (const SRectangle& rect: unsyncedHeightMapUpdatesSwap) {
-		UpdateHeightMapUnsynced(rect);
-	}
-	for (const SRectangle& rect: unsyncedHeightMapUpdatesSwap) {
-		eventHandler.UnsyncedHeightMapUpdate(rect);
-	}
-
-	unsyncedHeightMapUpdatesSwap.clear();
-
-	#else
+	//optimize layout
+	unsyncedHeightMapUpdates.Process();
 
 	// TODO: quadtree or whatever
 	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
@@ -502,7 +461,6 @@ void CReadMap::UpdateDraw(bool firstCall)
 	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
 		unsyncedHeightMapUpdates.pop_front();
 	}
-	#endif
 }
 
 

@@ -74,7 +74,6 @@ protected:
 	void Initialize();
 
 	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
-
 public:
 	//OK since it's loaded with SerializeObjectInstance
 	CR_DECLARE_STRUCT(CReadMap)
@@ -259,8 +258,6 @@ protected:
 
 
 	CRectangleOverlapHandler unsyncedHeightMapUpdates;
-	CRectangleOverlapHandler unsyncedHeightMapUpdatesTemp;
-
 private:
 	// these combine the various synced and unsynced arrays
 	// for branch-less access: [0] = !synced, [1] = synced

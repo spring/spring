@@ -34,6 +34,13 @@ struct SRectangle {
 		return (xb && yb);
 	}
 
+	//rect inside *this
+	bool Inside(SRectangle&& rect) const {
+		return
+			x1 <= rect.x1 && y1 <= rect.y1 &&
+			x2 >= rect.x2 && y2 >= rect.y2;
+	}
+
 	void ClampPos(int2* pos) const {
 		pos->x = Clamp(pos->x, x1, x2);
 		pos->y = Clamp(pos->y, y1, y2);
