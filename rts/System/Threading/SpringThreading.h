@@ -9,6 +9,7 @@
 #include <atomic>
 #include <thread>
 #include <condition_variable>
+#include <immintrin.h>
 
 
 #if   defined(_WIN32)
