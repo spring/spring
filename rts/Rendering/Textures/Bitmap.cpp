@@ -807,17 +807,17 @@ CBitmap TBitmapAction<T, ch>::CreateRescaled(int newx, int newy)
 						rgba[a] += srcPixel[a];
 				}
 			}
-			const float denom = static_cast<float>((ex - sx) * (ey - sy));
+			const int denom = ((ex - sx) * (ey - sy));
 
 			const int index = (y * dst.xsize + x);
 			auto& dstPixel = static_cast<ThisType>(dstAction.get())->GetRef(index);
 
 			for (int a = 0; a < ch; ++a) {
 				if constexpr (std::is_same_v<ChanType, float>) {
-					dstPixel[a] = static_cast<ChanType>(std::max  (rgba[a], AccumChanType{ 0 }   ));
+					dstPixel[a] = static_cast<ChanType>(std::max  (rgba[a] / denom, AccumChanType{ 0 }   ));
 				}
 				else {
-					dstPixel[a] = static_cast<ChanType>(std::clamp(rgba[a], AccumChanType{ 0 }, N));
+					dstPixel[a] = static_cast<ChanType>(std::clamp(rgba[a] / denom, AccumChanType{ 0 }, N));
 				}
 			}
 		}
