@@ -1019,7 +1019,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 			if (feature != nullptr) {
 				bool featureBeingResurrected = IsFeatureBeingResurrected(feature->id, owner);
-				featureBeingResurrected &= (c.IsInternalOrder()) && !(c.GetOpts() & CONTROL_KEY);
+				featureBeingResurrected &= c.IsInternalOrder();
 
 				if (featureBeingResurrected || !ReclaimObject(feature)) {
 					StopMoveAndFinishCommand();
@@ -1582,7 +1582,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 				if (!owner->unitDef->canmove && !IsInBuildRange(f))
 					continue;
 
-				if (!(cmdopt & CONTROL_KEY) && IsFeatureBeingResurrected(f->id, owner))
+				if (IsFeatureBeingResurrected(f->id, owner))
 					continue;
 
 				metal |= (recSpecial && !metal && f->defResources.metal > 0.0f);
