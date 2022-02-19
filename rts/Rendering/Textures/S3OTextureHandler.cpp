@@ -74,12 +74,12 @@ void CS3OTextureHandler::Reload()
 			continue;
 
 		{
-			uint32_t newTexId = bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID);
 			if (texData.invertAlpha)
 				bitmap.InvertAlpha();
 			if (texData.invertAxis)
 				bitmap.ReverseYAxis();
 
+			uint32_t newTexId = bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID);
 			assert(newTexId == texData.texID);
 		}
 	}
@@ -128,7 +128,7 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 	const auto& textureName = model->texs[texNum];
 	const auto textureIt = textureCache.find(textureName);
 
-	if (textureIt != textureCache.end())
+	if (textureIt != textureCache.end() && textureIt->second.texID > 0)
 		return textureIt->second.texID;
 
 	const auto bitmapIt = bitmapCache.find(textureName);
@@ -163,19 +163,27 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 			bitmap->InvertAlpha();
 	}
 
+	const unsigned int texID = preloadCall ? 0 : bitmap->CreateMipMapTexture();
+
+	if (textureIt != textureCache.end()) {
+		assert(!preloadCall);
+		textureIt->second.texID = texID;
+	}
+	else {
+		//save main params from the preloadCall pass, such that data is stored correctly for Reload()
+		assert( preloadCall);
+		textureCache[textureName] = {
+			texID,
+			static_cast<uint32_t>(bitmap->xsize),
+			static_cast<uint32_t>(bitmap->ysize),
+			invertAxis,
+			invertAlpha
+		};
+	}
+
 	// don't generate a texture yet, just save the bitmap for later
 	if (preloadCall)
 		return 0;
-
-	const unsigned int texID = bitmap->CreateMipMapTexture();
-
-	textureCache[textureName] = {
-		texID,
-		static_cast<unsigned int>(bitmap->xsize),
-		static_cast<unsigned int>(bitmap->ysize),
-		invertAxis,
-		invertAlpha
-	};
 
 	bitmapCache.erase(textureName);
 	return texID;
