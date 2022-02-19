@@ -9,7 +9,6 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/MapRendering.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
@@ -95,8 +94,7 @@ void CWorldDrawer::InitPost() const
 	}
 
 	{
-		loadscreen->SetLoadMessage("Creating TreeDrawer");
-		treeDrawer = ITreeDrawer::GetTreeDrawer();
+		loadscreen->SetLoadMessage("Creating GrassDrawer");
 		grassDrawer = new CGrassDrawer();
 	}
 	{
@@ -139,7 +137,6 @@ void CWorldDrawer::Kill()
 
 	spring::SafeDelete(water);
 	spring::SafeDelete(sky);
-	spring::SafeDelete(treeDrawer);
 	spring::SafeDelete(grassDrawer);
 	spring::SafeDelete(pathDrawer);
 	shadowHandler.Kill();
@@ -183,7 +180,6 @@ void CWorldDrawer::Update(bool newSimFrame)
 	// unitDrawer->Update();
 	// lineDrawer.UpdateLineStipple();
 	CUnitDrawer::UpdateStatic();
-	treeDrawer->Update();
 	CFeatureDrawer::UpdateStatic();
 	IWater::ApplyPushedChanges(game);
 
@@ -315,7 +311,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 		{
 			SCOPED_TIMER("Draw::World::Foliage");
 			grassDrawer->Draw();
-			treeDrawer->Draw();
 		}
 		smoothHeightMeshDrawer->Draw(1.0f);
 	}

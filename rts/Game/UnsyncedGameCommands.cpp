@@ -74,7 +74,6 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -1432,20 +1431,6 @@ public:
 };
 
 
-
-class DrawTreesActionExecutor : public IUnsyncedActionExecutor {
-public:
-	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees", "Enable/Disable engine-tree rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		InverseOrSetBool(treeDrawer->DrawTreesRef(), action.GetArgs());
-		LogSystemStatus("engine-tree rendering", treeDrawer->DrawTreesRef());
-		return true;
-	}
-};
-
-
-
 class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky", "Enable/Disable dynamic-sky rendering") {}
@@ -1651,28 +1636,6 @@ public:
 		return true;
 	}
 
-};
-
-
-
-class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees", "Increases distance from the camera at which trees are still drawn") {}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		LOG("tree draw-distance increased to %f", (treeDrawer->IncrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
-		return true;
-	}
-};
-
-class LessTreesActionExecutor : public IUnsyncedActionExecutor {
-public:
-	LessTreesActionExecutor() : IUnsyncedActionExecutor("LessTrees", "Decreases distance from the camera at which trees are still drawn") {}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		LOG("tree draw-distance decreased to %f", (treeDrawer->DecrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
-		return true;
-	}
 };
 
 
@@ -3076,17 +3039,6 @@ public:
 	}
 };
 
-class WireTreeActionExecutor: public IUnsyncedActionExecutor {
-public:
-	WireTreeActionExecutor(): IUnsyncedActionExecutor("WireTree", "Toggle wireframe-mode drawing of tree geometry") {
-	}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		LogSystemStatus("wireframe tree-drawing mode", treeDrawer->WireFrameModeRef() = !treeDrawer->WireFrameModeRef());
-		return true;
-	}
-};
-
 class WireWaterActionExecutor: public IUnsyncedActionExecutor {
 public:
 	WireWaterActionExecutor(): IUnsyncedActionExecutor("WireWater", "Toggle wireframe-mode drawing of water geometry") {
@@ -3686,7 +3638,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SoundChannelEnableActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<CreateVideoActionExecutor>());
 	// [devel] AddActionExecutor(AllocActionExecutor<DrawGrassActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<DrawTreesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DynamicSkyActionExecutor>()); // [maint]
 	AddActionExecutor(AllocActionExecutor<NetPingActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<NetMsgSmoothingActionExecutor>());
@@ -3701,8 +3652,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<GroundDetailActionExecutor>());
 	// [devel] AddActionExecutor(AllocActionExecutor<MoreGrassActionExecutor>());
 	// [devel] AddActionExecutor(AllocActionExecutor<LessGrassActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<MoreTreesActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<LessTreesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<FeatureFadeDistActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<FeatureDrawDistActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SpeedUpActionExecutor>());
@@ -3779,7 +3728,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<WireModelActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WireMapActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WireSkyActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<WireTreeActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WireWaterActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<CrashActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<HangActionExecutor>());

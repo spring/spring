@@ -12,7 +12,6 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"

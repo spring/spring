@@ -15,7 +15,6 @@
 #include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -418,7 +417,6 @@ void CShadowHandler::DrawShadowPasses()
 			eventHandler.DrawWorldShadow();
 
 			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
-				treeDrawer->DrawShadowPass();
 				grassDrawer->DrawShadow();
 			}
 
