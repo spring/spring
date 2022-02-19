@@ -564,6 +564,9 @@ void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clea
 
 
 void CGlobalRendering::DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context) {
+	if (!window)
+		return;
+
 	if (window == sdlWindows[0]) {
 		WindowManagerHelper::SetIconSurface(window, nullptr);
 		SetWindowInputGrabbing(false);
@@ -573,7 +576,8 @@ void CGlobalRendering::DestroyWindowAndContext(SDL_Window* window, SDL_GLContext
 	SDL_DestroyWindow(window);
 
 	#if !defined(HEADLESS)
-	SDL_GL_DeleteContext(context);
+	if (context)
+		SDL_GL_DeleteContext(context);
 	#endif
 }
 
