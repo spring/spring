@@ -75,6 +75,11 @@ void CS3OTextureHandler::Reload()
 
 		{
 			uint32_t newTexId = bitmap.CreateTexture(0.0f, 0.0f, true, texData.texID);
+			if (texData.invertAlpha)
+				bitmap.InvertAlpha();
+			if (texData.invertAxis)
+				bitmap.ReverseYAxis();
+
 			assert(newTexId == texData.texID);
 		}
 	}
