@@ -11,6 +11,7 @@
 #include "LuaUtils.h"
 
 #include "Game/Camera.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
@@ -28,6 +29,29 @@ float fltUniformArrayBuf[1024] = {0.0f};
 
 int LuaShaders::activeShaderDepth = 0;
 
+
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		return nullptr;
+	}
+
+	CUnit* unit = unitHandler.GetUnit(lua_toint(L, index));
+
+	if (unit == nullptr)
+		return nullptr;
+
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	if (readAllyTeam < 0)
+		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
+
+	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
+		return unit;
+
+	return nullptr;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -937,6 +961,26 @@ int LuaShaders::UniformMatrix(lua_State* L)
 			}
 			break;
 		}
+
+		case 2: {
+			if (!lua_isstring(L, 2))
+				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
+
+			const char* matName = lua_tostring(L, 2);
+			if (strcmp(matName, "pieceMatrices") != 0)
+				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
+
+			const CUnit* unit = ParseUnit(L, __func__, 3);
+			if (unit == nullptr)
+				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
+
+			const LocalModel& lm = unit->localModel;
+			const std::vector<CMatrix44f>& pms = lm.GetPieceMatrices();
+
+			glUniformMatrix4fv(location, pms.size(), GL_FALSE, &pms.data()[0].m[0]);
+			break;
+		}
+
 		case (2 * 2): {
 			float array[2 * 2];
 
