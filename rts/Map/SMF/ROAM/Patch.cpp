@@ -382,9 +382,38 @@ void Patch::RecursRender(const TriTreeNode* tri, const int2 left, const int2 rig
 	if (tri->IsDummy())
 		return;
 	if (tri->IsLeaf()) {
-		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
-		indices.push_back(left.x  + left.y  * (PATCH_SIZE + 1));
-		indices.push_back(right.x + right.y * (PATCH_SIZE + 1));
+		const int apexIndex = apex.x + apex.y * (PATCH_SIZE + 1);
+		const int leftIndex = left.x + left.y * (PATCH_SIZE + 1);
+		const int rightIndex = right.x + right.y * (PATCH_SIZE + 1);
+
+		// Rotate the triangles if their hypotenuse becomes shorter
+		if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor == tri)) {
+			const int2 baseNeighborApex = left + right - apex;
+
+			if (baseNeighborApex.x >= 0 && baseNeighborApex.y >= 0 && baseNeighborApex.x < PATCH_SIZE + 1 && baseNeighborApex.y < PATCH_SIZE + 1) {
+				const float apexHeight = vertices[apexIndex * 3 + 1];
+				const float leftHeight = vertices[leftIndex * 3 + 1];
+				const float rightHeight = vertices[rightIndex * 3 + 1];
+
+				float heightDiff = std::abs(leftHeight - rightHeight);
+
+				const int baseNeighborApexIndex = baseNeighborApex.x + baseNeighborApex.y * (PATCH_SIZE + 1);
+				const float baseNeighborApexHeight = vertices[baseNeighborApexIndex * 3 + 1];
+
+				float heightDiff2 = std::abs(apexHeight - baseNeighborApexHeight);
+
+				if (heightDiff2 < heightDiff - 0.0001f) {
+					indices.push_back(apexIndex);
+					indices.push_back(leftIndex);
+					indices.push_back(baseNeighborApexIndex);
+					return;
+				}
+			}
+		}
+
+		indices.push_back(apexIndex);
+		indices.push_back(leftIndex);
+		indices.push_back(rightIndex);
 		return;
 	}
 
