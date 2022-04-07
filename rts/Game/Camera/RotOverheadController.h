@@ -30,6 +30,7 @@ public:
 private:
 	float mouseScale;
 	float oldHeight;
+	bool clampToMap;
 };
 
 #endif // _ROTOH_CONTROLLER_H
