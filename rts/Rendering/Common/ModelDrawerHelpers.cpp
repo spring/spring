@@ -12,18 +12,23 @@
 
 bool CModelDrawerHelper::ObjectVisibleReflection(const float3& objPos, const float3& camPos, float maxRadius)
 {
-#if 0
+#if 1
+	// If the object is underwater then,
+	// draw the object if the water depth at the object is less than the units draw radius
 	if (objPos.y < 0.0f)
-		return (CGround::GetApproximateHeight(objPos.x, objPos.z, false) <= maxRadius);
+		return (-1.0 * CGround::GetApproximateHeight(objPos.x, objPos.z, false) <= maxRadius);
 
 	const float dif = objPos.y - camPos.y;
-
+	// Otherwise draw a line between the objects position and the underwater camera, intersecting the waterplane
 	float3 zeroPos;
 	zeroPos += (camPos * ( objPos.y / dif));
 	zeroPos += (objPos * (-camPos.y / dif));
-
+	// If the height of the ground at zeropos is less than the maxradius, 
+	// we are likely to get a reflection (e.g. high cliffs will prevent reflections
 	return (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) <= maxRadius);
 #else
+	// This method does not cull reflections hidden by cliffs,
+	// and prevents units over water depth > 2 * radius  to have any reflection at all
 	const float gh = CGround::GetApproximateHeight(objPos.x, objPos.z, false);
 	return gh + 2.0f * maxRadius > 0.0f;
 #endif
