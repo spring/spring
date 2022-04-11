@@ -77,6 +77,8 @@ void CModInfo::ResetState()
 	}
 	{
 		flankingBonusModeDefault = 0;
+		flankingBonusMaxDefault = 1.9f;
+		flankingBonusMinDefault = 0.9f;
 	}
 	{
 		losMipLevel = 0;
@@ -236,6 +238,8 @@ void CModInfo::Init(const std::string& modFileName)
 		// flanking bonus
 		const LuaTable& flankingBonusTbl = root.SubTable("flankingBonus");
 		flankingBonusModeDefault = flankingBonusTbl.GetInt("defaultMode", 1);
+		flankingBonusMaxDefault = flankingBonusTbl.GetFloat("defaultMax", 1.9f);
+		flankingBonusMinDefault = flankingBonusTbl.GetFloat("defaultMin", 0.9f);
 	}
 
 	{

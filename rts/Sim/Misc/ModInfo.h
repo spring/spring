@@ -126,6 +126,12 @@ public:
 	/// 0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
 	int flankingBonusModeDefault;
 
+	// maximum damage bonus granted by flanking bonus. Can use a number less than 1 to reduce damage.
+	float flankingBonusMaxDefault;
+
+	// mininum damage bonus granted by flnaking bonus. Can use a number less than 1 to reduce damage.
+	float flankingBonusMinDefault;
+
 	// Sensor behaviour
 	/// miplevel for los
 	int losMipLevel;
