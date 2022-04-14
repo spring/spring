@@ -13,6 +13,11 @@
 bool CModelDrawerHelper::ObjectVisibleReflection(const float3& objPos, const float3& camPos, float maxRadius)
 {
 #if 1
+	// If the camera is above water (which seems to be the case for projectiles with ATIhacks on), then this is
+	// probably not the underwater camera, so allow drawing as the zeropos calculation below will utterly fail
+	if (camPos.y >= 0.0f)
+		return true;
+
 	// If the object is underwater then,
 	// draw the object if the water depth at the object is less than the units draw radius
 	if (objPos.y < 0.0f)
