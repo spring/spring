@@ -574,8 +574,9 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 	if (drawRefraction && (pro->drawPos.y > pro->GetDrawRadius()) /*!pro->IsInWater()*/)
 		return;
-	if (drawReflection && !CModelDrawerHelper::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
-		return;
+	// removed this to fix AMD particle drawing
+	//if (drawReflection && !CModelDrawerHelper::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
+	//	return;
 
 	const CCamera* cam = CCameraHandler::GetActiveCamera();
 	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
