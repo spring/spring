@@ -4,11 +4,10 @@
 #include <algorithm>
 #include <vector>
 #include <list>
-#include <cmath>
 
 
 // texture spacing in the atlas (in pixels)
-static constexpr int TEXMARGIN = 2;
+#define TEXMARGIN 2
 
 
 inline int CLegacyAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
@@ -147,9 +146,4 @@ bool CLegacyAtlasAlloc::Allocate()
 		atlasSize = max;
 
 	return success;
-}
-
-int CLegacyAtlasAlloc::GetMaxMipMaps()
-{
-	return 1 + std::floor(std::log2f(std::max(atlasSize.x, atlasSize.y)));
 }
