@@ -354,8 +354,8 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 		int weight = FC_WEIGHT_NORMAL;
 		int slant  = FC_SLANT_ROMAN;
 		FcBool outline = FcFalse;
-		FcChar8* family = nullptr;
-		FcChar8* foundry = nullptr;
+		std::string family;
+		std::string foundry;
 
 		{
 			const FcChar8* ftname = reinterpret_cast<const FcChar8*>("not used");
@@ -363,11 +363,20 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 			FcPattern* origPattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
 			FcBlanksDestroy(blanks);
 			if (origPattern) {
-				FcPatternGetInteger(origPattern, FC_WEIGHT , 0, &weight);
-				FcPatternGetInteger(origPattern, FC_SLANT  , 0, &slant);
-				FcPatternGetBool(   origPattern, FC_OUTLINE, 0, &outline);
-				FcPatternGetString( origPattern, FC_FAMILY , 0, &family);
-				FcPatternGetString( origPattern, FC_FOUNDRY, 0, &foundry);
+				FcPatternGetInteger(origPattern, FC_WEIGHT, 0, &weight);
+				FcPatternGetInteger(origPattern, FC_SLANT, 0, &slant);
+				FcPatternGetBool(origPattern, FC_OUTLINE, 0, &outline);
+				//FcPatternGetString char* return is destroyed upon FcPatternDestroy call, need to copy
+				{
+					FcChar8* tmp = nullptr;
+					FcPatternGetString(origPattern, FC_FAMILY, 0, &tmp);
+					if (tmp) family.assign(reinterpret_cast<const char*>(tmp));
+				}
+				{
+					FcChar8* tmp = nullptr;
+					FcPatternGetString(origPattern, FC_FOUNDRY, 0, &tmp);
+					if (tmp) foundry.assign(reinterpret_cast<const char*>(tmp));
+				}
 
 				FcPatternDestroy(origPattern);
 			}
@@ -375,10 +384,10 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 		FcPatternAddInteger(pattern, FC_WEIGHT, weight);
 		FcPatternAddInteger(pattern, FC_SLANT, slant);
 		FcPatternAddBool(pattern, FC_OUTLINE, outline);
-		if (family)
-			FcPatternAddString(pattern, FC_FAMILY, family);
-		if (foundry)
-			FcPatternAddString(pattern, FC_FOUNDRY, foundry);
+		if (!family.empty())
+			FcPatternAddString(pattern, FC_FAMILY, reinterpret_cast<const FcChar8*>(family.c_str()));
+		if (!foundry.empty())
+			FcPatternAddString(pattern, FC_FOUNDRY, reinterpret_cast<const FcChar8*>(foundry.c_str()));
 	}
 
 	FcDefaultSubstitute(pattern);
