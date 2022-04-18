@@ -84,6 +84,12 @@ public:
 		const int2& zrange
 	);
 
+	///< test whether a blocked map square has a build override
+	static bool TestBlockSquareForBuildOnly(
+		const CSolidObject *blockingObject,
+		const int2 yardpos
+	);
+
 	///< test a single mapsquare for build possibility
 	static BuildSquareStatus TestBuildSquare(
 		const float3& pos,

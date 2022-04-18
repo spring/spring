@@ -1295,10 +1295,12 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			if ((allyteam < 0) || (u->losStatus[allyteam] & LOS_INLOS)) {
 				if (so->immobile) {
 
-					const int ymIdx = GetYardMapIndex(buildInfo.buildFacing, int2{ yardxpos, yardypos }, xrange, zrange);
+					const int2 yardpos = { yardxpos, yardypos };
+					const int ymIdx = GetYardMapIndex(buildInfo.buildFacing, yardpos, xrange, zrange);
 
-					// if tested square is covered by a stackable yardmap cell, consider it acceptable for construction
-					ret = (!unitDef->yardmap.empty() && unitDef->yardmap[ymIdx] <= YardmapStates::YARDMAP_GEOSTACKABLE) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED;
+					bool isStackable = (!unitDef->yardmap.empty() && unitDef->yardmap[ymIdx] <= YardmapStates::YARDMAP_GEOSTACKABLE);
+					ret = isStackable ? BUILDSQUARE_OPEN :
+							(TestBlockSquareForBuildOnly(so, yardpos) ? BUILDSQUARE_OPEN : BUILDSQUARE_BLOCKED);
 				} else {
 					ret = BUILDSQUARE_OCCUPIED;
 				}
@@ -1332,6 +1334,31 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 
 		if (ret == BUILDSQUARE_BLOCKED)
 			return ret;
+	}
+
+	return ret;
+}
+
+bool CGameHelper::TestBlockSquareForBuildOnly(
+	const CSolidObject *blockingObject,
+	const int2 yardpos
+)
+{
+	bool ret = false;
+	auto so = blockingObject;
+	
+	// check whether the current building allows for building in the given square.
+	auto soYardMap = so->GetBlockMap();
+	if (soYardMap != nullptr) {
+		const int sox1 = int(so->pos.x / SQUARE_SIZE) - (so->xsize >> 1), sox2 = sox1 + so->xsize;
+		const int soz1 = int(so->pos.z / SQUARE_SIZE) - (so->zsize >> 1), soz2 = soz1 + so->zsize;
+		const int2 soxrange = int2(sox1, sox2);
+		const int2 sozrange = int2(soz1, soz2);
+
+		auto soYmIdx = GetYardMapIndex(so->buildFacing, yardpos, soxrange, sozrange);
+		if (soYardMap[soYmIdx] == YardmapStates::YARDMAP_BUILDONLY)
+			// While the square is blocked for walking, it is open for building.
+			ret = true;
 	}
 
 	return ret;
