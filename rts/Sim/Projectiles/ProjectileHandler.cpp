@@ -117,6 +117,8 @@ void CProjectileHandler::Init()
 		flyingPieces[modelType].reserve(1000);
 	}
 
+	projectileContainers[0].reserve(((size_t)maxParticles)*2);
+
 	// register ConfigNotify()
 	configHandler->NotifyOnChange(this, {"MaxParticles", "MaxNanoParticles"});
 }
@@ -167,6 +169,8 @@ void CProjectileHandler::ConfigNotify(const std::string& key, const std::string&
 {
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
+
+	projectileContainers[0].reserve(((size_t)maxParticles)*2);
 }
 
 
