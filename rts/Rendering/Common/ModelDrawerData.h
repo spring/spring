@@ -211,6 +211,7 @@ inline void CModelDrawerDataBase<T>::UpdateCommon()
 {
 	const auto updateBody = [this](int k) {
 		T* o = unsortedObjects[k];
+		o->previousDrawFlag = o->drawFlag;
 		UpdateObjectDrawFlags(o);
 
 		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG))

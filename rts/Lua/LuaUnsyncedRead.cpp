@@ -148,7 +148,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleProjectiles);
 
 	REGISTER_LUA_CFUNC(GetRenderUnits);
+	REGISTER_LUA_CFUNC(GetRenderUnitsDrawFlagChanged);
 	REGISTER_LUA_CFUNC(GetRenderFeatures);
+	REGISTER_LUA_CFUNC(GetRenderFeaturesDrawFlagChanged);
 
 	REGISTER_LUA_CFUNC(GetUnitsInScreenRectangle);
 
@@ -1220,6 +1222,39 @@ namespace {
 
 		return 2;
 	}
+
+	template<typename V>
+	static int GetRenderObjectsDrawFlagChanged(lua_State* L, const V& renderObjects, const char* func) {
+		const int  drawMask = luaL_optint(L, 1, 0);
+		const bool sendMask = luaL_optboolean(L, 2, false);
+
+		lua_createtable(L, renderObjects.size(), 0);
+		uint32_t count = 0;
+		for (const auto renderObject : renderObjects)
+		{
+			if (renderObject->previousDrawFlag == renderObject->drawFlag)
+				continue;
+
+			lua_pushnumber(L, renderObject->id);
+			lua_rawseti(L, -2, ++count);
+		}
+
+		if 	(!sendMask)
+			return 1;
+
+		lua_createtable(L, count, 0);
+		count = 0;
+		for (const auto renderObject : renderObjects)
+		{
+			if (renderObject->previousDrawFlag == renderObject->drawFlag)
+				continue;
+
+			lua_pushnumber(L, renderObject->drawFlag);
+			lua_rawseti(L, -2, ++count);
+		}
+
+		return 2;
+	}
 }
 
 int LuaUnsyncedRead::GetRenderUnits(lua_State* L)
@@ -1227,9 +1262,19 @@ int LuaUnsyncedRead::GetRenderUnits(lua_State* L)
 	return GetRenderObjects(L, unitDrawer->GetUnsortedUnits(), __func__);
 }
 
+int LuaUnsyncedRead::GetRenderUnitsDrawFlagChanged(lua_State* L)
+{
+	return GetRenderObjectsDrawFlagChanged(L, unitDrawer->GetUnsortedUnits(), __func__);
+}
+
 int LuaUnsyncedRead::GetRenderFeatures(lua_State* L)
 {
 	return GetRenderObjects(L, featureDrawer->GetUnsortedFeatures(), __func__);
+}
+
+int LuaUnsyncedRead::GetRenderFeaturesDrawFlagChanged(lua_State* L)
+{
+	return GetRenderObjectsDrawFlagChanged(L, featureDrawer->GetUnsortedFeatures(), __func__);
 }
 
 int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)

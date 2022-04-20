@@ -426,6 +426,7 @@ public:
 	float3 drawMidPos;
 
 	uint8_t drawFlag = DrawFlags::SO_NODRAW_FLAG;
+	uint8_t previousDrawFlag = DrawFlags::SO_NODRAW_FLAG;
 
 	/**
 	 * @brief mod controlled parameters
