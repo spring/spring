@@ -78,6 +78,8 @@ public:
 	const std::vector<T*>& GetUnsortedObjects() const { return unsortedObjects; }
 	const ModelRenderContainer<T>& GetModelRenderer(int modelType) const { return modelRenderers[modelType]; }
 
+	void ClearPreviousDrawFlags() { for (auto object : unsortedObjects) object->previousDrawFlag = 0; }
+
 	const ScopedMatricesMemAlloc& GetObjectMatricesMemAlloc(const T* o) const {
 		const auto it = matricesMemAllocs.find(const_cast<T*>(o));
 		return (it != matricesMemAllocs.end()) ? it->second : ScopedMatricesMemAlloc::Dummy();

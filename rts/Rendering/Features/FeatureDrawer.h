@@ -32,6 +32,8 @@ public:
 	// modelDrawerData proxies
 	void ConfigNotify(const std::string& key, const std::string& value) { modelDrawerData->ConfigNotify(key, value); }
 	static const std::vector<CFeature*>& GetUnsortedFeatures() { return modelDrawerData->GetUnsortedObjects(); }
+
+	static void ClearPreviousDrawFlags() { modelDrawerData->ClearPreviousDrawFlags(); }
 public:
 	virtual void DrawFeatureModel(const CFeature* feature, bool noLuaCall) const = 0;
 protected:
