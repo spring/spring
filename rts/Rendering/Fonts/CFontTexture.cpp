@@ -458,6 +458,9 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, texture(0)
 	, textureSpaceMatrix(0)
 {
+	atlasAlloc.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
+	atlasAlloc.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
+
 	atlasGlyphs.reserve(1024);
 
 	if (fontSize <= 0)
@@ -628,8 +631,6 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 	// read atlasAlloc glyph data back into atlasUpdate{Shadow}
 	{
-		atlasAlloc.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
-
 		if (!atlasAlloc.Allocate())
 			LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size and/or outlinewidth)");
 
