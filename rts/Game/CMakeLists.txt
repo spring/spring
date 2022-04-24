@@ -57,6 +57,7 @@ make_global_var(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeyBindings.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeyCodes.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeySet.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeySetSC.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/MiniMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/MouseCursor.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/MouseHandler.cpp"

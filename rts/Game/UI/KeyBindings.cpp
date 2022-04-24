@@ -5,6 +5,7 @@
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
+#include "KeySetSC.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -263,6 +264,7 @@ void CKeyBindings::Init()
 
 
 	bindings.reserve(32);
+	bindingsSC.reserve(32);
 	hotkeys.reserve(32);
 
 	statefulCommands.reserve(16);
@@ -392,6 +394,94 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeyChain& kc)
 	return out;
 }
 
+const CKeyBindings::ActionList& CKeyBindings::GetActionListSC() const
+{
+	static ActionList merged; //FIXME switch to thread_local (?)
+	const ActionList* alPtr;
+
+	for (const auto& p : bindingsSC) {
+		const ActionList& al = p.second;
+
+		merged.insert(merged.end(), al.begin(), al.end());
+	}
+
+	alPtr = &merged;
+
+	return *alPtr;
+}
+
+const CKeyBindings::ActionList& CKeyBindings::GetActionListSC(const CKeySetSC& ks) const
+{
+	static const ActionList empty;
+	static ActionList merged; //FIXME switch to thread_local (?)
+
+	const ActionList* alPtr = &empty;
+
+	if (ks.AnyMod()) {
+		const auto it = bindingsSC.find(ks);
+
+		if (it != bindingsSC.end())
+			alPtr = &(it->second);
+
+	}
+	else {
+		// have to check for an AnyMod keyset as well as the normal one
+		CKeySetSC anyMod = ks;
+		anyMod.SetAnyBit();
+
+		const auto nit = bindingsSC.find(ks);
+		const auto ait = bindingsSC.find(anyMod);
+
+		const bool haveNormal = (nit != bindingsSC.end());
+		const bool haveAnyMod = (ait != bindingsSC.end());
+
+		if (haveNormal && !haveAnyMod) {
+			alPtr = &(nit->second);
+		}
+		else if (!haveNormal && haveAnyMod) {
+			alPtr = &(ait->second);
+		}
+		else if (haveNormal && haveAnyMod) {
+			// combine the two lists (normal first)
+			merged = nit->second;
+			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
+			alPtr = &merged;
+		}
+	}
+
+	if (debugEnabled) {
+		LOG("GetActions: SC=%i SC_Name=\"%s\":", ks.KeySC(), ks.GetString(false).c_str());
+
+		if (alPtr != &empty) {
+			int i = 1;
+			for (const auto& a : *alPtr) {
+				LOG("   %i. action=\"%s\"  rawline=\"%s\"  shortcut=\"%s\"", i++, a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
+			}
+		}
+		else {
+			LOG("   EMPTY");
+		}
+	}
+
+	return *alPtr;
+}
+
+const CKeyBindings::ActionList& CKeyBindings::GetActionListSC(const CKeyChainSC& kc) const
+{
+	static ActionList out; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
+	out.clear();
+
+	if (kc.empty())
+		return out;
+
+	const CKeyBindings::ActionList& al = GetActionListSC(kc.back());
+	for (const Action& action : al) {
+		if (kc.fit(action.keyChainSC))
+			out.push_back(action);
+	}
+	return out;
+}
+
 
 const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& action) const
 {
@@ -428,6 +518,29 @@ static bool ParseSingleChain(const std::string& keystr, CKeyChain* kc)
 	return true;
 }
 
+static bool ParseSingleChainSC(const std::string& keystr, CKeyChainSC* kc)
+{
+	kc->clear();
+	CKeySetSC ks;
+
+	// note: this will fail if keystr contains spaces
+	std::stringstream ss(keystr);
+
+	while (ss.good()) {
+		char kcstr[256];
+		ss.getline(kcstr, 256, ',');
+		std::string kstr(kcstr);
+
+		if (!ks.Parse(kstr, false))
+			return false;
+
+		kc->emplace_back(ks);
+	}
+
+	return true;
+}
+
+
 static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = std::string::npos)
 {
 	// recursive function to allow "," as separator-char & as shortcut
@@ -453,6 +566,31 @@ static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = 
 	return ParseKeyChain(keystr, kc, cpos);
 }
 
+static bool ParseKeyChainSC(std::string keystr, CKeyChainSC* kc, const size_t pos = std::string::npos)
+{
+	// recursive function to allow "," as separator-char & as shortcut
+	// -> when parsing fails, this functions replaces one by one all "," by their hexcode
+	//    and tries then to reparse it
+	// -> i.e. ",,," will at the end parsed as "0x2c,0x2c"
+
+	const size_t cpos = keystr.rfind(',', pos);
+
+	if (ParseSingleChainSC(keystr, kc))
+		return true;
+
+	if (cpos == std::string::npos)
+		return false;
+
+	// if cpos is 0, cpos - 1 will equal std::string::npos (size_t::max)
+	const size_t nextpos = cpos - 1;
+
+	if ((nextpos != std::string::npos) && ParseKeyChainSC(keystr, kc, nextpos))
+		return true;
+
+	keystr.replace(cpos, 1, IntToString(keyCodes.GetCode(","), "%#x"));
+	return ParseKeyChainSC(keystr, kc, cpos);
+}
+
 
 bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
@@ -464,8 +602,8 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 	}
 
 	if (!ParseKeyChain(keystr, &action.keyChain) || action.keyChain.empty()) {
-		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
-		return false;
+		// keystr not parsed as keysym, lets try if we have a scancode bind
+		return BindSC(keystr, line);
 	}
 	CKeySet& ks = action.keyChain.back();
 
@@ -500,13 +638,62 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 	return true;
 }
 
+bool CKeyBindings::BindSC(const std::string& keystr, const std::string& line)
+{
+	Action action(line);
+	action.boundWith = keystr;
+
+	if (action.command.empty()) {
+		LOG_L(L_WARNING, "BindSC: empty action: %s", line.c_str());
+		return false;
+	}
+
+	if (!ParseKeyChainSC(keystr, &action.keyChainSC) || action.keyChainSC.empty()) {
+		LOG_L(L_WARNING, "BindSC: could not parse key: %s", keystr.c_str());
+		return false;
+	}
+	
+	CKeySetSC& ksSC = action.keyChainSC.back();
+
+	// Try to be safe, force AnyMod mode for stateful commands
+	if (statefulCommands.find(action.command) != statefulCommands.end())
+		ksSC.SetAnyBit();
+
+	const auto it = bindingsSC.find(ksSC);
+
+	if (it == bindingsSC.end()) {
+		// create new keyset entry and push it command
+		ActionList& al = bindingsSC[ksSC];
+		al.push_back(action);
+	}
+	else {
+		ActionList& al = it->second;
+		assert(it->first == ksSC);
+
+		// check if the command is already found to the given keyset
+		bool found = false;
+		for (const Action& act : al) {
+			if (act.command == action.command && act.extra == action.extra) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			// not yet bound, push it
+			al.push_back(action);
+		}
+	}
+
+	return true;
+}
+
 
 bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 {
 	CKeySet ks;
 	if (!ks.Parse(keystr)) {
-		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
-		return false;
+		// keystr not parsed as keysym, lets try if we have a scancode bind
+		return UnBindSC(keystr, command);
 	}
 
 	const auto it = bindings.find(ks);
@@ -523,13 +710,35 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 	return success;
 }
 
+bool CKeyBindings::UnBindSC(const std::string& keystr, const std::string& command)
+{
+	CKeySetSC ksSC;
+	if (!ksSC.Parse(keystr)) {
+		LOG_L(L_WARNING, "UnBindSC: could not parse key: %s", keystr.c_str());
+		return false;
+	}
+
+	const auto it = bindingsSC.find(ksSC);
+
+	if (it == bindingsSC.end())
+		return false;
+
+	ActionList& al = it->second;
+	const bool success = RemoveCommandFromList(al, command);
+
+	if (al.empty())
+		bindingsSC.erase(it);
+
+	return success;
+}
+
 
 bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 {
 	CKeySet ks;
 	if (!ks.Parse(keystr)) {
-		LOG_L(L_WARNING, "UnBindKeyset: could not parse key: %s", keystr.c_str());
-		return false;
+		// No Keysym Keyset to unbind, lets look at Keysets with scancodes
+		return UnBindKeysetSC(keystr);
 	}
 
 	const auto it = bindings.find(ks);
@@ -538,6 +747,23 @@ bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 		return false;
 
 	bindings.erase(it);
+	return true;
+}
+
+bool CKeyBindings::UnBindKeysetSC(const std::string& keystr)
+{
+	CKeySetSC ksSC;
+	if (!ksSC.Parse(keystr)) {
+		LOG_L(L_WARNING, "UnBindKeysetSC: could not parse key: %s", keystr.c_str());
+		return false;
+	}
+
+	const auto it = bindingsSC.find(ksSC);
+
+	if (it == bindingsSC.end())
+		return false;
+
+	bindingsSC.erase(it);
 	return true;
 }
 
@@ -561,7 +787,26 @@ bool CKeyBindings::UnBindAction(const std::string& command)
 		}
 	}
 
-	return success;
+
+	bool successSC = false;
+
+	auto itSC = bindingsSC.begin();
+
+	while (itSC != bindingsSC.end()) {
+		ActionList& al = itSC->second;
+
+		if (RemoveCommandFromList(al, command))
+			successSC = true;
+
+		if (al.empty()) {
+			itSC = bindingsSC.erase(itSC);
+		}
+		else {
+			++itSC;
+		}
+	}
+
+	return success || successSC;
 }
 
 
@@ -702,7 +947,8 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	else if (command == "unbindall") {
 		bindings.clear();
 		keyCodes.Reset();
-		Bind("enter", "chat"); // bare minimum
+		bindingsSC.clear();
+		Bind("enter", "edit_return"); // bare minimum
 	}
 	else {
 		return false;

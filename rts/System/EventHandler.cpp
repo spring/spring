@@ -703,6 +703,16 @@ bool CEventHandler::KeyRelease(int key)
 	return ControlReverseIterateDefTrue(listKeyRelease, &CEventClient::KeyRelease, key);
 }
 
+bool CEventHandler::KeyPressSC(int keyScanCode, bool isRepeat)
+{
+	return ControlReverseIterateDefTrue(listKeyPressSC, &CEventClient::KeyPressSC, keyScanCode, isRepeat);
+}
+
+bool CEventHandler::KeyReleaseSC(int keyScanCode)
+{
+	return ControlReverseIterateDefTrue(listKeyReleaseSC, &CEventClient::KeyReleaseSC, keyScanCode);
+}
+
 
 bool CEventHandler::TextInput(const std::string& utf8)
 {

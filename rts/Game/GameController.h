@@ -15,8 +15,18 @@ public:
 
 	virtual bool Draw() { return true; }
 	virtual bool Update() { return true; }
-	virtual int KeyPressed(int key, bool isRepeat) { return 0; }
-	virtual int KeyReleased(int key) { return 0; }
+
+	// This adapter makes guarantees backward compatiblity for GameControllers, which haven´t implement KeyPressedSC and KeyReleasedSC
+	// = fall back to KeyPressed if KeyPressedSC is not implemented/overriden in derived class
+	virtual int KeyPressedSC(int keyScanCode, int keySym, bool isRepeat) {
+		return KeyPressed(keySym, isRepeat);
+	} 
+	virtual int KeyPressed(int keySym, bool isRepeat) { return 0; }
+	virtual int KeyReleasedSC(int keyScanCode, int keySym) {
+		return KeyReleased(keySym);
+	}
+	virtual int KeyReleased(int keySym) { return 0; }
+
 	virtual int TextInput(const std::string& utf8Text) { return 0; }
 	virtual int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) { return 0; }
 	virtual void ResizeEvent() {}

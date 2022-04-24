@@ -190,6 +190,8 @@ class CLuaHandle : public CEventClient
 
 		bool KeyPress(int key, bool isRepeat) override;
 		bool KeyRelease(int key) override;
+		bool KeyPressSC(int key, bool isRepeat) override;
+		bool KeyReleaseSC(int key) override;
 		bool TextInput(const std::string& utf8) override;
 		bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length) override;
 		bool MouseMove(int x, int y, int dx, int dy, int button) override;

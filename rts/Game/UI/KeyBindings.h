@@ -30,6 +30,9 @@ class CKeyBindings : public CommandReceiver
 		const ActionList& GetActionList() const;
 		const ActionList& GetActionList(const CKeySet& ks) const;
 		const ActionList& GetActionList(const CKeyChain& kc) const;
+		const ActionList& GetActionListSC() const;
+		const ActionList& GetActionListSC(const CKeySetSC& ks) const;
+		const ActionList& GetActionListSC(const CKeyChainSC& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
 		virtual void PushAction(const Action&);
@@ -46,8 +49,11 @@ class CKeyBindings : public CommandReceiver
 		void BuildHotkeyMap();
 
 		bool Bind(const std::string& keystring, const std::string& action);
+		bool BindSC(const std::string& keystring, const std::string& action);
 		bool UnBind(const std::string& keystring, const std::string& action);
+		bool UnBindSC(const std::string& keystring, const std::string& action);
 		bool UnBindKeyset(const std::string& keystr);
+		bool UnBindKeysetSC(const std::string& keystr);
 		bool UnBindAction(const std::string& action);
 		bool SetFakeMetaKey(const std::string& keystring);
 		bool AddKeySymbol(const std::string& keysym, const std::string& code);
@@ -63,10 +69,20 @@ class CKeyBindings : public CommandReceiver
 			}
 		};
 
+		struct KeySetHashSC {
+			uint64_t operator ()(const CKeySetSC& ksSC) const {
+				return ((ksSC.KeySC() * 6364136223846793005ull + ksSC.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
+			}
+		};
+
 		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
 		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
 
+		typedef spring::unsynced_map<CKeySetSC, ActionList, KeySetHashSC> KeyMapSC; // keysetSC to action
+		typedef spring::unsynced_map<std::string, HotkeyList> ActionMapSC; // action to keysetSC
+
 		KeyMap bindings;
+		KeyMapSC bindingsSC;
 		ActionMap hotkeys;
 
 		// commands that use both Up and Down key presses

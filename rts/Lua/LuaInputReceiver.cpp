@@ -24,15 +24,15 @@ CLuaInputReceiver* CLuaInputReceiver::GetInstace()
 }
 
 
-bool CLuaInputReceiver::KeyPressed(int key, bool isRepeat)
+bool CLuaInputReceiver::KeyPressedSC(int keyScanCode, int keySym, bool isRepeat)
 {
-	return eventHandler.KeyPress(key, isRepeat);
+	return eventHandler.KeyPressSC(keyScanCode, isRepeat) || eventHandler.KeyPress(keySym, isRepeat);
 }
 
 
-bool CLuaInputReceiver::KeyReleased(int key)
+bool CLuaInputReceiver::KeyReleasedSC(int keyScanCode, int keySym)
 {
-	return eventHandler.KeyRelease(key);
+	return eventHandler.KeyReleaseSC(keyScanCode) || eventHandler.KeyRelease(keySym);
 }
 
 

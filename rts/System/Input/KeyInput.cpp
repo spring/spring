@@ -106,6 +106,19 @@ namespace KeyInput {
 		return sym;
 	}
 
+	int GetNormalizedKeySymbolSC(int sc)
+	{
+		switch (sc) {
+		case SDL_SCANCODE_RSHIFT: { return SDL_SCANCODE_LSHIFT; } break;
+		case SDL_SCANCODE_RCTRL: { return SDL_SCANCODE_LCTRL; } break;
+		case SDL_SCANCODE_RGUI: { return SDL_SCANCODE_LGUI; } break;
+		case SDL_SCANCODE_RALT: { return SDL_SCANCODE_LALT; } break;
+		default: {                             } break;
+		}
+
+		return sc;
+	}
+
 	void ReleaseAllKeys()
 	{
 		for (const auto& key: keyVec) {

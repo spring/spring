@@ -18,6 +18,7 @@ namespace KeyInput {
 	const std::vector<Key>& GetPressedKeys();
 
 	int GetNormalizedKeySymbol(int key);
+	int GetNormalizedKeySymbolSC(int key);
 }
 
 #endif

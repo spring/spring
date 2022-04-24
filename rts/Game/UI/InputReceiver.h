@@ -21,8 +21,15 @@ protected:
 	virtual ~CInputReceiver();
 
 public:
-	virtual bool KeyPressed(int key, bool isRepeat) { return false; }
-	virtual bool KeyReleased(int key) { return false; }
+	// adapter, fall back to KeyPressed if KeyPressedSC is not implemented/overriden in derived class
+	virtual bool KeyPressedSC(int keyScanCode, int keySym, bool isRepeat) {
+		return KeyPressed(keySym, isRepeat);
+	}
+	virtual bool KeyPressed(int keySym, bool isRepeat) { return false; }
+	virtual bool KeyReleasedSC(int keyScanCode, int keySym) {
+		return KeyReleased(keySym);
+	}
+	virtual bool KeyReleased(int keySym) { return false; }
 
 	virtual bool MousePress(int x, int y, int button) { return false; }
 	virtual void MouseMove(int x, int y, int dx, int dy, int button) {}

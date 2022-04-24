@@ -10,6 +10,7 @@
 #include "GameController.h"
 #include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
+#include "Game/UI/KeySetsc.h"
 #include "Rendering/WorldDrawer.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
@@ -120,9 +121,11 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(int k) override;
+	//int KeyReleased(int k) override;
+	int KeyReleasedSC(int keyScanCode, int keySym) override;
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k, bool isRepeat) override;
+	//int KeyPressed(int k, bool isRepeat) override;
+	int KeyPressedSC(int keyScanCode, int keySym, bool isRepeat) override;
 	///
 	int TextInput(const std::string& utf8Text) override;
 	int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) override;
@@ -213,6 +216,7 @@ private:
 	JobDispatcher jobDispatcher;
 
 	CTimedKeyChain curKeyChain;
+	CTimedKeyChainSC curKeyChainSC;
 
 	CWorldDrawer worldDrawer;
 

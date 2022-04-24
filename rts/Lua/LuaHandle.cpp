@@ -19,6 +19,7 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Game/UI/KeySet.h"
+#include "Game/UI/KeySetSC.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -2046,6 +2047,69 @@ bool CLuaHandle::KeyRelease(int key)
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 4, 1))
+		return false;
+
+	const bool retval = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return retval;
+}
+
+bool CLuaHandle::KeyPressSC(int keyScanCode, bool isRepeat)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 5, __func__);
+	static const LuaHashString cmdStr(__func__);
+
+	// if the call is not defined, do not take the event
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	// FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
+	// Send Scancode to Lua
+	lua_pushinteger(L, keyScanCode);
+
+	lua_createtable(L, 0, 4);
+	HSTR_PUSH_BOOL(L, "alt", !!KeyInput::GetKeyModState(KMOD_ALT));
+	HSTR_PUSH_BOOL(L, "ctrl", !!KeyInput::GetKeyModState(KMOD_CTRL));
+	HSTR_PUSH_BOOL(L, "meta", !!KeyInput::GetKeyModState(KMOD_GUI));
+	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
+
+	lua_pushboolean(L, isRepeat);
+
+	CKeySetSC ksSC(keyScanCode, false);
+	lua_pushsstring(L, ksSC.GetString(true));
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 4, 1))
+		return false;
+
+	const bool retval = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return retval;
+}
+
+bool CLuaHandle::KeyReleaseSC(int keyScanCode)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 4, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	lua_pushinteger(L, keyScanCode);
+
+	lua_createtable(L, 0, 4);
+	HSTR_PUSH_BOOL(L, "alt", !!KeyInput::GetKeyModState(KMOD_ALT));
+	HSTR_PUSH_BOOL(L, "ctrl", !!KeyInput::GetKeyModState(KMOD_CTRL));
+	HSTR_PUSH_BOOL(L, "meta", !!KeyInput::GetKeyModState(KMOD_GUI));
+	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
+
+	CKeySetSC ksSC(keyScanCode, false);
+	lua_pushsstring(L, ksSC.GetString(true));
+
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
 	const bool retval = luaL_optboolean(L, -1, false);

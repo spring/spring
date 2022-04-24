@@ -5,6 +5,7 @@
 
 #include <string>
 #include "Game/UI/KeySet.h"
+#include "Game/UI/KeySetSC.h"
 
 class Action
 {
@@ -18,6 +19,7 @@ public:
 	std::string boundWith; ///< the string that defined the binding keyset
 
 	CKeyChain keyChain;    ///< the bounded keychain/keyset
+	CKeyChainSC keyChainSC;
 };
 
 #endif // ACTION_H

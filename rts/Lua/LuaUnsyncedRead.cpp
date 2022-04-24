@@ -82,7 +82,8 @@
 #include <SDL_clipboard.h>
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
-
+#include <SDL_scancode.h>
+#include <SDL.h>
 
 /******************************************************************************/
 /******************************************************************************/
@@ -230,7 +231,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
+	REGISTER_LUA_CFUNC(GetKeyScancodeName);
 	REGISTER_LUA_CFUNC(GetKeyBindings);
+	REGISTER_LUA_CFUNC(GetKeyBindingsSC);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
 	REGISTER_LUA_CFUNC(GetLastMessagePositions);
@@ -2537,6 +2540,21 @@ int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 	return 2;
 }
 
+int LuaUnsyncedRead::GetKeyScancodeName(lua_State* L)
+{
+	// Does SDL2 know that keyscancode ?
+	const string keyScancodeName = SDL_GetScancodeName(static_cast<SDL_Scancode>(luaL_checkint(L, 1)));
+	const int keyScancode = SDL_GetScancodeFromName(keyScancodeName.c_str());
+	if (keyScancode != SDL_SCANCODE_UNKNOWN) {
+		// feed lua with prefixed Scancodename
+		lua_pushsstring(L, "SC_" + keyScancodeName);
+	}
+	else {
+		lua_pushsstring(L, "");
+	}
+	return 1;
+}
+
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
 	CKeyBindings::ActionList actions;
@@ -2555,16 +2573,48 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 	int i = 1;
 	lua_newtable(L);
-	for (const Action& action: actions) {
-		lua_newtable(L);
-			lua_pushsstring(L, action.command);
-			lua_pushsstring(L, action.extra);
-			lua_rawset(L, -3);
-			LuaPushNamedString(L, "command",   action.command);
-			LuaPushNamedString(L, "extra",     action.extra);
-			LuaPushNamedString(L, "boundWith", action.boundWith);
-		lua_rawseti(L, -2, i++);
+		for (const Action& action: actions) {
+			lua_newtable(L);
+				// regardless of this keyValue-Pair being pushed or not, current actions.lua can´t handle it, so just delete it already
+				// lua_pushsstring(L, action.command);
+				// lua_pushsstring(L, action.extra);
+				// lua_rawset(L, -3);
+				// above 3 lines is same as: LuaPushNamedString(L, action.command, action.extra);
+
+				LuaPushNamedString(L, "command", action.command); 
+				LuaPushNamedString(L, "extra",     action.extra); 
+				LuaPushNamedString(L, "boundWith", action.boundWith); 
+	lua_rawseti(L, -2, i++);
+		}
+	return 1;
+}
+
+int LuaUnsyncedRead::GetKeyBindingsSC(lua_State* L)
+{
+	CKeyBindings::ActionList actions;
+	const std::string& argument = luaL_optstring(L, 1, "");
+
+	if (argument.empty()) {
+		actions = keyBindings.GetActionListSC();
 	}
+	else {
+		CKeySetSC ksSC;
+
+		if (!ksSC.Parse(luaL_checksstring(L, 1)))
+			return 0;
+
+		actions = keyBindings.GetActionListSC(ksSC);
+	}
+
+	int i = 1;
+	lua_newtable(L);
+		for (const Action& action : actions) {
+			lua_newtable(L);
+				LuaPushNamedString(L, "command", action.command);
+				LuaPushNamedString(L, "extra", action.extra);
+				LuaPushNamedString(L, "boundWith", action.boundWith);
+	lua_rawseti(L, -2, i++);
+		}
 	return 1;
 }
 

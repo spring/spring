@@ -216,6 +216,8 @@ class CEventHandler
 
 		bool KeyPress(int key, bool isRepeat);
 		bool KeyRelease(int key);
+		bool KeyPressSC(int key, bool isRepeat);
+		bool KeyReleaseSC(int key);
 		bool TextInput(const std::string& utf8);
 		bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
