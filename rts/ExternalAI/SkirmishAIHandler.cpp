@@ -186,7 +186,7 @@ bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
 }
 
 
-void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
+void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId, bool savedGame) {
 	SkirmishAIData* aiData = GetSkirmishAI(skirmishAIId);
 
 	// fail, if a local AI is already in line for this team
@@ -198,7 +198,14 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 	localTeamAIs[aiData->team].isLuaAI = (aiData->isLuaAI = IsLuaAI(*aiData));
 
 	// create instantly
-	eoh->CreateSkirmishAI(skirmishAIId);
+	eoh->CreateSkirmishAI(skirmishAIId, savedGame);
+}
+
+void CSkirmishAIHandler::PostLoadSkirmishAI(const size_t skirmishAIId) {
+	if (HasLocalKillFlag(skirmishAIId) || GetSkirmishAI(skirmishAIId)->isLuaAI)
+		return;
+
+	eoh->PostLoadSkirmishAI(skirmishAIId);
 }
 
 void CSkirmishAIHandler::NetCreateLocalSkirmishAI(const SkirmishAIData& aiData) {

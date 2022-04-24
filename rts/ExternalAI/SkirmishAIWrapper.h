@@ -32,16 +32,7 @@ public:
 	CSkirmishAIWrapper& operator = (CSkirmishAIWrapper&& w) = delete;
 
 	void Serialize(creg::ISerializer* s) {}
-	void PostLoad() {
-		#if 0
-		// EngineOutHandler invokes PostLoad directly since
-		// it does not (de)serialize AI's, less error-prone
-		CreateCallback();
-		InitLibrary(true);
-		#else
-		SendUnitEvents();
-		#endif
-	}
+	void PostLoad() { SendUnitEvents(); }
 
 
 	void PreInit(int aiID);
@@ -52,7 +43,7 @@ public:
 	 * Initialize the AI instance.
 	 * This calls the native init() method, the InitAIEvent is sent afterwards.
 	 */
-	void Init();
+	void Init(bool savedGame);
 	void Kill();
 
 	/// @see SReleaseEvent in Interface/AISEvents.h
@@ -106,11 +97,13 @@ public:
 
 	bool Active() const { return (skirmishAIId != -1); }
 
+	bool IsLoadSupported() const;
+
 private:
-	bool InitLibrary(bool postLoad);
+	bool InitLibrary();
 	void CreateCallback();
 
-	void SendInitEvent();
+	void SendInitEvent(bool savedGame);
 	void SendUnitEvents();
 
 	/**

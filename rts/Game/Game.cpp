@@ -464,9 +464,6 @@ void CGame::Load(const std::string& mapFileName)
 			LOG("[Game::%s][8] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 			LoadSkirmishAIs();
-			if (saveFileHandler != nullptr) {
-				saveFileHandler->LoadAIData();
-			}
 		} catch (const content_error& e) {
 			LOG_L(L_WARNING, "[Game::%s][8] forced quit with exception \"%s\"", __func__, e.what());
 			forcedQuit = true;
@@ -802,16 +799,20 @@ void CGame::LoadSkirmishAIs()
 
 	// create Skirmish AI's if required
 	const std::vector<uint8_t>& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
-	const std::string timerName = std::string("Game::") + __func__;
+	if (localAIs.empty() && !IsSavedGame())
+		return;
 
-	if (!localAIs.empty()) {
-		ScopedOnceTimer timer(timerName);
-		loadscreen->SetLoadMessage("Loading Skirmish AIs");
+	ScopedOnceTimer timer(std::string("Game::") + __func__);
+	loadscreen->SetLoadMessage("Loading Skirmish AIs");
 
-		for (uint8_t localAI: localAIs) {
-			ScopedOnceTimer subTimer(timerName + "::CreateAI(id=" + IntToString(localAI) + ")");
-			skirmishAIHandler.CreateLocalSkirmishAI(localAI);
-		}
+	for (uint8_t localAI: localAIs)
+		skirmishAIHandler.CreateLocalSkirmishAI(localAI, IsSavedGame());
+
+	if (IsSavedGame()) {
+		saveFileHandler->LoadAIData();
+
+		for (uint8_t localAI: localAIs)
+			skirmishAIHandler.PostLoadSkirmishAI(localAI);
 	}
 }
 

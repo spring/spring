@@ -1234,7 +1234,7 @@ void CGame::ClientReadNet()
 
 					if (playerNum == gu->myPlayerNum) {
 						LOG("[Game::%s] local skirmish AI being created for team %i ...", __func__, aiTeamNum);
-						eoh->CreateSkirmishAI(aiNum);
+						eoh->CreateSkirmishAI(aiNum, false);
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AI_CREATED] exception \"%s\"", __func__, ex.what());
@@ -1278,7 +1278,7 @@ void CGame::ClientReadNet()
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
 							LOG("[Game::%s] %s skirmish AI \"%s\" being created for team %i", __func__, types[true], aiData->name.c_str(), aiTeamId);
-							eoh->CreateSkirmishAI(aiNum);
+							eoh->CreateSkirmishAI(aiNum, false);
 						}
 					} else {
 						// this could be done in the above function as well, team has no controller left now

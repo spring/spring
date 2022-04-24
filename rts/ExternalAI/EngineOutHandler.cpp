@@ -520,7 +520,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 
 
-void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
+void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId, bool savedGame) {
 	SCOPED_TIMER("AI");
 	LOG_L(L_INFO, "[EOH::%s(id=%u)]", __func__, skirmishAIId);
 
@@ -541,7 +541,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 	teamSkirmishAIs[ aiInst.GetTeamId() ].push_back(skirmishAIId);
 	activeSkirmishAIs.push_back(skirmishAIId);
 
-	aiInst.Init();
+	aiInst.Init(savedGame);
 
 	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
 		return;
@@ -551,9 +551,19 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 
 	// send events for each unit belonging to the AI's team
 	// will only do something if the AI is created mid-game
-	aiInst.PostLoad();
+	if (!savedGame)
+		aiInst.PostLoad();
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+}
+
+void CEngineOutHandler::PostLoadSkirmishAI(const uint8_t skirmishAIId) {
+	CSkirmishAIWrapper& aiInst = hostSkirmishAIs[skirmishAIId];
+
+	if (aiInst.IsLoadSupported())
+		return;
+
+	aiInst.PostLoad();
 }
 
 void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {

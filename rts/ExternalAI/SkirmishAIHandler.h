@@ -114,7 +114,8 @@ public:
 	 * @param skirmishAIId Skirmish AI index
 	 * @see EngineOutHandler::CreateSkirmishAI()
 	 */
-	void CreateLocalSkirmishAI(const size_t skirmishAIId);
+	void CreateLocalSkirmishAI(const size_t skirmishAIId, bool savedGame);
+	void PostLoadSkirmishAI(const size_t skirmishAIId);
 	/**
 	 * Starts the synced initialization process of a locally running Skirmish AI.
 	 * Stores detailed info locally and sends synced stuff in a message

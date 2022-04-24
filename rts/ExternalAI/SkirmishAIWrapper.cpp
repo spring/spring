@@ -105,8 +105,19 @@ void CSkirmishAIWrapper::CreateCallback() {
 }
 
 
+bool CSkirmishAIWrapper::IsLoadSupported() const {
+	AILibraryManager* libManager = AILibraryManager::GetInstance();
+	libManager->FetchSkirmishAILibrary(key);
 
-bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
+	const auto& libInfoMap = AILibraryManager::GetInstance()->GetSkirmishAIInfos();
+	const auto& libInfoIt  = libInfoMap.find(key);
+	const bool loadSupported = (libInfoIt != libInfoMap.end() && libInfoIt->second.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
+
+	libManager->ReleaseSkirmishAILibrary(key);
+	return loadSupported;
+}
+
+bool CSkirmishAIWrapper::InitLibrary() {
 	AILibraryManager* libManager = AILibraryManager::GetInstance();
 
 	{
@@ -122,36 +133,15 @@ bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 		return false;
 	}
 
-	#if 0
-	libManager->FetchSkirmishAILibrary(key);
-
-	const auto& libInfoMap = libManager->GetSkirmishAIInfos();
-	const auto& libInfoIt  = libInfoMap.find(key);
-
-	const bool loadSupported = (libInfoIt != libInfoMap.end() && libInfoIt->second.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
-
-	libManager->ReleaseSkirmishAILibrary(key);
-
-	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] postLoad=%d loadSupported=%d numUnits=%u", __func__, skirmishAIId, teamId, postLoad, loadSupported, unitHandler.NumUnitsByTeam(teamId));
-
-	if (!postLoad || loadSupported)
-		return true;
-
-	SendInitEvent();
-	SendUnitEvents();
-	#else
-	assert(!postLoad);
-	#endif
-
 	return true;
 }
 
 
-void CSkirmishAIWrapper::Init() {
-	if (!InitLibrary(false))
+void CSkirmishAIWrapper::Init(bool savedGame) {
+	if (!InitLibrary())
 		return;
 
-	SendInitEvent();
+	SendInitEvent(savedGame);
 }
 
 void CSkirmishAIWrapper::Kill()
@@ -197,9 +187,9 @@ void CSkirmishAIWrapper::Release(int reason)
 }
 
 
-void CSkirmishAIWrapper::SendInitEvent()
+void CSkirmishAIWrapper::SendInitEvent(bool savedGame)
 {
-	const SInitEvent evtData = {skirmishAIId, callback};
+	const SInitEvent evtData = {skirmishAIId, callback, savedGame};
 	const int error = HandleEvent(EVENT_INIT, &evtData);
 
 	if (error == 0) {

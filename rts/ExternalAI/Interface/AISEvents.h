@@ -98,6 +98,7 @@ const int NUM_EVENTS = 28;
 struct SInitEvent {
 	int skirmishAIId;
 	const struct SSkirmishAICallback* callback;
+	bool savedGame;
 }; //$ EVENT_INIT
 
 /**

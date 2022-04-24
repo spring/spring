@@ -82,7 +82,8 @@ public:
 
 
 	// Skirmish AI stuff
-	void CreateSkirmishAI(const uint8_t skirmishAIId);
+	void CreateSkirmishAI(const uint8_t skirmishAIId, bool savedGame);
+	void PostLoadSkirmishAI(const uint8_t skirmishAIId);
 	/**
 	 * Sets a local Skirmish AI to block events.
 	 * Do not call this if you want to kill a local AI, but use
