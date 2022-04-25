@@ -10,7 +10,7 @@
 #include "GameController.h"
 #include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
-#include "Game/UI/KeySetsc.h"
+#include "Game/UI/KeySetSC.h"
 #include "Rendering/WorldDrawer.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
