@@ -198,6 +198,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPixelDir);
 
 	REGISTER_LUA_CFUNC(GetTimer);
+	REGISTER_LUA_CFUNC(GetTimerMicros);
 	REGISTER_LUA_CFUNC(GetFrameTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
 
@@ -1997,7 +1998,7 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void PushTimer(lua_State* L, const spring_time& time)
+static void PushTimer(lua_State* L, const spring_time& time, bool microseconds)
 {
 	// use time since Spring's epoch in MILLIseconds because that
 	// is more likely to fit in a 32-bit pointer (on any platforms
@@ -2006,14 +2007,27 @@ static void PushTimer(lua_State* L, const spring_time& time)
 	// single-precision floats better
 	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
-	const std::uint64_t millis = time.toMilliSecs<std::uint64_t>();
-
 	ptrdiff_t p = 0;
 
-	if (sizeof(void*) == 8) {
-		p = spring::SafeCast<std::uint64_t>(millis);
-	} else {
-		p = spring::SafeCast<std::uint32_t>(millis);
+	if (microseconds) {
+		const std::uint64_t micros = time.toMicroSecs<std::uint64_t>();
+
+		if (sizeof(void*) == 8) {
+			p = spring::SafeCast<std::uint64_t>(micros);
+		}
+		else {
+			p = spring::SafeCast<std::uint32_t>(micros);
+		}
+	}
+	else {
+		const std::uint64_t millis = time.toMilliSecs<std::uint64_t>();
+
+		if (sizeof(void*) == 8) {
+			p = spring::SafeCast<std::uint64_t>(millis);
+		}
+		else {
+			p = spring::SafeCast<std::uint32_t>(millis);
+		}
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
@@ -2021,16 +2035,23 @@ static void PushTimer(lua_State* L, const spring_time& time)
 
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
-	PushTimer(L, spring_now());
+	PushTimer(L, spring_now(), false);
 	return 1;
 }
+
+int LuaUnsyncedRead::GetTimerMicros(lua_State* L)
+{
+	PushTimer(L, spring_now(), true);
+	return 1;
+}
+
 
 int LuaUnsyncedRead::GetFrameTimer(lua_State* L)
 {
 	if (luaL_optboolean(L, 1, false)) {
-		PushTimer(L, game->lastFrameTime);
+		PushTimer(L, game->lastFrameTime, false);
 	} else {
-		PushTimer(L, globalRendering->lastFrameStart);
+		PushTimer(L, globalRendering->lastFrameStart, false);
 	}
 	return 1;
 }
@@ -2045,24 +2066,36 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const void* p1 = lua_touserdata(L, 1);
 	const void* p2 = lua_touserdata(L, 2);
 
-	const std::uint64_t t1 = (sizeof(void*) == 8)?
-		*reinterpret_cast<std::uint64_t*>(&p1):
+	const std::uint64_t t1 = (sizeof(void*) == 8) ?
+		*reinterpret_cast<std::uint64_t*>(&p1) :
 		*reinterpret_cast<std::uint32_t*>(&p1);
-	const std::uint64_t t2 = (sizeof(void*) == 8)?
-		*reinterpret_cast<std::uint64_t*>(&p2):
+	const std::uint64_t t2 = (sizeof(void*) == 8) ?
+		*reinterpret_cast<std::uint64_t*>(&p2) :
 		*reinterpret_cast<std::uint32_t*>(&p2);
 
 	// t1 is supposed to be the most recent time-point
 	assert(t1 >= t2);
 
-	const spring_time dt = spring_time::fromMilliSecs(t1 - t2);
-
-	if (luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, dt.toMilliSecsf());
-	} else {
-		lua_pushnumber(L, dt.toSecsf());
+	if (luaL_optboolean(L, 4, false)) {
+		const spring_time dt = spring_time::fromMicroSecs(t1 - t2);
+		
+		if (luaL_optboolean(L, 3, false)) {
+			lua_pushnumber(L, dt.toMilliSecsf());
+		}
+		else {
+			lua_pushnumber(L, dt.toSecsf());
+		}
 	}
+	else {
+		const spring_time dt = spring_time::fromMilliSecs(t1 - t2);
 
+		if (luaL_optboolean(L, 3, false)) {
+			lua_pushnumber(L, dt.toMilliSecsf());
+		}
+		else {
+			lua_pushnumber(L, dt.toSecsf());
+		}
+	}
 	return 1;
 }
 
