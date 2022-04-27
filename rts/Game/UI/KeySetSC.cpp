@@ -9,9 +9,8 @@
 #include "System/StringUtil.h"
 #include "System/Input/KeyInput.h"
 
-#include <SDL_keycode.h>
 #include <SDL_scancode.h>
-#include <SDL.h>
+#include <SDL_keyboard.h>
 
 
 #define DISALLOW_RELEASE_BINDINGS
@@ -121,7 +120,7 @@ bool CKeySetSC::Parse(const std::string& token, bool showerror)
 
 	if (s.empty()) {
 		Reset();
-		if (showerror) LOG_L(L_ERROR, "KeySet: Missing key");
+		if (showerror) LOG_L(L_ERROR, "KeySetSC: Missing key");
 		return false;
 	}
 

@@ -211,6 +211,14 @@ extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromKey(SDL_Keycode key) {
 	return 0;
 }
 
+extern DECLSPEC const char* SDLCALL SDL_GetScancodeName(SDL_Scancode scancode) {
+	return "";
+}
+
+extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromName(SDL_Scancode scancode) {
+	return 0;
+}
+
 extern DECLSPEC const SDL_version* SDLCALL SDL_Linked_Version() {
 	return &stubVersion;
 }
