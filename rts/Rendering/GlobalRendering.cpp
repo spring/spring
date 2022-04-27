@@ -107,8 +107,10 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(glDebugErrors),
 
 	CR_MEMBER(timeOffset),
+	CR_MEMBER(lastTimeOffset),
 	CR_MEMBER(lastFrameTime),
 	CR_MEMBER(lastFrameStart),
+	CR_MEMBER(lastSwapBuffersEnd),
 	CR_MEMBER(weightedSpeedFactor),
 	CR_MEMBER(drawFrame),
 	CR_MEMBER(FPS),
@@ -198,8 +200,10 @@ void CGlobalRendering::KillStatic() { globalRendering->PreKill();  spring::SafeD
 
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
+	, lastTimeOffset(0.0f)
 	, lastFrameTime(0.0f)
 	, lastFrameStart(spring_notime)
+	, lastSwapBuffersEnd(spring_notime)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
 	, FPS(1.0f)
