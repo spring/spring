@@ -215,7 +215,7 @@ extern DECLSPEC const char* SDLCALL SDL_GetScancodeName(SDL_Scancode scancode) {
 	return "";
 }
 
-extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromName(SDL_Scancode scancode) {
+extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromName(const char* name) {
 	return 0;
 }
 
