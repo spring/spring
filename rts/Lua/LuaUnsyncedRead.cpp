@@ -1234,28 +1234,36 @@ namespace {
 	static int GetRenderObjectsDrawFlagChanged(lua_State* L, const V& renderObjects, const char* func) {
 		const bool sendMask = luaL_optboolean(L, 1, false);
 
-		lua_createtable(L, renderObjects.size(), 0);
-		uint32_t count = 0;
+		std::vector<int> changedIds;
+		changedIds.reserve(renderObjects.size());
+
+		std::vector<uint8_t> changedDrawFlags;
+		changedDrawFlags.reserve(renderObjects.size());
+
 		for (const auto renderObject : renderObjects)
 		{
 			if (renderObject->previousDrawFlag == renderObject->drawFlag)
 				continue;
+			changedIds.push_back(renderObject->id);
+			changedDrawFlags.push_back(renderObject->drawFlag);
+		}
 
-			lua_pushnumber(L, renderObject->id);
+		lua_createtable(L, changedIds.size(), 0);
+		uint32_t count = 0;
+		for (const auto id : changedIds)
+		{
+			lua_pushnumber(L, id);
 			lua_rawseti(L, -2, ++count);
 		}
 
 		if 	(!sendMask)
 			return 1;
 
-		lua_createtable(L, count, 0);
+		lua_createtable(L, changedDrawFlags.size(), 0);
 		count = 0;
-		for (const auto renderObject : renderObjects)
+		for (const auto drawFlag : changedDrawFlags)
 		{
-			if (renderObject->previousDrawFlag == renderObject->drawFlag)
-				continue;
-
-			lua_pushnumber(L, renderObject->drawFlag);
+			lua_pushnumber(L, drawFlag);
 			lua_rawseti(L, -2, ++count);
 		}
 
@@ -2608,7 +2616,7 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 	lua_newtable(L);
 		for (const Action& action: actions) {
 			lua_newtable(L);
-				// regardless of this keyValue-Pair being pushed or not, current actions.lua can´t handle it, so just delete it already
+				// regardless of this keyValue-Pair being pushed or not, current actions.lua canï¿½t handle it, so just delete it already
 				// lua_pushsstring(L, action.command);
 				// lua_pushsstring(L, action.extra);
 				// lua_rawset(L, -3);
