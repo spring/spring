@@ -2084,7 +2084,15 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		TakeScreenshot(action.GetArgs());
+		auto args = _local_strSpaceTokenize(action.GetArgs());
+
+		if (args.size() == 0) {
+			TakeScreenshot("", 80);
+		} else {
+			int quality = args.size() > 1 ? StringToInt(args[1]) : 80;
+			quality = std::clamp(quality, 1, 99);
+			TakeScreenshot(args[0], quality);
+		}
 		return true;
 	}
 };

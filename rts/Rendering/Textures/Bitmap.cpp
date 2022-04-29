@@ -1244,7 +1244,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
+bool CBitmap::Save(std::string const& filename, unsigned quality, bool opaque, bool logged) const
 {
 	if (compressed) {
 		#ifndef HEADLESS
@@ -1285,8 +1285,8 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
-	ilSetInteger(IL_JPG_QUALITY, 80);
+	ilHint(IL_COMPRESSION_HINT, IL_NO_COMPRESSION);
+	ilSetInteger(IL_JPG_QUALITY, quality);
 
 	ILuint imageID = 0;
 	ilGenImages(1, &imageID);

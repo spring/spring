@@ -48,7 +48,7 @@ public:
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
 
-	bool Save(const std::string& filename, bool opaque = true, bool logged = false) const;
+	bool Save(const std::string& filename, unsigned quality = 80, bool opaque = true, bool logged = false) const;
 	bool SaveGrayScale(const std::string& filename) const;
 	bool SaveFloat(const std::string& filename) const;
 

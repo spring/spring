@@ -22,11 +22,12 @@ struct FunctionArgs
 {
 	std::vector<uint8_t> pixelbuf;
 	std::string filename;
+	unsigned quality;
 	int x;
 	int y;
 };
 
-void TakeScreenshot(std::string type)
+void TakeScreenshot(std::string type, unsigned quality)
 {
 	if (type.empty())
 		type = "jpg";
@@ -44,6 +45,7 @@ void TakeScreenshot(std::string type)
 	// note: we no longer increment the counter until a "file not found" occurs
 	// since that stalls the thread and might run concurrently with an IL write
 	args.filename.assign("screenshots/screen" + IntToString(shotCounter, "%05d") + "." + type);
+	args.quality = quality;
 	args.pixelbuf.resize(args.x * args.y * 4);
 
 	configHandler->Set("ScreenshotCounter", shotCounter + 1);
@@ -53,6 +55,6 @@ void TakeScreenshot(std::string type)
 	ThreadPool::Enqueue([](const FunctionArgs& args) {
 		CBitmap bmp(&args.pixelbuf[0], args.x, args.y);
 		bmp.ReverseYAxis();
-		bmp.Save(args.filename, true, true);
+		bmp.Save(args.filename, args.quality, true, true);
 	}, args);
 }

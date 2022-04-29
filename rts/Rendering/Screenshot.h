@@ -5,6 +5,6 @@
 
 #include <string>
 
-void TakeScreenshot(std::string type);
+void TakeScreenshot(std::string type, unsigned quality);
 
 #endif
