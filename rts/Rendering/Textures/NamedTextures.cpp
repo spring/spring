@@ -287,6 +287,14 @@ namespace CNamedTextures {
 			default:                   { texInfo.texType = GL_TEXTURE_2D;       } break;
 		}	
 
+		#ifndef HEADLESS
+			switch (bitmap.textype) {
+				case GL_TEXTURE_3D:        { texInfo.texType = GL_TEXTURE_3D;       } break;
+				case GL_TEXTURE_CUBE_MAP:  { texInfo.texType = GL_TEXTURE_CUBE_MAP; } break;
+				default:                   { texInfo.texType = GL_TEXTURE_2D;       } break;
+			}	
+		#endif
+
 		if (genInsert)
 			GenInsertTex(texName, texInfo, false, false, true, false);
 
