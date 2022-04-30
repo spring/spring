@@ -22,6 +22,7 @@ Misc:
    that appears when `collisionVolumeScales` are zero. This means that units no longer have to
    define a bogus custom colvol just to prevent the default sphere.
  - don't warn for archive checksum mismatch if server's checksum is zero
+ - 3D and Cubemap .dds textures supported in Lua
 
 -- 105.0 --------------------------------------------------------
 Sim:
