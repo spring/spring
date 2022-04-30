@@ -103,6 +103,7 @@ class LuaMatTexture {
 
 	public:
 		Type type = LUATEX_NONE;
+		GLuint texType = 0;
 
 		const void* data = nullptr;
 		      void* state = nullptr;

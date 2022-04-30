@@ -25,10 +25,11 @@ namespace CNamedTextures {
 
 	struct TexInfo {
 		TexInfo()
-			: id(0), xsize(-1), ysize(-1), alpha(false), persist(false) {}
+			: id(0), xsize(-1), ysize(-1), texType(0), alpha(false), persist(false) {}
 		unsigned int id;
 		int xsize;
 		int ysize;
+		unsigned int texType;
 		bool alpha;
 		bool persist;
 	};

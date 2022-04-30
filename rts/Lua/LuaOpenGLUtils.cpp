@@ -467,6 +467,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			if (texInfo != nullptr) {
 				texUnit.type = LuaMatTexture::LUATEX_NAMED;
 				texUnit.data = reinterpret_cast<const void*>(CNamedTextures::GetInfoIndex(image));
+				texUnit.texType = texInfo->texType;
 			} else {
 				LOG_L(L_WARNING, "Lua: Couldn't load texture named \"%s\"!", image.c_str());
 				return false;
@@ -645,7 +646,11 @@ GLuint LuaMatTexture::GetTextureTarget() const
 
 	switch (type) {
 		case LUATEX_NAMED: {
-			texType = GL_TEXTURE_2D; //FIXME allow lua to load cubemaps!
+			switch (this->texType) {
+				case GL_TEXTURE_3D:       { texType = GL_TEXTURE_3D;       } break;
+				case GL_TEXTURE_CUBE_MAP: { texType = GL_TEXTURE_CUBE_MAP; } break;
+				default:                  { texType = GL_TEXTURE_2D;       } break;
+			}
 		} break;
 		case LUATEX_LUATEXTURE: {
 			assert(state != nullptr);
@@ -749,10 +754,13 @@ void LuaMatTexture::Bind() const
 
 		// do not enable cubemap samplers here (not
 		// needed for shaders, not wanted otherwise)
+		// I really wonder why 3D and cube samplers _shouldnt_ be enabled here?
 		if (enable) {
 			switch (texType) {
 				case GL_TEXTURE_2D:           {   glEnable(texType);   } break;
-				case GL_TEXTURE_CUBE_MAP_ARB: { /*glEnable(texType);*/ } break;
+				case GL_TEXTURE_3D:           {   glEnable(texType);   } break;
+				case GL_TEXTURE_CUBE_MAP:     {   glEnable(texType);   } break;
+				//case GL_TEXTURE_CUBE_MAP_ARB: { /*glEnable(texType);*/ } break;
 				default:                      {                        } break;
 			}
 		}
@@ -761,7 +769,9 @@ void LuaMatTexture::Bind() const
 	else if (!enable) {
 		switch (texType) {
 			case GL_TEXTURE_2D:           {   glDisable(texType);   } break;
-			case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(texType);*/ } break;
+			case GL_TEXTURE_3D:           {   glDisable(texType);   } break;
+			case GL_TEXTURE_CUBE_MAP:     {   glDisable(texType);   } break;
+			//case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(texType);*/ } break;
 			default:                      {                         } break;
 		}
 	}
@@ -785,7 +795,9 @@ void LuaMatTexture::Unbind() const
 
 	switch (GetTextureTarget()) {
 		case GL_TEXTURE_2D:           {   glDisable(GL_TEXTURE_2D);             } break;
-		case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(GL_TEXTURE_CUBE_MAP_ARB);*/ } break;
+		case GL_TEXTURE_3D:           {   glDisable(GL_TEXTURE_3D);             } break;
+		case GL_TEXTURE_CUBE_MAP:     {   glDisable(GL_TEXTURE_CUBE_MAP);       } break;
+		//case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(GL_TEXTURE_CUBE_MAP_ARB);*/ } break;
 		default:                      {                                         } break;
 	}
 }
