@@ -136,6 +136,10 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 
 			return true;
 		} break;
+		// Selects or focuses camera on group.
+		case hashString(""): break;
+		// Unrecognized command
+		default: return false;
 	}
 
 	if (group->units.empty())

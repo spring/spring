@@ -1130,21 +1130,42 @@ public:
 	GroupActionExecutor() : IUnsyncedActionExecutor("Group", "Allows modifying the members of a group") {
 	}
 
+	bool WrongSyntax() const {
+		LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
+		return false;
+	}
+
 	bool Execute(const UnsyncedAction& action) const final {
-		const auto& actionArgs = action.GetArgs();
+		const auto args = CSimpleParser::Tokenize(action.GetArgs());
 
-		if ((actionArgs[0] >= '0') && (actionArgs[0] <= '9')) {
-			const int teamId = int(actionArgs[0] - '0');
-			const size_t firstCmdChar = actionArgs.find_first_not_of(" \t\n\r", 1);
+		if (args.size() == 0)
+			return WrongSyntax();
 
-			if (firstCmdChar != std::string::npos) {
-				uiGroupHandlers[gu->myTeam].GroupCommand(teamId, actionArgs.substr(firstCmdChar));
-			} else {
-				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
-			}
-		} else {
-			LOG_L(L_WARNING, "/%s: wrong groupid", GetCommand().c_str());
-		}
+		std::string subCommand = "";
+		int groupId;
+		bool parseFailure = true;
+
+		switch (args.size()) {
+			case 1:
+				groupId = StringToInt(args[0], &parseFailure);
+				break;
+			case 2:
+				subCommand = args[0];
+				groupId = StringToInt(args[1], &parseFailure);
+				break;
+			default:
+				return WrongSyntax();
+		};
+
+		if (parseFailure)
+			return WrongSyntax();
+		// This check is important because GroupCommand doesn't check the range
+		// and we can go OOB.
+		if (groupId < 0 || groupId > 9)
+			return WrongSyntax();
+		// Finally, actually run the command.
+		if (!uiGroupHandlers[gu->myTeam].GroupCommand(groupId, subCommand))
+			return WrongSyntax();
 
 		return true;
 	}
