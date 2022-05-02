@@ -6,6 +6,7 @@
 
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/SoundLog.h"
+#include "System/SafeUtil.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 
@@ -59,15 +60,51 @@ namespace VorbisCallbacks {
 
 COggStream::COggStream(ALuint _source)
 	: vorbisInfo(nullptr)
+	, pcmDecodeBuffer(nullptr)
 	, source(_source)
 	, format(AL_FORMAT_MONO16)
 	, stopped(true)
 	, paused(false)
 {
-	memset(buffers, 0, NUM_BUFFERS * sizeof(buffers[0]));
-	memset(pcmDecodeBuffer, 0, BUFFER_SIZE * sizeof(pcmDecodeBuffer[0]));
+	std::fill(buffers.begin(), buffers.end(), 0);
 }
 
+COggStream::~COggStream()
+{
+	Stop();
+	spring::SafeDeleteArray(pcmDecodeBuffer);
+}
+
+
+COggStream& COggStream::operator=(COggStream&& rhs) noexcept
+{
+	if (this != &rhs) {
+		spring::SafeDeleteArray(pcmDecodeBuffer);
+		pcmDecodeBuffer = rhs.pcmDecodeBuffer;
+		rhs.pcmDecodeBuffer = nullptr;
+
+		ovFile = rhs.ovFile;
+		vorbisInfo = rhs.vorbisInfo;
+
+		for (auto i = 0; i < buffers.size(); ++i) {
+			std::swap(buffers[i], rhs.buffers[i]);
+		}
+
+		std::swap(source, rhs.source);
+		std::swap(format, rhs.format);
+
+		std::swap(stopped, rhs.stopped);
+		std::swap(paused, rhs.paused);
+
+		std::swap(msecsPlayed, rhs.msecsPlayed);
+		std::swap(lastTick, rhs.lastTick);
+
+		std::swap(vorbisTags, rhs.vorbisTags);
+		std::swap(vendor, rhs.vendor);
+	}
+
+	return *this;
+}
 
 // open an Ogg stream from a given file and start playing it
 void COggStream::Play(const std::string& path, float volume)
@@ -115,7 +152,7 @@ void COggStream::Play(const std::string& path, float volume)
 		format = AL_FORMAT_STEREO16;
 	}
 
-	alGenBuffers(2, buffers);
+	alGenBuffers(2, buffers.data());
 	CheckError("[COggStream::Play][1]");
 
 	if (!StartPlaying()) {
@@ -192,9 +229,9 @@ void COggStream::ReleaseBuffers()
 	CheckError("[COggStream::ReleaseBuffers][1]");
 	#endif
 
-	alDeleteBuffers(2, buffers);
+	alDeleteBuffers(2, buffers.data());
 	CheckError("[COggStream::ReleaseBuffers][2]");
-	memset(buffers, 0, sizeof(buffers));
+	std::fill(buffers.begin(), buffers.end(), 0);
 
 	ov_clear(&ovFile);
 }
@@ -212,7 +249,7 @@ bool COggStream::StartPlaying()
 	if (!DecodeStream(buffers[1]))
 		return false;
 
-	alSourceQueueBuffers(source, 2, buffers);
+	alSourceQueueBuffers(source, 2, buffers.data());
 
 	// CheckError returns true if *no* error occurred
 	if (!CheckError("[COggStream::StartPlaying][1]"))
@@ -291,6 +328,10 @@ void COggStream::Update()
 // read decoded data from audio stream into PCM buffer
 bool COggStream::DecodeStream(ALuint buffer)
 {
+	if (!pcmDecodeBuffer) { //defer buffer allocation
+		pcmDecodeBuffer = new char[BUFFER_SIZE] {0};
+	}
+
 	memset(pcmDecodeBuffer, 0, BUFFER_SIZE);
 
 	int size = 0;
