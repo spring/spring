@@ -289,7 +289,7 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	Stop();
 
 	if (!curStream.Valid())
-		curStream = COggStream(id);
+		curStream = std::move(COggStream(id));
 
 	// OpenAL params
 	curChannel = channel;
