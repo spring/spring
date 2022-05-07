@@ -214,9 +214,6 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	if (!readMap->GetHeightMapUpdated())
-		return;
-
 	x1 = std::max(x1, 0); x2 = std::clamp(x2, x1, mapDims.mapx);
 	y1 = std::max(y1, 0); y2 = std::clamp(y2, y1, mapDims.mapy);
 
