@@ -115,8 +115,6 @@ public:
 	float3 dir;                    // set via Init()
 	float3 drawPos;
 
-	float3 rotParams = {0.0f, 0.0f, 0.0f}; // speed, accel, startRot |deg/s, deg/s2, deg|
-
 	float myrange = 0.0f;          // used by WeaponProjectile::TraveledRange
 	float mygravity = 0.0f;
 

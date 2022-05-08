@@ -1,4 +1,5 @@
 #include "ExpGenSpawnable.h"
+#include "ExpGenSpawnable.h"
 
 #include "ExpGenSpawnableMemberInfo.h"
 #include "ExpGenSpawner.h"
@@ -19,7 +20,11 @@
 
 
 CR_BIND_DERIVED_INTERFACE_POOL(CExpGenSpawnable, CWorldObject, projMemPool.allocMem, projMemPool.freeMem)
-CR_REG_METADATA(CExpGenSpawnable, )
+CR_REG_METADATA(CExpGenSpawnable, (
+	CR_MEMBER_BEGINFLAG(CM_Config),
+	CR_MEMBER(rotParams),
+	CR_MEMBER_ENDFLAG(CM_Config)
+))
 
 CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
  : CWorldObject(pos, spd)
@@ -38,6 +43,11 @@ CExpGenSpawnable::~CExpGenSpawnable()
 	assert(projMemPool.mapped(this));
 }
 
+void CExpGenSpawnable::Init(const CUnit* owner, const float3& offset)
+{
+	rotParams *= float3(math::DEG_TO_RAD / GAME_SPEED, math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED), math::DEG_TO_RAD);
+}
+
 
 
 bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
@@ -53,6 +63,8 @@ bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 	CHECK_MEMBER_INFO_FLOAT4_HASH(CExpGenSpawnable, speed        , memberHashes[1])
 	CHECK_MEMBER_INFO_BOOL_HASH  (CExpGenSpawnable, useAirLos    , memberHashes[2])
 	CHECK_MEMBER_INFO_BOOL_HASH  (CExpGenSpawnable, alwaysVisible, memberHashes[3])
+
+	CHECK_MEMBER_INFO_FLOAT3(CProjectile, rotParams)
 
 	return false;
 }

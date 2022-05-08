@@ -112,7 +112,7 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		SetVelocityAndSpeed(speed);
 	}
 
-	rotParams *= float3(math::DEG_TO_RAD / GAME_SPEED, math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED), math::DEG_TO_RAD);
+	CExpGenSpawnable::Init(owner, offset);
 
 	// NOTE:
 	//   new CWeapon- and CPieceProjectile*'s add themselves
@@ -182,7 +182,6 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)
-	CHECK_MEMBER_INFO_FLOAT3(CProjectile, rotParams) //consider moving to CExpGenSpawnable(?)
 	CHECK_MEMBER_INFO_INT(CProjectile, drawOrder)
 
 	return false;

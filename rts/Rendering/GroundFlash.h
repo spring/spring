@@ -102,10 +102,14 @@ public:
 private:
 	float3 side1;
 	float3 side2;
+	float3 normal;
 
 	float sizeGrowth;
 	int ttl;
 	float age, agerate;
+
+	float rotVal;
+	float rotVel;
 
 	CColorMap* colorMap;
 	AtlasedTexture* texture;
