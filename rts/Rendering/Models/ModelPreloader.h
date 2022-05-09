@@ -7,14 +7,14 @@
 class ModelPreloader {
 public:
 	static void Load() {
-		if (!globalRendering->haveGL4 || !enabled)
-			return;
-
 		// map features are loaded earlier in featureHandler.LoadFeaturesFromMap(); - not a big deal
 		// Functions below cannot be multithreaded because modelLoader.LoadModel() deal with OpenGL functions
 		LoadUnitDefs();
 		LoadFeatureDefs();
 		LoadWeaponDefs();
+
+		if (!globalRendering->haveGL4 || !enabled)
+			return;
 
 		// after that point we should've loaded all models, it's time to dispatch VBO/EBO/VAO creation
 		S3DModelVAO::Init(); //TODO figure out where to put S3DModelVAO::Kill();
