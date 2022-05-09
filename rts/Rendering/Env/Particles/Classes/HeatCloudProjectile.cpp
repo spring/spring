@@ -23,6 +23,8 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizemod),
 		CR_MEMBER(sizemodmod),
+		CR_MEMBER(rotVal),
+		CR_MEMBER(rotVel),
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ))
@@ -72,10 +74,21 @@ void CHeatCloudProjectile::Update()
 	pos += speed;
 	heat = std::max(heat - heatFalloff, 0.0f);
 
+	rotVal += rotVel;
+	rotVel += rotParams.y; //rot accel
+
 	deleteMe |= (heat <= 0.0f);
 
 	size += sizeGrowth;
 	sizemod *= sizemodmod;
+}
+
+void CHeatCloudProjectile::Init(const CUnit* owner, const float3& offset)
+{
+	CProjectile::Init(owner, offset);
+
+	rotVal = rotParams.z; //initial rotation value
+	rotVel = rotParams.x; //initial rotation velocity
 }
 
 void CHeatCloudProjectile::Draw(CVertexArray* va)
@@ -91,10 +104,25 @@ void CHeatCloudProjectile::Draw(CVertexArray* va)
 
 	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 
-	va->AddVertexTC(drawPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xstart, texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xend,   texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col);
+	const float3 ri = camera->GetRight();
+	const float3 up = camera->GetUp();
+
+	std::array<float3, 4> bounds = {
+		-ri * drawsize - up * drawsize,
+		 ri * drawsize - up * drawsize,
+		 ri * drawsize + up * drawsize,
+		-ri * drawsize + up * drawsize
+	};
+
+	if (math::fabs(rotVal) > 0.01f) {
+		for (auto& b : bounds)
+			b = b.rotate(rotVal, camera->GetForward());
+	}
+
+	va->AddVertexTC(drawPos + bounds[0], texture->xstart, texture->ystart, col);
+	va->AddVertexTC(drawPos + bounds[1], texture->xend,   texture->ystart, col);
+	va->AddVertexTC(drawPos + bounds[2], texture->xend,   texture->yend,   col);
+	va->AddVertexTC(drawPos + bounds[3], texture->xstart, texture->yend,   col);
 }
 
 int CHeatCloudProjectile::GetProjectilesCount() const

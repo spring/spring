@@ -24,6 +24,8 @@ public:
 	void Draw(CVertexArray* va) override;
 	void Update() override;
 
+	void Init(const CUnit* owner, const float3& offset) override;
+
 	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -38,6 +40,9 @@ private:
 	float sizeGrowth;
 	float sizemod;
 	float sizemodmod;
+
+	float rotVal;
+	float rotVel;
 
 	AtlasedTexture* texture;
 };

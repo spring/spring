@@ -271,13 +271,16 @@ bool CStandardGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 
 CSimpleGroundFlash::CSimpleGroundFlash()
+	: rotVal(0.0f)
+	, rotVel(0.0f)
+	, texture(nullptr)
+	, colorMap(nullptr)
+	, agerate(0.0f)
+	, age(0.0f)
+	, ttl(0)
+	, sizeGrowth(0.0f)
 {
-	texture = nullptr;
-	colorMap = nullptr;
-	agerate = 0.0f;
-	age = 0.0f;
-	ttl = 0;
-	sizeGrowth = 0.0f;
+
 }
 
 void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
