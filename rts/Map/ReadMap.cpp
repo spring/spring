@@ -263,9 +263,9 @@ void CReadMap::PostLoad()
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
-	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
-
 	hmUpdated = true;
+
+	mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
 }
 #endif //USING_CREG
 
