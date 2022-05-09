@@ -35,7 +35,6 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(dir),
-		CR_MEMBER(rotParams),
 		CR_MEMBER(drawOrder),
 	CR_MEMBER_ENDFLAG(CM_Config),
 
