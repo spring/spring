@@ -1864,17 +1864,17 @@ bool CGuiHandler::KeyPressedSC(int key, int keySym, bool isRepeat)
 
 	// setup actionOffset
 	//WTF a bit more documentation???
-	int tmpActionOffset = actionOffset;
+	int tmpActionOffset = actionOffset_SC;
 	if ((inCommand < 0) || (lastKeySetSC.KeySC() < 0)) {
-		actionOffset = 0;
+		actionOffset_SC = 0;
 		tmpActionOffset = 0;
 		lastKeySetSC.Reset();
 	}
 	else if (!ks.IsPureModifier()) {
 		// not a modifier
 		if ((ks == lastKeySetSC) && (ks.KeySC() >= 0)) {
-			actionOffset++;
-			tmpActionOffset = actionOffset;
+			actionOffset_SC++;
+			tmpActionOffset = actionOffset_SC;
 		}
 		else {
 			tmpActionOffset = 0;

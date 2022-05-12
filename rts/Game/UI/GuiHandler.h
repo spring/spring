@@ -186,6 +186,7 @@ private:
 	int curIconCommand = -1;
 
 	int actionOffset = 0;
+	int actionOffset_SC = 0;
 
 	int deadIconSlot = -1;
 	int prevPageSlot = -1;
