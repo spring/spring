@@ -26,25 +26,14 @@ class CModelDrawerDataConcept : public CEventClient {
 public:
 	CModelDrawerDataConcept(const std::string& ecName, int ecOrder)
 		: CEventClient(ecName, ecOrder, false)
-	{
-		if (modelDrawDist == 0.0f)
-			SetModelDrawDist(static_cast<float>(configHandler->GetInt("UnitLodDist")));
-	};
+	{};
 	virtual ~CModelDrawerDataConcept() {
 		eventHandler.RemoveClient(this);
 		autoLinkedEvents.clear();
-		modelDrawDist = 0.0f; //force re-read of UnitLodDist
 	};
 public:
 	bool GetFullRead() const override { return true; }
 	int  GetReadAllyTeam() const override { return AllAccessTeam; }
-public:
-	static void SetModelDrawDist(float dist) {
-		modelDrawDist    = dist;
-	}
-public:
-	// lenghts & distances
-	static float inline modelDrawDist    = 0.0f;
 protected:
 	static constexpr int MT_CHUNK_OR_MIN_CHUNK_SIZE_SMMA = -128;
 	static constexpr int MT_CHUNK_OR_MIN_CHUNK_SIZE_UPDT = -256;

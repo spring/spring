@@ -2952,27 +2952,6 @@ public:
 	}
 };
 
-class DistDrawActionExecutor : public IUnsyncedActionExecutor {
-public:
-	DistDrawActionExecutor() : IUnsyncedActionExecutor("DistDraw",
-			"Set the distance between units and camera, at which they turn"
-			" into far-textures (flat/texture-only representation) (Graphic setting)") {}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		if (!action.GetArgs().empty()) {
-			const int drawDist = atoi(action.GetArgs().c_str());
-			CModelDrawerDataConcept::SetModelDrawDist(static_cast<float>(drawDist));
-			configHandler->Set("UnitLodDist", drawDist);
-			LOG("Set UnitLodDist to %i", drawDist);
-		} else {
-			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
-		}
-		return true;
-	}
-};
-
-
-
 class LODScaleActionExecutor : public IUnsyncedActionExecutor {
 public:
 	LODScaleActionExecutor() : IUnsyncedActionExecutor(
@@ -3751,7 +3730,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<IconFadeStartActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IconFadeVanishActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IconsHideWithUIActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<DistDrawActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LODScaleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<AirMeshActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WireModelActionExecutor>());

@@ -12,7 +12,6 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Features/FeatureDrawer.h"
@@ -103,7 +102,6 @@ void CWorldDrawer::InitPost() const
 	}
 	{
 		heightMapTexture = new HeightMapTexture();
-		farTextureHandler = new CFarTextureHandler();
 	}
 	{
 		IGroundDecalDrawer::Init();
@@ -149,7 +147,6 @@ void CWorldDrawer::Kill()
 	ModelPreloader::Clean();
 	modelLoader.Kill();
 
-	spring::SafeDelete(farTextureHandler);
 	spring::SafeDelete(heightMapTexture);
 
 	textureHandler3DO.Kill();

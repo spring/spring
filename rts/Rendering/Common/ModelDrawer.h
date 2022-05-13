@@ -12,7 +12,6 @@
 #include "System/Log/ILog.h"
 #include "System/TypeToStr.h"
 #include "Rendering/LuaObjectDrawer.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -349,8 +348,6 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::DrawImpl(bool drawReflection
 	// now do the regular forward pass
 	if (drawForward)
 		DrawOpaquePass(false, drawReflection, drawRefraction);
-
-	farTextureHandler->Draw();
 
 	if constexpr (legacy) {
 		glDisable(GL_FOG);

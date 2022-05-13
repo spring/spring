@@ -136,16 +136,6 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 			{
 			case CCamera::CAMTYPE_PLAYER: {
 				const float sqrCamDist = (f->drawPos - cam->GetPos()).SqLength();
-				const float farTexDist = Square(f->GetDrawRadius() + CModelDrawerDataConcept::modelDrawDist);
-				if (sqrCamDist >= farTexDist) {
-					// note: it looks pretty bad to first alpha-fade and then
-					// draw a fully *opaque* fartex, so restrict impostors to
-					// non-fading features
-					if (!f->alphaFade)
-						f->SetDrawFlag(DrawFlags::SO_FARTEX_FLAG);
-
-					continue;
-				}
 
 				// special case for non-fading features
 				if (!f->alphaFade) {
@@ -154,11 +144,8 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 					continue;
 				}
 
-				const float sqFadeDistBeg = mix(featureFadeDistanceSq, farTexDist * (featureFadeDistanceSq / featureDrawDistanceSq), (farTexDist < featureDrawDistanceSq));
-				const float sqFadeDistEnd = mix(featureDrawDistanceSq, farTexDist                                                  , (farTexDist < featureDrawDistanceSq));
-
 				// draw feature as normal, no fading
-				if (sqrCamDist < sqFadeDistBeg) {
+				if (sqrCamDist < featureFadeDistanceSq) {
 					f->SetDrawFlag(DrawFlags::SO_OPAQUE_FLAG);
 
 					if (f->IsInWater())
@@ -169,8 +156,8 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 				}
 
 				// otherwise save it for the fade-pass
-				if (sqrCamDist < sqFadeDistEnd) {
-					f->drawAlpha = 1.0f - (sqrCamDist - sqFadeDistBeg) / (sqFadeDistEnd - sqFadeDistBeg);
+				if (sqrCamDist < featureDrawDistanceSq) {
+					f->drawAlpha = 1.0f - (sqrCamDist - featureFadeDistanceSq) / (featureDrawDistanceSq - featureFadeDistanceSq);
 					f->SetDrawFlag(DrawFlags::SO_ALPHAF_FLAG);
 
 					if (f->IsInWater())
@@ -184,18 +171,12 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 				if (!f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG) && !f->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 					continue;
 
-				if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
-					continue;
-
 				if (CModelDrawerHelper::ObjectVisibleReflection(f->drawMidPos, cam->GetPos(), f->GetDrawRadius()))
 					f->AddDrawFlag(DrawFlags::SO_REFLEC_FLAG);
 			} break;
 
 			case CCamera::CAMTYPE_SHADOW: {
 				if (!f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
-					continue;
-
-				if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
 					continue;
 
 				f->AddDrawFlag(DrawFlags::SO_SHADOW_FLAG);

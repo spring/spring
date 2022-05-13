@@ -10,7 +10,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/glExtra.h"
@@ -66,11 +65,6 @@ bool CFeatureDrawer::ShouldDrawOpaqueFeature(CFeature* f, uint8_t thisPassMask)
 
 	if (thisPassMask == DrawFlags::SO_REFRAC_FLAG && !f->HasDrawFlag(DrawFlags::SO_REFRAC_FLAG))
 		return false;
-
-	if (f->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG)) {
-		farTextureHandler->Queue(f);
-		return false;
-	}
 
 	if (LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 		return false;

@@ -42,9 +42,6 @@ public:
 	static float GetUnitIconScaleUI() { return modelDrawerData->GetUnitIconScaleUI(); }
 	static void SetUnitIconScaleUI(float scale) { modelDrawerData->SetUnitIconScaleUI(scale); }
 
-	static float GetUnitDrawDist() { return CModelDrawerDataConcept::modelDrawDist; }
-	static void SetModelDrawDist(float dist) { CModelDrawerDataConcept::SetModelDrawDist(dist); }
-
 	static float GetUnitIconDist(float dist) { return modelDrawerData->unitIconDist; }
 	static void SetUnitIconDist(float dist) { modelDrawerData->SetUnitIconDist(dist); }
 

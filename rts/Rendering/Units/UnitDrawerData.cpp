@@ -339,11 +339,6 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 		{
 			case CCamera::CAMTYPE_PLAYER: {
 				const float sqrCamDist = (u->drawPos - cam->GetPos()).SqLength();
-				const float farTexDist = Square(u->GetDrawRadius() + CModelDrawerDataConcept::modelDrawDist);
-				if (sqrCamDist >= farTexDist) {
-					u->SetDrawFlag(DrawFlags::SO_FARTEX_FLAG);
-					continue;
-				}
 
 				if (!IsAlpha(u)) {
 					u->SetDrawFlag(DrawFlags::SO_OPAQUE_FLAG);
@@ -357,17 +352,11 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 			} break;
 
 			case CCamera::CAMTYPE_UWREFL: {
-				if (u->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
-					continue;
-
 				if (CModelDrawerHelper::ObjectVisibleReflection(u->drawMidPos, cam->GetPos(), u->GetDrawRadius()))
 					u->AddDrawFlag(DrawFlags::SO_REFLEC_FLAG);
 			} break;
 
 			case CCamera::CAMTYPE_SHADOW: {
-				if (u->HasDrawFlag(DrawFlags::SO_FARTEX_FLAG))
-					continue;
-
 				if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
 					continue;
 
