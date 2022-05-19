@@ -423,7 +423,7 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 	}
 
 	struct _finddata_t fileInfo;
-	int handle;
+	intptr_t handle;
 
 	// look for files which end in: suffix
 	char* suffixFilesSpec = util_allocStrCat(3, dir, "\\*", suffix);
