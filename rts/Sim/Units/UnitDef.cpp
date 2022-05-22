@@ -298,11 +298,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	cobID = udTable.GetInt("cobID", -1);
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
-	// 128.0f is the ancient default
-	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
-	// 38.0f was evaluated by bobthedinosaur and FLOZi to be the bare minimum
-	// to not overlap for a 1x1 constructor building a 1x1 structure
-	buildDistance = std::max(38.0f, buildDistance);
+
+	buildDistance = udTable.GetFloat("buildDistance", 0.0f);
+
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
 	builder = udTable.GetBool("builder", false);
 	builder &= IsBuilderUnit();
