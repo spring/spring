@@ -68,6 +68,7 @@ CR_REG_METADATA(CReadMap, (
 
 	CR_IGNORED(heightMapSyncedPtr),
 	CR_IGNORED(heightMapUnsyncedPtr),
+	CR_IGNORED(originalHeightMapPtr),
 
 	/*
 	CR_IGNORED(originalHeightMap),
@@ -112,6 +113,7 @@ CReadMap* readMap = nullptr;
 
 MapDimensions mapDims;
 
+std::vector<float> CReadMap::mapFileHeightMap;
 std::vector<float> CReadMap::originalHeightMap;
 std::vector<float> CReadMap::centerHeightMap;
 std::array<std::vector<float>, CReadMap::numHeightMipMaps - 1> CReadMap::mipCenterHeightMaps;
@@ -187,12 +189,48 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
 #ifdef USING_CREG
 void CReadMap::Serialize(creg::ISerializer* s)
 {
+	SerializeMapChangesBeforeMatch(s);
+	SerializeMapChangesDuringMatch(s);
+	SerializeTypeMap(s);
+
+	if (!s->IsWriting())
+		mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
+}
+
+void CReadMap::SerializeMapChangesBeforeMatch(creg::ISerializer* s)
+{
+	SerializeMapChanges(s, GetMapFileHeightMapSynced(), const_cast<float*>(GetOriginalHeightMapSynced()));
+}
+
+void CReadMap::SerializeMapChangesDuringMatch(creg::ISerializer* s)
+{
+	SerializeMapChanges(s, GetOriginalHeightMapSynced(), const_cast<float*>(GetCornerHeightMapSynced()));
+}
+
+void CReadMap::SerializeMapChanges(creg::ISerializer* s, const float* refHeightMap, float* modifiedHeightMap) {
 	// using integers so we can xor the original heightmap with the
 	// current one (affected by Lua, explosions, etc) - long runs of
 	// zeros for unchanged squares should compress significantly better.
-	      int32_t*  ichms = reinterpret_cast<      int32_t*>(const_cast<float*>(GetCornerHeightMapSynced()));
-	const int32_t* iochms = reinterpret_cast<const int32_t*>(GetOriginalHeightMapSynced());
+	      int32_t*  ichms = reinterpret_cast<      int32_t*>(modifiedHeightMap);
+	const int32_t* iochms = reinterpret_cast<const int32_t*>(refHeightMap);
 
+	int32_t height;
+
+	if (s->IsWriting()) {
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			height = ichms[i] ^ iochms[i];
+			s->Serialize(&height, sizeof(int32_t));
+		}
+	} else {
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			s->Serialize(&height, sizeof(int32_t));
+			ichms[i] = height ^ iochms[i];
+		}
+	}
+}
+
+void CReadMap::SerializeTypeMap(creg::ISerializer* s)
+{
 	// LuaSynced can also touch the typemap, serialize it (manually)
 	MapBitmapInfo tbi;
 
@@ -202,33 +240,19 @@ void CReadMap::Serialize(creg::ISerializer* s)
 	assert(!typeMap.empty());
 	assert(typeMap.size() == (tbi.width * tbi.height));
 
-	int32_t height;
 	uint8_t type;
 
 	if (s->IsWriting()) {
-		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
-			height = ichms[i] ^ iochms[i];
-			s->Serialize(&height, sizeof(int32_t));
-		}
-
 		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			type = itm[i] ^ iotm[i];
 			s->Serialize(&type, sizeof(uint8_t));
 		}
 	} else {
-		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
-			s->Serialize(&height, sizeof(int32_t));
-			ichms[i] = height ^ iochms[i];
-		}
-
 		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			s->Serialize(&type, sizeof(uint8_t));
 			itm[i] = type ^ iotm[i];
 		}
-
-		mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
 	}
-
 }
 
 
@@ -310,6 +334,8 @@ void CReadMap::Initialize()
 		loadscreen->SetLoadMessage(loadMsg);
 	}
 
+	mapFileHeightMap.clear();
+	mapFileHeightMap.resize(mapDims.mapxp1 * mapDims.mapyp1);
 	originalHeightMap.clear();
 	originalHeightMap.resize(mapDims.mapxp1 * mapDims.mapyp1);
 	faceNormalsSynced.clear();
@@ -327,6 +353,8 @@ void CReadMap::Initialize()
 
 	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
+
+	originalHeightMapPtr = &originalHeightMap;
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
 		mipCenterHeightMaps[i - 1].clear();
@@ -350,6 +378,7 @@ void CReadMap::Initialize()
 	// for SMF maps so indexing it is forbidden (!)
 	assert(heightMapSyncedPtr != nullptr);
 	assert(heightMapUnsyncedPtr != nullptr);
+	assert(originalHeightMapPtr != nullptr);
 
 	{
 		#ifndef USE_UNSYNCED_HEIGHTMAP
@@ -388,6 +417,16 @@ void CReadMap::Initialize()
 void CReadMap::InitHeightBounds()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
+	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
+		mapFileHeightMap[i] = heightmap[i];
+	}
+
+	LoadOriginalHeightMapAndChecksum();
+}
+
+void CReadMap::LoadOriginalHeightMapAndChecksum()
+{
+	const float* heightmap = GetCornerHeightMapSynced();
 
 	initHeightBounds.x = std::numeric_limits<float>::max();
 	initHeightBounds.y = std::numeric_limits<float>::lowest();
@@ -410,6 +449,9 @@ void CReadMap::InitHeightBounds()
 	currHeightBounds.x = initHeightBounds.x;
 	currHeightBounds.y = initHeightBounds.y;
 }
+
+
+
 
 
 unsigned int CReadMap::CalcHeightmapChecksum()

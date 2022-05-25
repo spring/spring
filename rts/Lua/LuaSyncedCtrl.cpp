@@ -89,6 +89,7 @@ static int heightMapz1 = 0;
 static int heightMapz2 = 0;
 
 static float heightMapAmountChanged = 0.0f;
+static float originalHeightMapAmountChanged = 0.0f;
 static float smoothMeshAmountChanged = 0.0f;
 
 
@@ -124,6 +125,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 		heightMapz2 = 0;
 
 		heightMapAmountChanged = 0.0f;
+		originalHeightMapAmountChanged = 0.0f;
 		smoothMeshAmountChanged = 0.0f;
 	}
 
@@ -282,6 +284,14 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMapFunc);
+
+	REGISTER_LUA_CFUNC(LevelOriginalHeightMap);
+	REGISTER_LUA_CFUNC(AdjustOriginalHeightMap);
+	REGISTER_LUA_CFUNC(RevertOriginalHeightMap);
+
+	REGISTER_LUA_CFUNC(AddOriginalHeightMap);
+	REGISTER_LUA_CFUNC(SetOriginalHeightMap);
+	REGISTER_LUA_CFUNC(SetOriginalHeightMapFunc);
 
 	REGISTER_LUA_CFUNC(LevelSmoothMesh);
 	REGISTER_LUA_CFUNC(AdjustSmoothMesh);
@@ -4008,6 +4018,194 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	return 1;
 }
 
+
+/******************************************************************************/
+/* original mesh manipulation                                                   */
+/******************************************************************************/
+
+int LuaSyncedCtrl::LevelOriginalHeightMap(lua_State* L)
+{
+	if (mapDamage->Disabled()) {
+		return 0;
+	}
+	float height;
+	int x1, x2, z1, z2;
+	ParseMapParams(L, __func__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			readMap->SetOriginalHeight((z * mapDims.mapxp1) + x, height);
+		}
+	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AdjustOriginalHeightMap(lua_State* L)
+{
+	if (mapDamage->Disabled()) {
+		return 0;
+	}
+
+	float height;
+	int x1, x2, z1, z2;
+
+	ParseMapParams(L, __func__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			readMap->AddOriginalHeight((z * mapDims.mapxp1) + x, height);
+		}
+	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::RevertOriginalHeightMap(lua_State* L)
+{
+	if (mapDamage->Disabled()) {
+		return 0;
+	}
+	float origFactor;
+	int x1, x2, z1, z2;
+	ParseMapParams(L, __func__, origFactor, x1, z1, x2, z2);
+
+	const float* origMap = readMap->GetMapFileHeightMapSynced();
+	const float* currMap = readMap->GetOriginalHeightMapSynced();
+
+	if (origFactor == 1.0f) {
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int idx = (z * mapDims.mapxp1) + x;
+
+				readMap->SetOriginalHeight(idx, origMap[idx]);
+			}
+		}
+	}
+	else {
+		const float currFactor = (1.0f - origFactor);
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int index = (z * mapDims.mapxp1) + x;
+				const float ofh = origFactor * origMap[index];
+				const float cfh = currFactor * currMap[index];
+				readMap->SetOriginalHeight(index, ofh + cfh);
+			}
+		}
+	}
+
+	return 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::AddOriginalHeightMap(lua_State* L)
+{
+	if (!inOriginalHeightMap) {
+		luaL_error(L, "AddOriginalHeightMap() can only be called in SetOriginalHeightMapFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / SQUARE_SIZE);
+	const int z = (int)(zl / SQUARE_SIZE);
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > mapDims.mapx) ||
+	    (z < 0) || (z > mapDims.mapy)) {
+		return 0;
+	}
+
+	const int index = (z * mapDims.mapxp1) + x;
+	const float oldHeight = readMap->GetOriginalHeightMapSynced()[index];
+	originalHeightMapAmountChanged += math::fabsf(h);
+
+	readMap->AddOriginalHeight(index, h);
+	// push the new height
+	lua_pushnumber(L, oldHeight + h);
+	return 1;
+}
+
+
+int LuaSyncedCtrl::SetOriginalHeightMap(lua_State* L)
+{
+	if (!inOriginalHeightMap) {
+		luaL_error(L, "SetOriginalHeightMap() can only be called in SetOriginalHeightMapFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / SQUARE_SIZE);
+	const int z = (int)(zl / SQUARE_SIZE);
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > mapDims.mapx) ||
+	    (z < 0) || (z > mapDims.mapy)) {
+		return 0;
+	}
+
+	const int index = (z * mapDims.mapxp1) + x;
+	const float oldHeight = readMap->GetOriginalHeightMapSynced()[index];
+	float height = oldHeight;
+
+	if (lua_israwnumber(L, 4)) {
+		const float t = lua_tofloat(L, 4);
+		height += (h - oldHeight) * t;
+	} else{
+		height = h;
+	}
+
+	const float heightDiff = (height - oldHeight);
+	originalHeightMapAmountChanged += math::fabsf(heightDiff);
+
+	readMap->SetOriginalHeight(index, height);
+	lua_pushnumber(L, heightDiff);
+	return 1;
+}
+
+
+int LuaSyncedCtrl::SetOriginalHeightMapFunc(lua_State* L)
+{
+	if (mapDamage->Disabled()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isfunction(L, 1)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetOriginalHeightMapFunc(func, ...)");
+	}
+
+	if (inOriginalHeightMap) {
+		luaL_error(L, "SetOriginalHeightMapFunc() recursion is not permitted");
+	}
+
+	originalHeightMapAmountChanged = 0.0f;
+
+	inOriginalHeightMap = true;
+	const int error = lua_pcall(L, (args - 1), 0, 0);
+	inOriginalHeightMap = false;
+
+	if (error != 0) {
+		LOG_L(L_ERROR, "Spring.SetOriginalHeightMapFunc: error(%i) = %s",
+				error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	lua_pushnumber(L, originalHeightMapAmountChanged);
+	return 1;
+}
+
+
+
 /******************************************************************************/
 /* smooth mesh manipulation                                                   */
 /******************************************************************************/
@@ -4165,7 +4363,7 @@ int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State* L)
 		luaL_error(L, "SetHeightMapFunc() recursion is not permitted");
 	}
 
-	heightMapAmountChanged = 0.0f;
+	smoothMeshAmountChanged = 0.0f;
 
 	inSmoothMesh = true;
 	const int error = lua_pcall(L, (args - 1), 0, 0);
