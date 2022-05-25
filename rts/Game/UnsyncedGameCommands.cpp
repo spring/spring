@@ -3103,8 +3103,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		int* a = nullptr;
-		*a = 0;
+		std::abort();
 		return true;
 	}
 };
