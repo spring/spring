@@ -2621,7 +2621,7 @@ int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
 	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
 
 	if (amt == nullptr)
-		luaL_error(L, "Not a flying unit");
+		luaL_error(L, "Not a flying unit (id = %d, alive = %d, name = %s)", unit->id, static_cast<int>(unit->isDead), unit->unitDef ? unit->unitDef->name.c_str() : "<null>");
 
 	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): -1.0f;
