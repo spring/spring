@@ -156,6 +156,7 @@ void CWorldDrawer::Kill()
 	IGroundDecalDrawer::FreeInstance();
 	CShaderHandler::FreeInstance(shaderHandler);
 	LuaObjectDrawer::Kill();
+	SmoothHeightMeshDrawer::FreeInstance();
 
 	numUpdates = 0;
 }

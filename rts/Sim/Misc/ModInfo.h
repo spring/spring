@@ -168,6 +168,8 @@ public:
 	float pfRawDistMult;
 	float pfUpdateRate;
 
+	bool enableSmoothMesh;
+
 	bool allowTake;
 };
 

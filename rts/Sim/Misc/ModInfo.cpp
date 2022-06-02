@@ -98,6 +98,8 @@ void CModInfo::ResetState()
 		pfRawDistMult    = 1.25f;
 		pfUpdateRate     = 0.007f;
 
+		enableSmoothMesh = true;
+
 		allowTake = true;
 	}
 }
@@ -136,6 +138,8 @@ void CModInfo::Init(const std::string& modFileName)
 		pathFinderSystem = Clamp(system.GetInt("pathFinderSystem", HAPFS_TYPE), int(NOPFS_TYPE), int(PFS_TYPE_MAX));
 		pfRawDistMult = system.GetFloat("pathFinderRawDistMult", pfRawDistMult);
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", pfUpdateRate);
+
+		enableSmoothMesh = system.GetBool("enableSmoothMesh", enableSmoothMesh);
 
 		allowTake = system.GetBool("allowTake", allowTake);
 	}

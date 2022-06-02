@@ -1,18 +1,86 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SmoothHeightMeshDrawer.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
-#include "Rendering/GL/VertexArray.h"
-#include "System/float3.h"
 
+#include "Game/UI/MiniMap.h"
+#include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+#include "System/EventHandler.h"
+#include "System/float3.h"
+#include "System/SafeUtil.h"
+
+using namespace SmoothHeightMeshNamespace;
+
+static SmoothHeightMeshDrawer* smoothMeshDrawer = nullptr;
 
 SmoothHeightMeshDrawer* SmoothHeightMeshDrawer::GetInstance() {
-	static SmoothHeightMeshDrawer drawer;
-	return &drawer;
+	if (smoothMeshDrawer == nullptr) {
+		smoothMeshDrawer = new SmoothHeightMeshDrawer();
+	}
+	return smoothMeshDrawer;
+}
+
+void SmoothHeightMeshDrawer::FreeInstance() {
+	if (smoothMeshDrawer != nullptr) {
+		spring::SafeDelete(smoothMeshDrawer);
+	}
+}
+
+SmoothHeightMeshDrawer::SmoothHeightMeshDrawer()
+	: CEventClient("[SmoothHeightMeshDrawer]", 300002, false)
+	, drawEnabled(false)
+{
+	eventHandler.AddClient(this);
+}
+SmoothHeightMeshDrawer::~SmoothHeightMeshDrawer() {
+	eventHandler.RemoveClient(this);
+}
+
+void SmoothHeightMeshDrawer::DrawInMiniMap()
+{
+	if (!(drawEnabled && gs->cheatEnabled))
+		return;
+
+	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		minimap->ApplyConstraintsMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef3(UpVector);
+		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
+
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
+
+	const SmoothHeightMesh::MapChangeTrack& mapChangeTrack = smoothGround.mapChangeTrack;
+	const float tileSize = SAMPLES_PER_QUAD * smoothGround.resolution;
+	int i = 0;
+	for (auto changed : mapChangeTrack.damageMap) {
+		if (changed){
+			const float x = (i % mapChangeTrack.width) * tileSize;
+			const float y = (i / mapChangeTrack.width) * tileSize;
+			glRectf(x, y, x + tileSize, y + tileSize);
+		}
+		i++;
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 }
 
 void SmoothHeightMeshDrawer::Draw(float yoffset) {
-	if (!drawEnabled)
+	if (!(drawEnabled && gs->cheatEnabled))
 		return;
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -28,10 +96,10 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	va->EnlargeArrays((numQuadsX + 1) * (numQuadsZ + 1) * 4, 0, VA_SIZE_0);
+	va->EnlargeArrays(numQuadsX * numQuadsZ * 4, 0, VA_SIZE_0);
 
-	for (unsigned int zq = 0; zq <= numQuadsZ; zq++) {
-		for (unsigned int xq = 0; xq <= numQuadsX; xq++) {
+	for (unsigned int zq = 0; zq < numQuadsZ; zq++) {
+		for (unsigned int xq = 0; xq < numQuadsX; xq++) {
 			const float x = xq * quadSize;
 			const float z = zq * quadSize;
 

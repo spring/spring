@@ -4214,8 +4214,10 @@ static inline void ParseSmoothMeshParams(lua_State* L, const char* caller,
 		float& factor, int& x1, int& z1, int& x2, int& z2)
 {
 	ParseParams(L, caller, factor, x1, z1, x2, z2,
-			smoothGround.GetResolution(), smoothGround.GetMaxX(),
-			smoothGround.GetMaxY());
+			smoothGround.GetResolution(),
+			smoothGround.GetMaxX() - 1,
+			smoothGround.GetMaxY() - 1);
+			
 }
 
 
@@ -4231,6 +4233,7 @@ int LuaSyncedCtrl::LevelSmoothMesh(lua_State* L)
 			smoothGround.SetHeight(index, height);
 		}
 	}
+
 	return 0;
 }
 
@@ -4298,8 +4301,8 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State* L)
 	const int z = (int)(zl / smoothGround.GetResolution());
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > smoothGround.GetMaxX()) ||
-	    (z < 0) || (z > smoothGround.GetMaxY())) {
+	if ((x < 0) || (x > smoothGround.GetMaxX() - 1) ||
+	    (z < 0) || (z > smoothGround.GetMaxY() - 1)) {
 		return 0;
 	}
 
@@ -4328,8 +4331,8 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State* L)
 	const int z = (int)(zl / smoothGround.GetResolution());
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > smoothGround.GetMaxX()) ||
-	    (z < 0) || (z > smoothGround.GetMaxY())) {
+	if ((x < 0) || (x > smoothGround.GetMaxX() - 1) ||
+	    (z < 0) || (z > smoothGround.GetMaxY() - 1)) {
 		return 0;
 	}
 
