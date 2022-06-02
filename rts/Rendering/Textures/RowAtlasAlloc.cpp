@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <set>
 
 // texture spacing in the atlas (in pixels)
 static constexpr int ATLAS_PADDING = 1;
@@ -90,10 +91,16 @@ bool CRowAtlasAlloc::Allocate()
 	// sort new entries by height from large to small
 	std::vector<SAtlasEntry*> memtextures;
 	memtextures.reserve(entries.size());
-	for (auto& entry: entries) {
-		memtextures.push_back(&entry.second);
+
+	std::set<std::string> sortedNames;
+	for (auto& entry : entries) {
+		sortedNames.insert(entry.first);
 	}
-	std::sort(memtextures.begin(), memtextures.end(), CRowAtlasAlloc::CompareTex);
+
+	for (auto& name : sortedNames) {
+		memtextures.push_back(&entries[name]);
+	}
+	std::stable_sort(memtextures.begin(), memtextures.end(), CRowAtlasAlloc::CompareTex);
 
 	// find space for them
 	for (auto& curtex: memtextures) {

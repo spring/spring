@@ -37,7 +37,7 @@ namespace spring {
 	public:
 		std::uint32_t operator()(const std::string& s) const
 		{
-			return HsiehHash(&s.data()[0], s.size(), 0);
+			return HsiehHash(&s.data()[0], static_cast<std::uint32_t>(s.size()), 0);
 		}
 	};
 
