@@ -102,6 +102,8 @@ public:
 	typedef typename RNG::val_type rng_val_type;
 	typedef typename RNG::res_type rng_res_type;
 
+	using result_type = rng_res_type;
+
 	static_assert(std::numeric_limits<float>::digits == 24, "sign plus mantissa bits should be 24");
 
 	void Seed(rng_val_type seed) { SetSeed(seed); }

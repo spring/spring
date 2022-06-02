@@ -8,6 +8,10 @@
 #include <fstream>
 #include <sys/syscall.h>
 
+#if defined(__FreeBSD__)
+	#include <pthread_np.h>  // for pthread_getthreadid_np
+#endif
+
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
@@ -42,7 +46,11 @@ enum LinuxThreadState {
  * There is no glibc wrapper for this system call, so you have to write one:
  */
 static int gettid() {
+#if defined(__FreeBSD__)
+	return pthread_getthreadid_np();
+#else
 	return syscall(SYS_gettid);
+#endif
 }
 
 /**

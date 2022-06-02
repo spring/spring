@@ -1,6 +1,7 @@
+option(ENABLE_MANPAGES "Enable manpages" TRUE)
 
 ### make and install the man pages
-if    (UNIX)
+if    (UNIX AND ENABLE_MANPAGES)
 	find_package(SevenZip)
 	set(AsciiDoc_FIND_QUIETLY TRUE)
 	find_package(AsciiDoc)
