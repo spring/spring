@@ -6,6 +6,7 @@
 #include "Bitmap.h"
 #include "LegacyAtlasAlloc.h"
 #include "QuadtreeAtlasAlloc.h"
+#include "RowAtlasAlloc.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
@@ -56,6 +57,7 @@ void CTextureAtlas::ReinitAllocator()
 	switch (allocType) {
 		case ATLAS_ALLOC_LEGACY:   { atlasAllocator = new   CLegacyAtlasAlloc(); } break;
 		case ATLAS_ALLOC_QUADTREE: { atlasAllocator = new CQuadtreeAtlasAlloc(); } break;
+		case ATLAS_ALLOC_ROW:      { atlasAllocator = new      CRowAtlasAlloc(); } break;
 		default:                   {                              assert(false); } break;
 	}
 

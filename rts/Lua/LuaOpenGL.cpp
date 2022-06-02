@@ -3885,7 +3885,7 @@ int LuaOpenGL::CreateTextureAtlas(lua_State* L)
 	if (xsize > maxSizeX || ysize > maxSizeY)
 		luaL_error(L, "gl.%s() The specified atlas dimensions (%d, %d) are too large. The maximum side sizes are (%d, %d)", __func__, xsize, ysize, maxSizeX, maxSizeY);
 
-	const int allocType = std::clamp(luaL_optint(L, 3, 0), (int)CTextureAtlas::ATLAS_ALLOC_LEGACY, (int)CTextureAtlas::ATLAS_ALLOC_QUADTREE);
+	const int allocType = std::clamp(luaL_optint(L, 3, 0), (int)CTextureAtlas::ATLAS_ALLOC_LEGACY, (int)CTextureAtlas::ATLAS_ALLOC_ROW);
 
 	LuaAtlasTextures& atlasTexes = CLuaHandle::GetActiveAtlasTextures(L);
 	const string& texName = atlasTexes.Create(xsize, ysize, allocType);

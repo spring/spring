@@ -3,6 +3,7 @@
 #include <cstring> // memset
 #include <algorithm>
 #include <vector>
+#include <set>
 
 #include "QuadtreeAtlasAlloc.h"
 #include "System/Exceptions.h"
@@ -160,14 +161,19 @@ bool CQuadtreeAtlasAlloc::Allocate()
 
 	bool failure = false;
 
+	std::set<std::string> sortedNames;
+	for (auto& entry : entries) {
+		sortedNames.insert(entry.first);
+	}
+
 	std::vector<SAtlasEntry*> sortedEntries;
 	sortedEntries.reserve(entries.size());
 
-	for (auto& entry: entries) {
-		sortedEntries.push_back(&entry.second);
+	for (auto& name : sortedNames) {
+		sortedEntries.push_back(&entries[name]);
 	}
 
-	std::sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
+	std::stable_sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
 
 	for (const auto& item: sortedEntries) {
 		SAtlasEntry& entry = *item;
