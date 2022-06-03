@@ -340,7 +340,7 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->amdHacks) {
+	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap)) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (globalRendering->amdHacks) {
