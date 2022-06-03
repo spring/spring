@@ -239,6 +239,8 @@ class LuaOpenGL {
 		static int AddAtlasTexture(lua_State* L);
 		static int GetAtlasTexture(lua_State* L);
 
+		static int GetEngineAtlasTextures(lua_State* L);
+
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);

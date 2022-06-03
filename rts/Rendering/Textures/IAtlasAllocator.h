@@ -14,6 +14,16 @@
 class IAtlasAllocator
 {
 public:
+	struct SAtlasEntry
+	{
+		SAtlasEntry() : data(nullptr) {}
+		SAtlasEntry(const int2 _size, void* _data = nullptr) : size(_size), data(_data) {}
+
+		int2 size;
+		float4 texCoords;
+		void* data;
+	};
+public:
 	IAtlasAllocator() = default;
 	virtual ~IAtlasAllocator() {}
 
@@ -39,6 +49,8 @@ public:
 	{
 		return entries[name].data;
 	}
+
+	const spring::unordered_map<std::string, SAtlasEntry>& GetEntries() const { return entries; }
 
 	float4 GetTexCoords(const std::string& name)
 	{
@@ -73,16 +85,6 @@ public:
 	int2 GetAtlasSize() const { return atlasSize; }
 
 protected:
-	struct SAtlasEntry
-	{
-		SAtlasEntry() : data(nullptr) {}
-		SAtlasEntry(const int2 _size, void* _data = nullptr) : size(_size), data(_data) {}
-
-		int2 size;
-		float4 texCoords;
-		void* data;
-	};
-
 	spring::unordered_map<std::string, SAtlasEntry> entries;
 
 	int2 atlasSize;

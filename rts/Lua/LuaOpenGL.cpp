@@ -64,6 +64,7 @@
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
@@ -373,6 +374,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTextureAtlas);
 	REGISTER_LUA_CFUNC(AddAtlasTexture);
 	REGISTER_LUA_CFUNC(GetAtlasTexture);
+
+	REGISTER_LUA_CFUNC(GetEngineAtlasTextures);
 
 	REGISTER_LUA_CFUNC(Shape);
 	REGISTER_LUA_CFUNC(BeginEnd);
@@ -3984,6 +3987,52 @@ int LuaOpenGL::GetAtlasTexture(lua_State* L)
 	lua_pushnumber(L, atlTex.y2);
 	return 4;
 }
+
+int LuaOpenGL::GetEngineAtlasTextures(lua_State* L) {
+	const auto pushFunc = [L](const auto& textures) -> int {
+		lua_createtable(L, 0, textures.size());
+
+		for (const auto& texture : textures) {
+			lua_pushstring(L, texture.first.c_str()); //name
+			lua_createtable(L, 0, 4);
+
+			lua_pushnumber(L, 1);
+			lua_pushnumber(L, texture.second.texCoords.x1);
+			lua_rawset(L, -3);
+
+			lua_pushnumber(L, 2);
+			lua_pushnumber(L, texture.second.texCoords.x2);
+			lua_rawset(L, -3);
+
+			lua_pushnumber(L, 3);
+			lua_pushnumber(L, texture.second.texCoords.y1);
+			lua_rawset(L, -3);
+
+			lua_pushnumber(L, 4);
+			lua_pushnumber(L, texture.second.texCoords.y2);
+			lua_rawset(L, -3);
+
+			lua_rawset(L, -3);
+		}
+
+		return 1;
+	};
+
+	const std::string atlasName = luaL_checksstring(L, 1).c_str();
+	switch (hashString(atlasName.c_str()))
+	{
+	case hashString("$explosions"): {
+		return pushFunc(projectileDrawer->textureAtlas->GetTextures());
+	} break;
+	case hashString("$groundfx"): {
+		return pushFunc(projectileDrawer->groundFXAtlas->GetTextures());
+	} break;
+	default:
+		luaL_error(L, "[%s] Invalid engine atlas (%s) is specified (only $explosions and $groundfx are supported)", __func__, atlasName.c_str());
+		return 0;
+	}
+}
+
 
 /******************************************************************************/
 

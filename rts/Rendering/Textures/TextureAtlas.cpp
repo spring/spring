@@ -230,6 +230,11 @@ bool CTextureAtlas::TextureExists(const std::string& name)
 	return (textures.find(StringToLower(name)) != textures.end());
 }
 
+auto CTextureAtlas::GetTextures() -> const spring::unordered_map<std::string, IAtlasAllocator::SAtlasEntry>& const
+{
+	return atlasAllocator->GetEntries();
+}
+
 void CTextureAtlas::ReloadTextures()
 {
 	if (!reloadable) {
