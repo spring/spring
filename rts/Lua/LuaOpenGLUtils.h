@@ -83,6 +83,9 @@ class LuaMatTexture {
 
 			LUATEX_FONT,
 			LUATEX_FONTSMALL,
+
+			LUATEX_EXPLOSIONS_ATLAS,
+			LUATEX_GROUNDFX_ATLAS,
 		};
 
 	public:
