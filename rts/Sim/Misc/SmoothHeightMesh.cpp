@@ -340,8 +340,8 @@ inline static void BlurHorizontal(
 			LOG ( "%s: x: %d, y: %d, avg: %f (%f) (g: %f) (max h: %f)"
 				, __func__, x, y, avg, avg*weight, gh, readMap->GetCurrMaxHeight());
 #endif
-			assert(smoothed[x + y * lineSize] <=          readMap->GetCurrMaxHeight()+1     );
-			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()-1     );
+			assert(smoothed[x + y * lineSize] <= readMap->GetCurrMaxHeight() + 1.f);
+			assert(smoothed[x + y * lineSize] >= readMap->GetCurrMinHeight() - 1.f);
 		}
 	}
 }
@@ -391,8 +391,8 @@ inline static void BlurVertical(
 			LOG("%s: x: %d, y: %d, avg: %f (%f) (g: %f)", __func__, x, y, avg, avg*weight, gh);
 			LOG("%s: for next line -%f +%f", __func__, lv, rv);
 #endif
-			assert(smoothed[x + y * lineSize] <=          readMap->GetCurrMaxHeight()+1     );
-			assert(smoothed[x + y * lineSize] >=          readMap->GetCurrMinHeight()-1     );
+			assert(smoothed[x + y * lineSize] <= readMap->GetCurrMaxHeight() + 1.f);
+			assert(smoothed[x + y * lineSize] >= readMap->GetCurrMinHeight() - 1.f);
 		}
 	}
 }
@@ -403,22 +403,22 @@ inline static void CheckInvariants(
 	int maxx,
 	int maxy,
 	int winSize,
-	float resolution,
+	int resolution,
 	const std::vector<float>& colsMaxima,
 	const std::vector<int>& maximaRows
 ) {
-	// check invariants
-	if (y < maxy) {
-		for (int x = 0; x < maxx; ++x) {
+	// check invariants - only for initial mesh creationgit reset HEAD~
+	if (y <= maxy) {
+		for (int x = 0; x <= maxx; ++x) {
 			assert(maximaRows[x] > y - winSize);
 			assert(maximaRows[x] <= maxy);
-			assert(colsMaxima[x] <=          readMap->GetCurrMaxHeight()       );
-			assert(colsMaxima[x] >=          readMap->GetCurrMinHeight()       );
+			assert(colsMaxima[x] <= readMap->GetCurrMaxHeight() + 1.f);
+			assert(colsMaxima[x] >= readMap->GetCurrMinHeight() - 1.f);
 		}
 	}
-	for (int y1 = std::max(0, y - winSize + 1); y1 <= std::min(maxy, y + winSize + 1); ++y1) {
-		for (int x1 = 0; x1 < maxx; ++x1) {
-			assert(CGround::GetHeightReal(x1 * resolution, y1 * resolution) <= colsMaxima[x1]);
+	for (int y1 = std::max(0, (y - winSize) + 1); y1 <= std::min(maxy, y + winSize + 1); ++y1) {
+		for (int x1 = 0; x1 <= maxx; ++x1) {
+			assert(GetRealGroundHeight(x1, y1, resolution) <= colsMaxima[x1] + 1.f);
 		}
 	}
 }
@@ -624,7 +624,7 @@ void SmoothHeightMesh::MakeSmoothMesh() {
 		AdvanceMaximas(map, y+1, 0, max.x, winSize, resolution, colsMaxima, maximaRows);
 
 #ifdef _DEBUG
-		CheckInvariants(y, maxx, maxy, winSize, fresolution, colsMaxima, maximaRows);
+		CheckInvariants(y, max.x, max.y, winSize, resolution, colsMaxima, maximaRows);
 #endif
 	}
 
