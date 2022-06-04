@@ -189,7 +189,7 @@ bool CTextureAtlas::CreateTexture()
 
 		if (debug) {
 			CBitmap tex(data, atlasSize.x, atlasSize.y);
-			tex.Save(name + "-" + IntToString(atlasSize.x) + "x" + IntToString(atlasSize.y) + ".png");
+			tex.Save(name + "-" + IntToString(atlasSize.x) + "x" + IntToString(atlasSize.y) + ".png", true);
 		}
 	} else {
 		LOG_L(L_ERROR, "[TextureAtlas::%s] failed to map PBO for atlas \"%s\" (size=<%d,%d>)", __func__, name.c_str(), atlasSize.x, atlasSize.y);

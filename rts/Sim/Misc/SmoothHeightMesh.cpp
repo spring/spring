@@ -409,7 +409,7 @@ inline static void CheckInvariants(
 ) {
 	// check invariants
 	if (y < maxy) {
-		for (int x = 0; x <= maxx; ++x) {
+		for (int x = 0; x < maxx; ++x) {
 			assert(maximaRows[x] > y - winSize);
 			assert(maximaRows[x] <= maxy);
 			assert(colsMaxima[x] <=          readMap->GetCurrMaxHeight()       );
@@ -417,7 +417,7 @@ inline static void CheckInvariants(
 		}
 	}
 	for (int y1 = std::max(0, y - winSize + 1); y1 <= std::min(maxy, y + winSize + 1); ++y1) {
-		for (int x1 = 0; x1 <= maxx; ++x1) {
+		for (int x1 = 0; x1 < maxx; ++x1) {
 			assert(CGround::GetHeightReal(x1 * resolution, y1 * resolution) <= colsMaxima[x1]);
 		}
 	}

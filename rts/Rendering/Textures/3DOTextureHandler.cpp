@@ -153,8 +153,8 @@ void C3DOTextureHandler::Init()
 		CBitmap tex1(bigtex1.data(), curAtlasSize.x, curAtlasSize.y);
 		CBitmap tex2(bigtex2.data(), curAtlasSize.x, curAtlasSize.y);
 
-		tex1.Save(atlas.GetName() + "-1-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
-		tex2.Save(atlas.GetName() + "-2-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
+		tex1.Save(atlas.GetName() + "-1-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png", true);
+		tex2.Save(atlas.GetName() + "-2-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png", true);
 	}
 }
 

@@ -1244,7 +1244,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, unsigned quality, bool opaque, bool logged) const
+bool CBitmap::Save(const std::string& filename, bool opaque, bool logged, unsigned quality) const
 {
 	if (compressed) {
 		#ifndef HEADLESS
