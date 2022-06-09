@@ -2871,8 +2871,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final override {
-		int* a = nullptr;
-		*a = 0;
+		std::abort();
 		return true;
 	}
 };
