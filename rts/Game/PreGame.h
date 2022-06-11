@@ -47,7 +47,7 @@ public:
 	bool Draw() override;
 	bool Update() override;
 
-	int KeyPressed(int k, bool isRepeat) override;
+	int KeyPressed(int keyCode, int scanCode, bool isRepeat) override;
 
 private:
 	void AddMapArchivesToVFS(const CGameSetup* setup);

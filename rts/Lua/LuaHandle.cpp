@@ -19,7 +19,6 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Game/UI/KeySet.h"
-#include "Game/UI/KeySetSC.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -1990,10 +1989,10 @@ void CLuaHandle::Pong(uint8_t pingTag, const spring_time pktSendTime, const spri
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaHandle::KeyPress(int key, bool isRepeat)
+bool CLuaHandle::KeyPress(int keyCode, int scanCode, bool isRepeat)
 {
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 6, __func__);
+	luaL_checkstack(L, 7, __func__);
 	static const LuaHashString cmdStr(__func__);
 
 	// if the call is not defined, do not take the event
@@ -2001,7 +2000,7 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 		return false;
 
 	//FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
-	lua_pushinteger(L, SDL21_keysyms(key));
+	lua_pushinteger(L, SDL21_keysyms(keyCode));
 
 	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
@@ -2011,105 +2010,44 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 
 	lua_pushboolean(L, isRepeat);
 
-	CKeySet ks(key, false);
+	CKeySet ks(keyCode);
 	lua_pushsstring(L, ks.GetString(true));
 	lua_pushinteger(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
+	lua_pushinteger(L, scanCode);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 6, 1))
+		return false;
+
+	const bool retval = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::KeyRelease(int keyCode, int scanCode)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 6, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	lua_pushinteger(L, SDL21_keysyms(keyCode));
+
+	lua_createtable(L, 0, 5);
+	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!KeyInput::GetKeyModState(KMOD_CTRL));
+	HSTR_PUSH_BOOL(L, "meta",  !!KeyInput::GetKeyModState(KMOD_GUI));
+	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
+
+	CKeySet ks(keyCode);
+	lua_pushsstring(L, ks.GetString(true));
+	lua_pushinteger(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
+	lua_pushinteger(L, scanCode);
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 5, 1))
-		return false;
-
-	const bool retval = luaL_optboolean(L, -1, false);
-	lua_pop(L, 1);
-	return retval;
-}
-
-
-bool CLuaHandle::KeyRelease(int key)
-{
-	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 5, __func__);
-	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L))
-		return false;
-
-	lua_pushinteger(L, SDL21_keysyms(key));
-
-	lua_createtable(L, 0, 4);
-	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!KeyInput::GetKeyModState(KMOD_CTRL));
-	HSTR_PUSH_BOOL(L, "meta",  !!KeyInput::GetKeyModState(KMOD_GUI));
-	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
-
-	CKeySet ks(key, false);
-	lua_pushsstring(L, ks.GetString(true));
-	lua_pushinteger(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
-
-	// call the function
-	if (!RunCallIn(L, cmdStr, 4, 1))
-		return false;
-
-	const bool retval = luaL_optboolean(L, -1, false);
-	lua_pop(L, 1);
-	return retval;
-}
-
-bool CLuaHandle::KeyPressSC(int keyScanCode, bool isRepeat)
-{
-	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 5, __func__);
-	static const LuaHashString cmdStr(__func__);
-
-	// if the call is not defined, do not take the event
-	if (!cmdStr.GetGlobalFunc(L))
-		return false;
-
-	// FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
-	// Send Scancode to Lua
-	lua_pushinteger(L, keyScanCode);
-
-	lua_createtable(L, 0, 4);
-	HSTR_PUSH_BOOL(L, "alt", !!KeyInput::GetKeyModState(KMOD_ALT));
-	HSTR_PUSH_BOOL(L, "ctrl", !!KeyInput::GetKeyModState(KMOD_CTRL));
-	HSTR_PUSH_BOOL(L, "meta", !!KeyInput::GetKeyModState(KMOD_GUI));
-	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
-
-	lua_pushboolean(L, isRepeat);
-
-	CKeySetSC ksSC(keyScanCode, false);
-	lua_pushsstring(L, ksSC.GetString(true));
-
-	// call the function
-	if (!RunCallIn(L, cmdStr, 4, 1))
-		return false;
-
-	const bool retval = luaL_optboolean(L, -1, false);
-	lua_pop(L, 1);
-	return retval;
-}
-
-bool CLuaHandle::KeyReleaseSC(int keyScanCode)
-{
-	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 4, __func__);
-	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L))
-		return false;
-
-	lua_pushinteger(L, keyScanCode);
-
-	lua_createtable(L, 0, 4);
-	HSTR_PUSH_BOOL(L, "alt", !!KeyInput::GetKeyModState(KMOD_ALT));
-	HSTR_PUSH_BOOL(L, "ctrl", !!KeyInput::GetKeyModState(KMOD_CTRL));
-	HSTR_PUSH_BOOL(L, "meta", !!KeyInput::GetKeyModState(KMOD_GUI));
-	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
-
-	CKeySetSC ksSC(keyScanCode, false);
-	lua_pushsstring(L, ksSC.GetString(true));
-
-
-	// call the function
-	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
 	const bool retval = luaL_optboolean(L, -1, false);

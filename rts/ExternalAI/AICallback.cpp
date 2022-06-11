@@ -136,7 +136,7 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->team);
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(teamAIs[0]); // FIXME is there a better way?
 
-	if (!game->ProcessCommandText(-1, text))
+	if (!game->ProcessCommandText(-1, -1, text))
 		return;
 
 	LOG("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);

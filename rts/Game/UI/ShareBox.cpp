@@ -426,9 +426,9 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 	}
 }
 
-bool CShareBox::KeyPressed(int key, bool isRepeat)
+bool CShareBox::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	if (key == SDLK_ESCAPE) {
+	if (keyCode == SDLK_ESCAPE) {
 		delete this;
 		return true;
 	}

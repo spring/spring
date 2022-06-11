@@ -5,13 +5,22 @@
 
 #include <string>
 #include <deque>
+#include "IKeys.h"
 #include "System/Misc/SpringTime.h"
 
 
 class CKeySet {
 	public:
+
+		enum CKeySetType { KSScanCode, KSKeyCode };
+
 		CKeySet() { Reset(); }
-		CKeySet(int key, bool release);
+		CKeySet(int key);
+		CKeySet(int key, CKeySetType codeType);
+		CKeySet(int key, unsigned char modifiers, CKeySetType codeType);
+
+		static unsigned char GetCurrentModifiers();
+		static std::string GetHumanModifiers(unsigned char modifiers);
 
 		void Reset();
 		void SetAnyBit();
@@ -26,7 +35,7 @@ class CKeySet {
 			KS_META    = (1 << 2),
 			KS_SHIFT   = (1 << 3),
 			KS_ANYMOD  = (1 << 4),
-			KS_RELEASE = (1 << 5)
+			//KS_RELEASE = (1 << 5) Deprecated, need rework for enabling separate release bindings
 		};
 
 		int  Key()     const { return key; }
@@ -36,9 +45,11 @@ class CKeySet {
 		bool Meta()    const { return !!(modifiers & KS_META); }
 		bool Shift()   const { return !!(modifiers & KS_SHIFT); }
 		bool AnyMod()  const { return !!(modifiers & KS_ANYMOD); }
-		bool Release() const { return !!(modifiers & KS_RELEASE); }
 
 		bool IsPureModifier() const;
+		bool IsModifier() const;
+		bool IsKeyCode() const;
+		IKeys GetKeys() const;
 
 		bool operator<(const CKeySet& ks) const
 		{
@@ -51,17 +62,17 @@ class CKeySet {
 
 		bool fit(const CKeySet& ks) const
 		{
-			return (key == ks.key) && ((modifiers == ks.modifiers) || AnyMod() || ks.AnyMod());
+			return (type == ks.type) && (key == ks.key) && ((modifiers == ks.modifiers) || AnyMod() || ks.AnyMod());
 		}
 
 		bool operator==(const CKeySet& ks) const
 		{
-			return ((key == ks.key) && (modifiers == ks.modifiers));
+			return (type == ks.type) && (key == ks.key) && (modifiers == ks.modifiers);
 		}
 
 		bool operator!=(const CKeySet& ks) const
 		{
-			return ((key != ks.key) || (modifiers != ks.modifiers));
+			return (type != ks.type) || (key != ks.key) || (modifiers != ks.modifiers);
 		}
 
 	protected:
@@ -69,6 +80,7 @@ class CKeySet {
 
 	protected:
 		int key;
+		CKeySetType type;
 		unsigned char modifiers;
 };
 
@@ -126,7 +138,7 @@ class CTimedKeyChain : public CKeyChain
 			times.clear();
 		}
 
-		void push_back(const int key, const spring_time t, const bool isRepeat);
+		void push_back(const CKeySet& ks, const spring_time t, const bool isRepeat);
 		void emplace_back(const CKeySet& ks, const spring_time t) { assert(false); }
 };
 

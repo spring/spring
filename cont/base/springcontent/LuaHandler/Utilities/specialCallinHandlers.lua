@@ -123,13 +123,13 @@ end
 --------------------------------------------------------------------------------
 --  Keyboard call-ins
 
-function hHookFuncs.KeyPress(key, mods, isRepeat, label, unicode)
-	if (actionHandler.KeyAction(true, key, mods, isRepeat)) then
+function hHookFuncs.KeyPress(key, mods, isRepeat, label, unicode, scanCode)
+	if (actionHandler.KeyAction(true, key, mods, isRepeat, scanCode)) then
 		return true
 	end
 
 	for _,f in hCallInLists.KeyPress:iter() do
-		if f(key, mods, isRepeat, label, unicode) then
+		if f(key, mods, isRepeat, label, unicode, scanCode) then
 			return true
 		end
 	end
@@ -138,13 +138,13 @@ function hHookFuncs.KeyPress(key, mods, isRepeat, label, unicode)
 end
 
 
-function hHookFuncs.KeyRelease(key, mods, label, unicode)
-	if (actionHandler.KeyAction(false, key, mods, false)) then
+function hHookFuncs.KeyRelease(key, mods, label, unicode, scanCode)
+	if (actionHandler.KeyAction(false, key, mods, false, scanCode)) then
 		return true
 	end
 
 	for _,f in hCallInLists.KeyRelease:iter() do
-		if f(key, mods, label, unicode) then
+		if f(key, mods, label, unicode, scanCode) then
 			return true
 		end
 	end

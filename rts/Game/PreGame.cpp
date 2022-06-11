@@ -137,9 +137,9 @@ void CPreGame::LoadSaveFile(const std::string& save)
 	gu->globalQuit = true;
 }
 
-int CPreGame::KeyPressed(int k, bool isRepeat)
+int CPreGame::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	if (k != SDLK_ESCAPE)
+	if (keyCode != SDLK_ESCAPE)
 		return 0;
 
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {

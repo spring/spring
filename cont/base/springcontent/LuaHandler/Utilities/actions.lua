@@ -52,14 +52,15 @@ local function ParseTypes(types, def)
 end
 
 
-local function MakeKeySetString(key, mods)
-	local keyset = ""
-	if (mods.alt)   then keyset = keyset .. "A+" end
-	if (mods.ctrl)  then keyset = keyset .. "C+" end
-	if (mods.meta)  then keyset = keyset .. "M+" end
-	if (mods.shift) then keyset = keyset .. "S+" end
-	local userSym, defSym = Spring.GetKeySymbol(key)
-	return (keyset .. defSym)
+local function MakeKeySetString(key, mods, getSymbol)
+  getSymbol = getSymbol or Spring.GetKeySymbol
+  local keyset = ""
+  if (mods.alt)   then keyset = keyset .. "A+" end
+  if (mods.ctrl)  then keyset = keyset .. "C+" end
+  if (mods.meta)  then keyset = keyset .. "M+" end
+  if (mods.shift) then keyset = keyset .. "S+" end
+  local _, defSym = getSymbol(key)
+  return (keyset .. defSym)
 end
 
 
@@ -211,11 +212,14 @@ end
 --
 
 
-local function KeyAction(press, key, mods, isRepeat, _)
+local function KeyAction(press, key, mods, isRepeat, _, scanCode)
 	assert(_ == nil, "actionHandler:Foobar() is deprecated, use actionHandler.Foobar()!")
 
-	local keyset = MakeKeySetString(key, mods)
-	local defBinds = Spring.GetKeyBindings(keyset)
+	local keyset = MakeKeySetString(key, mods, Spring.GetKeySymbol)
+	local scanset = MakeKeySetString(scanCode, mods, Spring.GetScanSymbol)
+
+	local defBinds = Spring.GetKeyBindings(keyset, scanset)
+
 	if (defBinds) then
 		local actionSet
 		if (press) then
@@ -223,7 +227,7 @@ local function KeyAction(press, key, mods, isRepeat, _)
 		else
 			actionSet = keyReleaseActions
 		end
-		for b,bAction in ipairs(defBinds) do
+		for _,bAction in ipairs(defBinds) do
 			local bCmd, bOpts = next(bAction, nil)
 			local words = MakeWords(bOpts)
 			if (TryAction(actionSet, bCmd, bOpts, words, isRepeat, not press)) then

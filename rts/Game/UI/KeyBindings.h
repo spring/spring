@@ -16,8 +16,18 @@
 class CKeyBindings : public CommandReceiver
 {
 	public:
-		typedef std::vector<Action> ActionList;
 		typedef spring::unsynced_set<std::string> HotkeyList;
+		typedef std::function<bool (Action, Action)> ActionComparison;
+
+	protected:
+		struct KeySetHash {
+			uint64_t operator ()(const CKeySet& ks) const {
+				return (((unsigned long long)ks.Key() * 6364136223846793005ull + ks.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
+			}
+		};
+
+		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
+		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
 
 	public:
 		void Init();
@@ -27,12 +37,11 @@ class CKeyBindings : public CommandReceiver
 		bool Save(const std::string& filename) const;
 		void Print() const;
 
-		const ActionList& GetActionList() const;
-		const ActionList& GetActionList(const CKeySet& ks) const;
-		const ActionList& GetActionList(const CKeyChain& kc) const;
-		const ActionList& GetActionListSC() const;
-		const ActionList& GetActionListSC(const CKeySetSC& ks) const;
-		const ActionList& GetActionListSC(const CKeyChainSC& kc) const;
+		ActionList GetActionList() const;
+		ActionList GetActionList(int keyCode, int scanCode) const;
+		ActionList GetActionList(int keyCode, int scanCode, unsigned char modifiers) const;
+		ActionList GetActionList(const CKeyChain& kc) const;
+		ActionList GetActionList(const CKeyChain& kc, const CKeyChain& sc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
 		virtual void PushAction(const Action&);
@@ -47,13 +56,14 @@ class CKeyBindings : public CommandReceiver
 	protected:
 		void LoadDefaults();
 		void BuildHotkeyMap();
+		void DebugActionList(const ActionList& actionList) const;
+
+		void AddActionToKeyMap(KeyMap& bindings, Action& action);
+		static bool RemoveActionFromKeyMap(const std::string& command, KeyMap& bindings);
 
 		bool Bind(const std::string& keystring, const std::string& action);
-		bool BindSC(const std::string& keystring, const std::string& action);
 		bool UnBind(const std::string& keystring, const std::string& action);
-		bool UnBindSC(const std::string& keystring, const std::string& action);
 		bool UnBindKeyset(const std::string& keystr);
-		bool UnBindKeysetSC(const std::string& keystr);
 		bool UnBindAction(const std::string& action);
 		bool SetFakeMetaKey(const std::string& keystring);
 		bool AddKeySymbol(const std::string& keysym, const std::string& code);
@@ -62,28 +72,13 @@ class CKeyBindings : public CommandReceiver
 
 		bool FileSave(FILE* file) const;
 
-	protected:
-		struct KeySetHash {
-			uint64_t operator ()(const CKeySet& ks) const {
-				return ((ks.Key() * 6364136223846793005ull + ks.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
-			}
-		};
+  protected:
+		const ActionList & GetActionList(const CKeySet& ks, bool forceAny) const;
 
-		struct KeySetHashSC {
-			uint64_t operator ()(const CKeySetSC& ksSC) const {
-				return ((ksSC.KeySC() * 6364136223846793005ull + ksSC.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
-			}
-		};
-
-		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
-		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
-
-		typedef spring::unsynced_map<CKeySetSC, ActionList, KeySetHashSC> KeyMapSC; // keysetSC to action
-		typedef spring::unsynced_map<std::string, HotkeyList> ActionMapSC; // action to keysetSC
-
-		KeyMap bindings;
-		KeyMapSC bindingsSC;
+		KeyMap codeBindings;
+		KeyMap scanBindings;
 		ActionMap hotkeys;
+		int bindingsCount;
 
 		// commands that use both Up and Down key presses
 		spring::unsynced_set<std::string> statefulCommands;

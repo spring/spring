@@ -216,19 +216,19 @@ void CLoadScreen::ResizeEvent()
 }
 
 
-int CLoadScreen::KeyPressed(int k, bool isRepeat)
+int CLoadScreen::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
 	//FIXME add mouse events
 	if (luaIntro != nullptr)
-		luaIntro->KeyPress(k, isRepeat);
+		luaIntro->KeyPress(keyCode, scanCode, isRepeat);
 
 	return 0;
 }
 
-int CLoadScreen::KeyReleased(int k)
+int CLoadScreen::KeyReleased(int keyCode, int scanCode)
 {
 	if (luaIntro != nullptr)
-		luaIntro->KeyRelease(k);
+		luaIntro->KeyRelease(keyCode, scanCode);
 
 	return 0;
 }

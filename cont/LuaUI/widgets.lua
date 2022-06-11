@@ -184,8 +184,6 @@ local callInLists = {
   'DrawScreen',
   'KeyPress',
   'KeyRelease',
-  'KeyPressSC'
-  'KeyReleaseSC',
   'MousePress',
   'MouseWheel',
   'JoyAxis',
@@ -1392,22 +1390,22 @@ end
 --  Keyboard call-ins
 --
 
-function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
+function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode, scanCode)
   if (self.tweakMode) then
     self.tweakKeys[key] = true
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
-      mo:TweakKeyPress(key, mods, isRepeat, label, unicode)
+      mo:TweakKeyPress(key, mods, isRepeat, label, unicode, scanCode)
     end
     return true
   end
 
-  if (self.actionHandler:KeyAction(true, key, mods, isRepeat)) then
+  if (self.actionHandler:KeyAction(true, key, mods, isRepeat, scanCode)) then
     return true
   end
 
   for _,w in ipairs(self.KeyPressList) do
-    if (w:KeyPress(key, mods, isRepeat, label, unicode)) then
+    if (w:KeyPress(key, mods, isRepeat, label, unicode, scanCode)) then
       return true
     end
   end
@@ -1415,11 +1413,11 @@ function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
 end
 
 
-function widgetHandler:KeyRelease(key, mods, label, unicode)
+function widgetHandler:KeyRelease(key, mods, label, unicode, scanCode)
   if (self.tweakMode and self.tweakKeys[key] ~= nil) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
-      mo:TweakKeyRelease(key, mods, label, unicode)
+      mo:TweakKeyRelease(key, mods, label, unicode, scanCode)
     elseif (key == KEYSYMS.ESCAPE) then
       Spring.Log(section, LOG.INFO, "LuaUI TweakMode: OFF")
       self.tweakMode = false
@@ -1427,69 +1425,17 @@ function widgetHandler:KeyRelease(key, mods, label, unicode)
     return true
   end
 
-  if (self.actionHandler:KeyAction(false, key, mods, false)) then
+  if (self.actionHandler:KeyAction(false, key, mods, false, scanCode)) then
     return true
   end
 
   for _,w in ipairs(self.KeyReleaseList) do
-    if (w:KeyRelease(key, mods, label, unicode)) then
+    if (w:KeyRelease(key, mods, label, unicode, scanCode)) then
       return true
     end
   end
   return false
 end
-
-function widgetHandler:KeyPressSC(key, mods, isRepeat)
-  -- ToDo: tweakMode not tested with Scancode Keysets
-  --[[
-  if (self.tweakMode) then
-    self.tweakKeys[key] = true
-    local mo = self.mouseOwner
-    if (mo and mo.TweakKeyPress) then
-      mo:TweakKeyPress(key, mods, isRepeat, label, unicode)
-    end
-    return true
-  end
-  --]]
-  if (self.actionHandler:KeyActionSC(true, key, mods, isRepeat)) then
-    return true
-  end
-
-  for _,w in ipairs(self.KeyPressSCList) do
-    if (w:KeyPressSC(key, mods, isRepeat)) then
-      return true
-    end
-  end
-  return false
-end
-
-function widgetHandler:KeyReleaseSC(key, mods, scancode)
-  -- ToDo: tweakMode not tested with Scancode Keysets
-  --[[
-  if (self.tweakMode and self.tweakKeys[key] ~= nil) then
-    local mo = self.mouseOwner
-    if (mo and mo.TweakKeyRelease) then
-      mo:TweakKeyRelease(key, mods, label, unicode)
-    elseif (key == KEYSYMS.ESCAPE) then
-      self.tweakMode = false
-    end
-    return true
-  end
-  --]]
-  if (self.actionHandler:KeyActionSC(false, key, mods, false)) then
-    return true
-  end
-
-  for _,w in ipairs(self.KeyReleaseSCList) do
-    if (w:KeyReleaseSC(key, mods, scancode)) then
-      return true
-    end
-  end
-  return false
-end
-
-
-
 
 function widgetHandler:TextInput(utf8, ...)
   if (self.tweakMode) then

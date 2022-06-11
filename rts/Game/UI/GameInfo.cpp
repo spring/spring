@@ -190,9 +190,9 @@ void CGameInfo::MouseRelease(int x, int y, int button)
 }
 
 
-bool CGameInfo::KeyPressed(int key, bool isRepeat)
+bool CGameInfo::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	if (key == SDLK_ESCAPE) {
+	if (keyCode == SDLK_ESCAPE) {
 		delete this;
 		return true;
 	}

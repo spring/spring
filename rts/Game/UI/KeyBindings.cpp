@@ -4,8 +4,8 @@
 
 #include "KeyBindings.h"
 #include "KeyCodes.h"
+#include "ScanCodes.h"
 #include "KeySet.h"
-#include "KeySetSC.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -35,6 +35,23 @@ struct DefaultBinding {
 	const char* key;
 	const char* action;
 };
+
+
+static const CKeyBindings::ActionComparison compareActionByTriggerOrder = [](const Action& a, const Action& b) {
+	bool selfAnyMod = a.keyChain.back().AnyMod();
+	bool actionAnyMod = b.keyChain.back().AnyMod();
+
+	if (selfAnyMod == actionAnyMod)
+		return a.bindingIndex < b.bindingIndex;
+	else
+		return actionAnyMod;
+};
+
+
+static const CKeyBindings::ActionComparison compareActionByBindingOrder = [](const Action& a, const Action& b) {
+  return (a.bindingIndex < b.bindingIndex);
+};
+
 
 static const DefaultBinding defaultBindings[] = {
 	{            "esc", "quitmessage" },
@@ -199,9 +216,6 @@ static const DefaultBinding defaultBindings[] = {
 	{ "Any+f12", "screenshot"     },
 	{ "Alt+enter", "fullscreen"  },
 
-	// NOTE: Up bindings are currently converted to press bindings
-	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
-
 	{ "Any+`,Any+`",    "drawlabel" },
 	{ "Any+\\,Any+\\",  "drawlabel" },
 	{ "Any+~,Any+~",    "drawlabel" },
@@ -209,33 +223,20 @@ static const DefaultBinding defaultBindings[] = {
 	{ "Any+^,Any+^",    "drawlabel" },
 
 	{    "Any+`",    "drawinmap"  },
-	{ "Up+Any+`",    "drawinmap"  },
 	{    "Any+\\",   "drawinmap"  },
-	{ "Up+Any+\\",   "drawinmap"  },
 	{    "Any+~",    "drawinmap"  },
-	{ "Up+Any+~",    "drawinmap"  },
 	{    "Any+§",    "drawinmap"  },
-	{ "Up+Any+§",    "drawinmap"  },
 	{    "Any+^",    "drawinmap"  },
-	{ "Up+Any+^",    "drawinmap"  },
 
 	{    "Any+up",       "moveforward"  },
-	{ "Up+Any+up",       "moveforward"  },
 	{    "Any+down",     "moveback"     },
-	{ "Up+Any+down",     "moveback"     },
 	{    "Any+right",    "moveright"    },
-	{ "Up+Any+right",    "moveright"    },
 	{    "Any+left",     "moveleft"     },
-	{ "Up+Any+left",     "moveleft"     },
 	{    "Any+pageup",   "moveup"       },
-	{ "Up+Any+pageup",   "moveup"       },
 	{    "Any+pagedown", "movedown"     },
-	{ "Up+Any+pagedown", "movedown"     },
 
 	{    "Any+ctrl",     "moveslow"     },
-	{ "Up+Any+ctrl",     "moveslow"     },
 	{    "Any+shift",    "movefast"     },
-	{ "Up+Any+shift",    "movefast"     },
 
 	// selection keys
 	{ "Ctrl+a",    "select AllMap++_ClearSelection_SelectAll+"                                         },
@@ -262,9 +263,8 @@ void CKeyBindings::Init()
 	buildHotkeyMap = true;
 	debugEnabled = false;
 
-
-	bindings.reserve(32);
-	bindingsSC.reserve(32);
+	codeBindings.reserve(32);
+	scanBindings.reserve(32);
 	hotkeys.reserve(32);
 
 	statefulCommands.reserve(16);
@@ -298,7 +298,8 @@ void CKeyBindings::Init()
 
 void CKeyBindings::Kill()
 {
-	bindings.clear();
+	codeBindings.clear();
+	scanBindings.clear();
 	hotkeys.clear();
 	statefulCommands.clear();
 
@@ -307,180 +308,202 @@ void CKeyBindings::Kill()
 
 
 /******************************************************************************/
-const CKeyBindings::ActionList& CKeyBindings::GetActionList() const
+
+void FilterByKeychain(const ActionList & in, const CKeyChain & kc, ActionList & out)
 {
-	static ActionList merged; //FIXME switch to thread_local (?)
-	const ActionList* alPtr;
-
-	for (const auto& p: bindings) {
-		const ActionList& al = p.second;
-
-		merged.insert(merged.end(), al.begin(), al.end());
-	}
-
-	alPtr = &merged;
-
-	return *alPtr;
-}
-
-const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
-{
-	static const ActionList empty;
-	static ActionList merged; //FIXME switch to thread_local (?)
-
-	const ActionList* alPtr = &empty;
-
-	if (ks.AnyMod()) {
-		const auto it = bindings.find(ks);
-
-		if (it != bindings.end())
-			alPtr = &(it->second);
-
-	} else {
-		// have to check for an AnyMod keyset as well as the normal one
-		CKeySet anyMod = ks;
-		anyMod.SetAnyBit();
-
-		const auto nit = bindings.find(ks);
-		const auto ait = bindings.find(anyMod);
-
-		const bool haveNormal = (nit != bindings.end());
-		const bool haveAnyMod = (ait != bindings.end());
-
-		if (haveNormal && !haveAnyMod) {
-			alPtr = &(nit->second);
-		}
-		else if (!haveNormal && haveAnyMod) {
-			alPtr = &(ait->second);
-		}
-		else if (haveNormal && haveAnyMod) {
-			// combine the two lists (normal first)
-			merged = nit->second;
-			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
-			alPtr = &merged;
-		}
-	}
-
-	if (debugEnabled) {
-		LOG("GetActions: hex=0x%02X acii=\"%s\":", ks.Key(), ks.GetString(false).c_str());
-
-		if (alPtr != &empty) {
-			int i = 1;
-			for (const auto& a: *alPtr) {
-				LOG("   %i. action=\"%s\"  rawline=\"%s\"  shortcut=\"%s\"", i++, a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
-			}
-		} else {
-			LOG("   EMPTY");
-		}
-	}
-
-	return *alPtr;
-}
-
-
-const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeyChain& kc) const
-{
-	static ActionList out; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
-	out.clear();
-
-	if (kc.empty())
-		return out;
-
-	const CKeyBindings::ActionList& al = GetActionList(kc.back());
-	for (const Action& action: al) {
+	for (const Action& action: in)
 		if (kc.fit(action.keyChain))
 			out.push_back(action);
+}
+
+
+void MergeActionListsByTrigger(const ActionList& actionListA, const ActionList& actionListB, ActionList & out)
+{
+	// When we are retrieving actionlists for a given keyboard state we need to
+	// remove duplicate actions that might arise from binding the same action
+	// to both key and scancodes
+	//
+	// If the user bound same action to both keys and scancodes we want to not
+	// include action duplicates keeping the action with lower bindingIndex.
+	//
+	// A duplicate is an action for which theres a correspondent and only one
+	// identical action present, but bound to a different key.
+	// This is guaranteed by the logic in ::Bind, which also imples it will
+	// invariably be the opposite of the action keytype (scancode<->keycode)
+	// Duplicates will not exist in a single list but would exist if both lists
+	// were merged without care.
+	//
+	// For each list we have a list of ordered actions that is partitioned in two sections:
+	// [k, k, ..., Any+k, Any+k,...]
+
+	// We assume that both lists are already sorted by binding id.
+	// We assume that each list does not contain, itself, duplicates.
+	// We assume that the two lists are either both non-Any lists, or both Any lists.
+	//
+	// Their merged result is appended to out.
+	if (actionListA.empty()) {
+		out.insert(std::end(out), std::begin(actionListB), std::end(actionListB));
+		return;
 	}
+
+	// Only items from list A
+	size_t aBeginId = out.size();
+	out.insert(std::end(out), std::begin(actionListA), std::end(actionListA));
+	size_t aEndId = out.size();
+
+	if (actionListB.empty()) return;
+
+	// Only add items from list B
+	// - If there are duplicates with >= bindingId, don't add them
+	// - If there are duplicates with < bindingId, remove the A item
+	for (const auto & aB : actionListB) {
+		bool toAdd = true;
+		for (size_t a = aBeginId; a < aEndId; ++a) {
+			// B is a duplicate...
+			if (aB.line == out[a].line) {
+				// ...with a higher id, so do not add it.
+				if (aB.bindingIndex >= out[a].bindingIndex) {
+					toAdd = false;
+				// ...with a lower id, so remove its A equivalent.
+				} else {
+					out.erase(std::next(std::begin(out), a));
+					--aEndId;
+				}
+				break;
+			}
+		}
+		if (toAdd) out.push_back(aB);
+	}
+
+	// Merge the two parts.
+	std::inplace_merge(std::next(std::begin(out), aBeginId), std::next(std::begin(out), aEndId), std::end(out), compareActionByTriggerOrder);
+}
+
+
+const ActionList & CKeyBindings::GetActionList(const CKeySet& ks, bool forceAny) const
+{
+	static ActionList empty;
+
+	if (ks.Key() < 0)
+		return empty;
+
+	const auto & bindings = ks.IsKeyCode() ? codeBindings : scanBindings;
+
+	CKeySet toUse = ks;
+	if (forceAny) toUse.SetAnyBit();
+
+	const auto it = bindings.find(toUse);
+	if (it != bindings.end())
+		return (it->second);
+
+	return empty;
+}
+
+
+ActionList CKeyBindings::GetActionList(const CKeyChain& kc) const
+{
+	ActionList out;
+
+	if (kc.empty())
+		return out;
+
+	const auto & al = GetActionList(kc.back(), false);
+	FilterByKeychain(al, kc, out);
+
+	if (!kc.back().AnyMod()) {
+		const auto & al = GetActionList(kc.back(), true);
+		FilterByKeychain(al, kc, out);
+	}
+
 	return out;
 }
 
-const CKeyBindings::ActionList& CKeyBindings::GetActionListSC() const
-{
-	static ActionList merged; //FIXME switch to thread_local (?)
-	const ActionList* alPtr;
 
-	for (const auto& p : bindingsSC) {
+ActionList CKeyBindings::GetActionList(const CKeyChain& kc, const CKeyChain& sc) const
+{
+	// Recover the actionLists we need to merge.
+	ActionList merged;
+
+	// First get non-Any lists.
+	ActionList kList, sList;
+	if (!kc.back().AnyMod()) FilterByKeychain(GetActionList(kc.back(), false), kc, kList);
+	if (!sc.back().AnyMod()) FilterByKeychain(GetActionList(sc.back(), false), sc, sList);
+
+	MergeActionListsByTrigger(kList, sList, merged);
+
+	// Now do Any
+	kList.clear();
+	sList.clear();
+	FilterByKeychain(GetActionList(kc.back(), true), kc, kList);
+	FilterByKeychain(GetActionList(sc.back(), true), sc, sList);
+
+	MergeActionListsByTrigger(kList, sList, merged);
+
+	if (debugEnabled) {
+		LOG("GetActions: codeChain=\"%s\" scanChain=\"%s\":", kc.GetString().c_str(), sc.GetString().c_str());
+
+		DebugActionList(merged);
+	}
+
+	return merged;
+}
+
+
+ActionList CKeyBindings::GetActionList(int keyCode, int scanCode) const
+{
+	return GetActionList(keyCode, scanCode, CKeySet::GetCurrentModifiers());
+}
+
+
+ActionList CKeyBindings::GetActionList(int keyCode, int scanCode, unsigned char modifiers) const
+{
+	CKeyChain codeChain;
+	CKeyChain scanChain;
+
+	codeChain.emplace_back(CKeySet(keyCode, modifiers, CKeySet::KSKeyCode));
+	scanChain.emplace_back(CKeySet(scanCode, modifiers, CKeySet::KSScanCode));
+
+	return GetActionList(codeChain, scanChain);
+}
+
+
+ActionList CKeyBindings::GetActionList() const
+{
+	ActionList merged;
+
+	// If hotkey map is built hotkey size is often equal to action count, + 1 for recently bound action
+	if (!hotkeys.empty())
+		merged.reserve(hotkeys.size() + 1);
+
+	for (const auto& p: codeBindings) {
 		const ActionList& al = p.second;
 
 		merged.insert(merged.end(), al.begin(), al.end());
 	}
 
-	alPtr = &merged;
+	for (const auto& p: scanBindings) {
+		const ActionList& al = p.second;
 
-	return *alPtr;
+		merged.insert(merged.end(), al.begin(), al.end());
+	}
+
+	std::sort(merged.begin(), merged.end(), compareActionByBindingOrder);
+
+	return merged;
 }
 
-const CKeyBindings::ActionList& CKeyBindings::GetActionListSC(const CKeySetSC& ks) const
-{
-	static const ActionList empty;
-	static ActionList merged; //FIXME switch to thread_local (?)
 
-	const ActionList* alPtr = &empty;
-
-	if (ks.AnyMod()) {
-		const auto it = bindingsSC.find(ks);
-
-		if (it != bindingsSC.end())
-			alPtr = &(it->second);
-
-	}
-	else {
-		// have to check for an AnyMod keyset as well as the normal one
-		CKeySetSC anyMod = ks;
-		anyMod.SetAnyBit();
-
-		const auto nit = bindingsSC.find(ks);
-		const auto ait = bindingsSC.find(anyMod);
-
-		const bool haveNormal = (nit != bindingsSC.end());
-		const bool haveAnyMod = (ait != bindingsSC.end());
-
-		if (haveNormal && !haveAnyMod) {
-			alPtr = &(nit->second);
-		}
-		else if (!haveNormal && haveAnyMod) {
-			alPtr = &(ait->second);
-		}
-		else if (haveNormal && haveAnyMod) {
-			// combine the two lists (normal first)
-			merged = nit->second;
-			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
-			alPtr = &merged;
+void CKeyBindings::DebugActionList(const ActionList& actionList) const {
+	LOG("Action List:");
+	if (actionList.empty()) {
+		LOG("   EMPTY");
+	} else {
+		int i = 1;
+		for (const auto& a: actionList) {
+			LOG("   %i.  action=\"%s\"  rawline=\"%s\"  shortcut=\"%s\"  index=\"%i\"", i++, a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str(), a.bindingIndex);
 		}
 	}
-
-	if (debugEnabled) {
-		LOG("GetActions: SC=%i SC_Name=\"%s\":", ks.KeySC(), ks.GetString(false).c_str());
-
-		if (alPtr != &empty) {
-			int i = 1;
-			for (const auto& a : *alPtr) {
-				LOG("   %i. action=\"%s\"  rawline=\"%s\"  shortcut=\"%s\"", i++, a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
-			}
-		}
-		else {
-			LOG("   EMPTY");
-		}
-	}
-
-	return *alPtr;
-}
-
-const CKeyBindings::ActionList& CKeyBindings::GetActionListSC(const CKeyChainSC& kc) const
-{
-	static ActionList out; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
-	out.clear();
-
-	if (kc.empty())
-		return out;
-
-	const CKeyBindings::ActionList& al = GetActionListSC(kc.back());
-	for (const Action& action : al) {
-		if (kc.fit(action.keyChainSC))
-			out.push_back(action);
-	}
-	return out;
-}
+};
 
 
 const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& action) const
@@ -500,28 +523,6 @@ static bool ParseSingleChain(const std::string& keystr, CKeyChain* kc)
 {
 	kc->clear();
 	CKeySet ks;
-
-	// note: this will fail if keystr contains spaces
-	std::stringstream ss(keystr);
-
-	while (ss.good()) {
-		char kcstr[256];
-		ss.getline(kcstr, 256, ',');
-		std::string kstr(kcstr);
-
-		if (!ks.Parse(kstr, false))
-			return false;
-
-		kc->emplace_back(ks);
-	}
-
-	return true;
-}
-
-static bool ParseSingleChainSC(const std::string& keystr, CKeyChainSC* kc)
-{
-	kc->clear();
-	CKeySetSC ks;
 
 	// note: this will fail if keystr contains spaces
 	std::stringstream ss(keystr);
@@ -566,34 +567,41 @@ static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = 
 	return ParseKeyChain(keystr, kc, cpos);
 }
 
-static bool ParseKeyChainSC(std::string keystr, CKeyChainSC* kc, const size_t pos = std::string::npos)
+
+void CKeyBindings::AddActionToKeyMap(KeyMap& bindings, Action& action)
 {
-	// recursive function to allow "," as separator-char & as shortcut
-	// -> when parsing fails, this functions replaces one by one all "," by their hexcode
-	//    and tries then to reparse it
-	// -> i.e. ",,," will at the end parsed as "0x2c,0x2c"
+	CKeySet& ks = action.keyChain.back();
 
-	const size_t cpos = keystr.rfind(',', pos);
+	const auto it = bindings.find(ks);
 
-	if (ParseSingleChainSC(keystr, kc))
-		return true;
+	if (it == bindings.end()) {
+		// create new keyset entry and push it command
+		ActionList& al = bindings[ks];
+		action.bindingIndex = ++bindingsCount;
+		al.push_back(action);
+	} else {
+		ActionList& al = it->second;
+		assert(it->first == ks);
 
-	if (cpos == std::string::npos)
-		return false;
+		auto it = std::find_if(al.begin(), al.end(), [&action](Action a) {
+			return action.line == a.line;
+		});
 
-	// if cpos is 0, cpos - 1 will equal std::string::npos (size_t::max)
-	const size_t nextpos = cpos - 1;
-
-	if ((nextpos != std::string::npos) && ParseKeyChainSC(keystr, kc, nextpos))
-		return true;
-
-	keystr.replace(cpos, 1, IntToString(keyCodes.GetCode(","), "%#x"));
-	return ParseKeyChainSC(keystr, kc, cpos);
+		// check if the command is already bound to the given keyset
+		if (it == std::end(al)) {
+			// not yet bound, push it
+			action.bindingIndex = ++bindingsCount;
+			al.push_back(action);
+		}
+	}
 }
 
 
 bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
+	if (debugEnabled)
+		LOG("[CKeyBindings::Bind] index=%i keystr=%s line=%s", bindingsCount + 1, keystr.c_str(), line.c_str());
+
 	Action action(line);
 	action.boundWith = keystr;
 	if (action.command.empty()) {
@@ -602,8 +610,8 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 	}
 
 	if (!ParseKeyChain(keystr, &action.keyChain) || action.keyChain.empty()) {
-		// keystr not parsed as keysym, lets try if we have a scancode bind
-		return BindSC(keystr, line);
+		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
+		return false;
 	}
 	CKeySet& ks = action.keyChain.back();
 
@@ -611,78 +619,8 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 	if (statefulCommands.find(action.command) != statefulCommands.end())
 		ks.SetAnyBit();
 
-	const auto it = bindings.find(ks);
-
-	if (it == bindings.end()) {
-		// create new keyset entry and push it command
-		ActionList& al = bindings[ks];
-		al.push_back(action);
-	} else {
-		ActionList& al = it->second;
-		assert(it->first == ks);
-
-		// check if the command is already found to the given keyset
-		bool found = false;
-		for (const Action& act: al) {
-			if (act.command == action.command && act.extra == action.extra) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			// not yet bound, push it
-			al.push_back(action);
-		}
-	}
-
-	return true;
-}
-
-bool CKeyBindings::BindSC(const std::string& keystr, const std::string& line)
-{
-	Action action(line);
-	action.boundWith = keystr;
-
-	if (action.command.empty()) {
-		LOG_L(L_WARNING, "BindSC: empty action: %s", line.c_str());
-		return false;
-	}
-
-	if (!ParseKeyChainSC(keystr, &action.keyChainSC) || action.keyChainSC.empty()) {
-		LOG_L(L_WARNING, "BindSC: could not parse key: %s", keystr.c_str());
-		return false;
-	}
-	
-	CKeySetSC& ksSC = action.keyChainSC.back();
-
-	// Try to be safe, force AnyMod mode for stateful commands
-	if (statefulCommands.find(action.command) != statefulCommands.end())
-		ksSC.SetAnyBit();
-
-	const auto it = bindingsSC.find(ksSC);
-
-	if (it == bindingsSC.end()) {
-		// create new keyset entry and push it command
-		ActionList& al = bindingsSC[ksSC];
-		al.push_back(action);
-	}
-	else {
-		ActionList& al = it->second;
-		assert(it->first == ksSC);
-
-		// check if the command is already found to the given keyset
-		bool found = false;
-		for (const Action& act : al) {
-			if (act.command == action.command && act.extra == action.extra) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			// not yet bound, push it
-			al.push_back(action);
-		}
-	}
+	KeyMap& bindings = ks.IsKeyCode() ? codeBindings : scanBindings;
+	AddActionToKeyMap(bindings, action);
 
 	return true;
 }
@@ -692,10 +630,11 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 {
 	CKeySet ks;
 	if (!ks.Parse(keystr)) {
-		// keystr not parsed as keysym, lets try if we have a scancode bind
-		return UnBindSC(keystr, command);
+		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
+		return false;
 	}
 
+	KeyMap& bindings = ks.IsKeyCode() ? codeBindings : scanBindings;
 	const auto it = bindings.find(ks);
 
 	if (it == bindings.end())
@@ -710,36 +649,16 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 	return success;
 }
 
-bool CKeyBindings::UnBindSC(const std::string& keystr, const std::string& command)
-{
-	CKeySetSC ksSC;
-	if (!ksSC.Parse(keystr)) {
-		LOG_L(L_WARNING, "UnBindSC: could not parse key: %s", keystr.c_str());
-		return false;
-	}
-
-	const auto it = bindingsSC.find(ksSC);
-
-	if (it == bindingsSC.end())
-		return false;
-
-	ActionList& al = it->second;
-	const bool success = RemoveCommandFromList(al, command);
-
-	if (al.empty())
-		bindingsSC.erase(it);
-
-	return success;
-}
-
 
 bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 {
 	CKeySet ks;
 	if (!ks.Parse(keystr)) {
-		// No Keysym Keyset to unbind, lets look at Keysets with scancodes
-		return UnBindKeysetSC(keystr);
+		LOG_L(L_WARNING, "UnBindKeyset: could not parse key: %s", keystr.c_str());
+		return false;
 	}
+
+	KeyMap& bindings = ks.IsKeyCode() ? codeBindings : scanBindings;
 
 	const auto it = bindings.find(ks);
 
@@ -750,25 +669,8 @@ bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 	return true;
 }
 
-bool CKeyBindings::UnBindKeysetSC(const std::string& keystr)
-{
-	CKeySetSC ksSC;
-	if (!ksSC.Parse(keystr)) {
-		LOG_L(L_WARNING, "UnBindKeysetSC: could not parse key: %s", keystr.c_str());
-		return false;
-	}
 
-	const auto it = bindingsSC.find(ksSC);
-
-	if (it == bindingsSC.end())
-		return false;
-
-	bindingsSC.erase(it);
-	return true;
-}
-
-
-bool CKeyBindings::UnBindAction(const std::string& command)
+bool CKeyBindings::RemoveActionFromKeyMap(const std::string& command, KeyMap& bindings)
 {
 	bool success = false;
 
@@ -787,26 +689,13 @@ bool CKeyBindings::UnBindAction(const std::string& command)
 		}
 	}
 
+	return success;
+}
 
-	bool successSC = false;
 
-	auto itSC = bindingsSC.begin();
-
-	while (itSC != bindingsSC.end()) {
-		ActionList& al = itSC->second;
-
-		if (RemoveCommandFromList(al, command))
-			successSC = true;
-
-		if (al.empty()) {
-			itSC = bindingsSC.erase(itSC);
-		}
-		else {
-			++itSC;
-		}
-	}
-
-	return success || successSC;
+bool CKeyBindings::UnBindAction(const std::string& command)
+{
+	return RemoveActionFromKeyMap(command, codeBindings) || RemoveActionFromKeyMap(command, scanBindings);
 }
 
 
@@ -821,6 +710,10 @@ bool CKeyBindings::SetFakeMetaKey(const std::string& keystr)
 		LOG_L(L_WARNING, "SetFakeMetaKey: could not parse key: %s", keystr.c_str());
 		return false;
 	}
+	if (!ks.IsKeyCode()) {
+		LOG_L(L_WARNING, "SetFakeMetaKey: can't assign to scancode: %s", keystr.c_str());
+		return false;
+	}
 	fakeMetaKey = ks.Key();
 	return true;
 }
@@ -833,7 +726,7 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 		LOG_L(L_WARNING, "AddKeySymbol: could not parse key: %s", code.c_str());
 		return false;
 	}
-	if (!keyCodes.AddKeySymbol(keysym, ks.Key())) {
+	if (!ks.GetKeys().AddKeySymbol(keysym, ks.Key())) {
 		LOG_L(L_WARNING, "AddKeySymbol: could not add: %s", keysym.c_str());
 		return false;
 	}
@@ -945,10 +838,12 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 		if (!UnBindKeyset(words[1])) { return false; }
 	}
 	else if (command == "unbindall") {
-		bindings.clear();
+		codeBindings.clear();
+		scanBindings.clear();
 		keyCodes.Reset();
-		bindingsSC.clear();
-		Bind("enter", "edit_return"); // bare minimum
+		scanCodes.Reset();
+		bindingsCount = 0;
+		Bind("enter", "chat"); // bare minimum
 	}
 	else {
 		return false;
@@ -983,11 +878,9 @@ void CKeyBindings::BuildHotkeyMap()
 	// create reverse map of bindings ([action] -> key shortcuts)
 	hotkeys.clear();
 
-	for (const auto& p: bindings) {
-		for (const Action& action: p.second) {
-			HotkeyList& hl = hotkeys[action.command + (action.extra.empty() ? "" : " " + action.extra)];
-			hl.insert(action.boundWith);
-		}
+	for (const auto& action: GetActionList()) {
+		HotkeyList& hl = hotkeys[action.command + (action.extra.empty() ? "" : " " + action.extra)];
+		hl.insert(action.boundWith);
 	}
 }
 
@@ -1025,31 +918,27 @@ bool CKeyBindings::FileSave(FILE* out) const
 
 	// save the user defined key symbols
 	keyCodes.SaveUserKeySymbols(out);
+	scanCodes.SaveUserKeySymbols(out);
 
 	// save the fake meta key (if it has been defined)
 	if (fakeMetaKey >= 0)
 		fprintf(out, "fakemeta  %s\n\n", keyCodes.GetName(fakeMetaKey).c_str());
 
-	// save the bindings
-	for (const auto& p: bindings) {
-		const ActionList& al = p.second;
+	for (const Action& action: GetActionList()) {
+		std::string comment;
 
-		for (const Action& action: al) {
-			std::string comment;
+		if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
+			const std::string unitName = action.command.substr(10);
+			const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 
-			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
-				const std::string unitName = action.command.substr(10);
-				const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
+			if (unitDef != nullptr)
+				comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
+		}
 
-				if (unitDef != nullptr)
-					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
-			}
-
-			if (comment.empty()) {
-				fprintf(out, "bind %18s  %s\n", action.boundWith.c_str(), action.rawline.c_str());
-			} else {
-				fprintf(out, "bind %18s  %-20s%s\n", action.boundWith.c_str(), action.rawline.c_str(), comment.c_str());
-			}
+		if (comment.empty()) {
+			fprintf(out, "bind %18s  %s\n", action.boundWith.c_str(), action.rawline.c_str());
+		} else {
+			fprintf(out, "bind %18s  %-20s%s\n", action.boundWith.c_str(), action.rawline.c_str(), comment.c_str());
 		}
 	}
 
@@ -1058,4 +947,3 @@ bool CKeyBindings::FileSave(FILE* out) const
 
 
 /******************************************************************************/
-

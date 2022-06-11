@@ -67,16 +67,16 @@ public:
 
 	bool CheckHandlePasteCommand(const std::string& rawLine);
 
-	bool ConsumePressedKey(int key, const std::vector<Action>& actions);
-	bool ConsumeReleasedKey(int key) const;
+	bool ConsumePressedKey(int keyCode, int scanCode, const std::vector<Action>& actions);
+	bool ConsumeReleasedKey(int keyCode, int scanCode) const;
 
 private:
 	void PasteClipboard();
 
 	bool HandleChatCommand(int key, const std::string& command);
-	bool HandleEditCommand(int key, const std::string& command);
+	bool HandleEditCommand(int keyCode, int scanCode, const std::string& command);
 	bool HandlePasteCommand(int key, const std::string& rawLine);
-	bool ProcessKeyPressAction(int key, const Action& action);
+	bool ProcessKeyPressAction(int keyCode, int scanCode, const Action& action);
 
 public:
 	/// current writing/editing positions

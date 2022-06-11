@@ -130,15 +130,15 @@ bool CLuaMenuController::Draw()
 }
 
 
-int CLuaMenuController::KeyReleasedSC(int keyScanCode, int keySym)
+int CLuaMenuController::KeyReleased(int keyCode, int scanCode)
 {
-	luaInputReceiver->KeyReleasedSC(keyScanCode, keySym);
+	luaInputReceiver->KeyReleased(keyCode, scanCode);
 	return 0;
 }
 
-int CLuaMenuController::KeyPressedSC(int keyScanCode, int keySym, bool isRepeat)
+int CLuaMenuController::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	luaInputReceiver->KeyPressedSC(keyScanCode, keySym, isRepeat);
+	luaInputReceiver->KeyPressed(keyCode, scanCode, isRepeat);
 	return 0;
 }
 

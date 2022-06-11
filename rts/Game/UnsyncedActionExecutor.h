@@ -13,7 +13,7 @@ class Action;
 class UnsyncedAction : public IAction
 {
 public:
-	UnsyncedAction(const Action& action, unsigned int key, bool repeat)
+	UnsyncedAction(const Action& action, int key, bool repeat)
 		: IAction(action)
 		, key(key)
 		, repeat(repeat)
@@ -30,7 +30,7 @@ public:
 	bool IsRepeat() const { return repeat; }
 
 private:
-	unsigned int key;
+	int key;
 	bool repeat;
 };
 

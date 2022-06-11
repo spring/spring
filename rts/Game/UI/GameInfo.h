@@ -37,7 +37,7 @@ private:
 
 	bool MousePress(int x, int y, int button);
 	void MouseRelease(int x, int y, int button);
-	bool KeyPressed(int key, bool isRepeat);
+	bool KeyPressed(int keyCode, int scanCode, bool isRepeat);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x,int y);
 	void Draw();

@@ -38,8 +38,8 @@ public:
 
 	void ResizeEvent() override;
 
-	int KeyReleased(int k) override;
-	int KeyPressed(int k, bool isRepeat) override;
+	int KeyReleased(int keyCode, int scanCode) override;
+	int KeyPressed(int keyCode, int scanCode, bool isRepeat) override;
 
 
 private:

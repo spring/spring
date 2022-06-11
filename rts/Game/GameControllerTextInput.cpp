@@ -212,7 +212,7 @@ bool GameControllerTextInput::HandleChatCommand(int key, const std::string& comm
 
 
 // can only be called by CGame (via ConsumePressedKey)
-bool GameControllerTextInput::HandleEditCommand(int key, const std::string& command) {
+bool GameControllerTextInput::HandleEditCommand(int keyCode, int scanCode, const std::string& command) {
 	switch (hashString(command.c_str())) {
 		case hashString("edit_return"): {
 			userWriting = false;
@@ -227,7 +227,7 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 					cmd = userInput;
 				}
 
-				if (game->ProcessCommandText(key, cmd)) {
+				if (game->ProcessCommandText(keyCode, scanCode, cmd)) {
 					// execute an action
 					gameConsoleHistory.AddLine(cmd);
 					ClearInput();
@@ -384,32 +384,32 @@ bool GameControllerTextInput::CheckHandlePasteCommand(const std::string& rawLine
 }
 
 
-bool GameControllerTextInput::ProcessKeyPressAction(int key, const Action& action) {
+bool GameControllerTextInput::ProcessKeyPressAction(int keyCode, int scanCode, const Action& action) {
 	assert(userWriting);
 
 	if (action.command == "pastetext")
-		return (HandlePasteCommand(key, action.rawline));
+		return (HandlePasteCommand(keyCode, action.rawline));
 
 	if (action.command.find("edit_") == 0)
-		return (HandleEditCommand(key, action.command));
+		return (HandleEditCommand(keyCode, scanCode, action.command));
 
 	if (action.command.find("chatswitch") == 0)
-		return (HandleChatCommand(key, action.command));
+		return (HandleChatCommand(keyCode, action.command));
 
 	return false;
 }
 
 
-bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Action>& actions) {
+bool GameControllerTextInput::ConsumePressedKey(int keyCode, int scanCode, const std::vector<Action>& actions) {
 	if (!userWriting)
 		return false;
 
 	for (const Action& action: actions) {
-		if (!ProcessKeyPressAction(key, action))
+		if (!ProcessKeyPressAction(keyCode, scanCode, action))
 			continue;
 
 		// the key was used, ignore it (ex: alt+a)
-		ignoreNextChar = keyCodes.IsPrintable(key);
+		ignoreNextChar = keyCodes.IsPrintable(keyCode);
 		break;
 	}
 
@@ -417,12 +417,12 @@ bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Actio
 }
 
 
-bool GameControllerTextInput::ConsumeReleasedKey(int key) const {
+bool GameControllerTextInput::ConsumeReleasedKey(int keyCode, int scanCode) const {
 	if (!userWriting)
 		return false;
-	if (keyCodes.IsPrintable(key))
+	if (keyCodes.IsPrintable(keyCode))
 		return true;
 
-	return (key == SDLK_RETURN || key == SDLK_BACKSPACE || key == SDLK_DELETE || key == SDLK_HOME || key == SDLK_END || key == SDLK_RIGHT || key == SDLK_LEFT);
+	return (keyCode == SDLK_RETURN || keyCode == SDLK_BACKSPACE || keyCode == SDLK_DELETE || keyCode == SDLK_HOME || keyCode == SDLK_END || keyCode == SDLK_RIGHT || keyCode == SDLK_LEFT);
 }
 

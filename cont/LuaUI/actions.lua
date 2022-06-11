@@ -71,11 +71,8 @@ function actionHandler:AddAction(widget, cmd, func, data, types)
     error("LuaUI error adding action: please use widget:Initialize()")
   end
 
-  -- default to text, keyPress, repeat and release
-  local text, keyPress, keyRepeat, keyRelease = ParseTypes(types, "tpRr")
-  -- IF reenabling keyPress, keyRepeat and keyRelease actions, above line should be replaced by following line
   -- default to text and keyPress  (not repeat or releases)
-  -- local text, keyPress, keyRepeat, keyRelease = ParseTypes(types, "tp")
+  local text, keyPress, keyRepeat, keyRelease = ParseTypes(types, "tpRr")
   
   local tSuccess, pSuccess, RSuccess, rSuccess = false, false, false, false
 
@@ -197,24 +194,15 @@ local function MakeWords(line)
 end
 
 
-local function MakeKeySetString(key, mods)
+local function MakeKeySetString(key, mods, getSymbol)
+  getSymbol = getSymbol or Spring.GetKeySymbol
   local keyset = ""
   if (mods.alt)   then keyset = keyset .. "A+" end
   if (mods.ctrl)  then keyset = keyset .. "C+" end
   if (mods.meta)  then keyset = keyset .. "M+" end
   if (mods.shift) then keyset = keyset .. "S+" end
-  local userSym, defSym = Spring.GetKeySymbol(key)
+  local _, defSym = getSymbol(key)
   return (keyset .. defSym)
-end
-
-local function MakeKeySetStringSC(keySC, mods)
-  local keysetSC = ""
-  if (mods.alt)   then keysetSC = keysetSC .. "A+" end
-  if (mods.ctrl)  then keysetSC = keysetSC .. "C+" end
-  if (mods.meta)  then keysetSC = keysetSC .. "M+" end
-  if (mods.shift) then keysetSC = keysetSC .. "S+" end
-  local defScancodeName = Spring.GetKeyScancodeName(keySC)
-  return (keysetSC .. defScancodeName)
 end
 
 
@@ -235,9 +223,12 @@ local function TryAction(actionMap, cmd, optLine, optWords, isRepeat, release)
 end
 
 
-function actionHandler:KeyAction(press, key, mods, isRepeat)
-  local keyset = MakeKeySetString(key, mods)
-  local defBinds = Spring.GetKeyBindings(keyset)
+function actionHandler:KeyAction(press, key, mods, isRepeat, scanCode)
+  local keyset = MakeKeySetString(key, mods, Spring.GetKeySymbol)
+  local scanset = MakeKeySetString(scanCode, mods, Spring.GetScanSymbol)
+
+  local defBinds = Spring.GetKeyBindings(keyset, scanset)
+
   if (defBinds) then
     local actionSet
     if (press) then
@@ -245,45 +236,13 @@ function actionHandler:KeyAction(press, key, mods, isRepeat)
     else
       actionSet = self.keyReleaseActions
     end
-    for b,bAction in ipairs(defBinds) do
+    for _,bAction in ipairs(defBinds) do
       local bCmd, bOpts = next(bAction, nil)
-	  
-	  -- replace above with following 2 lines to reenable keyPress, keyRepeat and keyRelease actions
-	  -- local bCmd = bAction["command"]
-	  -- local bOpts = bAction["extra"]
-	  
 		  local words = MakeWords(bOpts)
       if (TryAction(actionSet, bCmd, bOpts, words, isRepeat, not press)) then
         return true
       end
     end
-  end
-  return false
-end
-
-function actionHandler:KeyActionSC(press, key, mods, isRepeat)
-  local keysetSC = MakeKeySetStringSC(key, mods)
-  local defBindsSC = Spring.GetKeyBindingsSC(keysetSC)
-  
-  if (defBindsSC) then
-	local actionSetSC
-	if (press) then
-	  actionSetSC = isRepeat and self.keyRepeatActions or self.keyPressActions
-	else
-	  actionSetSC = self.keyReleaseActions
-	end
-	for b,bAction in ipairs(defBindsSC) do
-	  local bCmd, bOpts = next(bAction, nil)
-	  
-	  -- replace above with following 2 lines to reenable keyPress, keyRepeat and keyRelease actions
-	  -- local bCmd = bAction["command"]
-	  -- local bOpts = bAction["extra"]
-
-	  local words = MakeWords(bOpts)
-	  if (TryAction(actionSetSC, bOpts, bOpts, words, isRepeat, not press)) then
-		return true
-	  end
-	end
   end
   return false
 end

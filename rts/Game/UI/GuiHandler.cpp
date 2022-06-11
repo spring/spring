@@ -54,7 +54,6 @@
 #include "System/FileSystem/SimpleParser.h"
 
 #include <SDL_keycode.h>
-#include <SDL_scancode.h>
 #include <SDL_mouse.h>
 
 CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
@@ -1800,21 +1799,21 @@ int CGuiHandler::GetIconPosCommand(int slot) const // only called by SetActiveCo
 }
 
 
-bool CGuiHandler::KeyPressed(int key, bool isRepeat)
+bool CGuiHandler::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	if (key == SDLK_ESCAPE && activeMousePress) {
+	if (keyCode == SDLK_ESCAPE && activeMousePress) {
 		activeMousePress = false;
 		inCommand = -1;
 		SetShowingMetal(false);
 		return true;
 	}
-	if (key == SDLK_ESCAPE && inCommand >= 0) {
+	if (keyCode == SDLK_ESCAPE && inCommand >= 0) {
 		inCommand=-1;
 		SetShowingMetal(false);
 		return true;
 	}
 
-	const CKeySet ks(key, false);
+	const CKeySet ks(keyCode);
 
 	// setup actionOffset
 	//WTF a bit more documentation???
@@ -1834,7 +1833,7 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		}
 	}
 
-	const CKeyBindings::ActionList& al = keyBindings.GetActionList(ks);
+	const ActionList& al = keyBindings.GetActionList(keyCode, scanCode);
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
 		const int actionIndex = (ali + tmpActionOffset) % (int)al.size(); //????
 		const Action& action = al[actionIndex];
@@ -1844,53 +1843,6 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 	}
 
 	return false;
-}
-
-bool CGuiHandler::KeyPressedSC(int key, int keySym, bool isRepeat)
-{
-	if (key == SDL_SCANCODE_ESCAPE && activeMousePress) {
-		activeMousePress = false;
-		inCommand = -1;
-		SetShowingMetal(false);
-		return true;
-	}
-	if (key == SDL_SCANCODE_ESCAPE && inCommand >= 0) {
-		inCommand = -1;
-		SetShowingMetal(false);
-		return true;
-	}
-
-	const CKeySetSC ks(key, false);
-
-	// setup actionOffset
-	//WTF a bit more documentation???
-	int tmpActionOffset = actionOffset_SC;
-	if ((inCommand < 0) || (lastKeySetSC.KeySC() < 0)) {
-		actionOffset_SC = 0;
-		tmpActionOffset = 0;
-		lastKeySetSC.Reset();
-	}
-	else if (!ks.IsPureModifier()) {
-		// not a modifier
-		if ((ks == lastKeySetSC) && (ks.KeySC() >= 0)) {
-			actionOffset_SC++;
-			tmpActionOffset = actionOffset_SC;
-		}
-		else {
-			tmpActionOffset = 0;
-		}
-	}
-
-	const CKeyBindings::ActionList& al = keyBindings.GetActionListSC(ks);
-	for (int ali = 0; ali < (int)al.size(); ++ali) {
-		const int actionIndex = (ali + tmpActionOffset) % (int)al.size(); //????
-		const Action& action = al[actionIndex];
-		if (SetActiveCommandSC(action, ks, actionIndex)) {
-			return true;
-		}
-	}
-
-	return KeyPressed(keySym, isRepeat);
 }
 
 
@@ -2059,179 +2011,8 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 	return false;	// couldn't find a match
 }
 
-bool CGuiHandler::SetActiveCommandSC(const Action& action,	const CKeySetSC& ks, int actionIndex)
-{
-	if (ProcessLocalActions(action)) {
-		return true;
-	}
 
-	// See if we have a positional icon command
-	int iconCmd = -1;
-	if (!action.extra.empty() && (action.command == "iconpos")) {
-		const int iconSlot = ParseIconSlot(action.extra);
-		iconCmd = GetIconPosCommand(iconSlot);
-	}
-
-	for (size_t a = 0; a < commands.size(); ++a) {
-		SCommandDescription& cmdDesc = commands[a];
-
-		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command))
-			continue; // not a match
-
-		if (cmdDesc.disabled)
-			continue; // can not use this command
-
-		const int cmdType = cmdDesc.type;
-
-		// set the activePage
-		if (!cmdDesc.hidden &&
-			(((cmdType == CMDTYPE_ICON) &&
-				((cmdDesc.id < 0) ||
-					(cmdDesc.id == CMD_STOCKPILE))) ||
-				(cmdType == CMDTYPE_ICON_MODE) ||
-				(cmdType == CMDTYPE_ICON_BUILDING))) {
-			for (int ii = 0; ii < iconsCount; ii++) {
-				if (icons[ii].commandsID == static_cast<int>(a)) {
-					activePage = std::min(maxPage, (ii / iconsPerPage));
-					selectedUnitsHandler.SetCommandPage(activePage);
-				}
-			}
-		}
-
-		switch (cmdType) {
-		case CMDTYPE_ICON: {
-			Command c(cmdDesc.id);
-			if ((cmdDesc.id < 0) || (cmdDesc.id == CMD_STOCKPILE)) {
-				if (action.extra == "+5") {
-					c.SetOpts(SHIFT_KEY);
-				}
-				else if (action.extra == "+20") {
-					c.SetOpts(CONTROL_KEY);
-				}
-				else if (action.extra == "+100") {
-					c.SetOpts(SHIFT_KEY | CONTROL_KEY);
-				}
-				else if (action.extra == "-1") {
-					c.SetOpts(RIGHT_MOUSE_KEY);
-				}
-				else if (action.extra == "-5") {
-					c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY);
-				}
-				else if (action.extra == "-20") {
-					c.SetOpts(RIGHT_MOUSE_KEY | CONTROL_KEY);
-				}
-				else if (action.extra == "-100") {
-					c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY);
-				}
-			}
-			else if (action.extra.find("queued") != std::string::npos) {
-				c.SetOpts(c.GetOpts() | SHIFT_KEY);
-			}
-			GiveCommand(c);
-			break;
-		}
-		case CMDTYPE_ICON_MODE: {
-			int newMode;
-
-			if (!action.extra.empty() && (iconCmd < 0)) {
-				newMode = atoi(action.extra.c_str());
-			}
-			else {
-				newMode = atoi(cmdDesc.params[0].c_str()) + 1;
-			}
-
-			if ((newMode < 0) || ((size_t)newMode > (cmdDesc.params.size() - 2)))
-				newMode = 0;
-
-			// not really required
-			char t[16];
-			SNPRINTF(t, sizeof(t), "%d", newMode);
-			cmdDesc.params[0] = t;
-
-			GiveCommand(Command(cmdDesc.id, 0, newMode));
-			forceLayoutUpdate = true;
-			break;
-		}
-		case CMDTYPE_NUMBER: {
-			if (!action.extra.empty()) {
-				const SCommandDescription& cd = cmdDesc;
-
-				float value = atof(action.extra.c_str());
-				float minV = 0.0f;
-				float maxV = 100.0f;
-
-				if (!cd.params.empty())
-					minV = atof(cd.params[0].c_str());
-				if (cd.params.size() >= 2)
-					maxV = atof(cd.params[1].c_str());
-
-				value = std::max(std::min(value, maxV), minV);
-				Command c(cd.id, 0, value);
-
-				if (action.extra.find("queued") != std::string::npos)
-					c.SetOpts(SHIFT_KEY);
-
-				GiveCommand(c);
-				break;
-			}
-			else {
-				// fall through
-			}
-		}
-		case CMDTYPE_ICON_MAP:
-		case CMDTYPE_ICON_AREA:
-		case CMDTYPE_ICON_UNIT:
-		case CMDTYPE_ICON_UNIT_OR_MAP:
-		case CMDTYPE_ICON_FRONT:
-		case CMDTYPE_ICON_UNIT_OR_AREA:
-		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
-		case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
-			SetShowingMetal(false);
-			actionOffset = actionIndex;
-			lastKeySetSC = ks;
-			inCommand = a;
-			break;
-		}
-		case CMDTYPE_ICON_BUILDING: {
-			const UnitDef* ud = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
-			SetShowingMetal(ud->extractsMetal > 0);
-			actionOffset = actionIndex;
-			lastKeySetSC = ks;
-			inCommand = a;
-			break;
-		}
-		case CMDTYPE_NEXT: {
-			++activePage;
-			if (activePage > maxPage)
-				activePage = 0;
-			selectedUnitsHandler.SetCommandPage(activePage);
-			break;
-		}
-		case CMDTYPE_PREV: {
-			--activePage;
-			if (activePage < 0)
-				activePage = maxPage;
-			selectedUnitsHandler.SetCommandPage(activePage);
-			break;
-		}
-		case CMDTYPE_CUSTOM: {
-			RunCustomCommands(cmdDesc.params, false);
-			break;
-		}
-		default: {
-			lastKeySet.Reset();
-			SetShowingMetal(false);
-			inCommand = a;
-		}
-		}
-		return true; // we used the command
-	}
-
-	return false;	// couldn't find a match
-}
-
-
-bool CGuiHandler::KeyReleased(int key)
+bool CGuiHandler::KeyReleased(int keyCode, int scanCode)
 {
 	return false;
 }

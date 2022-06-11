@@ -61,10 +61,8 @@ void CEventClient::DrawLoadScreen() {}
 void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastline) {}
 
 // from LuaUI
-bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
-bool CEventClient::KeyRelease(int key) { return false; }
-bool CEventClient::KeyPressSC(int keyScanCode, bool isRepeat) { return false; }
-bool CEventClient::KeyReleaseSC(int keyScanCode) { return false; }
+bool CEventClient::KeyPress(int keyCode, int scanCode, bool isRepeat) { return false; }
+bool CEventClient::KeyRelease(int keyCode, int scanCode) { return false; }
 bool CEventClient::TextInput(const std::string& utf8) { return false; }
 bool CEventClient::TextEditing(const std::string& utf8, unsigned int start, unsigned int length) { return false; }
 bool CEventClient::MouseMove(int x, int y, int dx, int dy, int button) { return false; }

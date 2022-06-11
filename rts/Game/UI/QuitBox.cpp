@@ -393,9 +393,9 @@ void CQuitBox::MouseMove(int x, int y, int dx, int dy, int button)
 }
 
 
-bool CQuitBox::KeyPressed(int key, bool isRepeat)
+bool CQuitBox::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 {
-	if (key == SDLK_ESCAPE) {
+	if (keyCode == SDLK_ESCAPE) {
 		delete this;
 		return true;
 	}

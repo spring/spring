@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef KEYCODES_H
-#define KEYCODES_H
+#ifndef SCANCODES_H
+#define SCANCODES_H
 
 #include "IKeys.h"
 
-class CKeyCodes : public IKeys {
+class CScanCodes : public IKeys {
 public:
 
 	bool IsModifier(int code);
@@ -17,6 +17,6 @@ public:
 	static int GetNormalizedSymbol(int sym);
 };
 
-extern CKeyCodes keyCodes;
+extern CScanCodes scanCodes;
 
-#endif /* KEYCODES_H */
+#endif /* SCANCODES_H */
