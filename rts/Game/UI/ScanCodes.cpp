@@ -100,6 +100,24 @@ void CScanCodes::Reset()
 
 	AddPair("sc_comma", SDL_SCANCODE_COMMA, true);
 
+	AddPair("sc_'", SDL_SCANCODE_APOSTROPHE, true);
+	AddPair("sc_apostrophe", SDL_SCANCODE_APOSTROPHE, true);
+
+	AddPair("sc_.", SDL_SCANCODE_PERIOD, true);
+	AddPair("sc_period", SDL_SCANCODE_PERIOD, true);
+
+	AddPair("sc_;", SDL_SCANCODE_SEMICOLON, true);
+	AddPair("sc_semicolon", SDL_SCANCODE_SEMICOLON, true);
+
+	AddPair("sc_[", SDL_SCANCODE_LEFTBRACKET, true);
+	AddPair("sc_leftbracket", SDL_SCANCODE_LEFTBRACKET, true);
+
+	AddPair("sc_]", SDL_SCANCODE_RIGHTBRACKET, true);
+	AddPair("sc_rightbracket", SDL_SCANCODE_RIGHTBRACKET, true);
+
+	AddPair("sc_/", SDL_SCANCODE_SLASH, true);
+	AddPair("sc_slash", SDL_SCANCODE_SLASH, true);
+
 	// (Located in the top left corner (on both ANSI and ISO keyboards).
 	//
 	// Produces GRAVE ACCENT and TILDE in a US Windows layout and in US and UK Mac
