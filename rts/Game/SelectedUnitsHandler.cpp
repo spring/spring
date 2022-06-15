@@ -87,8 +87,6 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	possibleCommandsChanged = false;
 
 	int commandPage = 1000;
-	int foundGroup = -2;
-	int foundGroup2 = -2;
 
 	spring::unordered_map<int, int> states;
 	std::vector<SCommandDescription> commands;
@@ -96,26 +94,17 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	for (const int unitID: selectedUnits) {
 		const CUnit* u = unitHandler.GetUnit(unitID);
 		const CCommandAI* cai = u->commandAI;
-		const CGroup* group = u->GetGroup();
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
-			states[cmdDesc->id] = cmdDesc->disabled ? 2 : 1;
+			// Disable unit commands if we have a group selected.
+			if (cmdDesc->showUnique && selectedUnits.size() > 1)
+				states[cmdDesc->id] = 0;
+			else
+				states[cmdDesc->id] = cmdDesc->disabled ? 2 : 1;
 		}
 
 		if (cai->lastSelectedCommandPage < commandPage)
 			commandPage = cai->lastSelectedCommandPage;
-
-		if (foundGroup == -2 && group != nullptr)
-			foundGroup = group->id;
-
-		if (group == nullptr || foundGroup != group->id)
-			foundGroup = -1;
-
-		if (foundGroup2 == -2 && group != nullptr)
-			foundGroup2 = group->id;
-
-		if (foundGroup2 >= 0 && group != nullptr && group->id != foundGroup2)
-			foundGroup2 = -1;
 	}
 
 	// load the first set (separating build and non-build commands)
@@ -124,17 +113,11 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		const CCommandAI* cai = u->commandAI;
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
-			if (buildIconsFirst) {
-				if (cmdDesc->id >= 0)
-					continue;
-			} else {
-				if (cmdDesc->id <  0)
-					continue;
-			}
-
-			if (cmdDesc->showUnique && selectedUnits.size() > 1)
+			// If the id < 0, it is a build command.
+			if (buildIconsFirst != (cmdDesc->id < 0))
 				continue;
 
+			// Prevent duplicates across different units.
 			if (states[cmdDesc->id] > 0) {
 				commands.push_back(*cmdDesc);
 				states[cmdDesc->id] = 0;
@@ -148,15 +131,7 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		const CCommandAI* cai = u->commandAI;
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
-			if (buildIconsFirst) {
-				if (cmdDesc->id < 0)
-					continue;
-			} else {
-				if (cmdDesc->id >= 0)
-					continue;
-			}
-
-			if (cmdDesc->showUnique && selectedUnits.size() > 1)
+			if (buildIconsFirst != (cmdDesc->id >= 0))
 				continue;
 
 			if (states[cmdDesc->id] > 0) {

@@ -149,9 +149,8 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 }
 
 template<typename int_type = int>
-static inline int_type StringToInt(std::string str, bool* failed = NULL)
+static inline int_type StringToInt(const std::string & str, bool* failed = NULL)
 {
-	StringTrimInPlace(str);
 	std::istringstream stream(str);
 	int_type buffer = 0;
 	stream >> buffer;

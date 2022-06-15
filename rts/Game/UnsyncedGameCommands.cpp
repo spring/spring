@@ -107,32 +107,6 @@
 #include <SDL_events.h>
 #include <SDL_video.h>
 
-
-static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
-	static const char* const SPACE_DELIMS = " \t";
-
-	std::vector<std::string> tokens;
-
-	// Skip delimiters at beginning.
-	std::string::size_type lastPos = text.find_first_not_of(SPACE_DELIMS, 0);
-	// Find first "non-delimiter".
-	std::string::size_type pos     = text.find_first_of(SPACE_DELIMS, lastPos);
-
-	while (std::string::npos != pos || std::string::npos != lastPos) {
-		// Found a token, add it to the vector.
-		tokens.push_back(text.substr(lastPos, pos - lastPos));
-
-		// Skip delimiters.  Note the "not_of"
-		lastPos = text.find_first_not_of(SPACE_DELIMS, pos);
-		// Find next "non-delimiter"
-		pos = text.find_first_of(SPACE_DELIMS, lastPos);
-	}
-
-	return tokens;
-}
-
-
-
 namespace { // prevents linking problems in case of duplicate symbols
 
 /**
@@ -259,10 +233,14 @@ public:
 			return true;
 		}
 
-		int smfMeshDrawerArg = -1;
-		int roamPatchModeArg = -1;
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
+		bool parseFailure;
 
-		sscanf((action.GetArgs()).c_str(), "%i %i", &smfMeshDrawerArg, &roamPatchModeArg);
+		int smfMeshDrawerArg = (args.size() > 0) ? StringToInt(args[0], &parseFailure) : -1.0;
+		if (parseFailure) smfMeshDrawerArg = -1.0;
+
+		int roamPatchModeArg = (args.size() > 1) ? StringToInt(args[1], &parseFailure) : -1.0;
+		if (parseFailure) roamPatchModeArg = -1.0;
 
 		smfDrawer->SwitchMeshDrawer(smfMeshDrawerArg);
 
@@ -331,13 +309,13 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		std::istringstream buf(action.GetArgs() + " 0.0 0.0");
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
 
 		float& pofs = (readMap->GetGroundDrawer())->spPolygonOffsetScale;
 		float& pofu = (readMap->GetGroundDrawer())->spPolygonOffsetUnits;
 
-		buf >> pofs;
-		buf >> pofu;
+		pofs = args.size() > 0 ? StringToInt<float>(args[0]) : 0.0;
+		pofu = args.size() > 1 ? StringToInt<float>(args[1]) : 0.0;
 
 		LOG("MapShadowPolygonOffset{Scale,Units}={%f,%f}", pofs, pofu);
 		return true;
@@ -353,13 +331,11 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		int nextWaterRendererMode = 0;
+		bool parseFailure;
+		int nextWaterRendererMode = StringToInt(action.GetArgs(), &parseFailure);
 
-		if (!(action.GetArgs()).empty()) {
-			nextWaterRendererMode = atoi((action.GetArgs()).c_str());
-		} else {
+		if (parseFailure)
 			nextWaterRendererMode = -1;
-		}
 
 		IWater::PushWaterMode(nextWaterRendererMode);
 		return true;
@@ -412,16 +388,25 @@ public:
 		"Forces particular Unit drawer type") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
+		bool parseFailure;
 
-		int prefModelDrawer = -1;
-		int mtModelDrawer = -1;
-		sscanf((action.GetArgs()).c_str(), "%i %i", &prefModelDrawer, &mtModelDrawer);
-
-		if (prefModelDrawer == -1)
+		if (args.size() == 0) {
+			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 			return false;
+		}
 
-		if (mtModelDrawer != -1)
-			CUnitDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+		int prefModelDrawer = StringToInt(args[0], &parseFailure);
+		if (parseFailure) return false;
+
+		if (args.size() > 1) {
+			// Note: there's StringToBool but it always returns something; so
+			// using it would change the code here.
+			int mtModelDrawer = StringToInt(args[1], &parseFailure);
+
+			if (!parseFailure)
+				CUnitDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+		}
 
 		CUnitDrawer::PreferedDrawerTypeRef() = prefModelDrawer;
 
@@ -435,16 +420,25 @@ public:
 		"Forces particular Feature drawer type") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
+		bool parseFailure;
 
-		int prefModelDrawer = -1;
-		int mtModelDrawer = -1;
-		sscanf((action.GetArgs()).c_str(), "%i %i", &prefModelDrawer, &mtModelDrawer);
-
-		if (prefModelDrawer == -1)
+		if (args.size() == 0) {
+			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 			return false;
+		}
 
-		if (mtModelDrawer != -1)
-			CFeatureDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+		int prefModelDrawer = StringToInt(args[0], &parseFailure);
+		if (parseFailure) return false;
+
+		if (args.size() > 1) {
+			// Note: there's StringToBool but it always returns something; so
+			// using it would change the code here.
+			int mtModelDrawer = StringToInt(args[1], &parseFailure);
+
+			if (!parseFailure)
+				CFeatureDrawer::MTDrawerTypeRef() = static_cast<bool>(mtModelDrawer);
+		}
 
 		CFeatureDrawer::PreferedDrawerTypeRef() = prefModelDrawer;
 
@@ -472,19 +466,20 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const std::string::size_type pos = action.GetArgs().find_first_of(' ');
+		auto args = CSimpleParser::Tokenize(action.GetArgs(), 1);
 
-		if (pos != std::string::npos) {
-			const std::string name = action.GetArgs().substr(0, pos);
-			const int playerID = playerHandler.Player(name);
-
-			if (playerID >= 0) {
-				game->SendNetChat(action.GetArgs().substr(pos + 1), playerID);
-			} else {
-				LOG_L(L_WARNING, "/w: Player not found: %s", name.c_str());
-			}
-		} else {
+		if (args.size() == 0) {
 			LOG_L(L_WARNING, "/w: wrong syntax (which is '/w %%playername')");
+			return true;
+		}
+
+		const int playerID = playerHandler.Player(args[0]);
+
+		if (playerID >= 0) {
+			std::string message = (args.size() == 2) ? std::move(args[1]) : "";
+			game->SendNetChat(std::move(message), playerID);
+		} else {
+			LOG_L(L_WARNING, "/w: Player not found: %s", args[0].c_str());
 		}
 
 		return true;
@@ -499,20 +494,26 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const std::string::size_type pos = action.GetArgs().find_first_of(' ');
+		auto args = CSimpleParser::Tokenize(action.GetArgs(), 1);
 
-		if (pos != std::string::npos) {
-			std::istringstream buf(action.GetArgs().substr(0, pos));
-			int playerID;
-			buf >> playerID;
-
-			if (playerID >= 0) {
-				game->SendNetChat(action.GetArgs().substr(pos + 1), playerID);
-			} else {
-				LOG_L(L_WARNING, "Player-ID invalid: %i", playerID);
-			}
-		} else {
+		if (args.size() == 0) {
 			LOG_L(L_WARNING, "/WByNum: wrong syntax (which is '/WByNum %%playerid')");
+			return true;
+		}
+
+		bool parseFailure;
+		const int playerID = StringToInt(args[0], &parseFailure);
+
+		if (parseFailure) {
+			LOG_L(L_WARNING, "/WByNum: wrong syntax (which is '/WByNum %%playerid')");
+			return true;
+		}
+
+		if (playerID >= 0) {
+			std::string message = (args.size() == 2) ? std::move(args[1]) : "";
+			game->SendNetChat(std::move(message), playerID);
+		} else {
+			LOG_L(L_WARNING, "Player-ID invalid: %i", playerID);
 		}
 
 		return true;
@@ -532,46 +533,27 @@ public:
 	}
 };
 
-
-
 class SetActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SetActionExecutor() : IUnsyncedActionExecutor("Set", "Set a config key=value pair") {
-	}
+	SetActionExecutor(bool overlay_) : IUnsyncedActionExecutor(overlay_ ? "TSet" : "Set",
+			std::string("Set a config key=value pair") +
+			(overlay_ ? " in the overlay, meaning it will not be persisted for future games" : "")
+		),
+		overlay(overlay_) {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const std::string::size_type pos = action.GetArgs().find_first_of(' ');
+		auto args = CSimpleParser::Tokenize(action.GetArgs(), 1);
 
-		if (pos != std::string::npos) {
-			const std::string varName = action.GetArgs().substr(0, pos);
-			configHandler->SetString(varName, action.GetArgs().substr(pos+1));
-		} else {
-			LOG_L(L_WARNING, "/set: wrong syntax (which is '/set %%cfgtag %%cfgvalue')");
+		if (args.size() != 2) {
+			LOG_L(L_WARNING, "/%s: wrong syntax (which is '/%s %%cfgtag %%cfgvalue')", GetCommand().c_str(), GetCommand().c_str());
+			return true;
 		}
+		configHandler->SetString(args[0], args[1], overlay);
 		return true;
 	}
-};
 
-
-
-class SetOverlayActionExecutor : public IUnsyncedActionExecutor {
-public:
-	SetOverlayActionExecutor() : IUnsyncedActionExecutor("TSet",
-			"Set a config key=value pair in the overlay, meaning it will not be"
-			" persisted for future games") {}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		const std::string::size_type pos = action.GetArgs().find_first_of(' ');
-
-		if (pos != std::string::npos) {
-			const std::string varName = action.GetArgs().substr(0, pos);
-			configHandler->SetString(varName, action.GetArgs().substr(pos+1), true);
-		} else {
-			LOG_L(L_WARNING, "/tset: wrong syntax (which is '/tset %%cfgtag %%cfgvalue')");
-		}
-
-		return true;
-	}
+private:
+	bool overlay;
 };
 
 
@@ -706,110 +688,116 @@ public:
 		kill = kill_;
 	}
 
-	bool Execute(const UnsyncedAction& action) const final {
-		bool badArgs = false;
+	bool WrongSyntax() const {
+		if (kill) {
+			LOG("description: "
+				"Kill a Skirmish AI controlling a team. The team itself will remain alive "
+				"unless a second argument is given, which specifies an active team "
+				"that will receive all the units of the AI team.");
+			LOG("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
+		} else {
+			// reload
+			LOG("description: "
+				"Reload a Skirmish AI controlling a team."
+				"The team itself will remain alive during the process.");
+			LOG("usage:   /%s teamToReload", GetCommand().c_str());
+		}
+		return true;
+	}
 
+	bool Execute(const UnsyncedAction& action) const final {
 		const CPlayer* fromPlayer     = playerHandler.Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != nullptr) ? fromPlayer->team : -1;
 
 		const bool cheating           = gs->cheatEnabled;
 		const bool singlePlayer       = (playerHandler.ActivePlayers() <= 1);
 
-		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs());
 		const std::string actionName  = StringToLower(GetCommand()).substr(2);
 
-		if (!args.empty()) {
-			size_t skirmishAIId = 0; // will only be used if !badArgs
-			bool share = false;
+		if (args.empty()) {
+			LOG_L(L_WARNING, "/%s: missing mandatory argument \"teamTo%s\"", GetCommand().c_str(), actionName.c_str());
+			return WrongSyntax();
+		}
 
-			int teamToReceiveUnitsId = -1;
-			int teamToKillId = atoi(args[0].c_str());
+		bool parseFailure;
 
-			if ((args.size() >= 2) && kill) {
-				teamToReceiveUnitsId = atoi(args[1].c_str());
-				share = true;
-			}
+		// Parse first argument (team to reload/kill)
+		int teamToKillId = StringToInt(args[0], &parseFailure);
+		CTeam* teamToKill = (!parseFailure && teamHandler.IsActiveTeam(teamToKillId))? teamHandler.Team(teamToKillId) : nullptr;
 
-			CTeam* teamToKill = (teamHandler.IsActiveTeam(teamToKillId))? teamHandler.Team(teamToKillId) : nullptr;
-			const CTeam* teamToReceiveUnits = (teamHandler.IsActiveTeam(teamToReceiveUnitsId))? teamHandler.Team(teamToReceiveUnitsId): nullptr;
+		// Validate first argument
+		if (parseFailure || teamToKill == nullptr) {
+			LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
+			return WrongSyntax();
+		}
 
-			if (teamToKill == nullptr) {
-				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
-				badArgs = true;
-			}
-			if (share && teamToReceiveUnits == nullptr) {
+		// Parse second argument if needed (team to receive units)
+		bool share = false;
+		int teamToReceiveUnitsId = -1;
+
+		if ((args.size() >= 2) && kill) {
+			share = true;
+			teamToReceiveUnitsId = StringToInt(args[1], &parseFailure);
+
+			// Validate second argument
+			if (parseFailure || !teamHandler.IsActiveTeam(teamToReceiveUnitsId)) {
 				LOG_L(L_WARNING, "Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
-				badArgs = true;
+				return WrongSyntax();
 			}
-			if (!badArgs && skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId).empty()) {
-				LOG_L(L_WARNING, "Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
-				badArgs = true;
+		}
+
+		// Additional checks over first parameter.
+		if (skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId).empty()) {
+			LOG_L(L_WARNING, "Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+			return WrongSyntax();
+		}
+
+		const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
+		if (teamAIs.empty()) {
+			LOG_L(L_WARNING, "Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+			return WrongSyntax();
+		}
+
+		size_t skirmishAIId = teamAIs[0];
+		if (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
+			LOG_L(L_WARNING, "Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
+			return WrongSyntax();
+		}
+
+		{
+			const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToKillId);
+			const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
+			const bool weAreLeader  = (teamToKill->GetLeader() == gu->myPlayerNum);
+
+			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
+				LOG_L(L_WARNING, "Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
+						actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
+				return WrongSyntax();
+			}
+		}
+
+		if (teamToKill->isDead) {
+			LOG_L(L_WARNING, "Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
+			return WrongSyntax();
+		}
+
+		// Execute the command
+		if (kill) {
+			if (share) {
+				clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+				// when the AIs team has no units left,
+				// the AI will be destroyed automatically
 			} else {
-				const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
-				if (!teamAIs.empty()) {
-					skirmishAIId = teamAIs[0];
-				} else {
-					LOG_L(L_WARNING, "Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
-					badArgs = true;
-				}
-			}
-			if (!badArgs && skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
-				LOG_L(L_WARNING, "Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
-				badArgs = true;
-			}
-			if (!badArgs) {
-				const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToKillId);
-				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
-				const bool weAreLeader  = (teamToKill->GetLeader() == gu->myPlayerNum);
-
-				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-					LOG_L(L_WARNING, "Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
-							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
-					badArgs = true;
-				}
-			}
-			if (!badArgs && teamToKill->isDead) {
-				LOG_L(L_WARNING, "Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
-				badArgs = true;
-			}
-
-			if (!badArgs) {
-				if (kill) {
-					if (share) {
-						clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
-						// when the AIs team has no units left,
-						// the AI will be destroyed automatically
-					} else {
-						if (skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId))
-							skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 3 /* = AI killed */);
-					}
-				} else {
-					// reload
-					clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
-				}
-
-				LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
+				if (skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId))
+					skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 3 /* = AI killed */);
 			}
 		} else {
-			LOG_L(L_WARNING, "/%s: missing mandatory argument \"teamTo%s\"", GetCommand().c_str(), actionName.c_str());
-			badArgs = true;
+			// reload
+			clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 		}
 
-		if (badArgs) {
-			if (kill) {
-				LOG("description: "
-					"Kill a Skirmish AI controlling a team. The team itself will remain alive "
-					"unless a second argument is given, which specifies an active team "
-					"that will receive all the units of the AI team.");
-				LOG("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
-			} else {
-				// reload
-				LOG("description: "
-					"Reload a Skirmish AI controlling a team."
-					"The team itself will remain alive during the process.");
-				LOG("usage:   /%s teamToReload", GetCommand().c_str());
-			}
-		}
+		LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
 
 		return true;
 	}
@@ -828,6 +816,14 @@ public:
 	) {
 	}
 
+	bool WrongSyntax() const {
+		LOG("description: Let a Skirmish AI take over control of a team.");
+		LOG("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", GetCommand().c_str());
+		LOG("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", GetCommand().c_str());
+
+		return true;
+	}
+
 	bool Execute(const UnsyncedAction& action) const final {
 		bool badArgs = false;
 
@@ -837,101 +833,96 @@ public:
 		const bool cheating           = gs->cheatEnabled;
 		const bool singlePlayer       = (playerHandler.ActivePlayers() <= 1);
 
-		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs());
 
-		if (!args.empty()) {
-			std::string aiShortName;
-			std::string aiVersion;
-			std::string aiName;
-			spring::unordered_map<std::string, std::string> aiOptions;
-
-			const int teamToControlId = atoi(args[0].c_str());
-			const CTeam* teamToControl = teamHandler.IsActiveTeam(teamToControlId) ?
-				teamHandler.Team(teamToControlId) : nullptr;
-
-			if (args.size() >= 2) {
-				aiShortName = args[1];
-			} else {
-				LOG_L(L_WARNING, "/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
-			}
-
-			if (args.size() >= 3)
-				aiVersion = args[2];
-
-			if (args.size() >= 4)
-				aiName = args[3];
-
-			if (teamToControl == nullptr) {
-				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
-				badArgs = true;
-			}
-			if (!badArgs) {
-				const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToControlId);
-				const bool weAreLeader  = (teamToControl->GetLeader() == gu->myPlayerNum);
-				const bool noLeader     = (!teamToControl->HasLeader());
-
-				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
-					LOG_L(L_WARNING, "Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
-							fromPlayer->name.c_str(), teamToControlId);
-					badArgs = true;
-				}
-			}
-			if (!badArgs && teamToControl->isDead) {
-				LOG_L(L_WARNING, "Team to control: is a dead team: %i", teamToControlId);
-				badArgs = true;
-			}
-			// TODO remove this, if support for multiple Skirmish AIs per team is in place
-			if (!badArgs && (!skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).empty())) {
-				LOG_L(L_WARNING, "Team to control: there is already an AI controlling this team: %i", teamToControlId);
-				badArgs = true;
-			}
-			if (!badArgs && (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != nullptr)) {
-				LOG_L(L_WARNING, "Team to control: there is already an AI beeing created for team: %i", teamToControlId);
-				badArgs = true;
-			}
-			if (!badArgs) {
-				const spring::unordered_set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
-				if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
-					LOG_L(L_WARNING, "Team to control: it is currently not supported to initialize Lua AIs mid-game");
-					badArgs = true;
-				}
-			}
-
-			if (!badArgs) {
-				SkirmishAIKey aiKey(aiShortName, aiVersion);
-				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
-
-				if ((badArgs = aiKey.IsUnspecified())) {
-					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s", aiShortName.c_str(), aiVersion.c_str());
-				} else {
-					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
-
-					SkirmishAIData aiData;
-					aiData.name       = !aiName.empty() ? aiName : aiShortName;
-					aiData.team       = teamToControlId;
-					aiData.hostPlayer = gu->myPlayerNum;
-					aiData.shortName  = aiShortName;
-					aiData.version    = aiVersion;
-
-					for (const auto& opt: aiOptions)
-						aiData.optionKeys.push_back(opt.first);
-
-					aiData.options = aiOptions;
-					aiData.isLuaAI = aiLibInfo.IsLuaAI();
-
-					skirmishAIHandler.NetCreateLocalSkirmishAI(aiData);
-				}
-			}
-		} else {
+		if (args.size() < 2) {
 			LOG_L(L_WARNING, "/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", GetCommand().c_str());
-			badArgs = true;
+			return WrongSyntax();
 		}
 
-		if (badArgs) {
-			LOG("description: Let a Skirmish AI take over control of a team.");
-			LOG("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", GetCommand().c_str());
-			LOG("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", GetCommand().c_str());
+		bool parseFailure;
+
+		// Note: this seems unused.
+		spring::unordered_map<std::string, std::string> aiOptions;
+
+		// First parameter
+		const int teamToControlId = StringToInt(args[0], &parseFailure);
+		const CTeam* teamToControl = (!parseFailure && teamHandler.IsActiveTeam(teamToControlId)) ? teamHandler.Team(teamToControlId) : nullptr;
+		if (teamToControl == nullptr) {
+			LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
+			return WrongSyntax();
 		}
+
+		// Second parameter
+		std::string aiShortName = args[1];
+
+		// Optional parameters
+		std::string aiVersion;
+		if (args.size() >= 3)
+			aiVersion = args[2];
+
+		std::string aiName;
+		if (args.size() >= 4)
+			aiName = args[3];
+
+		// Note: Shouldn't we parse options here..?
+
+		{
+			const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToControlId);
+			const bool weAreLeader  = (teamToControl->GetLeader() == gu->myPlayerNum);
+			const bool noLeader     = (!teamToControl->HasLeader());
+
+			if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
+				LOG_L(L_WARNING, "Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
+						fromPlayer->name.c_str(), teamToControlId);
+				return WrongSyntax();
+			}
+		}
+		if (teamToControl->isDead) {
+			LOG_L(L_WARNING, "Team to control: is a dead team: %i", teamToControlId);
+			return WrongSyntax();
+		}
+		// TODO remove this, if support for multiple Skirmish AIs per team is in place
+		if (!skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).empty()) {
+			LOG_L(L_WARNING, "Team to control: there is already an AI controlling this team: %i", teamToControlId);
+			return WrongSyntax();
+		}
+		if (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != nullptr) {
+			LOG_L(L_WARNING, "Team to control: there is already an AI beeing created for team: %i", teamToControlId);
+			return WrongSyntax();
+		}
+
+		const spring::unordered_set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+		if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
+			LOG_L(L_WARNING, "Team to control: it is currently not supported to initialize Lua AIs mid-game");
+			return WrongSyntax();
+		}
+
+		SkirmishAIKey aiKey(aiShortName, aiVersion);
+		aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
+
+		if (aiKey.IsUnspecified()) {
+			LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s", aiShortName.c_str(), aiVersion.c_str());
+			return WrongSyntax();
+		}
+
+		// Execute command
+		const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+
+		SkirmishAIData aiData;
+		aiData.name       = !aiName.empty() ? aiName : aiShortName;
+		aiData.team       = teamToControlId;
+		aiData.hostPlayer = gu->myPlayerNum;
+		aiData.shortName  = aiShortName;
+		aiData.version    = aiVersion;
+
+		for (const auto& opt: aiOptions)
+			aiData.optionKeys.push_back(opt.first);
+
+		aiData.options = aiOptions;
+		aiData.isLuaAI = aiLibInfo.IsLuaAI();
+
+		skirmishAIHandler.NetCreateLocalSkirmishAI(aiData);
 
 		return true;
 	}
@@ -992,9 +983,10 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const int teamId = atoi(action.GetArgs().c_str());
+		bool parseFailure;
+		const int teamId = StringToInt(action.GetArgs(), &parseFailure);
 
-		if (teamHandler.IsValidTeam(teamId)) {
+		if (!parseFailure && teamHandler.IsValidTeam(teamId)) {
 			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
 			LOG_L(L_WARNING, "[%s] team %d does not exist", __func__, teamId);
@@ -1037,9 +1029,10 @@ public:
 		if (!gu->spectating)
 			return false;
 
-		const int teamId = atoi(action.GetArgs().c_str());
+		bool parseFailure;
+		const int teamId = StringToInt(action.GetArgs(), &parseFailure);
 
-		if (!teamHandler.IsValidTeam(teamId))
+		if (parseFailure || !teamHandler.IsValidTeam(teamId))
 			return false;
 
 		gu->myTeam = teamId;
@@ -1070,7 +1063,7 @@ public:
 			return false;
 
 		if (!action.GetArgs().empty()) {
-			const int mode = atoi(action.GetArgs().c_str());
+			const int mode = StringToInt(action.GetArgs());
 			gu->spectatingFullView   = !!(mode & 1);
 			gu->spectatingFullSelect = !!(mode & 2);
 		} else {
@@ -1096,28 +1089,38 @@ public:
 	) {
 	}
 
+	bool WrongSyntax() const {
+		LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
+		return true;
+	}
+
 	bool Execute(const UnsyncedAction& action) const final {
 		if (gu->spectating)
 			return false;
 
-		if (!action.GetArgs().empty()) {
-			if (!gameSetup->fixedAllies) {
-				std::istringstream is(action.GetArgs());
-				int otherAllyTeam = -1;
-				is >> otherAllyTeam;
-				int state = -1;
-				is >> state;
-
-				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					clientNet->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
-				else
-					LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
-			} else {
-				LOG_L(L_WARNING, "In-game alliances are not allowed");
-			}
-		} else {
-			LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
+		if (gameSetup->fixedAllies) {
+			LOG_L(L_WARNING, "In-game alliances are not allowed");
+			return true;
 		}
+
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
+		if (args.size() < 2)
+			return WrongSyntax();
+
+		bool parseFailure;
+
+		int otherAllyTeam = StringToInt(args[0], &parseFailure);
+		if (parseFailure)
+			return WrongSyntax();
+
+		int state = StringToInt(args[1], &parseFailure);
+		if (parseFailure)
+			return WrongSyntax();
+
+		if (!(state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam))
+			return WrongSyntax();
+
+		clientNet->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 
 		return true;
 	}
@@ -1246,31 +1249,23 @@ private:
 };
 
 
-
-// TODO merge together with "TrackOff" to "Track 0|1", and deprecate the two old ones
 class TrackActionExecutor : public IUnsyncedActionExecutor {
 public:
-	TrackActionExecutor() : IUnsyncedActionExecutor("Track", "Start following the selected unit(s) with the camera") {
-	}
+	TrackActionExecutor() : IUnsyncedActionExecutor("Track",
+			"Start/stop following the selected unit(s) with the camera") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		unitTracker.Track();
+		bool enableTracking = unitTracker.Enabled();
+		InverseOrSetBool(enableTracking, action.GetArgs());
+
+		if (enableTracking)
+			unitTracker.Track();
+		else
+			unitTracker.Disable();
+
 		return true;
 	}
 };
-
-class TrackOffActionExecutor : public IUnsyncedActionExecutor {
-public:
-	TrackOffActionExecutor() : IUnsyncedActionExecutor("TrackOff", "Stop following the selected unit(s) with the camera") {
-	}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		unitTracker.Disable();
-		return true;
-	}
-};
-
-
 
 class TrackModeActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -1308,18 +1303,22 @@ public:
 
 class DebugActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugActionExecutor() : IUnsyncedActionExecutor("Debug", "Enable/Disable debug rendering mode") {
-	}
+	DebugActionExecutor() : IUnsyncedActionExecutor("Debug", "Enable/Disable debug rendering mode") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		// toggle
+		bool drawDebug = !globalRendering->drawDebug;
+		bool draw4Real = drawDebug;
 
-		int drawDebug = static_cast<int>(!globalRendering->drawDebug);
-		int draw4Real = static_cast<int>(drawDebug);
+		if (!action.GetArgs().empty()) {
+			auto args = CSimpleParser::Tokenize(action.GetArgs());
 
-		sscanf(action.GetArgs().c_str(), "%d %d", &drawDebug, &draw4Real);
+			if (args.size() > 0)
+				drawDebug = StringToBool(args[0]);
+			if (args.size() > 1)
+				draw4Real = StringToBool(args[1]);
+		}
 
-		globalRendering->drawDebug = static_cast<bool>(drawDebug);
+		globalRendering->drawDebug = drawDebug;
 
 		if (draw4Real && globalRendering->drawDebug)
 			ProfileDrawer::SetEnabled(true );
@@ -1344,24 +1343,29 @@ public:
 
 class DebugGLActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug-context output") {
-	}
+	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug-context output") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		// append zeros so all args can be safely omitted
-
-		int32_t enabled = -1;
+		bool enabled = !globalRendering->glDebug;
 		uint32_t msgSrceIdx = 0;
 		uint32_t msgTypeIdx = 0;
 		uint32_t msgSevrIdx = 0;
 
-		!!sscanf(action.GetArgs().c_str(), "%d %u %u %u", &enabled, &msgSrceIdx, &msgTypeIdx, &msgSevrIdx);
-		if (enabled == -1)
-			globalRendering->glDebug = !globalRendering->glDebug;
-		else
-			globalRendering->glDebug = static_cast<bool>(enabled);
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
 
+		if (args.size() > 0)
+			enabled = StringToBool(args[0]);
+
+		if (args.size() > 1)
+			msgSrceIdx = StringToInt(args[1]);
+		if (args.size() > 2)
+			msgTypeIdx = StringToInt(args[2]);
+		if (args.size() > 3)
+			msgSevrIdx = StringToInt(args[3]);
+
+		globalRendering->glDebug = enabled;
 		globalRendering->ToggleGLDebugOutput(msgSrceIdx, msgTypeIdx, msgSevrIdx);
+
 		return true;
 	}
 };
@@ -1409,26 +1413,29 @@ public:
 	SoundChannelEnableActionExecutor() : IUnsyncedActionExecutor(
 		"SoundChannelEnable",
 		"Enable/Disable specific sound channels: UnitReply, General, Battle, UserInterface, Music"
-	) {
-	}
+	) {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		std::string channel;
-		std::istringstream buf(action.GetArgs());
-		int enable;
-		buf >> channel;
-		buf >> enable;
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
+
+		if (args.size() < 2) {
+			LOG_L(L_WARNING, "/%s: wrong syntax (which is '/%s channelName 0/1')", GetCommand().c_str(), GetCommand().c_str());
+			return true;
+		}
+
+		std::string channel = std::move(args[0]);
+		bool enable = StringToBool(args[1]);
 
 		if (channel == "UnitReply")
-			Channels::UnitReply->Enable(enable != 0);
+			Channels::UnitReply->Enable(enable);
 		else if (channel == "General")
-			Channels::General->Enable(enable != 0);
+			Channels::General->Enable(enable);
 		else if (channel == "Battle")
-			Channels::Battle->Enable(enable != 0);
+			Channels::Battle->Enable(enable);
 		else if (channel == "UserInterface")
-			Channels::UserInterface->Enable(enable != 0);
+			Channels::UserInterface->Enable(enable);
 		else if (channel == "Music")
-			Channels::BGMusic->Enable(enable != 0);
+			Channels::BGMusic->Enable(enable);
 		else
 			LOG_L(L_WARNING, "/%s: wrong channel name \"%s\"", GetCommand().c_str(), channel.c_str());
 
@@ -1497,7 +1504,7 @@ class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor(
 		"SpeedControl",
-		"Sets how server adjusts speed according to player's CPU load, 1: use average, 2: use highest"
+		"Sets how server adjusts speed according to player's CPU load, 1: use average, 0: use highest"
 	) {
 	}
 
@@ -1508,11 +1515,11 @@ public:
 		int speedCtrl = game->speedControl;
 
 		if (action.GetArgs().empty()) {
-			// switch to next value
-			speedCtrl = mix(1, 2, speedCtrl == 1);
+			// switch to next value (0 <-> 1);
+			speedCtrl = (speedCtrl == 0) ? 1 : 0;
 		} else {
 			// set value
-			speedCtrl = Clamp(atoi(action.GetArgs().c_str()), 1, 2);
+			speedCtrl = Clamp(StringToInt(action.GetArgs()), 0, 1);
 		}
 
 		// constrain to bounds
@@ -1527,8 +1534,7 @@ public:
 	LuaGarbageCollectControlExecutor() : IUnsyncedActionExecutor(
 		"LuaGCControl",
 		"Toggle between 1/f and 30/s Lua garbage collection rate"
-	) {
-	}
+	) {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		constexpr const char* strs[] = {"1/f", "30/s"};
@@ -1536,7 +1542,7 @@ public:
 		const std::string& args = action.GetArgs();
 
 		if (!args.empty()) {
-			LOG("Lua garbage collection rate: %s", strs[game->luaGCControl = Clamp(atoi(args.c_str()), 0, 1)]);
+			LOG("Lua garbage collection rate: %s", strs[game->luaGCControl = Clamp(StringToInt(args), 0, 1)]);
 		} else {
 			LOG("Lua garbage collection rate: %s", strs[game->luaGCControl = 1 - game->luaGCControl]);
 		}
@@ -1587,7 +1593,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const bool enable = (atoi(action.GetArgs().c_str()) != 0);
+		const bool enable = StringToBool(action.GetArgs());
 		mouse->ToggleHwCursor(enable);
 		configHandler->Set("HardwareCursor", enable);
 		LogSystemStatus("Hardware mouse-cursor", enable);
@@ -1603,12 +1609,9 @@ public:
 			"Switches fullscreen mode") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		bool b;
-		if (!action.GetArgs().empty()) {
-			b = (atoi(action.GetArgs().c_str()) != 0);
-		} else {
-			b = !globalRendering->fullScreen;
-		}
+		bool b = globalRendering->fullScreen;
+		InverseOrSetBool(b, action.GetArgs());
+
 		configHandler->Set("Fullscreen", b);
 		return true;
 	}
@@ -1651,7 +1654,7 @@ public:
 			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
 			return false;
 		}
-		detail = atoi((action.GetArgs()).c_str());
+		detail = StringToInt((action.GetArgs()).c_str());
 
 		readMap->GetGroundDrawer()->SetDetail(detail);
 		return true;
@@ -1667,7 +1670,6 @@ public:
 			"Increases the density of clouds (lower performance)") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-
 		sky->IncreaseCloudDensity();
 		ReportCloudDensity();
 		return true;
@@ -1679,14 +1681,12 @@ public:
 };
 
 
-
 class LessCloudsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	LessCloudsActionExecutor() : IUnsyncedActionExecutor("LessClouds",
 			"Decreases the density of clouds (higher performance)") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
-
 		sky->DecreaseCloudDensity();
 		MoreCloudsActionExecutor::ReportCloudDensity();
 		return true;
@@ -1696,8 +1696,7 @@ public:
 
 class FeatureFadeDistActionExecutor : public IUnsyncedActionExecutor {
 public:
-	FeatureFadeDistActionExecutor(): IUnsyncedActionExecutor("FeatureFadeDistance", "") {
-	}
+	FeatureFadeDistActionExecutor(): IUnsyncedActionExecutor("FeatureFadeDistance", "") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		featureDrawer->ConfigNotify(action.GetCmd(), action.GetArgs());
@@ -1707,15 +1706,13 @@ public:
 
 class FeatureDrawDistActionExecutor : public IUnsyncedActionExecutor {
 public:
-	FeatureDrawDistActionExecutor(): IUnsyncedActionExecutor("FeatureDrawDistance", "") {
-	}
+	FeatureDrawDistActionExecutor(): IUnsyncedActionExecutor("FeatureDrawDistance", "") {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		featureDrawer->ConfigNotify(action.GetCmd(), action.GetArgs());
 		return true;
 	}
 };
-
 
 
 class SpeedUpActionExecutor : public IUnsyncedActionExecutor {
@@ -1748,8 +1745,7 @@ public:
 	SlowDownActionExecutor() : IUnsyncedActionExecutor(
 		"SlowDown",
 		"Decreases the simulation speed. The engine will try to simulate less frames per second"
-	) {
-	}
+	) {}
 
 	bool Execute(const UnsyncedAction& action) const final {
 		int index = 0;
@@ -1782,10 +1778,10 @@ public:
 		if ((action.GetArgs()).empty())
 			return false;
 
-		const float speed = atof((action.GetArgs()).c_str());
+		bool parseFailure;
+		const float speed = StringToInt<float>(action.GetArgs(), &parseFailure);
 
-		// atof converts non-float strings to 0.0, can be ignored
-		if (speed <= 0.0)
+		if (parseFailure || speed <= 0.0)
 			return false;
 
 		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
@@ -2105,12 +2101,13 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		auto args = _local_strSpaceTokenize(action.GetArgs());
+		auto args = CSimpleParser::Tokenize(action.GetArgs());
 
 		if (args.size() == 0) {
 			TakeScreenshot("", 80);
 		} else {
 			int quality = args.size() > 1 ? StringToInt(args[1]) : 80;
+			LOG_L(L_WARNING, "/%s: quality = %d", GetCommand().c_str(), quality);
 			quality = std::clamp(quality, 1, 99);
 			TakeScreenshot(args[0], quality);
 		}
@@ -2135,7 +2132,7 @@ public:
 			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
 			const bool preState = globalRendering->GetWindowInputGrabbing();
-			const bool reqState = static_cast<bool>(atoi(args.c_str()));
+			const bool reqState = StringToBool(args);
 			if (reqState != preState)
 				LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(reqState));
 			else
@@ -2180,17 +2177,18 @@ public:
 				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			float size;
-			float alpha;
-			float scale;
+			auto args = CSimpleParser::Tokenize(action.GetArgs());
 
-			const char* args = action.GetArgs().c_str();
-			const int argcount = sscanf(args, "%f %f %f", &size, &alpha, &scale);
+			const float size = StringToInt<float>(args[0]);
 
-			if (argcount > 1)
+			if (args.size() > 1) {
+				const float alpha = StringToInt<float>(args[1]);
 				configHandler->Set("CrossAlpha", mouse->crossAlpha = alpha);
-			if (argcount > 2)
+			}
+			if (args.size() > 2) {
+				const float scale = StringToInt<float>(args[2]);
 				configHandler->Set("CrossMoveScale", mouse->crossMoveScale = scale);
+			}
 
 			mouse->crossSize = size;
 		}
@@ -2240,7 +2238,7 @@ public:
 		if (action.GetArgs().empty()) {
 			globalConfig.teamHighlight = abs(globalConfig.teamHighlight + 1) % CTeamHighlight::HIGHLIGHT_SIZE;
 		} else {
-			globalConfig.teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
+			globalConfig.teamHighlight = abs(StringToInt(action.GetArgs())) % CTeamHighlight::HIGHLIGHT_SIZE;
 		}
 
 		LOG("Team highlighting: %s",
@@ -2332,7 +2330,7 @@ public:
 		if (action.GetArgs().empty()) {
 			verticalSync->Toggle();
 		} else {
-			verticalSync->SetInterval(atoi(action.GetArgs().c_str()));
+			verticalSync->SetInterval(StringToInt(action.GetArgs()));
 		}
 
 		return true;
@@ -2419,7 +2417,7 @@ public:
 		if (args.empty()) {
 			CEndGameBox::enabledMode = (CEndGameBox::enabledMode + 1) % 3;
 		} else {
-			CEndGameBox::enabledMode = std::clamp(atoi(args.c_str()), 0, 2);
+			CEndGameBox::enabledMode = std::clamp(StringToInt(args), 0, 2);
 		}
 		LOG(fmt, strs[CEndGameBox::enabledMode]);
 
@@ -2631,7 +2629,7 @@ public:
 		const char* strs[] = {"disabled", "enabled"};
 
 		if (!args.empty()) {
-			LOG(fmt, strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
+			LOG(fmt, strs[projectileDrawer->EnableSorting(StringToInt(args))]);
 		} else {
 			LOG(fmt, strs[projectileDrawer->ToggleSorting()]);
 		}
@@ -2654,7 +2652,7 @@ public:
 		const char* strs[] = { "disabled", "enabled" };
 
 		if (!args.empty()) {
-			LOG(fmt, strs[projectileDrawer->EnableSoften(atoi(args.c_str()))]);
+			LOG(fmt, strs[projectileDrawer->EnableSoften(StringToInt(args))]);
 		}
 		else {
 			LOG(fmt, strs[projectileDrawer->ToggleSoften()]);
@@ -2678,7 +2676,7 @@ public:
 		const char* strs[] = { "disabled", "enabled" };
 
 		if (!args.empty()) {
-			LOG(fmt, strs[projectileDrawer->EnableDrawOrder(atoi(args.c_str()))]);
+			LOG(fmt, strs[projectileDrawer->EnableDrawOrder(StringToInt(args))]);
 		}
 		else {
 			LOG(fmt, strs[projectileDrawer->ToggleDrawOrder()]);
@@ -2700,7 +2698,7 @@ public:
 		const auto& args = action.GetArgs();
 
 		if (!args.empty()) {
-			projectileHandler.SetMaxParticles(atoi(args.c_str()));
+			projectileHandler.SetMaxParticles(StringToInt(args));
 			LOG("Set maximum particles to: %i", projectileHandler.maxParticles);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2722,7 +2720,7 @@ public:
 		const auto& args = action.GetArgs();
 
 		if (!args.empty()) {
-			projectileHandler.SetMaxNanoParticles(atoi(args.c_str()));
+			projectileHandler.SetMaxNanoParticles(StringToInt(args));
 			LOG("Set maximum nano-particles to: %i", projectileHandler.maxNanoParticles);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2745,7 +2743,7 @@ public:
 		if (args.empty())
 			return false;
 
-		globalRendering->minViewRange = Clamp(strtof(args.c_str(), nullptr), CGlobalRendering::MIN_ZNEAR_DIST, globalRendering->maxViewRange);
+		globalRendering->minViewRange = Clamp(StringToInt<float>(args), CGlobalRendering::MIN_ZNEAR_DIST, globalRendering->maxViewRange);
 		return true;
 	}
 };
@@ -2761,7 +2759,7 @@ public:
 		if (args.empty())
 			return false;
 
-		globalRendering->maxViewRange = Clamp(strtof(args.c_str(), nullptr), globalRendering->minViewRange, CGlobalRendering::MAX_VIEW_RANGE);
+		globalRendering->maxViewRange = Clamp(StringToInt<float>(args), globalRendering->minViewRange, CGlobalRendering::MAX_VIEW_RANGE);
 		return true;
 	}
 };
@@ -2852,7 +2850,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const final {
 		if (!action.GetArgs().empty()) {
-			const int iconDist = atoi(action.GetArgs().c_str());
+			const int iconDist = StringToInt(action.GetArgs());
 			CUnitDrawer::SetUnitIconDist(static_cast<float>(iconDist));
 			configHandler->Set("UnitIconDist", iconDist);
 			LOG("Set UnitIconDist to %i", iconDist);
@@ -2885,7 +2883,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const final
 	{
 		if (!action.GetArgs().empty()) {
-			const float iconScale = (float) atof(action.GetArgs().c_str());
+			const float iconScale = StringToInt<float>(action.GetArgs());
 			unitDrawer->SetUnitIconScaleUI(iconScale);
 			configHandler->Set("UnitIconScaleUI", iconScale);
 			LOG("Set UnitIconScaleUI to %f", iconScale);
@@ -2906,7 +2904,7 @@ public:
 	{
 		if (!action.GetArgs().empty())
 		{
-			const float iconFadeStart = (float) atof(action.GetArgs().c_str());
+			const float iconFadeStart = StringToInt<float>(action.GetArgs());
 			unitDrawer->SetUnitIconFadeStart(iconFadeStart);
 			configHandler->Set("UnitIconFadeStart", iconFadeStart);
 			LOG("Set UnitIconFadeStart to %f", iconFadeStart);
@@ -2927,7 +2925,7 @@ public:
 	{
 		if (!action.GetArgs().empty())
 		{
-			const float iconFadeVanish = (float) atof(action.GetArgs().c_str());
+			const float iconFadeVanish = StringToInt<float>(action.GetArgs());
 			CUnitDrawer::SetUnitIconFadeVanish(iconFadeVanish);
 			configHandler->Set("UnitIconFadeVanish", iconFadeVanish);
 			LOG("Set UnitIconFadeVanish to %f", iconFadeVanish);
@@ -2961,32 +2959,32 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		if (!action.GetArgs().empty()) {
-			const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs(), 0);
+		if (action.GetArgs().empty()) {
+			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
+			return true;
+		}
+		const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs());
 
-			if (args.size() == 2) {
-				const int objType = Clamp(atoi(args[0].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
-				const float lodScale = strtof(args[1].c_str(), nullptr);
+		if (args.size() == 2) {
+			const int objType = Clamp(StringToInt(args[0]), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+			const float lodScale = StringToInt<float>(args[1]);
 
-				LuaObjectDrawer::SetLODScale(objType, lodScale);
-			}
-			else if (args.size() == 3) {
-				const int objType = Clamp(atoi(args[1].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
-				const float lodScale = strtof(args[2].c_str(), nullptr);
+			LuaObjectDrawer::SetLODScale(objType, lodScale);
+		}
+		else if (args.size() == 3) {
+			const int objType = Clamp(StringToInt(args[1]), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+			const float lodScale = StringToInt<float>(args[2]);
 
-				switch (hashString(args[0].c_str())) {
-					case hashString("shadow"): {
-						LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
-					} break;
-					case hashString("reflection"): {
-						LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
-					} break;
-					case hashString("refraction"): {
-						LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
-					} break;
-				}
-			} else {
-				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
+			switch (hashString(args[0].c_str())) {
+				case hashString("shadow"): {
+					LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
+				} break;
+				case hashString("reflection"): {
+					LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
+				} break;
+				case hashString("refraction"): {
+					LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
+				} break;
 			}
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -3117,7 +3115,7 @@ public:
 		const std::string& args = action.GetArgs();
 
 		const spring_time t0 = spring_now();
-		const spring_time t1 = t0 + spring_time((args.empty())? 20.0f * 1000.0f: strtof(args.c_str(), nullptr) * 1000.0f);
+		const spring_time t1 = t0 + spring_time((args.empty() ? 20.0f : StringToInt<float>(args)) * 1000.0f);
 
 		for (spring_time t = t0; t < t1; t = spring_now()) {
 			// prevent compiler from removing this
@@ -3236,18 +3234,18 @@ public:
 
 
 
-class DumpStateActionExecutor: public IUnsyncedActionExecutor {
+class DumpStateActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DumpStateActionExecutor(): IUnsyncedActionExecutor("DumpState", "dump game-state to file") {
+	DumpStateActionExecutor() : IUnsyncedActionExecutor("DumpState", "dump game-state to file") {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case 2: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1,                       false); } break;
-			case 3: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str()),                       false); } break;
-			case 4: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str()), (bool)atoi(args[3].c_str())); } break;
+			case 2: { DumpState(StringToInt(args[0]), StringToInt(args[1]),                    1,                 false); } break;
+			case 3: { DumpState(StringToInt(args[0]), StringToInt(args[1]), StringToInt(args[2]),                 false); } break;
+			case 4: { DumpState(StringToInt(args[0]), StringToInt(args[1]), StringToInt(args[2]), StringToBool(args[3])); } break;
 			default: {
 				LOG_L(L_WARNING, "/DumpState: wrong syntax");
 			} break;
@@ -3270,7 +3268,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		std::vector<std::string> args = _local_strSpaceTokenize(action.GetArgs());
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs());
 
 		switch (args.size()) {
 			case  1: { game->Save("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),                 ""); return  true; } break;
@@ -3583,8 +3581,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SayPrivateActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SayPrivateByPlayerIDActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<EchoActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<SetActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<SetOverlayActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SetActionExecutor>(true));
+	AddActionExecutor(AllocActionExecutor<SetActionExecutor>(false));
 	AddActionExecutor(AllocActionExecutor<EnableDrawInMapActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DrawLabelActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(1));
@@ -3630,7 +3628,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<ChatActionExecutor>("Spec", "s:", true));
 
 	AddActionExecutor(AllocActionExecutor<TrackActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<TrackOffActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<TrackModeActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<PauseActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugActionExecutor>());
