@@ -344,7 +344,6 @@ else (MSVC)
 endif(MSVC)
 
 add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
-add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 
 
 ### our custom OpenMP replacement
