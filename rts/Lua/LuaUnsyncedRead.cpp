@@ -3182,7 +3182,7 @@ namespace {
 int LuaUnsyncedRead::MakeGLDBQuery(lua_State* L)
 {
 	const bool forced = luaL_optboolean(L, 1, false);
-	if (LuaGLDBQuery::object && forced) {
+	if (LuaGLDBQuery::object && !forced) {
 		lua_pushboolean(L, false); //can't make another one (unless forced), old one is not consumed yet
 		return 1;
 	}
