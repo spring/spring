@@ -166,6 +166,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitWeaponDamages);
 	REGISTER_LUA_CFUNC(SetUnitMaxRange);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
+	REGISTER_LUA_CFUNC(AddUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitArmored);
 	REGISTER_LUA_CFUNC(SetUnitLosMask);
 	REGISTER_LUA_CFUNC(SetUnitLosState);
@@ -1878,6 +1879,18 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 		return 0;
 
 	unit->AddExperience(std::max(0.0f, luaL_checkfloat(L, 2)) - unit->experience);
+	return 0;
+}
+
+int LuaSyncedCtrl::AddUnitExperience(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	// can subtract, but the result can't be negative
+	unit->AddExperience(std::max(-unit->experience, luaL_checkfloat(L, 2)));
 	return 0;
 }
 
