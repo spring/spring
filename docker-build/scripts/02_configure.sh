@@ -48,7 +48,7 @@ if [ "${PLATFORM}" == "linux-64" ]; then
         -DLIBUNWIND_INCLUDE_DIRS:PATH=${INCLUDEDIR}
         -DLIBUNWIND_LIBRARY:PATH=${LIBDIR}/libunwind.a
         -DCURL_INCLUDE_DIR:PATH=${INCLUDEDIR}
-        -DCURL_LIBRARY:PATH=${LIBDIR}/libcurl.a
+        -DCURL_LIBRARY:PATH="${LIBDIR}/libcurl.a;${LIBDIR}/libnghttp2.a"
         -DOPENSSL_INCLUDE_DIR:PATH=${INCLUDEDIR}
         -DOPENSSL_SSL_LIBRARY:PATH=${LIBDIR}/libssl.a
         -DOPENSSL_CRYPTO_LIBRARY:PATH=${LIBDIR}/libcrypto.a
