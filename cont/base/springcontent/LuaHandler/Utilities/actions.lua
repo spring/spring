@@ -212,9 +212,7 @@ end
 --
 
 
-local function KeyAction(press, key, mods, isRepeat, _, scanCode)
-	assert(_ == nil, "actionHandler:Foobar() is deprecated, use actionHandler.Foobar()!")
-
+local function KeyAction(press, key, mods, isRepeat, scanCode)
 	local keyset = MakeKeySetString(key, mods, Spring.GetKeySymbol)
 	local scanset = MakeKeySetString(scanCode, mods, Spring.GetScanSymbol)
 
