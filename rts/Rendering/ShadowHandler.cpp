@@ -786,20 +786,20 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 }
 
 float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix44f& projMat, float3& projPos) {
-	// two sides, two points per side (plus one extra for MBS radius)
-	float3 frustumPoints[2 * 2 + 1];
+	float3 frustumPoints[8];
 
 	#if 0
 	{
+		float sqRadius = 0.0f;
 		projPos = CalcShadowProjectionPos(cam, &frustumPoints[0]);
 
 		// calculate radius of the minimally-bounding sphere around projected frustum
-		for (unsigned int n = 0; n < 4; n++) {
-			frustumPoints[4].x = std::max(frustumPoints[4].x, (frustumPoints[n] - projPos).SqLength());
+		for (unsigned int n = 0; n < 8; n++) {
+			sqRadius = std::max(sqRadius, (frustumPoints[n] - projPos).SqLength());
 		}
 
 		const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
-		const float frustumDiameter = std::sqrt(frustumPoints[4].x) * 2.0f;
+		const float frustumDiameter = std::sqrt(sqRadius) * 2.0f;
 
 		return (std::min(maxMapDiameter, frustumDiameter));
 	}
@@ -815,7 +815,7 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix
 		float2 xbounds = {std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
 		float2 zbounds = {std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
 
-		for (unsigned int n = 0; n < 4; n++) {
+		for (unsigned int n = 0; n < 8; n++) {
 			frustumPoints[n] = frustumProjMat * frustumPoints[n];
 
 			xbounds.x = std::min(xbounds.x, frustumPoints[n].x);
@@ -832,38 +832,71 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix
 
 float3 CShadowHandler::CalcShadowProjectionPos(CCamera* cam, float3* frustumPoints)
 {
+	const auto ClipByPlanes = [](const float3& p0, float3& p, const std::initializer_list<float4>& clipPlanes) {
+		float tMin = 1.0f;
+		float3 rayMin;
+
+		for (const auto& clipPlane : clipPlanes) {
+			const float3 ray = (p - p0);
+
+			float denom = clipPlane.dot(ray);
+			if (std::fabs(denom) < 1e-4)
+				continue;
+
+			float t = (clipPlane.w - clipPlane.dot(p0)) / denom;
+			if (t < 0.0f || t > 1.0f)
+				continue;
+
+			if (t < tMin) {
+				tMin = t;
+				rayMin = ray;
+			}
+		}
+
+		if (tMin < 1.0f)
+			p = p0 + rayMin * tMin;
+	};
+
+	static constexpr float T1 = 100.0f;
+	static constexpr float T2 = 200.0f;
+
 	float3 projPos;
-	float2 mapPlanes = {readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f};
+	for (int i = 0; i < 8; ++i)
+		frustumPoints[i] = cam->GetFrustumVert(i);
 
-	const CCamera::FrustumLine* lines = cam->GetNegFrustumLines();
+	const std::initializer_list<float4> nearClipPlanes = {
+		float4{ UpVector, readMap->GetCurrMaxHeight() + T1 },
+		//float4{ RgtVector, -T2 },
+		//float4{ RgtVector, mapDims.mapx * SQUARE_SIZE + T2 },
+		//float4{ FwdVector, -T2 },
+		//float4{ FwdVector, mapDims.mapy * SQUARE_SIZE + T2 }
+	};
+	const std::initializer_list<float4> farClipPlanes = {
+		float4{ UpVector, readMap->GetCurrMinHeight() - T1 },
+		//float4{ RgtVector, -T2 },
+		//float4{ RgtVector, mapDims.mapx * SQUARE_SIZE + T2 },
+		//float4{ FwdVector, -T2 },
+		//float4{ FwdVector, mapDims.mapy * SQUARE_SIZE + T2 }
+	};
 
-	cam->CalcFrustumLines(mapPlanes.x, mapPlanes.y, 1.0f, true);
-	cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
+	for (int i = 0; i < 4; ++i) {
+		//near quadrilateral
+		ClipByPlanes(frustumPoints[4 + i], frustumPoints[i], nearClipPlanes);
+		//far quadrilateral
+		ClipByPlanes(frustumPoints[i], frustumPoints[4 + i],  farClipPlanes);
 
-	// only need points on these lines
-	constexpr unsigned int planes[] = {CCamera::FRUSTUM_PLANE_LFT, CCamera::FRUSTUM_PLANE_RGT};
+		//hard clamp xz
+		frustumPoints[    i].x = std::clamp(frustumPoints[    i].x, -T2, mapDims.mapx * SQUARE_SIZE + T2);
+		frustumPoints[    i].z = std::clamp(frustumPoints[    i].z, -T2, mapDims.mapy * SQUARE_SIZE + T2);
+		frustumPoints[4 + i].x = std::clamp(frustumPoints[4 + i].x, -T2, mapDims.mapx * SQUARE_SIZE + T2);
+		frustumPoints[4 + i].z = std::clamp(frustumPoints[4 + i].z, -T2, mapDims.mapy * SQUARE_SIZE + T2);
 
-	for (unsigned int n = 0; n < 2; n++) {
-		const CCamera::FrustumLine& fl = lines[ planes[n] ];
-
-		// calculate xz-coordinates
-		const float z0 = fl.minz, x0 = fl.base + (fl.dir * z0);
-		const float z1 = fl.maxz, x1 = fl.base + (fl.dir * z1);
-
-		// clamp points to map edges
-		const float cx0 = Clamp(x0, 0.0f, float3::maxxpos);
-		const float cz0 = Clamp(z0, 0.0f, float3::maxzpos);
-		const float cx1 = Clamp(x1, 0.0f, float3::maxxpos);
-		const float cz1 = Clamp(z1, 0.0f, float3::maxzpos);
-
-		frustumPoints[n * 2 + 0] = float3(cx0, mapPlanes.x, cz0); // far-point
-		frustumPoints[n * 2 + 1] = float3(cx1, mapPlanes.x, cz1); // near-point
-
-		projPos += frustumPoints[n * 2 + 0];
-		projPos += frustumPoints[n * 2 + 1];
+		projPos += frustumPoints[i] + frustumPoints[4 + i];
 	}
 
-	return (projPos * 0.25f);
+	projPos *= 0.125f;
+
+	return projPos;
 }
 
 
