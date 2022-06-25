@@ -110,21 +110,10 @@ void CKeyCodes::Reset()
 	AddPair("pagedown", SDLK_PAGEDOWN);
 
 	// Function keys
-	AddPair("f1",  SDLK_F1);
-	AddPair("f2",  SDLK_F2);
-	AddPair("f3",  SDLK_F3);
-	AddPair("f4",  SDLK_F4);
-	AddPair("f5",  SDLK_F5);
-	AddPair("f6",  SDLK_F6);
-	AddPair("f7",  SDLK_F7);
-	AddPair("f8",  SDLK_F8);
-	AddPair("f9",  SDLK_F9);
-	AddPair("f10", SDLK_F10);
-	AddPair("f11", SDLK_F11);
-	AddPair("f12", SDLK_F12);
-	AddPair("f13", SDLK_F13);
-	AddPair("f14", SDLK_F14);
-	AddPair("f15", SDLK_F15);
+	for (int i = 0; i < 12; i++) {
+		AddPair("f" + IntToString(i + 1 ), SDLK_F1  + i);
+		AddPair("f" + IntToString(i + 13), SDLK_F13 + i);
+	}
 
 	// Key state modifier keys
 	//AddPair("numlock", SDLK_NUMLOCK);

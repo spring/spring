@@ -190,21 +190,10 @@ void CScanCodes::Reset()
 	AddPair("sc_pagedown", SDL_SCANCODE_PAGEDOWN);
 
 	// Function keys
-	AddPair("sc_f1",  SDL_SCANCODE_F1);
-	AddPair("sc_f2",  SDL_SCANCODE_F2);
-	AddPair("sc_f3",  SDL_SCANCODE_F3);
-	AddPair("sc_f4",  SDL_SCANCODE_F4);
-	AddPair("sc_f5",  SDL_SCANCODE_F5);
-	AddPair("sc_f6",  SDL_SCANCODE_F6);
-	AddPair("sc_f7",  SDL_SCANCODE_F7);
-	AddPair("sc_f8",  SDL_SCANCODE_F8);
-	AddPair("sc_f9",  SDL_SCANCODE_F9);
-	AddPair("sc_f10", SDL_SCANCODE_F10);
-	AddPair("sc_f11", SDL_SCANCODE_F11);
-	AddPair("sc_f12", SDL_SCANCODE_F12);
-	AddPair("sc_f13", SDL_SCANCODE_F13);
-	AddPair("sc_f14", SDL_SCANCODE_F14);
-	AddPair("sc_f15", SDL_SCANCODE_F15);
+	for (int i = 0; i < 12; i++) {
+		AddPair("sc_f" + IntToString(i + 1 ), SDL_SCANCODE_F1  + i);
+		AddPair("sc_f" + IntToString(i + 13), SDL_SCANCODE_F13 + i);
+	}
 
 	// Key state modifier keys
 	//AddPair("sc_numlock", SDL_SCANCODE_NUMLOCKCLEAR);

@@ -25,6 +25,7 @@ Misc:
    define a bogus custom colvol just to prevent the default sphere.
  - don't warn for archive checksum mismatch if server's checksum is zero
  - 3D and Cubemap .dds textures supported in Lua
+ - add support for f16-f24 scancodes; keycodes awaiting fix in SDL2
 
 -- 105.0 --------------------------------------------------------
 Sim:
