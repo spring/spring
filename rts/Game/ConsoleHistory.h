@@ -22,7 +22,7 @@ protected:
 	bool AddLineRaw(const std::string& msg);
 
 	std::deque<std::string> lines;
-	std::deque<std::string>::iterator pos;
+	std::size_t pos = 0;
 
 	static constexpr unsigned int MAX_LINES = 256;
 };

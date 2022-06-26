@@ -15,7 +15,7 @@ void CConsoleHistory::Init()
 
 void CConsoleHistory::ResetPosition()
 {
-	pos = lines.end();
+	pos = lines.size();
 }
 
 
@@ -44,11 +44,11 @@ bool CConsoleHistory::AddLineRaw(const std::string& msg)
 		return false;
 
 	if (lines.size() >= MAX_LINES) {
-		if (pos != lines.begin()) {
+		if (pos != 0) {
 			lines.pop_front();
 		} else {
 			lines.pop_front();
-			pos = lines.begin();
+			pos = 0;
 		}
 	}
 
@@ -69,27 +69,27 @@ std::string CConsoleHistory::NextLine(const std::string& current)
 		message = current;
 	}
 
-	if (pos == lines.end()) {
+	if (pos == lines.size()) {
 		AddLineRaw(message);
-		pos = lines.end();
+		pos = lines.size();
 		return prefix;
 	}
 
-	if (*pos != message) {
-		if (pos != --lines.end()) {
+	if (lines[pos] != message) {
+		if (pos != lines.size() - 1) {
 			AddLineRaw(message);
 		} else {
 			if (AddLineRaw(message)) {
-				pos = lines.end();
+				pos = lines.size();
 				return prefix;
 			}
 		}
 	}
 
-	if ((++pos) == lines.end())
+	if ((++pos) == lines.size())
 		return prefix;
 
-	return prefix + *pos;
+	return prefix + lines[pos];
 }
 
 
@@ -99,29 +99,30 @@ std::string CConsoleHistory::PrevLine(const std::string& current)
 	std::string message;
 
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
-		prefix  = current.substr(0, 2);
+		prefix = current.substr(0, 2);
 		message = current.substr(2);
-	} else {
+	}
+	else {
 		message = current;
 	}
 
-	if (pos == lines.begin()) {
-		if (*pos != message) {
+	if (pos == 0) {
+		if (lines[pos] != message) {
 			AddLineRaw(message);
-			pos = lines.begin();
+			pos = 0;
 		}
 		return prefix;
 	}
 
-	if ((pos == lines.end()) || (*pos != message)) {
+	if ((pos == lines.size()) || (lines[pos] != message)) {
 		AddLineRaw(message);
 
 		// AddLineRaw() will adjust begin() iterators when it rolls
-		if (pos == lines.begin())
+		if (pos == 0)
 			return prefix;
 	}
 
 	--pos;
 
-	return prefix + *pos;
+	return prefix + lines[pos];
 }
