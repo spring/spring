@@ -190,7 +190,11 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
 
 	if (!file.IsBuffered()) {
-		fileBuf.resize(file.FileSize(), 0);
+		const auto fs = file.FileSize();
+		if (fs <= 0)
+			throw content_error("An assimp model has invalid size of " + std::to_string(fs));
+
+		fileBuf.resize(fs, 0);
 		file.Read(fileBuf.data(), fileBuf.size());
 	} else {
 		fileBuf = std::move(file.GetBuffer());
