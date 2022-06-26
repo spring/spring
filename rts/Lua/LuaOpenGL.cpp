@@ -3278,7 +3278,8 @@ int LuaOpenGL::Texture(lua_State* L)
 
 	LuaMatTexture tex;
 
-	if (LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg))) {
+	const std::string imgName = lua_tostring(L, nextArg);
+	if (LuaOpenGLUtils::ParseTextureImage(L, tex, imgName)) {
 		lua_pushboolean(L, true);
 
 		tex.Enable(true);
