@@ -11,8 +11,6 @@
 class IKeys {
 public:
 	int GetCode(const std::string& name) const;
-	std::string GetName(int code) const;
-	std::string GetDefaultName(int code) const;
 	bool AddKeySymbol(const std::string& name, int code);
 	bool IsPrintable(int code) const;
 
@@ -25,6 +23,8 @@ public:
 	virtual void PrintNameToCode() const {};
 	virtual void PrintCodeToName() const {};
 	virtual bool IsModifier(int code) { return false; };
+	virtual std::string GetName(int code) const { return ""; };
+	virtual std::string GetDefaultName(int code) const { return ""; };
 
 	static bool IsValidLabel(const std::string& label);
 

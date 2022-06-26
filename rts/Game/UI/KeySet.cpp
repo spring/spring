@@ -162,6 +162,17 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 			if (showerror) LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
 			return false;
 		}
+	} else if (s.find("sc_0x") == 0) {
+		type = KSScanCode;
+
+		const char* start = (s.c_str() + 5);
+		char* end;
+		key = strtol(start, &end, 16);
+		if (end == start) {
+			Reset();
+			if (showerror) LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
+			return false;
+		}
 	} else if (((key = keyCodes.GetCode(s)) > 0)) {
 		type = KSKeyCode;
 	} else if (((key = scanCodes.GetCode(s)) > 0)) {

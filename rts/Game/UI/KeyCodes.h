@@ -13,6 +13,8 @@ public:
 	void Reset();
 	void PrintNameToCode() const;
 	void PrintCodeToName() const;
+	std::string GetName(int code) const;
+	std::string GetDefaultName(int code) const;
 
 	static int GetNormalizedSymbol(int sym);
 };

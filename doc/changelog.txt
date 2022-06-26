@@ -9,6 +9,7 @@ Lua:
  - `firestarter` weapon tag no longer capped at 10000 in defs (which
    becomes 100 in Lua after rescale). Now uncapped.
  - add Spring.AddUnitExperience(unitID, delta_xp). Can subtract, but the result cannot be negative.
+ - change widget, gadget and action handlers to support scancodes
 
 Maps:
  - New bumpwater params, most of these were just hard-coded values:
@@ -25,7 +26,30 @@ Misc:
    define a bogus custom colvol just to prevent the default sphere.
  - don't warn for archive checksum mismatch if server's checksum is zero
  - 3D and Cubemap .dds textures supported in Lua
- - add support for f16-f24 scancodes; keycodes awaiting fix in SDL2
+ - deprecate DISALLOW_RELEASE_BINDINGS and Up+ modifier for keysets, a
+   warning is displayed if attempted to bind. No change in behavior
+ - /keysave and /keyprint now preserves the binding order, providing a better output
+ - add support for f16-f24 key and scancodes; keycode support requires SDL1
+   keycode deprecation
+
+UI:
+ - KeyPress and KeyRelease callins receive an additional scanCode
+   argument
+ - sc_<k> keysets are introduced for scancodes and handled in conjunction
+   with keycode bindings preserving the order on which the actions where
+   bound. Can also be bound via `sc_0x<hexvalue>`
+ - Extend GetKeyBindings to receive an additional keyset string to retrieve scancode actions
+ - Add GetScanSymbol(int scanCode)
+
+Fixes:
+ - Fix keysets bound to duplicate actions when the action line contains
+   discrepant comment sections
+ - Fix name retrieval for keycodes always returning hex value, this
+   affected the `label` parameter of `KeyPress` and `KeyRelease` callins
+   as well as the output of /keydebug
+ - Fix `GetKeyBindings` returning incorrect actions for bound keychains,
+   e.g. if actions bound to m,n and b,n both would be
+   returned on `GetKeyBindings('n')` regardless of the previously pressed key
 
 -- 105.0 --------------------------------------------------------
 Sim:

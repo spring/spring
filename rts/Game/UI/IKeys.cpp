@@ -15,27 +15,6 @@ int IKeys::GetCode(const std::string& name) const
 }
 
 
-std::string IKeys::GetName(int code) const
-{
-	const auto iter = std::lower_bound(codeToName.begin(), codeToName.end(), CodeNamePair{code, ""}, codePred);
-
-	if (iter == codeToName.end() || iter->first != code)
-		return IntToString(code, "0x%03X");
-
-	return iter->second;
-}
-
-std::string IKeys::GetDefaultName(int code) const
-{
-	const auto iter = std::lower_bound(defaultCodeToName.begin(), defaultCodeToName.end(), CodeNamePair{code, ""}, codePred);
-
-	if (iter == defaultCodeToName.end() || iter->first != code)
-		return IntToString(code, "0x%03X");
-
-	return iter->second;
-}
-
-
 bool IKeys::AddKeySymbol(const std::string& name, int code)
 {
 	if ((code < 0) || !IsValidLabel(name))
