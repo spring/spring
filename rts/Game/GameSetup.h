@@ -25,10 +25,10 @@ class CGameSetup
 public:
 	CGameSetup() { ResetState(); }
 	CGameSetup(const CGameSetup& gs) = delete;
-	CGameSetup(CGameSetup&& gs) { *this = std::move(gs); }
+	CGameSetup(CGameSetup&& gs) noexcept { *this = std::move(gs); }
 
 	CGameSetup& operator = (const CGameSetup& gs) = delete;
-	CGameSetup& operator = (CGameSetup&& gs) {
+	CGameSetup& operator = (CGameSetup&& gs) noexcept {
 		fixedAllies = gs.fixedAllies;
 		useLuaGaia = gs.useLuaGaia;
 		luaDevMode = gs.luaDevMode;

@@ -503,7 +503,7 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
 	// same as gluProject()
 	const float4 projPos = viewProjectionMatrix * float4(objPos, 1.0f);
-	const float3 clipPos = projPos / projPos.w;
+	const float3 clipPos = float3(projPos) / projPos.w;
 
 	float3 winPos;
 	winPos.x = viewport[0] + viewport[2] * (clipPos.x + 1.0f) * 0.5f;
@@ -705,7 +705,7 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 bool CCamera::Frustum::IntersectSphere(const float3& cp, const float4& sp) const
 {
 	// need a vector since planes do not carry origin-distance
-	const float3 vec = sp - cp;
+	const float3 vec = float3(sp) - cp;
 
 	// use arrays because neither float2 nor float4 have an operator[]
 	const float xyPlaneOffsets[2] = {scales.x, scales.y};

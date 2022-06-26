@@ -211,7 +211,7 @@ public:
 		return *this;
 	}
 
-	void operator=(HashMap&& other)
+	void operator=(HashMap&& other) noexcept
 	{
 		this->swap(other);
 	}

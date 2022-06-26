@@ -171,10 +171,10 @@ namespace Threading {
 			strncpy(message, _message, sizeof(message) - 1);
 		}
 		Error(const Error&) = delete;
-		Error(Error&& e) { *this = std::move(e); }
+		Error(Error&& e) noexcept { *this = std::move(e); }
 
 		Error& operator = (const Error& e) = delete;
-		Error& operator = (Error&& e) {
+		Error& operator = (Error&& e) noexcept {
 			memcpy(caption, e.caption, sizeof(caption));
 			memcpy(message, e.message, sizeof(message));
 			memset(e.caption, 0, sizeof(caption));

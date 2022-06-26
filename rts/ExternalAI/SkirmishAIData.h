@@ -22,10 +22,10 @@ class SkirmishAIData : public SkirmishAIBase {
 public:
 	SkirmishAIData() = default;
 	SkirmishAIData(const SkirmishAIData& d) = default;
-	SkirmishAIData(SkirmishAIData&& d) { *this = std::move(d); }
+	SkirmishAIData(SkirmishAIData&& d) noexcept { *this = std::move(d); }
 
 	SkirmishAIData& operator = (const SkirmishAIData& d) = default;
-	SkirmishAIData& operator = (SkirmishAIData&& d) {
+	SkirmishAIData& operator = (SkirmishAIData&& d) noexcept {
 		team = d.team;
 		hostPlayer = d.hostPlayer;
 		status = d.status;

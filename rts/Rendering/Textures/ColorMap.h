@@ -24,7 +24,7 @@ public:
 	CColorMap(const std::string& fileName);
 
 	CColorMap(const CColorMap&) = delete;
-	CColorMap(CColorMap&& cm) { *this = std::move(cm); }
+	CColorMap(CColorMap&& cm) noexcept { *this = std::move(cm); }
 
 	CColorMap& operator = (const CColorMap&) = delete;
 	CColorMap& operator = (CColorMap&&) = default;
