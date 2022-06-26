@@ -465,7 +465,7 @@ inline static void CopyMeshPart
 	for (int y = min.y; y <= max.y; ++y) {
 		const int startIdx = min.x + y*mapx;
 		const int endIdx = max.x + y*mapx + 1;
-		std::copy(&src[startIdx], &src[endIdx], &dest[startIdx]);
+		std::copy(src.begin() + startIdx, src.begin() + endIdx, dest.begin() + startIdx);
 	}
 }
 
