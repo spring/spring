@@ -1485,6 +1485,7 @@ void CMiniMap::DrawNotes()
 
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& shader = rb.GetShader();
 
 	std::deque<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
@@ -1522,7 +1523,10 @@ void CMiniMap::DrawNotes()
 		}
 		++ni;
 	}
+
+	shader.Enable();
 	rb.DrawArrays(GL_LINES);
+	shader.Disable();
 }
 
 
