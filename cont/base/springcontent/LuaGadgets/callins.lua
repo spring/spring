@@ -147,6 +147,7 @@ CALLIN_LIST = {
 	"DrawGroundPreForward",
 	"DrawGroundPostForward",
 	"DrawGroundPreDeferred",
+	"DrawGroundDeferred"
 	"DrawGroundPostDeferred",
 	"DrawUnitsPostDeferred",
 	"DrawFeaturesPostDeferred",

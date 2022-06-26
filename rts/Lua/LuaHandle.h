@@ -240,6 +240,7 @@ class CLuaHandle : public CEventClient
 		void DrawGroundPreForward() override;
 		void DrawGroundPostForward() override;
 		void DrawGroundPreDeferred() override;
+		void DrawGroundDeferred() override;
 		void DrawGroundPostDeferred() override;
 		void DrawUnitsPostDeferred() override;
 		void DrawFeaturesPostDeferred() override;

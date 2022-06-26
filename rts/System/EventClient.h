@@ -329,6 +329,7 @@ class CEventClient
 		virtual void DrawGroundPreForward() {}
 		virtual void DrawGroundPostForward() {}
 		virtual void DrawGroundPreDeferred() {}
+		virtual void DrawGroundDeferred() {}
 		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
 		virtual void DrawFeaturesPostDeferred() {}

@@ -158,6 +158,7 @@ local flexCallIns = {
   'DrawGroundPreForward',
   'DrawGroundPostForward',
   'DrawGroundPreDeferred',
+  'DrawGroundDeferred',
   'DrawGroundPostDeferred',
   'DrawUnitsPostDeferred',
   'DrawFeaturesPostDeferred',
@@ -1333,6 +1334,12 @@ end
 function widgetHandler:DrawGroundPreDeferred()
   for _,w in ripairs(self.DrawGroundPreDeferredList) do
     w:DrawGroundPreDeferred()
+  end
+end
+
+function widgetHandler:DrawGroundDeferred()
+  for _,w in ripairs(self.DrawGroundDeferredList) do
+    w:DrawGroundDeferred()
   end
 end
 

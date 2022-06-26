@@ -43,7 +43,8 @@ CONFIG(int, MaxDynamicMapLights)
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
-CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
+CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(false);
+CONFIG(bool, AllowDrawMapDeferredEvents).defaultValue(false);
 
 
 CONFIG(int, ROAM)
@@ -77,6 +78,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
 	postDeferredEvents = configHandler->GetBool("AllowDrawMapPostDeferredEvents");
+	deferredEvents = configHandler->GetBool("AllowDrawMapDeferredEvents");
 
 
 	// NOTE:
@@ -311,6 +313,9 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
+
+		if (deferredEvents)
+			eventHandler.DrawGroundDeferred();
 
 		geomBuffer.SetDepthRange(0.0f, 1.0f);
 		geomBuffer.UnBind();

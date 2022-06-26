@@ -1928,6 +1928,12 @@ function gadgetHandler:DrawGroundPreDeferred()
   end
 end
 
+function gadgetHandler:DrawGroundDeferred()
+  for _,g in r_ipairs(self.DrawGroundDeferredList) do
+    g:DrawGroundDeferred()
+  end
+end
+
 function gadgetHandler:DrawGroundPostDeferred()
   for _,g in r_ipairs(self.DrawGroundPostDeferredList) do
     g:DrawGroundPostDeferred()

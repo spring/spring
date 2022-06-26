@@ -81,6 +81,7 @@ class LuaOpenGL {
 		NOOP_STATE_FUNCS(DrawGroundPreForward)
 		NOOP_STATE_FUNCS(DrawGroundPostForward)
 		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
+		NOOP_STATE_FUNCS(DrawGroundDeferred)
 		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
 		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
 		NOOP_STATE_FUNCS(DrawFeaturesPostDeferred)
