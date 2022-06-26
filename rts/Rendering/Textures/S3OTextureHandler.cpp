@@ -165,7 +165,7 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 
 	const unsigned int texID = preloadCall ? 0 : bitmap->CreateMipMapTexture();
 
-	if (textureIt != textureCache.end()) {
+	if (textureIt != textureCache.end() && texID > 0) {
 		assert(!preloadCall);
 		textureIt->second.texID = texID;
 	}
