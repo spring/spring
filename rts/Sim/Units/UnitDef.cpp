@@ -527,7 +527,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			cantBeTransported |= (!modInfo.transportAir && canfly);
 		} else {
 			//upright           |= (moveDef->speedModClass == MoveDef::Hover);
-			upright           |= (moveDef->speedModClass == MoveDef::Ship );
+			//upright           |= (moveDef->speedModClass == MoveDef::Ship );
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
