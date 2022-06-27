@@ -64,6 +64,8 @@ public:
 	void SelectUnits(const std::string& line);
 	void SelectCycle(const std::string& command);
 
+	bool GetBoxSelectionHandledByEngine() const { return ubHandledByEngine; }
+	void SetBoxSelectionHandledByEngine(bool b) { ubHandledByEngine = b; }
 private:
 	int selectedGroup = -1;
 	int soundMultiselID = 0;
@@ -72,6 +74,7 @@ private:
 	bool autoAddBuiltUnitsToSelectedGroup = false;
 	bool buildIconsFirst = false;
 
+	bool ubHandledByEngine = true;
 public:
 	bool selectionChanged = false;
 	bool possibleCommandsChanged = true;

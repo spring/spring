@@ -176,6 +176,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSelectedUnitsSorted);
 	REGISTER_LUA_CFUNC(GetSelectedUnitsCounts);
 	REGISTER_LUA_CFUNC(GetSelectedUnitsCount);
+	REGISTER_LUA_CFUNC(GetBoxSelectionByEngine);
 
 	REGISTER_LUA_CFUNC(HaveShadows);
 	REGISTER_LUA_CFUNC(HaveAdvShading);
@@ -1535,6 +1536,12 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 int LuaUnsyncedRead::GetSelectedUnitsCount(lua_State* L)
 {
 	lua_pushnumber(L, selectedUnitsHandler.selectedUnits.size());
+	return 1;
+}
+
+int LuaUnsyncedRead::GetBoxSelectionByEngine(lua_State* L)
+{
+	lua_pushboolean(L, selectedUnitsHandler.GetBoxSelectionHandledByEngine());
 	return 1;
 }
 

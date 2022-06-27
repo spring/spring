@@ -136,6 +136,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SelectUnitMap);
 	REGISTER_LUA_CFUNC(SelectUnitArray);
+	REGISTER_LUA_CFUNC(SetBoxSelectionByEngine);
 
 	REGISTER_LUA_CFUNC(AddWorldIcon);
 	REGISTER_LUA_CFUNC(AddWorldText);
@@ -930,6 +931,13 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 		}
 	}
 
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetBoxSelectionByEngine(lua_State* L)
+{
+	bool b = luaL_checkboolean(L, 1);
+	selectedUnitsHandler.SetBoxSelectionHandledByEngine(b);
 	return 0;
 }
 

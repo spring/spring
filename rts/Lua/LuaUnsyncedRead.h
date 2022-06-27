@@ -95,6 +95,7 @@ class LuaUnsyncedRead {
 		static int GetSelectedUnitsSorted(lua_State* L);
 		static int GetSelectedUnitsCounts(lua_State* L);
 		static int GetSelectedUnitsCount(lua_State* L);
+		static int GetBoxSelectionByEngine(lua_State* L);
 
 		static int IsGUIHidden(lua_State* L);
 		static int HaveShadows(lua_State* L);

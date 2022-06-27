@@ -438,10 +438,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL) && selectedUnitsHandler.GetBoxSelectionHandledByEngine())
 			selectedUnitsHandler.ClearSelected();
 
-		if (bp.movement > dragSelectionThreshold) {
+		if (bp.movement > dragSelectionThreshold && selectedUnitsHandler.GetBoxSelectionHandledByEngine()) {
 			// select box
 			float2 topright;
 			float2 bttmleft;

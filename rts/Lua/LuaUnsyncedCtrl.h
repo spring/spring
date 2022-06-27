@@ -36,6 +36,7 @@ class LuaUnsyncedCtrl {
 
 		static int SelectUnitMap(lua_State* L);
 		static int SelectUnitArray(lua_State* L);
+		static int SetBoxSelectionByEngine(lua_State* L);
 
 		static int AddWorldIcon(lua_State* L);
 		static int AddWorldText(lua_State* L);
