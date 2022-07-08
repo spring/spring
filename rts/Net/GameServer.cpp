@@ -751,7 +751,7 @@ void CGameServer::CheckSync()
 		// Remove complete sets (for which all player's checksums have been received).
 		if (completeResponseSet) {
 			for (GameParticipant& p: players) {
-				if (p.myState < GameParticipant::DISCONNECTED)
+				if (p.myState < GameParticipant::DISCONNECTING)
 					p.syncResponse.erase(outstandingSyncFrame);
 			}
 
@@ -797,6 +797,9 @@ void CGameServer::Update()
 	if (lastPlayerInfo < (spring_gettime() - playerInfoTime)) {
 		lastPlayerInfo = spring_gettime();
 
+		for (GameParticipant& p: players)
+			if (!p.isFromDemo) p.CheckForExpiredConnection();
+
 		if (!PreSimFrame()) {
 			LagProtection();
 		} else {
@@ -811,6 +814,7 @@ void CGameServer::Update()
 							Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(p.id, p.cpuUsage, PATHING_FLAG));
 					} break;
 					case GameParticipant::INGAME:
+					case GameParticipant::DISCONNECTING:
 					case GameParticipant::DISCONNECTED: {
 						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(p.id, 0, 0)); // reset status
 					} break;
@@ -1015,6 +1019,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 	const unsigned a = playerNum;
 	const unsigned msgCode = (unsigned) inbuf[0];
+
+	// Ignore packets from clienting in process of disconnecting.
+	if (players[a].myState == GameParticipant::DISCONNECTING)
+		return;
 
 	switch (msgCode) {
 		case NETMSG_KEYFRAME: {

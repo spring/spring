@@ -9,6 +9,7 @@
 #include "Game/Players/PlayerStatistics.h"
 #include "System/Net/LoopbackConnection.h"
 #include "System/UnorderedMap.hpp"
+#include "System/Misc/SpringTime.h"
 
 namespace netcode
 {
@@ -20,10 +21,13 @@ class GameParticipant : public PlayerBase
 {
 public:
 	GameParticipant();
+	~GameParticipant();
 
 	void SendData(std::shared_ptr<const netcode::RawPacket> packet);
 	void Connected(std::shared_ptr<netcode::CConnection> link, bool local);
 	void Kill(const std::string& reason, const bool flush = false);
+
+	void CheckForExpiredConnection();
 
 	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
@@ -35,6 +39,7 @@ public:
 		UNCONNECTED,
 		CONNECTED,
 		INGAME,
+		DISCONNECTING,
 		DISCONNECTED
 	};
 	State myState = UNCONNECTED;
@@ -44,6 +49,8 @@ public:
 	bool isMidgameJoin = false;
 
 	PlayerStatistics lastStats;
+
+	spring_time disconnectDelay;
 
 	struct ClientLinkData {
 		ClientLinkData(bool connect = true) {
