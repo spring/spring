@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <utility>
 #include <cstring>
+#include <memory>
 
 #include <IL/il.h>
 #include <SDL_video.h>
@@ -27,51 +28,71 @@
 #include "System/Threading/SpringThreading.h"
 #include "System/SpringMath.h"
 
-#define ENABLE_TEXMEMPOOL 1
-
-
 struct InitializeOpenIL {
 	InitializeOpenIL() { ilInit(); }
 	~InitializeOpenIL() { ilShutDown(); }
 } static initOpenIL;
 
+class TexMemPool;
+class TexNoMemPool;
 
-struct TexMemPool {
+class ITexMemPool {
+public:
+	void GrabLock() { bmpMutex.lock(); }
+	void FreeLock() { bmpMutex.unlock(); }
+
+	virtual size_t Size() const = 0;
+	virtual size_t AllocIdx(size_t size) = 0;
+	virtual size_t AllocIdxRaw(size_t size) = 0;
+
+	uint8_t* Alloc(size_t size) {
+		std::lock_guard<spring::mutex> lck(bmpMutex);
+		return (AllocRaw(size));
+	}
+	virtual uint8_t* AllocRaw(size_t size) = 0;
+
+	void Free(uint8_t* mem, size_t size) {
+		std::lock_guard<spring::mutex> lck(bmpMutex);
+		FreeRaw(mem, size);
+	}
+	virtual void FreeRaw(uint8_t* mem, size_t size) = 0;
+	virtual void Resize(size_t size) = 0;
+
+	virtual bool Defrag() = 0;
+
+	virtual const uint8_t* GetRawMem(size_t memIdx) const = 0;
+	virtual       uint8_t* GetRawMem(size_t memIdx)       = 0;
+
+	spring::mutex& GetMutex() { return bmpMutex; }
+public:
+	static void Init(size_t size);
+	static inline std::unique_ptr<ITexMemPool> texMemPool = {};
+protected:
+	// libIL is not thread-safe, neither are {Alloc,Free}
+	spring::mutex bmpMutex;
+};
+
+class TexMemPool : public ITexMemPool {
 private:
 	// (index, size)
-	typedef std::pair<size_t, size_t> FreePair;
+	using FreePair = std::pair<size_t, size_t>;
 
 	std::vector<uint8_t> memArray;
 	std::vector<FreePair> freeList;
-
-	// libIL is not thread-safe, neither are {Alloc,Free}
-	spring::mutex bmpMutex;
 
 	size_t numAllocs = 0;
 	size_t allocSize = 0;
 	size_t numFrees  = 0;
 	size_t freeSize  = 0;
-
+private:
+	const uint8_t* Base() const { return memArray.data(); }
+	      uint8_t* Base()       { return memArray.data(); }
 public:
-	void GrabLock() { bmpMutex.lock(); }
-	void FreeLock() { bmpMutex.unlock(); }
+	size_t Size() const override { return (memArray.size()); }
+	size_t AllocIdx(size_t size) override { return (Alloc(size) - Base()); }
+	size_t AllocIdxRaw(size_t size) override { return (AllocRaw(size) - Base()); }
 
-	spring::mutex& GetMutex() { return bmpMutex; }
-
-	size_t Size() const { return (memArray.size()); }
-	size_t AllocIdx(size_t size) { return (Alloc(size) - Base()); }
-	size_t AllocIdxRaw(size_t size) { return (AllocRaw(size) - Base()); }
-
-	uint8_t* Base() { return (memArray.data()); }
-	uint8_t* Alloc(size_t size) {
-		std::lock_guard<spring::mutex> lck(bmpMutex);
-		return (AllocRaw(size));
-	}
-
-	uint8_t* AllocRaw(size_t size) {
-		#if (ENABLE_TEXMEMPOOL == 0)
-		uint8_t* mem = new uint8_t[size];
-		#else
+	uint8_t* AllocRaw(size_t size) override {
 		uint8_t* mem = nullptr;
 
 		size_t bestPair = size_t(-1);
@@ -121,20 +142,11 @@ public:
 
 		numAllocs += 1;
 		allocSize += size;
-		#endif
+
 		return mem;
 	}
 
-
-	void Free(uint8_t* mem, size_t size) {
-		std::lock_guard<spring::mutex> lck(bmpMutex);
-		FreeRaw(mem, size);
-	}
-
 	void FreeRaw(uint8_t* mem, size_t size) {
-		#if (ENABLE_TEXMEMPOOL == 0)
-		delete[] mem;
-		#else
 		if (mem == nullptr)
 			return;
 
@@ -166,20 +178,12 @@ public:
 		// TODO: split into power-of-two subpools?
 		if (freeList.size() >= 64 || freeSize >= (memArray.size() >> 4))
 			DefragRaw();
-		#endif
 	}
 
-
-	void Dispose() {
-		freeList = {};
-		memArray = {};
-
-		numAllocs = 0;
-		allocSize = 0;
-		numFrees  = 0;
-		freeSize  = 0;
-	}
 	void Resize(size_t size) {
+		if (size <= Size())
+			return;
+
 		std::lock_guard<spring::mutex> lck(bmpMutex);
 
 		if (memArray.empty()) {
@@ -198,7 +202,7 @@ public:
 	}
 
 
-	bool Defrag() {
+	bool Defrag() override {
 		if (freeList.empty())
 			return false;
 
@@ -206,6 +210,10 @@ public:
 		return (DefragRaw());
 	}
 
+	const uint8_t* GetRawMem(size_t memIdx) const override { return ((memIdx == size_t(-1))? nullptr: (Base() + memIdx)); }
+	      uint8_t* GetRawMem(size_t memIdx)       override { return ((memIdx == size_t(-1))? nullptr: (Base() + memIdx)); }
+
+private:
 	bool DefragRaw() {
 		const auto sortPred = [](const FreePair& a, const FreePair& b) { return (a.first < b.first); };
 		const auto accuPred = [](const FreePair& a, const FreePair& b) { return FreePair{0, a.second + b.second}; };
@@ -213,7 +221,7 @@ public:
 		std::sort(freeList.begin(), freeList.end(), sortPred);
 
 		// merge adjacent chunks
-		for (size_t i = 0, n = freeList.size(); i < n; /**/) {
+		for (size_t i = 0, n = freeList.size(); i < n; /*NOOP*/) {
 			FreePair& currPair = freeList[i++];
 
 			for (size_t j = i; j < n; j++) {
@@ -259,7 +267,37 @@ public:
 	}
 };
 
-static TexMemPool texMemPool;
+class TexNoMemPool : public ITexMemPool {
+public:
+	size_t Size() const override { return 0; }
+	size_t AllocIdx(size_t size) override { return reinterpret_cast<std::uintptr_t>(Alloc(size)); }
+	size_t AllocIdxRaw(size_t size) override { return reinterpret_cast<std::uintptr_t>(AllocRaw(size)); }
+
+	uint8_t* AllocRaw(size_t size) override
+	{
+		return new uint8_t[size];
+	}
+	void FreeRaw(uint8_t* mem, size_t size) override
+	{
+		spring::SafeDeleteArray(mem);
+	}
+	void Resize(size_t size) override {}
+	bool Defrag() override { return true; }
+	const uint8_t* GetRawMem(size_t memIdx) const override { return (memIdx == size_t(-1)) ? nullptr : reinterpret_cast<uint8_t*>(memIdx); }
+		  uint8_t* GetRawMem(size_t memIdx)       override { return (memIdx == size_t(-1)) ? nullptr : reinterpret_cast<uint8_t*>(memIdx); }
+};
+
+void ITexMemPool::Init(size_t size)
+{
+	if (size == 0) {
+		if (texMemPool == nullptr || typeid(*texMemPool.get()) != typeid(TexNoMemPool))
+			texMemPool = std::make_unique<TexNoMemPool>();
+	}
+	else {
+		if (texMemPool == nullptr || typeid(*texMemPool.get()) != typeid(  TexMemPool))
+			texMemPool = std::make_unique<  TexMemPool>();
+	}
+}
 
 
 // this is a minimal list of file formats that (should) be available at all platforms
@@ -833,7 +871,7 @@ CBitmap TBitmapAction<T, ch>::CreateRescaled(int newx, int newy)
 
 CBitmap::~CBitmap()
 {
-	texMemPool.Free(GetRawMem(), GetMemSize());
+	ITexMemPool::texMemPool->Free(GetRawMem(), GetMemSize());
 }
 
 CBitmap::CBitmap()
@@ -852,7 +890,7 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels, uin
 	, compressed(false)
 {
 	assert(GetMemSize() > 0);
-	memIdx = texMemPool.AllocIdx(GetMemSize());
+	memIdx = ITexMemPool::texMemPool->AllocIdx(GetMemSize());
 
 	if (data != nullptr) {
 		assert(!((GetRawMem() < data) && (GetRawMem() + GetMemSize()) > data));
@@ -869,7 +907,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 {
 	if (this != &bmp) {
 		// NB: Free preserves size for asserts
-		texMemPool.Free(GetRawMem(), GetMemSize());
+		ITexMemPool::texMemPool->Free(GetRawMem(), GetMemSize());
 
 		if (bmp.GetRawMem() != nullptr) {
 			assert(!bmp.compressed);
@@ -878,7 +916,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 			assert(!((    GetRawMem() < bmp.GetRawMem()) && (    GetRawMem() +     GetMemSize()) > bmp.GetRawMem()));
 			assert(!((bmp.GetRawMem() <     GetRawMem()) && (bmp.GetRawMem() + bmp.GetMemSize()) >     GetRawMem()));
 
-			memIdx = texMemPool.AllocIdx(bmp.GetMemSize());
+			memIdx = ITexMemPool::texMemPool->AllocIdx(bmp.GetMemSize());
 
 			std::memcpy(GetRawMem(), bmp.GetRawMem(), bmp.GetMemSize());
 		} else {
@@ -928,24 +966,21 @@ void CBitmap::InitPool(size_t size)
 {
 	// only allow expansion; config-size is in MB
 	size *= (1024 * 1024);
-
-	if (size > texMemPool.Size())
-		texMemPool.Resize(size);
-
-	texMemPool.Defrag();
+	ITexMemPool::Init(size);
+	ITexMemPool::texMemPool->Resize(size);
+	ITexMemPool::texMemPool->Defrag();
 }
 
 
-const uint8_t* CBitmap::GetRawMem() const { return ((memIdx == size_t(-1))? nullptr: (texMemPool.Base() + memIdx)); }
-      uint8_t* CBitmap::GetRawMem()       { return ((memIdx == size_t(-1))? nullptr: (texMemPool.Base() + memIdx)); }
-
+const uint8_t* CBitmap::GetRawMem() const { return ITexMemPool::texMemPool->GetRawMem(memIdx); }
+      uint8_t* CBitmap::GetRawMem()       { return ITexMemPool::texMemPool->GetRawMem(memIdx); }
 
 void CBitmap::Alloc(int w, int h, int c, uint32_t glType)
 {
 	if (!Empty())
-		texMemPool.Free(GetRawMem(), GetMemSize());
+		ITexMemPool::texMemPool->Free(GetRawMem(), GetMemSize());
 
-	memIdx = texMemPool.AllocIdx((xsize = w) * (ysize = h) * (channels = c));
+	memIdx = ITexMemPool::texMemPool->AllocIdx((xsize = w) * (ysize = h) * (channels = c));
 	memset(GetRawMem(), 0, GetMemSize());
 }
 
@@ -1107,7 +1142,7 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 
 
 	{
-		std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+		std::lock_guard<spring::mutex> lck(ITexMemPool::texMemPool->GetMutex());
 
 		// do not preserve the image origin since IL does not
 		// vertically flip DDS images by default, unlike nv_dds
@@ -1157,8 +1192,8 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 			ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 			// format = ilGetInteger(IL_IMAGE_FORMAT);
 
-			texMemPool.FreeRaw(GetRawMem(), curMemSize);
-			memIdx = texMemPool.AllocIdxRaw(GetMemSize());
+			ITexMemPool::texMemPool->FreeRaw(GetRawMem(), curMemSize);
+			memIdx = ITexMemPool::texMemPool->AllocIdxRaw(GetMemSize());
 
 			// ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, GetRawMem());
 			for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
@@ -1210,7 +1245,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	}
 
 	{
-		std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+		std::lock_guard<spring::mutex> lck(ITexMemPool::texMemPool->GetMutex());
 
 		ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 		ilEnable(IL_ORIGIN_SET);
@@ -1229,8 +1264,8 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 		xsize = ilGetInteger(IL_IMAGE_WIDTH);
 		ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-		texMemPool.FreeRaw(GetRawMem(), curMemSize);
-		memIdx = texMemPool.AllocIdxRaw(GetMemSize());
+		ITexMemPool::texMemPool->FreeRaw(GetRawMem(), curMemSize);
+		memIdx = ITexMemPool::texMemPool->AllocIdxRaw(GetMemSize());
 
 		for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
 			std::memset(GetRawMem(), 0xFF, GetMemSize());
@@ -1258,10 +1293,10 @@ bool CBitmap::Save(const std::string& filename, bool opaque, bool logged, unsign
 		return false;
 
 
-	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+	std::lock_guard<spring::mutex> lck(ITexMemPool::texMemPool->GetMutex());
 
 	const uint8_t* mem = GetRawMem();
-	      uint8_t* buf = texMemPool.AllocRaw(xsize * ysize * 4);
+	      uint8_t* buf = ITexMemPool::texMemPool->AllocRaw(xsize * ysize * 4);
 
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
@@ -1294,7 +1329,7 @@ bool CBitmap::Save(const std::string& filename, bool opaque, bool logged, unsign
 	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 	assert(ilGetError() == IL_NO_ERROR);
 
-	texMemPool.FreeRaw(buf, xsize * ysize * 4);
+	ITexMemPool::texMemPool->FreeRaw(buf, xsize * ysize * 4);
 
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
@@ -1396,14 +1431,14 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	if (GetMemSize() == 0 || channels != 4)
 		return false;
 
-	std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
+	std::lock_guard<spring::mutex> lck(ITexMemPool::texMemPool->GetMutex());
 
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourselves
 	const uint8_t* u8mem = GetRawMem();
 	const float* f32mem = reinterpret_cast<const float*>(&u8mem[0]);
 
-	uint16_t* u16mem = reinterpret_cast<uint16_t*>(texMemPool.AllocRaw(xsize * ysize * sizeof(uint16_t)));
+	uint16_t* u16mem = reinterpret_cast<uint16_t*>(ITexMemPool::texMemPool->AllocRaw(xsize * ysize * sizeof(uint16_t)));
 
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
@@ -1424,7 +1459,7 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	//       IL_FLOAT is converted to RGB with 8bit colordepth!
 	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, u16mem);
 
-	texMemPool.FreeRaw(reinterpret_cast<uint8_t*>(u16mem), xsize * ysize * sizeof(uint16_t));
+	ITexMemPool::texMemPool->FreeRaw(reinterpret_cast<uint8_t*>(u16mem), xsize * ysize * sizeof(uint16_t));
 
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
@@ -1818,7 +1853,7 @@ void CBitmap::ReverseYAxis()
 	const auto dts = GetDataTypeSize();
 	const auto memSize = xsize * channels * dts;
 
-	uint8_t* tmp = texMemPool.Alloc(memSize);
+	uint8_t* tmp = ITexMemPool::texMemPool->Alloc(memSize);
 	uint8_t* mem = GetRawMem();
 
 	for (int y = 0; y < (ysize / 2); ++y) {
@@ -1831,7 +1866,6 @@ void CBitmap::ReverseYAxis()
 		std::copy(tmp, tmp + memSize, mem + pixelL);
 	}
 
-	texMemPool.Free(tmp, memSize);
+	ITexMemPool::texMemPool->Free(tmp, memSize);
 #endif
 }
-

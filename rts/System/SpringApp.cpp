@@ -102,7 +102,7 @@
 
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
-CONFIG(unsigned, TextureMemPoolSize).defaultValue(512).minimumValue(1);
+CONFIG(unsigned, TextureMemPoolSize).defaultValue(512).minimumValue(0).description("Set to 0 to disable, otherwise specify a predefined memory to serve Bitmap allocation requests");
 CONFIG(bool, UseLuaMemPools).defaultValue(true).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(bool, UseFontConfigLib).defaultValue(true).description("Whether the system fontconfig library (if present and enabled at compile-time) should be used for handling fonts.");
