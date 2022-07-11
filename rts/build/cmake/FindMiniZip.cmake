@@ -21,7 +21,7 @@ Find_Library(MINIZIP_LIBRARY NAMES ${MINIZIP_NAMES})
 
 # handle the QUIETLY and REQUIRED arguments and set MINIZIP_FOUND to TRUE if
 # all listed variables are TRUE
-Find_Package_Handle_Standard_Args(MINIZIP DEFAULT_MSG MINIZIP_LIBRARY MINIZIP_INCLUDE_DIR)
+Find_Package_Handle_Standard_Args(MiniZip DEFAULT_MSG MINIZIP_LIBRARY MINIZIP_INCLUDE_DIR)
 
 If     (MINIZIP_FOUND)
   Set(MINIZIP_LIBRARIES ${MINIZIP_LIBRARY})

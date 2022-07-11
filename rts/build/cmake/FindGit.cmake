@@ -48,4 +48,4 @@ mark_as_advanced(GIT_EXECUTABLE)
 # all listed variables are TRUE
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GIT DEFAULT_MSG GIT_EXECUTABLE)
+find_package_handle_standard_args(Git DEFAULT_MSG GIT_EXECUTABLE)
