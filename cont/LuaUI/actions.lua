@@ -73,7 +73,7 @@ function actionHandler:AddAction(widget, cmd, func, data, types)
 
   -- default to text and keyPress  (not repeat or releases)
   local text, keyPress, keyRepeat, keyRelease = ParseTypes(types, "tpRr")
-  
+
   local tSuccess, pSuccess, RSuccess, rSuccess = false, false, false, false
 
   if (text)       then tSuccess = add(self.textActions)       end
@@ -136,14 +136,14 @@ function actionHandler:RemoveAction(widget, cmd, types)
 
   -- default to removing all
   local text, keyPress, keyRepeat, keyRelease = ParseTypes(types, "tpRr")
-  
+
   local tSuccess, pSuccess, RSuccess, rSuccess = false, false, false, false
 
   if (text)       then tSuccess = remove(self.textActions)       end
   if (keyPress)   then pSuccess = remove(self.keyPressActions)   end
   if (keyRepeat)  then RSuccess = remove(self.keyRepeatActions)  end
   if (keyRelease) then rSuccess = remove(self.keyReleaseActions) end
-  
+
   return tSuccess, pSuccess, RSuccess, rSuccess
 end
 
@@ -195,6 +195,9 @@ end
 
 
 local function MakeKeySetString(key, mods, getSymbol)
+  if key == nil then
+    return ""
+  end
   getSymbol = getSymbol or Spring.GetKeySymbol
   local keyset = ""
   if (mods.alt)   then keyset = keyset .. "A+" end
@@ -272,7 +275,7 @@ function actionHandler:RecvFromSynced(...)
     if (callInfoList == nil) then
       return false
     end
-    
+
     for i,callInfo in ipairs(callInfoList) do
       -- local widget = callInfo[1]
       local func = callInfo[2]
@@ -290,7 +293,7 @@ function actionHandler:RecvFromSynced(...)
     end
     return false
   end
-  
+
   return false -- unknown type
 end
 
