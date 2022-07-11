@@ -67,6 +67,11 @@ Sim:
    default)
  - Record the previous draw flag of units/features to support incremental rendering queries
 
+System:
+ - Improved spinlocks by reducing their impact on the CPU, changed implementation from a
+   test-and-set (TAS) to test and test-and-set (TTAS) to reduce cache coherency traffic on the
+   processor
+
 UI:
  - KeyPress and KeyRelease callins receive an additional scanCode
    argument
