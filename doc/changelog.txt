@@ -18,6 +18,10 @@ Lua:
     - Spring.SetOriginalHeightMapFunc
     - Spring.AddOriginalHeightMap
     - Spring.SetOriginalHeightMap
+ - Added Spring.GetRenderFeaturesDrawFlagChanged to report all features whose draw flags have
+   changed since the last sim frame.
+ - Added Spring.GetRenderUnitsDrawFlagChanged to report all units whose draw flags have changed
+   since the last sim frame.
 
 Maps:
  - New bumpwater params, most of these were just hard-coded values:
@@ -56,6 +60,7 @@ Sim:
    threshold)
  - Smooth Height Mesh can be disabled by setting mod rule "enableSmoothMesh" = 0 (enabled by
    default)
+ - Record the previous draw flag of units/features to support incremental rendering queries
 
 UI:
  - KeyPress and KeyRelease callins receive an additional scanCode
