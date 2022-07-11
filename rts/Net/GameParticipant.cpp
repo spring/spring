@@ -44,9 +44,9 @@ void GameParticipant::Kill(const std::string& reason, const bool flush)
 	if (clientLink != nullptr) {
 		clientLink->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 
-		// make sure the Flush() performed by Close() has effect (forced flushes are undesirable)
-		// it will cause a slight lag in the game server during kick, but not a big deal
 		if (flush) {
+			/* delay to make sure the Flush() performed by Close()
+			 * has an effect (forced flushes are undesirable) */
 			disconnectDelay = spring_gettime() + spring_time(1000);
 			disconnected = false;
 			LOG("%s: client disconnecting...", __func__);
