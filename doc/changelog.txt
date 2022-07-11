@@ -10,6 +10,14 @@ Lua:
    becomes 100 in Lua after rescale). Now uncapped.
  - add Spring.AddUnitExperience(unitID, delta_xp). Can subtract, but the result cannot be negative.
  - change widget, gadget and action handlers to support scancodes
+ - Added Lua SyncedControl callins to modify the original/base heightmap (i.e. the values that the
+   restore command will aim for.)
+    - Spring.AdjustOriginalHeightMap
+    - Spring.LevelOriginalHeightMap
+    - Spring.RevertOriginalHeightMap
+    - Spring.SetOriginalHeightMapFunc
+    - Spring.AddOriginalHeightMap
+    - Spring.SetOriginalHeightMap
 
 Maps:
  - New bumpwater params, most of these were just hard-coded values:
@@ -19,6 +27,11 @@ Maps:
 		- waveFoamIntensity   (0.5)
 		- causticsResolution  (75.0)
 		- causticsStrength    (0.08)
+
+Map:
+ - The original/base height map is now editable, so the height map as read from the map file is
+   held separately. Both the map file height map and the original/base height map are saved and
+   loaded with save/load feature.
 
 Misc:
  - the `useFootPrintCollisionVolume` unit def tag now takes precedence over the default sphere
