@@ -50,6 +50,7 @@ Fixes:
  - Fix `GetKeyBindings` returning incorrect actions for bound keychains,
    e.g. if actions bound to m,n and b,n both would be
    returned on `GetKeyBindings('n')` regardless of the previously pressed key
+ - Fix server pause that happens when a spectator or player leaves the match
 
 -- 105.0 --------------------------------------------------------
 Sim:
