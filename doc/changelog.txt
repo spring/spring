@@ -50,6 +50,9 @@ Misc:
    keycode deprecation
 
 Sim:
+ - Added a new 'b' designator for yardmaps to declare an area that is buildable, but is not
+   walkable. This allows for the current method of upgradable buildings to create a locking
+   pattern that won't break pathing.
  - Smooth Height Mesh tracks damage to height map and updates itself in 64m^2 squares
  - Smooth Height Mesh switched from 2-pass Gaussian Blur to a single, kernelless Linear pass to
    reduce computational needs of the mesh to minimize impact of recaclulating mesh running sim
