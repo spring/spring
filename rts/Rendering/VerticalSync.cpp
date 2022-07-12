@@ -17,7 +17,7 @@ static CVerticalSync instance;
 
 
 CONFIG(int, VSync).
-	defaultValue(0).
+	defaultValue(-1).
 	minimumValue(MAX_ADAPTIVE_INTERVAL).
 	maximumValue(MAX_STANDARD_INTERVAL).
 	description(
