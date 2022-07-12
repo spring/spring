@@ -11,7 +11,7 @@ struct lua_State;
 template<LuaObjType T> class LuaObjectRendering;
 
 class LuaObjectRenderingImpl {
-#if __GNUC__ == 11
+#if __GNUC__ >= 11
 public:
 #else
 private:
