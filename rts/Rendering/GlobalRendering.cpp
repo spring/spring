@@ -635,6 +635,10 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	RenderBuffer::SwapStandardRenderBuffers();
 	//CglFont::SwapRenderBuffers();
 	IStreamBufferConcept::PutBufferLocks();
+
+	//https://stackoverflow.com/questions/68480028/supporting-opengl-screen-capture-by-third-party-applications
+	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
+
 	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 	globalRendering->lastSwapBuffersEnd = spring_now();
