@@ -526,16 +526,6 @@ int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 {
-	//report physical dims
-	if (luaL_optboolean(L, 1, true)) {
-		lua_pushnumber(L, globalRendering->screenFullSizeX);
-		lua_pushnumber(L, globalRendering->screenFullSizeY);
-		lua_pushnumber(L, globalRendering->screenFullPosX);
-		lua_pushnumber(L, globalRendering->screenFullPosY);
-		return 4;
-	}
-
-	// ... or usable dims
 	lua_pushnumber(L, globalRendering->screenSizeX);
 	lua_pushnumber(L, globalRendering->screenSizeY);
 	lua_pushnumber(L, globalRendering->screenPosX);

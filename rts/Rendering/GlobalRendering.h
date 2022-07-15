@@ -71,7 +71,7 @@ public:
 	void SetWindowTitle(const std::string& title);
 	void SetWindowAttributes(SDL_Window* window);
 	void UpdateWindow();
-	// Notify on Fullscreen/WindowBorderless change
+
 	void ConfigNotify(const std::string& key, const std::string& value);
 
 	bool GetWindowInputGrabbing();
@@ -97,7 +97,7 @@ public:
 	int2 GetCfgWinRes() const;
 
 	int GetCurrentDisplayIndex() const;
-	void GetScreenEffectiveBounds(SDL_Rect& r, const int* di = nullptr, const bool* fs = nullptr) const;
+	void GetScreenBounds(SDL_Rect& r, const int* di = nullptr) const;
 
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
@@ -144,14 +144,6 @@ public:
 	/// the screen offsets in pixels (in case display is not the first one)
 	int screenPosX;
 	int screenPosY;
-
-	/// the screen size in pixels
-	int screenFullSizeX;
-	int screenFullSizeY;
-
-	/// the screen offsets in pixels (in case display is not the first one)
-	int screenFullPosX;
-	int screenFullPosY;
 
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
@@ -376,6 +368,9 @@ public:
 private:
 	// double-buffered; results from frame N become available on frame N+1
 	std::array<uint32_t, NUM_OPENGL_TIMER_QUERIES * 2> glTimerQueries;
+private:
+	static constexpr inline const char* xsKeys[2] = { "XResolutionWindowed", "XResolution" };
+	static constexpr inline const char* ysKeys[2] = { "YResolutionWindowed", "YResolution" };
 };
 
 extern CGlobalRendering* globalRendering;

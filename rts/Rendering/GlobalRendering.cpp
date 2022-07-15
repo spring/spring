@@ -119,10 +119,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(screenSizeY),
 	CR_IGNORED(screenPosX),
 	CR_IGNORED(screenPosY),
-	CR_IGNORED(screenFullSizeX),
-	CR_IGNORED(screenFullSizeY),
-	CR_IGNORED(screenFullPosX),
-	CR_IGNORED(screenFullPosY),
+
 	CR_IGNORED(winPosX),
 	CR_IGNORED(winPosY),
 	CR_IGNORED(winSizeX),
@@ -210,8 +207,6 @@ CGlobalRendering::CGlobalRendering()
 
 	, screenSizeX(1)
 	, screenSizeY(1)
-	, screenFullSizeX(1)
-	, screenFullSizeY(1)
 
 	// window geometry
 	, winPosX(configHandler->GetInt("WindowPosX"))
@@ -980,13 +975,13 @@ void CGlobalRendering::LogDisplayMode(SDL_Window* window) const
 void CGlobalRendering::GetAllDisplayBounds(SDL_Rect& r) const
 {
 	int displayIdx = 0;
-	GetScreenEffectiveBounds(r, &displayIdx);
+	GetScreenBounds(r, &displayIdx);
 
 	std::array<int, 4> mb = { r.x, r.y, r.x + r.w, r.y + r.h }; //L, T, R, B
 
 	for (displayIdx = 1; displayIdx < SDL_GetNumVideoDisplays(); ++displayIdx) {
 		SDL_Rect db;
-		GetScreenEffectiveBounds(db, &displayIdx);
+		GetScreenBounds(db, &displayIdx);
 		std::array<int, 4> b = { db.x, db.y, db.x + db.w, db.y + db.h }; //L, T, R, B
 
 		if (b[0] < mb[0]) mb[0] = b[0];
@@ -1007,14 +1002,6 @@ void CGlobalRendering::GetWindowPosSizeBounded(int& x, int& y, int& w, int& h) c
 	y = std::clamp(y, r.y, r.y + r.h);
 	w = std::max(w, minRes.x * (1 - fullScreen)); w = std::min(w, r.w - x);
 	h = std::max(h, minRes.y * (1 - fullScreen)); h = std::min(h, r.h - y);
-
-	if (!borderless && !fullScreen) {
-		// take borders into account
-		y = std::max(y, r.y + winBorder[0]);
-		x = std::max(x, r.x + winBorder[1]);
-		h = std::min(h, r.h - winBorder[2] - winBorder[0]);
-		w = std::min(w, r.w - winBorder[3] - winBorder[1]);
-	}
 }
 
 
@@ -1109,34 +1096,13 @@ bool CGlobalRendering::SetWindowPosHelper(int displayIdx, int winRPosX, int winR
 	}
 
 	SDL_Rect db;
-	GetScreenEffectiveBounds(db, &displayIdx, &fs);
+	GetScreenBounds(db, &displayIdx);
 
 	const int2 tlPos = { db.x + winRPosX            , db.y + winRPosY             };
 	const int2 brPos = { db.x + winRPosX + winSizeX_, db.y + winRPosY + winSizeY_ };
 
-	//TODO fix me in case borders other than top one will get taken into account
-	const int2 tlWinPos = (!fs && !bl) ? tlPos - int2(winBorder[1], winBorder[0]) : tlPos;
-	const int2 brWinPos = (!fs && !bl) ? brPos - int2(winBorder[3], winBorder[2]) : brPos;
-
-
-	if ((tlWinPos.x < db.x) || (tlWinPos.y < db.y) || (brWinPos.x > db.x + db.w) || (brWinPos.y > db.y + db.h)) {
-		LOG_L(L_WARNING, "[GR::%s] Window TLBR(%d,%d,%d,%d), client area(%d,%d,%d,%d) is out of display bounds(%d,%d,%d,%d)", __func__,
-			tlWinPos.x, tlWinPos.y, brWinPos.x , brWinPos.y ,
-			tlPos.x   , tlPos.y   , brPos.x    , brPos.y    ,
-			db.x      , db.y      , db.x + db.w, db.y + db.h);
-	}
-
-	if (fs && (winRPosX != 0 || winRPosY != 0 || winSizeX_ != db.w || winSizeY_ != db.h)) {
-		LOG_L(L_WARNING, "[GR::%s] In fullscreen mode window geometry(%d,%d,%d,%d) should match display bounds(%d,%d,%d,%d)", __func__,
-			winRPosX, winRPosY, winSizeX_, winSizeY_,
-			0       ,        0,      db.w,      db.h);
-	}
-
 	configHandler->Set("WindowPosX", tlPos.x);
 	configHandler->Set("WindowPosY", tlPos.y);
-
-	static const char* xsKeys[2] = { "XResolutionWindowed", "XResolution" };
-	static const char* ysKeys[2] = { "YResolutionWindowed", "YResolution" };
 
 	configHandler->Set(xsKeys[fs], winSizeX_);
 	configHandler->Set(ysKeys[fs], winSizeY_);
@@ -1155,9 +1121,6 @@ int2 CGlobalRendering::GetMaxWinRes() const {
 
 int2 CGlobalRendering::GetCfgWinRes() const
 {
-	static const char* xsKeys[2] = {"XResolutionWindowed", "XResolution"};
-	static const char* ysKeys[2] = {"YResolutionWindowed", "YResolution"};
-
 	int2 res = {configHandler->GetInt(xsKeys[fullScreen]), configHandler->GetInt(ysKeys[fullScreen])};
 
 	// copy Native Desktop Resolution if user did not specify a value
@@ -1176,18 +1139,10 @@ int CGlobalRendering::GetCurrentDisplayIndex() const
 	return sdlWindows[0] ? SDL_GetWindowDisplayIndex(sdlWindows[0]) : 0;
 }
 
-void CGlobalRendering::GetScreenEffectiveBounds(SDL_Rect& r, const int* di, const bool* fs) const
+void CGlobalRendering::GetScreenBounds(SDL_Rect& r, const int* di) const
 {
 	const int displayIndex = di ? *di : GetCurrentDisplayIndex();
-	const bool fullScreen_ = fs ? *fs : this->fullScreen;
-#if 1
-	if (fullScreen_)
-		SDL_GetDisplayBounds(displayIndex, &r);
-	else
-		SDL_GetDisplayUsableBounds(displayIndex, &r);
-#else
 	SDL_GetDisplayBounds(displayIndex, &r);
-#endif
 }
 
 
@@ -1235,8 +1190,6 @@ void CGlobalRendering::ReadWindowPosAndSize()
 #ifdef HEADLESS
 	screenSizeX = 8;
 	screenSizeY = 8;
-	screenFullSizeX = 8;
-	screenFullSizeY = 8;
 	winSizeX = 8;
 	winSizeY = 8;
 	winPosX = 0;
@@ -1245,11 +1198,7 @@ void CGlobalRendering::ReadWindowPosAndSize()
 #else
 
 	SDL_Rect screenSize;
-	GetScreenEffectiveBounds(screenSize);
-
-	SDL_Rect screenFullSize;
-	static constexpr bool bogusFS = true;
-	GetScreenEffectiveBounds(screenFullSize, nullptr, &bogusFS);
+	GetScreenBounds(screenSize);
 
 	// no other good place to set these
 	screenSizeX = screenSize.w;
@@ -1257,11 +1206,7 @@ void CGlobalRendering::ReadWindowPosAndSize()
 	screenPosX  = screenSize.x;
 	screenPosY  = screenSize.y;
 
-	screenFullSizeX = screenFullSize.w;
-	screenFullSizeY = screenFullSize.h;
-	screenFullPosX  = screenFullSize.x;
-	screenFullPosY  = screenFullSize.y;
-
+	//probably redundant
 	if (!borderless)
 		UpdateWindowBorders(sdlWindows[0]);
 
@@ -1383,18 +1328,19 @@ void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
 		DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(RECT));
 		GetWindowRect(hwnd, &rect);
 
-		winBorder[0] -= std::max(0l, frame.top - rect.top);
-		winBorder[1] -= std::max(0l, frame.left - rect.left);
+		winBorder[0] -= std::max(0l, frame.top   - rect.top    );
+		winBorder[1] -= std::max(0l, frame.left  - rect.left   );
 		winBorder[2] -= std::max(0l, rect.bottom - frame.bottom);
-		winBorder[3] -= std::max(0l, rect.right - frame.right);
+		winBorder[3] -= std::max(0l, rect.right  - frame.right);
 
-		LOG("[GR::%s] Working around Windows 10+ thick borders SDL2 issue, borders are slimmed by TLBR(%d,%d,%d,%d)", __func__,
-			static_cast<int>(std::max(0l, frame.top - rect.top)),
-			static_cast<int>(std::max(0l, frame.left - rect.left)),
+		LOG_L(L_DEBUG, "[GR::%s] Working around Windows 10+ thick borders SDL2 issue, borders are slimmed by TLBR(%d,%d,%d,%d)", __func__,
+			static_cast<int>(std::max(0l, frame.top   - rect.top    )),
+			static_cast<int>(std::max(0l, frame.left  - rect.left   )),
 			static_cast<int>(std::max(0l, rect.bottom - frame.bottom)),
-			static_cast<int>(std::max(0l, rect.right - frame.right))
+			static_cast<int>(std::max(0l, rect.right  - frame.right ))
 		);
 	}
+	LOG_L(L_DEBUG, "[GR::%s] Storing window borders {%d, %d, %d, %d}", __func__, winBorder[0], winBorder[1], winBorder[2], winBorder[3]);
 	#endif
 #endif
 }
