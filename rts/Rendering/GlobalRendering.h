@@ -98,6 +98,7 @@ public:
 
 	int GetCurrentDisplayIndex() const;
 	void GetScreenBounds(SDL_Rect& r, const int* di = nullptr) const;
+	void GetUsableScreenBounds(SDL_Rect& r, const int* di = nullptr) const;
 
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;

@@ -526,12 +526,38 @@ int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 {
-	lua_pushnumber(L, globalRendering->screenSizeX);
-	lua_pushnumber(L, globalRendering->screenSizeY);
-	lua_pushnumber(L, globalRendering->screenPosX);
-	lua_pushnumber(L, globalRendering->screenPosY);
+	const int displayIndex = luaL_optint(L, 1, -1);
+	const int* displayIndexPtr = (displayIndex != -1) ? &displayIndex : nullptr;
+	const bool queryUsable = luaL_optboolean(L, 2, false); // whether to query usable screen size
 
-	return 4;
+	if (displayIndexPtr == nullptr) {
+		lua_pushnumber(L, globalRendering->screenSizeX);
+		lua_pushnumber(L, globalRendering->screenSizeY);
+		lua_pushnumber(L, globalRendering->screenPosX);
+		lua_pushnumber(L, globalRendering->screenPosY);
+	}
+	else {
+		SDL_Rect r{};
+		globalRendering->GetScreenBounds(r, displayIndexPtr);
+		lua_pushnumber(L, r.w);
+		lua_pushnumber(L, r.h);
+		lua_pushnumber(L, r.x);
+		lua_pushnumber(L, r.y);
+	}
+
+	if (!queryUsable)
+		return 4;
+
+	{
+		SDL_Rect r{};
+		globalRendering->GetUsableScreenBounds(r, displayIndexPtr);
+		lua_pushnumber(L, r.w);
+		lua_pushnumber(L, r.h);
+		lua_pushnumber(L, r.x);
+		lua_pushnumber(L, r.y);
+
+		return 4 + 4;
+	}
 }
 
 

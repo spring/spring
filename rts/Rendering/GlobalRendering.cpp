@@ -1145,6 +1145,12 @@ void CGlobalRendering::GetScreenBounds(SDL_Rect& r, const int* di) const
 	SDL_GetDisplayBounds(displayIndex, &r);
 }
 
+void CGlobalRendering::GetUsableScreenBounds(SDL_Rect& r, const int* di) const
+{
+	const int displayIndex = di ? *di : GetCurrentDisplayIndex();
+	SDL_GetDisplayUsableBounds(displayIndex, &r);
+}
+
 
 // only called on startup; change the config based on command-line args
 void CGlobalRendering::SetFullScreen(bool cliWindowed, bool cliFullScreen)
