@@ -29,7 +29,6 @@ public:
 		static Derived instance;
 		return instance;
 	};
-	static bool Supported();
 public:
 	void Init() { static_cast<Derived*>(this)->InitDerived(); }
 	void Kill() { static_cast<Derived*>(this)->KillDerived(); }
