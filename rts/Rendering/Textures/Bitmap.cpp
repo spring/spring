@@ -311,6 +311,8 @@ static bool IsValidImageFormat(int format) {
 	return std::find(std::cbegin(formatList), std::cend(formatList), format) != std::cend(formatList);
 }
 
+
+
 //////////////////////////////////////////////////////////////////////
 // BitmapAction
 //////////////////////////////////////////////////////////////////////
@@ -1041,8 +1043,13 @@ uint32_t CBitmap::GetDataTypeSize() const
 	switch (dataType) {
 	case GL_FLOAT:
 		return sizeof(float);
+	case GL_INT: [[fallthrough]];
+	case GL_UNSIGNED_INT:
+		return sizeof(uint32_t);
+	case GL_SHORT: [[fallthrough]];
 	case GL_UNSIGNED_SHORT:
 		return sizeof(uint16_t);
+	case GL_BYTE: [[fallthrough]];
 	case GL_UNSIGNED_BYTE:
 		return sizeof(uint8_t);
 	default:
@@ -1161,9 +1168,13 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 			isLoaded = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), buffer.size());
 			currFormat = ilGetInteger(IL_IMAGE_FORMAT);
 			isValid = (isLoaded && IsValidImageFormat(currFormat));
-			//noAlpha = (isValid && (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4));
-			noAlpha = (isValid && currFormat == 0x1907/*GL_RGB*/);
 			dataType = ilGetInteger(IL_IMAGE_TYPE);
+			uint32_t bytesPerChannel = std::max(GetDataTypeSize(), 1u); //make sure we don't div by 0 later on
+			uint32_t bytesPerPixel   = ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL);
+			uint32_t numChannels = bytesPerPixel / bytesPerChannel;
+			assert(numChannels > 0 && numChannels <= 4);
+
+			noAlpha = (isValid && numChannels != 4);
 
 			// FPU control word has to be restored as well
 			streflop::streflop_init<streflop::Simple>();
