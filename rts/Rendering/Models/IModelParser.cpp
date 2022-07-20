@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <chrono>
+
 #include "IModelParser.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
@@ -130,6 +132,8 @@ void CModelLoader::Init()
 	models.clear();
 	models.resize(MAX_MODEL_OBJECTS);
 
+	preloadFutures.reserve(1024);
+
 	// dummy first model, legitimate model IDs start at 1
 	models[0] = std::move(CreateDummyModel(numModels = 0));
 }
@@ -211,17 +215,25 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 {
 	assert(Threading::IsMainThread());
 
-	if (!ThreadPool::HasThreads())
-		return;
+	//NB: do preload in any case
+	if (ThreadPool::HasThreads()) {
 
-	// if already in cache, thread just returns early
-	// not spawning the thread at all would be better but still
-	// requires locking around cache.find(...) since some other
-	// preload worker might be down in CreateModel modifying it
-	// at the same time
-	ThreadPool::Enqueue([modelName]() {
+		// if already in cache, thread just returns early
+		// not spawning the thread at all would be better but still
+		// requires locking around cache.find(...) since some other
+		// preload worker might be down in CreateModel modifying it
+		// at the same time
+		preloadFutures.emplace_back(
+			ThreadPool::Enqueue([modelName]() {
+				modelLoader.LoadModel(modelName, true);
+			})
+		);
+
+		DrainPreloadFutures(preloadFutures.capacity() - 1); //keep the queue busy enough
+	}
+	else {
 		modelLoader.LoadModel(modelName, true);
-	});
+	}
 }
 
 void CModelLoader::LogErrors()
@@ -287,10 +299,41 @@ S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 
 	S3DModel* cachedModel = &models[ci->second];
 
+	assert(cachedModel->id >= 0);
+	//LoadAndProcessGeometry(cachedModel);
+
 	if (!preload)
 		CreateLists(cachedModel);
 
 	return cachedModel;
+}
+
+void CModelLoader::DrainPreloadFutures(uint32_t numAllowed)
+{
+	using namespace std::chrono_literals;
+
+	if (preloadFutures.size() <= numAllowed)
+		return;
+
+	// collect completed futures
+	for (size_t i = 0; i < preloadFutures.size(); ++i) {
+		if (preloadFutures[i]->wait_for(0s) == std::future_status::ready) {
+			preloadFutures[i] = std::move(preloadFutures.back());
+			preloadFutures.pop_back();
+		}
+	}
+
+	if (preloadFutures.size() <= numAllowed)
+		return;
+
+	while (preloadFutures.size() > numAllowed) {
+		for (size_t i = 0; i < preloadFutures.size(); ++i) {
+			if (preloadFutures[i]->wait_for(100us) == std::future_status::ready) {
+				preloadFutures[i] = std::move(preloadFutures.back());
+				preloadFutures.pop_back();
+			}
+		}
+	}
 }
 
 
@@ -308,6 +351,8 @@ S3DModel* CModelLoader::CreateModel(
 		assert(model.GetRootPiece() != nullptr);
 
 		model.SetPieceMatrices();
+
+		LoadAndProcessGeometry(&model);
 
 		if (!preload)
 			CreateLists(&model);
@@ -372,11 +417,12 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 
 
 
-void CModelLoader::CreateLists(S3DModel* model) {
-	const S3DModelPiece* rootPiece = model->GetRootPiece();
-
-	if (rootPiece->GetDisplayListID() != 0)
+void CModelLoader::LoadAndProcessGeometry(S3DModel* model)
+{
+	if (model->id >= 0)
 		return;
+
+	const S3DModelPiece* rootPiece = model->GetRootPiece();
 
 	model->curVertStartIndx = 0u;
 	model->curIndxStartIndx = 0u;
@@ -384,21 +430,31 @@ void CModelLoader::CreateLists(S3DModel* model) {
 	for (int i = 0; i < model->pieceObjects.size(); ++i) {
 		S3DModelPiece* p = model->pieceObjects[i];
 		p->PostProcessGeometry(i);
-		p->CreateShatterPieces();
 		model->curVertStartIndx += p->GetVertexCount();
 		model->curIndxStartIndx += p->GetVertexDrawIndexCount();
+	}
+}
+
+void CModelLoader::CreateLists(S3DModel* model) {
+	const S3DModelPiece* rootPiece = model->GetRootPiece();
+
+	if (rootPiece->GetDisplayListID() != 0)
+		return;
+
+	for (int i = 0; i < model->pieceObjects.size(); ++i) {
+		S3DModelPiece* p = model->pieceObjects[i];
+		p->CreateShatterPieces();
 	}
 
 	model->CreateVBOs();
 	for (S3DModelPiece* p : model->pieceObjects) {
 		p->UploadToVBO();
-		//p->CreateDispList();
 	}
 	for (S3DModelPiece* p : model->pieceObjects) {
-		//p->UploadToVBO();
 		p->CreateDispList();
 	}
 
+	// 3DO atlases are preloaded C3DOTextureHandler::Init()
 	if (model->type == MODELTYPE_3DO)
 		return;
 

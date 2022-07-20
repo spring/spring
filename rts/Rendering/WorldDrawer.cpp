@@ -72,7 +72,7 @@ void CWorldDrawer::InitPost() const
 	char buf[512] = {0};
 
 	{
-		loadscreen->SetLoadMessage("Loading Models and Textures");
+		loadscreen->SetLoadMessage("Loading Models");
 		ModelPreloader::Load();
 	}
 	{

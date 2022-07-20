@@ -53,7 +53,7 @@ extern MatricesMemStorage matricesMemStorage;
 class ScopedMatricesMemAlloc {
 public:
 	ScopedMatricesMemAlloc() : ScopedMatricesMemAlloc(0u) {};
-	ScopedMatricesMemAlloc(std::size_t numElems_, bool withMutex = false) : numElems{numElems_} {
+	ScopedMatricesMemAlloc(std::size_t numElems_, bool withMutex = true) : numElems{numElems_} {
 		firstElem = matricesMemStorage.Allocate(numElems, withMutex);
 	}
 

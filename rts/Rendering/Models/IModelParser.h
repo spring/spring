@@ -34,6 +34,8 @@ public:
 	void PreloadModel(const std::string& name);
 	void LogErrors();
 
+	void DrainPreloadFutures(uint32_t numAllowed = 0);
+
 	const std::vector<S3DModel>& GetModelsVec() const { return models; }
 	      std::vector<S3DModel>& GetModelsVec()       { return models; }
 public:
@@ -52,6 +54,7 @@ private:
 	void KillModels();
 	void KillParsers();
 
+	void LoadAndProcessGeometry(S3DModel* o);
 	void CreateLists(S3DModel* o);
 
 private:
@@ -60,6 +63,8 @@ private:
 	ParserMap parsers;
 
 	spring::mutex mutex;
+
+	std::vector<std::shared_ptr<std::future<void>>> preloadFutures;
 
 	std::vector<S3DModel> models;
 	std::vector< std::pair<std::string, std::string> > errors;
