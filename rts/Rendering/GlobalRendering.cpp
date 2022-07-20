@@ -355,6 +355,12 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 		"[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=\"%s\") for %s window",
 	};
 
+	bool borderless_ = configHandler->GetBool("WindowBorderless");
+	bool fullScreen_ = configHandler->GetBool("Fullscreen");
+	int winPosX_ = configHandler->GetInt("WindowPosX");
+	int winPosY_ = configHandler->GetInt("WindowPosY");
+	int2 newRes = GetCfgWinRes();
+
 	// note:
 	//   passing the minimized-flag is useless (state is not saved if minimized)
 	//   and has no effect anyway, setting a minimum size for a window overrides
@@ -365,12 +371,9 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 	//   SDL_WINDOW_FULLSCREEN_DESKTOP for "fake" fullscreen that takes the size of the desktop;
 	//   and 0 for windowed mode.
 
-	// do not set here
-	//sdlFlags |= mix(SDL_WINDOW_FULLSCREEN, SDL_WINDOW_FULLSCREEN_DESKTOP, borderless) * fullScreen;
-	//sdlFlags |=    (SDL_WINDOW_BORDERLESS * borderless);
-	//sdlFlags |=    (SDL_WINDOW_HIDDEN * hidden);
-
 	uint32_t sdlFlags  = (SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	         sdlFlags |= (borderless_ ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN) * fullScreen_;
+			 sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless_);
 	         sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
 
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (newWindow == nullptr); i++) {
@@ -383,7 +386,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (newWindow == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
-			if ((newWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, minRes.x, minRes.y, sdlFlags)) == nullptr) {
+			if ((newWindow = SDL_CreateWindow(title, winPosX_, winPosY_, newRes.x, newRes.y, sdlFlags)) == nullptr) {
 				LOG_L(L_WARNING, frmts[0], __func__, SDL_GetError(), aaLvls[i], zbBits[j], winName);
 				continue;
 			}
