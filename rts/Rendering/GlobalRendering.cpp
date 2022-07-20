@@ -373,7 +373,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 
 	uint32_t sdlFlags  = (SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	         sdlFlags |= (borderless_ ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN) * fullScreen_;
-			 sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless_);
+	         sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless_);
 	         sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
 
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (newWindow == nullptr); i++) {

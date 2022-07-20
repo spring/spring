@@ -11,6 +11,9 @@
 
 void ModelPreloader::Load()
 {
+	if (!globalRendering->haveGL4 || !enabled)
+		return;
+
 	// map features are loaded earlier in featureHandler.LoadFeaturesFromMap(); - not a big deal
 	// Functions below are multithreaded inside because modelLoader.PreloadModel() doesn't deal with OpenGL functions
 	LoadUnitDefs();
@@ -18,9 +21,6 @@ void ModelPreloader::Load()
 	LoadWeaponDefs();
 
 	modelLoader.DrainPreloadFutures(0);
-
-	if (!globalRendering->haveGL4 || !enabled)
-		return;
 
 	// after that point we should've loaded all models, it's time to dispatch VBO/EBO/VAO creation
 	S3DModelVAO::Init();
