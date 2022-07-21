@@ -337,6 +337,7 @@ CGlobalRendering::~CGlobalRendering()
 void CGlobalRendering::PreKill()
 {
 	UniformConstants::GetInstance().Kill(); //unsafe to kill in ~CGlobalRendering()
+	RenderBuffer::KillStatic();
 }
 
 
@@ -614,6 +615,7 @@ void CGlobalRendering::PostInit() {
 
 	UniformConstants::GetInstance().Init();
 	glGenQueries(glTimerQueries.size(), glTimerQueries.data());
+	RenderBuffer::InitStatic();
 }
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)

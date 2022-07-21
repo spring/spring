@@ -563,7 +563,7 @@ S3DModel* WeaponDef::LoadModel() const {
 	return const_cast<WeaponDef*>(this)->LoadModel();
 }
 
-void WeaponDef::PreloadModel() const {
+void WeaponDef::PreloadModel() {
 	if (visuals.model != nullptr)
 		return;
 	if (visuals.modelName.empty())
@@ -572,7 +572,7 @@ void WeaponDef::PreloadModel() const {
 	modelLoader.PreloadModel(visuals.modelName);
 }
 
-void WeaponDef::PreloadModel()
+void WeaponDef::PreloadModel() const
 {
 	//not very sweet, but still better than replacing "const WeaponDef" _everywhere_
 	const_cast<WeaponDef*>(this)->PreloadModel();

@@ -26,10 +26,18 @@ class TypedRenderBuffer;
 
 class RenderBuffer {
 public:
+	static void InitStatic();
+	static void KillStatic();
+
+	RenderBuffer()
+		:initCapacity{ 0, 0 }
+	{}
+	RenderBuffer(std::array<size_t, 2> c)
+		:initCapacity{ c }
+	{}
+
 	template <typename T>
 	static TypedRenderBuffer<T>& GetTypedRenderBuffer();
-
-	virtual void SwapBuffer() = 0;
 
 	static void SwapStandardRenderBuffers() {
 		for (const auto& trb : typedRenderBuffers) {
@@ -38,6 +46,23 @@ public:
 			}
 		}
 	}
+
+	virtual void SwapBuffer() = 0;
+	virtual const char* GetBufferName() const = 0;
+	virtual std::array<size_t, 2> GetBuffersCapacity() const = 0;
+
+	std::array<size_t, 2> GetSubmitNum() const { return numSubmits; }
+	std::array<size_t, 2> GetMaxSize()   const { return maxSize;    }
+	std::array<size_t, 2> GetInitialCapacity()   const { return initCapacity; }
+protected:
+	// [0] := non-indexed, [1] := indexed
+	std::array<size_t, 2> numSubmits = { 0, 0 };
+
+	// [0] := vertex, [1] := index
+	std::array<size_t, 2> maxSize = { 0, 0 };
+
+	// [0] := vertex, [1] := index
+	std::array<size_t, 2> initCapacity = { 0, 0 };
 private:
 	static std::array<std::unique_ptr<RenderBuffer>, 11> typedRenderBuffers;
 };
@@ -275,12 +300,14 @@ public:
 	using IndcType = uint32_t;
 
 	TypedRenderBuffer<T>()
-		: vertCount0{ 0 }
+		: RenderBuffer()
+		, vertCount0{ 0 }
 		, elemCount0{ 0 }
 		, bufferType{ bufferTypeDefault }
 	{}
 	TypedRenderBuffer<T>(size_t vertCount0_, size_t elemCount0_, IStreamBufferConcept::Types bufferType_ = bufferTypeDefault)
-		: vertCount0 { vertCount0_ }
+		: RenderBuffer({ vertCount0_, elemCount0_ })
+		, vertCount0 { vertCount0_ }
 		, elemCount0 { elemCount0_ }
 		, bufferType { bufferType_ }
 	{
@@ -294,6 +321,8 @@ public:
 		if (ebo)
 			ebo->SwapBuffer();
 
+		maxSize = std::max(maxSize, { verts.size(), indcs.size() });
+
 		// clear
 		verts.clear();
 		indcs.clear();
@@ -305,6 +334,14 @@ public:
 		eboUploadIndex = 0;
 
 		numSubmits = { 0, 0 };
+	}
+
+	const char* GetBufferName() const override {
+		return vboTypeName;
+	}
+
+	std::array<size_t, 2> GetBuffersCapacity() const override {
+		return std::array{ verts.capacity(), indcs.capacity() };
 	}
 
 	TypedRenderBuffer<T>(const TypedRenderBuffer<T>& trdb) = delete;
@@ -504,9 +541,6 @@ private:
 
 	size_t vboUploadIndex = 0;
 	size_t eboUploadIndex = 0;
-
-	// [0] := non-indexed, [1] := indexed
-	std::array<size_t, 2> numSubmits = { 0, 0 };
 
 	inline static RenderBufferShader<T> shader;
 
