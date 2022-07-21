@@ -1,6 +1,6 @@
 #include "RenderBuffers.h"
 
-#include "System/Log/ILog.h";
+#include "System/Log/ILog.h"
 
 std::array<std::unique_ptr<RenderBuffer>, 11> RenderBuffer::typedRenderBuffers;
 
@@ -26,12 +26,12 @@ void RenderBuffer::KillStatic()
 	for (const auto& trb : typedRenderBuffers) {
 		const auto Cx = trb->GetBuffersCapacity();
 		const auto C0 = trb->GetInitialCapacity();
-		const auto S = trb->GetMaxSize();
+		const auto S  = trb->GetMaxSize();
 		LOG_L(L_INFO, "[RenderBuffer::%s] Type = %s max size/init. capacity/curr. capacity: VBO = {%u, %u, %u}, EBO = {%u, %u, %u}", __func__, trb->GetBufferName(),
-			static_cast<uint32_t>(S[0] ),
+			static_cast<uint32_t>( S[0]),
 			static_cast<uint32_t>(C0[0]),
 			static_cast<uint32_t>(Cx[0]),
-			static_cast<uint32_t>(S[1] ),
+			static_cast<uint32_t>( S[1]),
 			static_cast<uint32_t>(C0[1]),
 			static_cast<uint32_t>(Cx[1])
 		);
