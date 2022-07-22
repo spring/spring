@@ -37,14 +37,6 @@ private:
 	int ttl;
 
 	float invttl;
-	int createTime;
-
-	float life;
-	float isize;
-	float ilength;
-
-	float rotVal;
-	float rotVel;
 };
 
 #endif // BITMAP_MUZZLE_FLAME_H

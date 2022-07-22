@@ -5,6 +5,7 @@
 #include "ExpGenSpawner.h"
 #include "ProjectileMemPool.h"
 #include "Rendering/GroundFlash.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/Classes/BitmapMuzzleFlame.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/DirtProjectile.h"
@@ -17,23 +18,33 @@
 #include "Rendering/Env/Particles/Classes/SpherePartProjectile.h"
 #include "Rendering/Env/Particles/Classes/TracerProjectile.h"
 #include "System/Sync/HsiehHash.h"
+#include "Sim/Misc/GlobalSynced.h"
 
 
 CR_BIND_DERIVED_INTERFACE_POOL(CExpGenSpawnable, CWorldObject, projMemPool.allocMem, projMemPool.freeMem)
 CR_REG_METADATA(CExpGenSpawnable, (
+	CR_MEMBER(rotVal),
+	CR_MEMBER(rotVel),
+	CR_MEMBER(createFrame),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 	CR_MEMBER(rotParams),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ))
 
 CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
- : CWorldObject(pos, spd)
+	: CWorldObject(pos, spd)
+	, createFrame{0}
+	, rotVal{0}
+	, rotVel{0}
 {
 	assert(projMemPool.alloced(this));
 }
 
 CExpGenSpawnable::CExpGenSpawnable()
- : CWorldObject()
+	: CWorldObject()
+	, createFrame{ 0 }
+	, rotVal{ 0 }
+	, rotVel{ 0 }
 {
 	assert(projMemPool.alloced(this));
 }
@@ -45,10 +56,19 @@ CExpGenSpawnable::~CExpGenSpawnable()
 
 void CExpGenSpawnable::Init(const CUnit* owner, const float3& offset)
 {
+	createFrame = gs->frameNum;
 	rotParams *= float3(math::DEG_TO_RAD / GAME_SPEED, math::DEG_TO_RAD / (GAME_SPEED * GAME_SPEED), math::DEG_TO_RAD);
+
+	UpdateRotation();
 }
 
-
+void CExpGenSpawnable::UpdateRotation()
+{
+	const float t = (gs->frameNum - createFrame + globalRendering->timeOffset);
+	// rotParams.y is acceleration in angle per frame^2
+	rotVel = rotParams.x + rotParams.y * t;
+	rotVal = rotParams.z + rotVel * t;
+}
 
 bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {

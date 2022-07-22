@@ -108,9 +108,6 @@ private:
 	int ttl;
 	float age, agerate;
 
-	float rotVal;
-	float rotVel;
-
 	CColorMap* colorMap;
 	AtlasedTexture* texture;
 };

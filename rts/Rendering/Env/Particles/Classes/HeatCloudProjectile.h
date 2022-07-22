@@ -41,9 +41,6 @@ private:
 	float sizemod;
 	float sizemodmod;
 
-	float rotVal;
-	float rotVel;
-
 	AtlasedTexture* texture;
 };
 

@@ -62,8 +62,6 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 	CR_MEMBER(normal),
 	CR_MEMBER(age),
 	CR_MEMBER(agerate),
-	CR_MEMBER(rotVal),
-	CR_MEMBER(rotVel),
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
@@ -271,9 +269,7 @@ bool CStandardGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 
 CSimpleGroundFlash::CSimpleGroundFlash()
-	: rotVal(0.0f)
-	, rotVel(0.0f)
-	, texture(nullptr)
+	: texture(nullptr)
 	, colorMap(nullptr)
 	, agerate(0.0f)
 	, age(0.0f)
@@ -298,14 +294,13 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 
 	CExpGenSpawnable::Init(owner, offset); // scales rotParams
 
-	rotVal = rotParams.z; //initial rotation value
-	rotVel = rotParams.x; //initial rotation velocity
-
 	projectileHandler.AddGroundFlash(this);
 }
 
 void CSimpleGroundFlash::Draw(CVertexArray* va)
 {
+	UpdateRotation();
+
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
 
@@ -331,9 +326,6 @@ bool CSimpleGroundFlash::Update()
 {
 	age += agerate;
 	size += sizeGrowth;
-
-	rotVal += rotVel;
-	rotVel += rotParams.y; //rot accel
 
 	return (age < 1);
 }

@@ -23,8 +23,6 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizemod),
 		CR_MEMBER(sizemodmod),
-		CR_MEMBER(rotVal),
-		CR_MEMBER(rotVel),
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ))
@@ -74,9 +72,6 @@ void CHeatCloudProjectile::Update()
 	pos += speed;
 	heat = std::max(heat - heatFalloff, 0.0f);
 
-	rotVal += rotVel;
-	rotVel += rotParams.y; //rot accel
-
 	deleteMe |= (heat <= 0.0f);
 
 	size += sizeGrowth;
@@ -86,13 +81,12 @@ void CHeatCloudProjectile::Update()
 void CHeatCloudProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
-
-	rotVal = rotParams.z; //initial rotation value
-	rotVel = rotParams.x; //initial rotation velocity
 }
 
 void CHeatCloudProjectile::Draw(CVertexArray* va)
 {
+	UpdateRotation();
+
 	unsigned char col[4];
 	const float dheat = std::max(0.0f, heat-globalRendering->timeOffset);
 	const float alpha = (dheat / maxheat) * 255.0f;
