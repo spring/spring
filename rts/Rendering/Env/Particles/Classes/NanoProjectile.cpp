@@ -19,7 +19,9 @@ CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 CR_REG_METADATA(CNanoProjectile,
 (
 	CR_MEMBER(rotAcc),
-
+	CR_MEMBER(rotVal0x),
+	CR_MEMBER(rotVel0x),
+	CR_MEMBER(rotAcc0x),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(deathFrame),
 		CR_MEMBER(color),
