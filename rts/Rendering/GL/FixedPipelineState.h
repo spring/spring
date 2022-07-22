@@ -172,9 +172,9 @@ namespace GL {
 		void BindUnbind(const bool bind) const;
 
 		template <typename... T>
-		constexpr void DumpState(const std::tuple<T...>& tuple);
+		inline void DumpState(const std::tuple<T...>& tuple);
 		template <typename... T>
-		constexpr void HashState(const std::tuple<T...>& tuple);
+		inline void HashState(const std::tuple<T...>& tuple);
 	private:
 		static void BindTextureProxy(GLenum texUnit, GLenum texType, GLuint texID) { glActiveTexture(texUnit); glBindTexture(texType, texID); }
 	private:
@@ -223,7 +223,7 @@ namespace GL {
 
 
 	template<typename ...T>
-	inline constexpr void FixedPipelineState::DumpState(const std::tuple<T...>& tuple)
+	inline void FixedPipelineState::DumpState(const std::tuple<T...>& tuple)
 	{
 	#if (DEBUG_PIPELINE_STATE == 1)
 		std::ostringstream ss;
@@ -237,7 +237,7 @@ namespace GL {
 	}
 
 	template<typename ...T>
-	inline constexpr void GL::FixedPipelineState::HashState(const std::tuple<T...>& tuple)
+	inline void FixedPipelineState::HashState(const std::tuple<T...>& tuple)
 	{
 		const auto lambda = [this](auto&&... args) -> uint64_t {
 			return ((hashString(reinterpret_cast<const char*>(&args), sizeof(args)) * 65521) + ...);

@@ -3,7 +3,7 @@
 #include "VertexArrayTypes.h"
 
 #define VA_TYPE_OFFSET(T, m) reinterpret_cast<const void*>(offsetof(T, m))
-#define VA_ATTR_DEF(T, idx, count, type, member, normalized, name) AttributeDef(idx, count, type, sizeof(T), VA_TYPE_OFFSET(T, T::member), normalized, name)
+#define VA_ATTR_DEF(T, idx, count, type, member, normalized, name) AttributeDef(idx, count, type, sizeof(T), VA_TYPE_OFFSET(T, member), normalized, name)
 
 std::array<AttributeDef, 1> VA_TYPE_0::attributeDefs = {
 	VA_ATTR_DEF(VA_TYPE_0, 0, 3, GL_FLOAT, p, false, "pos")
