@@ -122,6 +122,10 @@ GLAPI GLboolean APIENTRY glIsRenderbuffer(GLuint renderbuffer) {
 	return GL_FALSE;
 }
 GLAPI void APIENTRY glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {}
+GLAPI void APIENTRY glGetActiveUniformsiv(GLuint program, GLsizei uniformCount, const GLuint* uniformIndices, GLenum pname, GLint* params) {
+    for (GLsizei i = 0; i < uniformCount; ++i)
+        params[i] = 0;
+}
 GLAPI void APIENTRY glGetQueryiv(GLenum target, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {}
 

@@ -36,6 +36,9 @@ void LineEdit::SetContent(const std::string& line, bool moveCursor)
 	}
 }
 
+#ifdef HEADLESS
+void LineEdit::DrawSelf() {}
+#else
 void LineEdit::DrawSelf()
 {
 	const float opacity = Opacity();
@@ -76,6 +79,7 @@ void LineEdit::DrawSelf()
 	font->SetTextColor(); //default
 	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, tempText);
 }
+#endif
 
 bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 {

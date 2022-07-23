@@ -23,6 +23,9 @@ void Button::Label(const std::string& _label)
 	hovered = false;
 }
 
+#ifdef HEADLESS
+void Button::DrawSelf() {}
+#else
 void Button::DrawSelf()
 {
 	const float opacity = Opacity();
@@ -52,6 +55,7 @@ void Button::DrawSelf()
 	font->glPrint(pos[0] + size[0]/2, pos[1] + size[1]/2, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
 	font->End();
 }
+#endif
 
 bool Button::HandleEventSelf(const SDL_Event& ev)
 {

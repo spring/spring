@@ -131,6 +131,9 @@ void GuiElement::Move(float x, float y)
 		ch->Move(x, y);
 }
 
+#ifdef HEADLESS
+void GuiElement::DrawBox(int primType, const SColor& color) {}
+#else
 void GuiElement::DrawBox(int primType, const SColor& color)
 {
 	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2DC>();
@@ -163,5 +166,7 @@ void GuiElement::DrawBox(int primType, const SColor& color)
 	}
 	sh.Disable();
 }
+#endif // !HEADLESS
+
 
 }

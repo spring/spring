@@ -12,6 +12,9 @@ HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 {
 }
 
+#ifdef HEADLESS
+void HorizontalLayout::DrawSelf() {}
+#else
 void HorizontalLayout::DrawSelf()
 {
 	if (borderWidth <= 0.0f)
@@ -20,6 +23,7 @@ void HorizontalLayout::DrawSelf()
 	glLineWidth(borderWidth);
 	DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, Opacity() });
 }
+#endif
 
 void HorizontalLayout::GeometryChangeSelf()
 {

@@ -16,6 +16,9 @@ void TextElement::SetText(const std::string& str)
 	text = str;
 }
 
+#ifdef HEADLESS
+void TextElement::DrawSelf() {}
+#else
 void TextElement::DrawSelf()
 {
 	const float opacity = Opacity();
@@ -28,5 +31,6 @@ void TextElement::DrawSelf()
 	font->glPrint(pos[0]+size[0]/2, pos[1]+size[1]/2, 1.f, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, mytext);
 	font->End();
 }
+#endif
 
 }

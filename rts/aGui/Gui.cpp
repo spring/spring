@@ -20,6 +20,9 @@ Gui::Gui()
 	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
 }
 
+#ifdef HEADLESS
+void Gui::Draw() {}
+#else
 void Gui::Draw()
 {
 	Clean();
@@ -36,6 +39,7 @@ void Gui::Draw()
 		(*it).element->Draw();
 	}
 }
+#endif
 
 void Gui::Clean() {
 	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it)

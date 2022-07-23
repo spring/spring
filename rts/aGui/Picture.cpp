@@ -39,6 +39,9 @@ namespace agui
 		}
 	}
 
+#ifdef HEADLESS
+	void Picture::DrawSelf() {}
+#else
 	void Picture::DrawSelf()
 	{
 		if (texture) {
@@ -60,5 +63,6 @@ namespace agui
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
+#endif
 
 } // namespace agui

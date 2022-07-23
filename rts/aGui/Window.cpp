@@ -26,6 +26,10 @@ void Window::AddChild(GuiElement* elem)
 	elem->SetSize(size[0], size[1]-titleHeight);
 }
 
+
+#ifdef HEADLESS
+void Window::DrawSelf() {}
+#else
 void Window::DrawSelf()
 {
 	const float opacity = Opacity();
@@ -63,6 +67,7 @@ void Window::DrawSelf()
 	font->glPrint(pos[0]+0.01, pos[1]+size[1]-titleHeight/2, 1.0, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM, title);
 	font->End();
 }
+#endif
 
 bool Window::HandleEventSelf(const SDL_Event& ev)
 {

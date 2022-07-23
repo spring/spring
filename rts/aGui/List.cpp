@@ -194,6 +194,9 @@ bool List::MouseUpdate(int x, int y)
 	return false;
 }
 
+#ifdef HEADLESS
+void List::DrawSelf() {}
+#else
 void List::DrawSelf()
 {
 	const float opacity = Opacity();
@@ -288,6 +291,7 @@ void List::DrawSelf()
 
 	font->End();
 }
+#endif
 
 bool List::HandleEventSelf(const SDL_Event& ev)
 {

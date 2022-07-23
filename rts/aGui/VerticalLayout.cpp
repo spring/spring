@@ -11,6 +11,9 @@ VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 {
 }
 
+#ifdef HEADLESS
+void VerticalLayout::DrawSelf() {}
+#else
 void VerticalLayout::DrawSelf()
 {
 	if (borderWidth > 0)
@@ -19,6 +22,7 @@ void VerticalLayout::DrawSelf()
 		DrawBox(GL_LINE_LOOP, {1.f, 1.f, 1.f, Opacity()});
 	}
 }
+#endif
 
 void VerticalLayout::GeometryChangeSelf()
 {
