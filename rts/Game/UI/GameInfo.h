@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GAMEINFO_H
-#define GAMEINFO_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -35,18 +34,15 @@ private:
 	CGameInfo();
 	~CGameInfo();
 
-	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button);
-	bool KeyPressed(int keyCode, int scanCode, bool isRepeat);
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x,int y);
-	void Draw();
-
+	bool MousePress(int x, int y, int button) override;
+	void MouseRelease(int x, int y, int button) override;
+	bool KeyPressed(int key, int scanCode, bool isRepeat) override;
+	bool IsAbove(int x, int y) override;
+	std::string GetTooltip(int x,int y) override;
+	void Draw() override;
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
 	std::vector<FontString> labels;
 	std::vector<FontString> values;
 };
-
-#endif /* GAMEINFO_H */

@@ -103,7 +103,7 @@ public:
 	CPathManager();
 	~CPathManager();
 
-	std::int32_t GetPathFinderType() const override { return HAPFS_TYPE; }
+	std::int32_t GetPathFinderType() const override { return TKPFS_TYPE; }
 	std::uint32_t GetPathCheckSum() const override;
 
 	std::int64_t Finalize() override;
@@ -252,7 +252,7 @@ private:
 private:
 	mutable std::mutex pathMapUpdate;
 
-	
+
 	bool finalized = false;
 
 	PathFlowMap* pathFlowMap;

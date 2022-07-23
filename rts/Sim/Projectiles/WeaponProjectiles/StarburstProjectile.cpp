@@ -7,7 +7,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -321,10 +321,12 @@ inline int CStarburstProjectile::GetSmokeTime() const
 	return weaponDef->visuals.smokeTime;
 }
 
-void CStarburstProjectile::Draw(CVertexArray* va)
+void CStarburstProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;
@@ -354,10 +356,12 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 			SColor col = lightYellow * Clamp(alpha, 0.0f, 1.0f);
 			col.a = 1;
 
-			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
-			va->AddVertexTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col);
+			rb.AddQuadTriangles(
+				{ interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col },
+				{ interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col },
+				{ interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col },
+				{ interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col }
+			);
 		}
 
 		// unsigned, so LHS will wrap around to UINT_MAX
@@ -368,10 +372,12 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 	constexpr float fsize = 25.0f;
 
 	if (validTextures[1]) {
-		va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
-		va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
-		va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
-		va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed);
+		rb.AddQuadTriangles(
+			{ drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed },
+			{ drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed },
+			{ drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed },
+			{ drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed }
+		);
 	}
 }
 

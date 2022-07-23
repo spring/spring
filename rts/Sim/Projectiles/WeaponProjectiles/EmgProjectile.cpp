@@ -4,7 +4,7 @@
 #include "EmgProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -58,20 +58,26 @@ void CEmgProjectile::Update()
 	--ttl;
 }
 
-void CEmgProjectile::Draw(CVertexArray* va)
+void CEmgProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
 
-	unsigned char col[4];
-	col[0] = (unsigned char) (color.x * intensity * 255);
-	col[1] = (unsigned char) (color.y * intensity * 255);
-	col[2] = (unsigned char) (color.z * intensity * 255);
-	col[3] = intensity * 255;
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	auto& rb = GetPrimaryRenderBuffer();
+
+	const uint8_t col[4] {
+		(uint8_t)(color.x * intensity * 255),
+		(uint8_t)(color.y * intensity * 255),
+		(uint8_t)(color.z * intensity * 255),
+		(uint8_t)(          intensity * 255)
+	};
+
+	rb.AddQuadTriangles(
+		{ drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col },
+		{ drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col },
+		{ drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col },
+		{ drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col }
+	);
 }
 
 int CEmgProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)

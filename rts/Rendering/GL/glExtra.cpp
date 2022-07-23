@@ -28,6 +28,21 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 	va->DrawArray0(GL_LINE_LOOP);
 }
 
+static void defSurfaceColoredCircle(const float3& center, float radius, const SColor& col, unsigned int res)
+{
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	for (unsigned int i = 0; i < res; ++i) {
+		const float radians = math::TWOPI * (float)i / (float)res;
+		float3 pos;
+		pos.x = center.x + (fastmath::sin(radians) * radius);
+		pos.z = center.z + (fastmath::cos(radians) * radius);
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
+		va->AddVertexC(pos, col);
+	}
+	va->DrawArrayC(GL_LINE_LOOP);
+}
+
 static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 {
 	// FIXME: terrain contouring
@@ -47,16 +62,22 @@ static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 
 
 SurfaceCircleFunc glSurfaceCircle = defSurfaceCircle;
+SurfaceColoredCircleFunc glSurfaceColoredCircle = defSurfaceColoredCircle;
 SurfaceSquareFunc glSurfaceSquare = defSurfaceSquare;
 
 void setSurfaceCircleFunc(SurfaceCircleFunc func)
 {
-	glSurfaceCircle = (func == NULL)? defSurfaceCircle: func;
+	glSurfaceCircle = (func == nullptr)? defSurfaceCircle: func;
+}
+
+void setSurfaceColoredCircleFunc(SurfaceColoredCircleFunc func)
+{
+	glSurfaceColoredCircle = (func == nullptr) ? defSurfaceColoredCircle : func;
 }
 
 void setSurfaceSquareFunc(SurfaceSquareFunc func)
 {
-	glSurfaceSquare = (func == NULL)? defSurfaceSquare: func;
+	glSurfaceSquare = (func == nullptr)? defSurfaceSquare: func;
 }
 
 

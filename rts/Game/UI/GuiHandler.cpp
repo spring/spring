@@ -3948,7 +3948,7 @@ void CGuiHandler::DrawCentroidCursor()
 	const float3 winPos = camera->CalcWindowCoordinates(pos);
 	if (winPos.z <= 1.0f) {
 		const CMouseCursor* mc = mouse->FindCursor("Centroid");
-		if (mc != NULL) {
+		if (mc != nullptr) {
 			glDisable(GL_DEPTH_TEST);
 			mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
 			glEnable(GL_DEPTH_TEST);

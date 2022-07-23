@@ -3,7 +3,7 @@
 
 #include "Game/Camera.h"
 #include "LightningProjectile.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -30,7 +30,7 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 		color = weaponDef->visuals.color;
 	}
 
-	displacements[0] = 0.0f;
+	displacements [0] = 0.0f;
 	displacements2[0] = 0.0f;
 
 	for (size_t d = 1; d < displacements_size; ++d) {
@@ -55,63 +55,71 @@ void CLightningProjectile::Update()
 	UpdateInterception();
 }
 
-void CLightningProjectile::Draw(CVertexArray* va)
+void CLightningProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
 
-	unsigned char col[4];
-	col[0] = (unsigned char) (color.x * 255);
-	col[1] = (unsigned char) (color.y * 255);
-	col[2] = (unsigned char) (color.z * 255);
-	col[3] = 1; //intensity*255;
+	auto& rb = GetPrimaryRenderBuffer();
+
+	uint8_t col[4] {
+		(uint8_t)(color.x * 255),
+		(uint8_t)(color.y * 255),
+		(uint8_t)(color.z * 255),
+		1 //intensity*255;
+	};
 
 	const float3 ddir = (targetPos - startPos).Normalize();
 	const float3 dif  = (startPos - camera->GetPos()).Normalize();
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
-	float3 tempPos = startPos;
 
-	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
+	float3 tempPos = startPos;
 	for (size_t d = 1; d < displacements_size - 1; ++d) {
 		float f = (d + 1) * 0.111f;
+		const float3 tempPosO = tempPos;
+		tempPos  = (startPos * (1.0f - f)) + (targetPos * f);
 
 		#define WDV (&weaponDef->visuals)
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col);
-		tempPos = (startPos * (1.0f - f)) + (targetPos * f);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		rb.AddQuadTriangles(
+			{ tempPosO + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col },
+			{ tempPosO + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col },
+			{ tempPos  + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col },
+			{ tempPos  + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col }
+		);
 		#undef WDV
 	}
 
 	tempPos = startPos;
 	for (size_t d = 1; d < displacements_size - 1; ++d) {
 		float f = (d + 1) * 0.111f;
+		const float3 tempPosO = tempPos;
+		tempPos = startPos * (1.0f - f) + targetPos * f;
 
 		#define WDV (&weaponDef->visuals)
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col);
-		tempPos = startPos * (1.0f - f) + targetPos * f;
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		rb.AddQuadTriangles(
+			{ tempPosO + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col },
+			{ tempPosO + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col },
+			{ tempPos  + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col },
+			{ tempPos  + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col }
+		);
 		#undef WDV
 	}
 }
 
-void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CLightningProjectile::DrawOnMinimap()
 {
-	const unsigned char lcolor[4] = {
-		(unsigned char)(color[0] * 255),
-		(unsigned char)(color[1] * 255),
-		(unsigned char)(color[2] * 255),
-		                           255
+	const SColor lcolor = SColor{
+		color[0],
+		color[1],
+		color[2]
 	};
-	lines.AddVertexQC(startPos,  lcolor);
-	lines.AddVertexQC(targetPos, lcolor);
+
+	auto& rbMM = GetAnimationRenderBuffer();
+	rbMM.AddVertex({ startPos,  lcolor });
+	rbMM.AddVertex({ targetPos, lcolor });
 }
 
 int CLightningProjectile::GetProjectilesCount() const
 {
 	return 2 * displacements_size * validTextures[0];
 }
-

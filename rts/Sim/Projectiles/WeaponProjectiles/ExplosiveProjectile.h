@@ -15,7 +15,7 @@ public:
 	CExplosiveProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 
 	int GetProjectilesCount() const override;
 

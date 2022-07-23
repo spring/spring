@@ -14,10 +14,10 @@ void RenderBuffer::InitStatic()
 		std::make_unique<TypedRenderBuffer<VA_TYPE_TN  >>(1 << 16, 1 << 16),
 		std::make_unique<TypedRenderBuffer<VA_TYPE_TC  >>(1 << 20, 1 << 20),
 		std::make_unique<TypedRenderBuffer<VA_TYPE_TNT >>(0      , 0      ),
-		std::make_unique<TypedRenderBuffer<VA_TYPE_2d0 >>(1 << 16, 1 << 16),
-		std::make_unique<TypedRenderBuffer<VA_TYPE_2dC >>(1 << 16, 1 << 16),
-		std::make_unique<TypedRenderBuffer<VA_TYPE_2dT >>(1 << 20, 1 << 20),
-		std::make_unique<TypedRenderBuffer<VA_TYPE_2dTC>>(1 << 20, 1 << 20)
+		std::make_unique<TypedRenderBuffer<VA_TYPE_2D0 >>(1 << 16, 1 << 16),
+		std::make_unique<TypedRenderBuffer<VA_TYPE_2DC >>(1 << 16, 1 << 16),
+		std::make_unique<TypedRenderBuffer<VA_TYPE_2DT >>(1 << 20, 1 << 20),
+		std::make_unique<TypedRenderBuffer<VA_TYPE_2DTC>>(1 << 20, 1 << 20)
 	};
 }
 

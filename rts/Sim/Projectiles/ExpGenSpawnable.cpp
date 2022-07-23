@@ -1,5 +1,4 @@
 #include "ExpGenSpawnable.h"
-#include "ExpGenSpawnable.h"
 
 #include "ExpGenSpawnableMemberInfo.h"
 #include "ExpGenSpawner.h"
@@ -17,6 +16,7 @@
 #include "Rendering/Env/Particles/Classes/SmokeProjectile2.h"
 #include "Rendering/Env/Particles/Classes/SpherePartProjectile.h"
 #include "Rendering/Env/Particles/Classes/TracerProjectile.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "System/Sync/HsiehHash.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -88,6 +88,12 @@ bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
+
+TypedRenderBuffer<VA_TYPE_TC>& CExpGenSpawnable::GetPrimaryRenderBuffer()
+{
+	return RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+}
+
 
 #define CHECK_ALL_SPAWNABLES() \
 	CHECK_SPAWNABLE(CExpGenSpawner)         \

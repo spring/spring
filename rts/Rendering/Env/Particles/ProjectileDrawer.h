@@ -17,7 +17,6 @@
 
 class CSolidObject;
 class CTextureAtlas;
-class CVertexArray;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
@@ -69,7 +68,7 @@ public:
 	bool CanDrawSoften() {
 		return
 			CheckSoftenExt() &&
-			fxShader && fxShader->IsValid() &&
+			fxShaders[1] && fxShaders[1]->IsValid() &&
 			depthTexture != 0u &&
 			depthFBO && depthFBO->IsValid();
 	};
@@ -83,9 +82,6 @@ public:
 	void CopyDepthBufferToTexture();
 
 	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
-
-	CVertexArray* fxVA = nullptr;
-	CVertexArray* gfVA = nullptr;
 
 	CTextureAtlas* textureAtlas = nullptr;  ///< texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas = nullptr; ///< texture atlas for ground fx
@@ -188,7 +184,10 @@ private:
 
 	GLuint depthTexture = 0u;
 	FBO* depthFBO = nullptr;
-	Shader::IProgramObject* fxShader = nullptr;
+	std::array<Shader::IProgramObject*, 2> fxShaders = { nullptr };
+	Shader::IProgramObject* fsShadowShader = nullptr;
+
+	uint32_t lastDrawFrame = 0; //normal, reflection
 
 	constexpr static int WANT_SOFTEN_COUNT = 2;
 	int wantSoften = 0;

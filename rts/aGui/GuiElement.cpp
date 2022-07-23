@@ -1,9 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "GuiElement.h"
+#include "System/SafeUtil.h"
 
 #include "Rendering/GL/myGL.h"
-#include "System/SafeUtil.h"
+#include "Rendering/GL/RenderBuffers.h"
+#include "Rendering/Shaders/Shader.h"
 
 namespace agui
 {
@@ -129,14 +131,37 @@ void GuiElement::Move(float x, float y)
 		ch->Move(x, y);
 }
 
-void GuiElement::DrawBox(int how)
+void GuiElement::DrawBox(int primType, const SColor& color)
 {
-	glBegin(how);
-	glVertex2f(pos[0], pos[1]);
-	glVertex2f(pos[0], pos[1]+size[1]);
-	glVertex2f(pos[0]+size[0], pos[1]+size[1]);
-	glVertex2f(pos[0]+size[0], pos[1]);
-	glEnd();
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2DC>();
+	auto& sh = rb.GetShader();
+
+	sh.Enable();
+	switch (primType)
+	{
+	case GL_QUADS: {
+		rb.AddQuadTriangles(
+			{ pos[0]          , pos[1]          , color },
+			{ pos[0] + size[0], pos[1]          , color },
+			{ pos[0] + size[0], pos[1] + size[1], color },
+			{ pos[0]          , pos[1] + size[1], color }
+		);
+		rb.DrawElements(GL_TRIANGLES);
+	} break;
+	case GL_LINE_LOOP: {
+		rb.AddVertices({
+			{ pos[0]          , pos[1]          , color },
+			{ pos[0] + size[0], pos[1]          , color },
+			{ pos[0] + size[0], pos[1] + size[1], color },
+			{ pos[0]          , pos[1] + size[1], color }
+		});
+		rb.DrawArrays(primType);
+	} break;
+	default:
+		assert(false);
+		break;
+	}
+	sh.Disable();
 }
 
 }

@@ -3,6 +3,7 @@
 #include "TracerProjectile.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
 CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
@@ -58,18 +59,22 @@ void CTracerProjectile::Update()
 	deleteMe |= (length < 0.0f);
 }
 
-void CTracerProjectile::Draw(CVertexArray* va)
+void CTracerProjectile::Draw()
 {
 	drawLength = std::min(drawLength, 3.0f);
 
-	glTexCoord2f(1.0f/16, 1.0f/16);
-	glColor4f(1, 1, 0.1f, 0.4f);
-	glBegin(GL_LINES);
-		glVertexf3(drawPos);
-		glVertexf3(drawPos-dir * drawLength);
-	glEnd();
-	glColor4f(1, 1, 1, 1);
-	glTexCoord2f(0, 0);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	auto& sh = rb.GetShader();
+
+	SColor col = SColor{ 1.0f, 1.0f, 0.1f, 0.4f };
+	const float t = 1.0f / 16.0f;
+
+	rb.AddVertex({ drawPos                   , t, t, col });
+	rb.AddVertex({ drawPos - dir * drawLength, t, t, col });
+
+	sh.Enable();
+	rb.DrawArrays(GL_LINES);
+	sh.Disable();
 }
 
 int CTracerProjectile::GetProjectilesCount() const

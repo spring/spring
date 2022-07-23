@@ -7,7 +7,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/Env/IWater.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "System/SpringMath.h"
 
@@ -80,8 +80,10 @@ void CWakeProjectile::Update()
 	}
 }
 
-void CWakeProjectile::Draw(CVertexArray* va)
+void CWakeProjectile::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	unsigned char col[4];
 	col[0] = (unsigned char) (255 * alpha);
 	col[1] = (unsigned char) (255 * alpha);
@@ -95,10 +97,12 @@ void CWakeProjectile::Draw(CVertexArray* va)
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex
-	va->AddVertexTC(drawPos + dir1 + dir2, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + dir1 - dir2, wt->xstart, wt->yend,   col);
-	va->AddVertexTC(drawPos - dir1 - dir2, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - dir1 + dir2, wt->xend,   wt->ystart, col);
+	rb.AddQuadTriangles(
+		{ drawPos + dir1 + dir2, wt->xstart, wt->ystart, col },
+		{ drawPos + dir1 - dir2, wt->xstart, wt->yend,   col },
+		{ drawPos - dir1 - dir2, wt->xend,   wt->yend,   col },
+		{ drawPos - dir1 + dir2, wt->xend,   wt->ystart, col }
+	);
 	#undef wt
 }
 

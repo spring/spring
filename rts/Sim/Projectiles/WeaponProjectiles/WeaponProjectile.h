@@ -33,7 +33,7 @@ public:
 	/// @return 0=unaffected, 1=instant repulse, 2=gradual repulse
 	virtual int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
 
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void DrawOnMinimap() override;
 
 	// Why is this here? Here is why:
 	// ProjectileCreated(id) issues Spring.SpawnExplosion(), but the projectile(id) construction

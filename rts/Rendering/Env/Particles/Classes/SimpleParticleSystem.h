@@ -19,7 +19,7 @@ public:
 	CSimpleParticleSystem();
 	virtual ~CSimpleParticleSystem() { particles.clear(); }
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	void Update() override;
 	void Init(const CUnit* owner, const float3& offset) override;
 
@@ -83,7 +83,7 @@ class CSphereParticleSpawner : public CSimpleParticleSystem
 public:
 	CSphereParticleSpawner() {}
 
-	void Draw(CVertexArray* va) override {}
+	void Draw() override {}
 	void Update() override {}
 	void Init(const CUnit* owner, const float3& offset) override;
 

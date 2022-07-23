@@ -4,6 +4,7 @@
 #define BEAM_LASER_PROJECTILE_H
 
 #include "WeaponProjectile.h"
+#include "System/Color.h"
 
 class CBeamLaserProjectile: public CWeaponProjectile
 {
@@ -15,16 +16,16 @@ public:
 	CBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Draw() override;
+	void DrawOnMinimap() override;
 
 	int GetProjectilesCount() const override;
 
 private:
-	unsigned char coreColStart[4];
-	unsigned char coreColEnd[4];
-	unsigned char edgeColStart[4];
-	unsigned char edgeColEnd[4];
+	uint8_t coreColStart[4];
+	uint8_t coreColEnd[4];
+	uint8_t edgeColStart[4];
+	uint8_t edgeColEnd[4];
 
 	float thickness;
 	float corethickness;

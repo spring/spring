@@ -20,7 +20,7 @@ public:
 		const float3& speed
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	void Update() override;
 
 	int GetProjectilesCount() const override;

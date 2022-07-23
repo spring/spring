@@ -15,7 +15,7 @@ class CBitmapMuzzleFlame : public CProjectile
 public:
 	CBitmapMuzzleFlame();
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	void Update() override;
 
 	void Init(const CUnit* owner, const float3& offset) override;

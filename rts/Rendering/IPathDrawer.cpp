@@ -25,7 +25,7 @@ IPathDrawer* IPathDrawer::GetInstance() {
 			return (pathDrawer = new DefaultPathDrawer());
 
 		if (dynamic_cast<TKPFS::CPathManager*>(pathManager) != nullptr)
-			return (pathDrawer = new TKPFSPathDrawer());			
+			return (pathDrawer = new TKPFSPathDrawer());
 
 		pathDrawer = new IPathDrawer();
 	}

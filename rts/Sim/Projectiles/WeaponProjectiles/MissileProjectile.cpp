@@ -8,7 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -329,19 +329,23 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 
 
-void CMissileProjectile::Draw(CVertexArray* va)
+void CMissileProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
 
+	auto& rb = GetPrimaryRenderBuffer();
+
 	// rocket flare
 	const SColor lightYellow(255, 210, 180, 1);
 	const float fsize = radius * 0.4f;
-	va->EnlargeArrays(4, 0, VA_SIZE_TC);
-	va->AddVertexQTC(drawPos - camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, lightYellow);
-	va->AddVertexQTC(drawPos + camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, lightYellow);
-	va->AddVertexQTC(drawPos + camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   lightYellow);
-	va->AddVertexQTC(drawPos - camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   lightYellow);
+
+	rb.AddQuadTriangles(
+		{ drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, lightYellow },
+		{ drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, lightYellow },
+		{ drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   lightYellow },
+		{ drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   lightYellow }
+	);
 }
 
 int CMissileProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)

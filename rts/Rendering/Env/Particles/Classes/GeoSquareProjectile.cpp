@@ -4,7 +4,7 @@
 #include "Game/Camera.h"
 #include "GeoSquareProjectile.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
 
@@ -44,13 +44,15 @@ CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1, const float3& p2, c
 }
 
 
-void CGeoSquareProjectile::Draw(CVertexArray* va)
+void CGeoSquareProjectile::Draw()
 {
 	unsigned char col[4];
 	col[0] = (unsigned char) (r * a * 255);
 	col[1] = (unsigned char) (g * a * 255);
 	col[2] = (unsigned char) (b * a * 255);
 	col[3] = (unsigned char) (    a * 255);
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	float3 dif(p1 - camera->GetPos()); dif.ANormalize();
 	float3 dir1(dif.cross(v1)); dir1.ANormalize();
@@ -64,15 +66,19 @@ void CGeoSquareProjectile::Draw(CVertexArray* va)
 	const float v1 = projectileDrawer->geosquaretex->yend;
 
 	if (w2 != 0) {
-		va->AddVertexTC(p1 - dir1 * w1, u, v1, col);
-		va->AddVertexTC(p1 + dir1 * w1, u, v0, col);
-		va->AddVertexTC(p2 + dir2 * w2, u, v0, col);
-		va->AddVertexTC(p2 - dir2 * w2, u, v1, col);
+		rb.AddQuadTriangles(
+			{ p1 - dir1 * w1, u, v1, col },
+			{ p1 + dir1 * w1, u, v0, col },
+			{ p2 + dir2 * w2, u, v0, col },
+			{ p2 - dir2 * w2, u, v1, col }
+		);
 	} else {
-		va->AddVertexTC(p1 - dir1 * w1, u, v1,                    col);
-		va->AddVertexTC(p1 + dir1 * w1, u, v0,                    col);
-		va->AddVertexTC(p2,             u, v0 + (v1 - v0) * 0.5f, col);
-		va->AddVertexTC(p2,             u, v0 + (v1 - v0) * 1.5f, col);
+		rb.AddQuadTriangles(
+			{ p1 - dir1 * w1, u, v1,                    col },
+			{ p1 + dir1 * w1, u, v0,                    col },
+			{ p2,             u, v0 + (v1 - v0) * 0.5f, col },
+			{ p2,             u, v0 + (v1 - v0) * 1.5f, col }
+		);
 	}
 }
 

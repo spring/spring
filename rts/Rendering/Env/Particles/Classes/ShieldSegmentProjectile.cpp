@@ -4,7 +4,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
@@ -326,7 +326,7 @@ void ShieldSegmentProjectile::Update()
 
 }
 
-void ShieldSegmentProjectile::Draw(CVertexArray* va)
+void ShieldSegmentProjectile::Draw()
 {
 	if (collection == nullptr)
 		return;
@@ -339,22 +339,22 @@ void ShieldSegmentProjectile::Draw(CVertexArray* va)
 	if (!collection->AllowDrawing())
 		return;
 
+	auto& rb = GetPrimaryRenderBuffer();
 
 	const float3 shieldPos = collection->GetShieldDrawPos();
 	const float size = collection->GetSize();
-
-	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
 
 	// draw all quads
 	for (int y = 0; y < (NUM_VERTICES_Y - 1); ++y) {
 		for (int x = 0; x < (NUM_VERTICES_X - 1); ++x) {
 			const int idxTL = (y    ) * NUM_VERTICES_X + x, idxTR = (y    ) * NUM_VERTICES_X + x + 1;
 			const int idxBL = (y + 1) * NUM_VERTICES_X + x, idxBR = (y + 1) * NUM_VERTICES_X + x + 1;
-
-			va->AddVertexQTC(shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color);
-			va->AddVertexQTC(shieldPos + vertices[idxTR] * size, texCoors[idxTR].x, texCoors[idxTR].y, color);
-			va->AddVertexQTC(shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color);
-			va->AddVertexQTC(shieldPos + vertices[idxBL] * size, texCoors[idxBL].x, texCoors[idxBL].y, color);
+			rb.AddQuadTriangles(
+				{ shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color },
+				{ shieldPos + vertices[idxTR] * size, texCoors[idxTR].x, texCoors[idxTR].y, color },
+				{ shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color },
+				{ shieldPos + vertices[idxBL] * size, texCoors[idxBL].x, texCoors[idxBL].y, color }
+			);
 		}
 	}
 }

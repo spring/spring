@@ -16,7 +16,7 @@
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -96,24 +96,11 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
 	smfRenderStates[RENDER_STATE_SEL] = SelectRenderState(DrawPass::Normal);
 
-
-
-	waterPlaneDispLists[0] = 0;
-	waterPlaneDispLists[1] = 0;
-
-	if (waterRendering->hasWaterPlane) {
-		glNewList((waterPlaneDispLists[0] = glGenLists(1)), GL_COMPILE);
-		CreateWaterPlanes(true);
-		glEndList();
-
-		glNewList((waterPlaneDispLists[1] = glGenLists(1)), GL_COMPILE);
-		CreateWaterPlanes(false);
-		glEndList();
-	}
-
 	if (drawDeferred) {
 		drawDeferred &= UpdateGeometryBuffer(true);
 	}
+	CreateWaterPlanes(false);
+	CreateWaterPlanes(true );
 }
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
@@ -130,9 +117,8 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
 
-	// individually generated, individually deleted
-	glDeleteLists(waterPlaneDispLists[0], 1);
-	glDeleteLists(waterPlaneDispLists[1], 1);
+	rbs[0] = nullptr;
+	rbs[1] = nullptr;
 }
 
 
@@ -171,15 +157,12 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 
 
 void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
-	glDisable(GL_TEXTURE_2D);
-	glDepthMask(GL_FALSE);
-
 	const float xsize = (smfMap->mapSizeX) >> 2;
 	const float ysize = (smfMap->mapSizeZ) >> 2;
 	const float size = std::min(xsize, ysize);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
+	rb = std::make_unique<TypedRenderBuffer<VA_TYPE_C>>(1 << 10, 0);
 
 	const unsigned char fogColor[4] = {
 		(unsigned char)(255 * sky->fogColor[0]),
@@ -217,26 +200,34 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 		for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc ; alpha += alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, planeColor );
+			rb->AddVertex({ p, planeColor });
 			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, (n==3) ? fogColor : planeColor);
+			rb->AddVertex({ p, (n == 3) ? fogColor : planeColor });
 		}
 	}
-	va->DrawArrayC(GL_TRIANGLE_STRIP);
-
-	glDepthMask(GL_TRUE);
 }
-
 
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (drawWaterReflection)
 		return;
 
+	//glDisable(GL_TEXTURE_2D);
+	glDepthMask(GL_FALSE);
+
 	glPushMatrix();
 	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
-	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapRendering->voidWater]);
+
+	const bool camOufOfMap = camera->GetPos().IsInBounds() && !mapRendering->voidWater;
+	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
+	auto& shader = rb->GetShader();
+	shader.Enable();
+	rb->DrawArrays(GL_TRIANGLE_STRIP, false);
+	shader.Disable();
+
 	glPopMatrix();
+
+	glDepthMask(GL_TRUE);
 }
 
 

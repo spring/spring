@@ -28,7 +28,7 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/SpringMath.h"
 #include "System/StringUtil.h"
@@ -49,7 +49,7 @@ static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareSt
 
 
 
-DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
+DefaultPathDrawer::DefaultPathDrawer()
 {
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
@@ -57,69 +57,66 @@ DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
 	if (enabled && (gs->cheatEnabled || gu->spectating)) {
-		glPushAttrib(GL_ENABLE_BIT);
-
 		Draw(); // draw paths and goals
 		Draw(pm->GetMaxResPF()); // draw PF grid-overlay
 		Draw(pm->GetMedResPE()); // draw PE grid-overlay (med-res)
 		Draw(pm->GetLowResPE()); // draw PE grid-overlay (low-res)
-
-		glPopAttrib();
 	}
 }
 
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	const CPathEstimator* pe = pm->GetMedResPE();
-
 	if (!IsEnabled() || (!gs->cheatEnabled && !gu->spectatingFullView))
 		return;
 
-	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
-		minimap->ApplyConstraintsMatrix();
-	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-		glTranslatef3(UpVector);
-		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
+	const CPathEstimator* pe = pm->GetMedResPE();
 
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& sh = rb.GetShader();
 
-	for (const int2& sb: pe->GetUpdatedBlocks()) {
-		const int blockIdxX = sb.x * pe->GetBlockSize();
-		const int blockIdxY = sb.y * pe->GetBlockSize();
-		glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
+	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadMatrixf(minimap->GetProjMat(1));
+	glMatrixMode(GL_MODELVIEW ); glPushMatrix(); glLoadMatrixf(minimap->GetViewMat(1));
+
+	sh.Enable();
+
+	const int blkSize = pe->GetBlockSize();
+
+	for (const int2& blkIdx: pe->GetUpdatedBlocks()) {
+		const float2 blkPos = {blkIdx.x * blkSize * 1.0f, blkIdx.y * blkSize * 1.0f};
+
+		rb.SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tl
+		rb.SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tr
+		rb.SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // br
+
+		rb.SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // br
+		rb.SafeAppend({{blkPos.x                 , blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // bl
+		rb.SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tl
 	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glEnable(GL_TEXTURE_2D);
+	rb.DrawArrays(GL_TRIANGLES);
+	sh.Disable();
 
-	glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW ); glPopMatrix();
 }
 
 
+#if 1
+// part of LegacyInfoTexHandler, no longer called
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
 		case CLegacyInfoTextureHandler::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
-			if (guihandler->inCommand <= 0) {
+			if (guihandler->inCommand <= 0)
 				useCurrentBuildOrder = false;
-			}
-			if (guihandler->inCommand >= guihandler->commands.size()) {
+
+			if (guihandler->inCommand >= guihandler->commands.size())
 				useCurrentBuildOrder = false;
-			}
-			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+
+			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING)
 				useCurrentBuildOrder = false;
-			}
 
 			if (useCurrentBuildOrder) {
 				for (int ty = starty; ty < endy; ++ty) {
@@ -284,39 +281,41 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 	}
 }
+#else
+void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {}
+#endif
 
 
 
 
 void DefaultPathDrawer::Draw() const {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glLineWidth(3);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& sh = rb.GetShader();
 
+	glLineWidth(3.0f);
+
+	sh.Enable();
+
+	// draw paths
 	for (const auto& p: pm->GetPathMap()) {
 		const CPathManager::MultiPath& multiPath = p.second;
 
-		glBegin(GL_LINE_STRIP);
+		// draw low-res segments of <path> (green)
+		for (const float3& pos: multiPath.lowResPath.path) {
+			rb.SafeAppend({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
+		}
 
-			// draw low-res segments of <path> (green)
-			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (auto pvi = multiPath.lowResPath.path.begin(); pvi != multiPath.lowResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
+		// draw med-res segments of <path> (blue)
+		for (const float3& pos: multiPath.medResPath.path) {
+			rb.SafeAppend({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
+		}
 
-			// draw med-res segments of <path> (blue)
-			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (auto pvi = multiPath.medResPath.path.begin(); pvi != multiPath.medResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
+		// draw max-res segments of <path> (red)
+		for (const float3& pos: multiPath.maxResPath.path) {
+			rb.SafeAppend({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
+		}
 
-			// draw max-res segments of <path> (red)
-			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (auto pvi = multiPath.maxResPath.path.begin(); pvi != multiPath.maxResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
-
-		glEnd();
+		rb.DrawArrays(GL_LINE_STRIP);
 	}
 
 	// draw path definitions (goal, radius)
@@ -324,25 +323,26 @@ void DefaultPathDrawer::Draw() const {
 		Draw(&p.second.peDef);
 	}
 
-	glLineWidth(1);
+	rb.DrawArrays(GL_LINES);
+	sh.Disable();
+
+	glLineWidth(1.0f);
 }
 
 
 
 void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
-	if (pfd->synced) {
-		glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
-	} else {
-		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-	}
-	glSurfaceCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), 20);
+	constexpr SColor colors[] = {
+		{0.0f, 1.0f, 1.0f, 1.0f},
+		{1.0f, 1.0f, 0.0f, 1.0f}
+	};
+
+	glSurfaceColoredCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), colors[pfd->synced], 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
-	glColor3f(0.7f, 0.2f, 0.2f);
-	glDisable(GL_TEXTURE_2D);
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& sh = rb.GetShader();
 
 	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
 		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
@@ -363,11 +363,13 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		va->AddVertex0(p1);
-		va->AddVertex0(p2);
+		rb.SafeAppend({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		rb.SafeAppend({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
 	}
 
-	va->DrawArray0(GL_LINES);
+	sh.Enable();
+	rb.DrawArrays(GL_LINES);
+	sh.Disable();
 }
 
 
@@ -379,8 +381,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	if (md == nullptr)
 		return;
 
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(1.0f, 1.0f, 0.0f);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& sh = rb.GetShader();
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
 	const int overlayPeriod = GAME_SPEED * 5;
@@ -393,8 +395,6 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	// (normally TMI, but useful to keep the code
 	// compiling)
 	if (drawLowResPE || drawMedResPE) {
-		glBegin(GL_LINES);
-
 		const int2 peNumBlocks = pe->GetNumBlocks();
 		const int vertexBaseNr = md->pathType * peNumBlocks.x * peNumBlocks.y * PATH_DIRECTION_VERTICES;
 
@@ -410,9 +410,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				if (!camera->InView(p1))
 					continue;
 
-				glColor3f(1.0f, 1.0f, 0.75f * drawLowResPE);
-				glVertexf3(p1);
-				glVertexf3(p1 - UpVector * 10.0f);
+				rb.SafeAppend({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				rb.SafeAppend({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
 					const int obx = x + PE_DIRECTION_VECTORS[dir].x;
@@ -437,14 +436,15 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE);
-					glVertexf3(p1);
-					glVertexf3(p2);
+					rb.SafeAppend({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					rb.SafeAppend({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
 				}
 			}
 		}
 
-		glEnd();
+		sh.Enable();
+		rb.DrawArrays(GL_LINES);
+		sh.Disable();
 
 		for (int z = 0; z < peNumBlocks.y; z++) {
 			for (int x = 0; x < peNumBlocks.x; x++) {
@@ -491,10 +491,12 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						continue;
 
 					font->SetTextColor(1.0f, 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f);
-					font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"));
+					font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"), true);
 				}
 			}
 		}
+
+		font->DrawBufferedGL4();
 	}
 	#endif
 
@@ -502,12 +504,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	const SColor colors[2] = {SColor(0.2f, 0.7f, 0.7f, 1.0f), SColor(0.7f, 0.2f, 0.7f, 1.0f)};
 	const SColor& color = colors[pe == pm->GetMedResPE()];
 
-	glColor3ub(color.r, color.g, color.b);
-
 	{
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-
 		for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
 			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
 			const int blockNr = ob->nodeNum;
@@ -532,10 +529,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			va->AddVertex0(p1);
-			va->AddVertex0(p2);
+			rb.SafeAppend({p1, color});
+			rb.SafeAppend({p2, color});
 		}
-		va->DrawArray0(GL_LINES);
+
+		sh.Enable();
+		rb.DrawArrays(GL_LINES);
+		sh.Disable();
 	}
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)

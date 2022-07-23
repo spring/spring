@@ -12,6 +12,7 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -115,57 +116,61 @@ void CQuitBox::Draw()
 	const float mx = MouseX(mouse->lastx);
 	const float my = MouseY(mouse->lasty);
 
-	const ContainerBox boxes[] = {resignBox, saveBox, giveAwayBox, cancelBox, menuBox, quitBox};
+	const TRectangle<float> boxes[] = {resignBox, saveBox, giveAwayBox, cancelBox, menuBox, quitBox};
 
-	glDisable(GL_TEXTURE_2D);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
+	auto& shader = rb.GetShader();
+
 	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 
-	// draw the background box
-	glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-	DrawBox(box);
+	{
+		// draw the background box
+		gleDrawQuadC(box, SColor{0.2f, 0.2f, 0.2f, guiAlpha}, rb);
 
-	// draw the sub-box we are in
-	for (unsigned int n = 0; n < (sizeof(boxes) / sizeof(boxes[0])); n++) {
-		if (InBox(mx, my, box + boxes[n])) {
-			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-			DrawBox(box + boxes[n]);
-			break;
+		// draw the sub-box we are in
+		for (size_t i = 0, n = sizeof(boxes) / sizeof(boxes[0]); i < n; i++) {
+			if (InBox(mx, my, box + boxes[i])) {
+				gleDrawQuadC(box + boxes[i], SColor{0.7f, 0.2f, 0.2f, guiAlpha}, rb);
+				break;
+			}
 		}
+
+		gleDrawQuadC(box + teamBox, SColor{0.2f, 0.2f, 0.2f, guiAlpha}, rb);
 	}
 
-	glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-	DrawBox(box + teamBox);
-
 	if (hasScroll) {
-		glColor4f(0.1f, 0.1f, 0.1f, guiAlpha);
-		DrawBox(box + scrollbarBox);
+		gleDrawQuadC(box + scrollbarBox, SColor{0.1f, 0.1f, 0.1f, guiAlpha}, rb);
 
-		float sz = scrollbarBox.y2 - scrollbarBox.y1;
-		float tsz = sz / (float)(MAX_QUIT_TEAMS);
-		float psz = tsz * (float)numTeamsDisp;
+		const float  sz = scrollbarBox.y2 - scrollbarBox.y1;
+		const float tsz =  sz / float(MAX_QUIT_TEAMS);
+		const float psz = tsz * float(numTeamsDisp);
 
 		scrollBox.y2 = scrollbarBox.y2 - startTeam * tsz;
 		scrollBox.y1 = scrollBox.y2 - psz;
 
-		glColor4f(0.8f, 0.8f, 0.8f, guiAlpha);
-		DrawBox(box + scrollBox);
+		gleDrawQuadC(box + scrollBox, SColor{0.8f, 0.8f, 0.8f, guiAlpha}, rb);
 	}
 
-	glEnable(GL_TEXTURE_2D);
-	glColor4f(1.0f, 1.0f, 0.4f, 0.8f);
-	font->glPrint(box.x1 + 0.045f, box.y1 + 0.58f, 0.7f, FONT_VCENTER | FONT_SCALE | FONT_NORM,"Do you want to ...");
-	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+	{
+		shader.Enable();
+		rb.DrawArrays(GL_TRIANGLES);
+		shader.Disable();
+	}
 
-	font->glPrint(box.x1 +   resignBox.x1 + 0.025f, box.y1 + (  resignBox.y1 +   resignBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Resign");
-	font->glPrint(box.x1 +     saveBox.x1 + 0.025f, box.y1 + (    saveBox.y1 +     saveBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Save");
-	font->glPrint(box.x1 + giveAwayBox.x1 + 0.025f, box.y1 + (giveAwayBox.y1 + giveAwayBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Give everything to ...");
-	font->glPrint(box.x1 +   cancelBox.x1 + 0.025f, box.y1 + (  cancelBox.y1 +   cancelBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Cancel");
-	font->glPrint(box.x1 +     menuBox.x1 + 0.025f, box.y1 + (    menuBox.y1 +     menuBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Quit To Menu");
-	font->glPrint(box.x1 +     quitBox.x1 + 0.025f, box.y1 + (    quitBox.y1 +     quitBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Quit To System");
+
+	font->SetTextColor(1.0f, 1.0f, 0.4f, 0.8f);
+	font->glPrint(box.x1 + 0.045f, box.y1 + 0.58f, 0.7f, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Do you want to ...");
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+
+	font->glPrint(box.x1 +   resignBox.x1 + 0.025f, box.y1 + (  resignBox.y1 +   resignBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Resign");
+	font->glPrint(box.x1 +     saveBox.x1 + 0.025f, box.y1 + (    saveBox.y1 +     saveBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Save");
+	font->glPrint(box.x1 + giveAwayBox.x1 + 0.025f, box.y1 + (giveAwayBox.y1 + giveAwayBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Give everything to ...");
+	font->glPrint(box.x1 +   cancelBox.x1 + 0.025f, box.y1 + (  cancelBox.y1 +   cancelBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Cancel");
+	font->glPrint(box.x1 +     menuBox.x1 + 0.025f, box.y1 + (    menuBox.y1 +     menuBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Quit To Menu");
+	font->glPrint(box.x1 +     quitBox.x1 + 0.025f, box.y1 + (    quitBox.y1 +     quitBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Quit To System");
 
 	for (int teamNum = startTeam, teamPos = 0; teamNum < MAX_QUIT_TEAMS && teamPos < numTeamsDisp; ++teamNum, ++teamPos) {
-		const int actualTeamNum = teamNum + (teamNum >= gu->myTeam);
+		const int actualTeamNum = teamNum + int(teamNum >= gu->myTeam);
 
 		const CTeam* team = teamHandler.Team(actualTeamNum);
 
@@ -175,7 +180,6 @@ void CQuitBox::Draw()
 		const char* name = team->GetControllerName();
 		const char* ally = "";
 		const char* dead = "";
-
 
 		if (teamHandler.Ally(gu->myAllyTeam, teamHandler.AllyTeam(actualTeamNum))) {
 			ally = " <Ally>";
@@ -195,7 +199,7 @@ void CQuitBox::Draw()
 			box.x1 + teamBox.x1 + 0.002f,
 			box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,
 			0.7f,
-			FONT_SCALE | FONT_NORM,
+			FONT_SCALE | FONT_NORM | FONT_BUFFERED,
 			"Team %02i (%s)%s%s",
 			actualTeamNum,
 			name,
@@ -203,13 +207,13 @@ void CQuitBox::Draw()
 			dead
 		);
 	}
+
+	font->DrawBufferedGL4();
 }
 
 bool CQuitBox::IsAbove(int x, int y)
 {
-	const float mx = MouseX(x);
-	const float my = MouseY(y);
-	return (InBox(mx, my, box));
+	return (InBox(MouseX(x), MouseY(y), box));
 }
 
 std::string CQuitBox::GetTooltip(int x, int y)
@@ -217,7 +221,7 @@ std::string CQuitBox::GetTooltip(int x, int y)
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	const ContainerBox boxes[] = {
+	const TRectangle<float> boxes[] = {
 		resignBox, saveBox, giveAwayBox, scrollBox, scrollbarBox, teamBox, cancelBox, menuBox, quitBox
 	};
 	const char* toolTips[] = {
@@ -234,11 +238,11 @@ std::string CQuitBox::GetTooltip(int x, int y)
 
 	const char* toolTip = "";
 
-	for (unsigned int n = 0; n < (sizeof(boxes) / sizeof(boxes[0])); n++) {
-		if (!InBox(mx, my, box + boxes[n]))
+	for (size_t i = 0, n = sizeof(boxes) / sizeof(boxes[0]); i < n; i++) {
+		if (!InBox(mx, my, box + boxes[i]))
 			continue;
 
-		toolTip = toolTips[n];
+		toolTip = toolTips[i];
 		break;
 	}
 
@@ -250,15 +254,15 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	const ContainerBox boxes[] = {resignBox, saveBox, giveAwayBox, teamBox, cancelBox, menuBox, quitBox, scrollbarBox, scrollBox};
+	const TRectangle<float> boxes[] = {resignBox, saveBox, giveAwayBox, teamBox, cancelBox, menuBox, quitBox, scrollbarBox, scrollBox};
 
 	if (!InBox(mx, my, box))
 		return false;
 
 	moveBox = true;
 
-	for (unsigned int n = 0; n < (sizeof(boxes) / sizeof(boxes[0])); n++) {
-		if (!InBox(mx, my, box + boxes[n]))
+	for (size_t i = 0, n = sizeof(boxes) / sizeof(boxes[0]); i < n; i++) {
+		if (!InBox(mx, my, box + boxes[i]))
 			continue;
 
 		moveBox = false;
@@ -268,12 +272,15 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	if (hasScroll && InBox(mx, my, box + scrollBox)) {
 		scrolling = true;
 		scrollGrab = (box + scrollBox).y2 - my;
+		return true;
 	}
-	else if (hasScroll && InBox(mx, my, box + scrollbarBox)) {
+	if (hasScroll && InBox(mx, my, box + scrollbarBox)) {
 		if (my < (box + scrollBox).y1)
-			*(volatile int *)&startTeam = startTeam + std::min(MAX_QUIT_TEAMS - numTeamsDisp - startTeam, numTeamsDisp);
+			*(volatile int*) &startTeam = startTeam + std::min(MAX_QUIT_TEAMS - numTeamsDisp - startTeam, numTeamsDisp);
 		if (my > (box + scrollBox).y2)
-			*(volatile int *)&startTeam = startTeam - std::min(startTeam, numTeamsDisp);
+			*(volatile int*) &startTeam = startTeam - std::min(startTeam, numTeamsDisp);
+
+		return true;
 	}
 
 	if (!InBox(mx, my, box + teamBox))
@@ -291,7 +298,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	return true;
 }
 
-void CQuitBox::MouseRelease(int x,int y,int button)
+void CQuitBox::MouseRelease(int x, int y, int button)
 {
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -337,10 +344,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	}
 
 	// if we're still in the game, remove the QuitBox
-	const ContainerBox boxes[] = {resignBox, saveBox, giveAwayBox, cancelBox, menuBox, quitBox};
+	const TRectangle<float> boxes[] = {resignBox, saveBox, giveAwayBox, cancelBox, menuBox, quitBox};
 
-	for (unsigned int n = 0; n < (sizeof(boxes) / sizeof(boxes[0])); n++) {
-		if (!InBox(mx, my, box + boxes[n]))
+	for (size_t i = 0, n = sizeof(boxes) / sizeof(boxes[0]); i < n; i++) {
+		if (!InBox(mx, my, box + boxes[i]))
 			continue;
 
 		delete this;
@@ -358,7 +365,7 @@ void CQuitBox::MouseMove(int x, int y, int dx, int dy, int button)
 	if (scrolling) {
 		const float scr = (box + scrollbarBox).y2 - (my + scrollGrab);
 		const float sz = scrollbarBox.y2 - scrollbarBox.y1;
-		const float tsz = sz / (float)MAX_QUIT_TEAMS;
+		const float tsz = sz / float(MAX_QUIT_TEAMS);
 
 		// ??
 		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_QUIT_TEAMS - numTeamsDisp));
@@ -399,5 +406,6 @@ bool CQuitBox::KeyPressed(int keyCode, int scanCode, bool isRepeat)
 		delete this;
 		return true;
 	}
+
 	return false;
 }

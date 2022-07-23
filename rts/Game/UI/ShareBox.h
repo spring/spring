@@ -11,28 +11,27 @@ public:
 	CShareBox();
 	~CShareBox();
 
-	void Draw();
+	void Draw() override;
 
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
+	bool IsAbove(int x, int y) override;
+	std::string GetTooltip(int x, int y) override;
 
-	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button);
-	void MouseMove(int x, int y, int dx, int dy, int button);
-	bool KeyPressed(int keyCode, int scanCode, bool isRepeat);
-
+	bool MousePress(int x, int y, int button) override;
+	void MouseRelease(int x, int y, int button) override;
+	void MouseMove(int x, int y, int dx, int dy, int button) override;
+	bool KeyPressed(int keyCode, int scanCode, bool isRepeat) override;
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
-	ContainerBox okBox;
-	ContainerBox cancelBox;
-	ContainerBox applyBox;
-	ContainerBox teamBox;
-	ContainerBox unitBox;
-	ContainerBox metalBox;
-	ContainerBox energyBox;
-	ContainerBox scrollbarBox;
-	ContainerBox scrollBox;
+	TRectangle<float> okBox;
+	TRectangle<float> cancelBox;
+	TRectangle<float> applyBox;
+	TRectangle<float> teamBox;
+	TRectangle<float> unitBox;
+	TRectangle<float> metalBox;
+	TRectangle<float> energyBox;
+	TRectangle<float> scrollbarBox;
+	TRectangle<float> scrollBox;
 
 	int shareTeam;
 	static int lastShareTeam;

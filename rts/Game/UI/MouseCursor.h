@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "Rendering/GL/VertexArrayTypes.h"
+
+
 class CBitmap;
 class IHardwareCursor;
 
@@ -25,7 +28,6 @@ public:
 
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
-	void DrawQuad(int x, int y) const;            // draw command queue icon
 	void BindTexture() const;                     // software mouse cursor
 	void BindHwCursor() const;                    // hardware mouse cursor
 
@@ -37,6 +39,8 @@ public:
 
 	const std::string& GetName() const { return name; }
 	const HotSpot GetHotSpot() const { return hotSpot; }
+
+	float4 CalcFrameMatrixParams(const float3& winCoors, const float2& winScale) const;
 private:
 	struct ImageData;
 
@@ -54,6 +58,13 @@ public:
 
 
 private:
+	static constexpr VA_TYPE_TC CURSOR_VERTS[] = {
+		VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tl
+		VA_TYPE_TC{{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tr
+		VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // br
+		VA_TYPE_TC{{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // bl
+	};
+
 	struct ImageData {
 		unsigned int texture = 0;
 		int xOrigSize = 0;

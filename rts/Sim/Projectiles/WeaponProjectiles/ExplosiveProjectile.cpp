@@ -4,7 +4,7 @@
 #include "ExplosiveProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -64,7 +64,7 @@ void CExplosiveProjectile::Update()
 	UpdateInterception();
 }
 
-void CExplosiveProjectile::Draw(CVertexArray* va)
+void CExplosiveProjectile::Draw()
 {
 	// do not draw if a 3D model has been defined for us
 	if (model != nullptr)
@@ -73,7 +73,9 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 	if (!validTextures[0])
 		return;
 
-	unsigned char col[4] = {0};
+	auto& rb = GetPrimaryRenderBuffer();
+
+	uint8_t col[4] = {0};
 
 	const WeaponDef::Visuals& wdVisuals = weaponDef->visuals;
 	const AtlasedTexture* tex = wdVisuals.texture1;
@@ -96,8 +98,6 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 
 	const float3 ndir = dir * separation * 0.6f;
 
-	va->EnlargeArrays(stages * 4, 0, VA_SIZE_TC);
-
 	for (int stage = 0; stage < stages; ++stage) { //! CAUTION: loop count must match EnlargeArrays above
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
 		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
@@ -112,10 +112,12 @@ void CExplosiveProjectile::Draw(CVertexArray* va)
 		col[2] = stageDecay * col[2];
 		col[3] = stageDecay * col[3];
 
-		va->AddVertexQTC(stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col);
-		va->AddVertexQTC(stagePos + xdirCam - ydirCam, tex->xend,   tex->ystart, col);
-		va->AddVertexQTC(stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col);
-		va->AddVertexQTC(stagePos - xdirCam + ydirCam, tex->xstart, tex->yend,   col);
+		rb.AddQuadTriangles(
+			{ stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col },
+			{ stagePos + xdirCam - ydirCam, tex->xend,   tex->ystart, col },
+			{ stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col },
+			{ stagePos - xdirCam + ydirCam, tex->xstart, tex->yend,   col }
+		);
 	}
 }
 

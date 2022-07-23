@@ -4,7 +4,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
@@ -106,10 +106,12 @@ void CFlareProjectile::Update()
 	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CFlareProjectile::Draw(CVertexArray* va)
+void CFlareProjectile::Draw()
 {
 	if (gs->frameNum <= activateFrame)
 		return;
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	constexpr float rad = 6.0f;
 	const     float alpha = std::max(0.0f, 1.0f - (gs->frameNum - activateFrame) * alphaFalloff);
@@ -120,17 +122,17 @@ void CFlareProjectile::Draw(CVertexArray* va)
 	col[2] = (unsigned char) (alpha * 0.2f) * 255;
 	col[3] = 1;
 
-	va->EnlargeArrays(numSubProjs * 4, 0, VA_SIZE_TC);
-
 	//! CAUTION: loop count must match EnlargeArrays above
 	for (int a = 0; a < numSubProjs; ++a) {
 		const float3 interPos = subProjPos[a] + subProjVel[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		va->AddVertexQTC(interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col);
-		va->AddVertexQTC(interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col);
+		rb.AddQuadTriangles(
+			{ interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col },
+			{ interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col },
+			{ interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col },
+			{ interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col }
+		);
 		#undef fpt
 	}
 }

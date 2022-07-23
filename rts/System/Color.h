@@ -69,6 +69,8 @@ struct SColor
 	constexpr operator const uint8_t* () const { return &r; }
 	constexpr operator uint8_t* () { return &r; }
 
+	static const SColor Zero;
+	static const SColor One ;
 public:
 	union {
 		/// individual color channel values in the range [0, 255]

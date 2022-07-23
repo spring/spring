@@ -474,12 +474,15 @@ namespace Shader {
 			return valid;
 
 		std::string bufname(maxUniformNameLength, 0);
-		for (int i = 0; i < numUniforms; ++i) {
+		for (uint32_t i = 0; i < numUniforms; ++i) {
 			GLsizei nameLength = 0;
 			GLint size = 0;
+			GLint blockIdx = -1;
 			GLenum type = 0;
 			glGetActiveUniform(objID, i, maxUniformNameLength, &nameLength, &size, &type, &bufname[0]);
 			bufname[nameLength] = 0;
+
+			glGetActiveUniformsiv(objID, 1, &i, GL_UNIFORM_BLOCK_INDEX, &blockIdx);
 
 			if (nameLength == 0)
 				continue;
@@ -488,6 +491,9 @@ namespace Shader {
 				continue;
 
 			if (uniformStates.find(hashString(&bufname[0])) != uniformStates.end())
+				continue;
+
+			if (blockIdx >= 0) //ignore UBO
 				continue;
 
 			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, unset uniform: %s", __FUNCTION__, name.c_str(), &bufname[0]);

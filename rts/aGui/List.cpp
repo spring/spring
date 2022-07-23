@@ -227,26 +227,21 @@ void List::DrawSelf()
 
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
-		glColor4f(1,1,1,opacity/4.f);
-		b.DrawBox(GL_LINE_LOOP);
+		b.DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, opacity / 4.0f });
 
 		if (nCurIndex == place) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0.2f,0,0,opacity);
-			b.DrawBox(GL_QUADS);
+			b.DrawBox(GL_QUADS, { 0.2f, 0.0f, 0.0f, opacity });
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,0,0,opacity/2.f);
 			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP, { 1.0f, 0.0f, 0.0f, opacity / 2.0f });
 			glLineWidth(1.0f);
 		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0,0,0.2f,opacity);
-			b.DrawBox(GL_QUADS);
+			b.DrawBox(GL_QUADS, { 0.0f, 0.0f, 0.2f, opacity });
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,1,1,opacity/2.f);
 			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, opacity / 2.0f });
 			glLineWidth(1.0f);
 		}
 
@@ -275,16 +270,14 @@ void List::DrawSelf()
 		b.SetPos(scrollbar.GetPos()[0], sbY2);
 		b.SetSize(itemHeight + itemSpacing, sbHeight);
 
-		glColor4f(1,1,1,opacity/4.f);
-		b.DrawBox(GL_LINE_LOOP);
+		b.DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, opacity / 4.0f });
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.8f,0.8f,0.8f,opacity);
-		scrollbar.DrawBox(GL_QUADS);
+
+		scrollbar.DrawBox(GL_QUADS, { 0.8f, 0.8f, 0.8f, opacity });
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1,1,1,opacity/2.f);
 		glLineWidth(1.49f);
-		scrollbar.DrawBox(GL_LINE_LOOP);
+		scrollbar.DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, opacity / 2.0f });
 		glLineWidth(1.0f);
 	}
 	else

@@ -539,14 +539,14 @@ void CVertexArray::AddVertexQTC(const float3& pos, float tx, float ty, const uns
 
 void CVertexArray::AddVertexQ2d0(float x, float z) {
 	ASSERT_SIZE(VA_SIZE_2D0)
-		VA_TYPE_2d0* vat = GetTypedVertexArrayQ<VA_TYPE_2d0>(1);
+		VA_TYPE_2D0* vat = GetTypedVertexArrayQ<VA_TYPE_2D0>(1);
 	vat->x = x;
 	vat->y = z;
 }
 
 void CVertexArray::AddVertexQ2dT(float x, float y, float tx, float ty) {
 	ASSERT_SIZE(VA_SIZE_2DT)
-		VA_TYPE_2dT* vat = GetTypedVertexArrayQ<VA_TYPE_2dT>(1);
+		VA_TYPE_2DT* vat = GetTypedVertexArrayQ<VA_TYPE_2DT>(1);
 	vat->x = x;
 	vat->y = y;
 	vat->s = tx;
@@ -555,7 +555,7 @@ void CVertexArray::AddVertexQ2dT(float x, float y, float tx, float ty) {
 
 void CVertexArray::AddVertexQ2dTC(float x, float y, float tx, float ty, const unsigned char* c) {
 	ASSERT_SIZE(VA_SIZE_2DTC)
-		VA_TYPE_2dTC* vat = GetTypedVertexArrayQ<VA_TYPE_2dTC>(1);
+		VA_TYPE_2DTC* vat = GetTypedVertexArrayQ<VA_TYPE_2DTC>(1);
 	vat->x = x;
 	vat->y = y;
 	vat->s = tx;

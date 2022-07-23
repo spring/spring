@@ -94,5 +94,25 @@ struct SRectangle {
 	};
 };
 
+
+template<typename T> struct TRectangle {
+	TRectangle() = default;
+	TRectangle(T _x1, T _y1, T _x2, T _y2): x1(_x1), y1(_y1), x2(_x2), y2(_y2) {}
+
+	TRectangle operator + (const TRectangle& o) const {
+		TRectangle r;
+		r.x1 = x1 + o.x1;
+		r.x2 = x1 + o.x2;
+		r.y1 = y1 + o.y1;
+		r.y2 = y1 + o.y2;
+		return r;
+	}
+
+	T x1 = T(0);
+	T y1 = T(0);
+	T x2 = T(0);
+	T y2 = T(0);
+};
+
 #endif // RECTANGLE_H
 

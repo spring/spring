@@ -620,26 +620,30 @@ void CGlobalRendering::PostInit() {
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 {
-	SCOPED_TIMER("Misc::SwapBuffers");
-	assert(sdlWindows[0] != nullptr);
+	spring_time pre;
+	{
+		SCOPED_TIMER("Misc::SwapBuffers");
+		assert(sdlWindows[0] != nullptr);
 
-	// silently or verbosely clear queue at the end of every frame
-	if (clearErrors || glDebugErrors)
-		glClearErrors("GR", __func__, glDebugErrors);
+		// silently or verbosely clear queue at the end of every frame
+		if (clearErrors || glDebugErrors)
+			glClearErrors("GR", __func__, glDebugErrors);
 
-	if (!allowSwapBuffers && !forceSwapBuffers)
-		return;
+		if (!allowSwapBuffers && !forceSwapBuffers)
+			return;
 
-	const spring_time pre = spring_now();
+		pre = spring_now();
 
-	RenderBuffer::SwapStandardRenderBuffers();
-	//CglFont::SwapRenderBuffers();
-	IStreamBufferConcept::PutBufferLocks();
+		RenderBuffer::SwapStandardRenderBuffers();
+		CglFont::SwapRenderBuffers();
+		IStreamBufferConcept::PutBufferLocks();
 
-	//https://stackoverflow.com/questions/68480028/supporting-opengl-screen-capture-by-third-party-applications
-	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
+		//https://stackoverflow.com/questions/68480028/supporting-opengl-screen-capture-by-third-party-applications
+		glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
 
-	SDL_GL_SwapWindow(sdlWindows[0]);
+		SDL_GL_SwapWindow(sdlWindows[0]);
+	}
+	// exclude debug from SCOPED_TIMER("Misc::SwapBuffers");
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 	globalRendering->lastSwapBuffersEnd = spring_now();
 }

@@ -15,7 +15,7 @@
 #include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/ColorMap.h"
@@ -261,23 +261,45 @@ void CProjectileDrawer::Init() {
 
 	LoadWeaponTextures();
 
-	if (CheckSoftenExt()) {
-		{
-			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
-			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
-			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
-			fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
-			fxShader->Link();
-			fxShader->Enable();
-			fxShader->SetUniform("atlasTex",  0);
-			fxShader->SetUniform("depthTex", 15);
-			fxShader->SetUniform("softenExponent", CProjectileDrawer::softenExponent[0], CProjectileDrawer::softenExponent[1]);
-			fxShader->Disable();
-			fxShader->Validate();
-		}
-		ViewResize();
-		EnableSoften(configHandler->GetInt("SoftParticles"));
+	{
+		fsShadowShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader shadow", false);
+		fsShadowShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertShadowProg.glsl", "", GL_VERTEX_SHADER));
+		fsShadowShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragShadowProg.glsl", "", GL_FRAGMENT_SHADER));
+		fsShadowShader->Link();
+		fsShadowShader->Enable();
+
+		fsShadowShader->SetUniform("atlasTex", 0);
+		fsShadowShader->SetUniform("alphaCtrl", 0.3f, 1.0f, 0.0f, 0.0f);
+
+		fsShadowShader->Disable();
+		fsShadowShader->Validate();
 	}
+
+	fxShaders[0] = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader hard", false);
+	fxShaders[1] = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader soft", false);
+
+	for (auto*& fxShader : fxShaders)
+	{
+		fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
+		fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
+
+		fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
+		if (fxShader == fxShaders[1])
+			fxShader->SetFlag("SMOOTH_PARTICLES", CheckSoftenExt());
+
+		fxShader->Link();
+		fxShader->Enable();
+		fxShader->SetUniform("atlasTex",  0);
+		if (fxShader == fxShaders[1]) {
+			fxShader->SetUniform("depthTex", 15);
+			fxShader->SetUniform("softenExponent", softenExponent[0], softenExponent[1]);
+		}
+		fxShader->Disable();
+
+		fxShader->Validate();
+	}
+	ViewResize();
+	EnableSoften(configHandler->GetInt("SoftParticles"));
 }
 
 void CProjectileDrawer::Kill() {
@@ -301,9 +323,13 @@ void CProjectileDrawer::Kill() {
 
 	drawSorted = true;
 
-	if (fxShader) {
+	for (auto*& fxShader : fxShaders) {
 		fxShader->Release();
-		//spring::SafeDelete(fxShader); crashes spring
+		fxShader = nullptr;
+	}
+	{
+		fsShadowShader->Release();
+		fsShadowShader = nullptr;
 	}
 
 	if (depthFBO) {
@@ -371,9 +397,9 @@ void CProjectileDrawer::ViewResize()
 	depthFBO->CheckStatus("PROJECTILE-DRAWER-DEPTHFBO");
 	depthFBO->Unbind();
 
-	fxShader->Enable();
-	fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
-	fxShader->Disable();
+	fxShaders[1]->Enable();
+	fxShaders[1]->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
+	fxShaders[1]->Disable();
 }
 
 bool CProjectileDrawer::CheckSoftenExt()
@@ -387,6 +413,9 @@ bool CProjectileDrawer::CheckSoftenExt()
 
 void CProjectileDrawer::CopyDepthBufferToTexture()
 {
+	if (lastDrawFrame == globalRendering->drawFrame) //copy once per draw frame
+		return;
+
 #if 1
 	//no need to touch glViewport
 	const int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
@@ -406,6 +435,8 @@ void CProjectileDrawer::CopyDepthBufferToTexture()
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glActiveTexture(activeTex);
 #endif
+
+	lastDrawFrame = globalRendering->drawFrame;
 }
 
 void CProjectileDrawer::ParseAtlasTextures(
@@ -627,7 +658,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 			return;
 
 		// don't need to z-sort in the shadow pass
-		p->Draw(projectileDrawer->fxVA);
+		p->Draw();
 	}
 }
 
@@ -635,11 +666,6 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	CVertexArray* lines = GetVertexArray();
-	CVertexArray* points = GetVertexArray();
-	lines->Initialize();
-	points->Initialize();
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 		const auto& mdlRenderer = modelRenderers[modelType];
 		// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
@@ -647,37 +673,25 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 			const auto& projectileBin = mdlRenderer.GetObjectBin(i);
 
-			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
-			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
-
 			for (CProjectile* p: projectileBin) {
 				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
-				p->DrawOnMinimap(*lines, *points);
+				p->DrawOnMinimap();
 			}
 		}
 	}
 
-	lines->DrawArrayC(GL_LINES);
-	points->DrawArrayC(GL_POINTS);
-
 	if (!renderProjectiles.empty()) {
-		lines->Initialize();
-		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
-
 		for (CProjectile* p: renderProjectiles) {
 			if (!CanDrawProjectile(p, p->owner()))
 				continue;
 
-			p->DrawOnMinimap(*lines, *points);
+			p->DrawOnMinimap();
 		}
-
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
 	}
+
+	CProjectile::GetMiniMapRenderBuffer().Submit(GL_LINES);
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
@@ -745,22 +759,23 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// empty if !drawSorted
 		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), sortingPredicate);
 
-		fxVA = GetVertexArray();
-		fxVA->Initialize();
-
-		// collect the alpha-translucent particle effects in fxVA
-		for (CProjectile* p: sortedProjectiles[1]) {
-			p->Draw(fxVA);
+		for (auto p : sortedProjectiles[1]) if (!p->deleteMe) {
+			p->Draw();
 		}
-		for (CProjectile* p: sortedProjectiles[0]) {
-			p->Draw(fxVA);
+
+		for (auto p : sortedProjectiles[0]) if (!p->deleteMe) {
+			p->Draw();
 		}
 	}
 
 	glEnable(GL_BLEND);
 	glDisable(GL_FOG);
 
-	if (fxVA->drawIndex() > 0) {
+	auto& rb = CExpGenSpawnable::GetPrimaryRenderBuffer();
+
+	const bool needSoften = (wantSoften > 0) && !drawReflection && !drawRefraction;
+
+	if (rb.ShouldSubmit()) {
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
 
@@ -777,20 +792,25 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
 
-		if (wantSoften > 0) {
+		if (needSoften) {
 			CopyDepthBufferToTexture();
 			glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
-
-			fxShader->Enable();
-			fxShader->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
 
-		fxVA->DrawArrayTC(GL_QUADS);
-
-		if (wantSoften > 0) {
-			fxShader->Disable();
-			glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
+		fxShaders[needSoften]->Enable();
+		if (needSoften) {
+			fxShaders[needSoften]->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
+
+		rb.DrawElements(GL_TRIANGLES);
+
+		fxShaders[needSoften]->Disable();
+
+		if (needSoften) {
+			glBindTexture(GL_TEXTURE_2D, 0); //15th slot
+			glActiveTexture(GL_TEXTURE0);
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
 	} else {
 		eventHandler.DrawWorldPreParticles();
 	}
@@ -806,9 +826,6 @@ void CProjectileDrawer::DrawShadowPass()
 	glDisable(GL_TEXTURE_2D);
 	po->Enable();
 
-	fxVA = GetVertexArray();
-	fxVA->Initialize();
-
 	{
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			DrawProjectilesShadow(modelType);
@@ -817,21 +834,21 @@ void CProjectileDrawer::DrawShadowPass()
 		// draw the model-less projectiles
 		DrawProjectilesSetShadow(renderProjectiles);
 	}
+	po->Disable();
 
-	if (fxVA->drawIndex() > 0) {
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glAlphaFunc(GL_GREATER, 0.3f);
-		glEnable(GL_ALPHA_TEST);
-		glShadeModel(GL_SMOOTH);
-		// glDisable(GL_CULL_FACE);
+	auto& rb = CExpGenSpawnable::GetPrimaryRenderBuffer();
 
+	if (rb.ShouldSubmit()) {
 		textureAtlas->BindTexture();
-		fxVA->DrawArrayTC(GL_QUADS);
+
+		fsShadowShader->Enable();
+
+		rb.DrawElements(GL_TRIANGLES);
+
+		fsShadowShader->Disable();
 	}
 
-	po->Disable();
-	glShadeModel(GL_FLAT);
+	//glShadeModel(GL_FLAT);
 	glPopAttrib();
 }
 
@@ -910,13 +927,22 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
 
-	gfVA = GetVertexArray();
-	gfVA->Initialize();
-	gfVA->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
-
-
 	bool depthTest = true;
 	bool depthMask = false;
+
+	const bool needSoften = (wantSoften > 0);
+
+	auto& rb = CExpGenSpawnable::GetPrimaryRenderBuffer();
+
+	if (needSoften) {
+		CopyDepthBufferToTexture();
+		glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
+	}
+
+	fxShaders[needSoften]->Enable();
+	if (needSoften) {
+		fxShaders[needSoften]->SetUniform("softenThreshold", -CProjectileDrawer::softenThreshold[1]);
+	}
 
 	for (CGroundFlash* gf: gfc) {
 		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf, gu->myAllyTeam);
@@ -926,21 +952,16 @@ void CProjectileDrawer::DrawGroundFlashes()
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
-		bool depthTestWanted = wantSoften > 0 ? false : gf->depthTest;
+		bool depthTestWanted = needSoften ? false : gf->depthTest;
 
-		if (depthTest != depthTestWanted) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
+		if (depthTest != depthTestWanted || depthMask != gf->depthMask) {
+			rb.DrawElements(GL_TRIANGLES);
 
 			if ((depthTest = depthTestWanted)) {
 				glEnable(GL_DEPTH_TEST);
 			} else {
 				glDisable(GL_DEPTH_TEST);
 			}
-		}
-		if (depthMask != gf->depthMask) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
 
 			if ((depthMask = gf->depthMask)) {
 				glDepthMask(GL_TRUE);
@@ -949,23 +970,18 @@ void CProjectileDrawer::DrawGroundFlashes()
 			}
 		}
 
-		gf->Draw(gfVA);
+		gf->Draw();
 	}
 
-	if (wantSoften > 0) {
-		CopyDepthBufferToTexture();
-		glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
+	rb.DrawElements(GL_TRIANGLES);
 
-		fxShader->Enable();
-		fxShader->SetUniform("softenThreshold", -CProjectileDrawer::softenThreshold[1]);
+	fxShaders[needSoften]->Disable();
+
+	if (needSoften) {
+		glBindTexture(GL_TEXTURE_2D, 0); //15th slot
+		glActiveTexture(GL_TEXTURE0);
 	}
-
-	gfVA->DrawArrayTC(GL_QUADS);
-
-	if (wantSoften > 0) {
-		fxShader->Disable();
-		glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
-	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1008,8 +1024,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	float speed = 1.0f;
 	float size = 1.0f;
 
-	CVertexArray* va = GetVertexArray();
-	va->CheckInitSize(4 * VA_SIZE_TC);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
 
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a] += time * speed;
@@ -1031,12 +1046,14 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector, 0,         0, col);
-		va->AddVertexQTC(  UpVector, 0,     tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+
+		rb.AddQuadTriangles(
+			{ ZeroVector, 0,         0, col },
+			{   UpVector, 0,     tsize, col },
+			{   XYVector, tsize, tsize, col },
+			{  RgtVector, tsize,     0, col }
+		);
+		rb.DrawElements(GL_TRIANGLES);
 
 		if (a == 0)
 			glEnable(GL_BLEND);
@@ -1045,12 +1062,14 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int(perlinBlend[a] * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 1]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector,     0,     0, col);
-		va->AddVertexQTC(  UpVector,     0, tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+
+		rb.AddQuadTriangles(
+			{ ZeroVector,     0,     0, col },
+			{ UpVector  ,     0, tsize, col },
+			{ XYVector  , tsize, tsize, col },
+			{ RgtVector , tsize,     0, col }
+		);
+		rb.DrawElements(GL_TRIANGLES);
 
 		speed *= 0.6f;
 		size *= 2;

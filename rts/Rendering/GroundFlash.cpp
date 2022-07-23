@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundFlashInfo.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -209,8 +209,10 @@ bool CStandardGroundFlash::Update()
 	return (std::max(--ttl, 0) > 0);
 }
 
-void CStandardGroundFlash::Draw(CVertexArray* va)
+void CStandardGroundFlash::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
 	const float iSize = circleSize + circleGrowth * globalRendering->timeOffset;
@@ -223,11 +225,12 @@ void CStandardGroundFlash::Draw(CVertexArray* va)
 		const float3 p4 = pos + (-side1 + side2) * iSize;
 
 		color.a = (unsigned char)(iAlpha * 255);
-
-		va->AddVertexQTC(p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, color);
-		va->AddVertexQTC(p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, color);
-		va->AddVertexQTC(p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   color);
-		va->AddVertexQTC(p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   color);
+		rb.AddQuadTriangles(
+			{ p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, color },
+			{ p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, color },
+			{ p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   color },
+			{ p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   color }
+		);
 	}
 
 	if (iAge < 1.0f) {
@@ -243,11 +246,12 @@ void CStandardGroundFlash::Draw(CVertexArray* va)
 		const float3 p2 = pos + ( side1 - side2) * size;
 		const float3 p3 = pos + ( side1 + side2) * size;
 		const float3 p4 = pos + (-side1 + side2) * size;
-
-		va->AddVertexQTC(p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color);
-		va->AddVertexQTC(p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color);
-		va->AddVertexQTC(p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color);
-		va->AddVertexQTC(p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color);
+		rb.AddQuadTriangles(
+			{ p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color },
+			{ p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color },
+			{ p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color },
+			{ p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color }
+		);
 	}
 }
 
@@ -297,12 +301,19 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	projectileHandler.AddGroundFlash(this);
 }
 
-void CSimpleGroundFlash::Draw(CVertexArray* va)
+void CSimpleGroundFlash::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	UpdateRotation();
 
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
+
+	const float3 p1 = pos + (-side1 - side2) * size;
+	const float3 p2 = pos + ( side1 - side2) * size;
+	const float3 p3 = pos + ( side1 + side2) * size;
+	const float3 p4 = pos + (-side1 + side2) * size;
 
 	std::array<float3, 4> bounds = {
 		(-side1 - side2) * size,
@@ -316,10 +327,12 @@ void CSimpleGroundFlash::Draw(CVertexArray* va)
 			b = b.rotate(rotVal, normal);
 	}
 
-	va->AddVertexQTC(pos + bounds[0], texture->xstart, texture->ystart, color);
-	va->AddVertexQTC(pos + bounds[1], texture->xend, texture->ystart, color);
-	va->AddVertexQTC(pos + bounds[2], texture->xend, texture->yend, color);
-	va->AddVertexQTC(pos + bounds[3], texture->xstart, texture->yend, color);
+	rb.AddQuadTriangles(
+		{ pos + bounds[0], texture->xstart, texture->ystart, color },
+		{ pos + bounds[1], texture->xend  , texture->ystart, color },
+		{ pos + bounds[2], texture->xend  , texture->yend  , color },
+		{ pos + bounds[3], texture->xstart, texture->yend  , color }
+	);
 }
 
 bool CSimpleGroundFlash::Update()
@@ -379,8 +392,10 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	projectileHandler.AddGroundFlash(this);
 }
 
-void CSeismicGroundFlash::Draw(CVertexArray* va)
+void CSeismicGroundFlash::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
 
 	const float3 p1 = pos + (-side1 - side2) * size;
@@ -388,10 +403,12 @@ void CSeismicGroundFlash::Draw(CVertexArray* va)
 	const float3 p3 = pos + ( side1 + side2) * size;
 	const float3 p4 = pos + (-side1 + side2) * size;
 
-	va->AddVertexQTC(p1, texture->xstart, texture->ystart, color);
-	va->AddVertexQTC(p2, texture->xend,   texture->ystart, color);
-	va->AddVertexQTC(p3, texture->xend,   texture->yend,   color);
-	va->AddVertexQTC(p4, texture->xstart, texture->yend,   color);
+	rb.AddQuadTriangles(
+		{ p1, texture->xstart, texture->ystart, color },
+		{ p2, texture->xend,   texture->ystart, color },
+		{ p3, texture->xend,   texture->yend,   color },
+		{ p4, texture->xstart, texture->yend,   color }
+	);
 }
 
 bool CSeismicGroundFlash::Update()
@@ -399,4 +416,3 @@ bool CSeismicGroundFlash::Update()
 	size += sizeGrowth;
 	return (--ttl > 0);
 }
-

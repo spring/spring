@@ -5,7 +5,7 @@
 #include "LaserProjectile.h"
 #include "Map/Ground.h"
 #include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -165,7 +165,7 @@ void CLaserProjectile::Collision()
 
 
 
-void CLaserProjectile::Draw(CVertexArray* va)
+void CLaserProjectile::Draw()
 {
 	// dont draw if a 3d model has been defined for us
 	if (model != nullptr)
@@ -174,6 +174,8 @@ void CLaserProjectile::Draw(CVertexArray* va)
 	if (!validTextures[0])
 		return;
 
+	auto& rb = GetPrimaryRenderBuffer();
+
 	float3 dif(pos - camera->GetPos());
 	const float camDist = dif.LengthNormalize();
 
@@ -181,21 +183,23 @@ void CLaserProjectile::Draw(CVertexArray* va)
 	dir1.Normalize();
 	float3 dir2(dif.cross(dir1));
 
-	unsigned char col[4];
-	col[0]  = (unsigned char) (color.x  * intensity * 255);
-	col[1]  = (unsigned char) (color.y  * intensity * 255);
-	col[2]  = (unsigned char) (color.z  * intensity * 255);
-	col[3]  = 1; //intensity*255;
-	unsigned char col2[4];
-	col2[0] = (unsigned char) (color2.x * intensity * 255);
-	col2[1] = (unsigned char) (color2.y * intensity * 255);
-	col2[2] = (unsigned char) (color2.z * intensity * 255);
-	col2[3] = 1; //intensity*255;
+	const uint8_t col[4] = {
+		(uint8_t)(color.x * intensity * 255),
+		(uint8_t)(color.y * intensity * 255),
+		(uint8_t)(color.z * intensity * 255),
+		1 //intensity*255;
+	};
+
+	const uint8_t col2[4] = {
+		(uint8_t)(color2.x * intensity * 255),
+		(uint8_t)(color2.y * intensity * 255),
+		(uint8_t)(color2.z * intensity * 255),
+		1 //intensity*255;
+	};
 
 	const float size = weaponDef->visuals.thickness;
 	const float coresize = size * weaponDef->visuals.corethickness;
 
-	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
 	if (camDist < weaponDef->visuals.lodDistance) {
 		const float3 pos2 = drawPos - (dir * curLength);
 		float texStartOffset;
@@ -209,34 +213,49 @@ void CLaserProjectile::Draw(CVertexArray* va)
 		}
 
 		if (validTextures[2]) {
-			va->AddVertexQTC(drawPos - (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(drawPos + (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexQTC(drawPos + (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexQTC(drawPos - (dir1 * size) - (dir2 * size),       weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(drawPos - (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->ystart, col2);
-			va->AddVertexQTC(drawPos + (dir1 * coresize),                   midtexx,                             weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexQTC(drawPos + (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexQTC(drawPos - (dir1 * coresize)-(dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col2);
+			rb.AddQuadTriangles(
+				{ drawPos - (dir1 * size),                        midtexx,                             weaponDef->visuals.texture2->ystart, col },
+				{ drawPos + (dir1 * size),                        midtexx,                             weaponDef->visuals.texture2->yend  , col },
+				{ drawPos + (dir1 * size) - (dir2 * size),        weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend  , col },
+				{ drawPos - (dir1 * size) - (dir2 * size),        weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col }
+			);
+
+			rb.AddQuadTriangles(
+				{ drawPos - (dir1 * coresize),                     midtexx,                             weaponDef->visuals.texture2->ystart, col2 },
+				{ drawPos + (dir1 * coresize),                     midtexx,                             weaponDef->visuals.texture2->yend  , col2 },
+				{ drawPos + (dir1 * coresize) - (dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend  , col2 },
+				{ drawPos - (dir1 * coresize) - (dir2 * coresize), weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, col2 }
+			);
 		}
 		if (validTextures[1]) {
-			va->AddVertexQTC(drawPos - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col);
-			va->AddVertexQTC(drawPos + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col);
-			va->AddVertexQTC(pos2    + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col);
-			va->AddVertexQTC(pos2    - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col);
-			va->AddVertexQTC(drawPos - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2);
-			va->AddVertexQTC(drawPos + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2);
-			va->AddVertexQTC(pos2    + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2);
-			va->AddVertexQTC(pos2    - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2);
+			rb.AddQuadTriangles(
+				{ drawPos - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col },
+				{ drawPos + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend  , col },
+				{ pos2    + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset  , weaponDef->visuals.texture1->yend  , col },
+				{ pos2    - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset  , weaponDef->visuals.texture1->ystart, col }
+			);
+
+			rb.AddQuadTriangles(
+				{ drawPos - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2 },
+				{ drawPos + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend  , col2 },
+				{ pos2    + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset  , weaponDef->visuals.texture1->yend  , col2 },
+				{ pos2    - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset  , weaponDef->visuals.texture1->ystart, col2 }
+			);
 		}
 		if (validTextures[2]) {
-			va->AddVertexQTC(pos2    - (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(pos2    + (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexQTC(pos2    + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexQTC(pos2    - (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(pos2    - (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->ystart, col2);
-			va->AddVertexQTC(pos2    + (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexQTC(pos2    + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexQTC(pos2    - (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
+			rb.AddQuadTriangles(
+				{ pos2 - (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->ystart, col },
+				{ pos2 + (dir1 * size),                         midtexx,                           weaponDef->visuals.texture2->yend  , col },
+				{ pos2 + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend  , col },
+				{ pos2 - (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col }
+			);
+
+			rb.AddQuadTriangles(
+				{ pos2 - (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->ystart, col2 },
+				{ pos2 + (dir1 * coresize),                     midtexx,                           weaponDef->visuals.texture2->yend  , col2 },
+				{ pos2 + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend  , col2 },
+				{ pos2 - (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2 }
+			);
 		}
 	} else {
 		const float3 pos1 = drawPos + (dir * (size * 0.5f));
@@ -252,14 +271,19 @@ void CLaserProjectile::Draw(CVertexArray* va)
 			texEndOffset   = ((float)stayTime * (speedf / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 		if (validTextures[1]) {
-			va->AddVertexQTC(pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col);
-			va->AddVertexQTC(pos1 + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col);
-			va->AddVertexQTC(pos2 + (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col);
-			va->AddVertexQTC(pos2 - (dir1 * size),     weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col);
-			va->AddVertexQTC(pos1 - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2);
-			va->AddVertexQTC(pos1 + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend,   col2);
-			va->AddVertexQTC(pos2 + (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->yend,   col2);
-			va->AddVertexQTC(pos2 - (dir1 * coresize), weaponDef->visuals.texture1->xend   + texEndOffset,   weaponDef->visuals.texture1->ystart, col2);
+			rb.AddQuadTriangles(
+				{ pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col },
+				{ pos1 + (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend  , col },
+				{ pos2 + (dir1 * size),     weaponDef->visuals.texture1->xend +     texEndOffset, weaponDef->visuals.texture1->yend  , col },
+				{ pos2 - (dir1 * size),     weaponDef->visuals.texture1->xend +     texEndOffset, weaponDef->visuals.texture1->ystart, col }
+			);
+
+			rb.AddQuadTriangles(
+				{ pos1 - (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col2 },
+				{ pos1 + (dir1 * coresize), weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->yend  , col2 },
+				{ pos2 + (dir1 * coresize), weaponDef->visuals.texture1->xend +     texEndOffset, weaponDef->visuals.texture1->yend  , col2 },
+				{ pos2 - (dir1 * coresize), weaponDef->visuals.texture1->xend +     texEndOffset, weaponDef->visuals.texture1->ystart, col2 }
+			);
 		}
 	}
 }

@@ -39,16 +39,13 @@ void LineEdit::SetContent(const std::string& line, bool moveCursor)
 void LineEdit::DrawSelf()
 {
 	const float opacity = Opacity();
-	glColor4f(1.0f, 1.0f, 1.0f, opacity);
-	DrawBox(GL_QUADS);
+	DrawBox(GL_QUADS, { 1.0f, 1.0f, 1.0f, opacity });
 
 	glLineWidth(1.49f);
 	if (hasFocus) {
-		glColor4f(0.0f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, { 0.0f, 0.0f, 0.0f, opacity });
 	} else {
-		glColor4f(0.5f, 0.5f, 0.5f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, { 0.5f, 0.5f, 0.5f, opacity });
 	}
 
 	std::string tempText;
@@ -94,7 +91,7 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 		case SDL_TEXTINPUT: {
 			content.insert(cursorPos, ev.text.text);
 			cursorPos+=strlen(ev.text.text);
-		} break;	
+		} break;
 		case SDL_KEYDOWN: {
 			if (!hasFocus) {
 				break;
@@ -140,7 +137,7 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 				case SDLK_RETURN: {
 					DefaultAction.emit();
 					return true;
-				}				
+				}
 			}
 			break;
 		}

@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _END_GAME_BOX_H_
-#define _END_GAME_BOX_H_
+#pragma once
 
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
+#include "System/Rectangle.h"
 
 #include <vector>
 
@@ -15,12 +15,12 @@ public:
 	CEndGameBox(const std::vector<unsigned char>& winningAllyTeams);
 	~CEndGameBox();
 
-	virtual bool MousePress(int x, int y, int button);
-	virtual void MouseMove(int x, int y, int dx, int dy, int button);
-	virtual void MouseRelease(int x, int y, int button);
-	virtual void Draw();
-	virtual bool IsAbove(int x, int y);
-	virtual std::string GetTooltip(int x, int y);
+	virtual bool MousePress(int x, int y, int button) override;
+	virtual void MouseMove(int x, int y, int dx, int dy, int button) override;
+	virtual void MouseRelease(int x, int y, int button) override;
+	virtual void Draw() override;
+	virtual bool IsAbove(int x, int y) override;
+	virtual std::string GetTooltip(int x, int y) override;
 
 	static int enabledMode;
 	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == NULL) new CEndGameBox(winningAllyTeams);}
@@ -29,38 +29,37 @@ public:
 protected:
 	static CEndGameBox* endGameBox;
 	void FillTeamStats();
-	ContainerBox box;
 
-	ContainerBox exitBox;
+	TRectangle<float> box;
 
-	ContainerBox playerBox;
-	ContainerBox sumBox;
-	ContainerBox difBox;
+	TRectangle<float>   exitBox;
+	TRectangle<float> playerBox;
+	TRectangle<float>    sumBox;
+	TRectangle<float>    difBox;
 
-	bool moveBox;
+	bool moveBox = false;
 
-	int dispMode;
+	int dispMode = 0;
 
-	int stat1;
-	int stat2;
+	int stat1 =  1;
+	int stat2 = -1;
 
 	struct Stat {
-		Stat(std::string s) : name(s), max(1), maxdif(1) {}
+		Stat(const char* s) : name(s), max(1), maxdif(1) {}
 
 		void AddStat(int team, float value) {
-			if (value > max) {
-				max = value;
-			}
-			if (team >= 0 && static_cast<size_t>(team) >= values.size()) {
+			max = std::max(max, value);
+
+			if (team >= 0 && static_cast<size_t>(team) >= values.size())
 				values.resize(team + 1);
-			}
-			if (values[team].size() > 0 && math::fabs(value-values[team].back()) > maxdif) {
-				maxdif = math::fabs(value-values[team].back());
-			}
+
+			if (values[team].size() > 0)
+				maxdif = std::max(math::fabs(value - values[team].back()), maxdif);
 
 			values[team].push_back(value);
 		}
-		std::string name;
+
+		const char* name;
 		float max;
 		float maxdif;
 
@@ -72,5 +71,3 @@ protected:
 
 	GLuint graphTex = 0;
 };
-
-#endif // _END_GAME_BOX_H_

@@ -36,16 +36,7 @@ void CCursorIcons::Enable(bool value)
 	enabled = value;
 }
 
-
-void CCursorIcons::Clear()
-{
-	icons.clear();
-	texts.clear();
-	buildIcons.clear();
-}
-
-
-void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
+void CCursorIcons::SetCustomType(int cmdID, const std::string& cursor)
 {
 	if (cursor.empty()) {
 		customTypes.erase(cmdID);
@@ -58,73 +49,94 @@ void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
 void CCursorIcons::Draw()
 {
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT);
-	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.01f);
 	glDepthMask(GL_FALSE);
 
+	Sort();
 	DrawCursors();
+	DrawTexts();
 	DrawBuilds();
+	Clear();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();
-
-	Clear();
 }
 
 
-void CCursorIcons::DrawCursors()
+void CCursorIcons::Sort()
+{
+	// sort to minimize the number of texture bindings, and to
+	// avoid overdraw from multiple units with the same command
+	std::sort(icons.begin(), icons.end());
+	std::sort(texts.begin(), texts.end());
+	std::sort(buildIcons.begin(), buildIcons.end());
+
+	icons.erase(std::unique(icons.begin(), icons.end()), icons.end());
+	texts.erase(std::unique(texts.begin(), texts.end()), texts.end());
+	buildIcons.erase(std::unique(buildIcons.begin(), buildIcons.end()), buildIcons.end());
+}
+
+void CCursorIcons::DrawCursors() const
 {
 	if (icons.empty() || !cmdColors.UseQueueIcons())
 		return;
 
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0.0f, 1.0f, 0.0f, 1.0f);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	auto& sh = rb.GetShader();
+
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
 
-	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadMatrixf(CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
-	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
+	sh.Enable();
+
+	sh.SetUniform("alphaCtrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
+
+	const SColor iconColor = { 1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha() };
+
 	const CMouseCursor* currentCursor = nullptr;
 
-	for (const auto& icon : icons) {
-		const int command = icon.cmd;
-		if (command != currentCmd) {
-			currentCmd = command;
-			currentCursor = GetCursor(currentCmd);
-			if (currentCursor != nullptr) {
-				currentCursor->BindTexture();
-			}
+	// force the first binding
+	int currentCommand = icons[0].cmd + 1;
+
+	for (const Icon& icon : icons) {
+		if (icon.cmd != currentCommand) {
+			if ((currentCursor = GetCursor(currentCommand = icon.cmd)) == nullptr)
+				continue;
+
+			rb.Submit(GL_TRIANGLES);
+			currentCursor->BindTexture();
 		}
-		if (currentCursor != nullptr) {
-			const float3 winPos = camera->CalcWindowCoordinates(icon.pos);
-			if (winPos.z <= 1.0f) {
-				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
-			}
-		}
+
+		const float3 winCoors = camera->CalcWindowCoordinates(icon.pos);
+		const float2 winScale = { cmdColors.QueueIconScale(), 1.0f };
+		const float4& matParams = currentCursor->CalcFrameMatrixParams(winCoors, winScale);
+
+		CMatrix44f cursorMat;
+		cursorMat.Translate(matParams.x, matParams.y, 0.0f);
+		cursorMat.Scale({ matParams.z, matParams.w, 1.0f });
+
+		rb.AddQuadTriangles(
+			{ cursorMat * ICON_VERTS[0], ICON_TXCDS[0].x, ICON_TXCDS[0].y, iconColor }, // tl
+			{ cursorMat * ICON_VERTS[3], ICON_TXCDS[3].x, ICON_TXCDS[3].y, iconColor }, // tr
+			{ cursorMat * ICON_VERTS[2], ICON_TXCDS[2].x, ICON_TXCDS[2].y, iconColor }, // br
+			{ cursorMat * ICON_VERTS[1], ICON_TXCDS[1].x, ICON_TXCDS[1].y, iconColor }  // bl
+		);
 	}
 
-	if (currentCursor != nullptr) {
-		//undo state change
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+	rb.Submit(GL_TRIANGLES);
 
-	DrawTexts(); // use the same transformation
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+	sh.Disable();
 }
 
 
-void CCursorIcons::DrawTexts()
+void CCursorIcons::DrawTexts() const
 {
 	if (texts.empty())
 		return;
@@ -137,7 +149,7 @@ void CCursorIcons::DrawTexts()
 	font->Begin();
 	font->SetColors(); //default
 
-	for (const auto text : texts) {
+	for (const auto& text : texts) {
 		const float3 winPos = camera->CalcWindowCoordinates(text.pos);
 		if (winPos.z <= 1.0f) {
 			const float x = (winPos.x * globalRendering->pixelX);
@@ -154,7 +166,7 @@ void CCursorIcons::DrawTexts()
 }
 
 
-void CCursorIcons::DrawBuilds()
+void CCursorIcons::DrawBuilds() const
 {
 	unitDrawer->DrawBuildIcons(buildIcons);
 }
@@ -163,7 +175,7 @@ void CCursorIcons::DrawBuilds()
 
 const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 {
-	string cursorName;
+	std::string cursorName;
 
 	switch (cmd) {
 		case CMD_WAIT:            cursorName = "Wait";         break;

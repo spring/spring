@@ -6,7 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
@@ -139,14 +139,15 @@ void CFireProjectile::Update()
 	deleteMe |= (ttl <= -particleTime);
 }
 
-void CFireProjectile::Draw(CVertexArray* va)
+void CFireProjectile::Draw()
 {
-	unsigned char col[4];
+	uint8_t col[4];
 	col[3] = 1;
-	unsigned char col2[4];
+	uint8_t col2[4];
 	size_t sz2 = subParticles2.size();
 	size_t sz = subParticles.size();
-	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	for (const SubParticle& pi: subParticles2) {
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
@@ -161,14 +162,16 @@ void CFireProjectile::Draw(CVertexArray* va)
 
 		float3 interPos = pi.pos;
 
-		col[0] = (unsigned char) ((1 - age) * 255);
-		col[1] = (unsigned char) ((1 - age) * 255);
-		col[2] = (unsigned char) ((1 - age) * 255);
+		col[0] = (uint8_t) ((1 - age) * 255);
+		col[1] = (uint8_t) ((1 - age) * 255);
+		col[2] = (uint8_t) ((1 - age) * 255);
 
-		va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
-		va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
-		va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
-		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
+		rb.AddQuadTriangles(
+			{ interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col },
+			{ interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col },
+			{ interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col },
+			{ interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col }
+		);
 	}
 	for (const SubParticle& pi: subParticles) {
 		const AtlasedTexture* at = projectileDrawer->GetSmokeTexture(pi.smokeType);
@@ -180,38 +183,42 @@ void CFireProjectile::Draw(CVertexArray* va)
 		const float sinRot = fastmath::sin(rot);
 		const float cosRot = fastmath::cos(rot);
 
-		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
-		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
+		float3 dir1 = (camera->GetRight() * cosRot + camera->GetUp() * sinRot) * size;
+		float3 dir2 = (camera->GetRight() * sinRot - camera->GetUp() * cosRot) * size;
 
 		float3 interPos = pi.pos;
 
 		if (age < 1/1.31f) {
-			col[0] = (unsigned char) ((1 - age * 1.3f) * 255);
-			col[1] = (unsigned char) ((1 - age * 1.3f) * 255);
-			col[2] = (unsigned char) ((1 - age * 1.3f) * 255);
+			col[0] = (uint8_t) ((1 - age * 1.3f) * 255);
+			col[1] = (uint8_t) ((1 - age * 1.3f) * 255);
+			col[2] = (uint8_t) ((1 - age * 1.3f) * 255);
 			col[3] = 1;
 
-			va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
-			va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
-			va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
-			va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
+			rb.AddQuadTriangles(
+				{ interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col },
+				{ interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col },
+				{ interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col },
+				{ interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col }
+			);
 		}
 
-		unsigned char c;
+		uint8_t c;
 		if (age < 0.5f) {
-			c = (unsigned char)        (age * 510);
+			c = (uint8_t)        (age * 510);
 		} else {
-			c = (unsigned char) (510 - (age * 510));
+			c = (uint8_t) (510 - (age * 510));
 		}
-		col2[0] = (unsigned char) (c * 0.6f);
-		col2[1] = (unsigned char) (c * 0.6f);
-		col2[2] = (unsigned char) (c * 0.6f);
+		col2[0] = (uint8_t) (c * 0.6f);
+		col2[1] = (uint8_t) (c * 0.6f);
+		col2[2] = (uint8_t) (c * 0.6f);
 		col2[3] = c;
 
-		va->AddVertexQTC(interPos - dir1 - dir2, at->xstart, at->ystart, col2);
-		va->AddVertexQTC(interPos + dir1 - dir2, at->xend,   at->ystart, col2);
-		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
-		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
+		rb.AddQuadTriangles(
+			{ interPos - dir1 - dir2, at->xstart, at->ystart, col2 },
+			{ interPos + dir1 - dir2, at->xend,   at->ystart, col2 },
+			{ interPos + dir1 + dir2, at->xend,   at->yend,   col2 },
+			{ interPos - dir1 + dir2, at->xstart, at->yend,   col2 }
+		);
 	}
 }
 

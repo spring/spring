@@ -6,7 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -251,18 +251,21 @@ void CPieceProjectile::Update()
 }
 
 
-void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CPieceProjectile::DrawOnMinimap()
 {
-	points.AddVertexQC(pos, color4::red);
+	auto& rbMM = GetAnimationRenderBuffer();
+	rbMM.AddVertex({ pos        , color4::red });
+	rbMM.AddVertex({ pos + speed, color4::red });
 }
 
 
-void CPieceProjectile::Draw(CVertexArray* va)
+void CPieceProjectile::Draw()
 {
 	if ((explFlags & PF_Fire) == 0)
 		return;
 
-	va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
+	auto& rb = GetPrimaryRenderBuffer();
+
 	static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
 
 	for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
@@ -274,10 +277,12 @@ void CPieceProjectile::Draw(CVertexArray* va)
 		const SColor col = lightOrange * alpha;
 
 		const auto eft = projectileDrawer->explofadetex;
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xstart, eft->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xend,   eft->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xend,   eft->yend,   col);
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xstart, eft->yend,   col);
+		rb.AddQuadTriangles(
+			{ interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col },
+			{ interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xend,   eft->ystart, col },
+			{ interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col },
+			{ interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xstart, eft->yend,   col }
+		);
 	}
 }
 

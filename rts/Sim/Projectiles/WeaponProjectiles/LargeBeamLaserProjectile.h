@@ -5,6 +5,7 @@
 
 #include "WeaponProjectile.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "System/Color.h"
 
 class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
@@ -16,14 +17,14 @@ public:
 	CLargeBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Draw() override;
+	void DrawOnMinimap() override;
 
 	int GetProjectilesCount() const override;
 
 private:
-	unsigned char coreColStart[4];
-	unsigned char edgeColStart[4];
+	uint8_t coreColStart[4];
+	uint8_t edgeColStart[4];
 
 	float thickness;
 	float corethickness;

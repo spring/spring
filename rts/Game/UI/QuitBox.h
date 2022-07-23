@@ -10,29 +10,28 @@ class CQuitBox: public CInputReceiver
 public:
 	CQuitBox();
 
-	void Draw();
+	void Draw() override;
 
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
+	bool IsAbove(int x, int y) override;
+	std::string GetTooltip(int x, int y) override;
 
-	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button);
-	void MouseMove(int x, int y, int dx, int dy, int button);
-	bool KeyPressed(int keyCode, int scanCode, bool isRepeat);
-
+	bool MousePress(int x, int y, int button) override;
+	void MouseRelease(int x, int y, int button) override;
+	void MouseMove(int x, int y, int dx, int dy, int button) override;
+	bool KeyPressed(int keyCode, int scanCode, bool isRepeat) override;
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
 	// in order of appearance
-	ContainerBox resignBox;
-	ContainerBox saveBox;
-	ContainerBox giveAwayBox;
-	ContainerBox teamBox;
-	ContainerBox menuBox;
-	ContainerBox quitBox;
-	ContainerBox cancelBox;
-	ContainerBox scrollbarBox;
-	ContainerBox scrollBox;
+	TRectangle<float> resignBox;
+	TRectangle<float> saveBox;
+	TRectangle<float> giveAwayBox;
+	TRectangle<float> teamBox;
+	TRectangle<float> menuBox;
+	TRectangle<float> quitBox;
+	TRectangle<float> cancelBox;
+	TRectangle<float> scrollbarBox;
+	TRectangle<float> scrollBox;
 
 	int shareTeam;
 	bool noAlliesLeft;

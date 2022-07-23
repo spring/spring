@@ -7,7 +7,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/SpringMath.h"
@@ -95,11 +95,12 @@ void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
 }
 
 
-void CSmokeTrailProjectile::Draw(CVertexArray* va)
+void CSmokeTrailProjectile::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
 	const float invLifeTime = (1.0f / lifeTime);
-	va->EnlargeArrays(8, 0, VA_SIZE_TC);
 
 	const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
 	const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
@@ -137,20 +138,26 @@ void CSmokeTrailProjectile::Draw(CVertexArray* va)
 
 		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
 
-		va->AddVertexQTC(pos1   - (odir1 * size),  texture->xstart, texture->ystart, col);
-		va->AddVertexQTC(pos1   + (odir1 * size),  texture->xstart, texture->yend,   col);
-		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
+		rb.AddQuadTriangles(
+			{ pos1 - (odir1 * size),  texture->xstart, texture->ystart, col },
+			{ pos1 + (odir1 * size),  texture->xstart, texture->yend,   col },
+			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
+			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 }
+		);
 
-		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
-		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-		va->AddVertexQTC(pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2);
-		va->AddVertexQTC(pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2);
+		rb.AddQuadTriangles(
+			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 },
+			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
+			{ pos2 + (odir2 * size2), texture->xend,   texture->yend,   col2 },
+			{ pos2 - (odir2 * size2), texture->xend,   texture->ystart, col2 }
+		);
 	} else {
-		va->AddVertexQTC(pos1 - (odir1 * size),    texture->xstart, texture->ystart, col);
-		va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
-		va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
-		va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
+		rb.AddQuadTriangles(
+			{ pos1 - (odir1 * size),    texture->xstart, texture->ystart, col },
+			{ pos1 + (odir1 * size),    texture->xstart, texture->yend,   col },
+			{ pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2 },
+			{ pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2 }
+		);
 	}
 }
 

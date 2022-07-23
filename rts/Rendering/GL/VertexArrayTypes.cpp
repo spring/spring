@@ -44,23 +44,23 @@ std::array<AttributeDef, 5> VA_TYPE_TNT::attributeDefs = {
 	VA_ATTR_DEF(VA_TYPE_TNT, 4, 3, GL_FLOAT, uv2, false, "uvw2"),
 };
 
-std::array<AttributeDef, 1> VA_TYPE_2d0::attributeDefs = {
-	VA_ATTR_DEF(VA_TYPE_2d0, 0, 2, GL_FLOAT, x, false, "pos")
+std::array<AttributeDef, 1> VA_TYPE_2D0::attributeDefs = {
+	VA_ATTR_DEF(VA_TYPE_2D0, 0, 2, GL_FLOAT, x, false, "pos")
 };
-std::array<AttributeDef, 2> VA_TYPE_2dC::attributeDefs = {
-	VA_ATTR_DEF(VA_TYPE_2dC, 0, 2, GL_FLOAT, x, false, "pos"),
-	VA_ATTR_DEF(VA_TYPE_2dC, 1, 4, GL_UNSIGNED_BYTE, c, true, "color")
-};
-
-std::array<AttributeDef, 2> VA_TYPE_2dT::attributeDefs = {
-	VA_ATTR_DEF(VA_TYPE_2dT, 0, 2, GL_FLOAT, x, false, "pos"),
-	VA_ATTR_DEF(VA_TYPE_2dT, 1, 2, GL_FLOAT, s, false, "uv"),
+std::array<AttributeDef, 2> VA_TYPE_2DC::attributeDefs = {
+	VA_ATTR_DEF(VA_TYPE_2DC, 0, 2, GL_FLOAT, x, false, "pos"),
+	VA_ATTR_DEF(VA_TYPE_2DC, 1, 4, GL_UNSIGNED_BYTE, c, true, "color")
 };
 
-std::array<AttributeDef, 3> VA_TYPE_2dTC::attributeDefs = {
-	VA_ATTR_DEF(VA_TYPE_2dTC, 0, 2, GL_FLOAT, x, false, "pos"),
-	VA_ATTR_DEF(VA_TYPE_2dTC, 1, 2, GL_FLOAT, s, false, "uv"),
-	VA_ATTR_DEF(VA_TYPE_2dTC, 2, 4, GL_UNSIGNED_BYTE, c, true, "color")
+std::array<AttributeDef, 2> VA_TYPE_2DT::attributeDefs = {
+	VA_ATTR_DEF(VA_TYPE_2DT, 0, 2, GL_FLOAT, x, false, "pos"),
+	VA_ATTR_DEF(VA_TYPE_2DT, 1, 2, GL_FLOAT, s, false, "uv"),
+};
+
+std::array<AttributeDef, 3> VA_TYPE_2DTC::attributeDefs = {
+	VA_ATTR_DEF(VA_TYPE_2DTC, 0, 2, GL_FLOAT, x, false, "pos"),
+	VA_ATTR_DEF(VA_TYPE_2DTC, 1, 2, GL_FLOAT, s, false, "uv"),
+	VA_ATTR_DEF(VA_TYPE_2DTC, 2, 4, GL_UNSIGNED_BYTE, c, true, "color")
 };
 
 #undef VA_TYPE_OFFSET

@@ -80,7 +80,7 @@ public:
 		int ypart
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	void Update() override;
 	void PreDelete() {
 		collection = nullptr;

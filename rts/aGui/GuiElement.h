@@ -6,6 +6,8 @@
 #include <vector>
 #include <SDL_events.h>
 
+#include "System/Color.h"
+
 namespace agui
 {
 
@@ -76,7 +78,7 @@ public:
 			return this;
 	};
 
-	void DrawBox(int how);
+	void DrawBox(int primType, const SColor& color);
 
 protected:
 	GuiElement* parent;

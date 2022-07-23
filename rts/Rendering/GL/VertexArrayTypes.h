@@ -154,11 +154,11 @@ struct VA_TYPE_TNT {
 
 	static std::array<AttributeDef, 5> attributeDefs;
 };
-struct VA_TYPE_2d0 {
+struct VA_TYPE_2D0 {
 	float x, y;
 
-	VA_TYPE_2d0 operator* (float t) const {
-		VA_TYPE_2d0 v = *this;
+	VA_TYPE_2D0 operator* (float t) const {
+		VA_TYPE_2D0 v = *this;
 		v.x *= t;
 		v.y *= t;
 
@@ -167,12 +167,12 @@ struct VA_TYPE_2d0 {
 
 	static std::array<AttributeDef, 1> attributeDefs;
 };
-struct VA_TYPE_2dC {
+struct VA_TYPE_2DC {
 	float x, y;
 	SColor c;
 
-	VA_TYPE_2dC operator* (float t) const {
-		VA_TYPE_2dC v = *this;
+	VA_TYPE_2DC operator* (float t) const {
+		VA_TYPE_2DC v = *this;
 		v.x *= t;
 		v.y *= t;
 
@@ -183,12 +183,12 @@ struct VA_TYPE_2dC {
 
 	static std::array<AttributeDef, 2> attributeDefs;
 };
-struct VA_TYPE_2dT {
+struct VA_TYPE_2DT {
 	float x, y;
 	float s, t;
 
-	VA_TYPE_2dT operator* (float t) const {
-		VA_TYPE_2dT v = *this;
+	VA_TYPE_2DT operator* (float t) const {
+		VA_TYPE_2DT v = *this;
 		v.x *= t;
 		v.y *= t;
 
@@ -200,13 +200,13 @@ struct VA_TYPE_2dT {
 
 	static std::array<AttributeDef, 2> attributeDefs;
 };
-struct VA_TYPE_2dTC {
+struct VA_TYPE_2DTC {
 	float  x, y;
 	float  s, t;
 	SColor c;
 
-	VA_TYPE_2dTC operator* (float t) const {
-		VA_TYPE_2dTC v = *this;
+	VA_TYPE_2DTC operator* (float t) const {
+		VA_TYPE_2DTC v = *this;
 		v.x *= t;
 		v.y *= t;
 
@@ -229,6 +229,6 @@ constexpr size_t VA_SIZE_T    = (sizeof(VA_TYPE_T) / sizeof(float));
 constexpr size_t VA_SIZE_TN   = (sizeof(VA_TYPE_TN) / sizeof(float));
 constexpr size_t VA_SIZE_TC   = (sizeof(VA_TYPE_TC) / sizeof(float));
 constexpr size_t VA_SIZE_TNT  = (sizeof(VA_TYPE_TNT) / sizeof(float));
-constexpr size_t VA_SIZE_2D0  = (sizeof(VA_TYPE_2d0) / sizeof(float));
-constexpr size_t VA_SIZE_2DT  = (sizeof(VA_TYPE_2dT) / sizeof(float));
-constexpr size_t VA_SIZE_2DTC = (sizeof(VA_TYPE_2dTC) / sizeof(float));
+constexpr size_t VA_SIZE_2D0  = (sizeof(VA_TYPE_2D0) / sizeof(float));
+constexpr size_t VA_SIZE_2DT  = (sizeof(VA_TYPE_2DT) / sizeof(float));
+constexpr size_t VA_SIZE_2DTC = (sizeof(VA_TYPE_2DTC) / sizeof(float));

@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
@@ -83,9 +83,11 @@ void CHeatCloudProjectile::Init(const CUnit* owner, const float3& offset)
 	CProjectile::Init(owner, offset);
 }
 
-void CHeatCloudProjectile::Draw(CVertexArray* va)
+void CHeatCloudProjectile::Draw()
 {
 	UpdateRotation();
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	unsigned char col[4];
 	const float dheat = std::max(0.0f, heat-globalRendering->timeOffset);
@@ -112,11 +114,12 @@ void CHeatCloudProjectile::Draw(CVertexArray* va)
 		for (auto& b : bounds)
 			b = b.rotate(rotVal, camera->GetForward());
 	}
-
-	va->AddVertexTC(drawPos + bounds[0], texture->xstart, texture->ystart, col);
-	va->AddVertexTC(drawPos + bounds[1], texture->xend,   texture->ystart, col);
-	va->AddVertexTC(drawPos + bounds[2], texture->xend,   texture->yend,   col);
-	va->AddVertexTC(drawPos + bounds[3], texture->xstart, texture->yend,   col);
+  rb.AddQuadTriangles(
+    { drawPos + bounds[0], texture->xstart, texture->ystart, col },
+    { drawPos + bounds[1], texture->xend,   texture->ystart, col },
+    { drawPos + bounds[2], texture->xend,   texture->yend,   col },
+    { drawPos + bounds[3], texture->xstart, texture->yend,   col }
+  );
 }
 
 int CHeatCloudProjectile::GetProjectilesCount() const

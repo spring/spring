@@ -173,6 +173,7 @@ namespace Shader {
 		template<typename TV> inline void SetUniformMatrix4x4(const char* name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(name), transp, v); }
 
 		template<typename TV> void SetFlag(const char* key, TV val) { shaderFlags.Set(key, val); }
+		template<typename TV> bool GetFlag(const char* key, TV& val) { return shaderFlags.Get(key, val); }
 
 
 		/// old interface

@@ -6,6 +6,8 @@
 #include <cinttypes>
 #include <string.h>
 #include <string>
+#include <type_traits>
+#include <unordered_map>
 
 #include "Rendering/GL/myGL.h"
 #include "System/UnorderedMap.hpp"
@@ -229,8 +231,8 @@ namespace Shader {
 			char buf[8192] = {0};
 			char* ptr = &buf[0];
 
-			#define PV(p) ((p).second).second
-			#define RC(p) reinterpret_cast<const char*>((p).first)
+			#define PV(p) ((p).second)
+			#define RC(p) (((p).first).c_str())
 
 			// boolean flags are checked via #ifdef's (not #if's) in a subset of shaders
 			for (const auto& p: bitFlags) { if (PV(p)) ptr += snprintf(ptr, sizeof(buf) - (ptr - buf), "#define %s\n"   , RC(p)       ); }
@@ -260,9 +262,9 @@ namespace Shader {
 
 			// new keys or changed values count as an update
 			// numBitUpdates += (it == bitFlags.end() || (it->second).second != val);
-			numValUpdates += (it == bitFlags.end() || (it->second).second != val);
+			numValUpdates += (it == bitFlags.end() || (it->second) != val);
 
-			bitFlags[key] = {(it == bitFlags.end())? strlen(key): (it->second).first, val};
+			bitFlags[key] = val;
 		}
 
 		void Set(const char* key, unsigned int val) { Set(key, int(val)); }
@@ -270,28 +272,58 @@ namespace Shader {
 			const auto it = intFlags.find(key);
 
 			// numIntUpdates += (it == intFlags.end() || (it->second).second != val);
-			numValUpdates += (it == intFlags.end() || (it->second).second != val);
+			numValUpdates += (it == intFlags.end() || (it->second) != val);
 
-			intFlags[key] = {(it == intFlags.end())? strlen(key): (it->second).first, val};
+			intFlags[key] = val;
 		}
 
 		void Set(const char* key, float val) {
 			const auto it = fltFlags.find(key);
 
 			// numFltUpdates += (it == fltFlags.end() || (it->second).second != val);
-			numValUpdates += (it == fltFlags.end() || (it->second).second != val);
+			numValUpdates += (it == fltFlags.end() || (it->second) != val);
 
-			fltFlags[key] = {(it == fltFlags.end())? strlen(key): (it->second).first, val};
+			fltFlags[key] = val;
+		}
+
+		template <typename R>
+		bool Get(const char* key, R& val) {
+			if constexpr (std::is_same_v<R, bool>) {
+				const auto it = bitFlags.find(key);
+				if (it == bitFlags.end())
+					return false;
+
+				val = it->second;
+				return true;
+			}
+			else if constexpr (std::is_same_v<R, int32_t> || std::is_same_v<R, uint32_t>) {
+				const auto it = intFlags.find(key);
+				if (it == intFlags.end())
+					return false;
+
+				val = it->second;
+				return true;
+			}
+			else if constexpr (std::is_same_v<R, float>) {
+				const auto it = fltFlags.find(key);
+				if (it == fltFlags.end())
+					return false;
+
+				val = it->second;
+				return true;
+			}
+
+			assert(false);
+			return false;
 		}
 
 		bool HashSet() const { return (flagHashValue != 0); }
 		bool Updated() const { return (numValUpdates != prvValUpdates); }
 
 	private:
-		// NOTE: *only* pointers to constant addresses are allowed (literals, globals)
-		spring::unsynced_map<const void*, std::pair<unsigned int,  bool> > bitFlags;
-		spring::unsynced_map<const void*, std::pair<unsigned int,   int> > intFlags;
-		spring::unsynced_map<const void*, std::pair<unsigned int, float> > fltFlags;
+		spring::unsynced_map<std::string,  bool> bitFlags;
+		spring::unsynced_map<std::string,   int> intFlags;
+		spring::unsynced_map<std::string, float> fltFlags;
 
 		unsigned int numValUpdates;
 		unsigned int prvValUpdates;

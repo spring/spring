@@ -5,7 +5,7 @@
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -44,10 +44,12 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 	validTextures[0] = validTextures[1] || validTextures[2];
 }
 
-void CFireBallProjectile::Draw(CVertexArray* va)
+void CFireBallProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	unsigned char col[4] = {255, 150, 100, 1};
 
@@ -57,8 +59,6 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 	const unsigned int numFire = std::min(10u, numSparks);
 	const unsigned int maxCol = mix(numFire, 10u, checkCol);
 
-	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
-
 	if (validTextures[1])
 	for (unsigned int i = 0; i < numSparks; i++) {
 		//! CAUTION: loop count must match EnlargeArrays above
@@ -67,10 +67,12 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 		col[2] = (numSparks - i) *  4;
 
 		#define ept projectileDrawer->explotex
-		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend,   ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col);
-		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend,   col);
+		rb.AddQuadTriangles(
+			{ sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col },
+			{ sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend  , ept->ystart, col },
+			{ sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend  , ept->yend  , col },
+			{ sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend  , col }
+		);
 		#undef ept
 	}
 
@@ -81,10 +83,12 @@ void CFireBallProjectile::Draw(CVertexArray* va)
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;
 		#define dgt projectileDrawer->dguntex
-		va->AddVertexQTC(interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col);
-		va->AddVertexQTC(interPos - (speed * 0.5f * i) + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col);
-		va->AddVertexQTC(interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col);
-		va->AddVertexQTC(interPos - (speed * 0.5f * i)  -camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col);
+		rb.AddQuadTriangles(
+			{ interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col },
+			{ interPos - (speed * 0.5f * i) + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col },
+			{ interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend  , col },
+			{ interPos - (speed * 0.5f * i) - camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend  , col }
+		);
 		#undef dgt
 	}
 }
@@ -121,7 +125,7 @@ void CFireBallProjectile::EmitSpark()
 	const float y = guRNG.NextFloat() - 0.5f;
 	const float z = guRNG.NextFloat() - 0.5f;
 
-	spark.speed = (speed * 0.95f) + float3(x, y, z);
+	spark.speed = float3(speed * 0.95f) + float3(x, y, z);
 	spark.pos = pos - speed * (guRNG.NextFloat() + 3.0f) + spark.speed * 3.0f;
 	spark.size = 5.0f;
 	spark.ttl = maxSparks;

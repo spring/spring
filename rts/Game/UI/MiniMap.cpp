@@ -1172,7 +1172,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glTranslatef(0.0f, +1.0f, 0.0f);
 	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
-	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2d0>();
+	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_2D0>();
 	auto& sh = rb.GetShader();
 
 	if (!minimap->maximized) {

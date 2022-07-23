@@ -9,8 +9,7 @@
 #include "Icon.h"
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
-
-class CVertexArray;
+#include "Rendering/GL/RenderBuffersFwd.h"
 
 namespace icon {
 	class CIconData {

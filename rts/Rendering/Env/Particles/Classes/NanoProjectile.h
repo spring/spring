@@ -16,8 +16,8 @@ public:
 	~CNanoProjectile();
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Draw() override;
+	void DrawOnMinimap() override;
 
 	int GetProjectilesCount() const override;
 

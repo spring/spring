@@ -7,7 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -160,11 +160,13 @@ void CTorpedoProjectile::Update()
 
 
 
-void CTorpedoProjectile::Draw(CVertexArray* va)
+void CTorpedoProjectile::Draw()
 {
 	// do not draw if a 3D model has been defined for us
 	if (model != nullptr)
 		return;
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	float3 r = dir.cross(UpVector);
 
@@ -177,47 +179,60 @@ void CTorpedoProjectile::Draw(CVertexArray* va)
 	const float w = 2;
 	const SColor col(60, 60, 100, 255);
 
-	va->EnlargeArrays(32, 0, VA_SIZE_TC);
+	rb.AddQuadTriangles(
+		{ drawPos + (r * w),             texx, texy, col },
+		{ drawPos + (u * w),             texx, texy, col },
+		{ drawPos + (u * w) + (dir * h), texx, texy, col },
+		{ drawPos + (r * w) + (dir * h), texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos + (u * w),             texx, texy, col },
+		{ drawPos - (r * w),             texx, texy, col },
+		{ drawPos - (r * w) + (dir * h), texx, texy, col },
+		{ drawPos + (u * w) + (dir * h), texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos - (r * w),             texx, texy, col },
+		{ drawPos - (u * w),             texx, texy, col },
+		{ drawPos - (u * w) + (dir * h), texx, texy, col },
+		{ drawPos - (r * w) + (dir * h), texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos - (u * w),             texx, texy, col },
+		{ drawPos + (r * w),             texx, texy, col },
+		{ drawPos + (r * w) + (dir * h), texx, texy, col },
+		{ drawPos - (u * w) + (dir * h), texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos + (r * w) + (dir * h), texx, texy, col },
+		{ drawPos + (u * w) + (dir * h), texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
+	);
 
+	rb.AddQuadTriangles(
+		{ drawPos + (u * w) + (dir * h), texx, texy, col },
+		{ drawPos - (r * w) + (dir * h), texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos - (r * w) + (dir * h), texx, texy, col },
+		{ drawPos - (u * w) + (dir * h), texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
+	);
 
-	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-
-	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-
-	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
-	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	rb.AddQuadTriangles(
+		{ drawPos - (u * w) + (dir * h), texx, texy, col },
+		{ drawPos + (r * w) + (dir * h), texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
+		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
+	);
 }
 

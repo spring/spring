@@ -97,16 +97,16 @@ namespace Shader {
 		unsigned int hash = 997;
 
 		for (const auto& p: bitFlags) {
-			hash = HsiehHash(p.first, (p.second).first, hash);
-			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
+			hash = HsiehHash(p.first.c_str(), p.first.size(), hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&p.second), sizeof(p.second), hash);
 		}
 		for (const auto& p: intFlags) {
-			hash = HsiehHash(p.first, (p.second).first, hash);
-			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
+			hash = HsiehHash(p.first.c_str(), p.first.size(), hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&p.second), sizeof(p.second), hash);
 		}
 		for (const auto& p: fltFlags) {
-			hash = HsiehHash(p.first, (p.second).first, hash);
-			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
+			hash = HsiehHash(p.first.c_str(), p.first.size(), hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&p.second), sizeof(p.second), hash);
 		}
 
 		assert(hash != 0);

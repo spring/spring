@@ -26,28 +26,23 @@ void Button::Label(const std::string& _label)
 void Button::DrawSelf()
 {
 	const float opacity = Opacity();
-	glColor4f(0.8f, 0.8f, 0.8f, opacity);
 
-	DrawBox(GL_QUADS);
+	DrawBox(GL_QUADS, { 0.8f, 0.8f, 0.8f, opacity });
 
-	glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 	if (clicked) {
 		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.2f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_QUADS);
+
+		DrawBox(GL_QUADS, { 0.2f, 0.0f, 0.0f, opacity });
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 0.0f, 0.0f, opacity/2.f);
 		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, { 1.0f, 0.0f, 0.0f, opacity / 2.f });
 		glLineWidth(1.0f);
 	} else if (hovered) {
 		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.0f, 0.0f, 0.2f, opacity);
-		DrawBox(GL_QUADS);
+		DrawBox(GL_QUADS, { 0.0f, 0.0f, 0.2f, opacity });
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 1.0f, 1.0f, opacity/2.0f);
 		glLineWidth(1.49f);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, opacity / 2.0f });
 		glLineWidth(1.0f);
 	}
 

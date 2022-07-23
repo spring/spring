@@ -9,7 +9,7 @@
 #include <cmath>
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "System/Log/ILog.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"

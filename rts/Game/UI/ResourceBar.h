@@ -10,18 +10,17 @@ class CResourceBar :
 {
 public:
 	CResourceBar();
-	virtual ~CResourceBar();
-	void Draw();
+	void Draw() override;
 
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
+	bool IsAbove(int x, int y) override;
+	std::string GetTooltip(int x, int y) override;
 
-	bool MousePress(int x, int y, int button);
-	void MouseMove(int x, int y, int dx, int dy, int button);
+	bool MousePress(int x, int y, int button) override;
+	void MouseMove(int x, int y, int dx, int dy, int button) override;
 
-	ContainerBox box;
-	ContainerBox metalBox;
-	ContainerBox energyBox;
+	TRectangle<float> box;
+	TRectangle<float> metalBox;
+	TRectangle<float> energyBox;
 
 	bool moveBox;
 	bool enabled;

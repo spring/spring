@@ -3,7 +3,7 @@
 
 #include "Game/Camera.h"
 #include "GenericParticleProjectile.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/creg/DefTypes.h"
@@ -56,8 +56,10 @@ void CGenericParticleProjectile::Update()
 	deleteMe |= (life > 1.0f);
 }
 
-void CGenericParticleProjectile::Draw(CVertexArray* va)
+void CGenericParticleProjectile::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	float3 dir1 = camera->GetRight();
 	float3 dir2 = camera->GetUp();
 	if (directional) {
@@ -69,10 +71,12 @@ void CGenericParticleProjectile::Draw(CVertexArray* va)
 
 	unsigned char color[4];
 	colorMap->GetColor(color, life);
-	va->AddVertexTC(drawPos + (-dir1 - dir2) * size, texture->xstart, texture->ystart, color);
-	va->AddVertexTC(drawPos + (-dir1 + dir2) * size, texture->xend,   texture->ystart, color);
-	va->AddVertexTC(drawPos + ( dir1 + dir2) * size, texture->xend,   texture->yend,   color);
-	va->AddVertexTC(drawPos + ( dir1 - dir2) * size, texture->xstart, texture->yend,   color);
+	rb.AddQuadTriangles(
+		{ drawPos + (-dir1 - dir2) * size, texture->xstart, texture->ystart, color },
+		{ drawPos + (-dir1 + dir2) * size, texture->xend,   texture->ystart, color },
+		{ drawPos + ( dir1 + dir2) * size, texture->xend,   texture->yend,   color },
+		{ drawPos + ( dir1 - dir2) * size, texture->xstart, texture->yend,   color }
+	);
 }
 
 int CGenericParticleProjectile::GetProjectilesCount() const

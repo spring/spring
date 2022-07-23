@@ -8,6 +8,7 @@
 #include "CommandColors.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
@@ -210,7 +211,30 @@ bool CMouseCursor::BuildFromFileNames(const std::string& name, int lastFrame)
 	return (IsValid());
 }
 
+float4 CMouseCursor::CalcFrameMatrixParams(const float3& winCoors, const float2& winScale) const
+{
+	if (winCoors.z > 1.0f || frames.empty())
+		return { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	const FrameData& frame = frames[currentFrame];
+	const ImageData& image = images[frame.imageIdx];
+
+	const float qis = winScale.x;
+	const float  xs = image.xAlignedSize * qis;
+	const float  ys = image.yAlignedSize * qis;
+
+	const float rxs = xs * globalRendering->pixelX;
+	const float rys = ys * globalRendering->pixelY;
+
+	// center on hotspot
+	const float xp = (winCoors.x - (xofs * qis)) * globalRendering->pixelX;
+	const float yp = (winCoors.y - winScale.y * (ys - (yofs * qis))) * globalRendering->pixelY;
+
+	return { xp, yp, rxs, rys };
+}
+
 #if 0
+}
 bool CMouseCursor::LoadDummyImage()
 {
 	ImageData id;
@@ -288,77 +312,49 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	if (frames.empty())
 		return;
 
-	scale = std::max(scale, -scale);
-
 	const FrameData& frame = frames[currentFrame];
 	const ImageData& image = images[frame.imageIdx];
 
-	const int xs = int(float(image.xAlignedSize) * scale);
-	const int ys = int(float(image.yAlignedSize) * scale);
+	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	auto& sh = rb.GetShader();
 
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
-	const int yp = int(float(y) + (float(ys) - (float(yofs) * scale)));
+	const float3 winCoors = { x * 1.0f, (globalRendering->viewSizeY - y) * 1.0f, 0.0f };
+	const float2 winScale = { std::max(scale, -scale), 1.0f };
+	const float4& matParams = CalcFrameMatrixParams(winCoors, winScale);
 
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, image.texture);
+	CMatrix44f cursorMat;
+	cursorMat.Translate(matParams.x, matParams.y, 0.0f);
+	cursorMat.Scale({ matParams.z, matParams.w, 1.0f });
+
+	rb.AddQuadTriangles(CURSOR_VERTS);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadMatrixf(cursorMat);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadMatrixf(CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.01f);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
+	glBindTexture(GL_TEXTURE_2D, image.texture);
 
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,         0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
+	sh.Enable();
+	sh.SetUniform("alphaCtrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	rb.Submit(GL_TRIANGLES);
 
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+	sh.Disable();
 
-	glDrawArrays(GL_QUADS, 0, 4);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-}
-
-void CMouseCursor::DrawQuad(int x, int y) const
-{
-	if (frames.empty())
-		return;
-
-	const float scale = cmdColors.QueueIconScale();
-
-	const FrameData& frame = frames[currentFrame];
-	const ImageData& image = images[frame.imageIdx];
-
-	const int xs = int(float(image.xAlignedSize) * scale);
-	const int ys = int(float(image.yAlignedSize) * scale);
-
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
-	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
-
-	glViewport(globalRendering->viewPosX + xp, yp, xs, ys);
-
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,          0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_BLEND);
 }
 
 void CMouseCursor::Update()

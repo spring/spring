@@ -8,7 +8,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
@@ -93,8 +93,10 @@ void CSmokeProjectile::Update()
 	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile::Draw(CVertexArray* va)
+void CSmokeProjectile::Draw()
 {
+	auto& rb = GetPrimaryRenderBuffer();
+
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);
@@ -110,10 +112,12 @@ void CSmokeProjectile::Draw(CVertexArray* va)
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->GetSmokeTexture(textureNum)
-	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
-	va->AddVertexTC(drawPos + pos1, st->xend,   st->ystart, col);
-	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);
-	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
+	rb.AddQuadTriangles(
+		{ drawPos - pos2, st->xstart, st->ystart, col },
+		{ drawPos + pos1, st->xend,   st->ystart, col },
+		{ drawPos + pos2, st->xend,   st->yend,   col },
+		{ drawPos - pos1, st->xstart, st->yend,   col }
+	);
 	#undef st
 }
 

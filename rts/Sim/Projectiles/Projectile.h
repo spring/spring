@@ -14,12 +14,13 @@
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/Threading/SpringThreading.h"
+#include "Rendering/GL/RenderBuffersFwd.h"
 
 class CUnit;
 class CFeature;
-class CVertexArray;
 class CMatrix44f;
 struct AtlasedTexture;
+class CProjectileDrawer;
 
 class CProjectile: public CExpGenSpawnable
 {
@@ -46,8 +47,8 @@ public:
 	virtual void Update();
 	virtual void Init(const CUnit* owner, const float3& offset) override;
 
-	virtual void Draw(CVertexArray* va) {}
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	virtual void Draw() {}
+	virtual void DrawOnMinimap();
 
 	virtual int GetProjectilesCount() const = 0;
 
@@ -77,24 +78,22 @@ public:
 
 	CUnit* owner() const;
 
-	unsigned int GetOwnerID() const { return ownerID; }
-	unsigned int GetTeamID() const { return teamID; }
+	uint32_t GetOwnerID() const { return ownerID; }
+	uint32_t GetTeamID() const { return teamID; }
 	int GetAllyteamID() const { return allyteamID; }
 
-	unsigned int GetProjectileType() const { return projectileType; }
-	unsigned int GetCollisionFlags() const { return collisionFlags; }
-	unsigned int GetRenderIndex() const { return renderIndex; }
+	uint32_t GetProjectileType() const { return projectileType; }
+	uint32_t GetCollisionFlags() const { return collisionFlags; }
+	uint32_t GetRenderIndex() const { return renderIndex; }
 
-	void SetCustomExpGenID(unsigned int id) { cegID = id; }
-	void SetRenderIndex(unsigned int idx) { renderIndex = idx; }
+	void SetCustomExpGenID(uint32_t id) { cegID = id; }
+	void SetRenderIndex(uint32_t idx) { renderIndex = idx; }
 
 	// UNSYNCED ONLY
 	CMatrix44f GetTransformMatrix(bool offsetPos) const;
 
 	float GetSortDist() const { return sortDist; }
 	void SetSortDist(float d) { sortDist = d + sortDistOffset; }
-
-
 public:
 	bool synced = false;           // is this projectile part of the simulation?
 	bool weapon = false;           // is this a weapon projectile? (true implies synced true)
@@ -126,18 +125,20 @@ public:
 	inline static spring::mutex mut = {};
 protected:
 	std::array<bool, 5> validTextures = {false, false, false, false, false}; //overall state and 4 textures
-	unsigned int ownerID = -1u;
-	unsigned int teamID = -1u;
+	uint32_t ownerID = -1u;
+	uint32_t teamID = -1u;
 	int allyteamID = -1;
-	unsigned int cegID = -1u;
+	uint32_t cegID = -1u;
 
-	unsigned int projectileType = -1u;
-	unsigned int collisionFlags = 0;
-	unsigned int renderIndex = -1u;
+	uint32_t projectileType = -1u;
+	uint32_t collisionFlags = 0;
+	uint32_t renderIndex = -1u;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 	static bool IsValidTexture(const AtlasedTexture* tex);
 public:
+	static TypedRenderBuffer<VA_TYPE_C >& GetMiniMapRenderBuffer();
+	static TypedRenderBuffer<VA_TYPE_C >& GetAnimationRenderBuffer();
 	std::vector<int> quads;
 };
 

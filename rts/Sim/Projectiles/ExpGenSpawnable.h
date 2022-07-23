@@ -3,12 +3,16 @@
 #ifndef EXP_GEN_SPAWNABLE_H
 #define EXP_GEN_SPAWNABLE_H
 
+#include <memory>
+
 #include "Sim/Objects/WorldObject.h"
+#include "System/Threading/ThreadPool.h"
+#include "Rendering/GL/RenderBuffersFwd.h"
 
 struct SExpGenSpawnableMemberInfo;
 class CUnit;
 
-class CExpGenSpawnable: public CWorldObject
+class CExpGenSpawnable : public CWorldObject
 {
 	CR_DECLARE(CExpGenSpawnable)
 public:
@@ -35,6 +39,8 @@ protected:
 
 	CExpGenSpawnable();
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
+public:
+	static TypedRenderBuffer<VA_TYPE_TC>& GetPrimaryRenderBuffer();
 };
 
 #endif //EXP_GEN_SPAWNABLE_H

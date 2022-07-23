@@ -3,7 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -359,9 +359,11 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
-void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CWeaponProjectile::DrawOnMinimap()
 {
-	points.AddVertexQC(pos, color4::yellow);
+	auto& rbMM = GetAnimationRenderBuffer();
+	rbMM.AddVertex({ pos        , color4::yellow });
+	rbMM.AddVertex({ pos + speed, color4::yellow });
 }
 
 

@@ -21,7 +21,7 @@ public:
 	CGroundFlash();
 
 	virtual ~CGroundFlash() {}
-	virtual void Draw(CVertexArray* va) {}
+	virtual void Draw() {}
 	/// @return false when it should be deleted
 	virtual bool Update() { return false; }
 	virtual void Init(const CUnit* owner, const float3& offset) {}
@@ -58,7 +58,7 @@ public:
 
 	void InitCommon(const float3& _pos, const float3& _color);
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -94,7 +94,7 @@ public:
 	CSimpleGroundFlash();
 
 	void Init(const CUnit* owner, const float3& offset) override;
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -133,7 +133,7 @@ public:
 		const float3& _color
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw() override;
 	/// @return false when it should be deleted
 	bool Update() override;
 

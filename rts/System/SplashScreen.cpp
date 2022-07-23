@@ -150,7 +150,7 @@ void ShowSplashScreen(
 	CVertexArray* va = GetVertexArray();
 	CBitmap bmp;
 
-	VA_TYPE_2dT quadElems[] = {
+	VA_TYPE_2DT quadElems[] = {
 		{0.0f, 1.0f,  0.0f, 0.0f},
 		{0.0f, 0.0f,  0.0f, 1.0f},
 		{1.0f, 0.0f,  1.0f, 1.0f},

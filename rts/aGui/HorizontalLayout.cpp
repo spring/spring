@@ -18,8 +18,7 @@ void HorizontalLayout::DrawSelf()
 		return;
 
 	glLineWidth(borderWidth);
-	glColor4f(1.0f, 1.0f, 1.0f, Opacity());
-	DrawBox(GL_LINE_LOOP);
+	DrawBox(GL_LINE_LOOP, { 1.0f, 1.0f, 1.0f, Opacity() });
 }
 
 void HorizontalLayout::GeometryChangeSelf()

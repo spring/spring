@@ -3,7 +3,7 @@
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -63,7 +63,8 @@ CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWea
 		edgeColEnd[1] = (weaponDef->visuals.color.y * params.endAlpha);
 		edgeColEnd[2] = (weaponDef->visuals.color.z * params.endAlpha);
 		edgeColEnd[3] = 1;
-	} else {
+	}
+	else {
 		memset(&coreColStart[0], 0, sizeof(coreColStart));
 		memset(&coreColEnd[0], 0, sizeof(coreColEnd));
 		memset(&edgeColStart[0], 0, sizeof(edgeColStart));
@@ -91,10 +92,12 @@ void CBeamLaserProjectile::Update()
 	UpdateInterception();
 }
 
-void CBeamLaserProjectile::Draw(CVertexArray* va)
+void CBeamLaserProjectile::Draw()
 {
 	if (!validTextures[0])
 		return;
+
+	auto& rb = GetPrimaryRenderBuffer();
 
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
@@ -111,67 +114,89 @@ void CBeamLaserProjectile::Draw(CVertexArray* va)
 	const float3& pos1 = startPos;
 	const float3& pos2 = targetPos;
 
-	va->EnlargeArrays(4 * GetProjectilesCount(), 0, VA_SIZE_TC);
-
 	#define WT1 weaponDef->visuals.texture1
 	#define WT2 weaponDef->visuals.texture2
 	#define WT3 weaponDef->visuals.texture3
 
 	if ((midPos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
 		if (validTextures[2]) {
-			va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
-			va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
-			va->AddVertexQTC(pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);
-			va->AddVertexQTC(pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart);
-			va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart);
-			va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart);
-			va->AddVertexQTC(pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart);
-			va->AddVertexQTC(pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart);
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart },
+				{ pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart },
+				{ pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart },
+				{ pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart }
+			);
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart },
+				{ pos1 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart },
+				{ pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart },
+				{ pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart }
+			);
+
 		}
 		if (validTextures[1]) {
-			va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart);
-			va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart);
-			va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd);
-			va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd);
-			va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart);
-			va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart);
-			va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd);
-			va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd);
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart },
+				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart },
+				{ pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd },
+				{ pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd }
+			);
+
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart },
+				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart },
+				{ pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd },
+				{ pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd }
+			);
 		}
 		if (validTextures[2]) {
-			va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
-			va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
-			va->AddVertexQTC(pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);
-			va->AddVertexQTC(pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart);
-			va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart);
-			va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart);
-			va->AddVertexQTC(pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart);
-			va->AddVertexQTC(pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart);
+			rb.AddQuadTriangles(
+				{ pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart },
+				{ pos2 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart },
+				{ pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart },
+				{ pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart }
+			);
+
+			rb.AddQuadTriangles(
+				{ pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart },
+				{ pos2 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart },
+				{ pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart },
+				{ pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart }
+			);
 		}
 	} else {
 		if (validTextures[1]) {
-			va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart);
-			va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart);
-			va->AddVertexQTC(pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd);
-			va->AddVertexQTC(pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd);
-			va->AddVertexQTC(pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart);
-			va->AddVertexQTC(pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart);
-			va->AddVertexQTC(pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd);
-			va->AddVertexQTC(pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd);
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart },
+				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart },
+				{ pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd },
+				{ pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd }
+			);
+
+			rb.AddQuadTriangles(
+				{ pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart },
+				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart },
+				{ pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd },
+				{ pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd }
+			);
 		}
 	}
 
 	// draw flare
 	if (validTextures[3]) {
-		va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart);
-		va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart);
+		rb.AddQuadTriangles(
+			{ pos1 - camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart },
+			{ pos1 + camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart },
+			{ pos1 + camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart },
+			{ pos1 - camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart }
+		);
 
-		va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart);
-		va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart);
+		rb.AddQuadTriangles(
+			{ pos1 - camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart },
+			{ pos1 + camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart },
+			{ pos1 + camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart },
+			{ pos1 - camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart }
+		);
 	}
 
 	#undef WT3
@@ -179,12 +204,13 @@ void CBeamLaserProjectile::Draw(CVertexArray* va)
 	#undef WT1
 }
 
-void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CBeamLaserProjectile::DrawOnMinimap()
 {
-	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
+	const SColor color = { edgeColStart[0], edgeColStart[1], edgeColStart[2], 255u };
 
-	lines.AddVertexQC(startPos, color);
-	lines.AddVertexQC(targetPos, color);
+	auto& rbMM = GetAnimationRenderBuffer();
+	rbMM.AddVertex({ startPos , color });
+	rbMM.AddVertex({ targetPos, color });
 }
 
 int CBeamLaserProjectile::GetProjectilesCount() const
