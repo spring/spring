@@ -414,29 +414,8 @@ public:
 		static_assert(N == 4);
 		AddQuadTriangles(vs[0], vs[1], vs[2], vs[3]);
 	}
-
-	template<
-		typename TT = VertType,
-		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
-	>
-	void AddQuadTriangles(TT&& tl, TT&& tr, TT&& br, TT&& bl) {
-		const IndcType baseIndex = static_cast<IndcType>(verts.size());
-
-		verts.emplace_back(tl); //0
-		verts.emplace_back(tr); //1
-		verts.emplace_back(br); //2
-		verts.emplace_back(bl); //3
-
-		//triangle 1 {tl, tr, bl}
-		indcs.emplace_back(baseIndex + 3);
-		indcs.emplace_back(baseIndex + 0);
-		indcs.emplace_back(baseIndex + 1);
-
-		//triangle 2 {bl, tr, br}
-		indcs.emplace_back(baseIndex + 3);
-		indcs.emplace_back(baseIndex + 1);
-		indcs.emplace_back(baseIndex + 2);
-	}
+	void AddQuadTriangles(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { AddQuadTrianglesImpl(tl, tr, br, bl); }
+	void AddQuadTriangles(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { AddQuadTrianglesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl)); }
 
 	// render with DrawElements(GL_LINES)
 	template<std::size_t N>
@@ -444,28 +423,8 @@ public:
 		static_assert(N == 4);
 		AddQuadLines(vs[0], vs[1], vs[2], vs[3]);
 	}
-
-	template<
-		typename TT = VertType,
-		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
-	>
-	void AddQuadLines(TT&& tl, TT&& tr, TT&& br, TT&& bl) {
-		const IndcType baseIndex = static_cast<IndcType>(verts.size());
-
-		verts.emplace_back(tl); //0
-		verts.emplace_back(tr); //1
-		verts.emplace_back(br); //2
-		verts.emplace_back(bl); //3
-
-		indcs.emplace_back(baseIndex + 0);
-		indcs.emplace_back(baseIndex + 1);
-		indcs.emplace_back(baseIndex + 1);
-		indcs.emplace_back(baseIndex + 2);
-		indcs.emplace_back(baseIndex + 2);
-		indcs.emplace_back(baseIndex + 3);
-		indcs.emplace_back(baseIndex + 3);
-		indcs.emplace_back(baseIndex + 0);
-	}
+	void AddQuadLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { AddQuadLinesImpl(tl, tr, br, bl); }
+	void AddQuadLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { AddQuadLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl)); }
 
 	// render with DrawElements(GL_TRIANGLES)
 	template<std::size_t N>
@@ -473,44 +432,8 @@ public:
 		static_assert(N == 4);
 		MakeQuadsTriangles(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
 	}
-
-	template<
-		typename TT = VertType,
-		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
-	>
-	void MakeQuadsTriangles(TT&& tl, TT&& tr, TT&& br, TT&& bl, int xDiv, int yDiv) {
-		const IndcType baseIndex = static_cast<IndcType>(verts.size_t());
-		float ratio;
-
-		for (int y = 0; y < yDiv; ++y) {
-			ratio = static_cast<float>(y) / static_cast<float>(yDiv);
-			const VertType ml = mix(tl, bl, ratio);
-			const VertType mr = mix(tr, br, ratio);
-			for (int x = 0; y < xDiv; ++x) {
-				ratio = static_cast<float>(x) / static_cast<float>(xDiv);
-
-				verts.emplace_back(mix(ml, mr, ratio));
-			}
-		}
-
-		for (int y = 0; y < yDiv - 1; ++y)
-		for (int x = 0; y < xDiv - 1; ++x) {
-			const IndcType tli = xDiv * (y + 0) + (x + 0) + baseIndex;
-			const IndcType tri = xDiv * (y + 0) + (x + 1) + baseIndex;
-			const IndcType bli = xDiv * (y + 1) + (x + 0) + baseIndex;
-			const IndcType bri = xDiv * (y + 1) + (x + 1) + baseIndex;
-
-			//triangle 1 {tl, tr, bl}
-			indcs.emplace_back(tli);
-			indcs.emplace_back(tri);
-			indcs.emplace_back(bli);
-
-			//triangle 2 {bl, tr, br}
-			indcs.emplace_back(bli);
-			indcs.emplace_back(tri);
-			indcs.emplace_back(bri);
-		}
-	}
+	void MakeQuadsTriangles(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl, int xDiv, int yDiv) { MakeQuadsTrianglesImpl(tl, tr, br, bl, xDiv, yDiv); }
+	void MakeQuadsTriangles(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl, int xDiv, int yDiv) { MakeQuadsTrianglesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }
 
 	// render with DrawArrays(GL_LINE_LOOP)
 	template<std::size_t N>
@@ -518,26 +441,9 @@ public:
 		static_assert(N == 4);
 		MakeQuadsLines(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
 	}
+	void MakeQuadsLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { MakeQuadsLinesImpl(tl, tr, br, bl, xDiv, yDiv); }
+	void MakeQuadsLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { MakeQuadsLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }
 
-	template<
-		typename TT = VertType,
-		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
-	>
-	void MakeQuadsLines(TT&& tl, TT&& tr, TT&& br, TT&& bl, int xDiv, int yDiv) {
-		float ratio;
-
-		for (int x = 0; x < yDiv; ++x) {
-			ratio = static_cast<float>(x) / static_cast<float>(xDiv);
-			verts.emplace_back(mix(tl, tr, ratio));
-			verts.emplace_back(mix(bl, br, ratio));
-		}
-
-		for (int y = 0; y < yDiv; ++y) {
-			ratio = static_cast<float>(y) / static_cast<float>(yDiv);
-			verts.emplace_back(mix(tl, bl, ratio));
-			verts.emplace_back(mix(tr, br, ratio));
-		}
-	}
 
 	void UploadVBO();
 	void UploadEBO();
@@ -582,6 +488,110 @@ public:
 
 	static Shader::IProgramObject& GetShader() { return shader.GetShader(); }
 private:
+	template<
+		typename TT = VertType,
+		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
+	>
+	void AddQuadTrianglesImpl(TT&& tl, TT&& tr, TT&& br, TT&& bl) {
+		const IndcType baseIndex = static_cast<IndcType>(verts.size());
+
+		verts.emplace_back(tl); //0
+		verts.emplace_back(tr); //1
+		verts.emplace_back(br); //2
+		verts.emplace_back(bl); //3
+
+		//triangle 1 {tl, tr, bl}
+		indcs.emplace_back(baseIndex + 3);
+		indcs.emplace_back(baseIndex + 0);
+		indcs.emplace_back(baseIndex + 1);
+
+		//triangle 2 {bl, tr, br}
+		indcs.emplace_back(baseIndex + 3);
+		indcs.emplace_back(baseIndex + 1);
+		indcs.emplace_back(baseIndex + 2);
+	}
+
+	template<
+		typename TT = VertType,
+		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
+	>
+	void AddQuadLinesImpl(TT&& tl, TT&& tr, TT&& br, TT&& bl) {
+		const IndcType baseIndex = static_cast<IndcType>(verts.size());
+
+		verts.emplace_back(tl); //0
+		verts.emplace_back(tr); //1
+		verts.emplace_back(br); //2
+		verts.emplace_back(bl); //3
+
+		indcs.emplace_back(baseIndex + 0);
+		indcs.emplace_back(baseIndex + 1);
+		indcs.emplace_back(baseIndex + 1);
+		indcs.emplace_back(baseIndex + 2);
+		indcs.emplace_back(baseIndex + 2);
+		indcs.emplace_back(baseIndex + 3);
+		indcs.emplace_back(baseIndex + 3);
+		indcs.emplace_back(baseIndex + 0);
+	}
+
+
+	template<
+		typename TT = VertType,
+		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
+	>
+	void MakeQuadsTrianglesImpl(TT&& tl, TT&& tr, TT&& br, TT&& bl, int xDiv, int yDiv) {
+		const IndcType baseIndex = static_cast<IndcType>(verts.size_t());
+		float ratio;
+
+		for (int y = 0; y < yDiv; ++y) {
+			ratio = static_cast<float>(y) / static_cast<float>(yDiv);
+			const VertType ml = mix(tl, bl, ratio);
+			const VertType mr = mix(tr, br, ratio);
+			for (int x = 0; y < xDiv; ++x) {
+				ratio = static_cast<float>(x) / static_cast<float>(xDiv);
+
+				verts.emplace_back(mix(ml, mr, ratio));
+			}
+		}
+
+		for (int y = 0; y < yDiv - 1; ++y)
+			for (int x = 0; y < xDiv - 1; ++x) {
+				const IndcType tli = xDiv * (y + 0) + (x + 0) + baseIndex;
+				const IndcType tri = xDiv * (y + 0) + (x + 1) + baseIndex;
+				const IndcType bli = xDiv * (y + 1) + (x + 0) + baseIndex;
+				const IndcType bri = xDiv * (y + 1) + (x + 1) + baseIndex;
+
+				//triangle 1 {tl, tr, bl}
+				indcs.emplace_back(tli);
+				indcs.emplace_back(tri);
+				indcs.emplace_back(bli);
+
+				//triangle 2 {bl, tr, br}
+				indcs.emplace_back(bli);
+				indcs.emplace_back(tri);
+				indcs.emplace_back(bri);
+			}
+	}
+
+	template<
+		typename TT = VertType,
+		typename = typename std::enable_if_t<std::is_same_v<VertType, typename std::decay_t<T>>>
+	>
+	void MakeQuadsLinesImpl(TT&& tl, TT&& tr, TT&& br, TT&& bl, int xDiv, int yDiv) {
+		float ratio;
+
+		for (int x = 0; x < yDiv; ++x) {
+			ratio = static_cast<float>(x) / static_cast<float>(xDiv);
+			verts.emplace_back(mix(tl, tr, ratio));
+			verts.emplace_back(mix(bl, br, ratio));
+		}
+
+		for (int y = 0; y < yDiv; ++y) {
+			ratio = static_cast<float>(y) / static_cast<float>(yDiv);
+			verts.emplace_back(mix(tl, bl, ratio));
+			verts.emplace_back(mix(tr, br, ratio));
+		}
+	}
+
 	void CondInit();
 	void InitVAO() const;
 private:
