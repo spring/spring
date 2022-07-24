@@ -471,8 +471,8 @@ public:
 		static_assert(N == 4);
 		MakeQuadsLines(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
 	}
-	void MakeQuadsLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { MakeQuadsLinesImpl(tl, tr, br, bl, xDiv, yDiv); }
-	void MakeQuadsLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { MakeQuadsLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }
+	void MakeQuadsLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl, int xDiv, int yDiv) { MakeQuadsLinesImpl(tl, tr, br, bl, xDiv, yDiv); }
+	void MakeQuadsLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl, int xDiv, int yDiv) { MakeQuadsLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }
 
 
 	void UploadVBO();
