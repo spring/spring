@@ -421,7 +421,7 @@ void CUnit::FinishedBuilding(bool postInit)
 
 
 	// Sets the frontdir in sync with heading.
-	frontdir = GetVectorFromHeading(heading) + (UpVector * frontdir.y);
+	UpdateDirVectors(!upright && IsOnGround(), false);
 
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
