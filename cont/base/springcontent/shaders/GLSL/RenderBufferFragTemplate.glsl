@@ -1,4 +1,5 @@
-#version 150
+// Version and extensions
+%s
 
 uniform sampler2D tex;
 uniform vec4 ucolor = vec4(1.0);
@@ -23,5 +24,5 @@ void main() {
 	outColor *= ucolor;
 	if (AlphaDiscard(outColor.a))
 		discard;
-	
+
 }

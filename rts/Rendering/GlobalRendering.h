@@ -278,6 +278,9 @@ public:
 	*/
 	bool supportPersistentMapping;
 
+	// GLEW_ARB_explicit_attrib_location
+	bool supportExplicitAttribLoc;
+
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *

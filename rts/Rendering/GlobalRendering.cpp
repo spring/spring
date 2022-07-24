@@ -42,6 +42,7 @@ CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisableExplicitAttribLocs).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 //CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableGL4).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(1);
@@ -159,6 +160,7 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(amdHacks),
 	CR_IGNORED(supportPersistentMapping),
+	CR_IGNORED(supportExplicitAttribLoc),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(supportMSAAFrameBuffer),
@@ -270,6 +272,7 @@ CGlobalRendering::CGlobalRendering()
 	, amdHacks(false)
 
 	, supportPersistentMapping(false)
+	, supportExplicitAttribLoc(false)
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, supportMSAAFrameBuffer(false)
@@ -754,6 +757,9 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportPersistentMapping = GLEW_ARB_buffer_storage;
 	supportPersistentMapping &= (configHandler->GetInt("ForceDisablePersistentMapping") == 0);
 
+	supportExplicitAttribLoc = GLEW_ARB_explicit_attrib_location;
+	supportExplicitAttribLoc &= (configHandler->GetInt("ForceDisableExplicitAttribLocs") == 0);
+
 	// ATI's x-series doesn't support NPOTs, hd-series does
 	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two /* && (!haveAMD || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos))*/;
 	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
@@ -945,6 +951,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
 	LOG("\tfrag-depth layout support : %i (%i)", supportFragDepthLayout, glewIsExtensionSupported("GL_ARB_conservative_depth"));
 	LOG("\tpersistent maps support   : %i (%i)", supportPersistentMapping, glewIsExtensionSupported("GL_ARB_buffer_storage"));
+	LOG("\texplicit attribs location : %i (%i)", supportExplicitAttribLoc, glewIsExtensionSupported("GL_ARB_explicit_attrib_location"));
 
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());

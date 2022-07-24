@@ -263,8 +263,16 @@ void CProjectileDrawer::Init() {
 
 	{
 		fsShadowShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader shadow", false);
+
 		fsShadowShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertShadowProg.glsl", "", GL_VERTEX_SHADER));
 		fsShadowShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragShadowProg.glsl", "", GL_FRAGMENT_SHADER));
+
+		{
+			fsShadowShader->BindAttribLocation("pos", 0);
+			fsShadowShader->BindAttribLocation("uv", 1);
+			fsShadowShader->BindAttribLocation("col", 2);
+		}
+
 		fsShadowShader->Link();
 		fsShadowShader->Enable();
 
@@ -282,6 +290,12 @@ void CProjectileDrawer::Init() {
 	{
 		fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
 		fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
+
+		{
+			fxShader->BindAttribLocation("pos", 0);
+			fxShader->BindAttribLocation("uv", 1);
+			fxShader->BindAttribLocation("col", 2);
+		}
 
 		fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
 		if (fxShader == fxShaders[1])

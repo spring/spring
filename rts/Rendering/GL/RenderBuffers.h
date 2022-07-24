@@ -103,13 +103,18 @@ public:
 		std::string vsAssignment;
 		std::string vsPosVertex;
 
+		std::string vsHeader;
+		std::string fsHeader;
+
+		GetShaderHeaders(vsHeader, fsHeader);
 		GetAttributesStrings(vsInputs, varyingsData, vsAssignment, vsPosVertex);
 
 		static const char* fmtString = "%s Data {%s%s};";
 		const std::string varyingsVS = (varyingsData.empty()) ? "" : fmt::sprintf(fmtString, "out", nl, varyingsData);
-		const std::string varyingsFS = (varyingsData.empty()) ? "" : fmt::sprintf(fmtString, "in" , nl, varyingsData);
+		const std::string varyingsFS = (varyingsData.empty()) ? "" : fmt::sprintf(fmtString, "in", nl, varyingsData);
 
 		vertSrc = fmt::sprintf(vertSrc,
+			vsHeader,
 			vsInputs,
 			varyingsVS,
 			vsAssignment,
@@ -118,12 +123,19 @@ public:
 
 		const std::string fragOutput = GetFragOutput();
 		fragSrc = fmt::sprintf(fragSrc,
+			fsHeader,
 			varyingsFS,
 			fragOutput
 		);
 
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertSrc, "", GL_VERTEX_SHADER));
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragSrc, "", GL_FRAGMENT_SHADER));
+
+		if (!globalRendering->supportExplicitAttribLoc) {
+			for (const AttributeDef& ad : T::attributeDefs) {
+				shader->BindAttribLocation(fmt::format("a{}", ad.name), ad.index);
+			}
+		}
 
 		shader->Link();
 
@@ -164,10 +176,22 @@ private:
 
 	static const std::string GetFragOutput();
 
+	static void GetShaderHeaders(std::string& vsHeader, std::string& fsHeader) {
+		if (globalRendering->supportExplicitAttribLoc) {
+			vsHeader = fmt::format("{}{}{}", "#version 150 compatibility", nl, "#extension GL_ARB_explicit_attrib_location : require");
+		}
+		else {
+			vsHeader = "#version 150 compatibility";
+		}
+
+		fsHeader = "#version 150";
+	}
+
 	static void GetAttributesStrings(std::string& vsInputs, std::string& varyings, std::string& vsAssignment, std::string& vsPosVertex) {
-		static const char* vsInputsFmt     = "layout(location = {indx}) in {type} a{name};";
-		static const char* varyingsFmt     = "\t{type} v{name};";
-		static const char* vsAssignmentFmt = "\tv{name} = a{name};";
+		static constexpr const char* vsInputsFmtYLoc  = "layout(location = {indx}) in {type} a{name};";
+		static constexpr const char* vsInputsFmtNLoc = "in {type} a{name};";
+		static constexpr const char* varyingsFmt     = "\t{type} v{name};";
+		static constexpr const char* vsAssignmentFmt = "\tv{name} = a{name};";
 
 		assert(T::attributeDefs[0].index == 0);
 		assert(T::attributeDefs[0].name == "pos");
@@ -180,11 +204,17 @@ private:
 		std::vector<std::string> vsAssignmentVec;
 
 		for (const AttributeDef& ad : T::attributeDefs) {
-			vsInputsVec.emplace_back(fmt::format(vsInputsFmt,
-				fmt::arg("indx", ad.index),
-				fmt::arg("type", TypeToString(ad)),
-				fmt::arg("name", ad.name)
-			));
+			if (globalRendering->supportExplicitAttribLoc)
+				vsInputsVec.emplace_back(fmt::format(vsInputsFmtYLoc,
+					fmt::arg("indx", ad.index),
+					fmt::arg("type", TypeToString(ad)),
+					fmt::arg("name", ad.name)
+				));
+			else
+				vsInputsVec.emplace_back(fmt::format(vsInputsFmtNLoc,
+					fmt::arg("type", TypeToString(ad)),
+					fmt::arg("name", ad.name)
+				));
 
 			if (ad.index == 0)
 				continue;
