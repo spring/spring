@@ -68,13 +68,10 @@ void CCursorIcons::Sort()
 {
 	// sort to minimize the number of texture bindings, and to
 	// avoid overdraw from multiple units with the same command
-	std::sort(icons.begin(), icons.end());
-	std::sort(texts.begin(), texts.end());
-	std::sort(buildIcons.begin(), buildIcons.end());
 
-	icons.erase(std::unique(icons.begin(), icons.end()), icons.end());
-	texts.erase(std::unique(texts.begin(), texts.end()), texts.end());
-	buildIcons.erase(std::unique(buildIcons.begin(), buildIcons.end()), buildIcons.end());
+	spring::VectorSortUnique(icons);
+	spring::VectorSortUnique(texts);
+	spring::VectorSortUnique(buildIcons);
 }
 
 void CCursorIcons::DrawCursors() const
@@ -94,7 +91,6 @@ void CCursorIcons::DrawCursors() const
 	glLoadMatrixf(CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	sh.Enable();
-
 	sh.SetUniform("alphaCtrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
 	const SColor iconColor = { 1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha() };
@@ -133,6 +129,10 @@ void CCursorIcons::DrawCursors() const
 
 	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	sh.Disable();
+
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 }
 
 
