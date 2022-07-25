@@ -2213,6 +2213,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 
+			buildCommands.clear();
 			return CheckCommand((buildInfos.back()).CreateCommand(CreateOptions(button)));
 		}
 
