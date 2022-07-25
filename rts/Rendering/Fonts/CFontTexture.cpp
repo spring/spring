@@ -526,7 +526,7 @@ CFontTexture::~CFontTexture()
 void CFontTexture::RemoveUnused(bool kill)
 {
 	for (size_t i = 0; i < allFonts.size(); /*NOOP*/) {
-		if (allFonts[i].use_count() <= 1) {
+		if (allFonts[i].expired()) {
 			allFonts[i] = std::move(allFonts.back());
 			allFonts.pop_back();
 		}
@@ -548,11 +548,11 @@ void CFontTexture::Update() {
 	RemoveUnused();
 
 	for_mt_chunk(0, allFonts.size(), [](int i) {
-		allFonts[i]->UpdateGlyphAtlasTexture();
+		allFonts[i].lock()->UpdateGlyphAtlasTexture();
 	});
 
 	for (const auto& font : allFonts)
-		font->UploadGlyphAtlasTexture();
+		font.lock()->UploadGlyphAtlasTexture();
 }
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)

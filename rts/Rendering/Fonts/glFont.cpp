@@ -200,8 +200,11 @@ std::shared_ptr<CglFont> CglFont::LoadFont(const std::string& fontFile, int size
 
 std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
 {
-	const auto cmpPred = [&fontFile, size, outlinewidth, outlineweight](std::shared_ptr<CFontTexture> item) {
-		std::shared_ptr<CglFont> font = std::static_pointer_cast<CglFont>(item);
+	const auto cmpPred = [&fontFile, size, outlinewidth, outlineweight](std::weak_ptr<CFontTexture> item) {
+		if (item.expired())
+			return false;
+
+		std::shared_ptr<CglFont> font = std::static_pointer_cast<CglFont>(item.lock());
 		return
 			size == font->GetSize() &&
 			outlinewidth == font->GetOutlineWidth() &&
@@ -213,7 +216,7 @@ std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size
 	if (it == allFonts.end())
 		return nullptr;
 
-	return std::static_pointer_cast<CglFont>(*it);
+	return std::static_pointer_cast<CglFont>(it->lock());
 }
 
 
@@ -227,11 +230,14 @@ void CglFont::ReallocAtlases(bool pre)
 
 void CglFont::SwapRenderBuffers()
 {
-	assert(     font == nullptr || std::find(allFonts.begin(), allFonts.end(),      font) != allFonts.end());
-	assert(smallFont == nullptr || std::find(allFonts.begin(), allFonts.end(), smallFont) != allFonts.end());
+	assert(     font != nullptr);
+	assert(smallFont != nullptr);
 
 	for (auto f: allFonts) {
-		std::static_pointer_cast<CglFont>(f)->SwapBuffers();
+		if (f.expired())
+			continue;
+
+		std::static_pointer_cast<CglFont>(f.lock())->SwapBuffers();
 	}
 }
 

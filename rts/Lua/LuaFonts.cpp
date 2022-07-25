@@ -74,7 +74,7 @@ inline std::shared_ptr<CglFont> tofont(lua_State* L, int idx)
 {
 	auto font = *reinterpret_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, idx, "Font"));
 
-	if (font == nullptr || font.use_count() <= 1)
+	if (font == nullptr)
 		luaL_error(L, "attempt to use a deleted font");
 
 	return font;

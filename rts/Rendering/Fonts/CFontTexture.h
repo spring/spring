@@ -114,7 +114,7 @@ private:
 protected:
 	float GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl);
 protected:
-	static inline std::vector<std::shared_ptr<CFontTexture>> allFonts = {};
+	static inline std::vector<std::weak_ptr<CFontTexture>> allFonts = {};
 
 	static inline const GlyphInfo dummyGlyph = GlyphInfo();
 
