@@ -54,9 +54,6 @@ private:
 
 	spring::recursive_mutex mutex;
 	spring::thread netHeartbeatThread;
-	COffscreenGLThread gameLoadThread;
-
-	bool mtLoading;
 
 	spring_time lastDrawTime;
 };
