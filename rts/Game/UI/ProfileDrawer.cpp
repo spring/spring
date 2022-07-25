@@ -89,7 +89,8 @@ static void DrawBufferStats(const float2 pos)
 
 	{
 		std::array<size_t, 4> lfMetrics = {0};
-		for (const auto lf : CglFont::GetLoadedFonts()) {
+		for (const auto ft : CglFont::GetLoadedFonts()) {
+			auto lf = std::static_pointer_cast<CglFont>(ft);
 			lfMetrics[0] += lf->GetPrimaryBuffer().SumElems();
 			lfMetrics[1] += lf->GetPrimaryBuffer().SumIndcs();
 			lfMetrics[2] += lf->GetPrimaryBuffer().NumSubmits(false);

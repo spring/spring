@@ -39,7 +39,7 @@ namespace spring {
 	}
 
 	template<typename T>
-	static bool VectorErase(std::vector<T>& v, T e)
+	static bool VectorErase(std::vector<T>& v, const T& e)
 	{
 		auto it = std::find(v.begin(), v.end(), e);
 
@@ -76,7 +76,7 @@ namespace spring {
 	}
 
 	template<typename T>
-	static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
+	static bool VectorInsertUnique(std::vector<T>& v, const T& e, bool b = false)
 	{
 		// do not assume uniqueness, test for it
 		if (b && std::find(v.begin(), v.end(), e) != v.end())
@@ -113,7 +113,7 @@ namespace spring {
 	static T& VectorEmplaceBack(std::vector<T>& v, A&&... a) { v.emplace_back(std::forward<A>(a)...); return (v.back()); }
 
 	template<typename T>
-	static T VectorBackPop(std::vector<T>& v) { const T e = v.back(); v.pop_back(); return e; }
+	static const T& VectorBackPop(std::vector<T>& v) { const T& e = v.back(); v.pop_back(); return e; }
 };
 
 #endif

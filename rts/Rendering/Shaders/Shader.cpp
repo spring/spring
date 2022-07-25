@@ -600,8 +600,10 @@ namespace Shader {
 			if (IsValid()) {
 				for (const auto& [name, index] : attribLocations) {
 					GLint indexOut = glGetAttribLocation(objID, name.c_str());
-					LOG_L(L_ERROR, "[GLSL-PO::%s] Setting attribute %s to location %d(requested %d) for program %u", __func__, name.c_str(), indexOut, index, objID);
-					assert(indexOut == index);
+					if (indexOut != index) {
+						LOG_L(L_ERROR, "[GLSL-PO::%s] Setting attribute %s to location %d(requested %d) for program %u", __func__, name.c_str(), indexOut, index, objID);
+						assert(false);
+					}
 				}
 			}
 			#endif

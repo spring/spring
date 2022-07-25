@@ -46,8 +46,8 @@ CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontO
 bool CglFont::threadSafety = false;
 
 
-CglFont* font = nullptr;
-CglFont* smallFont = nullptr;
+std::shared_ptr<CglFont> font = nullptr;
+std::shared_ptr<CglFont> smallFont = nullptr;
 
 static constexpr float4        white(1.00f, 1.00f, 1.00f, 0.95f);
 static constexpr float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
@@ -136,13 +136,10 @@ void main() {
 
 bool CglFont::LoadConfigFonts()
 {
-	spring::SafeDelete(font);
-	spring::SafeDelete(smallFont);
-
-	font = CglFont::LoadFont("", false);
+	font      = CglFont::LoadFont("", false);
 	smallFont = CglFont::LoadFont("", true);
 
-	if (font == nullptr)
+	if (font      == nullptr)
 		throw content_error("Failed to load FontFile \"" + configHandler->GetString("FontFile") + "\", did you forget to run make install?");
 
 	if (smallFont == nullptr)
@@ -153,13 +150,10 @@ bool CglFont::LoadConfigFonts()
 
 bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile)
 {
-	CglFont* newLargeFont = CglFont::LoadFont(largeFontFile, false);
-	CglFont* newSmallFont = CglFont::LoadFont(smallFontFile, true);
+	auto newLargeFont = CglFont::LoadFont(largeFontFile, false);
+	auto newSmallFont = CglFont::LoadFont(smallFontFile,  true);
 
 	if (newLargeFont != nullptr && newSmallFont != nullptr) {
-		spring::SafeDelete(font);
-		spring::SafeDelete(smallFont);
-
 		font = newLargeFont;
 		smallFont = newSmallFont;
 
@@ -171,7 +165,7 @@ bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::strin
 	return true;
 }
 
-CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
+std::shared_ptr<CglFont> CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
 {
 	const std::string fontFiles[] = {configHandler->GetString("FontFile"), configHandler->GetString("SmallFontFile")};
 	const std::string& fontFile = (fontFileOverride.empty())? fontFiles[smallFont]: fontFileOverride;
@@ -180,36 +174,64 @@ CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
 	const   int fontWidths[] = {configHandler->GetInt("FontOutlineWidth"), configHandler->GetInt("SmallFontOutlineWidth")};
 	const float fontWeights[] = {configHandler->GetFloat("FontOutlineWeight"), configHandler->GetFloat("SmallFontOutlineWeight")};
 
-	return (CglFont::LoadFont(fontFile, fontSizes[smallFont], fontWidths[smallFont], fontWeights[smallFont]));
+	return std::move(CglFont::LoadFont(fontFile, fontSizes[smallFont], fontWidths[smallFont], fontWeights[smallFont]));
 }
 
 
-CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
+std::shared_ptr<CglFont> CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
 {
 	try {
-		return (new CglFont(fontFile, size, outlinewidth, outlineweight));
+		//return (new CglFont(fontFile, size, outlinewidth, outlineweight));
+		auto fnt = FindFont(fontFile, size, outlinewidth, outlineweight);
+		if (fnt) {
+			return fnt;
+		}
+
+		fnt = std::make_shared<CglFont>(fontFile, size, outlinewidth, outlineweight);
+		allFonts.emplace_back(fnt);
+
+		return fnt;
+
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
 		return nullptr;
 	}
 }
 
+std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
+{
+	const auto cmpPred = [&fontFile, size, outlinewidth, outlineweight](std::shared_ptr<CFontTexture> item) {
+		std::shared_ptr<CglFont> font = std::static_pointer_cast<CglFont>(item);
+		return
+			size == font->GetSize() &&
+			outlinewidth == font->GetOutlineWidth() &&
+			outlineweight == font->GetOutlineWeight() &&
+			fontFile == font->GetFilePath();
+	};
+
+	auto it = std::find_if(allFonts.begin(), allFonts.end(), cmpPred);
+	if (it == allFonts.end())
+		return nullptr;
+
+	return std::static_pointer_cast<CglFont>(*it);
+}
+
 
 void CglFont::ReallocAtlases(bool pre)
 {
-	if (font != nullptr)
-		static_cast<CFontTexture*>(font)->ReallocAtlases(pre);
+	if (font != nullptr)		
+		font->ReallocAtlases(pre);
 	if (smallFont != nullptr)
-		static_cast<CFontTexture*>(smallFont)->ReallocAtlases(pre);
+		smallFont->ReallocAtlases(pre);
 }
 
 void CglFont::SwapRenderBuffers()
 {
-	assert(     font == nullptr || loadedFonts.find(     font) != loadedFonts.end());
-	assert(smallFont == nullptr || loadedFonts.find(smallFont) != loadedFonts.end());
+	assert(     font == nullptr || std::find(allFonts.begin(), allFonts.end(),      font) != allFonts.end());
+	assert(smallFont == nullptr || std::find(allFonts.begin(), allFonts.end(), smallFont) != allFonts.end());
 
-	for (CglFont* f: loadedFonts) {
-		f->SwapBuffers();
+	for (auto f: allFonts) {
+		std::static_pointer_cast<CglFont>(f)->SwapBuffers();
 	}
 }
 
@@ -228,13 +250,6 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 	CreateDefaultShader();
 	curShader = defShader.get();
-
-	loadedFonts.insert(this);
-}
-
-CglFont::~CglFont()
-{
-	loadedFonts.erase(this);
 }
 
 #ifdef HEADLESS
@@ -260,6 +275,7 @@ void CglFont::SetColors(const float4* textColor, const float4* outlineColor) {}
 void CglFont::CreateDefaultShader() {}
 
 float CglFont::GetCharacterWidth(const char32_t c) { return 1.0f; }
+void CglFont::ScanForWantedGlyphs(const std::u8string& str) {}
 float CglFont::GetTextWidth_(const std::u8string& text) { return (text.size() * 1.0f); }
 float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* numLines) { return 1.0f; }
 
@@ -307,11 +323,11 @@ static inline bool SkipColorCodesAndNewLines(
 				cccb(*color = *colorReset);
 			} break;
 
-			case 0x0d: {
-				// CR; fall-through
-				idx += (idx < end && text[idx] == 0x0a);
+			case 0x0D: {
+				idx += (idx < end && text[idx] == 0x0A);
+				[[fallthrough]]; // CR; fall-through
 			}
-			case 0x0a: {
+			case 0x0A: {
 				// LF
 				idx += 1;
 				nls += 1;
@@ -339,13 +355,17 @@ static inline bool SkipColorCodesAndNewLines(
 
 float CglFont::GetCharacterWidth(const char32_t c)
 {
-	return GetGlyph(c).advance;
+	const auto& glyph = GetGlyph(c);
+	assert(&glyph != &CFontTexture::dummyGlyph);
+	return glyph.advance;
 }
 
 float CglFont::GetTextWidth_(const std::u8string& text)
 {
 	if (text.empty())
 		return 0.0f;
+
+	ScanForWantedGlyphs(text);
 
 	float curw = 0.0f;
 	float maxw = 0.0f;
@@ -375,14 +395,14 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 			case ColorResetIndicator: {
 			} break;
 
-			case 0x0d: {
-				// CR; fall-through
-				idx += (idx < end && text[idx] == 0x0a);
+			case 0x0D: {
+				idx += (idx < end && text[idx] == 0x0A);
+				[[fallthrough]]; // CR; fall-through
 			}
-			case 0x0a: {
+			case 0x0A: {
 				// LF
 				if (prvGlyphPtr != nullptr)
-					curw += GetGlyph(prvGlyphIdx).advance;
+					curw += GetCharacterWidth(prvGlyphIdx);
 
 				maxw = std::max(curw, maxw);
 				curw = 0.0f;
@@ -393,9 +413,13 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 			// printable char
 			default: {
 				curGlyphPtr = &GetGlyph(curGlyphIdx);
+				assert(curGlyphPtr != &CFontTexture::dummyGlyph);
 
-				if (prvGlyphPtr != nullptr)
-					curw += GetKerning(GetGlyph(prvGlyphIdx), *curGlyphPtr);
+				if (prvGlyphPtr != nullptr) {
+					prvGlyphPtr = &GetGlyph(prvGlyphIdx);
+					assert(prvGlyphPtr != &CFontTexture::dummyGlyph);
+					curw += GetKerning(*prvGlyphPtr, *curGlyphPtr);
+				}
 
 				prvGlyphPtr = curGlyphPtr;
 				prvGlyphIdx = curGlyphIdx;
@@ -404,7 +428,7 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	}
 
 	if (prvGlyphPtr != nullptr)
-		curw += GetGlyph(prvGlyphIdx).advance;
+		curw += GetCharacterWidth(prvGlyphIdx);
 
 	return (std::max(curw, maxw));
 }
@@ -417,6 +441,8 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 		if (numLines != nullptr) *numLines = 0;
 		return 0.0f;
 	}
+
+	ScanForWantedGlyphs(text);
 
 	float h = 0.0f;
 	float d = GetLineHeight() + GetDescender();
@@ -444,11 +470,11 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 			case ColorResetIndicator: {
 			} break;
 
-			case 0x0d: {
-				// CR; fall-through
-				idx += (idx < end && text[idx] == 0x0a);
+			case 0x0D: {
+				idx += (idx < end && text[idx] == 0x0A);
+				[[fallthrough]]; // CR; fall-through
 			}
-			case 0x0a: {
+			case 0x0A: {
 				// LF
 				multiLine++;
 				d = GetLineHeight() + GetDescender();
@@ -457,6 +483,7 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 			// printable char
 			default: {
 				const GlyphInfo& g = GetGlyph(u);
+				assert(&g != &CFontTexture::dummyGlyph);
 
 				d = std::min(d, g.descender);
 				h = std::max(h, g.height * (multiLine < 2)); // only calculate height for the first line
@@ -472,7 +499,44 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 	return h;
 }
 
+void CglFont::ScanForWantedGlyphs(const std::u8string& ustr)
+{
+	static std::vector<char32_t> missingGlyphs;
 
+	missingGlyphs.clear();
+
+	char32_t nextChar = 0;
+
+	for (int idx = 0, end = int(ustr.length()); idx < end; ) {
+		switch (nextChar = utf8::GetNextChar(ustr, idx)) {
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
+		case ColorCodeIndicator: {
+			idx = SkipColorCodes(ustr, idx - 1);
+		} break;
+
+			// reset color; no-op since GetNextChar increments idx
+		case ColorResetIndicator: {
+		} break;
+
+		case 0x0D: {
+			idx += (idx < end&& ustr[idx] == 0x0A);
+			[[fallthrough]]; // CR; fall-through
+		}
+		case 0x0A: {
+			// LF
+		} break;
+
+			// printable char
+		default: {
+			const GlyphInfo& curGlyph = GetGlyph(nextChar);
+			if (&curGlyph == &CFontTexture::dummyGlyph)
+				missingGlyphs.emplace_back(nextChar);
+		} break;
+		}
+	}
+
+	LoadWantedGlyphs(missingGlyphs);
+}
 
 
 std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
@@ -508,11 +572,11 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 				lines.back() += c;
 			} break;
 
-			case 0x0d: {
-				// CR; increment if next char is a LF and fall-through
-				idx += ((idx + 1) < end && text[idx + 1] == 0x0a);
+			case 0x0D: {
+				idx += ((idx + 1) < end && text[idx + 1] == 0x0A);
+				[[fallthrough]]; // CR; fall-through
 			}
-			case 0x0a: {
+			case 0x0A: {
 				lines.emplace_back("");
 
 				#if 0
@@ -594,7 +658,7 @@ void CglFont::CreateDefaultShader()
 	defShader = std::make_unique<Shader::GLSLProgramObject>("[GL-Font]");
 
 	// 330 version was broken on AMD, probably due to bad attributes location (how?, why?). TODO: investigate
-	if (globalRendering->supportExplicitAttribLoc && false) {
+	if (globalRendering->supportExplicitAttribLoc) {
 		LOG("[CglFont::%s] Creating Font shaders: GLEW_ARB_explicit_attrib_location = true", __func__);
 		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER  , vsFont330));
 		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont330));
@@ -669,8 +733,10 @@ void CglFont::End() {
 		//without this, fonts textures are empty in display lists somehow
 		GLboolean inListCompile;
 		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-		if (!inListCompile)
+		if (!inListCompile) {
 			UpdateGlyphAtlasTexture();
+			UploadGlyphAtlasTexture();
+		}
 
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
@@ -712,6 +778,7 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 
 	{
 		UpdateGlyphAtlasTexture();
+		UploadGlyphAtlasTexture();
 
 		// assume external shaders are never null and already bound
 		curShader = shader;
@@ -757,14 +824,16 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 {
 	const std::u8string& ustr = toustring(str);
 
+	ScanForWantedGlyphs(ustr);
+
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
 
-	int currentPos = 0;
-	int skippedLines = 0;
-
 	char32_t curGlyphIdx = 0;
 	char32_t prvGlyphIdx = 0;
+
+	int currentPos = 0;
+	int skippedLines = 0;
 
 	float4 newColor = textColor;
 
@@ -776,6 +845,7 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 		curGlyphIdx = utf8::GetNextChar(str, currentPos);
 
 		const GlyphInfo* curGlyphPtr = &GetGlyph(curGlyphIdx);
+		assert(curGlyphPtr != &CFontTexture::dummyGlyph);
 		const GlyphInfo* prvGlyphPtr = nullptr;
 
 		if (skippedLines > 0) {
@@ -784,6 +854,7 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 		}
 		else if (prvGlyphIdx != 0) {
 			prvGlyphPtr = &GetGlyph(prvGlyphIdx);
+			assert(prvGlyphPtr != &CFontTexture::dummyGlyph);
 			x += (scaleX * GetKerning(*prvGlyphPtr, *curGlyphPtr));
 		}
 
@@ -801,9 +872,8 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 		const float tx1 = tc.x1() * texScaleX;
 		const float ty1 = tc.y1() * texScaleY;
 
-#ifdef INDEXED_FONTS_RENDERING
-		if constexpr (shiftXC > 0 || shiftYC > 0 || outline) {
 
+		if constexpr (shiftXC > 0 || shiftYC > 0 || outline) {
 			const auto& stc = prvGlyphPtr->shadowTexCord;
 			const float stx0 = stc.x0() * texScaleX;
 			const float sty0 = stc.y0() * texScaleY;
@@ -824,43 +894,14 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 				ssY = (scaleY / fontSize) * GetOutlineWidth();
 			}
 
+#ifdef INDEXED_FONTS_RENDERING
 			outlineBufferTC.AddQuadTriangles(
 				{ {dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x) },
 				{ {dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x) },
 				{ {dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x) },
 				{ {dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x) }
 			);
-		}
-
-		primaryBufferTC.AddQuadTriangles(
-			{ {dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x) },
-			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
-			{ {dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x) },
-			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) }
-		);
 #else
-		if constexpr (shiftXC > 0 || shiftYC > 0 || outline) {
-
-			float shiftX = 0.0f;
-			float shiftY = 0.0f;
-			if constexpr (shiftXC > 0 || shiftYC > 0) {
-				shiftX = scaleX * static_cast<float>(shiftXC) / 100.0f;
-				shiftY = scaleY * static_cast<float>(shiftYC) / 100.0f;
-			}
-
-			float ssX = 0.0f;
-			float ssY = 0.0f;
-			if constexpr (outline) {
-				ssX = (scaleX / fontSize) * GetOutlineWidth();
-				ssY = (scaleY / fontSize) * GetOutlineWidth();
-			}
-
-			const auto& stc = prvGlyphPtr->shadowTexCord;
-			const float stx0 = stc.x0() * texScaleX;
-			const float sty0 = stc.y0() * texScaleY;
-			const float stx1 = stc.x1() * texScaleX;
-			const float sty1 = stc.y1() * texScaleY;
-
 			outlineBufferTC.AddVertices({
 				{ {dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x) },
 				{ {dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x) },
@@ -870,8 +911,17 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 				{ {dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x) },
 				{ {dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x) },
 			});
+#endif
 		}
 
+#ifdef INDEXED_FONTS_RENDERING
+		primaryBufferTC.AddQuadTriangles(
+			{ {dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x) },
+			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
+			{ {dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x) },
+			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) }
+		);
+#else
 		primaryBufferTC.AddVertices({
 			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) },
 			{ {dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x) },
@@ -880,7 +930,7 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) },
 			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
 			{ {dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x) },
-			});
+		});
 #endif
 	}
 }
@@ -1038,7 +1088,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 				if ((col += 1) >= colLines.size()) {
 					colLines.emplace_back("");
 					for (int i = 0; i < row; ++i)
-						colLines[col] += 0x0a;
+						colLines[col] += 0x0A;
 					colColor.push_back(defColor);
 				}
 				if (colColor[col] != curColor) {
@@ -1048,14 +1098,14 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 				}
 			} break;
 
-			case 0x0d: {
-				// CR; fall-through
-				pos += ((pos + 1) < text.length() && text[pos + 1] == 0x0a);
+			case 0x0D: {
+				pos += ((pos + 1) < text.length() && text[pos + 1] == 0x0A);
+				[[fallthrough]]; // CR; fall-through
 			}
-			case 0x0a: {
+			case 0x0A: {
 				// LF
 				for (auto& colLine: colLines)
-					colLine += 0x0a;
+					colLine += 0x0A;
 
 				if (colColor[0] != curColor) {
 					for (int i = 0; i < 4; ++i)

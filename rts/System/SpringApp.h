@@ -41,6 +41,7 @@ private:
 	bool InitWindow(const char* title);             //!< Initializes window
 	bool InitPlatformLibs();
 	bool InitFonts();
+	static void CleanFonts();
 	bool InitFileSystem();
 	bool MainEventHandler(const SDL_Event& ev);     //!< Handles SDL input events
 	bool Update();                                  //!< Run simulation and rendering

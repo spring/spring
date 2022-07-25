@@ -14,20 +14,19 @@
 class CTextWrap : public CFontTexture
 {
 public:
-	CTextWrap(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
-	virtual ~CTextWrap() {}
-
 	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight
 	inline int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
 	inline std::string Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = MAX_HEIGHT_DEFAULT);
 
-	static const char8_t ColorCodeIndicator  = 0xFF;
-	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
+	static constexpr float MAX_HEIGHT_DEFAULT = 1e3;
 
-	static constexpr float MAX_HEIGHT_DEFAULT = 1e4;
+	static constexpr const char8_t ColorCodeIndicator = 0xFF;
+	static constexpr const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
+protected:
+	CTextWrap(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
+	virtual ~CTextWrap() {}
 public:
 	virtual float GetTextWidth(const std::string& text) = 0;
-
 private:
 	struct colorcode {
 		colorcode() : resetColor(false),color(1.f,1.f,1.f,1.f),pos(0) {};

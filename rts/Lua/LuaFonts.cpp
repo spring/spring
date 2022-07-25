@@ -70,14 +70,14 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 }
 
 
-inline CglFont* tofont(lua_State* L, int idx)
+inline std::shared_ptr<CglFont> tofont(lua_State* L, int idx)
 {
-	CglFont** font = (CglFont**)luaL_checkudata(L, idx, "Font");
+	auto font = *reinterpret_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, idx, "Font"));
 
-	if (*font == nullptr)
+	if (font == nullptr || font.use_count() <= 1)
 		luaL_error(L, "attempt to use a deleted font");
 
-	return *font;
+	return font;
 }
 
 
@@ -89,9 +89,9 @@ int LuaFonts::meta_gc(lua_State* L)
 	if (lua_isnil(L, 1))
 		return 0;
 
-	CglFont** font = (CglFont**)luaL_checkudata(L, 1, "Font");
-	delete *font;
-	*font = nullptr;
+	auto font = std::move(*reinterpret_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, 1, "Font")));
+	//font destructor will decrement use counter
+
 	return 0;
 }
 
@@ -108,7 +108,7 @@ int LuaFonts::meta_index(lua_State* L)
 	lua_pop(L, 1);
 
 	// couldn't find a function, so check properties
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	if (lua_israwstring(L, 2)) {
 		switch (hashString(lua_tostring(L, 2))) {
@@ -173,12 +173,12 @@ int LuaFonts::meta_index(lua_State* L)
 
 int LuaFonts::LoadFont(lua_State* L)
 {
-	CglFont* f = CglFont::LoadFont(luaL_checkstring(L, 1), luaL_optint(L, 2, 14), luaL_optint(L, 3, 2), luaL_optfloat(L, 4, 15.0f));
+	auto f = CglFont::LoadFont(luaL_checkstring(L, 1), luaL_optint(L, 2, 14), luaL_optint(L, 3, 2), luaL_optfloat(L, 4, 15.0f));
 	if (f == nullptr)
 		return 0;
 
-	CglFont** font = (CglFont**) lua_newuserdata(L, sizeof(CglFont*));
-	*font = f;
+	auto shPtrFontPtr = (decltype(f)*) lua_newuserdata(L, sizeof(decltype(f)));
+	*shPtrFontPtr = std::move(f);
 
 	luaL_getmetatable(L, "Font");
 	lua_setmetatable(L, -2);
@@ -201,7 +201,7 @@ int LuaFonts::Print(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	const float x     = luaL_checkfloat(L, 3);
@@ -249,7 +249,7 @@ int LuaFonts::Print(lua_State* L)
 int LuaFonts::Begin(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 	f->Begin();
 	return 0;
 }
@@ -257,7 +257,7 @@ int LuaFonts::Begin(lua_State* L)
 int LuaFonts::End(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 	f->End();
 	return 0;
 }
@@ -268,7 +268,7 @@ int LuaFonts::End(lua_State* L)
 
 int LuaFonts::WrapText(lua_State* L)
 {
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	std::string text(luaL_checkstring(L, 2), lua_strlen(L, 2));
 
@@ -288,7 +288,7 @@ int LuaFonts::WrapText(lua_State* L)
 
 int LuaFonts::GetTextWidth(lua_State* L)
 {
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	lua_pushnumber(L, f->GetTextWidth(std::string(luaL_checkstring(L, 2), lua_strlen(L, 2))));
 	return 1;
@@ -297,7 +297,7 @@ int LuaFonts::GetTextWidth(lua_State* L)
 
 int LuaFonts::GetTextHeight(lua_State* L)
 {
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	const std::string text(luaL_checkstring(L, 2), lua_strlen(L, 2));
 	float descender;
@@ -316,7 +316,7 @@ int LuaFonts::GetTextHeight(lua_State* L)
 
 static int SetTextColorShared(lua_State* L, bool outline)
 {
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -350,7 +350,7 @@ int LuaFonts::SetOutlineColor(lua_State* L) { return (SetTextColorShared(L, true
 
 int LuaFonts::SetAutoOutlineColor(lua_State* L)
 {
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 	f->SetAutoOutlineColor(luaL_checkboolean(L, 2));
 	return 0;
 }
@@ -363,7 +363,7 @@ int LuaFonts::BindTexture(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	CglFont* f = tofont(L, 1);
+	auto f = tofont(L, 1);
 
 	glBindTexture(GL_TEXTURE_2D, f->GetTexture());
 	glEnable(GL_TEXTURE_2D);

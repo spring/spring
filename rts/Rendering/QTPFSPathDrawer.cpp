@@ -1,4 +1,5 @@
 #include <limits>
+#include <memory>
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"

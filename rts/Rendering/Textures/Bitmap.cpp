@@ -607,7 +607,7 @@ void TBitmapAction<T, ch>::Blur(int iterations, float weight)
 
 	using ThisType = decltype(this);
 
-	for (int i = 0; i < iterations; ++i) {
+	for (int iter = 0; iter < iterations; ++iter) {
 		for_mt(0, src->ysize, [&](const int y) {
 			for (int x = 0; x < src->xsize; x++) {
 				int yBaseOffset = (y * src->xsize);
@@ -630,10 +630,8 @@ void TBitmapAction<T, ch>::Blur(int iterations, float weight)
 
 						auto& srcChannel = static_cast<ThisType>(srcAction.get())->GetRef(yBaseOffset + x + offset, a);
 
-						if (i == 4)
-							fragment += (weight * blurkernel[i] * srcChannel);
-						else
-							fragment += (         blurkernel[i] * srcChannel);
+						const float thisWeight = mix(1.0f, weight, i == 4);
+						fragment += (thisWeight * blurkernel[i] * srcChannel);
 					}
 
 					auto& dstChannel = static_cast<ThisType>(dstAction.get())->GetRef(yBaseOffset + x, a);

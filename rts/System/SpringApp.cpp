@@ -342,6 +342,16 @@ bool SpringApp::InitFonts()
 	}
 }
 
+void SpringApp::CleanFonts()
+{
+	font      = {};
+	smallFont = {};
+
+	// Can't leave it to default program destructor as the order of object destruction is not guaranteed.
+	// E.g.: Bitmap memory pool can be destroyed before fonts causing null ptr exception
+	CFontTexture::RemoveUnused(true);
+}
+
 bool SpringApp::InitFileSystem()
 {
 	bool ret = false;
@@ -943,8 +953,9 @@ void SpringApp::Kill(bool fromRun)
 	#ifndef HEADLESS
 	spring::SafeDelete(agui::gui);
 	#endif
-	spring::SafeDelete(font);
-	spring::SafeDelete(smallFont);
+
+	CleanFonts();
+
 
 	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
