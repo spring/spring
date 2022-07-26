@@ -53,6 +53,8 @@ end
 
 
 local function MakeKeySetString(key, mods, getSymbol)
+  if key == nil then return "" end
+
   getSymbol = getSymbol or Spring.GetKeySymbol
   local keyset = ""
   if (mods.alt)   then keyset = keyset .. "A+" end
