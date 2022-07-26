@@ -18,6 +18,7 @@
 #include "System/MainDefines.h" // SNPRINTF
 #include "System/SafeUtil.h"
 #include "System/Threading/ThreadPool.h"
+#include "System/ContainerUtil.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 
@@ -315,24 +316,24 @@ void CModelLoader::DrainPreloadFutures(uint32_t numAllowed)
 	if (preloadFutures.size() <= numAllowed)
 		return;
 
+	const auto erasePredicate = [](std::weak_ptr<std::future<void>> item, std::chrono::microseconds timeout) {
+		return
+			item.expired() ||
+			item.lock()->wait_for(timeout) == std::future_status::ready;
+	};
+
+	const auto erasePredicate1 = [erasePredicate, timeout = 0us  ](std::weak_ptr<std::future<void>> item) { return erasePredicate(item, timeout); };
+	const auto erasePredicate2 = [erasePredicate, timeout = 100us](std::weak_ptr<std::future<void>> item) { return erasePredicate(item, timeout); };
+
 	// collect completed futures
-	for (size_t i = 0; i < preloadFutures.size(); ++i) {
-		if (preloadFutures[i]->wait_for(0s) == std::future_status::ready) {
-			preloadFutures[i] = std::move(preloadFutures.back());
-			preloadFutures.pop_back();
-		}
-	}
+	spring::VectorEraseAllIf(preloadFutures, erasePredicate1);
 
 	if (preloadFutures.size() <= numAllowed)
 		return;
 
 	while (preloadFutures.size() > numAllowed) {
-		for (size_t i = 0; i < preloadFutures.size(); ++i) {
-			if (preloadFutures[i]->wait_for(100us) == std::future_status::ready) {
-				preloadFutures[i] = std::move(preloadFutures.back());
-				preloadFutures.pop_back();
-			}
-		}
+		//drain queue until there are <= numAllowed items there
+		spring::VectorEraseAllIf(preloadFutures, erasePredicate2);
 	}
 }
 
