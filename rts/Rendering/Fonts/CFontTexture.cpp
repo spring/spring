@@ -45,7 +45,7 @@
 		int          err_code;
 		const char*  err_msg;
 	} static errorTable[] =
-	#include FT_ERRORS_H;
+	#include FT_ERRORS_H
 
 	static const char* GetFTError(FT_Error e) {
 		for (int a = 0; errorTable[a].err_msg; ++a) {
@@ -62,9 +62,6 @@
 #ifdef HEADLESS
 typedef unsigned char FT_Byte;
 #endif
-
-struct {}; //definitions above confuse MSVC, do this to restore MSVC sanity
-
 
 
 //static inline std::vector<std::weak_ptr<CFontTexture>> allFonts = {};

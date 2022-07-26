@@ -1305,7 +1305,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		modelsUniformsUploader.Update();
 
 		CNamedTextures::Update();
-		CglFont::Update();
+		CFontTexture::Update();
 	}
 
 	// always update InfoTexture and SoundListener at <= 30Hz (even when paused)
