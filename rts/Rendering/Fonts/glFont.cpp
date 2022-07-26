@@ -183,14 +183,15 @@ std::shared_ptr<CglFont> CglFont::LoadFont(const std::string& fontFile, int size
 	try {
 		//return (new CglFont(fontFile, size, outlinewidth, outlineweight));
 		auto fnt = FindFont(fontFile, size, outlinewidth, outlineweight);
-		if (fnt) {
+		if (fnt)
 			return fnt;
-		}
 
-		fnt = std::make_shared<CglFont>(fontFile, size, outlinewidth, outlineweight);
-		allFonts.emplace_back(fnt);
-
-		return fnt;
+		return std::static_pointer_cast<CglFont>(
+			allFonts.emplace_back(
+				std::make_shared<CglFont>(fontFile, size, outlinewidth, outlineweight)
+			)
+			.lock()
+		);
 
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
@@ -200,10 +201,7 @@ std::shared_ptr<CglFont> CglFont::LoadFont(const std::string& fontFile, int size
 
 std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
 {
-	const auto cmpPred = [&fontFile, size, outlinewidth, outlineweight](std::weak_ptr<CFontTexture> item) {
-		if (item.expired())
-			return false;
-
+	const auto cmpFunc = [&fontFile, size, outlinewidth, outlineweight](std::weak_ptr<CFontTexture> item) {
 		std::shared_ptr<CglFont> font = std::static_pointer_cast<CglFont>(item.lock());
 		return
 			size == font->GetSize() &&
@@ -212,11 +210,25 @@ std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size
 			fontFile == font->GetFilePath();
 	};
 
-	auto it = std::find_if(allFonts.begin(), allFonts.end(), cmpPred);
-	if (it == allFonts.end())
+	// check for unused fonts and search in the same time
+	size_t fontIndex = size_t(-1);
+	for (size_t i = 0; i < allFonts.size(); /*NOOP*/) {
+		if (allFonts[i].expired()) {
+			allFonts[i] = std::move(allFonts.back());
+			allFonts.pop_back();
+		}
+		else {
+			if (fontIndex == size_t(-1) && cmpFunc(allFonts[i]))
+				fontIndex = i;
+
+			++i;
+		}
+	}
+
+	if (fontIndex == size_t(-1))
 		return nullptr;
 
-	return std::static_pointer_cast<CglFont>(it->lock());
+	return std::static_pointer_cast<CglFont>(allFonts[fontIndex].lock());
 }
 
 
@@ -315,8 +327,9 @@ static inline bool SkipColorCodesAndNewLines(
 	T idx = *curIndex;
 	T nls = 0;
 
+	char32_t nextChar = 0;
 	for (T end = T(text.length()); idx < end; ) {
-		switch (text[idx]) {
+		switch (nextChar = utf8::GetNextChar(text, idx, false/*do not advance*/)) {
 			case CglFont::ColorCodeIndicator: {
 				if ((idx += 4) < end)
 					cccb(*color = {text[idx - 3] / 255.0f, text[idx - 2] / 255.0f, text[idx - 1] / 255.0f, 1.0f});
@@ -325,7 +338,6 @@ static inline bool SkipColorCodesAndNewLines(
 
 			case CglFont::ColorResetIndicator: {
 				idx += 1;
-
 				cccb(*color = *colorReset);
 			} break;
 
@@ -508,7 +520,6 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 void CglFont::ScanForWantedGlyphs(const std::u8string& ustr)
 {
 	static std::vector<char32_t> missingGlyphs;
-
 	missingGlyphs.clear();
 
 	char32_t nextChar = 0;
@@ -848,7 +859,7 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
-		curGlyphIdx = utf8::GetNextChar(str, currentPos);
+		curGlyphIdx = utf8::GetNextChar(ustr, currentPos);
 
 		const GlyphInfo* curGlyphPtr = &GetGlyph(curGlyphIdx);
 		assert(curGlyphPtr != &CFontTexture::dummyGlyph);

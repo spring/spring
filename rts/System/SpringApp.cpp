@@ -349,7 +349,7 @@ void SpringApp::CleanFonts()
 
 	// Can't leave it to default program destructor as the order of object destruction is not guaranteed.
 	// E.g.: Bitmap memory pool can be destroyed before fonts causing null ptr exception
-	CFontTexture::RemoveUnused(true);
+	CFontTexture::KillFonts();
 }
 
 bool SpringApp::InitFileSystem()

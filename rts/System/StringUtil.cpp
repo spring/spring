@@ -120,7 +120,7 @@ void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseAr
 }
 
 
-char32_t utf8::GetNextChar(const std::string& text, int& pos)
+char32_t utf8::GetNextChar(const std::string& text, int& pos, bool advance)
 {
 	// UTF8 looks like this
 	// 1Byte == ASCII:      0xxxxxxxxx
@@ -197,7 +197,7 @@ char32_t utf8::GetNextChar(const std::string& text, int& pos)
 			//TODO limit range to UTF16!
 		} break;
 	}
-	pos += usedUtf8Bytes;
+	pos += usedUtf8Bytes * int(advance);
 
 	// replace tabs with spaces
 	if (u == 0x9)

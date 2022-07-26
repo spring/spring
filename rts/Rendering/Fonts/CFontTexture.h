@@ -4,6 +4,7 @@
 #define _CFONTTEXTURE_H
 
 #include <string>
+#include <unordered_map>
 #include <memory>
 
 #include "Rendering/Textures/Bitmap.h"
@@ -16,7 +17,6 @@
 struct FT_FaceRec_;
 typedef struct FT_FaceRec_* FT_Face;
 class CBitmap;
-struct FontFace;
 
 class FtLibraryHandlerProxy {
 public:
@@ -53,23 +53,45 @@ struct IGlyphRect { //FIXME use SRect or float4
 	float w,h;
 };
 
+
+//wrapper to allow usage as shared_ptr
+struct FontFileBytes {
+	FontFileBytes(size_t size) {
+		vec.resize(size);
+	}
+	using FT_Byte = unsigned char;
+	FT_Byte* data();
+private:
+	std::vector<FT_Byte> vec;
+};
+
+//wrapper to allow usage as shared_ptr
+struct FontFace {
+	FontFace(FT_Face f, std::shared_ptr<FontFileBytes>& mem);
+	~FontFace();
+	operator FT_Face();
+
+	FT_Face face;
+	std::shared_ptr<FontFileBytes> memory;
+};
+
 struct GlyphInfo {
 	GlyphInfo()
 	: advance(0)
 	, height(0)
 	, descender(0)
 	, index(0)
-	, utf16(0)
-	, face(NULL)
+	, letter(0)
+	, face(nullptr)
 	{ };
 
 	IGlyphRect size;
 	IGlyphRect texCord;
 	IGlyphRect shadowTexCord;
 	float advance, height, descender;
-	unsigned index;
-	char32_t utf16;
-	FT_Face face;
+	uint32_t index;
+	char32_t letter;
+	std::shared_ptr<FontFace> face;
 };
 
 
@@ -82,7 +104,7 @@ It works only and only with UTF32 chars
 class CFontTexture
 {
 public:
-	static void RemoveUnused(bool kill = false);
+	static void KillFonts();
 	static void Update();
 protected:
 	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
@@ -140,14 +162,10 @@ private:
 	int curTextureUpdate = 0;
 #ifndef HEADLESS
 	int lastTextureUpdate = 0;
-	FT_Face face;
 #endif
-
-
 	std::shared_ptr<FontFace> shFace;
-	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
-	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
+	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
 	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	std::vector<CBitmap> atlasGlyphs;
@@ -156,6 +174,9 @@ private:
 
 	CBitmap atlasUpdate;
 	CBitmap atlasUpdateShadow;
+public:
+	auto GetGlyphs() const -> const decltype(glyphs) { return glyphs; }
+	auto GetGlyphs()       ->       decltype(glyphs) { return glyphs; }
 };
 
 #endif // CFONTTEXTURE_H

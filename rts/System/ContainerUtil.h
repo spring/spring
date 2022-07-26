@@ -23,10 +23,27 @@ namespace spring {
 		}
 	}
 
+	template<typename T, typename UnaryPredicate>
+	static bool VectorEraseAllIf(std::vector<T>& v, UnaryPredicate p)
+	{
+		bool b = false;
+		for (size_t i = 0; i < v.size(); /*NOOP*/) {
+			if (p(v[i])) {
+				v[i] = std::move(v.back());
+				v.pop_back();
+				b = true;
+			}
+			else {
+				++i;
+			}
+		}
+
+		return b;
+	}
 
 
-	template<typename T, typename P>
-	static bool VectorEraseIf(std::vector<T>& v, const P& p)
+	template<typename T, typename UnaryPredicate>
+	static bool VectorEraseIf(std::vector<T>& v, UnaryPredicate p)
 	{
 		auto it = std::find_if(v.begin(), v.end(), p);
 

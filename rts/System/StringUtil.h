@@ -202,7 +202,7 @@ void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseAr
 
 
 namespace utf8 {
-	char32_t GetNextChar(const std::string& text, int& pos);
+	char32_t GetNextChar(const std::string& text, int& pos, bool advance = true);
 	std::string FromUnicode(char32_t ch);
 
 

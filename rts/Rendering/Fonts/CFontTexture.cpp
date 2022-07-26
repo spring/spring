@@ -23,7 +23,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Threading/SpringThreading.h"
 #include "System/Threading/ThreadPool.h"
 #ifdef _DEBUG
 	#include "System/Platform/Threading.h"
@@ -34,6 +33,7 @@
 #include "System/UnorderedMap.hpp"
 #include "System/float4.h"
 #include "System/bitops.h"
+#include "System/ContainerUtil.h"
 
 
 #ifndef HEADLESS
@@ -45,8 +45,7 @@
 		int          err_code;
 		const char*  err_msg;
 	} static errorTable[] =
-	#include FT_ERRORS_H
-
+	#include FT_ERRORS_H;
 
 	static const char* GetFTError(FT_Error e) {
 		for (int a = 0; errorTable[a].err_msg; ++a) {
@@ -64,36 +63,13 @@
 typedef unsigned char FT_Byte;
 #endif
 
-struct SP_Byte { //wrapper to allow usage as shared_ptr
-	SP_Byte(size_t size) {
-		vec.resize(size);
-	}
-	FT_Byte* data() {
-		return vec.data();
-	}
-private:
-	std::vector<FT_Byte> vec;
-};
+struct {}; //definitions above confuse MSVC, do this to restore MSVC sanity
 
-struct FontFace {
-	FontFace(FT_Face f, std::shared_ptr<SP_Byte>& mem) : face(f), memory(mem) { }
-	~FontFace() {
-	#ifndef HEADLESS
-		FT_Done_Face(face);
-	#endif
-	}
-	operator FT_Face() { return this->face; }
 
-	FT_Face face;
-	std::shared_ptr<SP_Byte> memory;
-};
 
+//static inline std::vector<std::weak_ptr<CFontTexture>> allFonts = {};
 static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
-static spring::unsynced_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
-static spring::recursive_mutex fontCacheMutex;
-
-
-
+static spring::unsynced_map<std::string, std::weak_ptr<FontFileBytes>> fontMemCache;
 
 #ifndef HEADLESS
 class FtLibraryHandler {
@@ -215,7 +191,6 @@ public:
 	#endif
 
 	static FT_Library& GetLibrary() {
-		// caller holds fontCacheMutex
 		static FtLibraryHandler singleton;
 
 		return singleton.lib;
@@ -262,6 +237,7 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 	if (lchar < 128 && rchar < 128)
 		return (lchar << 7) | rchar; // 14bit used
 
+	assert(lchar < (1 << 16) && rchar < (1 << 16));
 	return (lchar << 16) | rchar; // 32bit used
 }
 
@@ -269,7 +245,6 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
 	assert(Threading::IsMainThread());
-	//std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
@@ -297,11 +272,11 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	// we need to keep a copy of the memory
 	const int filesize = f.FileSize();
 
-	std::weak_ptr<SP_Byte>& fontMemWeak = fontMemCache[fontPath];
-	std::shared_ptr<SP_Byte> fontMem = fontMemWeak.lock();
+	std::weak_ptr<FontFileBytes>& fontMemWeak = fontMemCache[fontPath];
+	std::shared_ptr<FontFileBytes> fontMem = fontMemWeak.lock();
 
 	if (fontMemWeak.expired()) {
-		fontMem = std::make_shared<SP_Byte>(SP_Byte(filesize));
+		fontMem = std::make_shared<FontFileBytes>(FontFileBytes(filesize));
 		f.Read(fontMem.get()->data(), filesize);
 		fontMemWeak = fontMem;
 	}
@@ -328,7 +303,7 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 #ifndef HEADLESS
 // NOLINTNEXTLINE{misc-misplaced-const}
-static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize)
+static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize, const spring::unsynced_set<std::shared_ptr<FontFace>>& blackList)
 {
 #if defined(USE_FONTCONFIG)
 	if (characters.empty())
@@ -425,9 +400,14 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 
 		const std::string filename = reinterpret_cast<char*>(cFilename);
 		try {
-			return GetFontFace(filename, origSize);
+			auto face = GetFontFace(filename, origSize);
+			if (blackList.find(face) != blackList.cend())
+				continue;
+
+			return face;
 		} catch(const content_error& ex) {
-			LOG_L(L_DEBUG, "%s: %s", filename.c_str(), ex.what());
+			LOG_L(L_ERROR, "[%s] %s: %s", __func__, filename.c_str(), ex.what());
+			continue;
 		}
 	}
 	return nullptr;
@@ -474,13 +454,12 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontStyle  = "unknown";
 
 #ifndef HEADLESS
-	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
 
 	if (shFace == nullptr)
 		return;
 
-	face = *shFace;
+	FT_Face face = *shFace;
 
 	fontFamily = face->family_name;
 	fontStyle  = face->style_name;
@@ -523,36 +502,27 @@ CFontTexture::~CFontTexture()
 }
 
 
-void CFontTexture::RemoveUnused(bool kill)
+void CFontTexture::KillFonts()
 {
-	for (size_t i = 0; i < allFonts.size(); /*NOOP*/) {
-		if (allFonts[i].expired()) {
-			allFonts[i] = std::move(allFonts.back());
-			allFonts.pop_back();
-		}
-		else {
-			++i;
-		}
-	}
-	if (kill) {
-		assert(allFonts.empty());
-		allFonts = {}; //just in case
-	}
+	// check unused fonts
+	spring::VectorEraseAllIf(allFonts, [](std::weak_ptr<CFontTexture> item) { return item.expired(); });
+
+	assert(allFonts.empty());
+	allFonts = {}; //just in case
 }
 
 void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
 	assert(Threading::IsMainThread());
-	//std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
-
-	RemoveUnused();
 
 	for_mt_chunk(0, allFonts.size(), [](int i) {
-		allFonts[i].lock()->UpdateGlyphAtlasTexture();
+		if (!allFonts[i].expired())
+			allFonts[i].lock()->UpdateGlyphAtlasTexture();
 	});
 
 	for (const auto& font : allFonts)
-		font.lock()->UploadGlyphAtlasTexture();
+		if (!font.expired())
+			font.lock()->UploadGlyphAtlasTexture();
 }
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
@@ -572,7 +542,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
 #ifndef HEADLESS
 	// first check caches
-	const uint32_t hash = GetKerningHash(lgl.utf16, rgl.utf16);
+	const uint32_t hash = GetKerningHash(lgl.letter, rgl.letter);
 
 	if (hash < kerningPrecached.size())
 		return kerningPrecached[hash];
@@ -587,7 +557,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 	// load & cache
 	FT_Vector kerning;
-	FT_Get_Kerning(lgl.face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+	FT_Get_Kerning(*lgl.face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
 	return (kerningDynamic[hash] = lgl.advance + normScale * kerning.x);
 #else
 	return 0;
@@ -610,7 +580,6 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 		return;
 
 	assert(Threading::IsMainThread());
-	//std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	static std::vector<char32_t> map;
 	map.assign(wanted.cbegin(), wanted.cend());
@@ -618,8 +587,9 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
 
-	spring::unsynced_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
 #ifndef HEADLESS
+	static spring::unsynced_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+	alreadyCheckedFonts.clear();
 	do {
 		alreadyCheckedFonts.insert(f);
 
@@ -636,13 +606,11 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 				++idx;
 			}
 		}
-
-		f = GetFontForCharacters(map, *f, fontSize);
-		usedFallbackFonts.insert(f);
-	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
+		f = GetFontForCharacters(map, *f, fontSize, alreadyCheckedFonts);
+	} while (!map.empty() && f);
 #endif
 
-
+	assert(map.empty());
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
@@ -677,8 +645,10 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 			const auto texpos2 = atlasAlloc.GetEntry(glyphName2);
 
 			//glyphs is a map
-			glyphs[i].texCord       = IGlyphRect(texpos [0], texpos [1], texpos [2] - texpos [0], texpos [3] - texpos [1]);
-			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
+			auto& thisGlyph = glyphs[i];
+
+			thisGlyph.texCord       = IGlyphRect(texpos [0], texpos [1], texpos [2] - texpos [0], texpos [3] - texpos [1]);
+			thisGlyph.shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
 
 			const size_t glyphIdx = reinterpret_cast<size_t>(atlasAlloc.GetEntryData(glyphName));
 
@@ -707,20 +677,20 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 		return;
 
 	// check for duplicated glyphs
-	const auto pred = [&](const std::pair<char32_t, GlyphInfo>& p) { return (p.second.index == index && p.second.face == f->face); };
+	const auto pred = [&](const std::pair<char32_t, GlyphInfo>& p) { return (p.second.index == index && *p.second.face == f->face); };
 	const auto iter = std::find_if(glyphs.begin(), glyphs.end(), pred);
 
 	if (iter != glyphs.end()) {
 		auto& glyph = glyphs[ch];
 		glyph = iter->second;
-		glyph.utf16 = ch;
+		glyph.letter = ch;
 		return;
 	}
 
 	auto& glyph = glyphs[ch];
-	glyph.face  = f->face;
+	glyph.face  = f;
 	glyph.index = index;
-	glyph.utf16 = ch;
+	glyph.letter = ch;
 
 	// load glyph
 	if (FT_Load_Glyph(*f, index, FT_LOAD_RENDER) != 0)
@@ -856,7 +826,6 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
 	//assert(Threading::IsMainThread());
-	//std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	if (curTextureUpdate == lastTextureUpdate)
 		return;
@@ -898,4 +867,26 @@ void CFontTexture::UploadGlyphAtlasTexture() const
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
 	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
+}
+
+FT_Byte* FontFileBytes::data()
+{
+	return vec.data();
+}
+
+FontFace::FontFace(FT_Face f, std::shared_ptr<FontFileBytes>& mem)
+	: face(f)
+	, memory(mem)
+{ }
+
+FontFace::~FontFace()
+{
+#ifndef HEADLESS
+	FT_Done_Face(face);
+#endif
+}
+
+FontFace::operator FT_Face()
+{
+	return this->face;
 }
