@@ -400,7 +400,9 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 			}
 		}
 
+		glDisable(GL_DEPTH_TEST);
 		va.DrawArrayTC(GL_QUADS);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	scar.lastDraw = globalRendering->drawFrame;
