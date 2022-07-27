@@ -247,6 +247,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFactoryCounts);
 	REGISTER_LUA_CFUNC(GetFactoryCommands);
 
+	REGISTER_LUA_CFUNC(GetFactoryBuggerOff);
+
 	REGISTER_LUA_CFUNC(GetCommandQueue);
 	REGISTER_LUA_CFUNC(GetFullBuildQueue);
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
@@ -4268,6 +4270,27 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 	}
 
 	return 1;
+}
+
+int LuaSyncedRead::GetFactoryBuggerOff(lua_State* L)
+{
+	const CUnit* u = ParseUnit(L, __func__, 1);
+	if (u == nullptr)
+		return 0;
+
+	const CFactory* f = dynamic_cast<const CFactory*>(u);
+	if (f == nullptr)
+		return 0;
+
+	lua_pushboolean(L, f->boPerform    );
+	lua_pushnumber (L, f->boOffset     );
+	lua_pushnumber (L, f->boRadius     );
+	lua_pushnumber (L, f->boRelHeading );
+	lua_pushboolean(L, f->boSherical   );
+	lua_pushboolean(L, f->boForced     );
+	lua_pushboolean(L, f->boExcludeSelf);
+
+	return 7;
 }
 
 

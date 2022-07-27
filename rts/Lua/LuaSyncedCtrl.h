@@ -122,6 +122,9 @@ class LuaSyncedCtrl
 		static int SetUnitDirection(lua_State* L);
 		static int SetUnitVelocity(lua_State* L);
 
+		static int SetFactoryBuggerOff(lua_State* L);
+		static int BuggerOff(lua_State* L);
+
 		static int AddUnitDamage(lua_State* L);
 		static int AddUnitImpulse(lua_State* L);
 		static int AddUnitSeismicPing(lua_State* L);

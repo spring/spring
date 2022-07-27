@@ -839,24 +839,51 @@ size_t CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
 
-void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
-{
-	// copy on purpose since BuggerOff can call risky stuff
-	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
-	const int allyTeamId = teamHandler.AllyTeam(teamId);
+namespace {
+	template <typename ExcludeCallable>
+	static void BuggerOffImpl(const float3& pos, float radius, bool spherical, bool forced, int teamId, ExcludeCallable test)
+	{
+		// copy on purpose since BuggerOff can call risky stuff
+		QuadFieldQuery qfQuery;
+		quadField.GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
+		const int allyTeamId = teamHandler.AllyTeam(teamId);
 
-	for (CUnit* u: *qfQuery.units) {
-		if (u == excludeUnit)
-			continue;
-		// don't send BuggerOff commands to enemy units
-		if (!teamHandler.Ally(u->allyteam, allyTeamId) && !teamHandler.Ally(allyTeamId, u->allyteam))
-			continue;
-		if (!forced && (u->moveType->IsPushResistant() || u->UsingScriptMoveType()))
-			continue;
+		for (CUnit* u : *qfQuery.units) {
+			if (test(u))
+				continue;
 
-		u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
+			// don't send BuggerOff commands to enemy units
+			if (!teamHandler.Ally(u->allyteam, allyTeamId) && !teamHandler.Ally(allyTeamId, u->allyteam))
+				continue;
+			if (!forced && (u->moveType->IsPushResistant() || u->UsingScriptMoveType()))
+				continue;
+
+			u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
+		}
 	}
+}
+
+void CGameHelper::BuggerOff(const float3& pos, float radius, bool spherical, bool forced, int teamId, const CUnit* excludeUnit)
+{
+	const auto testPredicate = [excludeUnit](const CUnit* u) { return u == excludeUnit; };
+
+	::BuggerOffImpl(pos, radius, spherical, forced, teamId, testPredicate);
+}
+
+void CGameHelper::BuggerOff(const float3& pos, float radius, bool spherical, bool forced, int teamId, const CUnit* excludeUnit, const std::vector<const UnitDef*> excludeUnitDefs)
+{
+	const auto testPredicate = [excludeUnit, &excludeUnitDefs](const CUnit* u) {
+		if (u == excludeUnit)
+			return true;
+
+		const auto it = std::find(excludeUnitDefs.cbegin(), excludeUnitDefs.cend(), u->unitDef);
+		if (it != excludeUnitDefs.cend())
+			return true;
+
+		return false;
+	};
+
+	::BuggerOffImpl(pos, radius, spherical, forced, teamId, testPredicate);
 }
 
 

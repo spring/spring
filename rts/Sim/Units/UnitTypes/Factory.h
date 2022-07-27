@@ -48,6 +48,15 @@ private:
 public:
 	float buildSpeed;
 
+	//BuggerOff fine tuning
+	float boOffset;
+	float boRadius;
+	int boRelHeading;
+	bool boSherical;
+	bool boForced;
+	bool boExcludeSelf;
+	bool boPerform;
+
 	CUnit* curBuild;
 
 	enum {

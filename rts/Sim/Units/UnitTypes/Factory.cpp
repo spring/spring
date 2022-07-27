@@ -30,6 +30,15 @@
 CR_BIND_DERIVED(CFactory, CBuilding, )
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
+
+	CR_MEMBER(boOffset),
+	CR_MEMBER(boRadius),
+	CR_MEMBER(boRelHeading),
+	CR_MEMBER(boSherical),
+	CR_MEMBER(boForced),
+	CR_MEMBER(boExcludeSelf),
+	CR_MEMBER(boPerform),
+
 	CR_MEMBER(lastBuildUpdateFrame),
 	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
@@ -41,14 +50,20 @@ CR_REG_METADATA(CFactory, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory():
-	CBuilding(),
-	buildSpeed(100.0f),
-	curBuild(nullptr),
-	curBuildDef(nullptr),
-	lastBuildUpdateFrame(-1)
-{
-}
+CFactory::CFactory()
+	: CBuilding()
+	, buildSpeed(100.0f)
+	, boOffset(0.0f) //can't set here
+	, boRadius(0.0f) //can't set here
+	, boRelHeading(0)
+	, boSherical(true)
+	, boForced(true)
+	, boExcludeSelf(true)
+	, boPerform(true)
+	, curBuild(nullptr)
+	, curBuildDef(nullptr)
+	, lastBuildUpdateFrame(-1)
+{ }
 
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
@@ -66,6 +81,10 @@ void CFactory::PreInit(const UnitLoadParams& params)
 	buildSpeed = unitDef->buildSpeed / TEAM_SLOWUPDATE_RATE;
 
 	CBuilding::PreInit(params);
+
+	//radius is defined after CUnit::PreInit()
+	boOffset = radius * 0.5f;
+	boRadius = radius * 0.5f;
 }
 
 
@@ -106,8 +125,10 @@ void CFactory::Update()
 		// never called
 		// the radius can not be too large or assisting (mobile)
 		// builders around the factory will be disturbed by this
-		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0)
-			CGameHelper::BuggerOff(pos + frontdir * radius * 0.5f, radius * 0.5f, true, true, team, this);
+		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0 && boPerform) {
+			float3 boDir = (boRelHeading == 0) ? frontdir : GetVectorFromHeading((heading + boRelHeading) % SPRING_MAX_HEADING);
+			CGameHelper::BuggerOff(pos + boDir * boOffset, boRadius, boSherical, boForced, team, boExcludeSelf ? this : nullptr);
+		}
 
 		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap.CanOpenYard(this)) {

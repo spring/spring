@@ -209,6 +209,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitRotation);
 	REGISTER_LUA_CFUNC(SetUnitDirection);
 
+	REGISTER_LUA_CFUNC(SetFactoryBuggerOff);
+	REGISTER_LUA_CFUNC(BuggerOff);
+
 	REGISTER_LUA_CFUNC(AddUnitDamage);
 	REGISTER_LUA_CFUNC(AddUnitImpulse);
 	REGISTER_LUA_CFUNC(AddUnitSeismicPing);
@@ -479,6 +482,64 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 
 
 	return (teamHandler.Team(teamID));
+}
+
+static void ParseUnitMap(lua_State* L, const char* caller,
+	int table, vector<CUnit*>& unitIDs)
+{
+	if (!lua_istable(L, table))
+		luaL_error(L, "%s(): error parsing unit map", caller);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2))
+			continue;
+
+		CUnit* unit = ParseUnit(L, __func__, -2);
+
+		if (unit == nullptr)
+			continue; // bad pointer
+
+		unitIDs.push_back(unit);
+	}
+}
+
+
+static void ParseUnitArray(lua_State* L, const char* caller,
+	int table, vector<CUnit*>& unitIDs)
+{
+	if (!lua_istable(L, table))
+		luaL_error(L, "%s(): error parsing unit array", caller);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2) || !lua_isnumber(L, -1)) // avoid 'n'
+			continue;
+
+		CUnit* unit = ParseUnit(L, __func__, -1);
+
+		if (unit == nullptr)
+			continue; // bad pointer
+
+		unitIDs.push_back(unit);
+	}
+}
+
+static void ParseUnitDefArray(lua_State* L, const char* caller,
+	int table, vector<const UnitDef*>& unitDefs)
+{
+	if (!lua_istable(L, table))
+		luaL_error(L, "%s(): error parsing unitdef array", caller);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2) || !lua_isnumber(L, -1)) // avoid 'n'
+			continue;
+
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, -1));
+
+		if (ud == nullptr)
+			continue; // bad pointer
+
+		unitDefs.push_back(ud);
+	}
 }
 
 static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
@@ -2713,6 +2774,56 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFactoryBuggerOff(lua_State* L)
+{
+	CUnit* u = ParseUnit(L, __func__, 1);
+	if (u == nullptr)
+		return 0;
+
+	CFactory* f = dynamic_cast<CFactory*>(u);
+	if (f == nullptr)
+		return 0;
+
+	f->boPerform     = luaL_optboolean(L, 2, f->boPerform    );
+	f->boOffset      = luaL_optfloat(  L, 3, f->boOffset     );
+	f->boRadius      = luaL_optfloat(  L, 4, f->boRadius     );
+	f->boRelHeading  = luaL_optint(    L, 5, f->boRelHeading );
+	f->boSherical    = luaL_optboolean(L, 6, f->boSherical   );
+	f->boForced      = luaL_optboolean(L, 7, f->boForced     );
+	f->boExcludeSelf = luaL_optboolean(L, 8, f->boExcludeSelf);
+
+	lua_pushboolean(L, f->boPerform);
+	return 1;
+}
+
+int LuaSyncedCtrl::BuggerOff(lua_State* L)
+{
+	float3 pos;
+	pos.x = luaL_checkfloat(L, 1);
+	pos.z = luaL_checkfloat(L, 3);
+	pos.y = !lua_isnil(L, 2) ? luaL_checkfloat(L, 2) : CGround::GetHeightReal(pos.x, pos.z);
+
+	const float radius = luaL_checkfloat(L, 4);
+	const int teamID   = lua_toint(L      , 5);
+	if (!teamHandler.IsValidTeam(teamID))
+		luaL_error(L, "%s(): Bad teamID: %d", __func__, teamID);
+
+	const bool spherical  = luaL_optboolean(L, 6, true);
+	const bool forced     = luaL_optboolean(L, 7, true);
+	const CUnit* excudie  = ParseRawUnit(L, __func__, 8); //can be nullptr
+
+	if (lua_istable(L, 9)) {
+		std::vector<const UnitDef*> exclUDefs;
+		ParseUnitDefArray(L, __func__, 9, exclUDefs);
+		CGameHelper::BuggerOff(pos, radius, spherical, forced, teamID, excudie, exclUDefs);
+	}
+	else {
+		CGameHelper::BuggerOff(pos, radius, spherical, forced, teamID, excudie);
+	}
+
+	return 0;
+}
+
 int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
@@ -3533,50 +3644,6 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	lua_pushnumber(L, cegID);
 	return 1;
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-static void ParseUnitMap(lua_State* L, const char* caller,
-                         int table, vector<CUnit*>& unitIDs)
-{
-	if (!lua_istable(L, table))
-		luaL_error(L, "%s(): error parsing unit map", caller);
-
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwnumber(L, -2))
-			continue;
-
-		CUnit* unit = ParseUnit(L, __func__, -2);
-
-		if (unit == nullptr)
-			continue; // bad pointer
-
-		unitIDs.push_back(unit);
-	}
-}
-
-
-static void ParseUnitArray(lua_State* L, const char* caller,
-                           int table, vector<CUnit*>& unitIDs)
-{
-	if (!lua_istable(L, table))
-		luaL_error(L, "%s(): error parsing unit array", caller);
-
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwnumber(L, -2) || !lua_isnumber(L, -1)) // avoid 'n'
-			continue;
-
-		CUnit* unit = ParseUnit(L, __func__, -1);
-
-		if (unit == nullptr)
-			continue; // bad pointer
-
-		unitIDs.push_back(unit);
-	}
-}
-
 
 /******************************************************************************/
 
