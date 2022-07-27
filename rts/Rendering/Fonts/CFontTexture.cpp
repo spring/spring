@@ -63,6 +63,7 @@
 typedef unsigned char FT_Byte;
 #endif
 
+struct IgnoreMe {}; // MSVC IntelliSense is confused by #include FT_ERRORS_H above. This seems to fix it.
 
 //static inline std::vector<std::weak_ptr<CFontTexture>> allFonts = {};
 static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
@@ -512,14 +513,15 @@ void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
 	assert(Threading::IsMainThread());
 
+	// check unused fonts
+	spring::VectorEraseAllIf(allFonts, [](std::weak_ptr<CFontTexture> item) { return item.expired(); });
+
 	for_mt_chunk(0, allFonts.size(), [](int i) {
-		if (!allFonts[i].expired())
-			allFonts[i].lock()->UpdateGlyphAtlasTexture();
+		allFonts[i].lock()->UpdateGlyphAtlasTexture();
 	});
 
 	for (const auto& font : allFonts)
-		if (!font.expired())
-			font.lock()->UploadGlyphAtlasTexture();
+		font.lock()->UploadGlyphAtlasTexture();
 }
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)

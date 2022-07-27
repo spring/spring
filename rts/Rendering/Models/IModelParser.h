@@ -64,7 +64,8 @@ private:
 
 	spring::mutex mutex;
 
-	std::vector<std::weak_ptr<std::future<void>>> preloadFutures;
+	//can't be weak_ptr here, because in that case there are no owners left for futures. preloadFutures needs to own futures
+	std::vector<std::shared_ptr<std::future<void>>> preloadFutures;
 
 	std::vector<S3DModel> models;
 	std::vector< std::pair<std::string, std::string> > errors;

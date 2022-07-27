@@ -124,7 +124,7 @@ void CFactory::Update()
 		// the radius can not be too large or assisting (mobile)
 		// builders around the factory will be disturbed by this
 		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0 && boPerform) {
-			float3 boDir = (boRelHeading == 0) ? frontdir : GetVectorFromHeading((heading + boRelHeading) % SPRING_MAX_HEADING);
+			float3 boDir = (boRelHeading == 0) ? static_cast<float3>(frontdir) : GetVectorFromHeading((heading + boRelHeading) % SPRING_MAX_HEADING);
 			CGameHelper::BuggerOff(pos + boDir * boOffset, boRadius, boSherical, boForced, team, this);
 		}
 

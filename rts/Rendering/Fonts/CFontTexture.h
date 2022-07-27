@@ -4,7 +4,6 @@
 #define _CFONTTEXTURE_H
 
 #include <string>
-#include <unordered_map>
 #include <memory>
 
 #include "Rendering/Textures/Bitmap.h"
@@ -165,7 +164,7 @@ private:
 #endif
 	std::shared_ptr<FontFace> shFace;
 
-	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
+	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
 	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	std::vector<CBitmap> atlasGlyphs;

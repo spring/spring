@@ -225,9 +225,11 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 		// preload worker might be down in CreateModel modifying it
 		// at the same time
 		preloadFutures.emplace_back(
-			ThreadPool::Enqueue([modelName]() {
-				modelLoader.LoadModel(modelName, true);
-			})
+			std::move(
+				ThreadPool::Enqueue([modelName]() {
+					modelLoader.LoadModel(modelName, true);
+				})
+			)
 		);
 
 		DrainPreloadFutures(preloadFutures.capacity() - 1); //keep the queue busy enough
@@ -316,14 +318,12 @@ void CModelLoader::DrainPreloadFutures(uint32_t numAllowed)
 	if (preloadFutures.size() <= numAllowed)
 		return;
 
-	const auto erasePredicate = [](std::weak_ptr<std::future<void>> item, std::chrono::microseconds timeout) {
-		return
-			item.expired() ||
-			item.lock()->wait_for(timeout) == std::future_status::ready;
+	const auto erasePredicate = [](decltype(preloadFutures)::value_type item, std::chrono::microseconds timeout) {
+		return item->wait_for(timeout) == std::future_status::ready;
 	};
 
-	const auto erasePredicate1 = [erasePredicate, timeout = 0us  ](std::weak_ptr<std::future<void>> item) { return erasePredicate(item, timeout); };
-	const auto erasePredicate2 = [erasePredicate, timeout = 100us](std::weak_ptr<std::future<void>> item) { return erasePredicate(item, timeout); };
+	const auto erasePredicate1 = [erasePredicate, timeout = 0us  ](decltype(preloadFutures)::value_type item) { return erasePredicate(item, timeout); };
+	const auto erasePredicate2 = [erasePredicate, timeout = 100us](decltype(preloadFutures)::value_type item) { return erasePredicate(item, timeout); };
 
 	// collect completed futures
 	spring::VectorEraseAllIf(preloadFutures, erasePredicate1);
