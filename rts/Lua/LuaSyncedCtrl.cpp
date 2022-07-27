@@ -2790,7 +2790,6 @@ int LuaSyncedCtrl::SetFactoryBuggerOff(lua_State* L)
 	f->boRelHeading  = luaL_optint(    L, 5, f->boRelHeading );
 	f->boSherical    = luaL_optboolean(L, 6, f->boSherical   );
 	f->boForced      = luaL_optboolean(L, 7, f->boForced     );
-	f->boExcludeSelf = luaL_optboolean(L, 8, f->boExcludeSelf);
 
 	lua_pushboolean(L, f->boPerform);
 	return 1;

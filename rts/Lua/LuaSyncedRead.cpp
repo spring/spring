@@ -4288,9 +4288,8 @@ int LuaSyncedRead::GetFactoryBuggerOff(lua_State* L)
 	lua_pushnumber (L, f->boRelHeading );
 	lua_pushboolean(L, f->boSherical   );
 	lua_pushboolean(L, f->boForced     );
-	lua_pushboolean(L, f->boExcludeSelf);
 
-	return 7;
+	return 6;
 }
 
 

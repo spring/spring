@@ -54,7 +54,6 @@ public:
 	int boRelHeading;
 	bool boSherical;
 	bool boForced;
-	bool boExcludeSelf;
 	bool boPerform;
 
 	CUnit* curBuild;

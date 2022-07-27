@@ -36,7 +36,6 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(boRelHeading),
 	CR_MEMBER(boSherical),
 	CR_MEMBER(boForced),
-	CR_MEMBER(boExcludeSelf),
 	CR_MEMBER(boPerform),
 
 	CR_MEMBER(lastBuildUpdateFrame),
@@ -58,7 +57,6 @@ CFactory::CFactory()
 	, boRelHeading(0)
 	, boSherical(true)
 	, boForced(true)
-	, boExcludeSelf(true)
 	, boPerform(true)
 	, curBuild(nullptr)
 	, curBuildDef(nullptr)
@@ -127,7 +125,7 @@ void CFactory::Update()
 		// builders around the factory will be disturbed by this
 		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0 && boPerform) {
 			float3 boDir = (boRelHeading == 0) ? frontdir : GetVectorFromHeading((heading + boRelHeading) % SPRING_MAX_HEADING);
-			CGameHelper::BuggerOff(pos + boDir * boOffset, boRadius, boSherical, boForced, team, boExcludeSelf ? this : nullptr);
+			CGameHelper::BuggerOff(pos + boDir * boOffset, boRadius, boSherical, boForced, team, this);
 		}
 
 		if (!yardOpen && !IsStunned()) {
