@@ -14,12 +14,13 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/UnorderedSet.hpp"
 
 static constexpr float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
-static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
+static unsigned int volumeDisplayListIDs[] = {0, 0, 0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
 {
@@ -289,8 +290,35 @@ static inline void DrawUnitColVol(const CUnit* u)
 		if (v->HasCustomType() || v->HasCustomProp(u->radius)) {
 			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
+			glPushMatrix();
 			glScalef(u->radius, u->radius, u->radius);
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+			glPopMatrix();
+		}
+
+		if (const CFactory* f = dynamic_cast<const CFactory*>(u)) {
+			if (f->boPerform) {
+				glColor4f(0.0f, 1.0f, 1.0f, 0.35f);
+
+				glPushMatrix();
+
+				float3 boDir = (f->boRelHeading == 0) ? static_cast<float3>(f->frontdir) : GetVectorFromHeading((f->heading + f->boRelHeading) % SPRING_MAX_HEADING);
+				float3 boPos = f->pos + boDir * f->boOffset;
+
+				glTranslatef3(boPos - f->pos); //because of glMultMatrixf(u->GetTransformMatrix(false));
+
+				if (f->boSherical) {
+					glScalef(f->boRadius, f->boRadius, f->boRadius);
+					glWireSphere(&volumeDisplayListIDs[3], 20, 20);
+				}
+				else {
+					glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+					glScalef(f->boRadius, f->boRadius, 1.0f);
+					glWireCylinder(&volumeDisplayListIDs[4], 20, 20.0f);
+				}
+
+				glPopMatrix();
+			}
 		}
 
 	glPopMatrix();
