@@ -57,7 +57,6 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 	return true;
 }
 
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -70,14 +69,14 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 }
 
 
-inline std::shared_ptr<CglFont> tofont(lua_State* L, int idx)
+inline CglFont* tofont(lua_State* L, int idx)
 {
-	auto font = *reinterpret_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, idx, "Font"));
+	auto font = static_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, idx, "Font"));
 
-	if (font == nullptr)
+	if (*font == nullptr)
 		luaL_error(L, "attempt to use a deleted font");
 
-	return font;
+	return font->get();
 }
 
 
@@ -89,8 +88,8 @@ int LuaFonts::meta_gc(lua_State* L)
 	if (lua_isnil(L, 1))
 		return 0;
 
-	auto font = std::move(*reinterpret_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, 1, "Font")));
-	//font destructor will decrement use counter
+	auto font = std::move(*static_cast<std::shared_ptr<CglFont>*>(luaL_checkudata(L, 1, "Font")));
+	font = {};
 
 	return 0;
 }
@@ -177,7 +176,9 @@ int LuaFonts::LoadFont(lua_State* L)
 	if (f == nullptr)
 		return 0;
 
-	auto shPtrFontPtr = (decltype(f)*) lua_newuserdata(L, sizeof(decltype(f)));
+	auto shPtrFontPtr = static_cast<decltype(f)*>(lua_newuserdata(L, sizeof(decltype(f))));
+	memset(shPtrFontPtr, 0, sizeof(decltype(f)));
+
 	*shPtrFontPtr = std::move(f);
 
 	luaL_getmetatable(L, "Font");
