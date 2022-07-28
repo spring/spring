@@ -4,7 +4,8 @@
 #include "System/Input/InputHandler.h"
 
 namespace spring {
-	static void UnfreezeSpring(WatchdogThreadnum num = WDT_MAIN, int everyN = 0) {
+	static void UnfreezeSpring(WatchdogThreadnum num = WDT_MAIN, int everyN = 1) {
+		assert(everyN > 0);
 		static int counter = 0;
 		static int pEveryN = -1;
 		if (everyN != pEveryN) {

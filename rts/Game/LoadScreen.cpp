@@ -24,6 +24,7 @@
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "System/Misc/UnfreezeSpring.h"
 #include "System/Matrix44f.h"
 #include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
@@ -211,8 +212,7 @@ bool CLoadScreen::Update()
 		return true;
 	}
 
-	// without this call the window manager would think the window is unresponsive and thus ask for hard kill
-	SDL_PollEvent(nullptr);
+	spring::UnfreezeSpring(WDT_LOAD);
 
 	return true;
 }
@@ -243,7 +243,7 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replaceLast)
 {
-	Watchdog::ClearTimer(WDT_LOAD);
+	spring::UnfreezeSpring(WDT_LOAD);
 
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
