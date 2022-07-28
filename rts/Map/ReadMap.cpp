@@ -30,7 +30,7 @@
 #include "Sim/Misc/LosHandler.h"
 #endif
 
-#define MAX_UHM_RECTS_PER_FRAME static_cast<size_t>(128)
+static constexpr size_t MAX_UHM_RECTS_PER_FRAME = 128;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -491,16 +491,17 @@ void CReadMap::UpdateDraw(bool firstCall)
 	//optimize layout
 	unsyncedHeightMapUpdates.Process();
 
-	// TODO: quadtree or whatever
-	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
-		UpdateHeightMapUnsynced(*(unsyncedHeightMapUpdates.begin() + i));
-	}
+	const int N = static_cast<int>(std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()));
 
-	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
+	for (int i = 0; i < N; i++) {
+		UpdateHeightMapUnsynced(*(unsyncedHeightMapUpdates.begin() + i));
+	};
+
+	for (int i = 0; i < N; i++) {
 		eventHandler.UnsyncedHeightMapUpdate(*(unsyncedHeightMapUpdates.begin() + i));
 	}
 
-	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
+	for (int i = 0; i < N; i++) {
 		unsyncedHeightMapUpdates.pop_front();
 	}
 }
@@ -762,11 +763,11 @@ void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
-	for (int y = rect.z1; y <= rect.z2; y++) {
+	for_mt_chunk(rect.z1, rect.z2 + 1, [heightmapSynced, &rect](const int y) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
-			const int idxTL = (y    ) * mapDims.mapxp1 + x;
-			const int idxTR = (y    ) * mapDims.mapxp1 + x + 1;
-			const int idxBL = (y + 1) * mapDims.mapxp1 + x;
+			const int idxTL = (y + 0) * mapDims.mapxp1 + x + 0;
+			const int idxTR = (y + 0) * mapDims.mapxp1 + x + 1;
+			const int idxBL = (y + 1) * mapDims.mapxp1 + x + 0;
 			const int idxBR = (y + 1) * mapDims.mapxp1 + x + 1;
 
 			const float height =
@@ -776,7 +777,7 @@ void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
 				heightmapSynced[idxBR];
 			centerHeightMap[y * mapDims.mapx + x] = height * 0.25f;
 		}
-	}
+	}, -256);
 }
 
 
@@ -816,7 +817,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 	const int z2 = std::min(mapDims.mapym1, rect.z2 + 1);
 	const int x2 = std::min(mapDims.mapxm1, rect.x2 + 1);
 
-	for_mt(z1, z2+1, [&](const int y) {
+	for_mt_chunk(z1, z2 + 1, [&](const int y) {
 		float3 fnTL;
 		float3 fnBR;
 
@@ -873,7 +874,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 			}
 			#endif
 		}
-	});
+	}, -64);
 }
 
 
@@ -884,7 +885,7 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 	const int sy = std::max(0,                 (rect.z1 / 2) - 1);
 	const int ey = std::min(mapDims.hmapy - 1, (rect.z2 / 2) + 1);
 
-	for (int y = sy; y <= ey; y++) {
+	for_mt_chunk(sy, ey + 1, [sx, ex](const int y) {
 		for (int x = sx; x <= ex; x++) {
 			const int idx0 = (y*2    ) * (mapDims.mapx) + x*2;
 			const int idx1 = (y*2 + 1) * (mapDims.mapx) + x*2;
@@ -915,7 +916,7 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 
 			slopeMap[y * mapDims.hmapx + x] = 1.0f - slope;
 		}
-	}
+	}, -128);
 }
 
 
