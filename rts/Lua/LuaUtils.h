@@ -176,9 +176,9 @@ class LuaUtils {
 #endif
 
 		template<typename ...Args>
-		static void SolLuaError(const char* format, Args ...args)
+		static void SolLuaError(const char* format, Args&& ...args)
 		{
-			std::string what = fmt::sprintf(format, args...);
+			std::string what = fmt::sprintf(format, std::forward<Args>(args)...);
 			throw std::runtime_error(what.c_str());
 		}
 
