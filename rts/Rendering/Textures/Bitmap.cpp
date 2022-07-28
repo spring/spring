@@ -41,6 +41,8 @@ public:
 	void GrabLock() { bmpMutex.lock(); }
 	void FreeLock() { bmpMutex.unlock(); }
 
+	virtual ~ITexMemPool() {}
+
 	virtual size_t Size() const = 0;
 	virtual size_t AllocIdx(size_t size) = 0;
 	virtual size_t AllocIdxRaw(size_t size) = 0;
@@ -66,6 +68,7 @@ public:
 	spring::mutex& GetMutex() { return bmpMutex; }
 public:
 	static void Init(size_t size);
+	static void Kill();
 	static inline std::unique_ptr<ITexMemPool> texMemPool = {};
 protected:
 	// libIL is not thread-safe, neither are {Alloc,Free}
@@ -88,6 +91,11 @@ private:
 	const uint8_t* Base() const { return memArray.data(); }
 	      uint8_t* Base()       { return memArray.data(); }
 public:
+	~TexMemPool() override {
+		memArray = {};
+		freeList = {};
+	}
+
 	size_t Size() const override { return (memArray.size()); }
 	size_t AllocIdx(size_t size) override { return (Alloc(size) - Base()); }
 	size_t AllocIdxRaw(size_t size) override { return (AllocRaw(size) - Base()); }
@@ -297,6 +305,11 @@ void ITexMemPool::Init(size_t size)
 		if (texMemPool == nullptr || typeid(*texMemPool.get()) != typeid(  TexMemPool))
 			texMemPool = std::make_unique<  TexMemPool>();
 	}
+}
+
+void ITexMemPool::Kill()
+{
+	texMemPool = {};
 }
 
 
@@ -969,6 +982,11 @@ void CBitmap::InitPool(size_t size)
 	ITexMemPool::Init(size);
 	ITexMemPool::texMemPool->Resize(size);
 	ITexMemPool::texMemPool->Defrag();
+}
+
+void CBitmap::KillPool()
+{
+	ITexMemPool::Kill();
 }
 
 

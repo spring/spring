@@ -750,6 +750,7 @@ void SpringApp::Reload(const std::string script)
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 	CglFont::ReallocAtlases(false);
 	#else
+	CBitmap::KillPool();
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 	#endif
 
@@ -949,7 +950,7 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(clientNet);
 	spring::SafeDelete(gameServer);
 
-	LOG("[SpringApp::%s][4] font=%p", __func__, font);
+	LOG("[SpringApp::%s][4] font=%p", __func__, font.get());
 	#ifndef HEADLESS
 	spring::SafeDelete(agui::gui);
 	#endif
@@ -972,6 +973,7 @@ void SpringApp::Kill(bool fromRun)
 	LOG("[SpringApp::%s][7]", __func__);
 
 	CGlobalRendering::KillStatic();
+	CBitmap::KillPool();
 	CLuaSocketRestrictions::KillStatic();
 
 	// also gets rid of configHandler

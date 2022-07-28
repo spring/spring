@@ -31,6 +31,7 @@ public:
 	CBitmap CreateRescaled(int newx, int newy) const;
 
 	static void InitPool(size_t size);
+	static void KillPool();
 
 	void Alloc(int w, int h, int c, uint32_t glType);
 	void Alloc(int w, int h, int c) { Alloc(w, h, c, 0x1401/*GL_UNSIGNED_BYTE*/); }

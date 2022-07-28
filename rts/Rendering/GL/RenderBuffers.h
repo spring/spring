@@ -37,6 +37,8 @@ public:
 		:initCapacity{ c }
 	{}
 
+	virtual ~RenderBuffer() {}
+
 	template <typename T>
 	static TypedRenderBuffer<T>& GetTypedRenderBuffer();
 
@@ -350,6 +352,13 @@ public:
 	{
 		verts.reserve(vertCount0);
 		indcs.reserve(elemCount0);
+	}
+
+	~TypedRenderBuffer<T>() override {
+		verts = {};
+		indcs = {};
+		vbo = {};
+		ebo = {};
 	}
 
 	void Clear() {
