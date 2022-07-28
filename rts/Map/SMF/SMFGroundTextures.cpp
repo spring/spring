@@ -10,6 +10,8 @@
 	#include "lib/rg-etc1/rg_etc1.h"
 #endif
 
+#include "fmt/printf.h"
+
 #include "SMFGroundTextures.h"
 #include "SMFFormat.h"
 #include "SMFReadMap.h"
@@ -78,11 +80,9 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	char tmp[512] = {0};
-
 	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
-		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] header.{mapx=%d,mapy=%d} != mapDims.{mapx=%d,mapy=%d}", __func__, header.mapx, header.mapy, mapDims.mapx, mapDims.mapy);
-		throw content_error(tmp);
+		std::string err = fmt::sprintf("[SMFGroundTextures::%s] header.{mapx=%d,mapy=%d} != mapDims.{mapx=%d,mapy=%d}", __func__, header.mapx, header.mapy, mapDims.mapx, mapDims.mapy);
+		throw content_error(err);
 	}
 
 	ifs->Seek(header.tilesPtr);
@@ -91,8 +91,8 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CSMFMapFile::ReadMapTileHeader(tileHeader, *ifs);
 
 	if (smfMap->tileCount <= 0) {
-		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] smfMap->tileCount=%d <= 0", __func__, smfMap->tileCount);
-		throw content_error(tmp);
+		std::string err = fmt::sprintf("[SMFGroundTextures::%s] smfMap->tileCount=%d <= 0", __func__, smfMap->tileCount);
+		throw content_error(err);
 	}
 
 	tileMap.clear();
@@ -147,12 +147,11 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		CSMFMapFile::ReadMapTileFileHeader(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
-			snprintf(
-				tmp, sizeof(tmp),
+			std::string err = fmt::sprintf(
 				"[SMFGroundTextures::%s] tile-file %d (path=\"%s\" magic=\"%s\" version=%d tileSize=%d comprType=%d) does not match .smt format",
 				__func__, a, smtFilePath.c_str(), tfh.magic, tfh.version, tfh.tileSize, tfh.compressionType
 			);
-			throw content_error(tmp);
+			throw content_error(err);
 		}
 
 		for (int b = 0; b < numSmallTiles; ++b) {
