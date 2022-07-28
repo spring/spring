@@ -94,6 +94,7 @@ CLosTexture::CLosTexture()
 CLosTexture::~CLosTexture()
 {
 	glDeleteTextures(1, &uploadTex);
+	shaderHandler->ReleaseProgramObject("[CLosTexture]", "CLosTexture");
 }
 
 

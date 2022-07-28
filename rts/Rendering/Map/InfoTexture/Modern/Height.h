@@ -18,7 +18,7 @@ class CHeightTexture : public CPboInfoTexture, public CEventClient
 {
 public:
 	CHeightTexture();
-	~CHeightTexture();
+	~CHeightTexture() override;
 
 public:
 	// CEventClient interface

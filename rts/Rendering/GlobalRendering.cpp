@@ -341,6 +341,7 @@ void CGlobalRendering::PreKill()
 {
 	UniformConstants::GetInstance().Kill(); //unsafe to kill in ~CGlobalRendering()
 	RenderBuffer::KillStatic();
+	CShaderHandler::FreeInstance();
 }
 
 

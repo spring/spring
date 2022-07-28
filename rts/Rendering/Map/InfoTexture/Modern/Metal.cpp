@@ -24,7 +24,6 @@ CMetalTexture::CMetalTexture()
 	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_R8, texSize.x, texSize.y);
 }
 
-
 void CMetalTexture::Update()
 {
 	assert(metalMap.GetSizeX() == texSize.x && metalMap.GetSizeZ() == texSize.y);

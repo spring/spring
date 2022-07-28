@@ -46,7 +46,6 @@
 
 void CWorldDrawer::InitPre() const
 {
-	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
 
 	CColorMap::InitStatic();
@@ -154,7 +153,6 @@ void CWorldDrawer::Kill()
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
-	CShaderHandler::FreeInstance(shaderHandler);
 	LuaObjectDrawer::Kill();
 	SmoothHeightMeshDrawer::FreeInstance();
 

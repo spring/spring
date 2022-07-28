@@ -92,6 +92,7 @@ CAirLosTexture::CAirLosTexture()
 CAirLosTexture::~CAirLosTexture()
 {
 	glDeleteTextures(1, &uploadTex);
+	shaderHandler->ReleaseProgramObject("[CAirLosTexture]", "CAirLosTexture");
 }
 
 

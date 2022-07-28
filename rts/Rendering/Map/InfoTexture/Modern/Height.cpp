@@ -133,6 +133,7 @@ void CHeightTexture::UpdateCPU()
 CHeightTexture::~CHeightTexture()
 {
 	glDeleteTextures(1, &paletteTex);
+	shaderHandler->ReleaseProgramObject("[CHeightTexture]", "CHeightTexture");
 }
 
 

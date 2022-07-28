@@ -82,6 +82,11 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 	}
 }
 
+CMetalExtractionTexture::~CMetalExtractionTexture()
+{
+	shaderHandler->ReleaseProgramObject("[CMetalExtractionTexture]", "CMetalExtractionTexture");
+}
+
 
 bool CMetalExtractionTexture::IsUpdateNeeded()
 {

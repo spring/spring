@@ -16,7 +16,7 @@ class CMetalExtractionTexture : public CPboInfoTexture
 {
 public:
 	CMetalExtractionTexture();
-
+	~CMetalExtractionTexture() override;
 public:
 	void Update() override;
 	bool IsUpdateNeeded() override;

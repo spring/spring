@@ -11,7 +11,6 @@ class CMetalTexture : public CPboInfoTexture, public CEventClient
 {
 public:
 	CMetalTexture();
-
 public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) override {

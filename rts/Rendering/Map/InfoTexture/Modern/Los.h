@@ -16,7 +16,7 @@ class CLosTexture : public CPboInfoTexture
 {
 public:
 	CLosTexture();
-	~CLosTexture();
+	~CLosTexture() override;
 
 public:
 	void Update() override;

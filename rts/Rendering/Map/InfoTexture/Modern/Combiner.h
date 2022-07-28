@@ -18,6 +18,7 @@ class CInfoTextureCombiner : public CPboInfoTexture
 {
 public:
 	CInfoTextureCombiner();
+	~CInfoTextureCombiner() override;
 
 	bool IsEnabled() { return !disabled; }
 	const std::string& GetMode() const { return curMode; }

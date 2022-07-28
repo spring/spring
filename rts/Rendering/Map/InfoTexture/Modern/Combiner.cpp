@@ -62,6 +62,11 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	}
 }
 
+CInfoTextureCombiner::~CInfoTextureCombiner()
+{
+	shaderHandler->ReleaseProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner");
+}
+
 
 void CInfoTextureCombiner::SwitchMode(const std::string& name)
 {

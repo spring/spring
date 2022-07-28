@@ -337,14 +337,9 @@ void CProjectileDrawer::Kill() {
 
 	drawSorted = true;
 
-	for (auto*& fxShader : fxShaders) {
-		fxShader->Release();
-		fxShader = nullptr;
-	}
-	{
-		fsShadowShader->Release();
-		fsShadowShader = nullptr;
-	}
+	shaderHandler->ReleaseProgramObjects("[ProjectileDrawer::VFS]");
+	fxShaders = { nullptr };
+	fsShadowShader = nullptr;
 
 	if (depthFBO) {
 		if (depthFBO->IsValid()) {

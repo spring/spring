@@ -125,7 +125,7 @@ namespace Shader {
 		virtual void Release();
 		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
 		/// attach single shader objects (vertex, frag, ...) to the program
-		void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
+		void AttachShaderObject(IShaderObject* so);
 		bool RemoveShaderObject(GLenum soType);
 
 		void SetReloadComplete() {

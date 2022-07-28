@@ -21,8 +21,8 @@ public:
 
 	~CShaderHandler();
 
-	static CShaderHandler* GetInstance(unsigned int instanceValue);
-	static void FreeInstance(CShaderHandler*);
+	static CShaderHandler* GetInstance();
+	static void FreeInstance();
 
 	void ReloadAll();
 	bool ReleaseProgramObjects(const std::string& poClass);
@@ -80,8 +80,10 @@ private:
 	ProgramTable programObjects;
 	// all (re)loaded program ID's, by hash
 	ShaderCache shaderCache;
+
+	static inline CShaderHandler* gShaderHandler = nullptr;
 };
 
-#define shaderHandler (CShaderHandler::GetInstance(1))
+#define shaderHandler (CShaderHandler::GetInstance())
 
 #endif

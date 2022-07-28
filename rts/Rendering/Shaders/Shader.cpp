@@ -273,6 +273,17 @@ namespace Shader {
 		valid = false;
 	}
 
+	void IProgramObject::AttachShaderObject(IShaderObject* so)
+	{
+#ifdef _DEBUG
+		const auto it = std::find_if(shaderObjs.cbegin(), shaderObjs.cend(), [type = so->GetType()](Shader::IShaderObject* so) {
+			return so->GetType() == type;
+		});
+		assert(it == shaderObjs.cend());
+#endif
+		shaderObjs.push_back(so);
+	}
+
 	bool IProgramObject::RemoveShaderObject(GLenum soType) {
 		for (size_t i = 0; i < shaderObjs.size(); ++i) {
 			IShaderObject*& so = shaderObjs[i];

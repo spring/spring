@@ -116,6 +116,7 @@ CRadarTexture::~CRadarTexture()
 {
 	glDeleteTextures(1, &uploadTexRadar);
 	glDeleteTextures(1, &uploadTexJammer);
+	shaderHandler->ReleaseProgramObject("[CRadarTexture]", "CRadarTexture");
 }
 
 

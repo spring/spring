@@ -17,7 +17,7 @@ class CRadarTexture : public CPboInfoTexture
 {
 public:
 	CRadarTexture();
-	~CRadarTexture();
+	~CRadarTexture() override;
 
 public:
 	void Update() override;

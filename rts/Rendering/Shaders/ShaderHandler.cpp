@@ -7,37 +7,22 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
+#include "System/SafeUtil.h"
 
 #include <cassert>
 
 
-// not extern'ed, so static
-static CShaderHandler* gShaderHandler = nullptr;
-static unsigned int gNumInstances = 0;
-
-CShaderHandler* CShaderHandler::GetInstance(unsigned int instanceValue) {
-	assert(instanceValue <= 1);
-
+CShaderHandler* CShaderHandler::GetInstance() {
 	if (gShaderHandler == nullptr) {
 		gShaderHandler = new CShaderHandler();
-
-		gNumInstances *= instanceValue;
-		gNumInstances += 1;
 	}
 
-	// nobody should bring us back to life after FreeInstance
-	// (unless n==0, which indicates we have just [re]loaded)
-	assert(gNumInstances <= 1);
 	return gShaderHandler;
 }
 
-void CShaderHandler::FreeInstance(CShaderHandler* sh) {
-	assert(sh == gShaderHandler);
-	delete sh;
-	gShaderHandler = nullptr;
+void CShaderHandler::FreeInstance() {
+	spring::SafeDelete(gShaderHandler);
 }
-
-
 
 CShaderHandler::~CShaderHandler() {
 	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
@@ -119,6 +104,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 	if (programObjects.find(poClass) != programObjects.end()) {
 		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
 			LOG_L(L_WARNING, "[SH::%s] program-object \"%s\" already exists", __func__, poName.c_str());
+			assert(false);
 			return (programObjects[poClass][poName]);
 		}
 	} else {
