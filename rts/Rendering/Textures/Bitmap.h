@@ -30,6 +30,7 @@ public:
 	CBitmap CanvasResize(const int newx, const int newy, const bool center = true) const;
 	CBitmap CreateRescaled(int newx, int newy) const;
 
+	static bool CanBeKilled();
 	static void InitPool(size_t size);
 	static void KillPool();
 

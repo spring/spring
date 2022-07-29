@@ -744,15 +744,17 @@ void SpringApp::Reload(const std::string script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
-	#if 0
-	// rely only on defrag for now since WindowManagerHelper also keeps a global bitmap
-	CglFont::ReallocAtlases(true);
-	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
-	CglFont::ReallocAtlases(false);
-	#else
+	/*
+	* // Some bitmaps are still allocated even after CglFont::ReallocSystemFontAtlases(true);
+	* // E.g. WindowManagerHelper keeps a global bitmap
+	* // Too much effort for too little reward
+	* // Therefore can't change pool size / type
+	*
+	CglFont::ReallocSystemFontAtlases(true);
 	CBitmap::KillPool();
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
-	#endif
+	CglFont::ReallocSystemFontAtlases(false);
+	*/
 
 	LOG("[SpringApp::%s][8]", __func__);
 

@@ -41,6 +41,10 @@ public:
 	void GrabLock() { bmpMutex.lock(); }
 	void FreeLock() { bmpMutex.unlock(); }
 
+	bool NoCurrentAllocations() const {
+		return numAllocs == numFrees;
+	}
+
 	virtual ~ITexMemPool() {}
 
 	virtual size_t Size() const = 0;
@@ -71,6 +75,11 @@ public:
 	static void Kill();
 	static inline std::unique_ptr<ITexMemPool> texMemPool = {};
 protected:
+	size_t numAllocs = 0;
+	size_t allocSize = 0;
+	size_t numFrees = 0;
+	size_t freeSize = 0;
+
 	// libIL is not thread-safe, neither are {Alloc,Free}
 	spring::mutex bmpMutex;
 };
@@ -82,11 +91,6 @@ private:
 
 	std::vector<uint8_t> memArray;
 	std::vector<FreePair> freeList;
-
-	size_t numAllocs = 0;
-	size_t allocSize = 0;
-	size_t numFrees  = 0;
-	size_t freeSize  = 0;
 private:
 	const uint8_t* Base() const { return memArray.data(); }
 	      uint8_t* Base()       { return memArray.data(); }
@@ -158,7 +162,9 @@ public:
 		if (mem == nullptr)
 			return;
 
-		assert(size != 0);
+		if (size == 0)
+			return;
+
 		memset(mem, 0, size);
 		freeList.emplace_back(mem - &memArray[0], size);
 
@@ -208,7 +214,6 @@ public:
 
 		LOG_L(L_INFO, "[TexMemPool::%s] poolSize=" _STPF_ "u allocSize=" _STPF_ "u texCount=" _STPF_ "u", __func__, size, allocSize, numAllocs - numFrees);
 	}
-
 
 	bool Defrag() override {
 		if (freeList.empty())
@@ -283,10 +288,23 @@ public:
 
 	uint8_t* AllocRaw(size_t size) override
 	{
+		if (size == 0)
+			return nullptr;
+
+		numAllocs += 1;
+		allocSize += size;
+
 		return new uint8_t[size];
 	}
 	void FreeRaw(uint8_t* mem, size_t size) override
 	{
+		if (size == 0 || mem == nullptr)
+			return;
+
+		numFrees += 1;
+		freeSize += size;
+		allocSize -= size;
+
 		spring::SafeDeleteArray(mem);
 	}
 	void Resize(size_t size) override {}
@@ -975,6 +993,11 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp) noexcept
 }
 
 
+bool CBitmap::CanBeKilled()
+{
+	return ITexMemPool::texMemPool->NoCurrentAllocations();
+}
+
 void CBitmap::InitPool(size_t size)
 {
 	// only allow expansion; config-size is in MB
@@ -986,6 +1009,7 @@ void CBitmap::InitPool(size_t size)
 
 void CBitmap::KillPool()
 {
+	assert(CanBeKilled());
 	ITexMemPool::Kill();
 }
 

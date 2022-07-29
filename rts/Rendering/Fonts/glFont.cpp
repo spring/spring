@@ -232,11 +232,21 @@ std::shared_ptr<CglFont> CglFont::FindFont(const std::string& fontFile, int size
 }
 
 
-void CglFont::ReallocAtlases(bool pre)
+void CglFont::ReallocSystemFontAtlases(bool pre)
 {
+#ifdef _DEBUG
+	size_t fontsCounter = 0;
+	for (const auto& f : allFonts) {
+		if (!f.expired())
+			++fontsCounter;
+	}
+
+	assert(fontsCounter <= 2);
+#endif
+
 	if (font != nullptr)		
 		font->ReallocAtlases(pre);
-	if (smallFont != nullptr)
+	if (smallFont != nullptr && smallFont != font)
 		smallFont->ReallocAtlases(pre);
 }
 

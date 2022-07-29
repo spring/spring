@@ -773,13 +773,14 @@ void CFontTexture::CreateTexture(const int width, const int height)
 void CFontTexture::ReallocAtlases(bool pre)
 {
 #ifndef HEADLESS
-	assert(!atlasUpdate.Empty());
-
-
 	static std::vector<uint8_t> atlasMem;
 	static std::vector<uint8_t> atlasShadowMem;
+	static int2 atlasDim;
+	static int2 atlasUDim;
 
 	if (pre) {
+		assert(!atlasUpdate.Empty());
+
 		atlasMem.clear();
 		atlasMem.resize(atlasUpdate.GetMemSize());
 
@@ -789,25 +790,29 @@ void CFontTexture::ReallocAtlases(bool pre)
 		memcpy(atlasMem.data(), atlasUpdate.GetRawMem(), atlasUpdate.GetMemSize());
 		memcpy(atlasShadowMem.data(), atlasUpdateShadow.GetRawMem(), atlasUpdateShadow.GetMemSize());
 
+		atlasDim = { atlasUpdate.xsize, atlasUpdate.ysize };
+		atlasUDim = { atlasUpdateShadow.xsize, atlasUpdateShadow.ysize };
+
 		atlasUpdate = {};
 		atlasUpdateShadow = {};
 		return;
 	}
 
-
-	const int xsize = atlasUpdate.xsize;
-	const int ysize = atlasUpdate.ysize;
-
 	// NB: pool has already been wiped here, do not return memory to it but just realloc
-	atlasUpdate.Alloc(xsize, ysize, 1);
-	atlasUpdateShadow.Alloc(xsize, ysize, 1);
+	atlasUpdate.Alloc(atlasDim.x, atlasDim.y, 1);
+	atlasUpdateShadow.Alloc(atlasUDim.x, atlasUDim.y, 1);
 
 	memcpy(atlasUpdate.GetRawMem(), atlasMem.data(), atlasMem.size());
 	memcpy(atlasUpdateShadow.GetRawMem(), atlasShadowMem.data(), atlasShadowMem.size());
 
 
-	if (atlasGlyphs.empty())
+	if (atlasGlyphs.empty()) {
+		atlasMem = {};
+		atlasShadowMem = {};
+		atlasDim = {};
+		atlasUDim = {};
 		return;
+	}
 
 	LOG_L(L_WARNING, "[FontTexture::%s] discarding %u glyph bitmaps", __func__, uint32_t(atlasGlyphs.size()));
 
@@ -817,6 +822,11 @@ void CFontTexture::ReallocAtlases(bool pre)
 	}
 
 	atlasGlyphs.clear();
+
+	atlasMem = {};
+	atlasShadowMem = {};
+	atlasDim = {};
+	atlasUDim = {};
 #endif
 }
 
