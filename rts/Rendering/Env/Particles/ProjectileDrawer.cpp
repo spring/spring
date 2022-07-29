@@ -768,11 +768,11 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// empty if !drawSorted
 		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), sortingPredicate);
 
-		for (auto p : sortedProjectiles[1]) if (!p->deleteMe) {
+		for (auto p : sortedProjectiles[1]) {
 			p->Draw();
 		}
 
-		for (auto p : sortedProjectiles[0]) if (!p->deleteMe) {
+		for (auto p : sortedProjectiles[0]) {
 			p->Draw();
 		}
 	}
