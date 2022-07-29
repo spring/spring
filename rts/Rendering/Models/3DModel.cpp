@@ -8,7 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
-#include "lib/meshoptimizer/src/meshoptimizer.h"
+//#include "lib/meshoptimizer/src/meshoptimizer.h"
 
 #include "System/Log/ILog.h"
 
@@ -246,7 +246,7 @@ void S3DModelPiece::UploadToVBO()
 
 	indicesVBO.clear(); //no longer needed
 }
-
+/*
 void S3DModelPiece::MeshOptimize()
 {
 	if (!HasGeometryData())
@@ -306,6 +306,7 @@ void S3DModelPiece::MeshOptimize()
 		vertices = optVertices;
 	}
 }
+*/
 
 void S3DModelPiece::BindVertexAttribVBOs() const
 {
