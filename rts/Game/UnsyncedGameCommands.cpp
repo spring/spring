@@ -1617,6 +1617,21 @@ public:
 	}
 };
 
+class WindowBorderlessActionExecutor : public IUnsyncedActionExecutor {
+public:
+	WindowBorderlessActionExecutor() : IUnsyncedActionExecutor("WindowBorderless",
+		"Switches borderless/decorated mode") {}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		bool b = globalRendering->borderless;
+		InverseOrSetBool(b, action.GetArgs());
+
+		configHandler->Set("WindowBorderless", b);
+		return true;
+	}
+};
+
+
 
 
 class IncreaseViewRadiusActionExecutor : public IUnsyncedActionExecutor {
@@ -3650,6 +3665,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<HideInterfaceActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<HardwareCursorActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<FullscreenActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WindowBorderlessActionExecutor>());
 	// [devel] AddActionExecutor(AllocActionExecutor<GammaExponentActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IncreaseViewRadiusActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DecreaseViewRadiusActionExecutor>());
