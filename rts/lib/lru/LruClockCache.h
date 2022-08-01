@@ -17,29 +17,6 @@
 #include <unordered_map>
 #include <type_traits>
 
-
-// https://stackoverflow.com/questions/38067106/c-verify-callable-signature-of-template-type
-namespace spring {
-
-	// use static_assert(is_signature<SomeTemplateF, int(int)>::value);
-	template<typename, typename, typename = void>
-	struct is_signature : std::false_type {};
-
-	template<typename TFunc, typename Ret, typename... Args>
-	struct is_signature<TFunc, Ret(Args...),
-			typename std::enable_if_t<
-				std::is_convertible<TFunc, std::function<Ret(Args...)>>::value
-			>
-		> : public std::true_type
-	{};
-
-
-	template< class T >
-	struct remove_cvref {
-		typedef std::remove_cv_t<std::remove_reference_t<T>> type;
-	};
-};
-
 namespace spring {
 	/* LRU-CLOCK-second-chance implementation
 	 *
