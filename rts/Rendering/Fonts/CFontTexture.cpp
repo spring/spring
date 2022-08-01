@@ -72,7 +72,7 @@ typedef unsigned char FT_Byte;
 
 static spring::unordered_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
 static spring::unordered_map<std::string, std::weak_ptr<FontFileBytes>> fontMemCache;
-static spring::unordered_map<std::pair<std::string, int>, spring::synced_hash<std::pair<std::string, int>>> invalidFonts;
+static spring::unordered_set<std::pair<std::string, int>, spring::synced_hash<std::pair<std::string, int>>> invalidFonts;
 
 #ifndef HEADLESS
 class FtLibraryHandler {
