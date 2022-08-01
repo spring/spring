@@ -1323,9 +1323,10 @@ void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
 	{
 		auto scopedLib = spring::ScopedResource(
 			LoadLibrary("dwmapi.dll"),
-			[](HMODULE lib) { if (lib) FreeLibrary(lib); });
+			[](HMODULE lib) { if (lib) FreeLibrary(lib); }
+		);
 
-		if (!scopedLib())
+		if (scopedLib == nullptr)
 			return;
 
 		using DwmGetWindowAttributeT = HRESULT WINAPI(
@@ -1335,7 +1336,7 @@ void CGlobalRendering::UpdateWindowBorders(SDL_Window* window) const
 			DWORD
 		);
 
-		static auto* DwmGetWindowAttribute = reinterpret_cast<DwmGetWindowAttributeT*>(GetProcAddress(scopedLib(), "DwmGetWindowAttribute"));
+		static auto* DwmGetWindowAttribute = reinterpret_cast<DwmGetWindowAttributeT*>(GetProcAddress(scopedLib, "DwmGetWindowAttribute"));
 
 		if (!DwmGetWindowAttribute)
 			return;

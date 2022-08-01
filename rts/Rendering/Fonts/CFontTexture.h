@@ -164,8 +164,9 @@ private:
 #endif
 	std::shared_ptr<FontFace> shFace;
 
-	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
-	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
+	spring::unordered_set<char32_t> failedToFind;
+	spring::unordered_map<char32_t, GlyphInfo> glyphs; // UTF32 -> GlyphInfo
+	spring::unordered_map<uint64_t, float> kerningDynamic; // contains unicode kerning
 
 	std::vector<CBitmap> atlasGlyphs;
 

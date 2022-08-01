@@ -12,6 +12,7 @@
 #include "Rendering/GL/RenderBuffers.h"
 #include "System/float4.h"
 #include "System/Threading/SpringThreading.h"
+#include "lru/LruClockCache.h"
 
 #undef GetCharWidth // winapi.h
 
@@ -164,6 +165,15 @@ private:
 
 	float2 textDepth;
 
+	struct HeightCache {
+		float height;
+		float descender;
+		int numLines;
+	};
+
+	spring::LRUClockCache<std::string, float> stringWidth;
+	spring::LRUClockCache<std::string, HeightCache> stringHeight;
+
 	CMatrix44f viewMatrix;
 	CMatrix44f projMatrix;
 };
@@ -176,11 +186,19 @@ extern std::shared_ptr<CglFont> smallFont;
 // wrappers
 float CglFont::GetTextWidth(const std::string& text)
 {
-	return GetTextWidth_(toustring(text));
+	return stringWidth.Get(toustring(text));
 }
 float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines)
 {
-	return GetTextHeight_(toustring(text), descender, numLines);
+	HeightCache hc = stringHeight.Get(toustring(text));
+
+	if (descender)
+		*descender = hc.descender;
+
+	if (numLines)
+		*numLines = hc.numLines;
+
+	return hc.height;
 }
 
 //templated inlines

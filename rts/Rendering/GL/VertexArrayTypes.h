@@ -12,13 +12,13 @@
 
 struct AttributeDef {
 	AttributeDef(uint32_t index_, uint32_t count_, uint32_t type_, uint32_t stride_, const void* data_, bool normalize_ = false, std::string name_ = "")
-		: index{ index_ }
+		: name{ std::move(name_) }
+		, index{ index_ }
 		, count{ count_ }
 		, type{ type_ }
 		, stride{ stride_ }
 		, data{ data_ }
 		, normalize{ static_cast<uint8_t>(normalize_) }
-		, name{ std::move(name_) }
 	{}
 
 	const std::string name;

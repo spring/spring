@@ -264,8 +264,18 @@ void CglFont::SwapRenderBuffers()
 }
 
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
-: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
-, fontPath(fontFile)
+	: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
+	, fontPath(fontFile)
+	, stringWidth {
+		1 << 12,
+		[f = this](const std::string& str) { return f->GetTextWidth_(toustring(str)); },
+		[](const std::string& str, const auto& cache) {}, //don't save anything
+	}
+	, stringHeight {
+		1 << 10,
+		[f = this](const std::string& str) { HeightCache hc; hc.height = f->GetTextHeight_(toustring(str), &hc.descender, &hc.numLines); return hc; },
+		[](const std::string& str, const auto& cache) {}, //don't save anything
+	}
 {
 	textColor    = white;
 	outlineColor = darkOutline;
@@ -352,7 +362,7 @@ static inline bool SkipColorCodesAndNewLines(
 			} break;
 
 			case 0x0D: {
-				idx += (idx < end && text[idx] == 0x0A);
+				idx += (idx < end && text[idx + 1] == 0x0A);
 				[[fallthrough]]; // CR; fall-through
 			}
 			case 0x0A: {
@@ -758,9 +768,9 @@ void CglFont::End() {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//without this, fonts textures are empty in display lists somehow
-		GLboolean inListCompile;
-		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-		if (!inListCompile) {
+		GLint dl = 0;
+		glGetIntegerv(GL_LIST_INDEX, &dl);
+		if (dl == 0) {
 			UpdateGlyphAtlasTexture();
 			UploadGlyphAtlasTexture();
 		}

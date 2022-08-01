@@ -34,6 +34,9 @@
 #include "System/float4.h"
 #include "System/bitops.h"
 #include "System/ContainerUtil.h"
+#include "System/ScopedResource.h"
+#include "fmt/format.h"
+#include "fmt/printf.h"
 
 
 #ifndef HEADLESS
@@ -41,20 +44,23 @@
 	#define FT_ERRORDEF( e, v, s )  { e, s },
 	#define FT_ERROR_START_LIST     {
 	#define FT_ERROR_END_LIST       { 0, 0 } };
-	struct ErrorString {
+	struct FTErrorRecord {
 		int          err_code;
 		const char*  err_msg;
 	} static errorTable[] =
 	#include FT_ERRORS_H
 
+	struct IgnoreMe {}; // MSVC IntelliSense is confused by #include FT_ERRORS_H above. This seems to fix it.
+
 	static const char* GetFTError(FT_Error e) {
-		for (int a = 0; errorTable[a].err_msg; ++a) {
-			if (errorTable[a].err_code == e)
-				return errorTable[a].err_msg;
-		}
+		auto it = std::find_if(std::begin(errorTable), std::end(errorTable), [e](FTErrorRecord er) { return er.err_code == e; });
+		if (it != std::end(errorTable))
+			return it->err_msg;
+
 		return "Unknown error";
 	}
 #endif // HEADLESS
+
 
 
 
@@ -63,18 +69,17 @@
 typedef unsigned char FT_Byte;
 #endif
 
-struct IgnoreMe {}; // MSVC IntelliSense is confused by #include FT_ERRORS_H above. This seems to fix it.
 
-//static inline std::vector<std::weak_ptr<CFontTexture>> allFonts = {};
-static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
-static spring::unsynced_map<std::string, std::weak_ptr<FontFileBytes>> fontMemCache;
+static spring::unordered_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
+static spring::unordered_map<std::string, std::weak_ptr<FontFileBytes>> fontMemCache;
+static spring::unordered_map<std::pair<std::string, int>, spring::synced_hash<std::pair<std::string, int>>> invalidFonts;
 
 #ifndef HEADLESS
 class FtLibraryHandler {
 public:
 	FtLibraryHandler() {
-		char msgBuf[256] = {0};
-		char errBuf[256] = {0};
+		std::string msg;
+		std::string err;
 
 		{
 			const FT_Error error = FT_Init_FreeType(&lib);
@@ -82,29 +87,29 @@ public:
 			FT_Int version[3];
 			FT_Library_Version(lib, &version[0], &version[1], &version[2]);
 
-			snprintf(msgBuf, sizeof(msgBuf), "%s::FreeTypeInit (version %d.%d.%d)", __func__, version[0], version[1], version[2]);
-			snprintf(errBuf, sizeof(errBuf), "[%s] FT_Init_FreeType failure \"%s\"", __func__, GetFTError(error));
+			msg = fmt::sprintf("%s::FreeTypeInit (version %d.%d.%d)", __func__, version[0], version[1], version[2]);
+			err = fmt::sprintf("[%s] FT_Init_FreeType failure \"%s\"", __func__, GetFTError(error));
 
 			if (error != 0)
-				throw std::runtime_error(errBuf);
+				throw std::runtime_error(err);
 		}
 
         #ifdef USE_FONTCONFIG
 		if (!UseFontConfig())
 			return;
 
-		snprintf(msgBuf, sizeof(msgBuf), "%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
-		snprintf(errBuf, sizeof(errBuf), "[%s] FcInit failure (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+		msg = fmt::sprintf("%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+		err = fmt::sprintf("[%s] FcInit failure (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
 
 		{
-			ScopedOnceTimer timer(msgBuf);
+			ScopedOnceTimer timer(msg);
 
 			if (FcInit()) {
 				FtLibraryHandler::CheckGenFontConfigFast();
 				return;
 			}
 
-			throw std::runtime_error(errBuf);
+			throw std::runtime_error(err);
 		}
 		#endif
 	}
@@ -230,15 +235,13 @@ bool FtLibraryHandlerProxy::CheckGenFontConfigFull(bool console)
 /*******************************************************************************/
 
 #ifndef HEADLESS
-static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
+static inline uint64_t GetKerningHash(char32_t lchar, char32_t rchar)
 {
 	if (lchar < 128 && rchar < 128)
 		return (lchar << 7) | rchar; // 14bit used
 
-	assert(lchar < (1 << 16) && rchar < (1 << 16));
-	return (lchar << 16) | rchar; // 32bit used
+	return (static_cast<uint64_t>(lchar) << 32) | static_cast<uint64_t>(rchar); // 64bit used
 }
-
 
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
@@ -280,41 +283,66 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	}
 
 	// load the font
-	FT_Face face = nullptr;
-	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), fontMem.get()->data(), filesize, 0, &face);
+	FT_Face face_ = nullptr;
+	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), fontMem.get()->data(), filesize, 0, &face_);
+	auto face = spring::ScopedResource(
+		face_,
+		[](FT_Face f) { if (f) FT_Done_Face(f); }
+	);
 
-	if (error != 0)
-		throw content_error(fontfile + ": FT_New_Face failed: " + GetFTError(error));
+	if (error != 0) {
+		throw content_error(fmt::format("FT_New_Face failed: {}", GetFTError(error)));
+	}
 
 	// set render size
-	if ((error = FT_Set_Pixel_Sizes(face, 0, size)) != 0)
-		throw content_error(fontfile + ": FT_Set_Pixel_Sizes failed: " + GetFTError(error));
+	if ((error = FT_Set_Pixel_Sizes(face, 0, size)) != 0) {
+		throw content_error(fmt::format("FT_Set_Pixel_Sizes failed: {}", GetFTError(error)));
+	}
 
 	// select unicode charmap
-	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0)
-		throw content_error(fontfile + ": FT_Select_Charmap failed: " + GetFTError(error));
+	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0) {
+		throw content_error(fmt::format("FT_Select_Charmap failed: {}", GetFTError(error)));
+	}
 
-	return (fontFaceCache[fontKey] = std::make_shared<FontFace>(face, fontMem)).lock();
+	return (fontFaceCache[fontKey] = std::make_shared<FontFace>(face.Release(), fontMem)).lock();
 }
 #endif
 
 
+
 #ifndef HEADLESS
+
+inline
+static std::string GetFaceKey(FT_Face f)
+{
+	FT_FaceRec_* fr = static_cast<FT_FaceRec_*>(f);
+	return fmt::format("{}-{}-{}", fr->family_name, fr->style_name, fr->num_glyphs);
+}
+
 // NOLINTNEXTLINE{misc-misplaced-const}
-static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize, const spring::unsynced_set<std::shared_ptr<FontFace>>& blackList)
+template<typename USET>
+static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize, const USET& blackList)
 {
 #if defined(USE_FONTCONFIG)
 	if (characters.empty())
 		return nullptr;
 
 	// create list of wanted characters
-	FcCharSet* cset = FcCharSetCreate();
+	auto cset = spring::ScopedResource(
+		FcCharSetCreate(),
+		[](FcCharSet* cs) { if (cs) FcCharSetDestroy(cs); }
+	);
+
 	for (auto c: characters) {
 		FcCharSetAddChar(cset, c);
 	}
 
 	// create properties of the wanted font
-	FcPattern* pattern = FcPatternCreate();
+	auto pattern = spring::ScopedResource(
+		FcPatternCreate(),
+		[](FcPattern* p) { if (p) FcPatternDestroy(p); }
+	);
+
 	{
 		{
 			FcValue v;
@@ -330,59 +358,53 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 		int weight = FC_WEIGHT_NORMAL;
 		int slant  = FC_SLANT_ROMAN;
 		FcBool outline = FcFalse;
-		std::string family;
-		std::string foundry;
 
-		{
-			const FcChar8* ftname = reinterpret_cast<const FcChar8*>("not used");
-			FcBlanks* blanks = FcBlanksCreate();
-			FcPattern* origPattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
-			FcBlanksDestroy(blanks);
-			if (origPattern) {
-				FcPatternGetInteger(origPattern, FC_WEIGHT, 0, &weight);
-				FcPatternGetInteger(origPattern, FC_SLANT, 0, &slant);
-				FcPatternGetBool(origPattern, FC_OUTLINE, 0, &outline);
-				//FcPatternGetString char* return is destroyed upon FcPatternDestroy call, need to copy
-				{
-					FcChar8* tmp = nullptr;
-					FcPatternGetString(origPattern, FC_FAMILY, 0, &tmp);
-					if (tmp) family.assign(reinterpret_cast<const char*>(tmp));
-				}
-				{
-					FcChar8* tmp = nullptr;
-					FcPatternGetString(origPattern, FC_FOUNDRY, 0, &tmp);
-					if (tmp) foundry.assign(reinterpret_cast<const char*>(tmp));
-				}
+		FcChar8* family = nullptr;
+		FcChar8* foundry = nullptr;
 
-				FcPatternDestroy(origPattern);
-			}
+		const FcChar8* ftname = reinterpret_cast<const FcChar8*>("not used");
+
+		auto blanks = spring::ScopedResource(
+			FcBlanksCreate(),
+			[](FcBlanks* b) { if (b) FcBlanksDestroy(b); }
+		);
+
+		auto origPattern = spring::ScopedResource(
+			FcFreeTypeQueryFace(origFace, ftname, 0, blanks),
+			[](FcPattern* p) { if (p) FcPatternDestroy(p); }
+		);
+
+		if (origPattern != nullptr) {
+			FcPatternGetInteger(origPattern, FC_WEIGHT , 0, &weight );
+			FcPatternGetInteger(origPattern, FC_SLANT  , 0, &slant  );
+			FcPatternGetBool(   origPattern, FC_OUTLINE, 0, &outline);
+
+			FcPatternGetString( origPattern, FC_FAMILY , 0, &family );
+			FcPatternGetString( origPattern, FC_FOUNDRY, 0, &foundry);
 		}
+
 		FcPatternAddInteger(pattern, FC_WEIGHT, weight);
 		FcPatternAddInteger(pattern, FC_SLANT, slant);
 		FcPatternAddBool(pattern, FC_OUTLINE, outline);
-		if (!family.empty())
-			FcPatternAddString(pattern, FC_FAMILY, reinterpret_cast<const FcChar8*>(family.c_str()));
-		if (!foundry.empty())
-			FcPatternAddString(pattern, FC_FOUNDRY, reinterpret_cast<const FcChar8*>(foundry.c_str()));
+
+		if (family)
+			FcPatternAddString(pattern, FC_FAMILY, family);
+		if (foundry)
+			FcPatternAddString(pattern, FC_FOUNDRY, foundry);
 	}
 
 	FcDefaultSubstitute(pattern);
 	if (!FcConfigSubstitute(nullptr, pattern, FcMatchPattern))
 	{
-		FcPatternDestroy(pattern);
-		FcCharSetDestroy(cset);
 		return nullptr;
 	}
 
 	// search fonts that fit our request
 	FcResult res;
-	FcFontSet* fs = FcFontSort(nullptr, pattern, FcFalse, nullptr, &res);
-
-	// dtors
-	auto del = [&](FcFontSet* fs) { FcFontSetDestroy(fs); };
-	std::unique_ptr<FcFontSet, decltype(del)> fs_(fs, del);
-	FcPatternDestroy(pattern);
-	FcCharSetDestroy(cset);
+	auto fs = spring::ScopedResource(
+		FcFontSort(nullptr, pattern, FcFalse, nullptr, &res),
+		[](FcFontSet* f) { if (f) FcFontSetDestroy(f); }
+	);
 
 	if (fs == nullptr)
 		return nullptr;
@@ -391,22 +413,32 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 
 	// iterate returned font list
 	for (int i = 0; i < fs->nfont; ++i) {
-		FcPattern* font = fs->fonts[i];
+		const FcPattern* font = fs->fonts[i];
+
 		FcChar8* cFilename = nullptr;
 		FcResult r = FcPatternGetString(font, FC_FILE, 0, &cFilename);
-		if (r != FcResultMatch || cFilename == nullptr) continue;
+		if (r != FcResultMatch || cFilename == nullptr)
+			continue;
 
-		const std::string filename = reinterpret_cast<char*>(cFilename);
+		const std::string filename = std::string{ reinterpret_cast<char*>(cFilename) };
+
+		if (invalidFonts.find(std::make_pair(filename, origSize)) != invalidFonts.end()) //this font is known to error out
+			continue;
+
 		try {
 			auto face = GetFontFace(filename, origSize);
-			if (blackList.find(face) != blackList.cend())
+
+			if (blackList.find(GetFaceKey(*face)) != blackList.cend())
 				continue;
 
 			return face;
-		} catch(const content_error& ex) {
-			LOG_L(L_ERROR, "[%s] %s: %s", __func__, filename.c_str(), ex.what());
+		}
+		catch (content_error& ex) {
+			invalidFonts.emplace(std::make_pair(filename, origSize));
+			//LOG_L(L_ERROR, "[%s] \"%s\" (s = %d): %s", __func__, filename.c_str(), origSize, ex.what());
 			continue;
 		}
+
 	}
 	return nullptr;
 #else
@@ -452,7 +484,14 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontStyle  = "unknown";
 
 #ifndef HEADLESS
-	shFace = GetFontFace(fontfile, fontSize);
+
+	try {
+		shFace = GetFontFace(fontfile, fontSize);
+	}
+	catch (content_error& ex) {
+		LOG_L(L_ERROR, "[%s] %s (s=%d): %s", __func__, fontfile.c_str(), fontSize, ex.what());
+		return;
+	}
 
 	if (shFace == nullptr)
 		return;
@@ -475,12 +514,12 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	// precache ASCII glyphs & kernings (save them in kerningPrecached array for better lvl2 cpu cache hitrate)
 
 	//preload Glyphs
-	LoadWantedGlyphs(32, 127);
+	LoadWantedGlyphs(32, 128);
 
-	for (char32_t i = 32; i < 127; ++i) {
+	for (char32_t i = 32; i < 128; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
-		for (char32_t j = 32; j < 127; ++j) {
+		for (char32_t j = 32; j < 128; ++j) {
 			const auto& rgl = GetGlyph(j);
 			const auto hash = GetKerningHash(i, j);
 			FT_Vector kerning;
@@ -541,7 +580,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
 #ifndef HEADLESS
 	// first check caches
-	const uint32_t hash = GetKerningHash(lgl.letter, rgl.letter);
+	const uint64_t hash = GetKerningHash(lgl.letter, rgl.letter);
 
 	if (hash < kerningPrecached.size())
 		return kerningPrecached[hash];
@@ -581,16 +620,25 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	assert(Threading::IsMainThread());
 
 	static std::vector<char32_t> map;
-	map.assign(wanted.cbegin(), wanted.cend());
+	map.clear();
+
+	for (auto c : wanted) {
+		if (failedToFind.find(c) == failedToFind.end())
+			map.emplace_back(c);
+	}
+	spring::VectorSortUnique(map);
+
+	if (map.empty())
+		return;
 
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
 
 #ifndef HEADLESS
-	static spring::unsynced_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+	static spring::unordered_set<std::string> alreadyCheckedFonts;
 	alreadyCheckedFonts.clear();
 	do {
-		alreadyCheckedFonts.insert(f);
+		alreadyCheckedFonts.insert(GetFaceKey(*f));
 
 		for (std::size_t idx = 0; idx < map.size(); /*nop*/) {
 			FT_UInt index = FT_Get_Char_Index(*f, map[idx]);
@@ -609,10 +657,10 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	} while (!map.empty() && f);
 #endif
 
-	assert(map.empty());
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
+		failedToFind.insert(c);
 	}
 
 
@@ -737,7 +785,6 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 	atlasAlloc.AddEntry(IntToString(ch) + "sh", int2(width + olSize, height + olSize)                                                 );
 #endif
 }
-
 
 void CFontTexture::CreateTexture(const int width, const int height)
 {
