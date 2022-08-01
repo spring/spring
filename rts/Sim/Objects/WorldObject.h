@@ -5,6 +5,7 @@
 
 #include "System/Object.h"
 #include "System/float4.h"
+#include "System/Threading/ThreadPool.h"
 
 struct S3DModel;
 
@@ -69,6 +70,9 @@ public:
 	S3DModel* model = nullptr;
 protected:
 	float drawRadius = 0.0f;    ///< unsynced, used for projectile visibility culling
+
+public:
+	std::array<int, ThreadPool::MAX_THREADS> mtTempNum = {};
 };
 
 #endif /* WORLD_OBJECT_H */

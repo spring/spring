@@ -9,6 +9,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/ContainerUtil.h"
+#include "System/Threading/ThreadPool.h"
 
 #ifndef UNIT_TEST
 	#include "Sim/Features/Feature.h"
@@ -121,8 +122,20 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 	invQuadSize = {1.0f / quadSizeX, 1.0f / quadSizeZ};
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
-	tempQuads.ReserveAll(numQuadsX * numQuadsZ);
-	tempQuads.ReleaseAll();
+
+	int threadCount = ThreadPool::GetNumThreads();
+	tempQuads.reserve(threadCount);
+	tempSolids.reserve(threadCount);
+
+	for (auto i = 0; i < threadCount; ++i) {
+		auto newQueryVectorCache = tempQuads.emplace_back();
+
+		newQueryVectorCache.ReserveAll(numQuadsX * numQuadsZ);
+		newQueryVectorCache.ReleaseAll();
+
+		tempSolids.emplace_back();
+	}
+
 
 #ifndef UNIT_TEST
 	for (Quad& quad: baseQuads) {
@@ -142,8 +155,26 @@ void CQuadField::Kill()
 	tempUnits.ReleaseAll();
 	tempFeatures.ReleaseAll();
 	tempProjectiles.ReleaseAll();
-	tempSolids.ReleaseAll();
-	tempQuads.ReleaseAll();
+
+	for (auto cache : tempSolids) {
+		cache.ReleaseAll();
+	}
+	tempSolids.clear();
+
+	for (auto cache : tempQuads) {
+		cache.ReleaseAll();
+	}
+	tempQuads.clear();
+}
+
+void CQuadField::ReleaseVector(std::vector<CSolidObject*>* v)
+{
+	tempSolids[ThreadPool::GetThreadNum()].ReleaseVector(v);
+}
+
+void CQuadField::ReleaseVector(std::vector<int>* v)
+{
+	tempQuads[ThreadPool::GetThreadNum()].ReleaseVector(v);
 }
 
 
@@ -167,7 +198,7 @@ void CQuadField::GetQuads(QuadFieldQuery& qfq, float3 pos, float radius)
 {
 	pos.AssertNaNs();
 	pos.ClampInBounds();
-	qfq.quads = tempQuads.ReserveVector();
+	qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
 
 	const int2 min = WorldPosToQuadField(pos - radius);
 	const int2 max = WorldPosToQuadField(pos + radius);
@@ -197,7 +228,7 @@ void CQuadField::GetQuadsRectangle(QuadFieldQuery& qfq, const float3& mins, cons
 {
 	mins.AssertNaNs();
 	maxs.AssertNaNs();
-	qfq.quads = tempQuads.ReserveVector();
+	qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
 
 	const int2 min = WorldPosToQuadField(mins);
 	const int2 max = WorldPosToQuadField(maxs);
@@ -224,7 +255,7 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 	dir.AssertNaNs();
 	start.AssertNaNs();
 
-	auto& queryQuads = *(qfq.quads = tempQuads.ReserveVector());
+	auto& queryQuads = *(qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector());
 
 	const float3 to = start + (dir * length);
 
@@ -729,15 +760,17 @@ void CQuadField::GetSolidsExact(
 ) {
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
-	const int tempNum = gs->GetTempNum();
-	qfq.solids = tempSolids.ReserveVector();
+	const int tempNum = gs->GetMtTempNum();
+	auto curThread = ThreadPool::GetThreadNum();
+	qfq.solids = tempSolids[curThread].ReserveVector();
+	
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {
-			if (u->tempNum == tempNum)
+			if (u->mtTempNum[curThread] == tempNum)
 				continue;
 
-			u->tempNum = tempNum;
+			u->mtTempNum[curThread] = tempNum;
 
 			if (!u->HasPhysicalStateBit(physicalStateBits))
 				continue;
@@ -750,10 +783,10 @@ void CQuadField::GetSolidsExact(
 		}
 
 		for (CFeature* f: baseQuads[qi].features) {
-			if (f->tempNum == tempNum)
+			if (f->mtTempNum[curThread] == tempNum)
 				continue;
 
-			f->tempNum = tempNum;
+			f->mtTempNum[curThread] = tempNum;
 
 			if (!f->HasPhysicalStateBit(physicalStateBits))
 				continue;

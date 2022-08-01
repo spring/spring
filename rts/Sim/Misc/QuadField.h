@@ -170,8 +170,12 @@ public:
 	void ReleaseVector(std::vector<CUnit*>* v       ) { tempUnits.ReleaseVector(v); }
 	void ReleaseVector(std::vector<CFeature*>* v    ) { tempFeatures.ReleaseVector(v); }
 	void ReleaseVector(std::vector<CProjectile*>* v ) { tempProjectiles.ReleaseVector(v); }
-	void ReleaseVector(std::vector<CSolidObject*>* v) { tempSolids.ReleaseVector(v); }
-	void ReleaseVector(std::vector<int>* v          ) { tempQuads.ReleaseVector(v); }
+
+	// Ensure release in same thread as original quad field query generated.
+	void ReleaseVector(std::vector<CSolidObject*>* v); //{ tempSolids.ReleaseVector(v); }
+
+	// Ensure release in same thread as original quad field query generated.
+	void ReleaseVector(std::vector<int>* v          );// { tempQuads.ReleaseVector(v); }
 
 	struct Quad {
 	public:
@@ -242,8 +246,8 @@ private:
 	QueryVectorCache<CUnit*> tempUnits;
 	QueryVectorCache<CFeature*> tempFeatures;
 	QueryVectorCache<CProjectile*> tempProjectiles;
-	QueryVectorCache<CSolidObject*> tempSolids;
-	QueryVectorCache<int> tempQuads;
+	std::vector< QueryVectorCache<CSolidObject*> > tempSolids;
+	std::vector< QueryVectorCache<int> > tempQuads;
 
 	float2 invQuadSize;
 

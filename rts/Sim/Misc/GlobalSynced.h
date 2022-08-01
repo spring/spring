@@ -5,6 +5,7 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/GlobalRNG.h"
+#include "System/Threading/ThreadPool.h"
 
 
 class CGameSetup;
@@ -38,6 +39,8 @@ public:
 	int GetLuaSimFrame() { return (frameNum * (frameNum > 0)); }
 	int GetTempNum() { return tempNum++; }
 
+	int GetMtTempNum() { return mtTempNum[ThreadPool::GetThreadNum()]++; }
+
 	// remains true until first SimFrame call
 	bool PreSimFrame() const { return (frameNum == -1); }
 
@@ -49,6 +52,7 @@ private:
 	* (increase after each use)
 	*/
 	int tempNum = 1;
+	std::array<int, ThreadPool::MAX_THREADS> mtTempNum = {};
 
 public:
 	/**

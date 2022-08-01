@@ -304,6 +304,13 @@ void CUnitHandler::UpdateUnitMoveTypes()
 {
 	SCOPED_TIMER("Sim::Unit::MoveType");
 
+	for_mt(0, activeUnits.size(), [this](const int i){
+		CUnit* unit = activeUnits[i];
+		AMoveType* moveType = unit->moveType;
+
+		moveType->UpdateObstacleAvoidance();
+	});
+
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;

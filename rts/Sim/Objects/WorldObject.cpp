@@ -2,12 +2,13 @@
 
 #include "WorldObject.h"
 #include "Rendering/Models/3DModel.h"
+#include "System/Threading/ThreadPool.h"
 
 CR_BIND_DERIVED(CWorldObject, CObject, )
 CR_REG_METADATA(CWorldObject, (
 	CR_MEMBER(id),
 	CR_MEMBER(tempNum),
-
+	CR_MEMBER(mtTempNum),
 	CR_MEMBER(radius),
 	CR_MEMBER(height),
 	CR_MEMBER(sqRadius),
@@ -32,4 +33,3 @@ void CWorldObject::SetRadiusAndHeight(const S3DModel* mdl)
 	// we always want the (more reliable) auto-calculated DR value
 	drawRadius = mdl->CalcDrawRadius();
 }
-

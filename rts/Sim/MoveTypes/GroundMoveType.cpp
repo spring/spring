@@ -696,6 +696,30 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw)
 	progressState = Done;
 }
 
+void CGroundMoveType::UpdateObstacleAvoidance() {
+	if (owner->GetTransporter() != nullptr)
+		return;
+
+	if (owner->IsSkidding())
+		return;
+
+	if (owner->IsFalling())
+		return;
+
+	if (owner->IsStunned() || owner->beingBuilt)
+		return;
+
+	if (owner->UnderFirstPersonControl())
+		return;
+
+	if (WantToStop())
+		return;
+
+	const float3&  ffd = flatFrontDir;
+	auto wantReverse = WantReverse(waypointDir, ffd);
+	const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
+	const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, !atGoal));
+}
 
 bool CGroundMoveType::FollowPath()
 {
@@ -847,9 +871,12 @@ bool CGroundMoveType::FollowPath()
 		wantReverse = WantReverse(waypointDir, ffd);
 
 		// apply obstacle avoidance (steering), prevent unit from chasing its own tail if already at goal
-		const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
-		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, !atGoal));
+		// const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
+		// const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, !atGoal));
+
 		// const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, (!atGoal) && (wpProjDists.x > wpProjDists.y || wpProjDists.z < 0.995f)));
+
+		const float3& modWantedDir = lastAvoidanceDir;
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);

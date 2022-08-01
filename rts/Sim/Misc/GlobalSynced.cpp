@@ -2,6 +2,7 @@
 
 #include "GlobalSynced.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <cstring>
 
@@ -34,6 +35,7 @@ CR_BIND(CGlobalSynced, )
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
 	CR_MEMBER(tempNum),
+	CR_MEMBER(mtTempNum),
 	CR_MEMBER(godMode),
 
 	CR_MEMBER(speedFactor),
@@ -57,6 +59,8 @@ void CGlobalSynced::ResetState() {
 	frameNum = -1; // first real frame is 0
 	tempNum  =  1;
 	godMode  =  0;
+
+	std::fill(std::begin(mtTempNum), std::end(mtTempNum), 1);
 
 #ifdef SYNCCHECK
 	// reset checksum
