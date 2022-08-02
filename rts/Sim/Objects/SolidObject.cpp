@@ -385,11 +385,13 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 	return dragAccelVec;
 }
 
-float3 CSolidObject::GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const
+float3 CSolidObject::GetWantedUpDir(bool useGroundNormal, bool useObjectNormal, float dirSmoothing) const
 {
 	const float3 groundUp = CGround::GetSmoothNormal(pos.x, pos.z);
-	const float3 objectUp = mix(UpVector, float3{updir}, useObjectNormal);
-	const float3 wantedUp = mix(objectUp,      groundUp, useGroundNormal);
+	const float3 curUpDir = float3{updir};
+	const float3 objectUp = mix(UpVector, curUpDir, useObjectNormal);
+	const float3 targetUp = mix(objectUp, groundUp, useGroundNormal);
+	const float3 wantedUp = mix(targetUp, curUpDir, dirSmoothing);
 
 	return wantedUp;
 }
@@ -411,9 +413,9 @@ void CSolidObject::SetDirVectorsEuler(const float3 angles)
 void CSolidObject::SetHeadingFromDirection() { heading = GetHeadingFromVector(frontdir.x, frontdir.z); }
 void CSolidObject::SetFacingFromHeading() { buildFacing = GetFacingFromHeading(heading); }
 
-void CSolidObject::UpdateDirVectors(bool useGroundNormal, bool useObjectNormal)
+void CSolidObject::UpdateDirVectors(bool useGroundNormal, bool useObjectNormal, float dirSmoothing)
 {
-	updir    = GetWantedUpDir(useGroundNormal, useObjectNormal);
+	updir    = GetWantedUpDir(useGroundNormal, useObjectNormal, dirSmoothing);
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);

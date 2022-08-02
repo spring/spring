@@ -46,7 +46,7 @@ void CBuilding::ForcedMove(const float3& newPos) {
 	// (always needs to be axis-aligned because yardmaps are not rotated)
 	heading = GetHeadingFromFacing(buildFacing);
 
-	UpdateDirVectors(false, false);
+	UpdateDirVectors(false, false, 0.0f);
 	SetVelocity(ZeroVector);
 
 	// update quadfield, etc.

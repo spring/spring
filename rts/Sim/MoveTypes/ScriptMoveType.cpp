@@ -6,6 +6,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/EventHandler.h"
@@ -122,7 +123,7 @@ bool CScriptMoveType::Update()
 	CheckLimits();
 
 	if (trackSlope) {
-		owner->UpdateDirVectors(owner->IsOnGround(), owner->IsInAir());
+		owner->UpdateDirVectors(owner->IsOnGround(), owner->IsInAir(), owner->moveDef->upDirSmoothing);
 		owner->UpdateMidAndAimPos();
 	}
 
@@ -194,7 +195,7 @@ void CScriptMoveType::SetRotation(const float3& _rot)
 
 void CScriptMoveType::SetHeading(short heading)
 {
-	owner->SetHeading(heading, trackSlope, false);
+	owner->SetHeading(heading, trackSlope, false, 0.0f);
 }
 
 

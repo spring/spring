@@ -3360,6 +3360,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishA
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->crushStrength;
 }
 
+EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing(int skirmishAIId, int unitDefId) {
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->upDirSmoothing;
+}
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId) {
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->speedModClass;
@@ -5334,6 +5337,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getDepthMod = &skirmishAiCallback_UnitDef_MoveData_getDepthMod;
 	callback->UnitDef_MoveData_getPathType = &skirmishAiCallback_UnitDef_MoveData_getPathType;
 	callback->UnitDef_MoveData_getCrushStrength = &skirmishAiCallback_UnitDef_MoveData_getCrushStrength;
+	callback->UnitDef_MoveData_getUpDirSmoothing = &skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing;
 	callback->UnitDef_MoveData_getSpeedModClass = &skirmishAiCallback_UnitDef_MoveData_getSpeedModClass;
 	callback->UnitDef_MoveData_getTerrainClass = &skirmishAiCallback_UnitDef_MoveData_getTerrainClass;
 	callback->UnitDef_MoveData_getFollowGround = &skirmishAiCallback_UnitDef_MoveData_getFollowGround;

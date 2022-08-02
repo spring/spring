@@ -172,7 +172,7 @@ void AAirMoveType::UpdateLanded()
 	owner->Move(UpVector * (std::max(curHeight, minHeight) - owner->pos.y), true);
 	owner->Move(owner->speed, true);
 	// match the terrain normal
-	owner->UpdateDirVectors(owner->IsOnGround(), false);
+	owner->UpdateDirVectors(owner->IsOnGround(), false, 0.0f);
 	owner->UpdateMidAndAimPos();
 }
 

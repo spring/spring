@@ -115,6 +115,7 @@ struct MoveDef {
 	float maxSlope = 1.0f;
 	float slopeMod = 0.0f;
 	float crushStrength = 0.0f;
+	float upDirSmoothing = 0.0f;
 
 	// PF speedmod-multipliers for squares blocked by mobile units
 	// (which can respectively be "idle" == non-moving and have no

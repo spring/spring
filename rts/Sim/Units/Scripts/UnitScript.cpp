@@ -1437,7 +1437,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case HEADING: {
-			unit->SetHeading(param % COBSCALE, !unit->upright && unit->IsOnGround(), false);
+			unit->SetHeading(param % COBSCALE, !unit->upright && unit->IsOnGround(), false, unit->moveDef->upDirSmoothing);
 		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(unit->realLosRadius = param, unit->realAirLosRadius);

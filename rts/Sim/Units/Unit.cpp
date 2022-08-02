@@ -239,7 +239,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	SetVelocity(params.speed);
 	Move(preFramePos = params.pos.cClampInMap(), false);
-	UpdateDirVectors(!upright && IsOnGround(), false);
+	UpdateDirVectors(!upright && IsOnGround(), false, 0.0f);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateMidAndAimPos();
@@ -421,7 +421,7 @@ void CUnit::FinishedBuilding(bool postInit)
 
 
 	// Sets the frontdir in sync with heading.
-	UpdateDirVectors(!upright && IsOnGround(), false);
+	UpdateDirVectors(!upright && IsOnGround(), false, 0.0f);
 
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);

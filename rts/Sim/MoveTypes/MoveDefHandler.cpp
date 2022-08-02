@@ -33,6 +33,7 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
 	CR_MEMBER(crushStrength),
+	CR_MEMBER(upDirSmoothing),
 	CR_MEMBER(speedModMults),
 
 	CR_MEMBER(heatMod),
@@ -171,6 +172,7 @@ MoveDef::MoveDef()
 MoveDef::MoveDef(const LuaTable& moveDefTable): MoveDef() {
 	name          = StringToLower(moveDefTable.GetString("name", ""));
 	crushStrength = moveDefTable.GetFloat("crushStrength", 10.0f);
+	upDirSmoothing = std::clamp(moveDefTable.GetFloat("upDirSmoothing", 0.0f), 0.0f, 0.95f);
 
 	const LuaTable& depthModTable = moveDefTable.SubTable("depthModParams");
 	const LuaTable& speedModMultsTable = moveDefTable.SubTable("speedModMults");

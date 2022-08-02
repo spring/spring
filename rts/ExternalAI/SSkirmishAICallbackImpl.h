@@ -611,6 +611,8 @@ EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getPathType(int sk
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishAIId, int unitDefId);
 
+EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing(int skirmishAIId, int unitDefId);
+
 EXPORT(bool             ) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_MoveData_isSubMarine(int skirmishAIId, int unitDefId);

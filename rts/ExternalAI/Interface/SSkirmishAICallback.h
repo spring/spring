@@ -1001,6 +1001,8 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_MoveData_getCrushStrength)(int skirmishAIId, int unitDefId);
 
+	float             (CALLING_CONV* UnitDef_MoveData_getUpDirSmoothing)(int skirmishAIId, int unitDefId);
+
 
 	/** enum SpeedModClass { Tank=0, KBot=1, Hover=2, Ship=3 }; */
 	int               (CALLING_CONV *UnitDef_MoveData_getSpeedModClass)(int skirmishAIId, int unitDefId);
