@@ -12,6 +12,8 @@
 #include "LuaAtlasTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
+#include "LuaVBO.h"
+#include "LuaVAO.h"
 #include "LuaDisplayLists.h"
 #endif
 
@@ -111,6 +113,8 @@ public:
 	LuaAtlasTextures atlasTextures;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
+	LuaVBOs vbos;
+	LuaVAOs vaos;
 	CLuaDisplayLists displayLists;
 
 	GLMatrixStateTracker glMatrixTracker;

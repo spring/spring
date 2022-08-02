@@ -29,7 +29,6 @@ LuaVAOImpl::LuaVAOImpl()
 
 void LuaVAOImpl::Delete()
 {
-	//LOG_L(L_WARNING, "[LuaVAOImpl::%s]", __func__);
 	if (vertLuaVBO) {
 		vertLuaVBO = nullptr;
 	}
@@ -186,7 +185,7 @@ void LuaVAOImpl::CondInitVAO()
 	vao->Bind();
 
 	if (vertLuaVBO)
-		vertLuaVBO->vbo->Bind(GL_ARRAY_BUFFER); //type is needed cause same buffer could have been rebounded as something else using LuaVBO functions
+		vertLuaVBO->vbo->Bind(GL_ARRAY_BUFFER); //type is needed cause same buffer could have been rebounded as something else using LuaVBOs functions
 
 	if (indxLuaVBO)
 		indxLuaVBO->vbo->Bind(GL_ELEMENT_ARRAY_BUFFER);

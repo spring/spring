@@ -44,13 +44,10 @@ LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::opti
 	, primitiveRestartIndex{ ~0u }
 	, bufferAttribDefsVec{}
 	, bufferAttribDefs{}
-{
-
-}
+{ }
 
 LuaVBOImpl::~LuaVBOImpl()
 {
-	//LOG_L(L_WARNING, "[LuaVBOImpl::%s]", __func__);
 	Delete();
 }
 
@@ -1023,7 +1020,7 @@ void LuaVBOImpl::DumpDefinition()
 	}
 
 	std::ostringstream ss;
-	ss << fmt::format("Definition information on LuaVBO. OpenGL Buffer ID={}:\n", vbo->GetId());
+	ss << fmt::format("Definition information on LuaVBOs. OpenGL Buffer ID={}:\n", vbo->GetId());
 	for (const auto& kv : bufferAttribDefs) { //guaranteed increasing order of key
 		const int attrID = kv.first;
 		const auto& baDef = kv.second;

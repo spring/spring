@@ -487,8 +487,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	}
 
 	LuaMatrix::PushEntries(L);
-	LuaVAO::PushEntries(L);
-	LuaVBO::PushEntries(L);
+	LuaVAOs::PushEntries(L);
+	LuaVBOs::PushEntries(L);
 
 	LuaFonts::PushEntries(L);
 

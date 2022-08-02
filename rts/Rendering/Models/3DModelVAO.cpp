@@ -94,17 +94,6 @@ S3DModelVAO::S3DModelVAO()
 
 	//OpenGL stuff
 	{
-		vertVBO = VBO{ GL_ARRAY_BUFFER, false };
-		vertVBO.Bind();
-		vertVBO.New(vertData);
-		vertVBO.Unbind();
-
-		indxVBO = VBO{ GL_ELEMENT_ARRAY_BUFFER, false };
-		indxVBO.Bind();
-		indxVBO.New(indxData);
-		indxVBO.Unbind();
-	}
-	{
 		vao = VAO{};
 		vao.Bind();
 
@@ -115,14 +104,13 @@ S3DModelVAO::S3DModelVAO()
 		indxVBO = VBO{ GL_ELEMENT_ARRAY_BUFFER, false };
 		indxVBO.Bind();
 		indxVBO.New(indxData);
-		EnableAttribs(false);
-
+		EnableAttribs(false); // vertex attribs
 		vertVBO.Unbind();
 
 		instVBO = VBO{ GL_ARRAY_BUFFER, false };
 		instVBO.Bind();
 		instVBO.New(S3DModelVAO::INSTANCE_BUFFER_NUM_ELEMS * sizeof(SInstanceData), GL_STREAM_DRAW);
-		EnableAttribs(true);
+		EnableAttribs(true); // instance attribs
 
 		vao.Unbind();
 		DisableAttribs();

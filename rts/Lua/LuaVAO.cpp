@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////
 
-bool LuaVAO::PushEntries(lua_State* L)
+bool LuaVAOs::PushEntries(lua_State* L)
 {
 	REGISTER_LUA_CFUNC(GetVAO);
 
@@ -53,16 +53,29 @@ bool LuaVAO::PushEntries(lua_State* L)
 	return true;
 }
 
-int LuaVAO::GetVAO(lua_State* L)
+LuaVAOs::~LuaVAOs()
+{
+	for (auto lva : luaVAOs) {
+		if (lva.expired())
+			continue; //destroyed already
+
+		lva.lock()->Delete();
+	}
+	luaVAOs.clear();
+}
+
+int LuaVAOs::GetVAO(lua_State* L)
 {
 	if (!LuaVAOImpl::Supported()) {
-		LOG_L(L_ERROR, "[LuaVAO::%s] Important OpenGL extensions are not supported by the system\n  GL_ARB_vertex_buffer_object = %d\n GL_ARB_vertex_array_object = %d\n GL_ARB_instanced_arrays = %d\n GL_ARB_draw_elements_base_vertex = %d\n GL_ARB_multi_draw_indirect = %d", \
-			__func__, GLEW_ARB_vertex_buffer_object, GLEW_ARB_vertex_array_object, GLEW_ARB_instanced_arrays, GLEW_ARB_draw_elements_base_vertex, GLEW_ARB_multi_draw_indirect);
+		LOG_L(L_ERROR, "[LuaVAOs::%s] Important OpenGL extensions are not supported by the system\n  \tGL_ARB_vertex_buffer_object = %d; GL_ARB_vertex_array_object = %d; GL_ARB_instanced_arrays = %d; GL_ARB_draw_elements_base_vertex = %d; GL_ARB_multi_draw_indirect = %d",
+			__func__, (GLEW_ARB_vertex_buffer_object), (GLEW_ARB_vertex_array_object), (GLEW_ARB_instanced_arrays), (GLEW_ARB_draw_elements_base_vertex), (GLEW_ARB_multi_draw_indirect)
+		);
 
 		return 0;
 	}
 
-	return sol::stack::call_lua(L, 1, []() {
-		return LuaVAOImpl();
+	return sol::stack::call_lua(L, 1, [L]() {
+		auto& activeVAOs = CLuaHandle::GetActiveVAOs(L);
+		return activeVAOs.luaVAOs.emplace_back(std::make_shared<LuaVAOImpl>()).lock();
 	});
 }
