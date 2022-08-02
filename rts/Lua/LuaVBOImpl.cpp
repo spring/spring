@@ -55,7 +55,7 @@ void LuaVBOImpl::Delete()
 {
 	//safe to call multiple times
 	if (vboOwner)
-		spring::SafeDestruct(vbo);
+		spring::SafeDelete(vbo);
 
 	if (bufferData) {
 		spring::FreeAlignedMemory(bufferData);

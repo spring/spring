@@ -22,6 +22,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
+#include "fmt/printf.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
@@ -503,12 +504,10 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 
 	CFileHandler file(std::string("shaders/") + filename);
 	if (!file.FileExists()) {
-		char c[512];
-		SNPRINTF(c, 512, "[myGL::LoadProgram] Cannot find %s-program file '%s'", program_type, filename);
+		std::string c = fmt::sprintf("[myGL::LoadProgram] Cannot find %s-program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
 
-	// buffer does not need to be null-terminated
 	std::vector<unsigned char> fbuf;
 
 	if (!file.IsBuffered()) {
@@ -518,9 +517,12 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 		fbuf = std::move(file.GetBuffer());
 	}
 
+	if (fbuf.back() != '\0')
+		fbuf.emplace_back('\0');
+
 	glGenProgramsARB(1, &ret);
 	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - (fbuf.back() == '\0'), fbuf.data());
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size(), fbuf.data());
 
 	if (CheckParseErrors(target, filename, reinterpret_cast<char*>(fbuf.data())))
 		ret = 0;

@@ -29,19 +29,11 @@ LuaVAOImpl::LuaVAOImpl()
 
 void LuaVAOImpl::Delete()
 {
-	if (vertLuaVBO) {
-		vertLuaVBO = nullptr;
-	}
+	vertLuaVBO = nullptr;
+	instLuaVBO = nullptr;
+	indxLuaVBO = nullptr;
 
-	if (instLuaVBO) {
-		instLuaVBO = nullptr;
-	}
-
-	if (indxLuaVBO) {
-		indxLuaVBO = nullptr;
-	}
-
-	spring::SafeDestruct(vao);
+	spring::SafeDelete(vao);
 }
 
 LuaVAOImpl::~LuaVAOImpl()
