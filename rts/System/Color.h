@@ -43,6 +43,15 @@ struct SColor
 		, b(u[2])
 		, a(u[3])
 	{}
+	template<std::size_t N>
+	constexpr SColor(const uint8_t(&u)[N])
+		: r(u[0])
+		, g(u[1])
+		, b(u[2])
+		, a(u[3])
+	{
+		static_assert(N == 4);
+	}
 
 	constexpr SColor operator* (float s) const {
 		return SColor(int(float(r) * s), int(float(g) * s), int(float(b) * s), int(float(a) * s));
@@ -54,6 +63,15 @@ struct SColor
 		a = uint8_t(float(a) * s);
 
 		return *this;
+	}
+
+	constexpr const uint8_t& operator[](std::size_t idx) const {
+		assert(idx < 4 && idx >= 0);
+		return rgba[idx];
+	}
+	constexpr uint8_t& operator[](std::size_t idx) {
+		assert(idx < 4 && idx >= 0);
+		return rgba[idx];
 	}
 
 	constexpr operator float4 () const {
@@ -75,6 +93,7 @@ public:
 	union {
 		/// individual color channel values in the range [0, 255]
 		struct { std::uint8_t r, g, b, a; };
+		std::uint8_t rgba[4];
 		/// The color as a single 32bit value
 		std::uint32_t i;
 	};

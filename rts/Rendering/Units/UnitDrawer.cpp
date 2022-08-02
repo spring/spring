@@ -502,8 +502,7 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 				continue;
 
 			// use white for selected units
-			const uint8_t* srcColor = unit->isSelected ? color4::white : teamHandler.Team(unit->team)->color;
-			uint8_t color[4] = { srcColor[0], srcColor[1], srcColor[2], 255 };
+			SColor color = unit->isSelected ? color4::white : SColor{ teamHandler.Team(unit->team)->color };
 
 			float unitRadiusMult = icon->GetSize();
 			if (icon->GetRadiusAdjust() && icon != icon::iconHandler.GetDefaultIconData())
@@ -516,7 +515,7 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 					continue;
 				else if (modelDrawerData->iconFadeVanish < modelDrawerData->iconFadeStart && modelDrawerData->iconZoomDist / unitRadiusMult < modelDrawerData->iconFadeStart)
 					// alpha range [64, 255], since icons is unrecognisable with alpha < 64
-					color[3] = 64 + 191.0f * (modelDrawerData->iconZoomDist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
+					color.a = 64 + 191.0f * (modelDrawerData->iconZoomDist / unitRadiusMult - modelDrawerData->iconFadeVanish) / (modelDrawerData->iconFadeStart - modelDrawerData->iconFadeVanish);
 			}
 
 			// calculate the vertices
@@ -531,10 +530,10 @@ void CUnitDrawerLegacy::DrawUnitIconsScreen() const
 				continue; // don't try to draw when totally outside the screen
 
 			rb.AddQuadTriangles(
-				{ x0, y0, 0.0f, 0.0f, &color[0] },
-				{ x1, y0, 1.0f, 0.0f, &color[0] },
-				{ x1, y1, 1.0f, 1.0f, &color[0] },
-				{ x0, y1, 0.0f, 1.0f, &color[0] }
+				{ x0, y0, 0.0f, 0.0f, color },
+				{ x1, y0, 1.0f, 0.0f, color },
+				{ x1, y1, 1.0f, 1.0f, color },
+				{ x0, y1, 0.0f, 1.0f, color }
 			);
 		}
 
