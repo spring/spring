@@ -260,6 +260,17 @@ if    (USE_LIBSQUISH)
 endif (USE_LIBSQUISH)
 
 
+option(USE_ASAN "Build/link with address sanitizer enabled (for DEBUG builds only)" FALSE)
+if    (USE_ASAN)
+	if (UNIX AND NOT MINGW)
+		add_compile_options("$<$<CONFIG:DEBUG>:-fsanitize=address>")
+		add_link_options("$<$<CONFIG:DEBUG>:-fsanitize=address>")
+	endif (UNIX AND NOT MINGW)
+	if (MSVC)
+		add_compile_options("$<$<CONFIG:DEBUG>:/fsanitize=address>")
+	endif (MSVC)
+endif (USE_ASAN)
+
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 find_package(SDL2)
