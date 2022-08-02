@@ -56,7 +56,7 @@ CONFIG(float, CrossAlpha).defaultValue(0.5f);
 CONFIG(float, CrossMoveScale).defaultValue(1.0f);
 
 CONFIG(float, DoubleClickTime).defaultValue(200.0f).description("Double click time in milliseconds.");
-CONFIG(float, ScrollWheelSpeed).defaultValue(25.0f).minimumValue(-255.f).maximumValue(255.f);
+CONFIG(float, ScrollWheelSpeed).defaultValue(-25.0f).minimumValue(-255.f).maximumValue(255.f);
 
 CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
 CONFIG(int, MouseDragSelectionThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a selection box.");
