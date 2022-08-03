@@ -105,7 +105,7 @@ static void DrawBufferStats(const float2 pos)
 			lfMetrics[3] += lf->GetOutlineBuffer().NumSubmits(true);
 		}
 
-		#define FMT "\t%s={e=" _STPF_ " i=" _STPF_ " subs{e,i}={" _STPF_ "," _STPF_ "}}"
+		static constexpr const char* FMT = "\t%s={e=%u i=%u subs{e,i}={%u,%u}}";
 		font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
 		font->glFormat(pos.x, pos.y - 0.005f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, FMT, "FONTS", lfMetrics[0], lfMetrics[1], lfMetrics[2], lfMetrics[3]);
@@ -208,7 +208,7 @@ static void DrawThreadBarcode(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	}
 	{
 		// title
-		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.1f seconds :: " _STPF_ " threads)", MAX_THREAD_HIST_TIME, numThreads);
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.1f seconds :: %u threads)", MAX_THREAD_HIST_TIME, numThreads);
 	}
 	{
 		// need to lock; DrawTimeSlice pop_front()'s old entries from
