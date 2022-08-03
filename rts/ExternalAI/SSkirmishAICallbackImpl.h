@@ -323,6 +323,8 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getCaptureSpeed(int skirmis
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getTerraformSpeed(int skirmishAIId, int unitDefId);
 
+EXPORT(float            ) skirmishAiCallback_UnitDef_getUpDirSmoothing(int skirmishAIId, int unitDefId);
+
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMass(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isPushResistant(int skirmishAIId, int unitDefId);
@@ -610,8 +612,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int sk
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAIId, int unitDefId);
 

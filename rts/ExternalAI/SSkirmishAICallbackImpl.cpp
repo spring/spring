@@ -2710,6 +2710,10 @@ EXPORT(float) skirmishAiCallback_UnitDef_getTerraformSpeed(int skirmishAIId, int
 	return getUnitDefById(skirmishAIId, unitDefId)->terraformSpeed;
 }
 
+EXPORT(float) skirmishAiCallback_UnitDef_getUpDirSmoothing(int skirmishAIId, int unitDefId) {
+	return getUnitDefById(skirmishAIId, unitDefId)->upDirSmoothing;
+}
+
 EXPORT(float) skirmishAiCallback_UnitDef_getMass(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->mass;
 }
@@ -3358,10 +3362,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, in
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishAIId, int unitDefId) {
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->crushStrength;
-}
-
-EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->upDirSmoothing;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId) {
@@ -5203,6 +5203,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getResurrectSpeed = &skirmishAiCallback_UnitDef_getResurrectSpeed;
 	callback->UnitDef_getCaptureSpeed = &skirmishAiCallback_UnitDef_getCaptureSpeed;
 	callback->UnitDef_getTerraformSpeed = &skirmishAiCallback_UnitDef_getTerraformSpeed;
+	callback->UnitDef_getUpDirSmoothing = &skirmishAiCallback_UnitDef_getUpDirSmoothing;
 	callback->UnitDef_getMass = &skirmishAiCallback_UnitDef_getMass;
 	callback->UnitDef_isPushResistant = &skirmishAiCallback_UnitDef_isPushResistant;
 	callback->UnitDef_isStrafeToAttack = &skirmishAiCallback_UnitDef_isStrafeToAttack;
@@ -5337,7 +5338,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getDepthMod = &skirmishAiCallback_UnitDef_MoveData_getDepthMod;
 	callback->UnitDef_MoveData_getPathType = &skirmishAiCallback_UnitDef_MoveData_getPathType;
 	callback->UnitDef_MoveData_getCrushStrength = &skirmishAiCallback_UnitDef_MoveData_getCrushStrength;
-	callback->UnitDef_MoveData_getUpDirSmoothing = &skirmishAiCallback_UnitDef_MoveData_getUpDirSmoothing;
 	callback->UnitDef_MoveData_getSpeedModClass = &skirmishAiCallback_UnitDef_MoveData_getSpeedModClass;
 	callback->UnitDef_MoveData_getTerrainClass = &skirmishAiCallback_UnitDef_MoveData_getTerrainClass;
 	callback->UnitDef_MoveData_getFollowGround = &skirmishAiCallback_UnitDef_MoveData_getFollowGround;

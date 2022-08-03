@@ -185,6 +185,8 @@ public:
 	float minWaterDepth;
 	float maxWaterDepth;
 
+	float upDirSmoothing;
+
 	unsigned int pathType;
 
 	float armoredMultiple;

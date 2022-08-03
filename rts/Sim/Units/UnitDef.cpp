@@ -117,6 +117,7 @@ UnitDef::UnitDef()
 	, waterline(0.0f)
 	, minWaterDepth(0.0f)
 	, maxWaterDepth(0.0f)
+	, upDirSmoothing(0.0f)
 	, pathType(-1U)
 	, armoredMultiple(0.0f)
 	, armorType(0)
@@ -313,6 +314,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	resurrectSpeed = udTable.GetFloat("resurrectSpeed", buildSpeed);
 	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
 	terraformSpeed = udTable.GetFloat("terraformSpeed", buildSpeed);
+
+	upDirSmoothing = std::clamp(udTable.GetFloat("upDirSmoothing", 0.0f), 0.0f, 0.95f);
 
 	reclaimable  = udTable.GetBool("reclaimable",  true);
 	capturable   = udTable.GetBool("capturable",   true);

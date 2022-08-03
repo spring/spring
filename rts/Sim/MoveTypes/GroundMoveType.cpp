@@ -1057,7 +1057,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	if (absDeltaHeading >= minScriptChangeHeading)
 		owner->script->ChangeHeading(rawDeltaHeading);
 
-	owner->AddHeading(rawDeltaHeading, !owner->upright && owner->IsOnGround(), owner->IsInAir(), owner->moveDef->upDirSmoothing);
+	owner->AddHeading(rawDeltaHeading, !owner->upright && owner->IsOnGround(), owner->IsInAir(), owner->unitDef->upDirSmoothing);
 
 	flatFrontDir = (owner->frontdir * XZVector).Normalize();
 }
@@ -1227,7 +1227,7 @@ void CGroundMoveType::UpdateSkid()
 	owner->SetSpeed(spd);
 	// translate before rotate, match terrain normal if not in air
 	owner->Move(spd, true);
-	owner->UpdateDirVectors(!owner->upright && owner->IsOnGround(), owner->IsInAir(), owner->moveDef->upDirSmoothing);
+	owner->UpdateDirVectors(!owner->upright && owner->IsOnGround(), owner->IsInAir(), owner->unitDef->upDirSmoothing);
 
 	if (owner->IsSkidding()) {
 		CalcSkidRot();

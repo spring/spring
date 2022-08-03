@@ -446,23 +446,22 @@ static int MoveDefTable(lua_State* L, const void* data)
 	assert(md->pathType == mdPathType);
 	lua_createtable(L, 0, 14);
 
-	HSTR_PUSH_NUMBER(L, "id"            , md->pathType);
-	HSTR_PUSH_NUMBER(L, "smClass"       , md->speedModClass);
-	HSTR_PUSH_NUMBER(L, "xsize"         , md->xsize);
-	HSTR_PUSH_NUMBER(L, "zsize"         , md->zsize);
-	HSTR_PUSH_NUMBER(L, "depth"         , md->depth);
-	HSTR_PUSH_NUMBER(L, "maxSlope"      , md->maxSlope);
-	HSTR_PUSH_NUMBER(L, "slopeMod"      , md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod"      , md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
-	HSTR_PUSH_NUMBER(L, "crushStrength" , md->crushStrength);
-	HSTR_PUSH_NUMBER(L, "upDirSmoothing", md->upDirSmoothing);
-	HSTR_PUSH_BOOL  (L, "isSubmarine"   , md->isSubmarine);
+	HSTR_PUSH_NUMBER(L, "id"           , md->pathType);
+	HSTR_PUSH_NUMBER(L, "smClass"      , md->speedModClass);
+	HSTR_PUSH_NUMBER(L, "xsize"        , md->xsize);
+	HSTR_PUSH_NUMBER(L, "zsize"        , md->zsize);
+	HSTR_PUSH_NUMBER(L, "depth"        , md->depth);
+	HSTR_PUSH_NUMBER(L, "maxSlope"     , md->maxSlope);
+	HSTR_PUSH_NUMBER(L, "slopeMod"     , md->slopeMod);
+	HSTR_PUSH_NUMBER(L, "depthMod"     , md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
+	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
+	HSTR_PUSH_BOOL  (L, "isSubmarine"  , md->isSubmarine);
 
-	HSTR_PUSH_BOOL  (L, "heatMapping"   , md->heatMapping);
-	HSTR_PUSH_NUMBER(L, "heatMod"       , md->heatMod);
-	HSTR_PUSH_NUMBER(L, "heatProduced"  , md->heatProduced);
+	HSTR_PUSH_BOOL  (L, "heatMapping"  , md->heatMapping);
+	HSTR_PUSH_NUMBER(L, "heatMod"      , md->heatMod);
+	HSTR_PUSH_NUMBER(L, "heatProduced" , md->heatProduced);
 
-	HSTR_PUSH_STRING(L, "name"          , md->name);
+	HSTR_PUSH_STRING(L, "name"         , md->name);
 
 	return 1;
 }
@@ -739,6 +738,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
 	ADD_FLOAT("terraformSpeed", ud.terraformSpeed);
+
+	ADD_FLOAT("upDirSmoothing", ud.upDirSmoothing);
 
 	ADD_BOOL("canSubmerge",       ud.canSubmerge);
 	ADD_BOOL("floatOnWater",      ud.floatOnWater);

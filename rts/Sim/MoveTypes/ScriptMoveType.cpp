@@ -123,7 +123,7 @@ bool CScriptMoveType::Update()
 	CheckLimits();
 
 	if (trackSlope) {
-		owner->UpdateDirVectors(owner->IsOnGround(), owner->IsInAir(), owner->moveDef->upDirSmoothing);
+		owner->UpdateDirVectors(owner->IsOnGround(), owner->IsInAir(), owner->unitDef->upDirSmoothing);
 		owner->UpdateMidAndAimPos();
 	}
 
