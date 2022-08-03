@@ -445,9 +445,9 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 		const char* errString = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
 		if (errString != NULL) {
-			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, errString);
+			LOG_L(L_ERROR, fmtString, __func__, errorPos, program + errorPos, tgtString, filename, errString);
 		} else {
-			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, "(null)");
+			LOG_L(L_ERROR, fmtString, __func__, errorPos, program + errorPos, tgtString, filename, "(null)");
 		}
 
 		return true;
@@ -518,11 +518,11 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 	}
 
 	if (fbuf.back() != '\0')
-		fbuf.emplace_back('\0');
+		fbuf.emplace_back('\0'); //vmware driver can't deal with non-null terminated strings
 
 	glGenProgramsARB(1, &ret);
 	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size(), fbuf.data());
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - 1, fbuf.data()); //NV driver refuses to deal with null-terminated endings
 
 	if (CheckParseErrors(target, filename, reinterpret_cast<char*>(fbuf.data())))
 		ret = 0;

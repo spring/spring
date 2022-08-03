@@ -349,8 +349,8 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 {
 	SDL_Window* newWindow = nullptr;
 
-	const int aaLvls[] = {msaaLevel, msaaLevel / 2, msaaLevel / 4, msaaLevel / 8, msaaLevel / 16, msaaLevel / 32, 0};
-	const int zbBits[] = {24, 32, 16};
+	const std::array aaLvls = {msaaLevel, msaaLevel / 2, msaaLevel / 4, msaaLevel / 8, msaaLevel / 16, msaaLevel / 32, 0};
+	const std::array zbBits = {24, 32, 16};
 
 	const char* winName = hidden? "hidden": "main";
 	const char* wpfName = "";
@@ -381,14 +381,14 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const char* title, bool hidden) co
 	         sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless_);
 	         sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
 
-	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (newWindow == nullptr); i++) {
+	for (size_t i = 0; i < (aaLvls.size()) && (newWindow == nullptr); i++) {
 		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
 			break;
 
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, aaLvls[i] > 0);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, aaLvls[i]    );
 
-		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (newWindow == nullptr); j++) {
+		for (size_t j = 0; j < (zbBits.size()) && (newWindow == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
 			if ((newWindow = SDL_CreateWindow(title, winPosX_, winPosY_, newRes.x, newRes.y, sdlFlags)) == nullptr) {
