@@ -53,6 +53,9 @@ public:
 	float3 GetDrawPos(                float t) const { return (speed.w != 0.0f) ? (pos + speed * t) : pos; }
 	float3 GetDrawPos(const float3 v, float t) const { return (pos +     v * t); }
 
+	inline int GetMtTempNum() const { return mtTempNum[ThreadPool::GetThreadNum()]; }
+	inline void SetMtTempNum(int value) { mtTempNum[ThreadPool::GetThreadNum()] = value; }
+
 public:
 	int id = -1;
 	int tempNum = 0;            ///< used to check if object has already been processed (in QuadField queries, etc)

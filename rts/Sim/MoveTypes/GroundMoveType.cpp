@@ -503,13 +503,41 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
+	ASSERT_SYNCED(currWayPoint);
+	ASSERT_SYNCED(nextWayPoint);
 	ASSERT_SYNCED(owner->pos);
 
 	const short heading = owner->heading;
 
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
-	UpdateOwnerAccelAndHeading();
+	//UpdateOwnerAccelAndHeading();
+	SyncWaypoints();
+	pathManager->UpdatePath(owner, pathID);
+	switch (setHeading) {
+		case 1:
+			ChangeHeading(setHeadingDir);
+			ChangeSpeed(maxWantedSpeed, WantReverse(lastAvoidanceDir, flatFrontDir));
+			setHeading = 0;
+			break;
+		case 2:
+			SetMainHeading();
+			ChangeSpeed(0.0f, false);
+			setHeading = 0;
+			break;
+	}
+	if (pathingFailed) {
+		Fail(false);
+		pathingFailed = false;
+	}
+	if (pathingArrived) {
+		Arrived(false);
+		pathingArrived = false;
+	}
+	if (owner->UnderFirstPersonControl()){
+		UpdateDirectControl();
+	}
+
 	UpdateOwnerPos(owner->speed, calcSpeedVectorFuncs[modInfo.allowGroundUnitGravity](owner, this, deltaSpeed, myGravity));
 	HandleObjectCollisions();
 	AdjustPosToWaterLine();
@@ -524,18 +552,27 @@ bool CGroundMoveType::Update()
 
 void CGroundMoveType::UpdateOwnerAccelAndHeading()
 {
+	if (owner->GetTransporter() != nullptr) return;
+	if (owner->IsSkidding()) return;
+	if (owner->IsFalling()) return;
+
 	if (owner->IsStunned() || owner->beingBuilt) {
 		ChangeSpeed(0.0f, false);
 		return;
 	}
 
+	if (owner->UnderFirstPersonControl()) return;
+
+	earlyCurrWayPoint = currWayPoint;
+	earlyNextWayPoint = nextWayPoint;
+
 	// either follow user control input or pathfinder
 	// waypoints; change speed and heading as required
-	if (owner->UnderFirstPersonControl()) {
-		UpdateDirectControl();
-	} else {
+	// if (owner->UnderFirstPersonControl()) {
+	// 	UpdateDirectControl();
+	// } else {
 		FollowPath();
-	}
+	// }
 }
 
 void CGroundMoveType::SlowUpdate()
@@ -727,16 +764,19 @@ bool CGroundMoveType::FollowPath()
 	bool wantReverse = false;
 
 	if (WantToStop()) {
-		currWayPoint.y = -1.0f;
-		nextWayPoint.y = -1.0f;
+		// currWayPoint.y = -1.0f;
+		// nextWayPoint.y = -1.0f;
+		earlyCurrWayPoint.y = -1.0f;
+		earlyNextWayPoint.y = -1.0f;
 
-		SetMainHeading();
-		ChangeSpeed(0.0f, false);
+		// SetMainHeading();
+		// ChangeSpeed(0.0f, false);
+		setHeading = 2;
 		//LOG("%s stop", __func__);
 	} else {
-		ASSERT_SYNCED(currWayPoint);
-		ASSERT_SYNCED(nextWayPoint);
-		ASSERT_SYNCED(owner->pos);
+		// ASSERT_SYNCED(currWayPoint);
+		// ASSERT_SYNCED(nextWayPoint);
+		// ASSERT_SYNCED(owner->pos);
 
 		#ifdef PATHING_DEBUG
 		if (DEBUG_DRAWING_ENABLED) {
@@ -764,10 +804,12 @@ bool CGroundMoveType::FollowPath()
 		const float3& opos = owner->pos;
 		const float3& ovel = owner->speed;
 		const float3&  ffd = flatFrontDir;
-		const float3&  cwp = currWayPoint;
+		// const float3&  cwp = currWayPoint;
+		const float3&  cwp = earlyCurrWayPoint;
 
 		prevWayPointDist = currWayPointDist;
-		currWayPointDist = currWayPoint.distance2D(opos);
+		// currWayPointDist = currWayPoint.distance2D(opos);
+		currWayPointDist = earlyCurrWayPoint.distance2D(opos);
 
 		{
 			// NOTE:
@@ -839,7 +881,8 @@ bool CGroundMoveType::FollowPath()
 					}
 				}
 				#endif
-				Arrived(false);
+				//Arrived(false);
+				pathingArrived = true;
 			} else {
 				#ifdef PATHING_DEBUG
 				if (DEBUG_DRAWING_ENABLED) {
@@ -865,8 +908,8 @@ bool CGroundMoveType::FollowPath()
 			// wpProjDists = {math::fabs(waypointVec.dot(ffd)), 1.0f, math::fabs(waypointDir.dot(ffd))};
 		}
 
-		ASSERT_SYNCED(waypointVec);
-		ASSERT_SYNCED(waypointDir);
+		//ASSERT_SYNCED(waypointVec);
+		//ASSERT_SYNCED(waypointDir);
 
 		wantReverse = WantReverse(waypointDir, ffd);
 
@@ -878,8 +921,11 @@ bool CGroundMoveType::FollowPath()
 
 		const float3& modWantedDir = lastAvoidanceDir;
 
-		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
-		ChangeSpeed(maxWantedSpeed, wantReverse);
+		// ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
+		// ChangeSpeed(maxWantedSpeed, wantReverse);
+		setHeading = 1;
+		setHeadingDir = GetHeadingFromVector(modWantedDir.x, modWantedDir.z);
+		
 
 		#ifdef PATHING_DEBUG
 		if (DEBUG_DRAWING_ENABLED) {
@@ -920,7 +966,7 @@ bool CGroundMoveType::FollowPath()
 		}
 	}
 
-	pathManager->UpdatePath(owner, pathID);
+	//pathManager->UpdatePath(owner, pathID);
 	return wantReverse;
 }
 
@@ -1754,13 +1800,13 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 	}
 	#endif
 
-	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
+	if (earlyCurrWayPoint.y != -1.0f && earlyNextWayPoint.y != -1.0f) {
 		const float3& pos = owner->pos;
-		      float3& cwp = (float3&) currWayPoint;
-		      float3& nwp = (float3&) nextWayPoint;
+		      float3& cwp = earlyCurrWayPoint;
+		      float3& nwp = earlyNextWayPoint;
 
 		// QTPFS ONLY PATH
-		if (pathManager->PathUpdated(pathID)) {
+		if (pathManager->PathUpdated(pathID)) { // MT Safe????
 			// path changed while we were following it (eg. due
 			// to terrain deformation) in between two waypoints
 			// but still has the same ID; in this case (which is
@@ -1770,16 +1816,17 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 		}
 
-		if (DEBUG_DRAWING_ENABLED) {
-			if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
-				// plot the vectors to {curr, next}WayPoint
-				const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
-				const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		// needs mt safety applied
+		// if (DEBUG_DRAWING_ENABLED) {
+		// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
+		// 		// plot the vectors to {curr, next}WayPoint
+		// 		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		// 		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 
-				geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-				geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-			}
-		}
+		// 		geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+		// 		geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+		// 	}
+		// }
 
 		// perform a turn-radius check: if the waypoint lies outside
 		// our turning circle, do not skip since we can steer toward
@@ -1903,8 +1950,10 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		#endif
 
 		if (atEndOfPath) {
-			currWayPoint = goalPos;
-			nextWayPoint = goalPos;
+			earlyCurrWayPoint = goalPos;
+			earlyNextWayPoint = goalPos;
+			// currWayPoint = goalPos;
+			// nextWayPoint = goalPos;
 			return false;
 		}
 	}
@@ -1952,8 +2001,9 @@ void CGroundMoveType::SetNextWayPoint()
 		// -----------------------------------
 	}
 
-	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
-		Fail(false);
+	if (earlyNextWayPoint.x == -1.0f && earlyNextWayPoint.z == -1.0f) {
+		//Fail(false);
+		pathingFailed = true;
 		#ifdef PATHING_DEBUG
 		if (DEBUG_DRAWING_ENABLED) {
 			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)
@@ -1966,8 +2016,10 @@ void CGroundMoveType::SetNextWayPoint()
 		return;
 	}
 
-	const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner);
-	const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
+	// const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner);
+	// const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
+	const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, earlyCurrWayPoint, owner);
+	const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, earlyNextWayPoint, owner);
 
 	if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0 && (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) == 0){
 		#ifdef PATHING_DEBUG

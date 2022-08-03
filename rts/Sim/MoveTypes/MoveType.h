@@ -65,6 +65,7 @@ public:
 	void UpdateCollisionMap();
 
 	virtual void UpdateObstacleAvoidance() {};
+	virtual void UpdateOwnerAccelAndHeading() {};
 
 	virtual bool IsSkidding() const { return false; }
 	virtual bool IsFlying() const { return false; }

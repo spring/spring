@@ -175,7 +175,7 @@ private:
 
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerAccelAndHeading();
+	void UpdateOwnerAccelAndHeading() override;
 	void UpdateOwnerPos(const float3&, const float3&);
 	bool UpdateOwnerSpeed(float oldSpeedAbs, float newSpeedAbs, float newSpeedRaw);
 	bool OwnerMoved(const short, const float3&, const float3&);
@@ -242,6 +242,10 @@ private:
 	bool canReverse = false;
 	bool useMainHeading = false;            /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
 	bool useRawMovement = false;            /// if true, move towards goal without invoking PFS (unrelated to MoveDef::allowRawMovement)
+	bool pathingFailed = false;
+	bool pathingArrived = false;
+	int setHeading = 0; // 1 = Regular (use setHeadingDir), 2 = Main
+	short setHeadingDir = 0;
 };
 
 #endif // GROUNDMOVETYPE_H

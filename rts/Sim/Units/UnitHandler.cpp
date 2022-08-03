@@ -311,6 +311,13 @@ void CUnitHandler::UpdateUnitMoveTypes()
 		moveType->UpdateObstacleAvoidance();
 	});
 
+	for_mt(0, activeUnits.size(), [this](const int i){
+		CUnit* unit = activeUnits[i];
+		AMoveType* moveType = unit->moveType;
+
+		moveType->UpdateOwnerAccelAndHeading();
+	});
+
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;
