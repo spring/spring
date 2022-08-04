@@ -85,7 +85,8 @@ public:
 	 *                 (FONT_LEFT | FONT_CENTER | FONT_RIGHT) |
 	 *                 (FONT_BASELINE | FONT_DESCENDER | FONT_VCENTER |
 	 *                  FONT_TOP | FONT_ASCENDER | FONT_BOTTOM) |
-	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW
+	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW |
+	 *                 FONT_BUFFERED
 	 */
 	void glPrint(float x, float y, float s, const int options, const std::string& str);
 	void glPrintTable(float x, float y, float s, const int options, const std::string& str);
@@ -99,8 +100,8 @@ public:
 	void SetColors(const float4* textColor = nullptr, const float4* outlineColor = nullptr);
 	void SetTextColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetTextColor(&f); }
 	void SetOutlineColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetOutlineColor(&f); }
-	void SetTextColor(SColor rgba) { SetTextColor(&static_cast<float4>(rgba)); }
-	void SetOutlineColor(SColor rgba) { SetOutlineColor(&static_cast<float4>(rgba)); }
+	void SetTextColor(SColor rgba) { const float4 f = rgba; SetTextColor(&f); }
+	void SetOutlineColor(SColor rgba) { const float4 f = rgba; SetOutlineColor(&f); }
 	void SetTextDepth(float z = 0.0f) { textDepth.x = z; }
 	void SetOutlineDepth(float z = 0.0f) { textDepth.y = z; }
 
