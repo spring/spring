@@ -237,7 +237,7 @@ void CStartPosSelecter::Draw()
 
 		font->SetColors(); // default
 		font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Ready");
-		font->DrawBufferedGL4();
+		font->DrawBuffered();
 	}
 }
 

@@ -4,7 +4,6 @@
 #include "InMapDrawView.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 
 #include "Game/Camera.h"
@@ -24,32 +23,25 @@ static inline unsigned char smoothStep(int x, int y, int a) {
 
 CInMapDrawView::CInMapDrawView()
 {
-	unsigned char tex[64][128][4];
-	for (int y = 0; y < 64; y++) {
-		for (int x = 0; x < 128; x++) {
-			tex[y][x][0] = 0;
-			tex[y][x][1] = 0;
-			tex[y][x][2] = 0;
-			tex[y][x][3] = 0;
-		}
-	}
+	uint8_t tex[64][128][4];
+	std::memset(tex, 0, sizeof(tex));
 
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
-			float dist = std::sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
+			const float dist = std::sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
 			if (dist > 31.0f) {
 				// do nothing - leave transparent
 			} else if (dist > 30.0f) {
 				// interpolate (outline -> nothing)
-				float a = (dist - 30.0f);
+				const float a = (dist - 30.0f);
 				tex[y][x][3] = smoothStep(255,   0, a);
 			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
 			} else if (dist > 23.0f) {
 				// interpolate (inner -> outline)
-				float a = (dist - 23.0f);
+				const float a = (dist - 23.0f);
 				tex[y][x][0] = smoothStep(255,   0, a);
 				tex[y][x][1] = smoothStep(255,   0, a);
 				tex[y][x][2] = smoothStep(255,   0, a);
@@ -65,19 +57,19 @@ CInMapDrawView::CInMapDrawView()
 	for (int y = 0; y < 64; y++) {
 		// linear falloff
 		for (int x = 64; x < 128; x++) {
-			float dist = abs(y - 32);
+			const float dist = std::abs(y - 32);
 			if (dist > 31.0f) {
 				// do nothing - leave transparent
 			} else if (dist > 30.0f) {
 				// interpolate (outline -> nothing)
-				float a = (dist - 30.0f);
+				const float a = (dist - 30.0f);
 				tex[y][x][3] = smoothStep(255,   0, a);
 			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
 			} else if (dist > 23.0f) {
 				// interpolate (inner -> outline)
-				float a = (dist - 23.0f);
+				const float a = (dist - 23.0f);
 				tex[y][x][0] = smoothStep(255,   0, a);
 				tex[y][x][1] = smoothStep(255,   0, a);
 				tex[y][x][2] = smoothStep(255,   0, a);
@@ -98,6 +90,7 @@ CInMapDrawView::CInMapDrawView()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 
@@ -109,14 +102,12 @@ CInMapDrawView::~CInMapDrawView()
 
 struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 {
-	CVertexArray* pointsVa;
-	CVertexArray* linesVa;
+	TypedRenderBuffer<VA_TYPE_TC>* rbp = nullptr;
+	TypedRenderBuffer<VA_TYPE_C >* rbl = nullptr;
+
 	std::vector<const CInMapDrawModel::MapPoint*>* visibleLabels;
 
-	void ResetState() {
-		pointsVa = nullptr;
-		linesVa = nullptr;
-	}
+	void ResetState() {}
 	void DrawQuad(int x, int y);
 
 private:
@@ -132,27 +123,31 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) con
 	const float3 dir2 = (dif.cross(dir1));
 
 
-	const unsigned char* pcolor = point->IsBySpectator() ? color4::white : teamHandler.Team(point->GetTeamID())->color;
-	const unsigned char color[4] = {pcolor[0], pcolor[1], pcolor[2], 200};
+	SColor color = point->IsBySpectator() ? color4::white : SColor{ teamHandler.Team(point->GetTeamID())->color };
+	color.a = 200;
 
 	const float size = 6.0f;
 	const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
 	const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
 
-	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, color);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, color);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, color);
-	pointsVa->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, color);
-
-	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, color);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, color);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, color);
-	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, color);
-
-	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, color);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, color);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, color);
-	pointsVa->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, color);
+	rbp->AddQuadTriangles(
+		{ pos1 - dir1 * size,               0.25f, 0, color },
+		{ pos1 + dir1 * size,               0.25f, 1, color },
+		{ pos1 + dir1 * size + dir2 * size, 0.00f, 1, color },
+		{ pos1 - dir1 * size + dir2 * size, 0.00f, 0, color }
+	);
+	rbp->AddQuadTriangles(
+		{ pos1 - dir1 * size,               0.75f, 0, color },
+		{ pos1 + dir1 * size,               0.75f, 1, color },
+		{ pos2 + dir1 * size,               0.75f, 1, color },
+		{ pos2 - dir1 * size,               0.75f, 0, color }
+	);
+	rbp->AddQuadTriangles(
+		{ pos2 - dir1 * size,               0.25f, 0, color },
+		{ pos2 + dir1 * size,               0.25f, 1, color },
+		{ pos2 + dir1 * size - dir2 * size, 0.00f, 1, color },
+		{ pos2 - dir1 * size - dir2 * size, 0.00f, 0, color }
+	);
 
 	if (!point->GetLabel().empty()) {
 		visibleLabels->push_back(point);
@@ -161,16 +156,17 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) con
 
 void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line) const
 {
-	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler.Team(line->GetTeamID())->color;
-	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color);
-	linesVa->AddVertexQC(line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color);
+	const SColor color = line->IsBySpectator() ? color4::white : SColor{ teamHandler.Team(line->GetTeamID())->color };
+	rbl->AddVertices({
+		{ line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color },
+		{ line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color }
+	});
 }
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 {
 	const CInMapDrawModel::DrawQuad* dq = inMapDrawerModel->GetDrawQuad(x, y);
 
-	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
 	for (const CInMapDrawModel::MapPoint& pi: dq->points) {
 		if (pi.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
@@ -178,7 +174,6 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		}
 	}
 
-	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
 	for (const CInMapDrawModel::MapLine& li: dq->lines) {
 		if (li.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
@@ -191,39 +186,43 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDrawView::Draw()
 {
-	CVertexArray* pointsVa = GetVertexArray();
-	pointsVa->Initialize();
-	CVertexArray* linesVa = GetVertexArray();
-	linesVa->Initialize();
-
 	InMapDraw_QuadDrawer drawer;
-	drawer.linesVa = linesVa;
-	drawer.pointsVa = pointsVa;
 	drawer.visibleLabels = &visibleLabels;
+	drawer.rbl = &rbl;
+	drawer.rbp = &rbp;
 
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-	glBindTexture(GL_TEXTURE_2D, texture);
 
 	readMap->GridVisibility(nullptr, &drawer, 1e9, CInMapDrawModel::DRAW_QUAD_SIZE);
 
-	glDisable(GL_TEXTURE_2D);
-	glLineWidth(3.f);
-	linesVa->DrawArrayC(GL_LINES); //! draw lines
-
-	// XXX hopeless drivers, retest in a year or so...
-	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
-	// so redraw lines with width 1
-	if (globalRendering->amdHacks) {
-		glLineWidth(1.f);
-		linesVa->DrawArrayC(GL_LINES);
+	{
+		glLineWidth(3.0f);
+		auto& sh = rbl.GetShader();
+		sh.Enable();
+		if (globalRendering->amdHacks) {
+			rbl.DrawArrays(GL_LINES, false); //! draw lines
+			glLineWidth(1.0f);
+			rbl.DrawArrays(GL_LINES, true ); // width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
+		}
+		else {
+			rbl.DrawArrays(GL_LINES, false); //! draw lines
+		}
+		sh.Disable();
+		glLineWidth(1.0f);
 	}
 
 	// draw points
-	glLineWidth(1);
-	glEnable(GL_TEXTURE_2D);
-	pointsVa->DrawArrayTC(GL_QUADS); //! draw point markers
+
+	{
+		glBindTexture(GL_TEXTURE_2D, texture);
+		auto& sh = rbp.GetShader();
+		sh.Enable();
+		rbp.DrawElements(GL_TRIANGLES); //! draw point markers
+		sh.Disable();
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 
 	if (!visibleLabels.empty()) {
 		font->SetColors(); // default
@@ -233,14 +232,16 @@ void CInMapDrawView::Draw()
 			const float3 pos = point->GetPos() + UpVector * 111.0f;
 
 			const CTeam* team = teamHandler.Team(point->GetTeamID());
-			const unsigned char* color = point->IsBySpectator() ? color4::white : team->color;
+			const SColor color = point->IsBySpectator() ? color4::white : SColor{ team->color };
 
-			font->SetTextColor(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f, 1.0f); //FIXME (overload!)
-			font->glWorldPrint(pos, 26.0f, point->GetLabel());
+			font->SetTextColor(color);
+			font->glWorldPrint(pos, 26.0f, point->GetLabel(), true);
 		}
 
+		font->DrawWorldBuffered();
 		visibleLabels.clear();
+		font->SetColors(); // default
 	}
 
-	glDepthMask(1);
+	glDepthMask(GL_TRUE);
 }

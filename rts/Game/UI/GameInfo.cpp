@@ -270,5 +270,5 @@ void CGameInfo::Draw()
 		font->glPrint(box.x2 - xBorder, y, 1.0f, FONT_RIGHT | FONT_SCALE | FONT_NORM | FONT_BUFFERED, vfs.msg);
 	}
 
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 }

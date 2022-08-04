@@ -154,7 +154,7 @@ void CResourceBar::Draw()
 	smallFont->glPrint(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontSize, fontOptions | FONT_BUFFERED, FloatToSmallString(rcr.metal));
 	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-	smallFont->DrawBufferedGL4();
+	smallFont->DrawBuffered();
 }
 
 

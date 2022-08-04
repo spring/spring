@@ -294,7 +294,7 @@ void CEndGameBox::Draw()
 	}
 
 	if (gs->PreSimFrame()) {
-		font->DrawBufferedGL4();
+		font->DrawBuffered();
 		return;
 	}
 
@@ -474,7 +474,7 @@ void CEndGameBox::Draw()
 		shaderC.Disable();
 	}
 
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 }
 
 std::string CEndGameBox::GetTooltip(int x, int y)

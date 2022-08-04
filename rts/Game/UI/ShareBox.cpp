@@ -253,7 +253,7 @@ void CShareBox::Draw()
 		);
 	}
 
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 }
 
 bool CShareBox::IsAbove(int x, int y)

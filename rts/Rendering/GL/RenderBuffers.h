@@ -425,18 +425,26 @@ public:
 	void AddVertex(VertType&& v) {
 		verts.emplace_back(v);
 	}
-	//develop compat
-	void SafeAppend(VertType&& v) { AddVertex(std::forward<VertType&&>(v)); }
-
-	void AddVertices(std::initializer_list<VertType>&& vs) {
-		for (auto&& v : vs) {
-			verts.emplace_back(v);
-		}
+	void AddVertices(const std::vector<VertType>& vertices) {
+		verts.insert(verts.end(), vertices.begin(), vertices.end());
 	}
+	void AddVertices(std::initializer_list<VertType>&& vertices) {
+		verts.insert(verts.end(), vertices.begin(), vertices.end());
+	}
+	//106.0 compat
+	void SafeAppend(VertType&& v) { AddVertex(std::forward<VertType&&>(v)); }
 
 	void UpdateVertex(VertType&& v, size_t at) {
 		assert(at < verts.size());
 		verts.emplace(at, v);
+	}
+	void UpdateVertices(const std::vector<VertType>& vs, size_t at) {
+		size_t cnt = 0;
+		for (auto&& v : vs) {
+			assert(cnt + at < verts.size());
+			verts.emplace(cnt + at, v);
+			++cnt;
+		}
 	}
 	void UpdateVertices(std::initializer_list<VertType>&& vs, size_t at) {
 		size_t cnt = 0;
@@ -448,19 +456,37 @@ public:
 	}
 
 	// render with DrawElements(GL_TRIANGLES)
+	void AddQuadTriangles(const std::vector<VertType>& vs) {
+		if (vs.empty())
+			return;
+
+		assert(vs.size() % 4 == 0);
+		for (size_t i = 0; i < vs.size(); i += 4) {
+			AddQuadTrianglesImpl(vs[i + 0], vs[i + 1], vs[i + 2], vs[i + 3]);
+		}
+	}
 	template<std::size_t N>
 	void AddQuadTriangles(const VertType(&vs)[N]) {
 		static_assert(N == 4);
-		AddQuadTriangles(vs[0], vs[1], vs[2], vs[3]);
+		AddQuadTrianglesImpl(vs[0], vs[1], vs[2], vs[3]);
 	}
 	void AddQuadTriangles(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { AddQuadTrianglesImpl(tl, tr, br, bl); }
 	void AddQuadTriangles(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { AddQuadTrianglesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl)); }
 
 	// render with DrawElements(GL_LINES)
+	void AddQuadLines(const std::vector<VertType>& vs) {
+		if (vs.empty())
+			return;
+
+		assert(vertices.size() % 4 == 0);
+		for (size_t i = 0; i < vs.size(); i += 4) {
+			AddQuadLinesImpl(vs[i + 0], vs[i + 1], vs[i + 2], vs[i + 3]);
+		}
+	}
 	template<std::size_t N>
 	void AddQuadLines(const VertType(&vs)[N]) {
 		static_assert(N == 4);
-		AddQuadLines(vs[0], vs[1], vs[2], vs[3]);
+		AddQuadLinesImpl(vs[0], vs[1], vs[2], vs[3]);
 	}
 	void AddQuadLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl) { AddQuadLinesImpl(tl, tr, br, bl); }
 	void AddQuadLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl) { AddQuadLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl)); }
@@ -478,7 +504,7 @@ public:
 	template<std::size_t N>
 	void MakeQuadsLines(const VertType(&vs)[N], int xDiv, int yDiv) {
 		static_assert(N == 4);
-		MakeQuadsLines(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
+		MakeQuadsLinesImpl(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
 	}
 	void MakeQuadsLines(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl, int xDiv, int yDiv) { MakeQuadsLinesImpl(tl, tr, br, bl, xDiv, yDiv); }
 	void MakeQuadsLines(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl, int xDiv, int yDiv) { MakeQuadsLinesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }

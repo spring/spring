@@ -496,7 +496,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			}
 		}
 
-		font->DrawBufferedGL4();
+		font->DrawWorldBuffered();
 	}
 	#endif
 
@@ -561,8 +561,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
 			font->SetTextColor(1.0f, 0.7f, 0.75f * drawLowResPE, 1.0f);
-			font->glWorldPrint(p1, 5.0f, blockCostsStr);
+			font->glWorldPrint(p1, 5.0f, blockCostsStr, true);
 		}
+		font->DrawWorldBuffered();
 	}
 	#endif
 }

@@ -8,6 +8,7 @@
 
 #include "System/float3.h"
 #include "Game/InMapDrawModel.h"
+#include "Rendering/GL/RenderBuffers.h"
 
 /**
  * The V in MVC for InMapDraw.
@@ -23,7 +24,10 @@ public:
 	void Draw();
 
 private:
-	unsigned int texture;
+	TypedRenderBuffer<VA_TYPE_TC>& rbp = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	TypedRenderBuffer<VA_TYPE_C >& rbl = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C >();
+
+	uint32_t texture;
 
 	std::vector<const CInMapDrawModel::MapPoint*> visibleLabels;
 };

@@ -297,6 +297,7 @@ void CglFont::SwapBuffers() {}
 void CglFont::Begin(Shader::IProgramObject* shader) {}
 void CglFont::End() {}
 void CglFont::DrawBuffered(Shader::IProgramObject* shader) {}
+void CglFont::DrawWorldBuffered(Shader::IProgramObject* shader) {}
 
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered) {}
 
@@ -856,6 +857,16 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 		bufferMutex.unlock();
 }
 
+void CglFont::DrawWorldBuffered(Shader::IProgramObject* shader)
+{
+	glPushMatrix();
+	glMultMatrixf(camera->GetBillBoardMatrix());
+
+	DrawBuffered(shader);
+
+	glPopMatrix();
+}
+
 template<int shiftXC, int shiftYC, bool outline>
 void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
@@ -974,19 +985,33 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered)
 {
-	glPushMatrix();
-	glTranslatef(p.x, p.y, p.z);
-	glMultMatrixf(camera->GetBillBoardMatrix());
+	if (!buffered) {
+		glPushMatrix();
 
-	if (!buffered)
+		CMatrix44f tbM = camera->GetBillBoardMatrix();
+		//tbM.SetPos(p); // (Tr * Bm)
+		glMultMatrixf(tbM);
+
+		float3 pos = tbM.Transpose() * p;
+
 		Begin();
-
-	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | (FONT_BUFFERED * int(buffered)), str);
-
-	if (!buffered)
+		SetTextDepth(pos.z); SetOutlineDepth(pos.z);
+		glPrint(pos.x, pos.y, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
+		SetTextDepth(); SetOutlineDepth();
 		End();
 
-	glPopMatrix();
+		glPopMatrix();
+	}
+	else {
+		CMatrix44f bm = camera->GetBillBoardMatrix();
+		float3 drawPos = bm.Transpose() * p;
+
+		// drawPos negates the effect of multiplication by camera->GetBillBoardMatrix() in DrawWorldBuffered
+
+		SetTextDepth(drawPos.z); SetOutlineDepth(drawPos.z);
+		glPrint(drawPos.x, drawPos.y, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
+		SetTextDepth(         ); SetOutlineDepth(         );
+	}
 }
 
 CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }

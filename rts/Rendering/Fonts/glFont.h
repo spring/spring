@@ -63,11 +63,11 @@ public:
 	void Begin() { Begin(defShader.get()); };
 	void End();
 
-	void DrawBufferedGL4() { DrawBuffered(); }
-	void DrawBufferedGL4(Shader::IProgramObject* shader) { DrawBuffered(shader); }
-
 	void DrawBuffered() { DrawBuffered(defShader.get()); }
 	void DrawBuffered(Shader::IProgramObject* shader);
+
+	void DrawWorldBuffered() { DrawWorldBuffered(defShader.get()); }
+	void DrawWorldBuffered(Shader::IProgramObject* shader);
 
 	void SwapBuffers();
 
@@ -97,10 +97,12 @@ public:
 	void SetTextColor(const float4* color = nullptr);
 	void SetOutlineColor(const float4* color = nullptr);
 	void SetColors(const float4* textColor = nullptr, const float4* outlineColor = nullptr);
-	void SetTextColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetTextColor(&f); };
-	void SetOutlineColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetOutlineColor(&f); };
-	void SetTextDepth(float z) { textDepth.x = z; }
-	void SetOutlineDepth(float z) { textDepth.y = z; }
+	void SetTextColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetTextColor(&f); }
+	void SetOutlineColor(float r, float g, float b, float a) { const float4 f{r, g, b, a}; SetOutlineColor(&f); }
+	void SetTextColor(SColor rgba) { SetTextColor(&static_cast<float4>(rgba)); }
+	void SetOutlineColor(SColor rgba) { SetOutlineColor(&static_cast<float4>(rgba)); }
+	void SetTextDepth(float z = 0.0f) { textDepth.x = z; }
+	void SetOutlineDepth(float z = 0.0f) { textDepth.y = z; }
 
 	float GetCharacterWidth(const char32_t c);
 

@@ -208,7 +208,7 @@ void CQuitBox::Draw()
 		);
 	}
 
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 }
 
 bool CQuitBox::IsAbove(int x, int y)

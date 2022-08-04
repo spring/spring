@@ -575,7 +575,7 @@ void ProfileDrawer::DrawScreen()
 
 	shader.Disable();
 
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 
 	glMatrixMode(GL_PROJECTION); glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);  glPopMatrix();

@@ -108,7 +108,7 @@ void QTPFSPathDrawer::DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) 
 		font->glWorldPrint(pos, 5.0f, FloatToString(node->GetMoveCost(), "%8.2f"), true);
 	}
 
-	font->DrawBufferedGL4();
+	font->DrawWorldBuffered();
 	#undef zmidw
 	#undef xmidw
 }
