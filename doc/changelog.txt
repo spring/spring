@@ -67,6 +67,9 @@ Sim:
    default)
  - Record the previous draw flag of units/features to support incremental rendering queries
  - Multi-threaded GroundMoveType collision avoidance
+ - Multi-threaded GroundMoveType heading and accelaration planning
+ - GroundMoveType checks whether waypoints have changed before updating synced waypoint vars.
+   This avoids unnecessary expensive checksum updates.
 
 System:
  - Improved spinlocks by reducing their impact on the CPU, changed implementation from a
