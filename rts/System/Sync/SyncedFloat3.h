@@ -331,6 +331,11 @@ public:
 			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
 	}
 
+	// For when bit level precision is necessary.
+	bool bitExactEquals(const float3& f) const {
+		return (x == f.x) && (y == f.y) && (z == f.z);
+	}
+
 	/**
 	 * @brief dot product
 	 * @param f float3 to use

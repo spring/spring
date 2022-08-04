@@ -105,8 +105,12 @@ public:
 		else if (curRepath & PATH_REQUEST_UPDATE_EXISTING) { DoSetNextWaypoint(); }
 	}
 	void SyncWaypoints() {
-		currWayPoint = earlyCurrWayPoint;
-		nextWayPoint = earlyNextWayPoint;
+		// Synced vars trigger a checksum update on change, which is expensive so we should check
+		// that there has been a change before triggering an update to the checksum.
+		if (!currWayPoint.bitExactEquals(earlyCurrWayPoint))
+			currWayPoint = earlyCurrWayPoint;
+		if (!nextWayPoint.bitExactEquals(earlyNextWayPoint))
+			nextWayPoint = earlyNextWayPoint;
 	}
 	unsigned int GetPathId() { return pathID; }
 	
