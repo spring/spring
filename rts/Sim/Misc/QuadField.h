@@ -276,8 +276,6 @@ struct QuadFieldQuery {
 	std::vector<CProjectile*>* projectiles = nullptr;
 	std::vector<CSolidObject*>* solids = nullptr;
 	std::vector<int>* quads = nullptr;
-
-	int originalThread = 0;
 };
 
 
