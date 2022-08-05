@@ -40,6 +40,7 @@ public:
 	int GetTempNum() { return tempNum++; }
 
 	int GetMtTempNum() { return mtTempNum[ThreadPool::GetThreadNum()]++; }
+	int GetMtTempNum(int tid) { return mtTempNum[tid]++; }
 
 	// remains true until first SimFrame call
 	bool PreSimFrame() const { return (frameNum == -1); }

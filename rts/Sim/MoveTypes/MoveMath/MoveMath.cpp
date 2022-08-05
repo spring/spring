@@ -317,7 +317,8 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 
 	BlockType ret = BLOCK_NONE;
 
-	const int tempNum = gs->GetMtTempNum();
+	const int thread = ThreadPool::GetThreadNum();
+	const int tempNum = gs->GetMtTempNum(thread);
 
 	// footprints are point-symmetric around <xSquare, zSquare>
 	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
@@ -329,10 +330,10 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 			for (size_t i = 0, n = cell.size(); i < n; i++) {
 				CSolidObject* collidee = cell[i];
 
-				if (collidee->GetMtTempNum() == tempNum)
+				if (collidee->mtTempNum[thread] == tempNum)
 					continue;
 
-				collidee->SetMtTempNum(tempNum);
+				collidee->mtTempNum[thread] = tempNum;
 
 				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
 					continue;
