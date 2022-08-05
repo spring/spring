@@ -751,9 +751,6 @@ void CGroundMoveType::UpdateObstacleAvoidance() {
 	if (owner->UnderFirstPersonControl())
 		return;
 
-	if (WantToStop())
-		return;
-
 	const float3&  ffd = flatFrontDir;
 	auto wantReverse = WantReverse(waypointDir, ffd);
 	const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
