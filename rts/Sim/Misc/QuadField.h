@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "System/Misc/NonCopyable.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 #include "System/type2.h"
@@ -246,8 +247,8 @@ private:
 	QueryVectorCache<CUnit*> tempUnits;
 	QueryVectorCache<CFeature*> tempFeatures;
 	QueryVectorCache<CProjectile*> tempProjectiles;
-	std::vector< QueryVectorCache<CSolidObject*> > tempSolids;
-	std::vector< QueryVectorCache<int> > tempQuads;
+	std::array< QueryVectorCache<CSolidObject*>, ThreadPool::MAX_THREADS > tempSolids;
+	std::array< QueryVectorCache<int>, ThreadPool::MAX_THREADS > tempQuads;
 
 	float2 invQuadSize;
 
@@ -275,6 +276,8 @@ struct QuadFieldQuery {
 	std::vector<CProjectile*>* projectiles = nullptr;
 	std::vector<CSolidObject*>* solids = nullptr;
 	std::vector<int>* quads = nullptr;
+
+	int originalThread = 0;
 };
 
 

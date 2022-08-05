@@ -482,6 +482,8 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 
 bool CGroundMoveType::Update()
 {
+	//SCOPED_TIMER("Sim::Unit::MoveType::Update");
+
 	ASSERT_SYNCED(owner->pos);
 
 	// do nothing at all if we are inside a transport
@@ -529,7 +531,7 @@ bool CGroundMoveType::Update()
 	if (pathingFailed) {
 		Fail(false);
 		pathingFailed = false;
-	}
+	} else
 	if (pathingArrived) {
 		Arrived(false);
 		pathingArrived = false;

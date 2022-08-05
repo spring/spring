@@ -123,17 +123,11 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
 
-	int threadCount = ThreadPool::GetNumThreads();
-	tempQuads.reserve(threadCount);
-	tempSolids.reserve(threadCount);
+	size_t threadCount = ThreadPool::GetNumThreads();
 
-	for (auto i = 0; i < threadCount; ++i) {
-		auto newQueryVectorCache = tempQuads.emplace_back();
-
-		newQueryVectorCache.ReserveAll(numQuadsX * numQuadsZ);
-		newQueryVectorCache.ReleaseAll();
-
-		tempSolids.emplace_back();
+	for (size_t i = 0; i < threadCount; ++i) {
+		tempQuads[i].ReserveAll(numQuadsX * numQuadsZ);
+		tempQuads[i].ReleaseAll();
 	}
 
 
@@ -156,15 +150,11 @@ void CQuadField::Kill()
 	tempFeatures.ReleaseAll();
 	tempProjectiles.ReleaseAll();
 
-	for (auto cache : tempSolids) {
+	for (auto cache : tempSolids)
 		cache.ReleaseAll();
-	}
-	tempSolids.clear();
 
-	for (auto cache : tempQuads) {
+	for (auto cache : tempQuads)
 		cache.ReleaseAll();
-	}
-	tempQuads.clear();
 }
 
 void CQuadField::ReleaseVector(std::vector<CSolidObject*>* v)
