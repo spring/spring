@@ -88,7 +88,7 @@ namespace spring {
 
 		// thread-safe but slower version of get()
 		inline
-		const LruValue GetThreadSafe(const LruKey& key) const noexcept
+		const LruValue GetThreadSafe(const LruKey& key) noexcept
 		{
 			std::lock_guard<std::mutex> lg(mut);
 			return AccessClock2Hand(key, nullptr);

@@ -37,12 +37,6 @@ namespace spring {
 			if (!released) d(r);
 		}
 
-		const R&& Release() const {
-			if (released)
-				throw std::runtime_error("Scoped Object already released");
-			released = true;
-			return std::move(r);
-		}
 		R&& Release() {
 			if (released)
 				throw std::runtime_error("Scoped Object already released");

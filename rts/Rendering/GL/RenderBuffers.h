@@ -478,7 +478,7 @@ public:
 		if (vs.empty())
 			return;
 
-		assert(vertices.size() % 4 == 0);
+		assert(vs.size() % 4 == 0);
 		for (size_t i = 0; i < vs.size(); i += 4) {
 			AddQuadLinesImpl(vs[i + 0], vs[i + 1], vs[i + 2], vs[i + 3]);
 		}
