@@ -164,18 +164,18 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
 	rb = std::make_unique<TypedRenderBuffer<VA_TYPE_C>>(1 << 10, 0);
 
-	const unsigned char fogColor[4] = {
-		(unsigned char)(255 * sky->fogColor[0]),
-		(unsigned char)(255 * sky->fogColor[1]),
-		(unsigned char)(255 * sky->fogColor[2]),
-		 255
+	const SColor fogColor = {
+		sky->fogColor[0],
+		sky->fogColor[1],
+		sky->fogColor[2],
+		1.0f
 	};
 
-	const unsigned char planeColor[4] = {
-		(unsigned char)(255 * waterRendering->planeColor[0]),
-		(unsigned char)(255 * waterRendering->planeColor[1]),
-		(unsigned char)(255 * waterRendering->planeColor[2]),
-		 255
+	const SColor planeColor = {
+		waterRendering->planeColor[0],
+		waterRendering->planeColor[1],
+		waterRendering->planeColor[2],
+		1.0f
 	};
 
 	const float alphainc = math::TWOPI / 32;
@@ -209,6 +209,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 }
 
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
+#if 0
 	if (drawWaterReflection)
 		return;
 
@@ -220,7 +221,7 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 	const bool camOufOfMap = camera->GetPos().IsInBounds() && !mapRendering->voidWater;
 	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
-	auto& shader = rb->GetShader();
+	auto& shader = TypedRenderBuffer<VA_TYPE_C>::GetShader();
 	shader.Enable();
 	rb->DrawArrays(GL_TRIANGLE_STRIP, false);
 	shader.Disable();
@@ -228,6 +229,7 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	glPopMatrix();
 
 	glDepthMask(GL_TRUE);
+#endif
 }
 
 
