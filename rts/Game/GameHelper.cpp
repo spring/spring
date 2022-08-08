@@ -1440,6 +1440,7 @@ bool CGameHelper::CheckTerrainConstraints(
 	float minDepth = MoveDef::GetDefaultMinWaterDepth();
 	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
 	float maxSlope = 90.0f; // NB: aircraft use this too
+	bool isFloating;
 
 	if (moveDef != nullptr) {
 		// we are a mobile ground-unit, use MoveDef limits
@@ -1450,6 +1451,7 @@ bool CGameHelper::CheckTerrainConstraints(
 		}
 
 		maxSlope = moveDef->maxSlope;
+		isFloating = moveDef->FloatOnWater();
 	} else {
 		if (!unitDef->canfly) {
 			// we are a building, use UnitDef limits
@@ -1459,22 +1461,25 @@ bool CGameHelper::CheckTerrainConstraints(
 			// submerging or floating aircraft
 			maxDepth *= (unitDef->canSubmerge || unitDef->floatOnWater);
 		}
+		isFloating = unitDef->floatOnWater;
 	}
 
 	if (clampedHeight != nullptr)
 		*clampedHeight = Clamp(groundHeight, -maxDepth, -minDepth);
 
-
-	if (unitDef->IsImmobileUnit()) {
-		// check maxHeightDif constraint for structures
-		//
-		// if structure is capable of floating, only factor in
-		// the height difference IF terrain is above sea-level
-		slopeCheck |= (unitDef->floatOnWater && groundHeight <= 0.0f);
+	/* NB: mobiles also have maxHeightDiff, which can have a different
+	 * value compared to moveDef and could be used here (for example,
+	 * maybe a spiderbot still needs to be constructed on flat terrain).
+	 * This applies to depth as well (maybe a tortoise still needs to
+	 * hatch on land). Doing that is potentially a breaking change though
+	 * since games may not have paid attention to those values. */
+	if (unitDef->IsImmobileUnit())
 		slopeCheck |= (std::abs(wantedHeight - groundHeight) <= unitDef->maxHeightDif);
-	} else {
+	else
 		slopeCheck |= (groundSlope <= maxSlope);
-	}
+
+	// floaters don't mind the slope of the seafloor
+	slopeCheck |= (isFloating && groundHeight <= 0.0f);
 
 	// <groundHeight> must lie in the range [-maxDepth, -minDepth]
 	depthCheck &= (groundHeight >= -maxDepth);
