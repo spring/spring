@@ -6,13 +6,18 @@
 #include <string>
 
 #include "ISky.h"
+#include "Rendering/GL/VAO.h"
 #include "Map/MapTexture.h"
+
+namespace Shader {
+	struct IProgramObject;
+}
 
 class CSkyBox : public ISky
 {
 public:
 	CSkyBox(const std::string& texture);
-	~CSkyBox();
+	~CSkyBox() override;
 
 	void Update() override {}
 	void UpdateSunDir() override {}
@@ -27,6 +32,8 @@ public:
 	}
 
 private:
+	VAO skyVAO; //even though VAO has no attached VBOs, it's still needed to perform rendering
+	Shader::IProgramObject* shader;
 	MapTexture skyTex;
 };
 

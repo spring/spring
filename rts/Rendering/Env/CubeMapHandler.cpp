@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Units/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Env/DebugCubeMapTexture.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -198,38 +199,38 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 		CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 		const float3* fd = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X];
-		const float4& fc = faceColors[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X];
 
-		if (globalRendering->drawDebugCubeMap) {
-			glClearColor(fc.x, fc.y, fc.z, fc.w);
-			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		} else {
-			// env-reflections are only correct when drawn from an inverted
-			// perspective (meaning right becomes left and up becomes down)
-			curCam->forward  = fd[0];
-			curCam->right    = fd[1] * -1.0f;
-			curCam->up       = fd[2] * -1.0f;
+		// env-reflections are only correct when drawn from an inverted
+		// perspective (meaning right becomes left and up becomes down)
+		curCam->forward  = fd[0];
+		curCam->right    = fd[1] * -1.0f;
+		curCam->up       = fd[2] * -1.0f;
 
-			// set vertical *and* horizontal FOV to 90 degrees
-			curCam->SetVFOV(90.0f);
-			curCam->SetAspectRatio(1.0f);
-			curCam->SetPos(prvCam->GetPos());
+		// set vertical *and* horizontal FOV to 90 degrees
+		curCam->SetVFOV(90.0f);
+		curCam->SetAspectRatio(1.0f);
+		curCam->SetPos(prvCam->GetPos());
 
-			curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
-			curCam->UpdateViewRange();
-			curCam->UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, curCam->GetAspectRatio());
-			curCam->UpdateFrustum();
-			curCam->LoadMatrices();
+		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
+		curCam->UpdateViewRange();
+		curCam->UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, curCam->GetAspectRatio());
+		curCam->UpdateFrustum();
+		curCam->LoadMatrices();
 
-			// generate the face
-			game->SetDrawMode(CGame::gameReflectionDraw);
+		// generate the face
+		game->SetDrawMode(CGame::gameReflectionDraw);
+
+		if (!globalRendering->drawDebugCubeMap) {
 			sky->Draw();
-
 			if (!skyOnly)
 				readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
-
-			game->SetDrawMode(CGame::gameNormalDraw);
 		}
+		else {
+			debugCubeMapTexture.Draw(glFace);
+		}
+
+		game->SetDrawMode(CGame::gameNormalDraw);
+
 
 		CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 	}

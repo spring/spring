@@ -1,16 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <vector>
+#include <algorithm>
 
 #include "SkyBox.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Env/DebugCubeMapTexture.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "System/Exceptions.h"
 #include "System/float3.h"
+#include "System/type2.h"
+#include "System/Color.h"
 #include "System/Log/ILog.h"
 
 #define LOG_SECTION_SKY_BOX "SkyBox"
@@ -24,6 +31,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 
 CSkyBox::CSkyBox(const std::string& texture)
+	: skyVAO()
 {
 #ifndef HEADLESS
 	CBitmap btex;
@@ -36,12 +44,21 @@ CSkyBox::CSkyBox(const std::string& texture)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
+	shader = shaderHandler->CreateProgramObject("[SkyBox]", "SkyBox", false);
+	shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/CubeMapVS.glsl", "", GL_VERTEX_SHADER));
+	shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/CubeMapFS.glsl", "", GL_FRAGMENT_SHADER));
+	shader->Link();
+	shader->Enable();
+	shader->SetUniform("skybox", 0);
+	shader->Disable();
+	shader->Validate();
 #endif
 	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
 CSkyBox::~CSkyBox()
 {
+	shaderHandler->ReleaseProgramObject("[SkyBox]", "SkyBox");
 }
 
 void CSkyBox::Draw()
@@ -49,61 +66,41 @@ void CSkyBox::Draw()
 	if (!globalRendering->drawSky)
 		return;
 
-	glColor3f(1,1,1);
-	glDisable(GL_FOG);
-	glDisable(GL_BLEND);
-	glDepthMask(0);
-	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_TEXTURE_CUBE_MAP);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
+	glDisable(GL_BLEND);
+	//glDepthFunc(GL_LEQUAL);
 
 	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+	glPushMatrix();
+	CMatrix44f view = camera->GetViewMatrix();
+	view.SetPos(float3());
+	glLoadMatrixf(view);
+
 	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
+	glPushMatrix();
+	glLoadMatrixf(camera->GetProjectionMatrix());
 
-		if (game->GetDrawMode() == CGame::GameDrawMode::gameReflectionDraw)
-			glScalef(globalRendering->aspectRatio, 1.0, 1.0);
+	if (globalRendering->drawDebugCubeMap)
+		glBindTexture(GL_TEXTURE_CUBE_MAP, debugCubeMapTexture.GetId());
+	else
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
-		gluOrtho2D(0, 1, 0, 1);
+	skyVAO.Bind();
+	assert(shader->IsValid());
+	shader->Enable();
 
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-	GLfloat verts[] = {
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f, 0.0f
-	};
-	float3 texcoords[] = {
-		-camera->CalcPixelDir(                         0,                          0),
-		-camera->CalcPixelDir(globalRendering->viewSizeX,                          0),
-		-camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY),
-		-camera->CalcPixelDir(                         0, globalRendering->viewSizeY)
-	};
+	shader->Disable();
+	skyVAO.Unbind();
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(3, GL_FLOAT, 0, texcoords);
-	glVertexPointer(2, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 	// glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
+	glPopMatrix();
+
 	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-
-	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-	glDepthMask(1);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	glPopMatrix();
 
 	sky->SetupFog();
 }

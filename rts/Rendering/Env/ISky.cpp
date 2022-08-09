@@ -30,7 +30,6 @@ ISky::ISky()
 	, skyLight(nullptr)
 	, wireFrameMode(false)
 	, dynamicSky(false)
-
 {
 	skyLight = new ISkyLight();
 }
