@@ -1,10 +1,11 @@
 #version 130
 
-in vec3 uvw;
-
 uniform samplerCube skybox;
+
+in vec3 uvw;
+out vec4 fragColor;
 
 void main()
 {    
-    gl_FragColor = texture(skybox, uvw);
+    fragColor = texture(skybox, uvw);
 }

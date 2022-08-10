@@ -495,7 +495,7 @@ public:
 	template<std::size_t N>
 	void MakeQuadsTriangles(const VertType(&vs)[N], int xDiv, int yDiv) {
 		static_assert(N == 4);
-		MakeQuadsTriangles(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
+		MakeQuadsTrianglesImpl(vs[0], vs[1], vs[2], vs[3], xDiv, yDiv);
 	}
 	void MakeQuadsTriangles(VertType&& tl, VertType&& tr, VertType&& br, VertType&& bl, int xDiv, int yDiv) { MakeQuadsTrianglesImpl(tl, tr, br, bl, xDiv, yDiv); }
 	void MakeQuadsTriangles(const VertType& tl, const VertType& tr, const VertType& br, const VertType& bl, int xDiv, int yDiv) { MakeQuadsTrianglesImpl(std::move(tl), std::move(tr), std::move(br), std::move(bl), xDiv, yDiv); }

@@ -55,10 +55,15 @@ CONFIG(int, ROAM)
 	.description("Use ROAM for terrain mesh rendering: 0 to disable, {1=VBO,2=DL,3=VA}-mode to enable.");
 
 
+namespace Shader {
+	struct IProgramObject;
+}
+
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
 	, meshDrawer(nullptr)
 	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
+	, waterPlaneVAO()
 {
 	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
@@ -99,8 +104,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	if (drawDeferred) {
 		drawDeferred &= UpdateGeometryBuffer(true);
 	}
-	CreateWaterPlanes(false);
-	CreateWaterPlanes(true );
+	CreateWaterPlane();
 }
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
@@ -117,8 +121,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
 
-	rbs[0] = nullptr;
-	rbs[1] = nullptr;
+	shaderHandler->ReleaseProgramObject("[CSMFGroundDrawer]", "WaterPlane");
 }
 
 
@@ -156,77 +159,45 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 
 
 
-void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
-	const float xsize = (smfMap->mapSizeX) >> 2;
-	const float ysize = (smfMap->mapSizeZ) >> 2;
-	const float size = std::min(xsize, ysize);
-
-	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
-	rb = std::make_unique<TypedRenderBuffer<VA_TYPE_C>>(1 << 10, 0);
-
-	const SColor fogColor = {
-		sky->fogColor[0],
-		sky->fogColor[1],
-		sky->fogColor[2],
-		1.0f
-	};
-
-	const SColor planeColor = {
-		waterRendering->planeColor[0],
-		waterRendering->planeColor[1],
-		waterRendering->planeColor[2],
-		1.0f
-	};
-
-	const float alphainc = math::TWOPI / 32;
-	float alpha,r1,r2;
-
-	float3 p(0.0f, 0.0f, 0.0f);
-
-	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
-		if ((n == 1) && !camOufOfMap) {
-			// don't render vertices under the map
-			r1 = 2 * size;
-		} else {
-			r1 = n*n * size;
-		}
-
-		if (n == 3) {
-			// last stripe: make it thinner (looks better with fog)
-			r2 = (n+0.5)*(n+0.5) * size;
-		} else {
-			r2 = (n+1)*(n+1) * size;
-		}
-		for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc ; alpha += alphainc) {
-			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			rb->AddVertex({ p, planeColor });
-			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			rb->AddVertex({ p, (n == 3) ? fogColor : planeColor });
-		}
-	}
+void CSMFGroundDrawer::CreateWaterPlane() {
+	waterPlaneShader = shaderHandler->CreateProgramObject("[CSMFGroundDrawer]", "WaterPlane", false);
+	waterPlaneShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/WaterPlaneVS.glsl", "", GL_VERTEX_SHADER));
+	waterPlaneShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/WaterPlaneFS.glsl", "", GL_FRAGMENT_SHADER));
+	waterPlaneShader->Link();
+	waterPlaneShader->Enable();
+	waterPlaneShader->Disable();
+	waterPlaneShader->Validate();
 }
 
+//NB: WaterPlane is here to hide the bottom part of the SkyBox. And for something else?
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
-#if 0
+#if 1
 	if (drawWaterReflection)
 		return;
 
-	//glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 
-	glPushMatrix();
-	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
+	const float planeHeight = std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f);
 
-	const bool camOufOfMap = camera->GetPos().IsInBounds() && !mapRendering->voidWater;
-	auto& rb = rbs[static_cast<uint8_t>(camOufOfMap)];
-	auto& shader = TypedRenderBuffer<VA_TYPE_C>::GetShader();
-	shader.Enable();
-	rb->DrawArrays(GL_TRIANGLE_STRIP, false);
-	shader.Disable();
+	//const bool camOufOfMap = !camera->GetPos().IsInBounds() || mapRendering->voidWater;
 
-	glPopMatrix();
+	waterPlaneVAO.Bind();
+
+	assert(waterPlaneShader->IsValid());
+	waterPlaneShader->Enable();
+	waterPlaneShader->SetUniform("planeColor", waterRendering->planeColor[0], waterRendering->planeColor[1], waterRendering->planeColor[2], 1.0f);
+	waterPlaneShader->SetUniform("fogColor", sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+
+	float3 fogParams = float3{ sky->fogStart * camera->GetFarPlaneDist(), sky->fogEnd * camera->GetFarPlaneDist(), 0.0f };
+	fogParams.z = 1.0f / (fogParams.y - fogParams.x);
+
+	waterPlaneShader->SetUniform("fogParams", fogParams.x, fogParams.y, fogParams.z);
+	waterPlaneShader->SetUniform("mapParams", static_cast<float>(smfMap->mapSizeX), planeHeight, static_cast<float>(smfMap->mapSizeZ));
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	waterPlaneShader->Disable();
+	waterPlaneVAO.Unbind();
 
 	glDepthMask(GL_TRUE);
 #endif

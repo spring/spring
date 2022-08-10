@@ -66,6 +66,7 @@ void CSkyBox::Draw()
 	if (!globalRendering->drawSky)
 		return;
 
+	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
 	//glDepthFunc(GL_LEQUAL);
@@ -103,4 +104,6 @@ void CSkyBox::Draw()
 	glPopMatrix();
 
 	sky->SetupFog();
+
+	glEnable(GL_DEPTH_TEST);
 }

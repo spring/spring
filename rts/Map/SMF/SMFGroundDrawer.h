@@ -8,6 +8,7 @@
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/RenderBuffersFwd.h"
+#include "Rendering/GL/VAO.h"
 
 #include <memory>
 
@@ -73,7 +74,7 @@ public:
 private:
 	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
 
-	void CreateWaterPlanes(bool camOufOfMap);
+	void CreateWaterPlane();
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
 
@@ -87,7 +88,9 @@ protected:
 	int drawerMode;
 	int groundDetail;
 
-	std::array<std::unique_ptr<TypedRenderBuffer<VA_TYPE_C>>, 2> rbs;
+	VAO waterPlaneVAO; //no attachments needed
+	Shader::IProgramObject* waterPlaneShader;
+
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := custom shader-driven rendering path (via Lua)

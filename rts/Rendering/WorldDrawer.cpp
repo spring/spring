@@ -266,8 +266,8 @@ void CWorldDrawer::Draw() const
 
 	camera->Update();
 
-	DrawOpaqueObjects();
 	sky->Draw();
+	DrawOpaqueObjects();
 	DrawAlphaObjects();
 
 	{
