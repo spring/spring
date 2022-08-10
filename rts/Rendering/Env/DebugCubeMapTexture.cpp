@@ -11,6 +11,7 @@ DebugCubeMapTexture::DebugCubeMapTexture()
 	: texId(0)
 	, vao()
 {
+#ifndef HEADLESS
 	glGenTextures(1, &texId);
 
 	static constexpr const char* texture = "bitmaps/testsky.dds";
@@ -58,16 +59,20 @@ DebugCubeMapTexture::DebugCubeMapTexture()
 	shader->SetUniform("skybox", 0);
 	shader->Disable();
 	shader->Validate();
+#endif
 }
 
 DebugCubeMapTexture::~DebugCubeMapTexture()
 {
+#ifndef HEADLESS
 	glDeleteTextures(1, &texId);
 	shaderHandler->ReleaseProgramObject("[DebugCubeMap]", "DebugCubeMap");
+#endif
 }
 
 void DebugCubeMapTexture::Draw(uint32_t face) const
 {
+#ifndef HEADLESS
 	assert(face == 0 || (face >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && face <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z));
 
 	//all faces (default) are expected
@@ -111,6 +116,7 @@ void DebugCubeMapTexture::Draw(uint32_t face) const
 	glPopMatrix();
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+#endif
 }
 
 DebugCubeMapTexture& DebugCubeMapTexture::GetInstance()
