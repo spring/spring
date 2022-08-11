@@ -317,12 +317,19 @@ void CUnitHandler::UpdateUnitMoveTypes()
 
 	{
 	//	SCOPED_TIMER("Sim::Unit::MoveType::Singlethreaded");
-	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-		CUnit* unit = activeUnits[activeUpdateUnit];
+	std::size_t len = activeUnits.size();
+	for (std::size_t i=0; i<len; ++i) {
+		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
 
 		unit->SanityCheck();
 		unit->PreUpdate();
+
+		moveType->UpdatePreCollisions();
+	}
+	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
+		CUnit* unit = activeUnits[activeUpdateUnit];
+		AMoveType* moveType = unit->moveType;
 
 		if (moveType->Update())
 			eventHandler.UnitMoved(unit);

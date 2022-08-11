@@ -480,11 +480,50 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 	return true;
 }
 
+void CGroundMoveType::UpdatePreCollisions()
+{
+ 	ASSERT_SYNCED(owner->pos);
+ 	ASSERT_SYNCED(currWayPoint);
+ 	ASSERT_SYNCED(nextWayPoint);
+ 	ASSERT_SYNCED(owner->pos);
+
+	if (pathingArrived) {
+		Arrived(false);
+		pathingArrived = false;
+	}
+
+ 	switch (setHeading) {
+ 		case 1:
+ 			ChangeHeading(setHeadingDir);
+			ChangeSpeed(maxWantedSpeed, WantReverse(waypointDir, flatFrontDir));
+ 			setHeading = 0;
+ 			break;
+		case 2:
+			SetMainHeading();
+			ChangeSpeed(0.0f, false);
+			setHeading = 0;
+			break;
+	}
+
+ 	if (pathingFailed) {
+ 		Fail(false);
+ 		pathingFailed = false;
+ 	}
+
+	pathManager->UpdatePath(owner, pathID);
+	SyncWaypoints();
+
+ 	if (owner->UnderFirstPersonControl()){
+		if (owner->GetTransporter() != nullptr) return;
+		if (owner->IsSkidding()) return;
+		if (owner->IsFalling()) return;
+ 		UpdateDirectControl();
+ 	}
+}
+
 bool CGroundMoveType::Update()
 {
 	//SCOPED_TIMER("Sim::Unit::MoveType::Update");
-
-	ASSERT_SYNCED(owner->pos);
 
 	// do nothing at all if we are inside a transport
 	if (owner->GetTransporter() != nullptr)
@@ -505,40 +544,11 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	ASSERT_SYNCED(currWayPoint);
-	ASSERT_SYNCED(nextWayPoint);
-	ASSERT_SYNCED(owner->pos);
-
 	const short heading = owner->heading;
 
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
 	//UpdateOwnerAccelAndHeading();
-	SyncWaypoints();
-	pathManager->UpdatePath(owner, pathID);
-	switch (setHeading) {
-		case 1:
-			ChangeHeading(setHeadingDir);
-			ChangeSpeed(maxWantedSpeed, WantReverse(lastAvoidanceDir, flatFrontDir));
-			setHeading = 0;
-			break;
-		case 2:
-			SetMainHeading();
-			ChangeSpeed(0.0f, false);
-			setHeading = 0;
-			break;
-	}
-	if (pathingFailed) {
-		Fail(false);
-		pathingFailed = false;
-	} else
-	if (pathingArrived) {
-		Arrived(false);
-		pathingArrived = false;
-	}
-	if (owner->UnderFirstPersonControl()){
-		UpdateDirectControl();
-	}
 
 	UpdateOwnerPos(owner->speed, calcSpeedVectorFuncs[modInfo.allowGroundUnitGravity](owner, this, deltaSpeed, myGravity));
 	HandleObjectCollisions();
@@ -2135,8 +2145,6 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 	// Just in case a pathing request is pending.
 	wantRepath = PATH_REQUEST_NONE;
 }
-
-
 
 /* Called when the unit arrives at its goal. */
 void CGroundMoveType::Arrived(bool callScript)

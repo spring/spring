@@ -33,6 +33,7 @@ public:
 	void SlowUpdate() override;
 
 	void UpdateObstacleAvoidance() override;
+	void UpdatePreCollisions() override;
 
 	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
 	void StartMoving(float3 pos, float moveGoalRadius) override;
