@@ -99,6 +99,7 @@ Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poCl
 
 Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram) {
 	Shader::IProgramObject* po = Shader::nullProgramObject;
+#ifndef HEADLESS
 	const char* poType = arbProgram? "ARB": "GLSL";
 
 	if (programObjects.find(poClass) != programObjects.end()) {
@@ -123,7 +124,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 	if (po == Shader::nullProgramObject)
 		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating (%s) program-object \"%s\"", __func__, poType, poName.c_str());
-
+#endif
 	programObjects[poClass][poName] = po;
 	return po;
 }
@@ -133,7 +134,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
 	Shader::IShaderObject* so = Shader::nullShaderObject;
-
+#ifndef HEADLESS
 	switch (soType) {
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
@@ -158,6 +159,6 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating shader-object \"%s\"", __func__, soName.c_str());
 		return so;
 	}
-
+#endif
 	return so;
 }
