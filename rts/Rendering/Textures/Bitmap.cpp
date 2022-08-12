@@ -920,7 +920,9 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels, uin
 	, dataType(reqDataType == 0 ? 0x1401/*GL_UNSIGNED_BYTE*/ : reqDataType)
 	, compressed(false)
 {
+#ifndef HEADLESS
 	assert(GetMemSize() > 0);
+#endif
 	memIdx = ITexMemPool::texMemPool->AllocIdx(GetMemSize());
 
 	if (data != nullptr) {
@@ -942,8 +944,9 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 
 		if (bmp.GetRawMem() != nullptr) {
 			assert(!bmp.compressed);
+#ifndef HEADLESS
 			assert(bmp.GetMemSize() != 0);
-
+#endif
 			assert(!((    GetRawMem() < bmp.GetRawMem()) && (    GetRawMem() +     GetMemSize()) > bmp.GetRawMem()));
 			assert(!((bmp.GetRawMem() <     GetRawMem()) && (bmp.GetRawMem() + bmp.GetMemSize()) >     GetRawMem()));
 

@@ -279,7 +279,9 @@ namespace Shader {
 		const auto it = std::find_if(shaderObjs.cbegin(), shaderObjs.cend(), [type = so->GetType()](Shader::IShaderObject* so) {
 			return so->GetType() == type;
 		});
+	#ifndef HEADLESS
 		assert(it == shaderObjs.cend());
+	#endif
 #endif
 		shaderObjs.push_back(so);
 	}

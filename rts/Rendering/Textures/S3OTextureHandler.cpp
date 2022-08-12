@@ -142,7 +142,9 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 		// bitmap was not yet preloaded, meaning we are the
 		// first to (all non-3DO model textures are always
 		// preloaded)
+#ifndef HEADLESS //?
 		assert(preloadCall);
+#endif
 
 		auto pair = bitmapCache.emplace(textureName, {});
 		auto iter = pair.first;
@@ -171,7 +173,9 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 	}
 	else {
 		//save main params from the preloadCall pass, such that data is stored correctly for Reload()
+#ifndef HEADLESS //?
 		assert( preloadCall);
+#endif
 		textureCache[textureName] = {
 			texID,
 			static_cast<uint32_t>(bitmap->xsize),
