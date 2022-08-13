@@ -3056,9 +3056,6 @@ void CGuiHandler::DrawMenu()
 				DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC);
 			}
 
-			if (menuIconDrawFlags[iconIdx - minIconIdx] == 2)
-				continue;
-
 			// draw the command name (or parameter)
 			if (cmdDesc.type == CMDTYPE_ICON_MODE && !cmdDesc.params.empty()) {
 				const size_t opt = atoi(cmdDesc.params[0].c_str()) + 1;
