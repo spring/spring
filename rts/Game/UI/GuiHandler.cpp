@@ -2884,12 +2884,6 @@ void CGuiHandler::DrawMenu()
 	Shader::IProgramObject* shaderTC = bufferTC->GetShader(); // used for button textures
 	Shader::IProgramObject* shaderC  = bufferC->GetShader(); // used for everything else
 
-	shaderC->Enable();
-	shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-	shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
-
-
 	const float boxAlpha = mix(frameAlpha, guiAlpha, frameAlpha < 0.0f);
 
 	const int mouseIconIdx = IconAtPos(mouse->lastx, mouse->lasty);
@@ -2946,27 +2940,6 @@ void CGuiHandler::DrawMenu()
 	}
 
 	{
-		for (bool outline: {true, false}) {
-			// LED outlines and filled interiors; latter must come second
-			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
-
-			for (int iconIdx: menuIconIndices) {
-				const IconInfo& icon = icons[iconIdx];
-				const SCommandDescription& cmdDesc = commands[icon.commandsID];
-
-				if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM))
-					continue;
-				if (!useOptionLEDs || cmdDesc.type != CMDTYPE_ICON_MODE)
-					continue;
-
-				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
-			}
-
-			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
-		}
-	}
-	{
-		shaderC->Disable();
 		shaderTC->Enable();
 		shaderTC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderTC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
@@ -2991,9 +2964,13 @@ void CGuiHandler::DrawMenu()
 
 		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shaderTC->Disable();
-		shaderC->Enable();
 	}
 	{
+		shaderC->Enable();
+		shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
+
 		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
 
 		// (default and custom) icon background highlights; use additive blending
@@ -3085,6 +3062,28 @@ void CGuiHandler::DrawMenu()
 
 		// Submit outlines.
 		bufferC->Submit(GL_LINES);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
+	}
+
+	{
+		for (bool outline: {false, true}) {
+			// Filled interiors and LED outlines; latter must come second
+			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
+
+			for (int iconIdx: menuIconIndices) {
+				const IconInfo& icon = icons[iconIdx];
+				const SCommandDescription& cmdDesc = commands[icon.commandsID];
+
+				if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM))
+					continue;
+				if (!useOptionLEDs || cmdDesc.type != CMDTYPE_ICON_MODE)
+					continue;
+
+				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
+			}
+
+			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
+		}
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
