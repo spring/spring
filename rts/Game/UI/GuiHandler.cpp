@@ -1642,7 +1642,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		activePage = 0;
 		selectedUnitsHandler.SetCommandPage(activePage);
 		selectedUnitsHandler.ToggleBuildIconsFirst();
-		LayoutIcons(false);
 		return true;
 	}
 	else if (action.command == "firstmenu") {
