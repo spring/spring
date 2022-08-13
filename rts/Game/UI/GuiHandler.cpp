@@ -2770,15 +2770,29 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 }
 
 
-void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, float fudge) const
+void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, bool outline, float fudge) const
 {
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+	if (outline) {
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
 
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+	} else {
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+	}
 }
 
 
@@ -2994,7 +3008,7 @@ void CGuiHandler::DrawMenu()
 			if (!highlightIcon)
 				continue;
 
-			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, 0.0f);
+			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, false, 0.0f);
 		}
 
 		bufferC->Submit(GL_TRIANGLES);
@@ -3015,7 +3029,7 @@ void CGuiHandler::DrawMenu()
 			if (!highlightIcon)
 				continue;
 
-			DrawMenuIconFrame(icon.visual, frameColors[(1 + (bpl.pressed || bpr.pressed)) * (1 - activeCommand)], bufferC, 0.0f);
+			DrawMenuIconFrame(icon.visual, frameColors[(1 + (bpl.pressed || bpr.pressed)) * (1 - activeCommand)], bufferC, true, 0.0f);
 		}
 
 		// icon frames and labels
@@ -3026,7 +3040,7 @@ void CGuiHandler::DrawMenu()
 			// custom commands are only (optionally, if untextured) decorated by a frame
 			if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
 				if (menuIconDrawFlags[iconIdx - minIconIdx] == 1)
-					DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC);
+					DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC, true);
 
 				continue;
 			}
@@ -3053,7 +3067,7 @@ void CGuiHandler::DrawMenu()
 				nextArrowIconIdx = mix(iconIdx, nextArrowIconIdx, cmdDesc.type != CMDTYPE_NEXT);
 			} else if (menuIconDrawFlags[iconIdx - minIconIdx] == 1) {
 				// no texture and no arrow, just draw a frame
-				DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC);
+				DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC, true);
 			}
 
 			// draw the command name (or parameter)
@@ -3069,8 +3083,8 @@ void CGuiHandler::DrawMenu()
 			DrawMenuIconName(icon.visual, cmdDesc.name, useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE));
 		}
 
-		// should be submitted as GL_LINE_LOOP, but this is faster
-		bufferC->Submit(GL_TRIANGLES);
+		// Submit outlines.
+		bufferC->Submit(GL_LINES);
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
@@ -3380,8 +3394,15 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 		if (outline) {
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
+			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
 			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
+			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 		} else {
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, colors[c]});

@@ -140,7 +140,7 @@ private:
 	void DrawMenuPrevArrow(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer) const;
 	void DrawMenuNextArrow(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer) const;
 
-	void DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, float fudge = 0.001f) const;
+	void DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, bool outline = false, float fudge = 0.001f) const;
 	void DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescription& cmdDesc, GL::RenderDataBufferC* rdBuffer, bool outline) const;
 	void DrawMenuName(GL::RenderDataBufferC* rdBuffer) const;
 
