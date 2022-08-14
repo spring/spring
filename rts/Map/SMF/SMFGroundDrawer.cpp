@@ -171,7 +171,7 @@ void CSMFGroundDrawer::CreateWaterPlane() {
 
 //NB: WaterPlane is here to hide the bottom part of the SkyBox. And for something else?
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
-#if 1
+#ifndef HEADLESS
 	if (drawWaterReflection)
 		return;
 
