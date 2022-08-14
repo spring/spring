@@ -307,7 +307,10 @@ void CCameraHandler::UpdateTransition()
 		transTime = globalRendering->lastSwapBuffersEnd.toMilliSecsf() + 1000.0f / drawFPS;
 	}
 
-	const float timeRatio = std::fmax(0.0f, (camTransState.timeEnd - transTime) / (camTransState.timeEnd - camTransState.timeStart));
+	const float timeRatio = (camTransState.timeEnd - camTransState.timeStart != 0.0f) ?
+		std::fmax(0.0f, (camTransState.timeEnd - transTime) / (camTransState.timeEnd - camTransState.timeStart)) :
+		0.0f;
+
 	float tweenFact = 1.0f - math::pow(timeRatio, camTransState.timeExponent);
 	
 
