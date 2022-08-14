@@ -95,7 +95,9 @@ public:
 		if (!shader)
 			shader = shaderHandler->CreateProgramObject(poClass, typeName, false);
 
+#ifndef HEADLESS
 		assert(shader);
+#endif
 
 		std::string vertSrc = GetShaderTemplate("GLSL/RenderBufferVertTemplate.glsl");
 		std::string fragSrc = GetShaderTemplate("GLSL/RenderBufferFragTemplate.glsl");
@@ -145,7 +147,9 @@ public:
 		shader->Disable();
 
 		shader->Validate();
+#ifndef HEADLESS
 		assert(shader->IsValid());
+#endif
 		shader->SetReloadComplete();
 
 		return *shader;
@@ -749,8 +753,9 @@ inline void TypedRenderBuffer<T>::DrawArrays(uint32_t mode, bool rewind)
 	size_t vertsCount = (verts.size() - vboStartIndex);
 	if (vertsCount <= 0)
 		return;
-
+#ifndef HEADLESS
 	assert(vao.GetIdRaw() > 0);
+#endif
 	vao.Bind();
 	glDrawArrays(mode, vbo->BufferElemOffset() + vboStartIndex, vertsCount);
 	vao.Unbind();
@@ -773,7 +778,9 @@ inline void TypedRenderBuffer<T>::DrawElements(uint32_t mode, bool rewind)
 		return;
 
 	#define BUFFER_OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
+#ifndef HEADLESS
 	assert(vao.GetIdRaw() > 0);
+#endif
 	vao.Bind();
 	glDrawElements(mode, indcsCount, GL_UNSIGNED_INT, BUFFER_OFFSET(uint32_t, ebo->BufferElemOffset() + eboStartIndex));
 	vao.Unbind();
