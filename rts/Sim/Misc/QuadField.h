@@ -173,10 +173,10 @@ public:
 	void ReleaseVector(std::vector<CProjectile*>* v ) { tempProjectiles.ReleaseVector(v); }
 
 	// Ensure release in same thread as original quad field query generated.
-	void ReleaseVector(std::vector<CSolidObject*>* v); //{ tempSolids.ReleaseVector(v); }
+	void ReleaseVector(std::vector<CSolidObject*>* v, int onThread = 0); //{ tempSolids.ReleaseVector(v); }
 
 	// Ensure release in same thread as original quad field query generated.
-	void ReleaseVector(std::vector<int>* v          );// { tempQuads.ReleaseVector(v); }
+	void ReleaseVector(std::vector<int>* v          , int onThread = 0);// { tempQuads.ReleaseVector(v); }
 
 	struct Quad {
 	public:
@@ -267,8 +267,8 @@ struct QuadFieldQuery {
 		quadField.ReleaseVector(units);
 		quadField.ReleaseVector(features);
 		quadField.ReleaseVector(projectiles);
-		quadField.ReleaseVector(solids);
-		quadField.ReleaseVector(quads);
+		quadField.ReleaseVector(solids, threadOwner);
+		quadField.ReleaseVector(quads, threadOwner);
 	}
 
 	std::vector<CUnit*>* units = nullptr;
@@ -276,6 +276,7 @@ struct QuadFieldQuery {
 	std::vector<CProjectile*>* projectiles = nullptr;
 	std::vector<CSolidObject*>* solids = nullptr;
 	std::vector<int>* quads = nullptr;
+	int threadOwner = 0;
 };
 
 

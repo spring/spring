@@ -157,14 +157,16 @@ void CQuadField::Kill()
 		cache.ReleaseAll();
 }
 
-void CQuadField::ReleaseVector(std::vector<CSolidObject*>* v)
+void CQuadField::ReleaseVector(std::vector<CSolidObject*>* v, int onThread)
 {
-	tempSolids[ThreadPool::GetThreadNum()].ReleaseVector(v);
+	//tempSolids[ThreadPool::GetThreadNum()].ReleaseVector(v);
+	tempSolids[onThread].ReleaseVector(v);
 }
 
-void CQuadField::ReleaseVector(std::vector<int>* v)
+void CQuadField::ReleaseVector(std::vector<int>* v, int onThread)
 {
-	tempQuads[ThreadPool::GetThreadNum()].ReleaseVector(v);
+	//tempQuads[ThreadPool::GetThreadNum()].ReleaseVector(v);
+	tempQuads[onThread].ReleaseVector(v);
 }
 
 
@@ -188,7 +190,8 @@ void CQuadField::GetQuads(QuadFieldQuery& qfq, float3 pos, float radius)
 {
 	pos.AssertNaNs();
 	pos.ClampInBounds();
-	qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
+	//qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
+	qfq.quads = tempQuads[qfq.threadOwner].ReserveVector();
 
 	const int2 min = WorldPosToQuadField(pos - radius);
 	const int2 max = WorldPosToQuadField(pos + radius);
@@ -218,7 +221,7 @@ void CQuadField::GetQuadsRectangle(QuadFieldQuery& qfq, const float3& mins, cons
 {
 	mins.AssertNaNs();
 	maxs.AssertNaNs();
-	qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
+	qfq.quads = tempQuads[qfq.threadOwner].ReserveVector();
 
 	const int2 min = WorldPosToQuadField(mins);
 	const int2 max = WorldPosToQuadField(maxs);
@@ -245,7 +248,7 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 	dir.AssertNaNs();
 	start.AssertNaNs();
 
-	auto& queryQuads = *(qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector());
+	auto& queryQuads = *(qfq.quads = tempQuads[qfq.threadOwner].ReserveVector());
 
 	const float3 to = start + (dir * length);
 
@@ -748,10 +751,12 @@ void CQuadField::GetSolidsExact(
 	const unsigned int physicalStateBits,
 	const unsigned int collisionStateBits
 ) {
+	//auto curThread = ThreadPool::GetThreadNum();
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = curThread;
 	GetQuads(qfQuery, pos, radius);
-	const int tempNum = gs->GetMtTempNum();
-	auto curThread = ThreadPool::GetThreadNum();
+	const int tempNum = gs->GetMtTempNum(curThread);
 	qfq.solids = tempSolids[curThread].ReserveVector();
 	
 

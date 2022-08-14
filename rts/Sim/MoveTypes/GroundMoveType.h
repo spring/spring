@@ -31,8 +31,9 @@ public:
 
 	bool Update() override;
 	void SlowUpdate() override;
+	void UpdatePreCollisionsMt() override;
 
-	void UpdateObstacleAvoidance() override;
+	void UpdateObstacleAvoidance();
 	void UpdatePreCollisions() override;
 
 	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
@@ -131,8 +132,8 @@ private:
 
 	unsigned int GetNewPath();
 
-	void SetNextWayPoint();
-	bool CanSetNextWayPoint();
+	void SetNextWayPoint(int thread = 0);
+	bool CanSetNextWayPoint(int thread = 0);
 	void DoSetNextWaypoint();
 	void ReRequestPath(PathRequestType requestType);
 	void DoReRequestPath();
@@ -180,11 +181,11 @@ private:
 
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerAccelAndHeading() override;
+	void UpdateOwnerAccelAndHeading();
 	void UpdateOwnerPos(const float3&, const float3&);
 	bool UpdateOwnerSpeed(float oldSpeedAbs, float newSpeedAbs, float newSpeedRaw);
 	bool OwnerMoved(const short, const float3&, const float3&);
-	bool FollowPath();
+	bool FollowPath(int thread = 0);
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:

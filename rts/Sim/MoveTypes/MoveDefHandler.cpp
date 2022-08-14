@@ -294,7 +294,8 @@ bool MoveDef::TestMoveSquareRange(
 	bool testObjects,
 	bool centerOnly,
 	float* minSpeedModPtr,
-	int* maxBlockBitPtr
+	int* maxBlockBitPtr,
+	int thread
 ) const {
 	assert(testTerrain || testObjects);
 
@@ -322,7 +323,7 @@ bool MoveDef::TestMoveSquareRange(
 	// GetPosSpeedMod only checks *one* square of terrain
 	// (heightmap/slopemap/typemap), not the blocking-map
 	if (retTestMove) {
-		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xmin, xmax, zmin, zmax, collider);
+		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xmin, xmax, zmin, zmax, collider, thread);
 
 		maxBlockBit |= blockBits;
 		retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);

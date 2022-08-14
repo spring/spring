@@ -485,7 +485,6 @@ void CGroundMoveType::UpdatePreCollisions()
  	ASSERT_SYNCED(owner->pos);
  	ASSERT_SYNCED(currWayPoint);
  	ASSERT_SYNCED(nextWayPoint);
- 	ASSERT_SYNCED(owner->pos);
 
 	if (pathingArrived) {
 		Arrived(false);
@@ -564,10 +563,6 @@ bool CGroundMoveType::Update()
 
 void CGroundMoveType::UpdateOwnerAccelAndHeading()
 {
-	if (owner->GetTransporter() != nullptr) return;
-	if (owner->IsSkidding()) return;
-	if (owner->IsFalling()) return;
-
 	if (owner->IsStunned() || owner->beingBuilt) {
 		ChangeSpeed(0.0f, false);
 		return;
@@ -583,7 +578,7 @@ void CGroundMoveType::UpdateOwnerAccelAndHeading()
 	// if (owner->UnderFirstPersonControl()) {
 	// 	UpdateDirectControl();
 	// } else {
-		FollowPath();
+		FollowPath(ThreadPool::GetThreadNum());
 	// }
 }
 
@@ -745,16 +740,16 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw)
 	progressState = Done;
 }
 
+void CGroundMoveType::UpdatePreCollisionsMt() {
+	if (owner->GetTransporter() != nullptr) return;
+	if (owner->IsSkidding()) return;
+	if (owner->IsFalling()) return;
+
+	UpdateObstacleAvoidance();
+	UpdateOwnerAccelAndHeading();
+}
+
 void CGroundMoveType::UpdateObstacleAvoidance() {
-	if (owner->GetTransporter() != nullptr)
-		return;
-
-	if (owner->IsSkidding())
-		return;
-
-	if (owner->IsFalling())
-		return;
-
 	if (owner->IsStunned() || owner->beingBuilt)
 		return;
 
@@ -767,7 +762,7 @@ void CGroundMoveType::UpdateObstacleAvoidance() {
 	const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, !atGoal));
 }
 
-bool CGroundMoveType::FollowPath()
+bool CGroundMoveType::FollowPath(int thread)
 {
 	//LOG("%s activated (%d)", __func__, owner->team);
 	bool wantReverse = false;
@@ -971,7 +966,7 @@ bool CGroundMoveType::FollowPath()
 		#endif
 
 		if (!atEndOfPath && !useRawMovement) {
-			SetNextWayPoint();
+			SetNextWayPoint(thread);
 		}
 	}
 
@@ -1525,6 +1520,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoiderRadius = avoiderMD->CalcFootPrintMinExteriorRadius();
 
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = ThreadPool::GetThreadNum();
 	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 	for (const CSolidObject* avoidee: *qfQuery.solids) {
@@ -1621,19 +1617,19 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	avoidanceDir = (mix(desiredDir, avoidanceVec, DESIRED_DIR_WEIGHT)).SafeNormalize();
 	avoidanceDir = (mix(avoidanceDir, lastAvoidanceDir, LAST_DIR_MIX_ALPHA)).SafeNormalize();
 
-	if (DEBUG_DRAWING_ENABLED) {
-		if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
-			const float3 p0 = owner->pos + (    UpVector * 20.0f);
-			const float3 p1 =         p0 + (avoidanceVec * 40.0f);
-			const float3 p2 =         p0 + (avoidanceDir * 40.0f);
+	// if (DEBUG_DRAWING_ENABLED) { - MT Safety check
+	// 	if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
+	// 		const float3 p0 = owner->pos + (    UpVector * 20.0f);
+	// 		const float3 p1 =         p0 + (avoidanceVec * 40.0f);
+	// 		const float3 p2 =         p0 + (avoidanceDir * 40.0f);
 
-			const int avFigGroupID = geometricObjects->AddLine(p0, p1, 8.0f, 1, 4);
-			const int adFigGroupID = geometricObjects->AddLine(p0, p2, 8.0f, 1, 4);
+	// 		const int avFigGroupID = geometricObjects->AddLine(p0, p1, 8.0f, 1, 4);
+	// 		const int adFigGroupID = geometricObjects->AddLine(p0, p2, 8.0f, 1, 4);
 
-			geometricObjects->SetColor(avFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-			geometricObjects->SetColor(adFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-		}
-	}
+	// 		geometricObjects->SetColor(avFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+	// 		geometricObjects->SetColor(adFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+	// 	}
+	// }
 
 	return (lastAvoidanceDir = avoidanceDir);
 }
@@ -1788,7 +1784,7 @@ void CGroundMoveType::DoReRequestPath() {
 }
 
 
-bool CGroundMoveType::CanSetNextWayPoint() {
+bool CGroundMoveType::CanSetNextWayPoint(int thread) {
 	assert(!useRawMovement);
 
 	//LOG("%s activated", __func__);
@@ -1911,7 +1907,7 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			// if still further than SS elmos from waypoint, disallow skipping
 			// note: can somehow cause units to move in circles near obstacles
 			// (mantis3718) if rectangle is too generous in size
-			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true);
+			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true, nullptr, nullptr, thread);
 			const bool allowSkip = ((cwp - pos).SqLength() <= Square(SQUARE_SIZE));
 
 			#ifdef PATHING_DEBUG
@@ -1980,12 +1976,12 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 	return true;
 }
 
-void CGroundMoveType::SetNextWayPoint()
+void CGroundMoveType::SetNextWayPoint(int thread)
 {
 	assert(!useRawMovement);
 	//LOG("%s activated", __func__);
 
-	if (CanSetNextWayPoint()) {
+	if (CanSetNextWayPoint(thread)) {
 		#ifdef PATHING_DEBUG
 		if (DEBUG_DRAWING_ENABLED) {
 			bool printMoveInfo = (selectedUnitsHandler.selectedUnits.size() == 1)

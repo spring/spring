@@ -299,7 +299,6 @@ void CUnitHandler::DeleteUnit(CUnit* delUnit)
 	CSolidObject::SetDeletingRefID(-1);
 }
 
-
 void CUnitHandler::UpdateUnitMoveTypes()
 {
 	SCOPED_TIMER("Sim::Unit::MoveType");
@@ -310,8 +309,10 @@ void CUnitHandler::UpdateUnitMoveTypes()
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
 
-		moveType->UpdateObstacleAvoidance();
-		moveType->UpdateOwnerAccelAndHeading();
+		unit->SanityCheck();
+		unit->PreUpdate();
+
+		moveType->UpdatePreCollisionsMt();
 	});
 	}
 
@@ -322,11 +323,9 @@ void CUnitHandler::UpdateUnitMoveTypes()
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
 
-		unit->SanityCheck();
-		unit->PreUpdate();
-
 		moveType->UpdatePreCollisions();
 	}
+
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;

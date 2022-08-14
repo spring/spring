@@ -36,7 +36,8 @@ struct MoveDef {
 		bool testObjects = true,
 		bool centerOnly = false,
 		float* minSpeedModPtr = nullptr,
-		int* maxBlockBitPtr = nullptr
+		int* maxBlockBitPtr = nullptr,
+		int thread = 0
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,

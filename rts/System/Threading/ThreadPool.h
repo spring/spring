@@ -109,6 +109,8 @@ namespace ThreadPool {
 	int GetNumThreads();
 	void NotifyWorkerThreads(bool force, bool async);
 
+	extern bool inMultiThreadedSection;
+
 	static constexpr int MAX_THREADS = 32;
 }
 
@@ -692,6 +694,8 @@ static inline void for_mt(int start, int end, int step, F&& f)
 
 	SCOPED_MT_TIMER("ThreadPool::AddTask");
 
+	ThreadPool::inMultiThreadedSection = true;
+
 	// static, so TaskGroup's are recycled
 	static TaskPool<ForTaskGroup, F> pool;
 	auto taskGroup = pool.GetTaskGroup();
@@ -714,6 +718,7 @@ static inline void for_mt(int start, int end, int step, F&& f)
 	// make calling thread also run ExecuteLoop
 	ThreadPool::WaitForFinished(taskGroup);
 
+	ThreadPool::inMultiThreadedSection = false;
 }
 
 template <typename F>
