@@ -512,27 +512,13 @@ void CGroundMoveType::UpdatePreCollisions()
 	pathManager->UpdatePath(owner, pathID);
 	SyncWaypoints();
 
- 	if (owner->UnderFirstPersonControl()){
-		if (owner->GetTransporter() != nullptr) return;
-		if (owner->IsSkidding()) return;
-		if (owner->IsFalling()) return;
- 		UpdateDirectControl();
- 	}
-}
-
-bool CGroundMoveType::Update()
-{
-	//SCOPED_TIMER("Sim::Unit::MoveType::Update");
-
-	// do nothing at all if we are inside a transport
-	if (owner->GetTransporter() != nullptr)
-		return false;
+	if (owner->GetTransporter() != nullptr) return;
 
 	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING, owner->IsSkidding() || OnSlope(1.0f));
 
 	if (owner->IsSkidding()) {
 		UpdateSkid();
-		return false;
+		return;
 	}
 
 	ASSERT_SYNCED(owner->pos);
@@ -540,16 +526,45 @@ bool CGroundMoveType::Update()
 	// set drop height when we start to drop
 	if (owner->IsFalling()) {
 		UpdateControlledDrop();
-		return false;
+		return;
 	}
+
+ 	if (owner->UnderFirstPersonControl())
+ 		UpdateDirectControl();
+
+	UpdateOwnerPos(owner->speed, calcSpeedVectorFuncs[modInfo.allowGroundUnitGravity](owner, this, deltaSpeed, myGravity));
+}
+
+bool CGroundMoveType::Update()
+{
+	//SCOPED_TIMER("Sim::Unit::MoveType::Update");
+
+	// // do nothing at all if we are inside a transport
+	// if (owner->GetTransporter() != nullptr)
+	// 	return false;
+
+	// owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING, owner->IsSkidding() || OnSlope(1.0f));
+
+	// if (owner->IsSkidding()) {
+	// 	UpdateSkid();
+	// 	return false;
+	// }
+
+	// ASSERT_SYNCED(owner->pos);
+
+	// // set drop height when we start to drop
+	// if (owner->IsFalling()) {
+	// 	UpdateControlledDrop();
+	// 	return false;
+	// }
 
 	const short heading = owner->heading;
 
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
-	//UpdateOwnerAccelAndHeading();
+	// UpdateOwnerAccelAndHeading();
 
-	UpdateOwnerPos(owner->speed, calcSpeedVectorFuncs[modInfo.allowGroundUnitGravity](owner, this, deltaSpeed, myGravity));
+	// UpdateOwnerPos(owner->speed, calcSpeedVectorFuncs[modInfo.allowGroundUnitGravity](owner, this, deltaSpeed, myGravity));
 	HandleObjectCollisions();
 	AdjustPosToWaterLine();
 
@@ -2190,7 +2205,7 @@ void CGroundMoveType::Fail(bool callScript)
 
 void CGroundMoveType::HandleObjectCollisions()
 {
-	SCOPED_TIMER("Sim::Unit::MoveType::Collisions");
+	//SCOPED_TIMER("Sim::Unit::MoveType::Collisions");
 
 	CUnit* collider = owner;
 

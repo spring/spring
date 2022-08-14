@@ -304,7 +304,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	SCOPED_TIMER("Sim::Unit::MoveType");
 
 	{
-	//	SCOPED_TIMER("Sim::Unit::MoveType::Multithreaded");
+	SCOPED_TIMER("Sim::Unit::MoveType::Multithreaded");
 	for_mt(0, activeUnits.size(), [this](const int i){
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
@@ -317,15 +317,18 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	}
 
 	{
-	//	SCOPED_TIMER("Sim::Unit::MoveType::Singlethreaded");
+	SCOPED_TIMER("Sim::Unit::MoveType::Singlethreaded");
 	std::size_t len = activeUnits.size();
 	for (std::size_t i=0; i<len; ++i) {
+		// for (int i=activeUnits.size()-1; i>=0; --i) {
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
 
 		moveType->UpdatePreCollisions();
 	}
 
+	{
+	SCOPED_TIMER("Sim::Unit::MoveType::Collisions");
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;
@@ -340,6 +343,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 
 		unit->SanityCheck();
 		assert(activeUnits[activeUpdateUnit] == unit);
+	}
 	}
 	}
 }
