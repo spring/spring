@@ -8,7 +8,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
 
-#define border 7
+static constexpr int IC_BORDER = 7;
 
 CONFIG(int, InfoMessageTime).defaultValue(10).description("Time until old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
@@ -111,8 +111,8 @@ void CInfoConsole::Draw()
 	const uint32_t fontOptions = FONT_NORM | FONT_OUTLINE;
 	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
-	float curX = xpos + border * globalRendering->pixelX;
-	float curY = ypos - border * globalRendering->pixelY;
+	float curX = xpos + IC_BORDER * globalRendering->pixelX;
+	float curY = ypos - IC_BORDER * globalRendering->pixelY;
 
 	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
 		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
@@ -129,16 +129,38 @@ void CInfoConsole::Update()
 	if (infoLines.empty())
 		return;
 
-	// pop old messages after timeout
-	if (infoLines[0].timeout <= spring_gettime())
-		infoLines.pop_front();
-
 	if (smallFont == nullptr)
 		return;
 
+	// pop old messages after timeout
+	while (infoLines.size() > 0 && infoLines.front().timeout <= spring_gettime())
+		infoLines.pop_front();
+
+	for (size_t i = 0; i < infoLines.size(); /*NO-OP*/) {
+		InfoLine& il = infoLines[i];
+		if (il.needWrap) {
+			const std::string wrappedText = smallFont->Wrap(il.text, fontSize, (width * globalRendering->viewSizeX) - (2 * IC_BORDER));
+			const auto& newLines = smallFont->SplitIntoLines(toustring(wrappedText));
+			assert(newLines.size() > 0);
+
+			//replace the existing record
+			il.text = newLines[0];
+			il.needWrap = false;
+
+			for (size_t j = newLines.size() - 1; j > 0; --j) {
+				infoLines.emplace(infoLines.begin() + i + 1, newLines[j], il.timeout, false);
+			}
+			i += newLines.size();
+		}
+		else {
+			++i;
+		}
+	}
+
+
 	// if we have more lines then we can show, remove the oldest one,
 	// and make sure the others are shown long enough
-	const float  maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
+	const float  maxHeight = (height * globalRendering->viewSizeY) - (IC_BORDER * 2);
 	const float fontHeight = smallFont->GetLineHeight();
 
 	// height=0 will likely be the case on HEADLESS only
@@ -209,17 +231,7 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 	// NOTE
 	//   do not remove elements from infoLines here, ::Draw iterates over it
 	//   and can call LOG() which will end up back in ::RecordLogMessage
-	const std::string& wrappedText = smallFont->Wrap(message, fontSize, (width * globalRendering->viewSizeX) - (2 * border));
-	const std::u8string& unicodeText = toustring(wrappedText);
-
-	for (auto& splitLine: smallFont->SplitIntoLines(unicodeText)) {
-		// add the line to the console
-		infoLines.emplace_back();
-
-		InfoLine& l = infoLines.back();
-		l.text    = std::move(splitLine);
-		l.timeout = spring_gettime() + spring_secs(lifetime);
-	}
+	infoLines.emplace_back(message, spring_gettime() + spring_secs(lifetime), true);
 }
 
 

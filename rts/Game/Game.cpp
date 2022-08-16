@@ -1305,7 +1305,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		modelsUniformsUploader.Update();
 
 		CNamedTextures::Update();
-		CFontTexture::Update();
+		//CFontTexture::Update();
 	}
 
 	// always update InfoTexture and SoundListener at <= 30Hz (even when paused)
@@ -1338,6 +1338,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	infoConsole->PushNewLinesToEventHandler();
 	infoConsole->Update();
+
+	//infoConsole->Update() can in theory cause the need to update fonts, so update here
+	CFontTexture::Update();
 
 	mouse->Update();
 	mouse->UpdateCursors();
