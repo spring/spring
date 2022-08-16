@@ -1642,7 +1642,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		activePage = 0;
 		selectedUnitsHandler.SetCommandPage(activePage);
 		selectedUnitsHandler.ToggleBuildIconsFirst();
-		LayoutIcons(false);
 		return true;
 	}
 	else if (action.command == "firstmenu") {
@@ -2771,15 +2770,29 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 }
 
 
-void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, float fudge) const
+void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer, bool outline, float fudge) const
 {
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+	if (outline) {
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
 
-	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+	} else {
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+		rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+		rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
+	}
 }
 
 
@@ -2871,12 +2884,6 @@ void CGuiHandler::DrawMenu()
 	Shader::IProgramObject* shaderTC = bufferTC->GetShader(); // used for button textures
 	Shader::IProgramObject* shaderC  = bufferC->GetShader(); // used for everything else
 
-	shaderC->Enable();
-	shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-	shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
-
-
 	const float boxAlpha = mix(frameAlpha, guiAlpha, frameAlpha < 0.0f);
 
 	const int mouseIconIdx = IconAtPos(mouse->lastx, mouse->lasty);
@@ -2933,27 +2940,6 @@ void CGuiHandler::DrawMenu()
 	}
 
 	{
-		for (bool outline: {true, false}) {
-			// LED outlines and filled interiors; latter must come second
-			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
-
-			for (int iconIdx: menuIconIndices) {
-				const IconInfo& icon = icons[iconIdx];
-				const SCommandDescription& cmdDesc = commands[icon.commandsID];
-
-				if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM))
-					continue;
-				if (!useOptionLEDs || cmdDesc.type != CMDTYPE_ICON_MODE)
-					continue;
-
-				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
-			}
-
-			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
-		}
-	}
-	{
-		shaderC->Disable();
 		shaderTC->Enable();
 		shaderTC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderTC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
@@ -2978,9 +2964,13 @@ void CGuiHandler::DrawMenu()
 
 		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shaderTC->Disable();
-		shaderC->Enable();
 	}
 	{
+		shaderC->Enable();
+		shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
+
 		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
 
 		// (default and custom) icon background highlights; use additive blending
@@ -2995,7 +2985,7 @@ void CGuiHandler::DrawMenu()
 			if (!highlightIcon)
 				continue;
 
-			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, 0.0f);
+			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, false, 0.0f);
 		}
 
 		bufferC->Submit(GL_TRIANGLES);
@@ -3016,7 +3006,7 @@ void CGuiHandler::DrawMenu()
 			if (!highlightIcon)
 				continue;
 
-			DrawMenuIconFrame(icon.visual, frameColors[(1 + (bpl.pressed || bpr.pressed)) * (1 - activeCommand)], bufferC, 0.0f);
+			DrawMenuIconFrame(icon.visual, frameColors[(1 + (bpl.pressed || bpr.pressed)) * (1 - activeCommand)], bufferC, true, 0.0f);
 		}
 
 		// icon frames and labels
@@ -3027,7 +3017,7 @@ void CGuiHandler::DrawMenu()
 			// custom commands are only (optionally, if untextured) decorated by a frame
 			if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM)) {
 				if (menuIconDrawFlags[iconIdx - minIconIdx] == 1)
-					DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC);
+					DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC, true);
 
 				continue;
 			}
@@ -3054,11 +3044,8 @@ void CGuiHandler::DrawMenu()
 				nextArrowIconIdx = mix(iconIdx, nextArrowIconIdx, cmdDesc.type != CMDTYPE_NEXT);
 			} else if (menuIconDrawFlags[iconIdx - minIconIdx] == 1) {
 				// no texture and no arrow, just draw a frame
-				DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC);
+				DrawMenuIconFrame(icon.visual, {1.0f, 1.0f, 1.0f, 0.1f}, bufferC, true);
 			}
-
-			if (menuIconDrawFlags[iconIdx - minIconIdx] == 2)
-				continue;
 
 			// draw the command name (or parameter)
 			if (cmdDesc.type == CMDTYPE_ICON_MODE && !cmdDesc.params.empty()) {
@@ -3073,8 +3060,30 @@ void CGuiHandler::DrawMenu()
 			DrawMenuIconName(icon.visual, cmdDesc.name, useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE));
 		}
 
-		// should be submitted as GL_LINE_LOOP, but this is faster
-		bufferC->Submit(GL_TRIANGLES);
+		// Submit outlines.
+		bufferC->Submit(GL_LINES);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
+	}
+
+	{
+		for (bool outline: {false, true}) {
+			// Filled interiors and LED outlines; latter must come second
+			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
+
+			for (int iconIdx: menuIconIndices) {
+				const IconInfo& icon = icons[iconIdx];
+				const SCommandDescription& cmdDesc = commands[icon.commandsID];
+
+				if ((cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM))
+					continue;
+				if (!useOptionLEDs || cmdDesc.type != CMDTYPE_ICON_MODE)
+					continue;
+
+				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
+			}
+
+			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
+		}
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
@@ -3384,8 +3393,15 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 		if (outline) {
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
+			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
 			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+
+			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 		} else {
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, colors[c]});

@@ -407,7 +407,7 @@ bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
 	bool noAlpha  =  true;
 
 	const bool loadDDS = (FileSystem::GetExtension(filename) == "dds"); // always lower-case
-	const bool flipDDS = true; // default, also assumed by gl.TexRect
+	const bool flipDDS = (filename.find("unitpics") == std::string::npos); // keep buildpics as-is
 
 	const size_t curMemSize = GetMemSize();
 
