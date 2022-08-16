@@ -486,6 +486,8 @@ void CGroundMoveType::UpdatePreCollisions()
  	ASSERT_SYNCED(currWayPoint);
  	ASSERT_SYNCED(nextWayPoint);
 
+	SyncWaypoints();
+
 	if (pathingArrived) {
 		Arrived(false);
 		pathingArrived = false;
@@ -510,7 +512,6 @@ void CGroundMoveType::UpdatePreCollisions()
  	}
 
 	pathManager->UpdatePath(owner, pathID);
-	SyncWaypoints();
 
 	if (owner->GetTransporter() != nullptr) return;
 
