@@ -1051,10 +1051,14 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	float sizeY = s;
 	float textDescender = 0.0f;
 
-	// render in normalized coords (0..1) instead of screencoords (0..~1024)
-	if (options & FONT_NORM) {
-		sizeX *= globalRendering->pixelX;
-		sizeY *= globalRendering->pixelY;
+	// transform size to normalized space (0..1)
+	sizeX *= globalRendering->pixelX;
+	sizeY *= globalRendering->pixelY;
+
+	if ((options & FONT_NORM) == 0) {
+		// coordinates are screencords (0..~1024), normalize
+		x *= globalRendering->pixelX;
+		y *= globalRendering->pixelY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)
@@ -1233,10 +1237,14 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	float sizeX = ss;
 	float sizeY = ss;
 
-	// render in normalized coords (0..1) instead of screencoords (0..~1024)
-	if (options & FONT_NORM) {
-		sizeX *= globalRendering->pixelX;
-		sizeY *= globalRendering->pixelY;
+	// transform size to normalized space (0..1)
+	sizeX *= globalRendering->pixelX;
+	sizeY *= globalRendering->pixelY;
+
+	if ((options & FONT_NORM) == 0) {
+		// coordinates are screencords (0..~1024), normalize
+		x *= globalRendering->pixelX;
+		y *= globalRendering->pixelY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)
