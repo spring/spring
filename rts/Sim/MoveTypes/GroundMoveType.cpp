@@ -541,8 +541,11 @@ bool CGroundMoveType::Update()
 	//SCOPED_TIMER("Sim::Unit::MoveType::Update");
 
 	// // do nothing at all if we are inside a transport
-	// if (owner->GetTransporter() != nullptr)
-	// 	return false;
+	if (owner->GetTransporter() != nullptr)
+		return false;
+
+	if (owner->IsSkidding()) return false;
+	if (owner->IsFalling()) return false;
 
 	// owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING, owner->IsSkidding() || OnSlope(1.0f));
 
