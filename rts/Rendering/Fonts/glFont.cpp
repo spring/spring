@@ -1154,7 +1154,6 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	SetColors(&baseTextColor, &baseOutlineColor);
 }
 
-// TODO: remove, only used by PlayerRosterDrawer
 void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text)
 {
 	std::vector<std::string> colLines;
@@ -1285,7 +1284,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	}
 
 	for (size_t i = 0; i < colLines.size(); ++i) {
-		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), colLines[i]);
+		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_NORM | FONT_RIGHT | FONT_CENTER), colLines[i]);
 		x += (sizeX * colWidths[i]);
 	}
 }
