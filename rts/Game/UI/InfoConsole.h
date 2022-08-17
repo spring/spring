@@ -61,22 +61,21 @@ private:
 	static constexpr size_t maxRawLines = 1024;
 
 	struct InfoLine {
-		InfoLine(std::string text_, spring_time timeout_, bool needWrap_)
+		InfoLine(std::string text_, spring_time timeout_)
 			: text(std::move(text_))
 			, timeout(timeout_)
-			, needWrap(needWrap_)
 		{}
 
 		std::string text;
 		spring_time timeout;
-		bool needWrap;
 	};
 
 	std::array<float3, maxMsgCount> lastMsgPositions;
 
 	std::vector<RawLine> tmpLines;
-	std::vector<InfoLine> tmpInfoLines;
 	std::deque<RawLine> rawLines;
+	std::vector<InfoLine> drawInfoLines;
+	std::vector<InfoLine> tmpInfoLines;
 	std::deque<InfoLine> infoLines;
 
 	std::string prvSection;

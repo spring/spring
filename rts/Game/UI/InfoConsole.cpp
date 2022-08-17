@@ -71,6 +71,7 @@ void CInfoConsole::Init()
 
 	rawLines.clear();
 	infoLines.clear();
+	tmpInfoLines.clear();
 
 	lastMsgPositions.fill(ZeroVector);
 }
@@ -101,8 +102,8 @@ void CInfoConsole::Draw()
 		if (infoLines.empty())
 			return;
 
-		tmpInfoLines.clear();
-		tmpInfoLines.insert(tmpInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
+		drawInfoLines.clear();
+		drawInfoLines.insert(drawInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
 	}
 
 	smallFont->Begin();
@@ -114,8 +115,8 @@ void CInfoConsole::Draw()
 	float curX = xpos + IC_BORDER * globalRendering->pixelX;
 	float curY = ypos - IC_BORDER * globalRendering->pixelY;
 
-	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
-		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
+	for (size_t i = 0, n = drawInfoLines.size(); i < n; ++i) {
+		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, drawInfoLines[i].text);
 	}
 
 	smallFont->End();
@@ -126,37 +127,26 @@ void CInfoConsole::Update()
 {
 	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
 
-	if (infoLines.empty())
-		return;
-
-	if (smallFont == nullptr)
-		return;
-
 	// pop old messages after timeout
 	while (infoLines.size() > 0 && infoLines.front().timeout <= spring_gettime())
 		infoLines.pop_front();
 
-	for (size_t i = 0; i < infoLines.size(); /*NO-OP*/) {
-		InfoLine& il = infoLines[i];
-		if (il.needWrap) {
-			const std::string wrappedText = smallFont->Wrap(il.text, fontSize, (width * globalRendering->viewSizeX) - (2 * IC_BORDER));
-			const auto& newLines = smallFont->SplitIntoLines(toustring(wrappedText));
-			assert(newLines.size() > 0);
+	if (smallFont == nullptr)
+		return;
 
-			//replace the existing record
-			il.text = newLines[0];
-			il.needWrap = false;
+	for (const auto& til : tmpInfoLines) {
+		if (til.timeout <= spring_gettime())
+			continue;
 
-			for (size_t j = newLines.size() - 1; j > 0; --j) {
-				infoLines.emplace(infoLines.begin() + i + 1, newLines[j], il.timeout, false);
-			}
-			i += newLines.size();
-		}
-		else {
-			++i;
-		}
+		const std::string wrappedText = smallFont->Wrap(til.text, fontSize, (width * globalRendering->viewSizeX) - (2 * IC_BORDER));
+		const auto& newLines = smallFont->SplitIntoLines(toustring(wrappedText));
+		for (const auto& nl : newLines)
+			infoLines.emplace_back(nl, til.timeout);
 	}
+	tmpInfoLines.clear();
 
+	if (infoLines.empty())
+		return;
 
 	// if we have more lines then we can show, remove the oldest one,
 	// and make sure the others are shown long enough
@@ -228,10 +218,7 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 	if (smallFont == nullptr)
 		return;
 
-	// NOTE
-	//   do not remove elements from infoLines here, ::Draw iterates over it
-	//   and can call LOG() which will end up back in ::RecordLogMessage
-	infoLines.emplace_back(message, spring_gettime() + spring_secs(lifetime), true);
+	tmpInfoLines.emplace_back(message, spring_gettime() + spring_secs(lifetime));
 }
 
 
