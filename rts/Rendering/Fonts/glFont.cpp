@@ -982,6 +982,13 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 	if (threadSafety)
 		bufferMutex.lock();
 
+	if (inBeginEndBlock) {
+		bufferMutex.unlock();
+		return;
+	}
+
+	inBeginEndBlock = true;
+
 	if ((curShader = shader) == defShader) {
 		curShader->Enable();
 		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
@@ -1027,6 +1034,9 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
+	if (!inBeginEndBlock)
+		return;
+
 	if (curShader == defShader) {
 		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMatrix);
 		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix);
@@ -1040,6 +1050,8 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 	glAttribStatePtr->PopBits();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	inBeginEndBlock = false;
 
 	if (threadSafety)
 		bufferMutex.unlock();
