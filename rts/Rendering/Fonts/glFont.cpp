@@ -208,6 +208,7 @@ CglFont::~CglFont()
 #ifdef HEADLESS
 
 void CglFont::SwapBuffers() {}
+void CglFont::UpdateProjMatrix() {}
 
 void CglFont::Begin(Shader::IProgramObject* shader) {}
 void CglFont::End(Shader::IProgramObject* shader) {}
