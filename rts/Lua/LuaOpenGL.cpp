@@ -2268,6 +2268,8 @@ int LuaOpenGL::Texture(lua_State* L)
 		if (texUnit != GL_TEXTURE0)
 			glActiveTexture(GL_TEXTURE0);
 
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		lua_pushboolean(L, true);
 		return 1;
 	}
