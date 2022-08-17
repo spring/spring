@@ -13,6 +13,8 @@ fi
 if [ ! -d $MINGWLIBS_PATH ]; then
 	echo "clone mingwlibs git-repo"
 	git clone $MINGWLIBS_REPO_URL $MINGWLIBS_PATH
+else
+	git -C $MINGWLIBS_PATH remote set-url origin $MINGWLIBS_REPO_URL
 fi
 
 cd $MINGWLIBS_PATH
