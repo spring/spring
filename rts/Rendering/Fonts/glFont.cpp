@@ -135,7 +135,11 @@ void CglFont::SwapRenderBuffers()
 	}
 }
 
-
+void CglFont::UpdateAllProjMatrices() {
+	for (CglFont* f: loadedFonts) {
+		f->UpdateProjMatrix();
+	}
+}
 
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
@@ -581,6 +585,13 @@ void CglFont::SwapBuffers() {
 	ResetBuffers();
 }
 
+void CglFont::UpdateProjMatrix() {
+	if (useDefaultProjMatrix) {
+		defShader->Enable();
+		defShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix = DefProjMatrix());
+		defShader->Disable();
+	}
+}
 
 void CglFont::Begin(Shader::IProgramObject* shader) {
 	if (threadSafety)
@@ -1037,8 +1048,7 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 
 
 CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }
-CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f); }
-
+CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::ClipOrthoProj(0, globalRendering->viewSizeX, 0, globalRendering->viewSizeY, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f); }
 
 
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)
@@ -1051,14 +1061,10 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	float sizeY = s;
 	float textDescender = 0.0f;
 
-	// transform size to normalized space (0..1)
-	sizeX *= globalRendering->pixelX;
-	sizeY *= globalRendering->pixelY;
-
-	if ((options & FONT_NORM) == 0) {
-		// coordinates are screencords (0..~1024), normalize
-		x *= globalRendering->pixelX;
-		y *= globalRendering->pixelY;
+	// transform normalized coords (0..1) to screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		x *= globalRendering->viewSizeX;
+		y *= globalRendering->viewSizeY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)
@@ -1237,14 +1243,10 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	float sizeX = ss;
 	float sizeY = ss;
 
-	// transform size to normalized space (0..1)
-	sizeX *= globalRendering->pixelX;
-	sizeY *= globalRendering->pixelY;
-
-	if ((options & FONT_NORM) == 0) {
-		// coordinates are screencords (0..~1024), normalize
-		x *= globalRendering->pixelX;
-		y *= globalRendering->pixelY;
+	// transform normalized coords (0..1) to screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		x *= globalRendering->viewSizeX;
+		y *= globalRendering->viewSizeY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)

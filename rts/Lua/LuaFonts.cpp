@@ -424,7 +424,7 @@ int LuaFonts::SetTextProjMatrix(lua_State* L)
 	if (LuaUtils::ParseFloatArray(L, 2, &mat.m[0], 16) == 16)
 		f->SetProjMatrix(mat);
 	else
-		f->SetProjMatrix(CglFont::DefProjMatrix());
+		f->ResetProjMatrix();
 
 	return 0;
 }
