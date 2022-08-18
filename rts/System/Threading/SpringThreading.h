@@ -52,6 +52,61 @@ namespace spring {
 	typedef std::cv_status cv_status;
 	typedef std::condition_variable_any condition_variable_any;
 
+	class noop_mutex {
+	public:
+		using native_handle_type = spring::mutex::native_handle_type;
+
+		noop_mutex() noexcept {}
+		~noop_mutex() {}
+
+		noop_mutex(const noop_mutex&) = delete;
+		noop_mutex& operator=(const noop_mutex&) = delete;
+
+		void lock() {}
+		bool try_lock() { return true; }
+		void unlock() {}
+
+		native_handle_type native_handle() { return native_handle_type{}; }
+	};
+
+	class mutex_wrapper_concept {
+	public:
+		using native_handle_type = spring::mutex::native_handle_type;
+
+		mutex_wrapper_concept() noexcept {}
+		virtual ~mutex_wrapper_concept() {}
+
+		mutex_wrapper_concept(const mutex_wrapper_concept&) = delete;
+		mutex_wrapper_concept& operator=(const mutex_wrapper_concept&) = delete;
+
+		virtual void lock() = 0;
+		virtual bool try_lock() noexcept = 0;
+		virtual void unlock() = 0;
+
+		virtual native_handle_type native_handle() = 0;
+	};
+
+	template<typename M>
+	class mutex_wrapper : public mutex_wrapper_concept {
+		static_assert(std::is_member_function_pointer<decltype(&M::lock)>::value);
+		static_assert(std::is_member_function_pointer<decltype(&M::try_lock)>::value);
+		static_assert(std::is_member_function_pointer<decltype(&M::unlock)>::value);
+		static_assert(std::is_member_function_pointer<decltype(&M::native_handle)>::value);
+	public:
+		mutex_wrapper() noexcept {};
+
+		mutex_wrapper(const mutex_wrapper&) = delete;
+		mutex_wrapper& operator=(const mutex_wrapper&) = delete;
+
+		void lock() override { mut.lock(); }
+		bool try_lock() noexcept override { return mut.try_lock(); }
+		void unlock() override { mut.unlock(); }
+
+		virtual native_handle_type native_handle() override { return mut.native_handle(); }
+	protected:
+		M mut;
+	};
+
 
 	// updated as per https://rigtorp.se/spinlock/
 	class spinlock {
