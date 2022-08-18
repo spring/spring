@@ -79,7 +79,7 @@ void CGeoThermSmokeProjectile::UpdateDir()
 
 void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 {
-	for (CProjectile* p: projectileHandler.projectileContainers[false]) {
+	for (CProjectile* p: projectileHandler.GetActiveProjectiles(false)) {
 		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(p);
 
 		if (geoPuff == nullptr)

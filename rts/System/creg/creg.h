@@ -202,7 +202,6 @@ namespace creg {
 //FIXME: defined cause gcc4.8 still doesn't support c++11's offsetof for non-static members
 #define offsetof_creg(type, member) (std::size_t)(((char*)&null->member) - ((char*)null))
 
-
 #define CR_DECLARE_BASE(TCls, isStr, VIRTUAL, OVERRIDE)	\
 public: \
 	static creg::Class creg_class; \
@@ -329,6 +328,14 @@ public: \
 	template<typename TArg> void TCls<TArg>::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
 	template<typename TArg> creg::Class TCls<TArg>::creg_class(TOSTRING(TCls) "<" TOSTRING(TArg) ">", creg::CF_None, nullptr, &TCls<TArg>::_CregRegisterMembers, sizeof(TCls<TArg>), alignof(TCls<TArg>), std::is_polymorphic<TCls<TArg>>::value, TCls<TArg>::creg_isStruct, TCls<TArg>::_ConstructInstance, TCls<TArg>::_DestructInstance, nullptr, nullptr);
 
+ /** @def CR_BIND_TEMPLATE_2TYPED
+   *  @see CR_BIND
+   */
+#define CR_BIND_TEMPLATE_2TYPED(TCls, TArg1, TArg2, ctor_args) \
+	template<typename TArg1, typename TArg2> void TCls<TArg1, TArg2>::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
+	template<typename TArg1, typename TArg2> void TCls<TArg1, TArg2>::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	template<typename TArg1, typename TArg2> creg::Class TCls<TArg1, TArg2>::creg_class(TOSTRING(TCls) "<" TOSTRING(TArg1) "," TOSTRING(TArg2) ">", creg::CF_None, nullptr, &TCls<TArg1, TArg2>::_CregRegisterMembers, sizeof(TCls<TArg1, TArg2>), alignof(TCls<TArg1, TArg2>), std::is_polymorphic<TCls<TArg1, TArg2>>::value, TCls<TArg1, TArg2>::creg_isStruct, TCls<TArg1, TArg2>::_ConstructInstance, TCls<TArg1, TArg2>::_DestructInstance, nullptr, nullptr);
+
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
  * should be used in the source file
@@ -405,6 +412,20 @@ public: \
 #define CR_REG_METADATA_TEMPLATE_1TYPED(TCls, TArg, Members) \
 	template<typename TArg> void TCls<TArg>::_CregRegisterMembers(creg::Class* class_) { \
 		typedef TCls<TArg> Type; \
+		Type* null=nullptr; \
+		(void)null; /*suppress compiler warning if this isn't used*/ \
+		int currentMemberFlags = 0; \
+		(void)currentMemberFlags; \
+		Members; \
+	}
+
+ /** @def CR_REG_METADATA_TEMPLATE_2TYPED
+  * Just like CR_REG_METADATA, but for a typed template.
+  *  @see CR_REG_METADATA
+  */
+#define CR_REG_METADATA_TEMPLATE_2TYPED(TCls, TArg1, TArg2, Members) \
+	template<typename TArg1, typename TArg2> void TCls<TArg1, TArg2>::_CregRegisterMembers(creg::Class* class_) { \
+		typedef TCls<TArg1, TArg2> Type; \
 		Type* null=nullptr; \
 		(void)null; /*suppress compiler warning if this isn't used*/ \
 		int currentMemberFlags = 0; \

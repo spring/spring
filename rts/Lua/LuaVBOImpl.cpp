@@ -14,15 +14,19 @@
 #include "Rendering/ModelsDataUploader.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VBO.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Game/GlobalUnsynced.h"
 
 #include "LuaUtils.h"
@@ -723,15 +727,9 @@ size_t LuaVBOImpl::ModelsVBOImpl()
 	return bufferSizeInBytes;
 }
 
-void LuaVBOImpl::InstanceDataFromDataCheck(int attrID, const char* func)
+void LuaVBOImpl::InstanceBufferCheckAndFormatCheck(int attrID, const char* func)
 {
-	if (!vbo) {
-		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid instance VBO. Did you call :Define() succesfully?", func);
-	}
-
-	if (bufferAttribDefs.find(attrID) == bufferAttribDefs.cend()) {
-		LuaUtils::SolLuaError("[LuaVBOImpl::%s] No instance attribute definition %d found", func, attrID);
-	}
+	InstanceBufferCheck(attrID, func);
 
 	const BufferAttribDef& bad = bufferAttribDefs[attrID];
 	if (bad.type != GL_UNSIGNED_INT) {
@@ -742,14 +740,106 @@ void LuaVBOImpl::InstanceDataFromDataCheck(int attrID, const char* func)
 	}
 }
 
+void LuaVBOImpl::InstanceBufferCheck(int attrID, const char* func)
+{
+	if (!vbo) {
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid instance VBO. Did you call :Define() succesfully?", func);
+	}
+	/*
+	if (defTarget != GL_ARRAY_BUFFER) {
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Invalid instance VBO. Target type (%u) is not GL_ARRAY_BUFFER(%u)", func, defTarget, GL_ARRAY_BUFFER);
+	}
+	*/
+	if (bufferAttribDefs.find(attrID) == bufferAttribDefs.cend()) {
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] No instance attribute definition %d found", func, attrID);
+	}
+}
+
+template<typename Iterable>
+size_t LuaVBOImpl::MatrixDataFromProjectileIDsImpl(const Iterable& ids, int attrID, sol::optional<int> elemOffsetOpt, const char* func)
+{
+	const size_t idsSize = ids.size();
+	if (idsSize == 0u) //empty Iterable
+		return 0u;
+
+	//do basic sanity check
+	InstanceBufferCheck(attrID + 0, func);
+
+	//matrix can be represented in several ways:
+	// * 4 attributes of GL_FLOAT vec4 (VBO)
+	// * 4 sized vector of GL_FLOAT_VEC4 (UBO/SSBO)
+	// * 1 field of GL_FLOAT_MAT4 (UBO/SSBO)
+	// There're are other ways, but we won't support them
+
+	int strideSize = 0;
+
+	const auto& attr0 = bufferAttribDefs[attrID + 0];
+
+	switch (attr0.type)
+	{
+	case GL_FLOAT: {
+		for (int i = 1; i <= 3; ++i) {
+			InstanceBufferCheck(attrID + i, func);
+
+			const auto& attrN = bufferAttribDefs[attrID + 1];
+
+			if (attrN.type != GL_FLOAT)
+				LuaUtils::SolLuaError("[LuaVBOImpl::%s] Buffer attribute %d is of GL_FLOAT type, but attribute %d is not, got %u type instead", func, attrID, attrID + i, attrN.type);
+
+			strideSize += attrN.strideSizeInBytes;
+		}
+	} break;
+	case GL_FLOAT_VEC4: [[fallthrough]];
+	case GL_FLOAT_MAT4: {
+		strideSize += attr0.strideSizeInBytes;
+	} break;
+	default:
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Buffer attribute %d must have floating type, got (%u) type instead", func, attrID, attr0.type);
+		break;
+	}
+
+	if (strideSize != 64)
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Attributes starting from (%d), don't define matrix. Size mismatch (%d != 64).", func, attrID, strideSize);
+
+	const uint32_t elemOffset = elemOffsetOpt.value_or(0u);
+
+	if (idsSize > elementsCount - elemOffset)
+		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Too many elements in Lua table", func);
+
+	static std::vector<float> matDataVec;
+	matDataVec.resize(16 * idsSize); //16 floats (matrix) per projectile id
+
+	constexpr auto defaultValue = static_cast<lua_Number>(0);
+
+	size_t idx = 0;
+	for (const auto id : ids) {
+		const CProjectile* p = LuaUtils::SolIdToObject<CProjectile>(id, __func__);
+		const CWeaponProjectile* wp = p->weapon ? static_cast<const CWeaponProjectile*>(p) : nullptr;
+		const bool doOffset = wp && wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE;
+
+		const CMatrix44f trMat = projectileDrawer->CanDrawProjectile(p, /*p->owner()*/ nullptr) ?
+			p->GetTransformMatrix(doOffset) :
+			CMatrix44f::Zero();
+
+		memcpy(&matDataVec[16 * idx], &trMat, sizeof(CMatrix44f));
+
+		++idx;
+	}
+
+	if (attr0.type == GL_FLOAT)
+		return UploadImpl<float>(matDataVec, elemOffset, { attrID + 0, attrID + 1, attrID + 2, attrID + 3 });
+	else
+		return UploadImpl<float>(matDataVec, elemOffset, attrID);
+}
+
 template<typename TObj>
 SInstanceData LuaVBOImpl::InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID)
 {
 	uint32_t teamID = defTeamID;
 
 	const TObj* obj = LuaUtils::SolIdToObject<TObj>(id, __func__);
-	const uint32_t matOffset = MatrixUploader::GetInstance().GetElemOffset(obj);
-	const uint32_t uniIndex = modelsUniformsStorage.GetObjOffset(obj); //doesn't need to exist for defs and model. Don't check for validity
+	const uint32_t matOffset = static_cast<uint32_t>(MatrixUploader::GetInstance().GetElemOffset(obj));
+	const uint32_t uniIndex  = static_cast<uint32_t>(modelsUniformsStorage.GetObjOffset(obj)); //doesn't need to exist for defs and model. Don't check for validity
 
 	uint8_t drawFlags = 0u;
 	if   constexpr (std::is_same_v<TObj, CUnit> || std::is_same_v<TObj, CFeature>) {
@@ -766,7 +856,7 @@ SInstanceData LuaVBOImpl::InstanceDataFromGetData(int id, int attrID, uint8_t de
 template<typename TObj>
 size_t LuaVBOImpl::InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt)
 {
-	InstanceDataFromDataCheck(attrID, __func__);
+	InstanceBufferCheckAndFormatCheck(attrID, __func__);
 
 	const uint32_t elemOffset = elemOffsetOpt.value_or(0u);
 	const SInstanceData instanceData = InstanceDataFromGetData<TObj>(id, attrID, defTeamID);
@@ -784,7 +874,7 @@ size_t LuaVBOImpl::InstanceDataFromImpl(int id, int attrID, uint8_t defTeamID, c
 template<typename TObj>
 size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt)
 {
-	InstanceDataFromDataCheck(attrID, __func__);
+	InstanceBufferCheckAndFormatCheck(attrID, __func__);
 
 	std::size_t idsSize = ids.size();
 
@@ -810,8 +900,8 @@ size_t LuaVBOImpl::InstanceDataFromImpl(const sol::stack_table& ids, int attrID,
 	return UploadImpl<uint32_t>(instanceDataVec, elemOffset, attrID);
 }
 
-template<typename TIn>
-size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, int attribIdx)
+template<typename TIn, typename AttribTestFunc>
+size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, AttribTestFunc attribTestFunc)
 {
 	if (dataVec.empty())
 		return 0u;
@@ -853,7 +943,7 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffs
 				basicTypeSize *= attrDef.typeSizeInBytes >> 2; // / 4;
 			}
 
-			bool copyData = attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
+			bool copyData = attribTestFunc(attrID);
 
 			#define TRANSFORM_AND_WRITE(T) { \
 				if (!TransformAndWrite<TIn, T>(bytesWritten, buffDataWithOffset, mappedBufferSizeInBytes, basicTypeSize, bdvIter, dataVec.cend(), copyData)) { \
@@ -895,7 +985,6 @@ size_t LuaVBOImpl::UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffs
 
 	return uploadToGPU(bytesWritten);
 }
-
 
 size_t LuaVBOImpl::ModelsVBO()
 {
@@ -950,6 +1039,27 @@ size_t LuaVBOImpl::InstanceDataFromFeatureIDs(int id, int attrID, sol::optional<
 size_t LuaVBOImpl::InstanceDataFromFeatureIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt)
 {
 	return InstanceDataFromImpl<CFeature>(ids, attrID, /*noop*/ 0u, elemOffsetOpt);
+}
+
+size_t LuaVBOImpl::MatrixDataFromProjectileIDs(int id, int attrID, sol::optional<int> elemOffsetOpt)
+{
+	return MatrixDataFromProjectileIDsImpl(std::initializer_list<int>{id}, attrID, elemOffsetOpt, __func__);
+}
+
+size_t LuaVBOImpl::MatrixDataFromProjectileIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt)
+{
+	std::size_t idsSize = ids.size();
+
+	static std::vector<int> idsVec;
+	idsVec.resize(idsSize);
+
+	constexpr auto defaultValue = static_cast<lua_Number>(0);
+	for (std::size_t i = 0u; i < idsSize; ++i) {
+		lua_Number idLua = ids.raw_get_or<lua_Number>(i + 1, defaultValue);
+		int id = spring::SafeCast<int, lua_Number>(idLua);
+		idsVec[i] = id;
+	}
+	return MatrixDataFromProjectileIDsImpl(idsVec, attrID, elemOffsetOpt, __func__);
 }
 
 int LuaVBOImpl::BindBufferRangeImpl(GLuint bindingIndex,  const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, bool bind)
@@ -1041,7 +1151,7 @@ void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 		LuaUtils::SolLuaError("[LuaVBOImpl::%s] Exceeded [%u] sane buffer size limit of [%u] bytes", __func__, bufferSizeInBytes, LuaVBOImpl::BUFFER_SANE_LIMIT_BYTES);
 	}
 
-	bufferSizeInBytes = byteSize; //be strict here and don't account for possible increase of size on GPU due to alignment requirements
+	bufferSizeInBytes = static_cast<uint32_t>(byteSize); //be strict here and don't account for possible increase of size on GPU due to alignment requirements
 
 	vbo = new VBO(defTarget, false);
 	vbo->Bind();

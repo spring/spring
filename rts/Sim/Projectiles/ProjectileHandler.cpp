@@ -17,7 +17,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
 #include "Rendering/Env/Particles/Classes/NanoProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -45,7 +44,7 @@ CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(0).minimumValue(0
 
 CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
-	CR_MEMBER(projectileContainers),
+	CR_MEMBER(projectiles),
 	CR_MEMBER_UN(flyingPieces),
 	CR_MEMBER_UN(groundFlashes),
 	CR_MEMBER_UN(resortFlyingPieces),
@@ -54,10 +53,7 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(maxNanoParticles),
 	CR_MEMBER(currentNanoParticles),
 	CR_MEMBER_UN(frameCurrentParticles),
-	CR_MEMBER_UN(frameProjectileCounts),
-
-	CR_MEMBER(freeProjectileIDs),
-	CR_MEMBER(projectileMaps)
+	CR_MEMBER_UN(frameProjectileCounts)
 ))
 
 
@@ -78,46 +74,20 @@ void CProjectileHandler::Init()
 
 	resortFlyingPieces.fill(false);
 
-	projectileMaps[true].clear();
-	projectileMaps[true].resize(1024, nullptr);
-
-#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
-	projectileMaps[false].clear();
-	projectileMaps[false].resize(0, nullptr);
-#else
-	projectileMaps[false].clear();
-	projectileMaps[false].resize(8192, nullptr);
-#endif
-
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
 	projMemPool.clear();
 	projMemPool.reserve(1024);
 
-	{
-		freeProjectileIDs[ true].reserve(projectileMaps[true].size());
-		freeProjectileIDs[false].reserve(projectileMaps[false].size());
-
-		// preload some IDs
-		for (int i = 0; i < projectileMaps[true].size(); i++) {
-			freeProjectileIDs[true].push_back(i);
-		}
-
-		for (int i = 0; i < projectileMaps[false].size(); i++) {
-			freeProjectileIDs[false].push_back(i);
-		}
-
-		spring::random_shuffle(freeProjectileIDs[ true].begin(), freeProjectileIDs[ true].end(), gsRNG);
-		spring::random_shuffle(freeProjectileIDs[false].begin(), freeProjectileIDs[false].end(), guRNG);
-	}
-
 	for (int modelType = 0; modelType < MODELTYPE_CNT; ++modelType) {
 		flyingPieces[modelType].clear();
 		flyingPieces[modelType].reserve(1000);
 	}
 
-	projectileContainers[0].reserve(((size_t)maxParticles)*2);
+	projectiles[true ].SeedFreeKeys(0, maxParticles * 2, true); //seed only synced free ids.
+
+	projectiles[false].reserve(static_cast<size_t>(maxParticles) * 2);
 
 	// register ConfigNotify()
 	configHandler->NotifyOnChange(this, {"MaxParticles", "MaxNanoParticles"});
@@ -129,17 +99,17 @@ void CProjectileHandler::Kill()
 
 	{
 		// synced first, to avoid callback crashes
-		for (CProjectile* p: projectileContainers[true])
+		for (CProjectile* p: projectiles[true])
 			projMemPool.free(p);
 
-		projectileContainers[true].clear();
+		projectiles[true].clear();
 	}
 
 	{
-		for (CProjectile* p: projectileContainers[false])
+		for (CProjectile* p: projectiles[false])
 			projMemPool.free(p);
 
-		projectileContainers[false].clear();
+		projectiles[false].clear();
 	}
 
 	{
@@ -155,12 +125,6 @@ void CProjectileHandler::Kill()
 		}
 	}
 
-	freeProjectileIDs[ true].clear();
-	freeProjectileIDs[false].clear();
-
-	projectileMaps[ true].clear();
-	projectileMaps[false].clear();
-
 	CCollisionHandler::PrintStats();
 }
 
@@ -170,7 +134,7 @@ void CProjectileHandler::ConfigNotify(const std::string& key, const std::string&
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
-	projectileContainers[0].reserve(((size_t)maxParticles)*2);
+	projectiles[false].reserve(static_cast<size_t>(maxParticles) * 2);
 }
 
 
@@ -185,11 +149,10 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 	assert(v.y <=  MAX_PROJECTILE_HEIGHT);
 }
 
-
 template<bool synced>
 void CProjectileHandler::UpdateProjectilesImpl()
 {
-	ProjectileContainer& pc = projectileContainers[synced];
+	auto& pc = projectiles[synced];
 
 	// WARNING:
 	//   we can't use iterators here because ProjectileCreated
@@ -210,9 +173,6 @@ void CProjectileHandler::UpdateProjectilesImpl()
 
 		// deletion (FIXME: move outside of loop)
 		if (p->deleteMe) {
-			pc[i] = pc.back();
-			pc.pop_back();
-
 			DestroyProjectile(p);
 			continue;
 		}
@@ -328,24 +288,22 @@ void CProjectileHandler::DestroyProjectile(CProjectile* p)
 	if (p->synced) {
 		eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 
-		projectileMaps[true][p->id] = nullptr;
-		freeProjectileIDs[true].push_back(p->id);
+		projectiles[true].Del(p->id);
 
 		ASSERT_SYNCED(p->pos);
 		ASSERT_SYNCED(p->id);
 	} else {
 	#if (PH_UNSYNCED_PROJECTILE_EVENTS == 1)
 		eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-
-		projectileMaps[false][p->id] = nullptr;
-		freeProjectileIDs[false].push_back(p->id);
 	#endif
+		projectiles[false].Del(p->id);
 	}
 
 	projMemPool.free(p);
 }
 
-
+uint32_t CProjectileHandler::UnsyncedRandInt(uint32_t N) { return guRNG.NextInt(N); }
+uint32_t CProjectileHandler::SyncedRandInt  (uint32_t N) { return gsRNG.NextInt(N); }
 
 void CProjectileHandler::Update()
 {
@@ -373,22 +331,16 @@ void CProjectileHandler::Update()
 	// precache part of particles count calculation that else becomes very heavy
 	frameCurrentParticles = 0;
 
-	for (const CProjectile* p: projectileContainers[ true]) {
+	for (const CProjectile* p: projectiles[ true]) {
 		frameCurrentParticles += p->GetProjectilesCount();
 	}
-	for (const CProjectile* p: projectileContainers[false]) {
+	for (const CProjectile* p: projectiles[false]) {
 		frameCurrentParticles += p->GetProjectilesCount();
 	}
 
-	frameProjectileCounts[ true] = projectileContainers[ true].size();
-	frameProjectileCounts[false] = projectileContainers[false].size();
+	frameProjectileCounts[ true] = projectiles[ true].size();
+	frameProjectileCounts[false] = projectiles[false].size();
 }
-
-
-
-
-static unsigned int UnsyncedRandInt(unsigned int N) { return (guRNG.NextInt(N)); }
-static unsigned int   SyncedRandInt(unsigned int N) { return (gsRNG.NextInt(N)); }
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
@@ -396,47 +348,14 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	assert(p->id < 0);
 	assert(p->createMe);
 
-	static constexpr decltype(&UnsyncedRandInt) rngFuncs[] = {&UnsyncedRandInt, &SyncedRandInt};
+	if (p->synced)
+		p->id = static_cast<int>(projectiles[true ].Add(p, rngFuncs[true]));
+	else
+		p->id = static_cast<int>(projectiles[false].Add(p)); //don't bother with shuffling unsynced ids 
 
-	auto& freeIDs = freeProjectileIDs[p->synced];
-	auto& projMap =    projectileMaps[p->synced];
-	auto& rngFunc =          rngFuncs[p->synced];
-
-	projectileContainers[p->synced].push_back(p);
-
-	if (p->synced || PH_UNSYNCED_PROJECTILE_EVENTS == 1) {
-		if (freeIDs.empty()) {
-			const size_t oldSize = projMap.size();
-			const size_t newSize = std::max(oldSize + 256, oldSize * 2);
-
-			projMap.resize(newSize, nullptr);
-			freeIDs.resize(newSize - oldSize);
-
-			// generate (newSize - oldSize) new id's starting from oldSize
-			std::for_each(freeIDs.begin(), freeIDs.end(), [k = oldSize](int& id) mutable { id = k++; });
-			spring::random_shuffle(freeIDs.begin(), freeIDs.end(), rngFunc);
-		}
-
-
-		#if 0
-		// popping from the back means ID's are reused more often
-		projMap[p->id = spring::VectorBackPop(freeIDs)] = p;
-		#else
-		{
-			// randomly shuffled, randomly indexed
-			const unsigned int idx = rngFunc(freeIDs.size());
-			const          int pid = (p->id = freeIDs[idx]);
-
-			projMap[pid] = p;
-			freeIDs[idx] = freeIDs.back();
-			freeIDs.pop_back();
-		}
-		#endif
-
-		#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
+	if (p->synced) {
 		ASSERT_SYNCED(freeIDs.size());
 		ASSERT_SYNCED(p->id);
-		#endif
 	}
 
 	CreateProjectile(p);
@@ -619,14 +538,15 @@ void CProjectileHandler::CheckShieldCollisions(
 	}
 }
 
-void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
+void CProjectileHandler::CheckUnitFeatureCollisions(bool synced)
 {
 	static std::vector<CUnit*> tempUnits;
 	static std::vector<CFeature*> tempFeatures;
 	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
-	for (size_t i = 0; i < pc.size(); ++i) {
-		CProjectile* p = pc[i];
+	//can't use iterators here, because instructions inside the loop modify projectiles[synced]
+	for (size_t i = 0; i < projectiles[synced].size(); ++i) {
+		CProjectile* p = projectiles[synced][i];
 
 		if (!p->checkCol) continue;
 		if ( p->deleteMe) continue;
@@ -637,16 +557,17 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 
 		quadField.GetUnitsAndFeaturesColVol(p->pos, p->speed.w + p->radius, tempUnits, tempFeatures, &tempRepulsers);
 
-		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
-		CheckUnitCollisions(p, tempUnits, ppos0, ppos1); tempUnits.clear();
-		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1); tempFeatures.clear();
+		CheckShieldCollisions (p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
+		CheckUnitCollisions   (p, tempUnits    , ppos0, ppos1); tempUnits.clear();
+		CheckFeatureCollisions(p, tempFeatures , ppos0, ppos1); tempFeatures.clear();
 	}
 }
 
-void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
+void CProjectileHandler::CheckGroundCollisions(bool synced)
 {
-	for (size_t i = 0; i < pc.size(); ++i) {
-		CProjectile* p = pc[i];
+	//can't use iterators here, because instructions inside the loop modify projectiles[synced]
+	for (size_t i = 0; i < projectiles[synced].size(); ++i) {
+		CProjectile* p = projectiles[synced][i];
 
 		if (!p->checkCol)
 			continue;
@@ -688,11 +609,11 @@ void CProjectileHandler::CheckCollisions()
 {
 	SCOPED_TIMER("Sim::Projectiles::Collisions");
 
-	CheckUnitFeatureCollisions(projectileContainers[ true]); // changes simulation state
-	CheckUnitFeatureCollisions(projectileContainers[false]); // does not change simulation state
+	CheckUnitFeatureCollisions(true ); // changes simulation state
+	CheckUnitFeatureCollisions(false); // does not change simulation state
 
-	CheckGroundCollisions(projectileContainers[ true]); // changes simulation state
-	CheckGroundCollisions(projectileContainers[false]); // does not change simulation state
+	CheckGroundCollisions(true ); // changes simulation state
+	CheckGroundCollisions(false); // does not change simulation state
 }
 
 
@@ -787,30 +708,6 @@ void CProjectileHandler::AddNanoParticle(
 	}
 }
 
-
-CProjectile* CProjectileHandler::GetProjectileBySyncedID(int id)
-{
-	if ((size_t)id < projectileMaps[true].size())
-		return projectileMaps[true][id];
-
-	return nullptr;
-}
-
-
-CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
-{
-	#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
-	// unsynced projectiles have no IDs in this case
-	return nullptr;
-	#endif
-
-	if ((size_t)id < projectileMaps[false].size())
-		return projectileMaps[false][id];
-
-	return nullptr;
-}
-
-
 float CProjectileHandler::GetParticleSaturation(bool randomized) const
 {
 	const int curParticles = GetCurrentParticles();
@@ -829,15 +726,15 @@ int CProjectileHandler::GetCurrentParticles() const
 {
 	// use precached part of particles count calculation that else becomes very heavy
 	// example where it matters: (in ZK) /cheat /give 20 armraven -> shoot ground
-	for (size_t i = frameProjectileCounts[true], e = projectileContainers[true].size(); i < e; ++i) {
-		frameCurrentParticles += projectileContainers[true][i]->GetProjectilesCount();
+	for (size_t i = frameProjectileCounts[true], e = projectiles[true].size(); i < e; ++i) {
+		frameCurrentParticles += projectiles[true][i]->GetProjectilesCount();
 	}
-	frameProjectileCounts[true ] = projectileContainers[true ].size();
+	frameProjectileCounts[true ] = projectiles[true ].size();
 
-	for (size_t i = frameProjectileCounts[false], e = projectileContainers[false].size(); i < e; ++i) {
-		frameCurrentParticles += projectileContainers[false][i]->GetProjectilesCount();
+	for (size_t i = frameProjectileCounts[false], e = projectiles[false].size(); i < e; ++i) {
+		frameCurrentParticles += projectiles[false][i]->GetProjectilesCount();
 	}
-	frameProjectileCounts[false] = projectileContainers[false].size();
+	frameProjectileCounts[false] = projectiles[false].size();
 
 	int partCount = frameCurrentParticles;
 	for (const auto& c: flyingPieces) {

@@ -122,6 +122,8 @@ public:
 	AtlasedTexture* groundringtex = nullptr;
 
 	AtlasedTexture* seismictex = nullptr;
+public:
+	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
@@ -132,7 +134,6 @@ private:
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
-	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 
 	static void DrawProjectileShadow(CProjectile* projectile);

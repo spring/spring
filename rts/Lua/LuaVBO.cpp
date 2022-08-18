@@ -45,6 +45,10 @@ bool LuaVBOs::PushEntries(lua_State* L)
 			sol::resolve<size_t(int, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureIDs),
 			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>)>(&LuaVBOImpl::InstanceDataFromFeatureIDs)
 		),
+		"MatrixDataFromProjectileIDs", sol::overload(
+			sol::resolve<size_t(int, int, sol::optional<int>)>(&LuaVBOImpl::MatrixDataFromProjectileIDs),
+			sol::resolve<size_t(const sol::stack_table&, int, sol::optional<int>)>(&LuaVBOImpl::MatrixDataFromProjectileIDs)
+		),
 
 		"BindBufferRange", &LuaVBOImpl::BindBufferRange,
 		"UnbindBufferRange", &LuaVBOImpl::UnbindBufferRange,

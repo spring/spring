@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "lib/lua/include/lua.h" //for lua_Number
 #include "lib/sol2/forward.hpp"
@@ -43,6 +44,9 @@ public:
 	size_t InstanceDataFromFeatureIDs(int id, int attrID, sol::optional<int> elemOffsetOpt);
 	size_t InstanceDataFromFeatureIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt);
 
+	size_t MatrixDataFromProjectileIDs(int id, int attrID, sol::optional<int> elemOffsetOpt);
+	size_t MatrixDataFromProjectileIDs(const sol::stack_table& ids, int attrID, sol::optional<int> elemOffsetOpt);
+
 	int BindBufferRange  (const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
 	int UnbindBufferRange(const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt);
 
@@ -65,7 +69,8 @@ private:
 private:
 	size_t ModelsVBOImpl();
 
-	void InstanceDataFromDataCheck(int attrID, const char* func);
+	void InstanceBufferCheckAndFormatCheck(int attrID, const char* func);
+	void InstanceBufferCheck(int attrID, const char* func);
 
 	template<typename TObj>
 	static SInstanceData InstanceDataFromGetData(int id, int attrID, uint8_t defTeamID);
@@ -76,8 +81,25 @@ private:
 	template<typename TObj>
 	size_t InstanceDataFromImpl(const sol::stack_table& ids, int attrID, uint8_t defTeamID, const sol::optional<int>& elemOffsetOpt);
 
+	template<typename Iterable>
+	size_t MatrixDataFromProjectileIDsImpl(const Iterable& ids, int attrID, sol::optional<int> elemOffsetOpt, const char* func);
+
+	template<typename TIn, typename AttribTestFunc>
+	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, AttribTestFunc attribTestFunc);
+
 	template<typename TIn>
-	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, int attribIdx);
+	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, int attribIdx) {
+		return UploadImpl(dataVec, elemOffset, [attribIdx](int attrID) {
+			return attribIdx == -1 || attribIdx == attrID; // copy data if specific attribIdx is not requested or requested and matches attrID
+		});
+	}
+
+	template<typename TIn>
+	size_t UploadImpl(const std::vector<TIn>& dataVec, uint32_t elemOffset, const std::initializer_list<int>& attribIdxs) {
+		return UploadImpl(dataVec, elemOffset, [&attribIdxs](int attrID) {
+			return std::find(attribIdxs.begin(), attribIdxs.end(), attrID) != attribIdxs.end();
+		});
+	}
 
 	template<typename T>
 	static T MaybeFunc(const sol::table& tbl, const std::string& key, T defValue);

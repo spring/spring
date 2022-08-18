@@ -496,7 +496,7 @@ static void DrawInfoText(TypedRenderBuffer<VA_TYPE_C   >& rb)
 	);
 
 	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
-	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sfxFmtStr, ph->projectileContainers[true].size(), ph->projectileContainers[false].size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
+	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, sfxFmtStr, ph->GetActiveProjectiles(true).size(), ph->GetActiveProjectiles(false).size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
 
 	{
 		const int2 pfsUpdates = pm->GetNumQueuedUpdates();

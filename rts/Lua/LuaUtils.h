@@ -20,7 +20,9 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -438,6 +440,24 @@ const inline CFeature* LuaUtils::IdToObject(int id, const char* func)
 }
 
 template<>
+const inline CProjectile* LuaUtils::IdToObject(int id, const char* func)
+{
+	const CProjectile* p = projectileHandler.GetProjectileBySyncedID(id);
+	if (p == nullptr)
+		return nullptr;
+
+	assert(p->synced);
+
+	if (p->piece)
+		return nullptr;
+
+	if (!p->weapon)
+		return nullptr;
+
+	return p;
+}
+
+template<>
 const inline UnitDef* LuaUtils::IdToObject(int id, const char* func)
 {
 	return unitDefHandler->GetUnitDefByID(id);
@@ -467,6 +487,17 @@ const inline CFeature* LuaUtils::SolIdToObject(int id, const char* func)
 
 	if (obj == nullptr)
 		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "FeatureID", id);
+
+	return obj;
+}
+
+template<>
+const inline CProjectile* LuaUtils::SolIdToObject(int id, const char* func)
+{
+	const CProjectile* obj = IdToObject<CProjectile>(id, func);
+
+	if (obj == nullptr)
+		SolLuaError("[LuaUtils::%s] Non-existing %s (%d) is supplied", func ? func : __func__, "ProjectileID", id);
 
 	return obj;
 }
