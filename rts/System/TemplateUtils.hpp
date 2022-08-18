@@ -1,5 +1,7 @@
-// https://stackoverflow.com/questions/38067106/c-verify-callable-signature-of-template-type
+#include <functional>
+
 namespace spring {
+	// https://stackoverflow.com/questions/38067106/c-verify-callable-signature-of-template-type
 
 	template<typename, typename, typename = void>
 	struct is_signature : std::false_type {};
@@ -30,4 +32,70 @@ namespace spring {
 	struct remove_cvref {
 		typedef std::remove_cv_t<std::remove_reference_t<T>> type;
 	};
+
+	template<typename T>
+	struct return_type { using type = T; };
+
+	template<typename R, typename... Ts>
+	struct return_type<std::function<R(Ts...)>> { using type = R; };
+
+	template<typename R, typename... Ts>
+	struct return_type<std::function<R(Ts...)> const> { using type = R; };
+
+	template<typename R, typename T, typename... Ts>
+	struct return_type<std::function<R(Ts...)> T::*> { using type = R; };
+
+	template<typename R, typename T, typename... Ts>
+	struct return_type<std::function<R(Ts...)> const T::*> { using type = R; };
+
+	template<typename R, typename T, typename... Ts>
+	struct return_type<std::function<R(Ts...)> T::* const&> { using type = R; };
+
+	template<typename R, typename T, typename... Ts>
+	struct return_type<std::function<R(Ts...)> const T::* const> { using type = R; };
+
+	template<typename R, typename... Ts>
+	struct return_type<R(*)(Ts...)> { using type = R; };
+
+	template<typename R, typename... Ts>
+	struct return_type<R& (*)(Ts...)> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R(T::*)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R& (T::*)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>(T::*)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>& (T::*)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R(T::* const)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R& (T::* const)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>(T::* const)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>& (T::* const)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R(T::* const&)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<R& (T::* const&)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>(T::* const&)() const> { using type = R; };
+
+	template<typename R, typename T>
+	struct return_type<std::shared_ptr<R>& (T::* const&)() const> { using type = R; };
+
+	template<typename T>
+	using return_type_t = typename return_type<T>::type;
 };
