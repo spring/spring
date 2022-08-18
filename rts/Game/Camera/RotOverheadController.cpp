@@ -10,6 +10,8 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
+#include "Game/CameraHandler.h"
+
 CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
 CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
 CONFIG(bool, RotOverheadEnabled).defaultValue(true).headlessValue(false);
@@ -44,10 +46,24 @@ void CRotOverheadController::KeyMove(float3 move)
 
 void CRotOverheadController::MouseMove(float3 move)
 {
-	camera->SetRotY(camera->GetRot().y + mouseScale * move.x);
-	camera->SetRotX(camera->GetRot().x + mouseScale * move.y * move.z);
-	camera->SetRotX(Clamp(camera->GetRot().x, math::PI * 0.4999f, math::PI * 0.9999f));
-	dir = camera->GetDir();
+	// use local dir state so CameraHandler can create smooth transition between
+	// current camera rot and desired
+	auto rot = CCamera::GetRotFromDir(dir);
+	rot.x = Clamp(rot.x + mouseScale * move.y * move.z, math::PI * 0.4999f, math::PI * 0.9999f);
+
+	float new_rot_y = ClampRad(rot.y + mouseScale * move.x + math::PI) - math::PI;
+	float cam_rot_y = camera->GetRot().y;
+	bool over_half_rot_y = (GetRadAngleToward(cam_rot_y, new_rot_y) *
+			GetRadAngleToward(cam_rot_y , rot.y) > 0.0f) &&
+			(fabsf(GetRadAngleToward(cam_rot_y, rot.y)) > math::HALFPI);
+
+	if (!over_half_rot_y) {
+		// pending rotation can't be over 180deg as CameraHandler will smooth it
+		// in the opposite direction
+		rot.y = new_rot_y;
+	}
+
+	dir = CCamera::GetFwdFromRot(rot);
 	Update();
 }
 

@@ -341,9 +341,8 @@ void CCameraHandler::UpdateTransition()
 	if (camTransState.timeEnd <= camTransState.timeStart)
 		return;
 
-
 	camera->SetPos(mix(camTransState.startPos, camTransState.tweenPos, tweenFact));
-	camera->SetRot(mix(camTransState.startRot, camTransState.tweenRot, tweenFact));
+	camera->SetRot(mixRotation(camTransState.startRot, camTransState.tweenRot, tweenFact));
 	camera->SetVFOV(mix(camTransState.startFOV, camTransState.tweenFOV, tweenFact));
 	camera->Update();
 }

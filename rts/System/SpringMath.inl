@@ -151,6 +151,24 @@ inline float ClampRad(float f)
 
 inline void ClampRad(float* f) { *f = ClampRad(*f); }
 
+inline float3 ClampRad(float3 v)
+{
+	v.x = ClampRad(v.x);
+	v.y = ClampRad(v.y);
+	v.z = ClampRad(v.z);
+	return v;
+}
+
+inline float GetRadAngleToward(float f1, float f2) {
+	 return (f2-f1) +
+			 (f2-f1 > math::PI ?
+				  -math::TWOPI :
+				  (f2-f1 <= -math::PI ? math::TWOPI : 0));
+}
+
+inline float3 GetRadAngleToward(float3 v1, float3 v2) {
+    return float3{GetRadAngleToward(v1.x, v2.x), GetRadAngleToward(v1.y, v2.y), GetRadAngleToward(v1.z, v2.z)};
+}
 
 inline bool RadsAreEqual(const float f1, const float f2)
 {
