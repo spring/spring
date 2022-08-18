@@ -135,7 +135,11 @@ void CglFont::SwapRenderBuffers()
 	}
 }
 
-
+void CglFont::UpdateAllProjMatrices() {
+	for (CglFont* f: loadedFonts) {
+		f->UpdateProjMatrix();
+	}
+}
 
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
@@ -204,6 +208,7 @@ CglFont::~CglFont()
 #ifdef HEADLESS
 
 void CglFont::SwapBuffers() {}
+void CglFont::UpdateProjMatrix() {}
 
 void CglFont::Begin(Shader::IProgramObject* shader) {}
 void CglFont::End(Shader::IProgramObject* shader) {}
@@ -581,6 +586,13 @@ void CglFont::SwapBuffers() {
 	ResetBuffers();
 }
 
+void CglFont::UpdateProjMatrix() {
+	if (useDefaultProjMatrix) {
+		defShader->Enable();
+		defShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix = DefProjMatrix());
+		defShader->Disable();
+	}
+}
 
 void CglFont::Begin(Shader::IProgramObject* shader) {
 	if (threadSafety)
@@ -971,6 +983,13 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 	if (threadSafety)
 		bufferMutex.lock();
 
+	if (inBeginEndBlock) {
+		bufferMutex.unlock();
+		return;
+	}
+
+	inBeginEndBlock = true;
+
 	if ((curShader = shader) == defShader) {
 		curShader->Enable();
 		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
@@ -1016,6 +1035,9 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
+	if (!inBeginEndBlock)
+		return;
+
 	if (curShader == defShader) {
 		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMatrix);
 		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix);
@@ -1030,6 +1052,8 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	inBeginEndBlock = false;
+
 	if (threadSafety)
 		bufferMutex.unlock();
 }
@@ -1037,8 +1061,7 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 
 
 CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }
-CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f); }
-
+CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::ClipOrthoProj(0, globalRendering->viewSizeX, 0, globalRendering->viewSizeY, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f); }
 
 
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)
@@ -1051,14 +1074,10 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	float sizeY = s;
 	float textDescender = 0.0f;
 
-	// transform size to normalized space (0..1)
-	sizeX *= globalRendering->pixelX;
-	sizeY *= globalRendering->pixelY;
-
-	if ((options & FONT_NORM) == 0) {
-		// coordinates are screencords (0..~1024), normalize
-		x *= globalRendering->pixelX;
-		y *= globalRendering->pixelY;
+	// transform normalized coords (0..1) to screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		x *= globalRendering->viewSizeX;
+		y *= globalRendering->viewSizeY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)
@@ -1136,7 +1155,6 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	SetColors(&baseTextColor, &baseOutlineColor);
 }
 
-// TODO: remove, only used by PlayerRosterDrawer
 void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text)
 {
 	std::vector<std::string> colLines;
@@ -1237,14 +1255,10 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	float sizeX = ss;
 	float sizeY = ss;
 
-	// transform size to normalized space (0..1)
-	sizeX *= globalRendering->pixelX;
-	sizeY *= globalRendering->pixelY;
-
-	if ((options & FONT_NORM) == 0) {
-		// coordinates are screencords (0..~1024), normalize
-		x *= globalRendering->pixelX;
-		y *= globalRendering->pixelY;
+	// transform normalized coords (0..1) to screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		x *= globalRendering->viewSizeX;
+		y *= globalRendering->viewSizeY;
 	}
 
 	// horizontal alignment (FONT_LEFT is default)
@@ -1271,7 +1285,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	}
 
 	for (size_t i = 0; i < colLines.size(); ++i) {
-		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), colLines[i]);
+		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_NORM | FONT_RIGHT | FONT_CENTER), colLines[i]);
 		x += (sizeX * colWidths[i]);
 	}
 }

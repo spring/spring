@@ -81,6 +81,14 @@ void Gui::SetDrawMode(DrawMode newMode)
 		case TEXTURE: { shader->SetUniform4f(2,  1.0f, 1.0f, 1.0f, 1.0f); } break;
 		case FONT   : { shader->SetUniform4f(2, -1.0f, 0.0f, 0.0f, 0.0f); } break;
 	}
+	
+	CMatrix44f projMat;
+	if (currentDrawMode != FONT) {
+		projMat = CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f);
+	} else {
+		projMat = CMatrix44f::ClipOrthoProj(0, globalRendering->viewSizeX, 0, globalRendering->viewSizeY, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f);
+	}
+	shader->SetUniformMatrix4x4<float>("viewProjMat", false, projMat);
 }
 
 

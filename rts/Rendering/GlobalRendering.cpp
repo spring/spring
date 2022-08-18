@@ -5,6 +5,7 @@
 
 #include "GlobalRendering.h"
 #include "GlobalRenderingInfo.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
@@ -1026,6 +1027,8 @@ void CGlobalRendering::UpdateViewPortGeometry()
 
 	viewPosX = (winSizeX >> 1) * dualScreenMode * dualScreenMiniMapOnLeft;
 	viewPosY = 0;
+
+	CglFont::UpdateAllProjMatrices();
 }
 
 void CGlobalRendering::UpdatePixelGeometry()

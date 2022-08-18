@@ -48,6 +48,7 @@ public:
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 	static void ReallocAtlases(bool pre);
 	static void SwapRenderBuffers();
+	static void UpdateAllProjMatrices();
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
 	~CglFont();
@@ -65,6 +66,7 @@ public:
 	void DrawBuffered(Shader::IProgramObject* shader);
 
 	void SwapBuffers();
+	void UpdateProjMatrix();
 
 	void ResetBuffer(bool outline) {
 		const unsigned int bi = GetBufferIdx(outline);
@@ -85,7 +87,8 @@ public:
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
 
 	void SetViewMatrix(const CMatrix44f& mat) { viewMatrix = mat; }
-	void SetProjMatrix(const CMatrix44f& mat) { projMatrix = mat; }
+	void SetProjMatrix(const CMatrix44f& mat) { useDefaultProjMatrix = false; projMatrix = mat; }
+	void ResetProjMatrix() { useDefaultProjMatrix = true; projMatrix = DefProjMatrix(); }
 
 	static CMatrix44f DefViewMatrix();
 	static CMatrix44f DefProjMatrix();
@@ -170,6 +173,7 @@ private:
 	unsigned int currBufferIndx = 0;
 	unsigned int lastPrintFrame = 0;
 
+	bool useDefaultProjMatrix = true;
 	bool inBeginEndBlock = false; // implies bufferMutex is locked
 	bool autoOutlineColor = false; // auto-select outline color for in-text-colorcodes
 
