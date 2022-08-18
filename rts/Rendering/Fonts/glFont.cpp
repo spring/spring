@@ -42,10 +42,6 @@ CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineW
 CONFIG(float,      FontOutlineWeight).defaultValue(25.0f).description("Sets the opacity of Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
 
-
-bool CglFont::threadSafety = false;
-
-
 std::shared_ptr<CglFont> font = nullptr;
 std::shared_ptr<CglFont> smallFont = nullptr;
 
@@ -288,6 +284,11 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 	CreateDefaultShader();
 	curShader = defShader.get();
+
+	fontMutexes = {
+		std::make_unique<spring::mutex_wrapper<spring::noop_mutex     >>(),
+		std::make_unique<spring::mutex_wrapper<spring::recursive_mutex>>()
+	};
 }
 
 #ifdef HEADLESS
@@ -404,6 +405,8 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	if (text.empty())
 		return 0.0f;
 
+	std::lock_guard lk(*GetFontMutex());
+
 	ScanForWantedGlyphs(text);
 
 	float curw = 0.0f;
@@ -480,6 +483,8 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 		if (numLines != nullptr) *numLines = 0;
 		return 0.0f;
 	}
+
+	std::lock_guard lk(*GetFontMutex());
 
 	ScanForWantedGlyphs(text);
 
@@ -641,13 +646,9 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 
 void CglFont::SetAutoOutlineColor(bool enable)
 {
-	if (threadSafety)
-		bufferMutex.lock();
+	std::lock_guard lk(*GetFontMutex());
 
 	autoOutlineColor = enable;
-
-	if (threadSafety)
-		bufferMutex.unlock();
 }
 
 void CglFont::SetTextColor(const float4* color)
@@ -655,13 +656,9 @@ void CglFont::SetTextColor(const float4* color)
 	if (color == nullptr)
 		color = &white;
 
-	if (threadSafety)
-		bufferMutex.lock();
+	std::lock_guard lk(*GetFontMutex());
 
 	textColor = *color;
-
-	if (threadSafety)
-		bufferMutex.unlock();
 }
 
 void CglFont::SetOutlineColor(const float4* color)
@@ -669,13 +666,9 @@ void CglFont::SetOutlineColor(const float4* color)
 	if (color == nullptr)
 		color = ChooseOutlineColor(textColor);
 
-	if (threadSafety)
-		bufferMutex.lock();
+	std::lock_guard lk(*GetFontMutex());
 
 	outlineColor = *color;
-
-	if (threadSafety)
-		bufferMutex.unlock();
 }
 
 
@@ -741,11 +734,10 @@ void CglFont::SwapBuffers() {
 
 
 void CglFont::Begin(Shader::IProgramObject* shader) {
-	if (threadSafety)
-		bufferMutex.lock();
+	GetFontMutex()->lock();
 
 	if (inBeginEndBlock) {
-		bufferMutex.unlock();
+		GetFontMutex()->unlock();
 		return;
 	}
 
@@ -804,15 +796,13 @@ void CglFont::End() {
 
 	inBeginEndBlock = false;
 
-	if (threadSafety)
-		bufferMutex.unlock();
+	GetFontMutex()->unlock();
 }
 
 
 void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 {
-	if (threadSafety)
-		bufferMutex.lock();
+	std::lock_guard lk(*GetFontMutex());
 
 	{
 		UpdateGlyphAtlasTexture();
@@ -852,9 +842,6 @@ void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 	}
 
 	curShader = nullptr;
-
-	if (threadSafety)
-		bufferMutex.unlock();
 }
 
 void CglFont::DrawWorldBuffered(Shader::IProgramObject* shader)
@@ -1086,8 +1073,8 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 		// no buffering
 		Begin();
 	} else if (buffered) {
-		if (threadSafety && !inBeginEndBlock)
-			bufferMutex.lock();
+		if (!inBeginEndBlock)
+			GetFontMutex()->lock();
 	}
 
 	// select correct decoration RenderString function
@@ -1102,8 +1089,8 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	if (immediate) {
 		End();
 	} else if (buffered) {
-		if (threadSafety && !inBeginEndBlock)
-			bufferMutex.unlock();
+		if (!inBeginEndBlock)
+			GetFontMutex()->unlock();
 	}
 
 	// reset text & outline colors (if changed via in-text colorcodes)

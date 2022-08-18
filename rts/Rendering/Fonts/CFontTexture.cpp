@@ -73,6 +73,13 @@ typedef unsigned char FT_Byte;
 static spring::unordered_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
 static spring::unordered_map<std::string, std::weak_ptr<FontFileBytes>> fontMemCache;
 static spring::unordered_set<std::pair<std::string, int>, spring::synced_hash<std::pair<std::string, int>>> invalidFonts;
+static std::array<std::unique_ptr<spring::mutex_wrapper_concept>, 2> cacheMutexes = {
+	std::make_unique<spring::mutex_wrapper<spring::noop_mutex     >>(),
+	std::make_unique<spring::mutex_wrapper<spring::recursive_mutex>>()
+};
+
+spring::mutex_wrapper_concept* GetCacheMutex() { return cacheMutexes[CFontTexture::threadSafety].get(); }
+
 
 #ifndef HEADLESS
 class FtLibraryHandler {
@@ -245,7 +252,8 @@ static inline uint64_t GetKerningHash(char32_t lchar, char32_t rchar)
 
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-	assert(Threading::IsMainThread());
+	assert(CFontTexture::threadSafety || Threading::IsMainThread());
+	std::lock_guard lk(*GetCacheMutex());
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
@@ -550,7 +558,8 @@ void CFontTexture::KillFonts()
 
 void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
-	assert(Threading::IsMainThread());
+	assert(CFontTexture::threadSafety || Threading::IsMainThread());
+	std::lock_guard lk(*GetCacheMutex());
 
 	// check unused fonts
 	spring::VectorEraseAllIf(allFonts, [](std::weak_ptr<CFontTexture> item) { return item.expired(); });
@@ -617,7 +626,8 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	if (wanted.empty())
 		return;
 
-	assert(Threading::IsMainThread());
+	assert(CFontTexture::threadSafety || Threading::IsMainThread());
+	std::lock_guard lk(*GetCacheMutex());
 
 	static std::vector<char32_t> map;
 	map.clear();
@@ -881,7 +891,7 @@ void CFontTexture::ReallocAtlases(bool pre)
 void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
-	//assert(Threading::IsMainThread());
+	// no need to lock, MT safe
 
 	if (curTextureUpdate == lastTextureUpdate)
 		return;
@@ -909,9 +919,6 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 
 		atlasUpdateShadow = {}; // MT-safe
 	}
-
-
-
 #endif
 }
 

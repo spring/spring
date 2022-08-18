@@ -119,7 +119,6 @@ public:
 
 	static constexpr char8_t ColorCodeIndicator  = 0xFF;
 	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
-	static bool threadSafety;
 private:
 	static void CreateDefaultShader();
 
@@ -141,6 +140,8 @@ private:
 	void ScanForWantedGlyphs(const std::u8string& str);
 	float GetTextWidth_(const std::u8string& text);
 	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
+
+	spring::mutex_wrapper_concept* GetFontMutex() { return fontMutexes[threadSafety].get(); }
 public:
 	static auto GetLoadedFonts() -> const decltype(allFonts)& {
 		return allFonts;
@@ -149,7 +150,8 @@ private:
 	inline static std::unique_ptr<Shader::IProgramObject> defShader = nullptr;
 
 	std::string fontPath;
-	spring::recursive_mutex bufferMutex;
+
+	std::array<std::unique_ptr<spring::mutex_wrapper_concept>, 2> fontMutexes;
 
 	TypedRenderBuffer<VA_TYPE_TC> primaryBufferTC;
 	TypedRenderBuffer<VA_TYPE_TC> outlineBufferTC;
