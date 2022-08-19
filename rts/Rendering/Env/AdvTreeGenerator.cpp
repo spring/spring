@@ -386,7 +386,7 @@ void CAdvTreeGenerator::CreateBushLeaves(const float3& start, const float3& dir,
 
 void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
-	glAttribStatePtr->ViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
+	glAttribStatePtr->PushViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glAttribStatePtr->DisableBlendMask();
@@ -417,6 +417,8 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 	}
 
 	glAttribStatePtr->PopBits();
+
+	glAttribStatePtr->PopViewPort();
 }
 
 void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& end)
@@ -594,7 +596,7 @@ void CAdvTreeGenerator::DrawPineBranch(const float3& start, const float3& dir, f
 
 void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
-	glAttribStatePtr->ViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
+	glAttribStatePtr->PushViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -671,6 +673,6 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		}
 	}
 
-	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->PopViewPort();
 }
 
