@@ -25,15 +25,13 @@ class ScopedMatricesMemAlloc;
 
 enum ModelDrawerTypes {
 	MODEL_DRAWER_FFP =  0, // fixed-function path
-	MODEL_DRAWER_ARB =  1, // standard-shader path (ARB)
-	MODEL_DRAWER_GLSL = 2, // standard-shader path (GLSL)
-	MODEL_DRAWER_GL4 =  3, // GL4-shader path (GLSL)
-	MODEL_DRAWER_CNT =  4
+	MODEL_DRAWER_GLSL = 1, // standard-shader path (GLSL)
+	MODEL_DRAWER_GL4 =  2, // GL4-shader path (GLSL)
+	MODEL_DRAWER_CNT =  3
 };
 
 static constexpr const char* ModelDrawerNames[ModelDrawerTypes::MODEL_DRAWER_CNT] = {
 	"FFP : fixed-function path",
-	"ARB : legacy standard shader path",
 	"GLSL: legacy standard shader path",
 	"GL4 : modern standard shader path",
 };
@@ -302,7 +300,7 @@ inline void CModelDrawerBase<TDrawerData, TDrawer>::SelectImplementation(bool fo
 	}
 
 	int best = ModelDrawerTypes::MODEL_DRAWER_FFP;
-	for (int t = ModelDrawerTypes::MODEL_DRAWER_ARB; t < ModelDrawerTypes::MODEL_DRAWER_CNT; ++t) {
+	for (int t = ModelDrawerTypes::MODEL_DRAWER_GLSL; t < ModelDrawerTypes::MODEL_DRAWER_CNT; ++t) {
 		auto d = modelDrawers[t];
 		auto s = IModelDrawerState::modelDrawerStates[t];
 		if (qualifyDrawerFunc(d, s)) {

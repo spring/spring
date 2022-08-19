@@ -121,7 +121,6 @@ private:
 	std::vector<TrackType> trackTypes;
 
 	enum DecalShaderProgram {
-		DECAL_SHADER_ARB,
 		DECAL_SHADER_GLSL,
 		DECAL_SHADER_CURR,
 		DECAL_SHADER_LAST

@@ -96,8 +96,8 @@ void CShadowHandler::Init()
 	if (SpringVersion::IsHeadless())
 		return;
 
-	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
-		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __func__);
+	if (!globalRendering->haveGLSL) {
+		LOG_L(L_WARNING, "[%s] GPU does not support either GLSL shaders for shadow rendering", __func__);
 		return;
 	}
 
@@ -190,15 +190,10 @@ void CShadowHandler::LoadProjectionMatrix(const CCamera* shadowCam)
 
 void CShadowHandler::LoadShadowGenShaders()
 {
+	if (!globalRendering->haveGLSL)
+		return;
+
 	#define sh shaderHandler
-	static const std::string shadowGenProgNames[SHADOWGEN_PROGRAM_LAST] = {
-		"ARB/unit_genshadow.vp",
-		"", //GL4 only
-		"ARB/groundshadow.vp",
-		"ARB/treeShadow.vp",
-		"ARB/treeFarShadow.vp",
-		"ARB/projectileshadow.vp",
-	};
 	static const std::string shadowGenProgHandles[SHADOWGEN_PROGRAM_LAST] = {
 		"ShadowGenShaderProgModel",
 		"ShadowGenShaderProgModelGL4",
@@ -227,62 +222,47 @@ void CShadowHandler::LoadShadowGenShaders()
 		("#define SUPPORT_CLIP_CONTROL " + IntToString(globalRendering->supportClipSpaceControl) + "\n") +
 		("#define SUPPORT_DEPTH_LAYOUT " + IntToString(globalRendering->supportFragDepthLayout) + "\n");
 
-	if (globalRendering->haveGLSL) {
-		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
-			if (i == SHADOWGEN_PROGRAM_MODEL_GL4)
-				continue; //special path
+	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
+		if (i == SHADOWGEN_PROGRAM_MODEL_GL4)
+			continue; //special path
 
-			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
+		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
 
-			if (i == SHADOWGEN_PROGRAM_MAP) {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
-			} else {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
-			}
-
-			po->Link();
-			po->SetUniformLocation("shadowParams"); // idx 0
-			po->SetUniformLocation("cameraDirX"  ); // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("cameraDirY"  ); // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("treeOffset"  ); // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("alphaMaskTex"); // idx 4
-			po->SetUniformLocation("alphaParams" ); // idx 5, used by SHADOWGEN_PROGRAM_MAP
-			po->Enable();
-			po->SetUniform1i(4, 0); // alphaMaskTex
-			po->SetUniform2f(5, mapInfo->map.voidAlphaMin, 0.0f); // alphaParams
-			po->Disable();
-			po->Validate();
-
-			shadowGenProgs[i] = po;
+		if (i == SHADOWGEN_PROGRAM_MAP) {
+			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
+			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
+		} else {
+			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
 		}
-		{
-			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[SHADOWGEN_PROGRAM_MODEL_GL4] + "GLSL", false);
 
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProgGL4.glsl", shadowGenProgDefines[SHADOWGEN_PROGRAM_MODEL_GL4] + extraDefs, GL_VERTEX_SHADER));
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProgGL4.glsl", shadowGenProgDefines[SHADOWGEN_PROGRAM_MODEL_GL4] + extraDefs, GL_FRAGMENT_SHADER));
-			po->Link();
-			po->Enable();
-			po->SetUniform("cameraMode", 1);
-			po->SetUniform("alphaCtrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
-			po->Disable();
-			po->Validate();
+		po->Link();
+		po->SetUniformLocation("shadowParams"); // idx 0
+		po->SetUniformLocation("cameraDirX"  ); // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
+		po->SetUniformLocation("cameraDirY"  ); // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
+		po->SetUniformLocation("treeOffset"  ); // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
+		po->SetUniformLocation("alphaMaskTex"); // idx 4
+		po->SetUniformLocation("alphaParams" ); // idx 5, used by SHADOWGEN_PROGRAM_MAP
+		po->Enable();
+		po->SetUniform1i(4, 0); // alphaMaskTex
+		po->SetUniform2f(5, mapInfo->map.voidAlphaMin, 0.0f); // alphaParams
+		po->Disable();
+		po->Validate();
 
-			shadowGenProgs[SHADOWGEN_PROGRAM_MODEL_GL4] = po;
-		}
-	} else {
-		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
-			if (i == SHADOWGEN_PROGRAM_MODEL_GL4)
-				continue; //skip
+		shadowGenProgs[i] = po;
+	}
+	{
+		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[SHADOWGEN_PROGRAM_MODEL_GL4] + "GLSL");
 
-			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "ARB", true);
-			Shader::IShaderObject* so = sh->CreateShaderObject(shadowGenProgNames[i], "", GL_VERTEX_PROGRAM_ARB);
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProgGL4.glsl", shadowGenProgDefines[SHADOWGEN_PROGRAM_MODEL_GL4] + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProgGL4.glsl", shadowGenProgDefines[SHADOWGEN_PROGRAM_MODEL_GL4] + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
+		po->Enable();
+		po->SetUniform("cameraMode", 1);
+		po->SetUniform("alphaCtrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
+		po->Disable();
+		po->Validate();
 
-			po->AttachShaderObject(so);
-			po->Link();
-
-			shadowGenProgs[i] = po;
-		}
+		shadowGenProgs[SHADOWGEN_PROGRAM_MODEL_GL4] = po;
 	}
 
 	shadowsLoaded = true;
@@ -641,16 +621,6 @@ void CShadowHandler::CreateShadows()
 	SetShadowCamera(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW));
 
 	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
-
-	if (globalRendering->haveARB) {
-		// set the shadow-parameter registers
-		// NOTE: so long as any part of Spring rendering still uses
-		// ARB programs at run-time, these lines can not be removed
-		// (all ARB programs share the same environment)
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, shadowTexProjCenter.x, shadowTexProjCenter.y, 0.0f, 0.0f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, shadowTexProjCenter.z, shadowTexProjCenter.z, 0.0f, 0.0f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18, shadowTexProjCenter.w, shadowTexProjCenter.w, 0.0f, 0.0f);
-	}
 
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {

@@ -169,7 +169,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(supportSeamlessCubeMaps),
 	CR_IGNORED(supportFragDepthLayout),
-	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
 	CR_IGNORED(haveGL4),
 	CR_IGNORED(glslMaxVaryings),
@@ -281,7 +280,6 @@ CGlobalRendering::CGlobalRendering()
 	, supportClipSpaceControl(false)
 	, supportSeamlessCubeMaps(false)
 	, supportFragDepthLayout(false)
-	, haveARB(false)
 	, haveGLSL(false)
 	, haveGL4(false)
 
@@ -718,18 +716,16 @@ void CGlobalRendering::SetGLSupportFlags()
 	const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
 	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
 
-	haveARB   = static_cast<bool>(GLEW_ARB_vertex_program && GLEW_ARB_fragment_program);
 	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
 	haveGLSL &= static_cast<bool>(GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
 	haveGLSL &= static_cast<bool>(GLEW_VERSION_2_0); // we want OpenGL 2.0 core functions
 
 	#ifndef HEADLESS
-	if (!haveARB || !haveGLSL)
+	if (!haveGLSL)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
 
 	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
-	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
 	haveAMD    = (  glVendor.find(   "ati ") != std::string::npos) || (  glVendor.find("amd ") != std::string::npos) ||
@@ -936,7 +932,6 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tSDL driver  : %s", globalRenderingInfo.sdlDriverName);
 	LOG("\t");
 	LOG("\tInitialized OpenGL Context: %i.%i (%s)", globalRenderingInfo.glContextVersion.x, globalRenderingInfo.glContextVersion.y, globalRenderingInfo.glContextIsCore ? "Core" : "Compat");
-	LOG("\tARB shader support        : %i", haveARB);
 	LOG("\tGLSL shader support       : %i", haveGLSL);
 	LOG("\tGL4 support               : %i", haveGL4);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());

@@ -25,7 +25,7 @@ enum {
 
 struct ISMFRenderState {
 public:
-	static ISMFRenderState* GetInstance(bool haveARB, bool haveGLSL, bool luaShader);
+	static ISMFRenderState* GetInstance(bool haveGLSL, bool luaShader);
 	static void FreeInstance(ISMFRenderState* state) { delete state; }
 
 	virtual ~ISMFRenderState() {}
@@ -73,47 +73,6 @@ public:
 	void SetCurrentShader(const DrawPass::e& drawPass) {}
 	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const {};
 };
-
-
-struct SMFRenderStateARB: public ISMFRenderState {
-public:
-	SMFRenderStateARB() { arbShaders.fill(nullptr); }
-	~SMFRenderStateARB() { arbShaders.fill(nullptr); }
-
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
-	void Kill();
-	void Update(
-		const CSMFGroundDrawer* smfGroundDrawer,
-		const LuaMapShaderData* luaMapShaderData
-	) {}
-
-	bool HasValidShader(const DrawPass::e& drawPass) const;
-	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
-	bool CanDrawForward() const { return true; }
-	bool CanDrawDeferred() const { return false; }
-
-	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
-	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
-
-	void SetSquareTexGen(const int sqx, const int sqy) const;
-	void SetCurrentShader(const DrawPass::e& drawPass);
-	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
-
-	enum {
-		ARB_SHADER_DEFAULT = 0,
-		ARB_SHADER_REFLECT = 1,
-		ARB_SHADER_REFRACT = 2,
-		ARB_SHADER_CURRENT = 3,
-		ARB_SHADER_COUNT   = 4,
-	};
-private:
-	// [0] := default (V+F) SMF ARB shader
-	// [1] := shader (V+F) for the DynamicWater reflection pass
-	// [2] := shader (V+F) for the DynamicWater refraction pass
-	// [3] := currently active ARB shader {0, 1, 2}
-	std::array<Shader::IProgramObject*, ARB_SHADER_COUNT> arbShaders;
-};
-
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:

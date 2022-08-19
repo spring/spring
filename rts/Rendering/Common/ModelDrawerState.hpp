@@ -165,26 +165,6 @@ private:
 	static void CleanupBasicS3OTexture0();
 };
 
-class CModelDrawerStateARB final : public CModelDrawerStateLegacy {
-public:
-	CModelDrawerStateARB();
-	~CModelDrawerStateARB() override;
-public:
-	// caps functions
-	bool CanEnable() const override;
-	bool CanDrawDeferred() const override { return false; }
-
-	bool SetTeamColor(int team, float alpha) const override;
-
-	void Enable(bool deferredPass, bool alphaPass) const override;
-	void Disable(bool deferredPass) const override;
-private:
-	void SetNanoColor(const float4& color) const override;
-
-	void EnableTextures() const override;
-	void DisableTextures() const override;
-};
-
 class CModelDrawerStateGLSL final : public CModelDrawerStateLegacy {
 public:
 	CModelDrawerStateGLSL();

@@ -149,48 +149,6 @@ namespace Shader {
 	}
 
 
-
-
-	/*****************************************************************/
-
-	ARBShaderObject::ARBShaderObject(
-		unsigned int shType,
-		const std::string& shSrc,
-		const std::string& shSrcDefs
-	): IShaderObject(shType, shSrc)
-	{
-		assert(globalRendering->haveARB); // non-debug check is done in ShaderHandler
-		glGenProgramsARB(1, &objID);
-	}
-
-	void ARBShaderObject::Compile() {
-		glEnable(type);
-
-		glBindProgramARB(type, objID);
-		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, srcText.size(), srcText.c_str());
-
-		int errorPos = -1;
-		int isNative =  0;
-
-		glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-		glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
-
-		const char* err = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-
-		log = std::string((err != NULL)? err: "[NULL]");
-		valid = (errorPos == -1 && isNative != 0);
-
-		glBindProgramARB(type, 0);
-		glDisable(type);
-	}
-
-	void ARBShaderObject::Release() {
-		glDeleteProgramsARB(1, &objID);
-	}
-
-
-
-
 	/*****************************************************************/
 
 	GLSLShaderObject::GLSLShaderObject(

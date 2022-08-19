@@ -78,7 +78,7 @@ CHeightTexture::CHeightTexture()
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CHeightTexture]", "CHeightTexture", false);
+	shader = shaderHandler->CreateProgramObject("[CHeightTexture]", "CHeightTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();

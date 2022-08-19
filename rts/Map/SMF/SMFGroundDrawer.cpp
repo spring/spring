@@ -72,9 +72,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	meshDrawer = SwitchMeshDrawer(drawerMode);
 
 	smfRenderStates = { nullptr };
-	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL, false);
-	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false, false);
-	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true,  true);
+	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveGLSL, false);
+	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                    false, false);
+	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                     true,  true);
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
@@ -160,7 +160,7 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 
 
 void CSMFGroundDrawer::CreateWaterPlane() {
-	waterPlaneShader = shaderHandler->CreateProgramObject("[CSMFGroundDrawer]", "WaterPlane", false);
+	waterPlaneShader = shaderHandler->CreateProgramObject("[CSMFGroundDrawer]", "WaterPlane");
 	waterPlaneShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/WaterPlaneVS.glsl", "", GL_VERTEX_SHADER));
 	waterPlaneShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/WaterPlaneFS.glsl", "", GL_FRAGMENT_SHADER));
 	waterPlaneShader->Link();

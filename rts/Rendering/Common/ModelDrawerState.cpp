@@ -250,117 +250,11 @@ void CModelDrawerStateFFP::DisableTextures() const
 	glDisable(GL_TEXTURE_2D);
 }
 
-////////////// ARB ////////////////
-
-CModelDrawerStateARB::CModelDrawerStateARB()
-{
-	if (!CanEnable())
-		return;
-
-	// if GLEW_NV_vertex_program2 is supported, transparent objects are clipped against GL_CLIP_PLANE3
-	static const char* vertProgNamesARB[2] = { "ARB/units3o.vp", "ARB/units3o2.vp" };
-	static const char* fragProgNamesARB[2] = { "ARB/units3o.fp", "ARB/units3o_shadow.fp" };
-
-	#define sh shaderHandler
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD] = sh->CreateProgramObject(PO_CLASS, "S3OShaderDefARB", true);
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[0                      ], "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->Link();
-
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD] = sh->CreateProgramObject(PO_CLASS, "S3OShaderAdvARB", true);
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[1                      ], "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
-
-	modelShaders[MODEL_SHADER_NOSHADOW_DEFERRED] = nullptr; //cannot draw deferred
-	modelShaders[MODEL_SHADER_SHADOWED_DEFERRED] = nullptr;
-	#undef sh
-
-	SetActiveShader(shadowHandler.ShadowsLoaded(), false);
-}
-
-CModelDrawerStateARB::~CModelDrawerStateARB()
-{
-	modelShaders.fill(nullptr);
-	modelShader = nullptr;
-
-	shaderHandler->ReleaseProgramObjects(PO_CLASS);
-}
-
-bool CModelDrawerStateARB::CanEnable() const { return globalRendering->haveARB && CModelDrawerConcept::UseAdvShading(); }
-
-bool CModelDrawerStateARB::SetTeamColor(int team, float alpha) const
-{
-	if (!IModelDrawerState::SetTeamColor(team, alpha))
-		return false;
-
-	// NOTE:
-	//   both UnitDrawer::DrawAlphaPass and FeatureDrawer::DrawAlphaPass
-	//   disable advShading in case of ARB, so in that case we should end
-	//   up in StateFFP::SetTeamColor
-	assert(modelShader != nullptr);
-	assert(modelShader->IsBound());
-
-	modelShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShader->SetUniform4fv(14, std::move(CModelDrawerHelper::GetTeamColor(team, alpha)));
-
-	return true;
-}
-
-void CModelDrawerStateARB::Enable(bool deferredPass, bool alphaPass) const
-{
-	// body of former EnableCommon();
-	CModelDrawerHelper::PushTransform(camera);
-	CModelDrawerHelper::EnableTexturesCommon();
-
-	SetActiveShader(shadowHandler.ShadowsLoaded(), /*deferredPass*/ false);
-	assert(modelShader != nullptr);
-	modelShader->Enable();
-	// end of EnableCommon();
-
-	modelShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	modelShader->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
-	modelShader->SetUniform4f(11, sunLighting->modelDiffuseColor.x, sunLighting->modelDiffuseColor.y, sunLighting->modelDiffuseColor.z, 0.0f);
-	modelShader->SetUniform4f(12, sunLighting->modelAmbientColor.x, sunLighting->modelAmbientColor.y, sunLighting->modelAmbientColor.z, 1.0f); //!
-	modelShader->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
-	modelShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShader->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sunLighting->modelShadowDensity);
-	modelShader->SetUniform4f(11, sunLighting->modelAmbientColor.x, sunLighting->modelAmbientColor.y, sunLighting->modelAmbientColor.z, 1.0f);
-
-	glMatrixMode(GL_MATRIX0_ARB);
-	glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
-	glMatrixMode(GL_MODELVIEW);
-}
-
-void CModelDrawerStateARB::Disable(bool deferredPass) const
-{
-	assert(modelShader != nullptr);
-
-	modelShader->Disable();
-	//SetActiveShader(shadowHandler.ShadowsLoaded(), /*deferredPass*/ false);
-
-	CModelDrawerHelper::DisableTexturesCommon();
-	CModelDrawerHelper::PopTransform();
-}
-
-void CModelDrawerStateARB::SetNanoColor(const float4& color) const
-{
-	if (color.a > 0.0f) {
-		glColorf4(color);
-	}
-	else {
-		glColorf3(OnesVector);
-	}
-}
-
-void CModelDrawerStateARB::EnableTextures() const { CModelDrawerHelper::EnableTexturesCommon(); }
-void CModelDrawerStateARB::DisableTextures() const { CModelDrawerHelper::DisableTexturesCommon(); }
-
 ////////////// GSSL ////////////////
 
 CModelDrawerStateGLSL::CModelDrawerStateGLSL()
 {
-		if (!CanEnable())
+	if (!CanEnable())
 		return;
 
 	#define sh shaderHandler
@@ -377,7 +271,7 @@ CModelDrawerStateGLSL::CModelDrawerStateGLSL()
 		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
 
 	for (uint32_t n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
-		modelShaders[n] = sh->CreateProgramObject(PO_CLASS, shaderNames[n], false);
+		modelShaders[n] = sh->CreateProgramObject(PO_CLASS, shaderNames[n]);
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 
@@ -522,7 +416,7 @@ CModelDrawerStateGL4::CModelDrawerStateGL4()
 	};
 
 	for (uint32_t n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
-		modelShaders[n] = sh->CreateProgramObject(PO_CLASS, shaderNames[n], false);
+		modelShaders[n] = sh->CreateProgramObject(PO_CLASS, shaderNames[n]);
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProgGL4.glsl", "", GL_VERTEX_SHADER));
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProgGL4.glsl", "", GL_FRAGMENT_SHADER));
 

@@ -97,10 +97,9 @@ Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poCl
 }
 
 
-Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram) {
+Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName) {
 	Shader::IProgramObject* po = Shader::nullProgramObject;
 #ifndef HEADLESS
-	const char* poType = arbProgram? "ARB": "GLSL";
 
 	if (programObjects.find(poClass) != programObjects.end()) {
 		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
@@ -112,18 +111,11 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 		programObjects[poClass] = ProgramObjMap();
 	}
 
-	if (arbProgram) {
-		if (globalRendering->haveARB)
-			po = new Shader::ARBProgramObject(poName);
-
-	} else {
-		if (globalRendering->haveGLSL)
-			po = new Shader::GLSLProgramObject(poName);
-
-	}
+	if (globalRendering->haveGLSL)
+		po = new Shader::GLSLProgramObject(poName);
 
 	if (po == Shader::nullProgramObject)
-		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating (%s) program-object \"%s\"", __func__, poType, poName.c_str());
+		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating GLSL program-object \"%s\"", __func__, poName.c_str());
 #endif
 	programObjects[poClass][poName] = po;
 	return po;
@@ -135,25 +127,8 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	assert(!soName.empty());
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 #ifndef HEADLESS
-	switch (soType) {
-		case GL_VERTEX_PROGRAM_ARB:
-		case GL_FRAGMENT_PROGRAM_ARB: {
-			// assert(StringToLower(soName).find("arb") != std::string::npos);
-
-			if (globalRendering->haveARB)
-				so = new Shader::ARBShaderObject(soType, soName);
-
-		} break;
-
-		default: {
-			// assume GLSL shaders by default
-			// assert(StringToLower(soName).find("arb") == std::string::npos);
-
-			if (globalRendering->haveGLSL)
-				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
-
-		} break;
-	}
+	if (globalRendering->haveGLSL)
+		so = new Shader::GLSLShaderObject(soType, soName, soDefs);
 
 	if (so == Shader::nullShaderObject) {
 		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating shader-object \"%s\"", __func__, soName.c_str());

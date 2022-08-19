@@ -30,7 +30,7 @@ public:
 	void ReleaseProgramObjectsMap(ProgramObjMap& poMap);
 
 	Shader::IProgramObject* GetProgramObject(const std::string& poClass, const std::string& poName);
-	Shader::IProgramObject* CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram);
+	Shader::IProgramObject* CreateProgramObject(const std::string& poClass, const std::string& poName);
 	/**
 	 * @param soName The filepath to the shader.
 	 * @param soDefs Additional preprocessor flags passed as header.

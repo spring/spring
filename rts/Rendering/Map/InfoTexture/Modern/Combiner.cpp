@@ -55,7 +55,7 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
-	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner", false);
+	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner");
 
 	if (!fbo.IsValid() /*|| !shader->IsValid()*/) { // don't check shader (it gets created/switched at runtime)
 		throw opengl_error("");

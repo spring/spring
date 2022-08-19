@@ -23,7 +23,6 @@ void CModelDrawerConcept::InitStatic()
 	deferredAllowed &= geomBuffer->Valid();
 
 	IModelDrawerState::InitInstance<CModelDrawerStateFFP >(MODEL_DRAWER_FFP );
-	IModelDrawerState::InitInstance<CModelDrawerStateARB >(MODEL_DRAWER_ARB );
 	IModelDrawerState::InitInstance<CModelDrawerStateGLSL>(MODEL_DRAWER_GLSL);
 	IModelDrawerState::InitInstance<CModelDrawerStateGL4 >(MODEL_DRAWER_GL4 );
 

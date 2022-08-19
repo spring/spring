@@ -68,57 +68,49 @@ LegacyTrackHandler::~LegacyTrackHandler()
 void LegacyTrackHandler::LoadDecalShaders()
 {
 	#define sh shaderHandler
-	decalShaders.resize(DECAL_SHADER_LAST, NULL);
+	decalShaders.resize(DECAL_SHADER_LAST, nullptr);
+
+	if (!globalRendering->haveGLSL)
+		return;
 
 	// SM3 maps have no baked lighting, so decals blend differently
 	const bool haveShadingTexture = (readMap->GetShadingTexture() != 0);
-	const char* fragmentProgramNameARB = haveShadingTexture?
-		"ARB/GroundDecalsSMF.fp":
-		"ARB/GroundDecalsSM3.fp";
+
 	const std::string extraDef = haveShadingTexture?
 		"#define HAVE_SHADING_TEX 1\n":
 		"#define HAVE_SHADING_TEX 0\n";
 
-	decalShaders[DECAL_SHADER_ARB ] = sh->CreateProgramObject("[LegacyTrackHandler]", "DecalShaderARB",  true);
-	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[LegacyTrackHandler]", "DecalShaderGLSL", false);
-	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_ARB];
+	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[LegacyTrackHandler]", "DecalShaderGLSL");
+	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
+	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsFragProg.glsl", extraDef, GL_FRAGMENT_SHADER));
+	decalShaders[DECAL_SHADER_GLSL]->Link();
 
-	if (globalRendering->haveGLSL) {
-		decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
-		decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsFragProg.glsl", extraDef, GL_FRAGMENT_SHADER));
-		decalShaders[DECAL_SHADER_GLSL]->Link();
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx 0
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx 1
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx 2
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx 3
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx 4
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx 5
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 6
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 7
 
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx 0
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx 1
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx 2
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx 3
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx 4
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx 5
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 6
-		decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 7
+	decalShaders[DECAL_SHADER_GLSL]->Enable();
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->Disable();
+	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
-		decalShaders[DECAL_SHADER_GLSL]->Enable();
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
-		decalShaders[DECAL_SHADER_GLSL]->Disable();
-		decalShaders[DECAL_SHADER_GLSL]->Validate();
-
-		decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
-	} else if (globalRendering->haveARB) {
-		decalShaders[DECAL_SHADER_ARB]->AttachShaderObject(sh->CreateShaderObject("ARB/GroundDecals.vp", "", GL_VERTEX_PROGRAM_ARB));
-		decalShaders[DECAL_SHADER_ARB]->AttachShaderObject(sh->CreateShaderObject(fragmentProgramNameARB, "", GL_FRAGMENT_PROGRAM_ARB));
-		decalShaders[DECAL_SHADER_ARB]->Link();
-	}
+	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
 
 	#undef sh
 }
 
 void LegacyTrackHandler::SunChanged()
 {
-	if (globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
+	if (globalRendering->haveGLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
 		decalShaders[DECAL_SHADER_GLSL]->Disable();
@@ -273,6 +265,9 @@ void LegacyTrackHandler::Draw()
 	if (!GetDrawTracks())
 		return;
 
+	if (!decalShaders[DECAL_SHADER_CURR])
+		return;
+
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -376,21 +371,9 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 {
 	decalShaders[DECAL_SHADER_CURR]->Enable();
 
-	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_ARB]) {
-		decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sunLighting->groundShadowDensity);
-
-		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
-		glMatrixMode(GL_MODELVIEW);
-	} else {
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
-	}
+	decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
+	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
+	decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
 }
 
 

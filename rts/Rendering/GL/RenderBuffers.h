@@ -93,7 +93,7 @@ public:
 		}
 
 		if (!shader)
-			shader = shaderHandler->CreateProgramObject(poClass, typeName, false);
+			shader = shaderHandler->CreateProgramObject(poClass, typeName);
 
 #ifndef HEADLESS
 		assert(shader);
