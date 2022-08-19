@@ -17,9 +17,10 @@ CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, )
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
 	CR_MEMBER(pos2),
-	CR_MEMBER(orgSize),
+	CR_MEMBER(origSize),
 	CR_MEMBER(creationTime),
 	CR_MEMBER(lifeTime),
+	CR_MEMBER(lifePeriod),
 	CR_MEMBER(color),
 	CR_MEMBER(dir1),
 	CR_MEMBER(dir2),
@@ -44,6 +45,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	bool lastSegment,
 	float size,
 	int time,
+	int period,
 	float color,
 	AtlasedTexture* texture,
 	bool castShadowIn
@@ -52,16 +54,17 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 
 	pos1(pos1),
 	pos2(pos2),
-	orgSize(size),
+	origSize(size),
 	creationTime(gs->frameNum),
 	lifeTime(time),
+	lifePeriod(period),
 	color(color),
 	dir1(dir1),
 	dir2(dir2),
 	drawSegmented(false),
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
-	texture((texture == nullptr)? projectileDrawer->smoketrailtex : texture)
+	texture((texture == nullptr) ? projectileDrawer->smoketrailtex : texture)
 {
 	checkCol = false;
 	castShadow = castShadowIn;
@@ -107,40 +110,34 @@ void CSmokeTrailProjectile::Draw()
 	const float3 odir1 = (dif1.cross(dir1)).ANormalize();
 	const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
-	const SColor colBase(color, color, color, 1.f);
+	const SColor colBase(color, color, color, 1.0f);
 
-	float a1 = (1.f - age * invLifeTime) * (0.7f + std::fabs(dif1.dot(dir1)));
-	if (lastSegment) {
-		a1 = 0;
-	}
+	float a1 = lastSegment ?  0.0f : (1.0f - (age             ) * invLifeTime) * (0.7f + std::fabs(dif1.dot(dir1)));
 	const float alpha1 = Clamp(a1, 0.f, 1.f);
 	const SColor col = colBase * alpha1;
 
-	float a2 = (1.f - (age + 8) * invLifeTime) * (0.7f + std::fabs(dif2.dot(dir2)));
-	if (firstSegment) {
-		a2 = 0;
-	}
-	const float alpha2 = Clamp(a2, 0.f, 1.f);
+	float a2 = firstSegment ? 0.0f : (1.0f - (age + lifePeriod) * invLifeTime) * (0.7f + std::fabs(dif2.dot(dir2)));
+	const float alpha2 = Clamp(a2, 0.0f, 1.0f);
 	const SColor col2 = colBase * alpha2;
 
-	const float size =  1 + ( age      * invLifeTime) * orgSize;
-	const float size2 = 1 + ((age + 8) * invLifeTime) * orgSize;
+	const float size1 = 1.0f + ((age             ) * invLifeTime) * origSize;
+	const float size2 = 1.0f + ((age + lifePeriod) * invLifeTime) * origSize;
 
 	if (drawSegmented) {
-		const float t = (age + 4) * invLifeTime;
+		const float t = (age + 0.5f * lifePeriod) * invLifeTime;
 		const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
 		const float3 odir3 = (dif3.cross(middir)).ANormalize();
-		const float size3 = (0.2f + t) * orgSize;
+		const float size3 = (0.2f + t) * origSize;
 
-		const float a2 = (1.f - t) * (0.7f + std::fabs(dif3.dot(middir)));
-		const float alpha = Clamp(a2, 0.f, 1.f);
+		const float a2 = (1.0f - t) * (0.7f + std::fabs(dif3.dot(middir)));
+		const float alpha = Clamp(a2, 0.0f, 1.0f);
 		const SColor col3 = colBase * alpha;
 
 		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
 
 		rb.AddQuadTriangles(
-			{ pos1 - (odir1 * size),  texture->xstart, texture->ystart, col },
-			{ pos1 + (odir1 * size),  texture->xstart, texture->yend,   col },
+			{ pos1   - (odir1 * size1),  texture->xstart, texture->ystart, col  },
+			{ pos1   + (odir1 * size1),  texture->xstart, texture->yend,   col  },
 			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
 			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 }
 		);
@@ -148,13 +145,13 @@ void CSmokeTrailProjectile::Draw()
 		rb.AddQuadTriangles(
 			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 },
 			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
-			{ pos2 + (odir2 * size2), texture->xend,   texture->yend,   col2 },
-			{ pos2 - (odir2 * size2), texture->xend,   texture->ystart, col2 }
+			{ pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2 },
+			{ pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2 }
 		);
 	} else {
 		rb.AddQuadTriangles(
-			{ pos1 - (odir1 * size),    texture->xstart, texture->ystart, col },
-			{ pos1 + (odir1 * size),    texture->xstart, texture->yend,   col },
+			{ pos1 - (odir1 * size1),   texture->xstart, texture->ystart, col  },
+			{ pos1 + (odir1 * size1),   texture->xstart, texture->yend,   col  },
 			{ pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2 },
 			{ pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2 }
 		);

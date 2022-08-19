@@ -96,7 +96,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 void CStarburstProjectile::Collision()
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokePeriod(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
 
 	CWeaponProjectile::Collision();
 
@@ -107,7 +107,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokePeriod(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
 
 	CWeaponProjectile::Collision(unit);
 
@@ -118,7 +118,7 @@ void CStarburstProjectile::Collision(CUnit* unit)
 void CStarburstProjectile::Collision(CFeature* feature)
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, GetSmokeSize(), GetSmokeTime(), GetSmokePeriod(), GetSmokeColor(), weaponDef->visuals.texture2, weaponDef->visuals.smokeTrailCastShadow);
 
 	CWeaponProjectile::Collision(feature);
 
@@ -286,17 +286,18 @@ void CStarburstProjectile::UpdateSmokeTrail()
 	trailAge++;
 	numParts++;
 
-	if ((trailAge % weaponDef->visuals.smokePeriod) != 0)
+	if ((trailAge % GetSmokePeriod()) != 0)
 		return;
 
 	smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 		owner(),
 		pos, oldSmoke,
 		dir, oldSmokeDir,
-		trailAge == weaponDef->visuals.smokePeriod,
+		trailAge == GetSmokePeriod(),
 		false,
 		GetSmokeSize(),
 		GetSmokeTime(),
+		GetSmokePeriod(),
 		GetSmokeColor(),
 		weaponDef->visuals.texture2,
 		weaponDef->visuals.smokeTrailCastShadow
@@ -319,6 +320,11 @@ inline float CStarburstProjectile::GetSmokeColor() const
 inline int CStarburstProjectile::GetSmokeTime() const
 {
 	return weaponDef->visuals.smokeTime;
+}
+
+inline int CStarburstProjectile::GetSmokePeriod() const
+{
+	return weaponDef->visuals.smokePeriod;
 }
 
 void CStarburstProjectile::Draw()

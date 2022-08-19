@@ -21,7 +21,9 @@
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
 
-#define SMOKE_TIME 40
+static constexpr int   SMOKE_TIME   = 40;
+static constexpr int   SMOKE_SIZE   = 14;
+static constexpr float SMOKE_COLOR  = 0.5f;
 
 CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
 CR_REG_METADATA(CPieceProjectile,(
@@ -140,7 +142,7 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 			pos,
 			ZeroVector,
 			damageArray,
-			NULL,              // weaponDef
+			nullptr,           // weaponDef
 			owner(),
 			unit,              // hitUnit
 			feature,           // hitFeature
@@ -166,9 +168,10 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 				dir, oldSmokeDir,
 				false,
 				true,
-				14,
+				SMOKE_SIZE,
 				SMOKE_TIME,
-				0.5f,
+				NUM_TRAIL_PARTS,
+				SMOKE_COLOR,
 				projectileDrawer->smoketrailtex
 			);
 		}
@@ -232,16 +235,17 @@ void CPieceProjectile::Update()
 			oldSmokeDir = dir;
 		}
 
-		if ((age % 8) == 0) {
+		if ((age % NUM_TRAIL_PARTS) == 0) {
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
 				age == (NUM_TRAIL_PARTS - 1),
 				false,
-				14,
+				SMOKE_SIZE,
 				SMOKE_TIME,
-				0.5f,
+				NUM_TRAIL_PARTS,
+				SMOKE_COLOR,
 				projectileDrawer->smoketrailtex
 			);
 

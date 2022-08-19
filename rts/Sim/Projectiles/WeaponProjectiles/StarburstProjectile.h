@@ -67,6 +67,7 @@ private:
 	inline float GetSmokeSize() const;
 	inline float GetSmokeColor() const;
 	inline int GetSmokeTime() const;
+	inline int GetSmokePeriod() const;
 
 private:
 	struct TracerPart {

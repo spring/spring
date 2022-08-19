@@ -63,7 +63,7 @@ public:
 
 	const S3DModelPiece* omp;
 
-	static const unsigned NUM_TRAIL_PARTS = 8;
+	static constexpr unsigned NUM_TRAIL_PARTS = 8;
 	FireTrailPoint fireTrailPoints[NUM_TRAIL_PARTS];
 
 	float3 spinVec;

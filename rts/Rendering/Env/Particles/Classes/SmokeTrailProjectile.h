@@ -11,7 +11,7 @@ class CSmokeTrailProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CSmokeTrailProjectile)
 public:
-	CSmokeTrailProjectile() { }
+	CSmokeTrailProjectile() = default;
 	CSmokeTrailProjectile(
 		const CUnit* owner,
 		const float3& pos1,
@@ -22,6 +22,7 @@ public:
 		bool lastSegment,
 		float size,
 		int time,
+		int period,
 		float color,
 		AtlasedTexture* texture,
 		bool castShadow = true
@@ -37,10 +38,11 @@ public:
 private:
 	float3 pos1;
 	float3 pos2;
-	float orgSize;
+	float origSize;
 
 	int creationTime;
 	int lifeTime;
+	int lifePeriod;
 	float color;
 	float3 dir1;
 	float3 dir2;
