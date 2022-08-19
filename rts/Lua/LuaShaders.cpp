@@ -17,8 +17,10 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/TypeToStr.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Models/ModelsMemStorage.h"
 #include "Rendering/Models/ModelsMemStorageDefs.h"
+#include "Rendering/UniformConstants.h"
 
 #include <string>
 #include <vector>
@@ -47,6 +49,8 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UniformArray);
 	REGISTER_LUA_CFUNC(UniformMatrix);
 	REGISTER_LUA_CFUNC(UniformSubroutine);
+
+	REGISTER_LUA_CFUNC(GetEngineUniformBufferDef);
 
 	REGISTER_LUA_CFUNC(SetUnitBufferUniforms);
 	REGISTER_LUA_CFUNC(SetFeatureBufferUniforms);
@@ -1101,6 +1105,19 @@ int LuaShaders::UniformSubroutine(lua_State* L)
 	// this supports array and even array of arrays, but let's keep it simple
 	glUniformSubroutinesuiv(shaderType, 1, &index);
 	return 0;
+}
+
+int LuaShaders::GetEngineUniformBufferDef(lua_State* L)
+{
+	if (!globalRendering->haveGL4)
+		return 0;
+
+	const int idx = luaL_checkint(L, 1);
+	if (idx < 0 || idx > 1)
+		luaL_error(L, "%s(): Invalid UniformConstants buffer index (%d) requested", __func__, idx);
+
+	lua_pushstring(L, UniformConstants::GetInstance().GetGLSLDefinition(idx).c_str());
+	return 1;
 }
 
 int LuaShaders::SetGeometryShaderParameter(lua_State* L)

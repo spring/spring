@@ -3,16 +3,22 @@
 
 #include <array>
 #include <cstdint>
+#include <sstream>
+#include <map>
 
 #include "System/float3.h"
 #include "System/float4.h"
 #include "System/Matrix44f.h"
 #include "System/SpringMath.h"
+#include "System/creg/creg.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/StreamBuffer.h"
-//#include "Rendering/GL/VBO.h"
+
+#include "fmt/format.h"
 
 struct UniformMatricesBuffer {
+	CR_DECLARE_STRUCT(UniformMatricesBuffer)
+
 	CMatrix44f screenView;
 	CMatrix44f screenProj;
 	CMatrix44f screenViewProj;
@@ -51,6 +57,8 @@ struct UniformMatricesBuffer {
 };
 
 struct UniformParamsBuffer {
+	CR_DECLARE_STRUCT(UniformParamsBuffer)
+
 	float3 rndVec3; //new every draw frame.
 	uint32_t renderCaps; //various render booleans
 
@@ -99,19 +107,74 @@ public:
 		UpdateParams();
 	}
 	void Bind();
+
+	const std::string& GetGLSLDefinition(int idx) const { return glslDefinitions[idx]; }
 private:
 	static void UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer);
 	static void UpdateParamsImpl(UniformParamsBuffer* updateBuffer);
-private:
-	static constexpr int BUFFERING = 3;
 
+	template<typename T>
+	static std::string SetGLSLDefinition(int binding);
+public:
 	static constexpr int UBO_MATRIX_IDX = 0;
 	static constexpr int UBO_PARAMS_IDX = 1;
+private:
+	static constexpr int BUFFERING = 3;
 
 	std::unique_ptr<IStreamBuffer<UniformMatricesBuffer>> umbSBT;
 	std::unique_ptr<IStreamBuffer<UniformParamsBuffer  >> upbSBT;
 
 	bool initialized = false;
+
+	std::array<std::string, 2> glslDefinitions;
 };
 
 #endif
+
+template<typename T>
+inline std::string UniformConstants::SetGLSLDefinition(int binding)
+{
+	const T dummy{};
+
+	std::map<uint32_t, std::pair<std::string, std::string>> membersMap;
+	for (const auto& member : dummy.GetClass()->members) {
+		membersMap[member.offset] = std::make_pair(std::string{ member.name }, member.type->GetName());
+	}
+
+	std::ostringstream output;
+
+	output << fmt::format("layout(std140, binding = {}) uniform {} {{\n", binding, dummy.GetClass()->name); // {{ - escaped {
+
+	for (const auto& [offset, info] : membersMap) {
+		const auto& [name, tname] = info;
+
+		std::string glslType;
+		if (tname.rfind("CMatrix44f") != std::string::npos)
+			glslType = "mat4";
+		else if (tname.rfind("float4") != std::string::npos)
+			glslType = "vec4";
+		else if (tname.rfind("float3") != std::string::npos)
+			glslType = "vec3";
+		else if (tname.rfind("float2") != std::string::npos)
+			glslType = "vec2";
+		else if (tname.rfind("int") != std::string::npos)
+			glslType = "uint";
+
+		std::string arrayMods;
+
+		const size_t bro = tname.rfind("[");
+		const size_t brc = tname.rfind("]");
+
+		if (bro != std::string::npos && brc != std::string::npos) {
+			arrayMods = tname.substr(bro, brc - bro + 1);
+		}
+
+		assert(!glslType.empty());
+
+		output << fmt::format("\t{} {}{};\n", glslType, name, arrayMods);
+	}
+
+	output << "};\n";
+
+	return output.str();
+}

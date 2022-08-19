@@ -25,6 +25,86 @@
 #include "System/SafeUtil.h"
 #include "SDL2/SDL_mouse.h"
 
+CR_BIND(UniformMatricesBuffer, )
+
+CR_REG_METADATA(UniformMatricesBuffer, (
+	CR_MEMBER_BEGINFLAG(CM_NoSerialize),
+
+		CR_MEMBER(screenView),
+		CR_MEMBER(screenProj),
+		CR_MEMBER(screenViewProj),
+
+		CR_MEMBER(cameraView),
+		CR_MEMBER(cameraProj),
+		CR_MEMBER(cameraViewProj),
+		CR_MEMBER(cameraBillboardView),
+
+		CR_MEMBER(cameraViewInv),
+		CR_MEMBER(cameraProjInv),
+		CR_MEMBER(cameraViewProjInv),
+
+		CR_MEMBER(shadowView),
+		CR_MEMBER(shadowProj),
+		CR_MEMBER(shadowViewProj),
+
+		CR_MEMBER(reflectionView),
+		CR_MEMBER(reflectionProj),
+		CR_MEMBER(reflectionViewProj),
+
+		CR_MEMBER(orthoProj01),
+
+		CR_MEMBER(mmDrawView),
+		CR_MEMBER(mmDrawProj),
+		CR_MEMBER(mmDrawViewProj),
+
+		CR_MEMBER(mmDrawIMMView),
+		CR_MEMBER(mmDrawIMMProj),
+		CR_MEMBER(mmDrawIMMViewProj),
+
+		CR_MEMBER(mmDrawDimView),
+		CR_MEMBER(mmDrawDimProj),
+		CR_MEMBER(mmDrawDimViewProj),
+
+	CR_MEMBER_ENDFLAG(CM_NoSerialize)
+))
+
+CR_BIND(UniformParamsBuffer, )
+
+CR_REG_METADATA(UniformParamsBuffer, (
+	CR_MEMBER_BEGINFLAG(CM_NoSerialize),
+
+		CR_MEMBER(rndVec3),
+		CR_MEMBER(renderCaps),
+
+		CR_MEMBER(timeInfo),
+		CR_MEMBER(viewGeometry),
+		CR_MEMBER(mapSize),
+		CR_MEMBER(mapHeight),
+
+		CR_MEMBER(fogColor),
+		CR_MEMBER(fogParams),
+
+		CR_MEMBER(sunDir),
+
+		CR_MEMBER(sunAmbientModel),
+		CR_MEMBER(sunAmbientMap),
+		CR_MEMBER(sunDiffuseModel),
+		CR_MEMBER(sunDiffuseMap),
+		CR_MEMBER(sunSpecularModel),
+		CR_MEMBER(sunSpecularMap),
+
+		CR_MEMBER(shadowDensity),
+
+		CR_MEMBER(windInfo),
+		CR_MEMBER(mouseScreenPos),
+		CR_MEMBER(mouseStatus),
+		CR_MEMBER(mouseUnused),
+
+		CR_MEMBER(teamColor),
+
+	CR_MEMBER_ENDFLAG(CM_NoSerialize)
+))
+
 bool UniformConstants::Supported()
 {
 	static bool supported = VBO::IsSupported(GL_UNIFORM_BUFFER) && GLEW_ARB_shading_language_420pack; //UBO && UBO layout(binding=x)
@@ -43,6 +123,9 @@ void UniformConstants::Init()
 
 	umbSBT = IStreamBuffer<UniformMatricesBuffer>::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformMatricesBuffer");
 	upbSBT = IStreamBuffer<UniformParamsBuffer  >::CreateInstance(GL_UNIFORM_BUFFER, 1, "UniformParamsBuffer"  , IStreamBufferConcept::Types::SB_BUFFERSUBDATA);
+
+	glslDefinitions[0] = SetGLSLDefinition<UniformMatricesBuffer>(UBO_MATRIX_IDX);
+	glslDefinitions[1] = SetGLSLDefinition<UniformParamsBuffer  >(UBO_PARAMS_IDX);
 
 	initialized = true;
 }
