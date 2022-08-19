@@ -71,8 +71,6 @@ namespace spring {
 
 	class mutex_wrapper_concept {
 	public:
-		using native_handle_type = spring::mutex::native_handle_type;
-
 		mutex_wrapper_concept() noexcept {}
 		virtual ~mutex_wrapper_concept() {}
 
@@ -82,8 +80,6 @@ namespace spring {
 		virtual void lock() = 0;
 		virtual bool try_lock() noexcept = 0;
 		virtual void unlock() = 0;
-
-		virtual native_handle_type native_handle() = 0;
 	};
 
 	template<typename M>
@@ -102,7 +98,7 @@ namespace spring {
 		bool try_lock() noexcept override { return mut.try_lock(); }
 		void unlock() override { mut.unlock(); }
 
-		virtual native_handle_type native_handle() override { return mut.native_handle(); }
+		auto native_handle() { return mut.native_handle(); }
 	protected:
 		M mut;
 	};
