@@ -13,7 +13,7 @@
 #include "System/StringHash.h"
 
 
-struct fast_hash : public std::unary_function<int, size_t>
+struct fast_hash
 {
 	size_t operator()(const int a) const { return a; }
 };
