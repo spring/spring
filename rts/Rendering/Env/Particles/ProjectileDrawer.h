@@ -36,7 +36,8 @@ public:
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
 	void DrawGroundFlashes();
-	void DrawShadowPass();
+	void DrawShadowPassOpaque();
+	void DrawShadowPassTransparent();
 
 	void LoadWeaponTextures();
 	void UpdateTextures();
@@ -162,7 +163,7 @@ private:
 	std::vector<const AtlasedTexture*> smokeTextures;
 
 	/// projectiles without a model, e.g. nano-particles
-	std::vector<CProjectile*> renderProjectiles;
+	std::vector<CProjectile*> modellessProjectiles;
 	/// projectiles with a model
 	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_CNT> modelRenderers;
 

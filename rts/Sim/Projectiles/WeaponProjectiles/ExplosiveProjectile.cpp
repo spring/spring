@@ -32,6 +32,7 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+		castShadow = weaponDef->visuals.castShadow;
 	}
 
 	if (ttl <= 0) {
@@ -98,7 +99,7 @@ void CExplosiveProjectile::Draw()
 
 	const float3 ndir = dir * separation * 0.6f;
 
-	for (int stage = 0; stage < stages; ++stage) { //! CAUTION: loop count must match EnlargeArrays above
+	for (int stage = 0; stage < stages; ++stage) {
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
 		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
 

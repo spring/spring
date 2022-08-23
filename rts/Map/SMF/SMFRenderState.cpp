@@ -164,6 +164,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform("splatDetailNormalTex2", 16);
 			glslShaders[n]->SetUniform("splatDetailNormalTex3", 17);
 			glslShaders[n]->SetUniform("splatDetailNormalTex4", 18);
+			glslShaders[n]->SetUniform("shadowColorTex",        19);
 
 			glslShaders[n]->SetUniform("mapSizePO2", mapDims.pwr2mapx * SQUARE_SIZE * 1.0f, mapDims.pwr2mapy * SQUARE_SIZE * 1.0f);
 			glslShaders[n]->SetUniform("mapSize",    mapDims.mapx     * SQUARE_SIZE * 1.0f, mapDims.mapy     * SQUARE_SIZE * 1.0f);
@@ -178,7 +179,6 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
 			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler.GetShadowMatrixRaw());
-			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler.GetShadowParams().x));
 
 			glslShaders[n]->SetUniform3v("waterMinColor",    &waterRendering->minColor[0]);
 			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
@@ -373,7 +373,6 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler.GetShadowMatrixRaw());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler.GetShadowParams().x));
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 
 	// already on the MV stack at this point
@@ -381,8 +380,10 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	mLightHandler->Update(glslShaders[GLSL_SHADER_CURRENT]);
 	glMultMatrixf(camera->GetViewMatrix());
 
-	if (shadowHandler.ShadowsLoaded())
+	if (shadowHandler.ShadowsLoaded()) {
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
+		glActiveTexture(GL_TEXTURE19); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
+	}
 
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());

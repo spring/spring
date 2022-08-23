@@ -82,6 +82,7 @@ vec4 waveIntensity(const vec4 v) {
   uniform mat4 shadowMatrix;
   //uniform float shadowDensity;
   uniform sampler2DShadow shadowmap;
+  uniform sampler2D shadowColorTex;
 #endif
 
 float GetShadowOcclusion(vec3 worldPos) {

@@ -31,7 +31,7 @@ bool FBO::IsSupported()
 }
 
 
-static GLint GetCurrentBoundFBO()
+GLint FBO::GetCurrentBoundFBO()
 {
 	GLint curFBO;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &curFBO);

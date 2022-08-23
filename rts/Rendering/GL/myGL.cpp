@@ -257,27 +257,35 @@ void glSaveTexture(const GLuint textureID, const char* filename)
 	int sizeX, sizeY;
 
 	int bits = 0;
+	int chNum = 0;
+	bool depthTex = false;
 	{
 		glBindTexture(GL_TEXTURE_2D, textureID);
 
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &sizeX);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH , &sizeX);
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &sizeY);
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&format);
 
 		GLint _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &_cbits); bits += _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &_cbits); bits += _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE  , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) { chNum++; depthTex = true; }
 	}
-	assert(bits == 32);
-	assert(format == GL_RGBA8);
 
 	CBitmap bmp;
-	bmp.Alloc(sizeX, sizeY, 4);
-	glGetTexImage(target, 0, GL_RGBA, GL_UNSIGNED_BYTE, bmp.GetRawMem());
-	bmp.Save(filename, false);
+	bmp.Alloc(sizeX, sizeY, chNum, format);
+	glGetTexImage(target, 0, format, GL_UNSIGNED_BYTE, bmp.GetRawMem());
+
+	if (depthTex) {
+		//doesn't work, TODO: fix
+		bmp.SaveFloat(filename);
+	}
+	else {
+		assert(bits >= 24);
+		bmp.Save(filename, bits < 32);
+	}
 }
 
 

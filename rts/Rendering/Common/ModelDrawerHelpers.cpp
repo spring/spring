@@ -39,15 +39,17 @@ void CModelDrawerHelper::EnableTexturesCommon()
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
-	if (shadowHandler.ShadowsLoaded())
+	if (shadowHandler.ShadowsLoaded()) {
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+		glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
+	}
 
 	if (CModelDrawerConcept::UseAdvShading()) {
-		glActiveTexture(GL_TEXTURE3);
+		glActiveTexture(GL_TEXTURE4);
 		glEnable(GL_TEXTURE_CUBE_MAP);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
 
-		glActiveTexture(GL_TEXTURE4);
+		glActiveTexture(GL_TEXTURE5);
 		glEnable(GL_TEXTURE_CUBE_MAP);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
 	}

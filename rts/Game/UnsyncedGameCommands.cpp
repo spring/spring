@@ -303,6 +303,20 @@ public:
 	}
 };
 
+class DumpShadowsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DumpShadowsActionExecutor() : IUnsyncedActionExecutor(
+		"DumpShadows",
+		"Save shadow map textures to files"
+	)
+	{}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		shadowHandler.SaveShadowMapTextures();
+		return true;
+	}
+};
+
 class MapShadowPolyOffsetActionExecutor: public IUnsyncedActionExecutor {
 public:
 	MapShadowPolyOffsetActionExecutor(): IUnsyncedActionExecutor("MapShadowPolyOffset", "") {
@@ -3584,6 +3598,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SelectCycleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DeselectActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ShadowsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DumpShadowsActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapShadowPolyOffsetActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapMeshDrawerActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapBorderActionExecutor>());

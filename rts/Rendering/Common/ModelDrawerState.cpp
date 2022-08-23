@@ -285,42 +285,26 @@ CModelDrawerStateGLSL::CModelDrawerStateGLSL()
 		modelShaders[n]->SetFlag("GBUFFER_ZVALTEX_IDX", GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
 
 		modelShaders[n]->Link();
-		modelShaders[n]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
-		modelShaders[n]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
-		modelShaders[n]->SetUniformLocation("shadowTex");         // idx  2
-		modelShaders[n]->SetUniformLocation("reflectTex");        // idx  3 (cube)
-		modelShaders[n]->SetUniformLocation("specularTex");       // idx  4 (cube)
-		modelShaders[n]->SetUniformLocation("sunDir");            // idx  5
-		modelShaders[n]->SetUniformLocation("cameraPos");         // idx  6
-		modelShaders[n]->SetUniformLocation("cameraMat");         // idx  7
-		modelShaders[n]->SetUniformLocation("cameraMatInv");      // idx  8
-		modelShaders[n]->SetUniformLocation("teamColor");         // idx  9
-		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 10
-		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 11
-		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 12
-		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 13
-		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 14
-		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 15
-		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 16
 
 		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
-		modelShaders[n]->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
-		modelShaders[n]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
-		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
-		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(6, &camera->GetPos()[0]);
-		modelShaders[n]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
-		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-		modelShaders[n]->SetUniform4f(9, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler.GetShadowMatrixRaw());
-		modelShaders[n]->SetUniform4fv(15, &(shadowHandler.GetShadowParams().x));
-		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
+
+		modelShaders[n]->SetUniform("diffuseTex"    , 0);
+		modelShaders[n]->SetUniform("shadingTex"    , 1);
+		modelShaders[n]->SetUniform("shadowTex"     , 2);
+		modelShaders[n]->SetUniform("shadowColorTex", 3);
+		modelShaders[n]->SetUniform("reflectTex"    , 4);
+		modelShaders[n]->SetUniform("specularTex"   , 5);
+
+		modelShaders[n]->SetUniform3v("sunDir", &sky->GetLight()->GetLightDir().x);
+		modelShaders[n]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
+		modelShaders[n]->SetUniform("teamColor", 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform("nanoColor", 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform3v("sunAmbient", &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3v("sunDiffuse", &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform3v("sunSpecular", &sunLighting->modelSpecularColor[0]);
+		modelShaders[n]->SetUniform("shadowDensity", sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -349,7 +333,8 @@ bool CModelDrawerStateGLSL::SetTeamColor(int team, float alpha) const
 	assert(modelShader != nullptr);
 	assert(modelShader->IsBound());
 
-	modelShader->SetUniform4fv(9, std::move(CModelDrawerHelper::GetTeamColor(team, alpha)));
+	float4 teamColor = CModelDrawerHelper::GetTeamColor(team, alpha);
+	modelShader->SetUniform4v("teamColor", &teamColor.r);
 
 	return true;
 }
@@ -365,15 +350,12 @@ void CModelDrawerStateGLSL::Enable(bool deferredPass, bool alphaPass) const
 	modelShader->Enable();
 	// end of EnableCommon();
 
-	modelShader->SetUniform3fv(6, &camera->GetPos()[0]);
-	modelShader->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
-	modelShader->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShader->SetUniform3fv(5,  &sky->GetLight()->GetLightDir().x);
-	modelShader->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
-	modelShader->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
-	modelShader->SetUniform1f(13, sunLighting->modelShadowDensity);
-	modelShader->SetUniformMatrix4fv(14, false, shadowHandler.GetShadowMatrixRaw());
-	modelShader->SetUniform4fv(15, &(shadowHandler.GetShadowParams().x));
+	modelShader->SetUniform3v("sunDir", &sky->GetLight()->GetLightDir().x);
+	modelShader->SetUniform3v("sunAmbient", &sunLighting->modelAmbientColor[0]);
+	modelShader->SetUniform3v("sunDiffuse", &sunLighting->modelDiffuseColor[0]);
+	modelShader->SetUniform3v("sunSpecular", &sunLighting->modelSpecularColor[0]);
+	modelShader->SetUniform("shadowDensity", sunLighting->modelShadowDensity);
+	modelShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
 
 	CModelDrawerConcept::GetLightHandler()->Update(modelShader);
 }
@@ -392,7 +374,7 @@ void CModelDrawerStateGLSL::Disable(bool deferredPass) const
 void CModelDrawerStateGLSL::SetNanoColor(const float4& color) const
 {
 	assert(modelShader->IsBound());
-	modelShader->SetUniform4fv(10, color);
+	modelShader->SetUniform4v("nanoColor", &color.x);
 }
 
 void CModelDrawerStateGLSL::EnableTextures() const { CModelDrawerHelper::EnableTexturesCommon(); }

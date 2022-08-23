@@ -24,6 +24,7 @@ public:
 	 * if FrameBuffers are supported by the current platform
 	 */
 	static bool IsSupported();
+	static GLint GetCurrentBoundFBO();
 
 	FBO(         ) { Init(false); }
 	FBO(bool noop) { Init( noop); }
@@ -31,6 +32,8 @@ public:
 
 	void Init(bool noop);
 	void Kill();
+
+	uint32_t GetId() const { return fboId; }
 
 	/**
 	 * @brief fboId

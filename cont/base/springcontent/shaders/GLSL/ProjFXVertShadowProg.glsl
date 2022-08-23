@@ -1,4 +1,4 @@
-#version 150 compatibility
+#version 130
 //#extension GL_ARB_explicit_attrib_location : require
 
 in vec3 pos;
@@ -11,10 +11,8 @@ layout (location = 1) in vec2 uv;
 layout (location = 2) in vec4 col;
 */
 
-out Data {
-	vec4 vCol;
-	vec2 vUV;
-};
+out vec4 vCol;
+out vec2 vUV;
 
 void main() {
 	vCol = col;

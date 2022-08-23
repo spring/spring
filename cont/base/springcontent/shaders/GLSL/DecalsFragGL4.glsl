@@ -72,9 +72,10 @@ layout(std140) uniform SGroundLighting
 } groundLighting;
 
 #ifdef HAVE_SHADOWS
-uniform mat4 shadowMatrix;
-uniform float shadowDensity;
-layout(binding=2) uniform sampler2DShadow shadowTex;
+	uniform mat4 shadowMatrix;
+	uniform float shadowDensity;
+	layout(binding=2) uniform sampler2DShadow shadowTex;
+	layout(binding=3) uniform sampler2D shadowColorTex;
 #endif
 
 flat in int decalGroupId;

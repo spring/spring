@@ -463,20 +463,6 @@ CBumpWater::CBumpWater()
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterVS.glsl", definitions, GL_VERTEX_SHADER));
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterFS.glsl", definitions, GL_FRAGMENT_SHADER));
 		waterShader->Link();
-		waterShader->SetUniformLocation("eyePos");      // idx  0
-		waterShader->SetUniformLocation("frame");       // idx  1
-		waterShader->SetUniformLocation("normalmap");   // idx  2, texunit 0
-		waterShader->SetUniformLocation("heightmap");   // idx  3, texunit 1
-		waterShader->SetUniformLocation("caustic");     // idx  4, texunit 2
-		waterShader->SetUniformLocation("foam");        // idx  5, texunit 3
-		waterShader->SetUniformLocation("reflection");  // idx  6, texunit 4
-		waterShader->SetUniformLocation("refraction");  // idx  7, texunit 5
-		waterShader->SetUniformLocation("depthmap");    // idx  8, texunit 7
-		waterShader->SetUniformLocation("coastmap");    // idx  9, texunit 6
-		waterShader->SetUniformLocation("waverand");    // idx 10, texunit 8
-		waterShader->SetUniformLocation("infotex");     // idx 11, texunit 10
-		waterShader->SetUniformLocation("shadowmap");   // idx 12, texunit 9
-		waterShader->SetUniformLocation("shadowMatrix");   // idx 13
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
@@ -493,17 +479,20 @@ CBumpWater::CBumpWater()
 		// NOTE: ATI shader validation code is stricter wrt. state,
 		// so postpone the call until all texture uniforms are set
 		waterShader->Enable();
-		waterShader->SetUniform1i( 2, 0);
-		waterShader->SetUniform1i( 3, 1);
-		waterShader->SetUniform1i( 4, 2);
-		waterShader->SetUniform1i( 5, 3);
-		waterShader->SetUniform1i( 6, 4);
-		waterShader->SetUniform1i( 7, 5);
-		waterShader->SetUniform1i( 8, 7);
-		waterShader->SetUniform1i( 9, 6);
-		waterShader->SetUniform1i(10, 8);
-		waterShader->SetUniform1i(11, 10);
-		waterShader->SetUniform1i(12, 9);
+
+		waterShader->SetUniform("normalmap"     , 0 );
+		waterShader->SetUniform("heightmap"     , 1 );
+		waterShader->SetUniform("caustic"       , 2 );
+		waterShader->SetUniform("foam"          , 3 );
+		waterShader->SetUniform("reflection"    , 4 );
+		waterShader->SetUniform("refraction"    , 5 );
+		waterShader->SetUniform("depthmap"      , 7 );
+		waterShader->SetUniform("coastmap"      , 6 );
+		waterShader->SetUniform("waverand"      , 8 );
+		waterShader->SetUniform("infotex"       , 1 );
+		waterShader->SetUniform("shadowmap"     , 9 );
+		waterShader->SetUniform("shadowColorTex", 11);
+
 		waterShader->Disable();
 		waterShader->Validate();
 
@@ -1111,13 +1100,14 @@ void CBumpWater::Draw()
 	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
-	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
-	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
+	waterShader->SetUniform("eyePos", camera->GetPos().x, camera->GetPos().y, camera->GetPos().z);
+	waterShader->SetUniform("frame", (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (shadowHandler.ShadowsLoaded()) {
-		waterShader->SetUniformMatrix4fv(13, false, shadowHandler.GetShadowMatrixRaw());
+		waterShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
 
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE9);
+		glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
 	}
 
 	const int causticTexNum = (gs->frameNum % caustTextures.size());
@@ -1131,6 +1121,7 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	//glActiveTexture(GL_TEXTURE9); see above
 	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
+	//glActiveTexture(GL_TEXTURE11); see above
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	if (useUniforms)

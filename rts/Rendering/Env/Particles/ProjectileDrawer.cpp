@@ -256,7 +256,7 @@ void CProjectileDrawer::Init() {
 	}
 
 
-	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
+	modellessProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
 	for (auto& mr : modelRenderers) { mr.Clear(); }
 
 	LoadWeaponTextures();
@@ -277,7 +277,7 @@ void CProjectileDrawer::Init() {
 		fsShadowShader->Enable();
 
 		fsShadowShader->SetUniform("atlasTex", 0);
-		fsShadowShader->SetUniform("alphaCtrl", 0.3f, 1.0f, 0.0f, 0.0f);
+		fsShadowShader->SetUniform("alphaCtrl", 0.0f, 1.0f, 0.0f, 0.0f);
 
 		fsShadowShader->Disable();
 		fsShadowShader->Validate();
@@ -326,7 +326,7 @@ void CProjectileDrawer::Kill() {
 
 	smokeTextures.clear();
 
-	renderProjectiles.clear();
+	modellessProjectiles.clear();
 	sortedProjectiles[0].clear();
 	sortedProjectiles[1].clear();
 
@@ -691,8 +691,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		}
 	}
 
-	if (!renderProjectiles.empty()) {
-		for (CProjectile* p: renderProjectiles) {
+	if (!modellessProjectiles.empty()) {
+		for (CProjectile* p: modellessProjectiles) {
 			if (!CanDrawProjectile(p, p->owner()))
 				continue;
 
@@ -763,7 +763,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 		// note: model-less projectiles are NOT drawn by this call but
 		// only z-sorted (if the projectiles indicate they want to be)
-		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
+		DrawProjectilesSet(modellessProjectiles, drawReflection, drawRefraction);
 
 		// empty if !drawSorted
 		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), sortingPredicate);
@@ -827,38 +827,68 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glPopAttrib();
 }
 
-void CProjectileDrawer::DrawShadowPass()
+void CProjectileDrawer::DrawShadowPassOpaque()
 {
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 
 	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_TEXTURE_2D);
 	po->Enable();
-
 	{
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_CNT; modelType++) {
 			DrawProjectilesShadow(modelType);
 		}
-
-		// draw the model-less projectiles
-		DrawProjectilesSetShadow(renderProjectiles);
 	}
 	po->Disable();
 
-	auto& rb = CExpGenSpawnable::GetPrimaryRenderBuffer();
-
-	if (rb.ShouldSubmit()) {
-		textureAtlas->BindTexture();
-
-		fsShadowShader->Enable();
-
-		rb.DrawElements(GL_TRIANGLES);
-
-		fsShadowShader->Disable();
-	}
-
 	//glShadeModel(GL_FLAT);
 	glPopAttrib();
+}
+
+void CProjectileDrawer::DrawShadowPassTransparent()
+{
+	// Method #1 here: https://wickedengine.net/2018/01/18/easy-transparent-shadow-maps/
+
+	// 1) Render opaque objects into depth stencil texture from light’s point of view - done elsewhere
+
+	// draw the model-less projectiles
+	DrawProjectilesSetShadow(modellessProjectiles);
+
+	auto& rb = CExpGenSpawnable::GetPrimaryRenderBuffer();
+	if (!rb.ShouldSubmit())
+		return;
+
+	// 2) Bind render target for shadow color filter: R11G11B10 works good
+	shadowHandler.EnableColorOutput(true);
+
+	// 3) Clear render target to 1,1,1,0 (RGBA) color - done elsewhere
+
+	// 4) Apply depth stencil state with depth read, but no write
+	//glEnable(GL_DEPTH_TEST); - already enabled
+	glDepthMask(GL_FALSE);
+
+	// 5) Apply multiplicative blend state eg:
+	// SrcBlend = BLEND_ZERO
+	//	DestBlend = BLEND_SRC_COLOR
+	//	BlendOp = BLEND_OP_ADD
+	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+	glEnable(GL_BLEND);
+
+	// 6) Render transparents in arbitrary order
+	textureAtlas->BindTexture();
+	fsShadowShader->Enable();
+
+	rb.DrawElements(GL_TRIANGLES);
+
+	fsShadowShader->Disable();
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	//shadowHandler.EnableColorOutput(false);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_BLEND);
+
+	glDepthMask(GL_TRUE);
 }
 
 
@@ -1123,8 +1153,8 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 		return;
 	}
 
-	const_cast<CProjectile*>(p)->SetRenderIndex(renderProjectiles.size());
-	renderProjectiles.push_back(const_cast<CProjectile*>(p));
+	const_cast<CProjectile*>(p)->SetRenderIndex(modellessProjectiles.size());
+	modellessProjectiles.push_back(const_cast<CProjectile*>(p));
 }
 
 void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* p)
@@ -1136,14 +1166,14 @@ void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* p)
 
 	const unsigned int idx = p->GetRenderIndex();
 
-	if (idx >= renderProjectiles.size()) {
+	if (idx >= modellessProjectiles.size()) {
 		assert(false);
 		return;
 	}
 
-	renderProjectiles[idx] = renderProjectiles.back();
-	renderProjectiles[idx]->SetRenderIndex(idx);
+	modellessProjectiles[idx] = modellessProjectiles.back();
+	modellessProjectiles[idx]->SetRenderIndex(idx);
 
-	renderProjectiles.pop_back();
+	modellessProjectiles.pop_back();
 }
 

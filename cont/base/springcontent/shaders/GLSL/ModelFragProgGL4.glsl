@@ -5,9 +5,10 @@ layout(binding = 1) uniform sampler2D tex2;
 
 #if (USE_SHADOWS == 1)
 	layout(binding = 2) uniform sampler2DShadow shadowTex;
+	layout(binding = 3) uniform sampler2D shadowColorTex;
 #endif
 
-layout(binding = 3) uniform samplerCube reflectTex;
+layout(binding = 4) uniform samplerCube reflectTex;
 
 layout(std140, binding = 1) uniform UniformParamsBuffer {
 	vec3 rndVec3; //new every draw frame.
@@ -69,17 +70,13 @@ bool AlphaDiscard(float a) {
 	return ((alphaTestGT + alphaTestLT + alphaCtrl.w) == 0.0);
 }
 
-float GetShadowMult(vec3 shadowCoord, float NdotL) {
+vec3 GetShadowMult(vec3 shadowCoord, float NdotL) {
 	#if (USE_SHADOWS == 1)
-		const float cb = 5e-5;
-		float bias = cb * tan(acos(NdotL));
-		bias = clamp(bias, 0.0, 5.0 * cb);
-
-		shadowCoord.z -= bias;
-
-		return texture(shadowTex, shadowCoord).r;
+		float sh = min(texture(shadowTex, shadowCoord).r, smoothstep(0.0, 0.35, NdotL));
+		vec3 shColor = texture(shadowColorTex, shadowCoord.xy).rgb;
+		return mix(1.0, sh, shadowDensity.y) * shColor;
 	#else
-		return 1.0;
+		return vec3(1.0);
 	#endif
 }
 
@@ -116,7 +113,7 @@ void main(void)
 		float NdotL = clamp(dot(N, L), 0.0, 1.0);
 		float HdotN = clamp(dot(N, H), 0.0, 1.0);
 
-		float shadowMult = mix(1.0, GetShadowMult(shadowVertexPos.xyz / shadowVertexPos.w, NdotL), shadowDensity.y);
+		vec3 shadowMult = GetShadowMult(shadowVertexPos.xyz / shadowVertexPos.w, NdotL);
 
 		vec3 light = sunAmbientModel.rgb + (NdotL * sunDiffuseModel.rgb);
 

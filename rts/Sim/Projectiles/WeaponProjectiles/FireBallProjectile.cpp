@@ -37,6 +37,7 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+		castShadow = weaponDef->visuals.castShadow;
 	}
 
 	validTextures[1] = IsValidTexture(projectileDrawer->explotex);
@@ -61,7 +62,6 @@ void CFireBallProjectile::Draw()
 
 	if (validTextures[1])
 	for (unsigned int i = 0; i < numSparks; i++) {
-		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (numSparks - i) * 12;
 		col[1] = (numSparks - i) *  6;
 		col[2] = (numSparks - i) *  4;
@@ -78,7 +78,6 @@ void CFireBallProjectile::Draw()
 
 	if (validTextures[2])
 	for (unsigned int i = 0; i < numFire; i++) {
-		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (maxCol - i) * 25;
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;

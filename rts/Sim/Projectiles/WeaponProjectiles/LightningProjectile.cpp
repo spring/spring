@@ -25,7 +25,7 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	projectileType = WEAPON_LIGHTNING_PROJECTILE;
 	useAirLos = false;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		assert(weaponDef->IsHitScanWeapon());
 		color = weaponDef->visuals.color;
 	}

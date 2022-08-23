@@ -5,13 +5,14 @@ uniform sampler2D grassShadingTex;
 uniform sampler2D bladeTex;
 
 #ifdef HAVE_SHADOWS
-uniform sampler2DShadow shadowMap;
-uniform float groundShadowDensity;
+	uniform sampler2DShadow shadowMap;
+	uniform sampler2D shadowColorTex;
+	uniform float groundShadowDensity;
 #endif
 uniform float infoTexIntensityMul;
 
 #ifdef HAVE_INFOTEX
-uniform sampler2D infoMap;
+	uniform sampler2D infoMap;
 #endif
 
 uniform samplerCube specularTex;
@@ -24,7 +25,7 @@ varying vec4 shadingTexCoords;
 varying vec2 bladeTexCoords;
 varying vec3 ambientDiffuseLightTerm;
 #if defined(HAVE_SHADOWS) || defined(SHADOW_GEN)
-  varying vec4 shadowTexCoords;
+	varying vec4 shadowTexCoords;
 #endif
 
 

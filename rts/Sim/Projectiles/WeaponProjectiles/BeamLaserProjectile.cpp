@@ -3,6 +3,7 @@
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -101,6 +102,10 @@ void CBeamLaserProjectile::Draw()
 
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
+
+	CCamera* playerCamera = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+	const float playerCamDistSq = (midPos - playerCamera->GetPos()).SqLength();
+
 	// beam's coor-system; degenerate if targetPos == startPos
 	const float3 zdir = (targetPos - startPos).SafeANormalize();
 	const float3 xdir = (cameraDir.cross(zdir)).SafeANormalize();
@@ -118,7 +123,7 @@ void CBeamLaserProjectile::Draw()
 	#define WT2 weaponDef->visuals.texture2
 	#define WT3 weaponDef->visuals.texture3
 
-	if ((midPos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
+	if (playerCamDistSq < Square(1000.0f)) {
 		if (validTextures[2]) {
 			rb.AddQuadTriangles(
 				{ pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart },

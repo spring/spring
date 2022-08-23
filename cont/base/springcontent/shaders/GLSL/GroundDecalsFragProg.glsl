@@ -1,6 +1,7 @@
 uniform sampler2D       decalTex;
 uniform sampler2D       shadeTex;
 uniform sampler2DShadow shadowTex;
+uniform sampler2D shadowColorTex;
 
 uniform vec4 groundAmbientColor;
 

@@ -4,6 +4,7 @@
 #define SHADOW_HANDLER_H
 
 #include <array>
+#include <limits>
 
 #include "Rendering/GL/FBO.h"
 #include "System/float4.h"
@@ -17,7 +18,9 @@ class CCamera;
 class CShadowHandler
 {
 public:
-	CShadowHandler(): shadowMapFBO(true) {}
+	CShadowHandler()
+		:smOpaqFBO(true)
+	{}
 
 	void Init();
 	void Kill();
@@ -29,6 +32,8 @@ public:
 	void ResetShadowTexSampler(unsigned int texUnit, bool disable = false) const;
 	void ResetShadowTexSamplerRaw() const;
 	void CreateShadows();
+
+	void EnableColorOutput(bool enable) const;
 
 	enum ShadowGenerationBits {
 		SHADOWGEN_BIT_NONE  = 0,
@@ -52,10 +57,8 @@ public:
 		SHADOWGEN_PROGRAM_MODEL      = 0,
 		SHADOWGEN_PROGRAM_MODEL_GL4  = 1,
 		SHADOWGEN_PROGRAM_MAP        = 2,
-		SHADOWGEN_PROGRAM_TREE_NEAR  = 3,
-		SHADOWGEN_PROGRAM_TREE_FAR   = 4,
-		SHADOWGEN_PROGRAM_PROJECTILE = 5,
-		SHADOWGEN_PROGRAM_LAST       = 6,
+		SHADOWGEN_PROGRAM_PROJECTILE = 3,
+		SHADOWGEN_PROGRAM_COUNT      = 4,
 	};
 
 	enum ShadowMatrixType {
@@ -77,25 +80,24 @@ public:
 
 	const float4& GetShadowParams() const { return shadowTexProjCenter; }
 
-	unsigned int GetShadowTextureID() const { return shadowTexture; }
-	unsigned int GetColorTextureID() const { return dummyColorTexture; }
+	uint32_t GetShadowTextureID() const { return shadowDepthTexture; }
+	uint32_t GetColorTextureID() const { return shadowColorTexture; }
 
 	static bool ShadowsInitialized() { return firstInit; }
 	static bool ShadowsSupported() { return shadowsSupported; }
 
 	bool ShadowsLoaded() const { return shadowsLoaded; }
 	bool InShadowPass() const { return inShadowPass; }
-private:
-	void FreeTextures();
 
-	bool InitDepthTarget();
-	bool WorkaroundUnsupportedFboRenderTargets();
+	void SaveShadowMapTextures() const;
+private:
+	void FreeFBOAndTextures();
+	bool InitFBOAndTextures();
 
 	void DrawShadowPasses();
 	void LoadProjectionMatrix(const CCamera* shadowCam);
 	void LoadShadowGenShaders();
 
-	void SetShadowMapSizeFactors();
 	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
 	void SetShadowCamera(CCamera* shadowCam);
 
@@ -112,9 +114,6 @@ public:
 	int shadowProMode;
 
 private:
-	unsigned int shadowTexture;
-	unsigned int dummyColorTexture;
-
 	bool shadowsLoaded = false;
 	bool inShadowPass = false;
 
@@ -123,22 +122,31 @@ private:
 
 	// these project geometry into light-space
 	// to write the (FBO) depth-buffer texture
-	std::array<Shader::IProgramObject*, SHADOWGEN_PROGRAM_LAST> shadowGenProgs;
+	std::array<Shader::IProgramObject*, SHADOWGEN_PROGRAM_COUNT> shadowGenProgs;
 
 	float3 projMidPos[2 + 1];
 	float3 sunProjDir;
 
 	float4 shadowProjScales;
-	/// frustum bounding-rectangle corners; x1, x2, y1, y2
-	float4 shadowProjMinMax;
-	/// xmid, ymid, p17, p18
-	float4 shadowTexProjCenter;
 
 	// culling and drawing versions of both matrices
 	CMatrix44f projMatrix[2];
 	CMatrix44f viewMatrix[2];
 
-	FBO shadowMapFBO;
+	uint32_t shadowDepthTexture;
+	uint32_t shadowColorTexture;
+
+	FBO smOpaqFBO;
+
+	/// xmid, ymid, p17, p18
+	static constexpr float4 shadowTexProjCenter = {
+		// .xy are used to bias the SM-space projection; the values
+		// of .z and .w are such that (invsqrt(xy + zz) + ww) ~= 1
+		0.5f                             , //x
+		0.5f                             , //y
+		std::numeric_limits<float>::max(), //z
+		1.0f                               //w
+	};
 };
 
 extern CShadowHandler shadowHandler;

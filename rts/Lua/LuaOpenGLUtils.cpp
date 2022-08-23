@@ -66,8 +66,9 @@ LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name
 		case hashString("$sky_reflection"): { return LuaMatTexture::LUATEX_SKY_REFLECTION; } break;
 
 		// specials
-		case hashString("$shadow"   ): { return LuaMatTexture::LUATEX_SHADOWMAP; } break;
-		case hashString("$heightmap"): { return LuaMatTexture::LUATEX_HEIGHTMAP; } break;
+		case hashString("$shadow"      ): { return LuaMatTexture::LUATEX_SHADOWMAP;   } break;
+		case hashString("$shadow_color"): { return LuaMatTexture::LUATEX_SHADOWCOLOR; } break;
+		case hashString("$heightmap"   ): { return LuaMatTexture::LUATEX_HEIGHTMAP;   } break;
 
 		// SMF-maps
 		case hashString("$grass"  ): { return LuaMatTexture::LUATEX_SMF_GRASS; } break;
@@ -557,6 +558,9 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_SHADOWMAP: {
 			texID = shadowHandler.GetShadowTextureID();
 		} break;
+		case LUATEX_SHADOWCOLOR: {
+			texID = shadowHandler.GetColorTextureID();
+		} break;
 		case LUATEX_HEIGHTMAP: {
 			if (heightMapTexture != nullptr)
 				texID = heightMapTexture->GetTextureID();
@@ -693,6 +697,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 
 
 		case LUATEX_SHADOWMAP:
+		case LUATEX_SHADOWCOLOR:
 		case LUATEX_HEIGHTMAP:
 
 
@@ -893,6 +898,9 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_SHADOWMAP: {
 			return sqint2(shadowHandler.shadowMapSize);
 		} break;
+		case LUATEX_SHADOWCOLOR: {
+			return sqint2(shadowHandler.shadowMapSize);
+		} break;
 		case LUATEX_HEIGHTMAP: {
 			if (heightMapTexture != nullptr)
 				return {heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY()};
@@ -1011,6 +1019,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_SPECULAR);
 
 		STRING_CASE(typeName, LUATEX_SHADOWMAP);
+		STRING_CASE(typeName, LUATEX_SHADOWCOLOR);
 		STRING_CASE(typeName, LUATEX_HEIGHTMAP);
 
 		STRING_CASE(typeName, LUATEX_SMF_GRASS);

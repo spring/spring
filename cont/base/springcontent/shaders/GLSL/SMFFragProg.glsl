@@ -64,8 +64,8 @@ varying vec2 diffuseTexCoords;
 
 #ifdef HAVE_SHADOWS
 	uniform sampler2DShadow shadowTex;
+	uniform sampler2D shadowColorTex;
 	uniform mat4 shadowMat;
-	uniform vec4 shadowParams;
 #endif
 
 #ifdef SMF_WATER_ABSORPTION
@@ -192,7 +192,7 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 #endif
 
 
-vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
+vec4 GetShadeInt(float groundLightInt, vec3 groundShadowCoeff, float groundDiffuseAlpha) {
 	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
 
 	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundLightInt * groundShadowCoeff);
@@ -231,7 +231,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 		waterShadeInt.rgb *= vec3(SMF_INTENSITY_MULT * waterLightInt);
 
 		// make shadowed areas darker over deeper water
-		waterShadeInt.rgb *= (1.0 - waterShadeDecay * (1.0 - groundShadowCoeff));
+		waterShadeInt.rgb *= (1.0 - waterShadeDecay * (vec3(1.0) - groundShadowCoeff));
 
 		// if depth is greater than _SHALLOW_ depth, select waterShadeInt
 		// otherwise interpolate between groundShadeInt and waterShadeInt
@@ -399,16 +399,16 @@ void main() {
 
 
 
-	float shadowCoeff = 1.0;
+	vec3 shadowCoeff = vec3(1.0);
 
 	#if !defined(DEFERRED_MODE) && defined(HAVE_SHADOWS)
 	{
 		vec4 vertexShadowPos = shadowMat * vertexWorldPos;
-			vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-			vertexShadowPos.xy += shadowParams.xy;
+			vertexShadowPos.xy += vec2(0.5);
 
 		// same as ARB shader: shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
-		shadowCoeff = mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, groundShadowDensity);
+		vec3 shadowColor = texture(shadowColorTex, vertexShadowPos.xy).rgb;
+		shadowCoeff = mix(vec3(1.0), shadow2DProj(shadowTex, vertexShadowPos).r * shadowColor, groundShadowDensity);
 	}
 	#endif
 

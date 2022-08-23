@@ -29,6 +29,8 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 
 		intensity = weaponDef->intensity;
 		color = weaponDef->visuals.color;
+
+		castShadow = weaponDef->visuals.castShadow;
 	} else {
 		intensity = 0.0f;
 	}

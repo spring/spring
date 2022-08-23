@@ -578,6 +578,8 @@ void CGroundDecalHandler::BindTextures()
 	if (shadowHandler.ShadowsLoaded()) {
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
+		// TODO replace this madness
+		///glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
 	}
 
 	if (infoTextureHandler->IsEnabled()) {

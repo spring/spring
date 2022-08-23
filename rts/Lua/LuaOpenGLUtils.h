@@ -46,6 +46,7 @@ class LuaMatTexture {
 
 
 			LUATEX_SHADOWMAP,
+			LUATEX_SHADOWCOLOR,
 			LUATEX_HEIGHTMAP,
 
 			// NOTE: must be in same order as MAP_BASE_*!
