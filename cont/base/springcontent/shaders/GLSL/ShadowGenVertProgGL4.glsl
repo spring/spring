@@ -104,7 +104,7 @@ void TransformShadowCam(vec4 worldPos, vec3 worldNormal) {
 	//use old bias formula from GetShadowPCFRandom(), but this time to write down shadow depth map values
 	const float cb = 1e-6;
 	float bias = cb * tan(acos(NdotL));
-	bias = clamp(bias, 0.0, 1000.0 * cb);
+	bias = clamp(bias, 0.0, 100.0 * cb);
 
 	lightVertexPos.xy += vec2(0.5);
 	lightVertexPos.z  += bias;
