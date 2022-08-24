@@ -47,9 +47,10 @@ struct MoveDef {
 		bool testObjects = true,
 		bool centerOnly = false,
 		float* minSpeedModPtr = nullptr,
-		int* maxBlockBitPtr = nullptr
+		int* maxBlockBitPtr = nullptr,
+		int thread = 0
 	) const {
-		return (TestMoveSquareRange(collider, testMovePos, testMovePos, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedModPtr, maxBlockBitPtr));
+		return (TestMoveSquareRange(collider, testMovePos, testMovePos, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedModPtr, maxBlockBitPtr, thread));
 	}
 
 	// aircraft and buildings defer to UnitDef::floatOnWater

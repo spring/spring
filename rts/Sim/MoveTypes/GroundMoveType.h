@@ -4,6 +4,7 @@
 #define GROUNDMOVETYPE_H
 
 #include <array>
+#include <tuple>
 
 #include "MoveType.h"
 #include "Sim/Path/IPathController.hpp"
@@ -32,6 +33,8 @@ public:
 	bool Update() override;
 	void SlowUpdate() override;
 	void UpdatePreCollisionsMt() override;
+	void UpdateCollisionDetections() override;
+	void ProcessCollisionEvents() override;
 
 	void UpdateObstacleAvoidance();
 	void UpdatePreCollisions() override;
@@ -60,8 +63,7 @@ public:
 	bool WantToStop() const { return (pathID == 0 && (!useRawMovement || atEndOfPath)); }
 
 	void TriggerSkipWayPoint() {
-		currWayPoint.y = -1.0f;
-		// nextWayPoint.y = -1.0f;
+		earlyCurrWayPoint.y = -1.0f;
 	}
 	void TriggerCallArrived() {
 		atEndOfPath = true;
@@ -154,20 +156,23 @@ private:
 		const float3& separationVector,
 		bool canRequestPath,
 		bool checkYardMap,
-		bool checkTerrain
+		bool checkTerrain,
+		int curThread
 	);
 
 	void HandleUnitCollisions(
 		CUnit* collider,
 		const float3& colliderParams,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD
+		const MoveDef* colliderMD,
+		int curThread
 	);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float3& colliderParams,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD
+		const MoveDef* colliderMD,
+		int curThread
 	);
 
 	void SetMainHeading();
@@ -230,6 +235,8 @@ private:
 	float skidRotSpeed = 0.0f;              /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel = 0.0f;              /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
+	float3 resultantForces;
+
 	unsigned int pathID = 0;
 	unsigned int nextObstacleAvoidanceFrame = 0;
 
@@ -252,6 +259,12 @@ private:
 	bool pathingArrived = false;
 	int setHeading = 0; // 1 = Regular (use setHeadingDir), 2 = Main
 	short setHeadingDir = 0;
+
+	std::vector<CFeature*> collidedFeatures;
+	std::vector<CUnit*> collidedUnits;
+	std::vector<CFeature*> killFeatures;
+	std::vector<CUnit*> killUnits;
+	std::vector<std::tuple<CFeature*, float3>> moveFeatures;
 };
 
 #endif // GROUNDMOVETYPE_H

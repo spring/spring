@@ -168,15 +168,13 @@ public:
 	void MovedRepulser(CPlasmaRepulser* repulser);
 	void RemoveRepulser(CPlasmaRepulser* repulser);
 
-	void ReleaseVector(std::vector<CUnit*>* v       ) { tempUnits.ReleaseVector(v); }
-	void ReleaseVector(std::vector<CFeature*>* v    ) { tempFeatures.ReleaseVector(v); }
+	// Note: ensure ReleaseVector is called in the same thread as original quad field query generated.
+
+	void ReleaseVector(std::vector<CUnit*>* v       , int onThread = 0) { tempUnits[onThread].ReleaseVector(v); }
+	void ReleaseVector(std::vector<CFeature*>* v    , int onThread = 0) { tempFeatures[onThread].ReleaseVector(v); }
 	void ReleaseVector(std::vector<CProjectile*>* v ) { tempProjectiles.ReleaseVector(v); }
-
-	// Ensure release in same thread as original quad field query generated.
-	void ReleaseVector(std::vector<CSolidObject*>* v, int onThread = 0); //{ tempSolids.ReleaseVector(v); }
-
-	// Ensure release in same thread as original quad field query generated.
-	void ReleaseVector(std::vector<int>* v          , int onThread = 0);// { tempQuads.ReleaseVector(v); }
+	void ReleaseVector(std::vector<CSolidObject*>* v, int onThread = 0) { tempSolids[onThread].ReleaseVector(v); }
+	void ReleaseVector(std::vector<int>* v          , int onThread = 0) { tempQuads[onThread].ReleaseVector(v); }
 
 	struct Quad {
 	public:
@@ -244,8 +242,8 @@ private:
 	std::vector<Quad> baseQuads;
 
 	// preallocated vectors for Get*Exact functions
-	QueryVectorCache<CUnit*> tempUnits;
-	QueryVectorCache<CFeature*> tempFeatures;
+	std::array< QueryVectorCache<CUnit*>, ThreadPool::MAX_THREADS >  tempUnits;
+	std::array< QueryVectorCache<CFeature*>, ThreadPool::MAX_THREADS >  tempFeatures;
 	QueryVectorCache<CProjectile*> tempProjectiles;
 	std::array< QueryVectorCache<CSolidObject*>, ThreadPool::MAX_THREADS > tempSolids;
 	std::array< QueryVectorCache<int>, ThreadPool::MAX_THREADS > tempQuads;
@@ -264,8 +262,8 @@ extern CQuadField quadField;
 
 struct QuadFieldQuery {
 	~QuadFieldQuery() {
-		quadField.ReleaseVector(units);
-		quadField.ReleaseVector(features);
+		quadField.ReleaseVector(units, threadOwner);
+		quadField.ReleaseVector(features, threadOwner);
 		quadField.ReleaseVector(projectiles);
 		quadField.ReleaseVector(solids, threadOwner);
 		quadField.ReleaseVector(quads, threadOwner);

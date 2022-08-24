@@ -66,6 +66,8 @@ public:
 
 	virtual void UpdatePreCollisionsMt() {};
 	virtual void UpdatePreCollisions() {};
+	virtual void UpdateCollisionDetections() {};
+	virtual void ProcessCollisionEvents() {};
 
 	virtual bool IsSkidding() const { return false; }
 	virtual bool IsFlying() const { return false; }

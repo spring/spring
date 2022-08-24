@@ -146,8 +146,12 @@ void CQuadField::Kill()
 		quad.Clear();
 	}
 
-	tempUnits.ReleaseAll();
-	tempFeatures.ReleaseAll();
+	for (auto cache : tempUnits)
+		cache.ReleaseAll();
+
+	for (auto cache : tempFeatures)
+		cache.ReleaseAll();
+
 	tempProjectiles.ReleaseAll();
 
 	for (auto cache : tempSolids)
@@ -155,18 +159,6 @@ void CQuadField::Kill()
 
 	for (auto cache : tempQuads)
 		cache.ReleaseAll();
-}
-
-void CQuadField::ReleaseVector(std::vector<CSolidObject*>* v, int onThread)
-{
-	//tempSolids[ThreadPool::GetThreadNum()].ReleaseVector(v);
-	tempSolids[onThread].ReleaseVector(v);
-}
-
-void CQuadField::ReleaseVector(std::vector<int>* v, int onThread)
-{
-	//tempQuads[ThreadPool::GetThreadNum()].ReleaseVector(v);
-	tempQuads[onThread].ReleaseVector(v);
 }
 
 
@@ -190,7 +182,6 @@ void CQuadField::GetQuads(QuadFieldQuery& qfq, float3 pos, float radius)
 {
 	pos.AssertNaNs();
 	pos.ClampInBounds();
-	//qfq.quads = tempQuads[ThreadPool::GetThreadNum()].ReserveVector();
 	qfq.quads = tempQuads[qfq.threadOwner].ReserveVector();
 
 	const int2 min = WorldPosToQuadField(pos - radius);
@@ -555,17 +546,19 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 
 void CQuadField::GetUnits(QuadFieldQuery& qfq, const float3& pos, float radius)
 {
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = curThread;
 	GetQuads(qfQuery, pos, radius);
-	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.ReserveVector();
+	const int tempNum = gs->GetMtTempNum(curThread);
+	qfq.units = tempUnits[curThread].ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {
-			if (u->tempNum == tempNum)
+			if (u->mtTempNum[curThread] == tempNum)
 				continue;
 
-			u->tempNum = tempNum;
+			u->mtTempNum[curThread] = tempNum;
 			qfq.units->push_back(u);
 		}
 	}
@@ -575,17 +568,19 @@ void CQuadField::GetUnits(QuadFieldQuery& qfq, const float3& pos, float radius)
 
 void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& pos, float radius, bool spherical)
 {
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = curThread;
 	GetQuads(qfQuery, pos, radius);
-	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.ReserveVector();
+	const int tempNum = gs->GetMtTempNum(curThread);
+	qfq.units = tempUnits[curThread].ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {
-			if (u->tempNum == tempNum)
+			if (u->mtTempNum[curThread] == tempNum)
 				continue;
 
-			u->tempNum = tempNum;
+			u->mtTempNum[curThread] = tempNum;
 
 			const float totRad       = radius + u->radius;
 			const float totRadSq     = totRad * totRad;
@@ -605,18 +600,20 @@ void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& pos, float rad
 
 void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& mins, const float3& maxs)
 {
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
 	GetQuadsRectangle(qfQuery, mins, maxs);
-	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.ReserveVector();
+	qfQuery.threadOwner = curThread;
+	const int tempNum = gs->GetMtTempNum(curThread);
+	qfq.units = tempUnits[curThread].ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* unit: baseQuads[qi].units) {
 
-			if (unit->tempNum == tempNum)
+			if (unit->mtTempNum[curThread] == tempNum)
 				continue;
 
-			unit->tempNum = tempNum;
+			unit->mtTempNum[curThread] = tempNum;
 
 			const float3& pos = unit->pos;
 			if (pos.x < mins.x || pos.x > maxs.x)
@@ -634,17 +631,19 @@ void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& mins, const fl
 
 void CQuadField::GetFeaturesExact(QuadFieldQuery& qfq, const float3& pos, float radius, bool spherical)
 {
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = curThread;
 	GetQuads(qfQuery, pos, radius);
-	const int tempNum = gs->GetTempNum();
-	qfq.features = tempFeatures.ReserveVector();
+	const int tempNum = gs->GetMtTempNum(curThread);
+	qfq.features = tempFeatures[curThread].ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CFeature* f: baseQuads[qi].features) {
-			if (f->tempNum == tempNum)
+			if (f->mtTempNum[curThread] == tempNum)
 				continue;
 
-			f->tempNum = tempNum;
+			f->mtTempNum[curThread] = tempNum;
 
 			const float totRad       = radius + f->radius;
 			const float totRadSq     = totRad * totRad;
@@ -664,17 +663,19 @@ void CQuadField::GetFeaturesExact(QuadFieldQuery& qfq, const float3& pos, float 
 
 void CQuadField::GetFeaturesExact(QuadFieldQuery& qfq, const float3& mins, const float3& maxs)
 {
+	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
+	qfQuery.threadOwner = curThread;
 	GetQuadsRectangle(qfQuery, mins, maxs);
-	const int tempNum = gs->GetTempNum();
-	qfq.features = tempFeatures.ReserveVector();
+	const int tempNum = gs->GetMtTempNum(curThread);
+	qfq.features = tempFeatures[curThread].ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CFeature* feature: baseQuads[qi].features) {
-			if (feature->tempNum == tempNum)
+			if (feature->mtTempNum[curThread] == tempNum)
 				continue;
 
-			feature->tempNum = tempNum;
+			feature->mtTempNum[curThread] = tempNum;
 
 			const float3& pos = feature->pos;
 			if (pos.x < mins.x || pos.x > maxs.x)
@@ -751,7 +752,6 @@ void CQuadField::GetSolidsExact(
 	const unsigned int physicalStateBits,
 	const unsigned int collisionStateBits
 ) {
-	//auto curThread = ThreadPool::GetThreadNum();
 	auto curThread = qfq.threadOwner;
 	QuadFieldQuery qfQuery;
 	qfQuery.threadOwner = curThread;
