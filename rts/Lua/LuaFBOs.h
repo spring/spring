@@ -28,22 +28,34 @@ public:
 		int luaRef;
 		GLsizei xsize;
 		GLsizei ysize;
+		GLsizei zsize;
 	};
 
 	const FBO* GetLuaFBO(lua_State* L, int index);
 
 public:
 	static bool PushEntries(lua_State* L);
-
+public:
+	static void AttachObjectTexTarget(
+		const char* funcName,
+		GLenum fboTarget,
+		GLenum texTarget,
+		GLuint texId,
+		GLenum attachID,
+		GLenum attachLevel
+	);
 private:
 	std::vector<FBO*> fbos;
 
 private: // helpers
 	static bool CreateMetatable(lua_State* L);
-	static bool AttachObject(lua_State* L, int index,
-	                         FBO* fbo, GLenum attachID,
-	                         GLenum attachTarget = 0,
-	                         GLenum attachLevel  = 0);
+	static bool AttachObject(
+		const char* funcName,
+		lua_State* L, int index,
+		FBO* fbo, GLenum attachID,
+		GLenum attachTarget = 0,
+		GLenum attachLevel  = 0
+	);
 	static bool ApplyAttachment(lua_State* L, int index,
 	                            FBO* fbo, GLenum attachID);
 	static bool ApplyDrawBuffers(lua_State* L, int index);

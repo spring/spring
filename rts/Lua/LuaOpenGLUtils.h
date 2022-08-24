@@ -4,6 +4,7 @@
 #define LUA_OPENGLUTILS_H
 
 #include <string>
+#include <tuple>
 
 #include "System/type2.h"
 
@@ -115,7 +116,7 @@ class LuaMatTexture {
 		bool enable = false;
 		// bool enableTexParams = false;
 
-		int2 GetSize() const;
+		std::tuple<int, int, int> GetSize() const;
 		GLuint GetTextureID() const;
 		GLuint GetTextureTarget() const;
 };

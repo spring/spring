@@ -1,21 +1,44 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "LuaTextures.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
 #include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
+#include "System/Exceptions.h"
+#include "Lua/LuaFBOs.h"
 
+#include "fmt/format.h"
+
+
+const spring::unordered_map<GLenum, GLenum> LuaTextures::Format2Query =
+{
+	{ GL_TEXTURE_1D                  , GL_TEXTURE_BINDING_1D				   },
+	{ GL_TEXTURE_2D                  , GL_TEXTURE_BINDING_2D				   },
+	{ GL_TEXTURE_3D                  , GL_TEXTURE_BINDING_3D				   },
+//	{ GL_TEXTURE_1D_ARRAY            , GL_TEXTURE_BINDING_1D_ARRAY			   },
+//	{ GL_TEXTURE_2D_ARRAY            , GL_TEXTURE_BINDING_2D_ARRAY			   },
+//	{ GL_TEXTURE_RECTANGLE           , GL_TEXTURE_BINDING_RECTANGLE			   },
+	{ GL_TEXTURE_CUBE_MAP            , GL_TEXTURE_BINDING_CUBE_MAP			   },
+//	{ GL_TEXTURE_BUFFER              , GL_TEXTURE_BINDING_BUFFER			   },
+	{ GL_TEXTURE_2D_MULTISAMPLE      , GL_TEXTURE_BINDING_2D_MULTISAMPLE	   },
+//	{ GL_TEXTURE_2D_MULTISAMPLE_ARRAY, GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY },
+};
 
 /******************************************************************************/
 /******************************************************************************/
 
 std::string LuaTextures::Create(const Texture& tex)
 {
-	GLint currentBinding;
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+	GLint currentBinding = 0;
+
+	if (Format2Query.find(tex.target) == Format2Query.end()) {
+		LOG_L(L_ERROR, "[LuaTextures::%s] texture-target %d is not supported", __func__, tex.target);
+		return "";
+	}
+
+	glGetIntegerv(Format2Query.find(tex.target)->second, &currentBinding);
 
 	GLuint texID;
 	glGenTextures(1, &texID);
@@ -40,35 +63,43 @@ std::string LuaTextures::Create(const Texture& tex)
 	}
 
 	switch (tex.target) {
+		case GL_TEXTURE_1D: {
+			glTexImage1D(tex.target, 0, tex.format, tex.xsize                      , tex.border, dataFormat, dataType, nullptr);
+		} break;
+		case GL_TEXTURE_2D: {
+			glTexImage2D(tex.target, 0, tex.format, tex.xsize, tex.ysize           , tex.border, dataFormat, dataType, nullptr);
+		} break;
+		case GL_TEXTURE_3D: {
+			glTexImage3D(tex.target, 0, tex.format, tex.xsize, tex.ysize, tex.zsize, tex.border, dataFormat, dataType, nullptr);
+		} break;
+
 		case GL_TEXTURE_2D_MULTISAMPLE: {
 			assert(tex.samples > 1);
 
 			// 2DMS target only makes sense for FBO's
 			if (!globalRendering->supportMSAAFrameBuffer) {
 				glDeleteTextures(1, &texID);
-				glBindTexture(GL_TEXTURE_2D, currentBinding);
+				glBindTexture(tex.target, currentBinding);
 				return "";
 			}
 
 			glTexImage2DMultisample(tex.target, tex.samples, tex.format, tex.xsize, tex.ysize, GL_TRUE);
 		} break;
-		case GL_TEXTURE_2D: {
-			glTexImage2D(tex.target, 0, tex.format, tex.xsize, tex.ysize, tex.border, dataFormat, dataType, nullptr);
-		} break;
+
 		default: {
-			LOG_L(L_ERROR, "[LuaTextures::%s] texture-target %d is not supported yet", __func__, tex.target);
+			assert(false);
 		} break;
 	}
 
 	if (glGetError() != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
-		glBindTexture(GL_TEXTURE_2D, currentBinding);
+		glBindTexture(tex.target, currentBinding);
 		return "";
 	}
 
 	ApplyParams(tex);
 
-	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
+	glBindTexture(tex.target, currentBinding); // revert the current binding
 
 	GLuint fbo = 0;
 	GLuint fboDepth = 0;
@@ -93,9 +124,16 @@ std::string LuaTextures::Create(const Texture& tex)
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fboDepth);
 		}
 
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, tex.target, texID, 0);
+		bool attachFailure = false;
+		try {
+			LuaFBOs::AttachObjectTexTarget(__func__, GL_FRAMEBUFFER_EXT, tex.target, texID, GL_COLOR_ATTACHMENT0_EXT, 0);
+		}
+		catch (const opengl_error& e) {
+			attachFailure = true;
+			LOG_L(L_ERROR, "[LuaTextures::%s] %s", __func__, e.what());
+		}
 
-		if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT || attachFailure) {
 			glDeleteTextures(1, &texID);
 			glDeleteFramebuffersEXT(1, &fbo);
 			glDeleteRenderbuffersEXT(1, &fboDepth);
@@ -106,8 +144,7 @@ std::string LuaTextures::Create(const Texture& tex)
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 	}
 
-	char buf[64];
-	SNPRINTF(buf, sizeof(buf), "%c%i", prefix, ++lastCode);
+	std::string str = fmt::format("{}{}", prefix, ++lastCode);
 
 	Texture newTex = tex;
 	newTex.id = texID;
@@ -115,16 +152,16 @@ std::string LuaTextures::Create(const Texture& tex)
 	newTex.fboDepth = fboDepth;
 
 	if (freeIndices.empty()) {
-		textureMap.insert(buf, textureVec.size());
+		textureMap.insert(str, textureVec.size());
 		textureVec.emplace_back(newTex);
-		return buf;
+		return str;
 	}
 
 	// recycle
-	textureMap[buf] = freeIndices.back();
+	textureMap[str] = freeIndices.back();
 	textureVec[freeIndices.back()] = newTex;
 	freeIndices.pop_back();
-	return buf;
+	return str;
 }
 
 

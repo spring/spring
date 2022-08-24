@@ -12,7 +12,7 @@
 
 class LuaTextures {
 public:
-	static const char prefix = '!';
+	static constexpr char prefix = '!';
 
 	~LuaTextures() { FreeAll(); }
 	LuaTextures() {
@@ -39,6 +39,7 @@ public:
 
 		GLsizei xsize   = 0;
 		GLsizei ysize   = 0;
+		GLsizei zsize   = 0;
 		GLsizei samples = 0;
 
 		GLint border = 0;
@@ -72,7 +73,8 @@ public:
 
 	const Texture* GetInfo(const std::string& name) const { return (GetInfo(GetIdx(name))); }
 	      Texture* GetInfo(const std::string& name)       { return (GetInfo(GetIdx(name))); }
-
+public:
+	static const spring::unordered_map<GLenum, GLenum> Format2Query;
 private:
 	int lastCode;
 

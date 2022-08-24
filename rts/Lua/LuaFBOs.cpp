@@ -14,6 +14,8 @@
 #include "LuaTextures.h"
 
 #include "System/Log/ILog.h"
+#include "System/Exceptions.h"
+#include "fmt/format.h"
 
 
 /******************************************************************************/
@@ -242,6 +244,7 @@ int LuaFBOs::meta_newindex(lua_State* L)
 /******************************************************************************/
 
 bool LuaFBOs::AttachObject(
+	const char* funcName,
 	lua_State* L,
 	int index,
 	FBO* fbo,
@@ -266,10 +269,17 @@ bool LuaFBOs::AttachObject(
 		if (attachTarget == 0)
 			attachTarget = tex->target;
 
-		glFramebufferTexture2DEXT(fbo->target,
-		                          attachID, attachTarget, tex->id, attachLevel);
+		try {
+			AttachObjectTexTarget(funcName, fbo->target, attachTarget, tex->id, attachID, attachLevel);
+		}
+		catch (const opengl_error& e) {
+			luaL_error(L, "%s", e.what());
+		}
+
+
 		fbo->xsize = tex->xsize;
 		fbo->ysize = tex->ysize;
+		fbo->zsize = tex->zsize;
 		return true;
 	}
 
@@ -286,7 +296,37 @@ bool LuaFBOs::AttachObject(
 
 	fbo->xsize = rbo->xsize;
 	fbo->ysize = rbo->ysize;
+	fbo->zsize = 0; //RBO can't be 3D or CUBE_MAP
 	return true;
+}
+
+void LuaFBOs::AttachObjectTexTarget(const char* funcName, GLenum fboTarget, GLenum texTarget, GLuint texId, GLenum attachID, GLenum attachLevel)
+{
+	//  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, tex.target, texID, 0);
+	switch (texTarget)
+	{
+	case GL_TEXTURE_1D:
+		glFramebufferTexture1DEXT(fboTarget, attachID, texTarget, texId, attachLevel);
+		break;
+	case GL_TEXTURE_2D:
+		glFramebufferTexture2DEXT(fboTarget, attachID, texTarget, texId, attachLevel);
+		break;
+	case GL_TEXTURE_2D_MULTISAMPLE:
+		glFramebufferTexture2DEXT(fboTarget, attachID, texTarget, texId, 0);
+		break;
+	case GL_TEXTURE_CUBE_MAP: [[fallthrough]];
+	case GL_TEXTURE_3D: {
+		if (!GLEW_VERSION_3_2) {
+			throw opengl_error(fmt::format("[LuaFBO::{}] Using of the attachment target {} requires OpenGL >= 3.2", funcName, texTarget));
+		}
+
+		glFramebufferTexture(fboTarget, attachID, texId, attachLevel); //attach the whole texture
+	} break;
+	default: {
+		throw opengl_error(fmt::format("[LuaFBO::{}] Incorrect texture attach target {}", funcName, texTarget));
+	} break;
+
+	}
 }
 
 
@@ -300,7 +340,7 @@ bool LuaFBOs::ApplyAttachment(
 		return false;
 
 	if (!lua_istable(L, index))
-		return AttachObject(L, index, fbo, attachID);
+		return AttachObject(__func__, L, index, fbo, attachID);
 
 	const int table = (index < 0) ? index : (lua_gettop(L) + index + 1);
 
@@ -318,7 +358,7 @@ bool LuaFBOs::ApplyAttachment(
 	lua_pop(L, 1);
 
 	lua_rawgeti(L, table, 1);
-	const bool success = AttachObject(L, -1, fbo, attachID, target, level);
+	const bool success = AttachObject(__func__, L, -1, fbo, attachID, target, level);
 	lua_pop(L, 1);
 
 	return success;

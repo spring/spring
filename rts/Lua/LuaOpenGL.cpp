@@ -3342,8 +3342,15 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 	if (tex.xsize <= 0) luaL_argerror(L, 1, "Texture Size must be greater than zero!");
 	if (tex.ysize <= 0) luaL_argerror(L, 2, "Texture Size must be greater than zero!");
 
-	if (lua_istable(L, 3)) {
-		constexpr int tableIdx = 3;
+	tex.zsize = 0;
+	int tableIdx = 3;
+	if (lua_isnumber(L, 3)) {
+		tex.zsize = (GLsizei)luaL_checknumber(L, 3);
+		++tableIdx;
+		if (tex.zsize <= 0) luaL_argerror(L, 3, "Texture Size must be greater than zero!");
+	}
+
+	if (lua_istable(L, tableIdx)) {
 		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2))
 				continue;
@@ -3454,9 +3461,12 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 	if (!LuaOpenGLUtils::ParseTextureImage(L, tex, luaL_checkstring(L, 1)))
 		return 0;
 
-	lua_createtable(L, 0, 4);
-	HSTR_PUSH_NUMBER(L, "xsize" , tex.GetSize().x);
-	HSTR_PUSH_NUMBER(L, "ysize" , tex.GetSize().y);
+	lua_createtable(L, 0, 5);
+	auto texSize = tex.GetSize();
+	HSTR_PUSH_NUMBER(L, "xsize", std::get<0>(texSize));
+	HSTR_PUSH_NUMBER(L, "ysize", std::get<1>(texSize));
+	HSTR_PUSH_NUMBER(L, "zsize", std::get<2>(texSize));
+
 	HSTR_PUSH_NUMBER(L, "id"    , tex.GetTextureID());
 	HSTR_PUSH_NUMBER(L, "target", tex.GetTextureTarget());
 	// HSTR_PUSH_BOOL(L,   "alpha", texInfo.alpha);  FIXME
@@ -3564,10 +3574,11 @@ int LuaOpenGL::GenerateMipmap(lua_State* L)
 		return 0;
 
 	GLint currentBinding;
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
-	glBindTexture(GL_TEXTURE_2D, tex->id);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, currentBinding);
+	glGetIntegerv(LuaTextures::Format2Query.find(tex->format)->second, &currentBinding);
+	glBindTexture(tex->format, tex->id);
+	glGenerateMipmapEXT(tex->format);
+	glBindTexture(tex->format, currentBinding);
+
 	return 0;
 }
 
@@ -3793,7 +3804,10 @@ int LuaOpenGL::BindImageTexture(lua_State* L)
 			luaL_error(L, "%s Failed to find a Lua texture %s", __func__, luaTexStr.c_str());
 
 		texID = luaTex.GetTextureID();
-		int maxDim = std::max(luaTex.GetSize().x, luaTex.GetSize().y);
+		auto texSize = luaTex.GetSize();
+		int maxDim = 0;
+		std::apply([&maxDim](auto&&... args) {((maxDim = std::max(maxDim, args)), ...); }, texSize);
+
 		maxDim = std::max(maxDim, 1);
 		maxMipLevel = static_cast<int>(std::log2(maxDim)) + 1;
 	}
@@ -3943,19 +3957,19 @@ int LuaOpenGL::AddAtlasTexture(lua_State* L)
 	if (luaTex.GetTextureTarget() != GL_TEXTURE_2D)
 		luaL_error(L, "gl.%s() Atlas can only be of type GL_TEXTURE_2D", __func__);
 
-	const auto texSize = luaTex.GetSize();
+	const auto [texSizeX, texSizeY, texSizeZ] = luaTex.GetSize();
 
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 
 	luaTex.Bind();
 	std::vector<uint8_t> buffer;
-	buffer.resize(texSize.x * texSize.y * sizeof(uint32_t));  //hope texture is indeed RGBA/UNORM
+	buffer.resize(texSizeX * texSizeY * sizeof(uint32_t));  //hope texture is indeed RGBA/UNORM
 
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
 
 	const std::string subAtlasTexName = luaL_optstring(L, 3, luaTexStr.c_str());
-	atlas->AddTexFromMem(subAtlasTexName, texSize.x, texSize.y, CTextureAtlas::TextureType::RGBA32, buffer.data()); //whelp double copy
+	atlas->AddTexFromMem(subAtlasTexName, texSizeX, texSizeY, CTextureAtlas::TextureType::RGBA32, buffer.data()); //whelp double copy
 
 	luaTex.Unbind();
 

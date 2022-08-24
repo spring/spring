@@ -822,18 +822,23 @@ void LuaMatTexture::Unbind() const
 }
 
 
-int2 LuaMatTexture::GetSize() const
+std::tuple<int, int, int> LuaMatTexture::GetSize() const
 {
 	#define groundDrawer (readMap->GetGroundDrawer())
 	#define gdGeomBuff (groundDrawer->GetGeometryBuffer())
 	#define udGeomBuff (unitDrawer->GetGeometryBuffer())
-	#define sqint2(x) int2(x, x)
+
+	auto ReturnHelper = [](int x, int y = 0, int z = 0) {
+		if (y == 0)
+			y = x;
+		return std::make_tuple(x, y, z);
+	};
 
 	switch (type) {
 		case LUATEX_NAMED: {
 			const CNamedTextures::TexInfo* namedTexInfo = CNamedTextures::GetInfo(*reinterpret_cast<const size_t*>(&data));
 
-			return {namedTexInfo->xsize, namedTexInfo->ysize};
+			return ReturnHelper(namedTexInfo->xsize, namedTexInfo->ysize);
 		} break;
 
 		case LUATEX_LUATEXTURE: {
@@ -842,7 +847,7 @@ int2 LuaMatTexture::GetSize() const
 			const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(reinterpret_cast<lua_State*>(state));
 			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
 
-			return {luaTexture->xsize, luaTexture->ysize};
+			return ReturnHelper(luaTexture->xsize, luaTexture->ysize);
 		} break;
 
 		case LUATEX_LUATEXTUREATLAS: {
@@ -851,20 +856,20 @@ int2 LuaMatTexture::GetSize() const
 			const LuaAtlasTextures& luaAtlasTextures = CLuaHandle::GetActiveAtlasTextures(reinterpret_cast<lua_State*>(state));
 			const CTextureAtlas* atlas = luaAtlasTextures.GetAtlasByIndex(*reinterpret_cast<const size_t*>(&data));
 
-			return atlas->GetSize();
+			return ReturnHelper(atlas->GetSize().x, atlas->GetSize().y);
 		} break;
 
 
 		case LUATEX_UNITTEXTURE1: {
 			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
-			return {static_cast<int>(texMat->tex1SizeX), static_cast<int>(texMat->tex1SizeY)};
+			return ReturnHelper(static_cast<int>(texMat->tex1SizeX), static_cast<int>(texMat->tex1SizeY));
 		} break;
 		case LUATEX_UNITTEXTURE2: {
 			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
-			return {static_cast<int>(texMat->tex2SizeX), static_cast<int>(texMat->tex2SizeY)};
+			return ReturnHelper(static_cast<int>(texMat->tex2SizeX), static_cast<int>(texMat->tex2SizeY));
 		} break;
 		case LUATEX_3DOTEXTURE: {
-			return {static_cast<int>(textureHandler3DO.GetAtlasTexSizeX()), static_cast<int>(textureHandler3DO.GetAtlasTexSizeY())};
+			return ReturnHelper(static_cast<int>(textureHandler3DO.GetAtlasTexSizeX()), static_cast<int>(textureHandler3DO.GetAtlasTexSizeY()));
 		} break;
 
 
@@ -873,37 +878,37 @@ int2 LuaMatTexture::GetSize() const
 				const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
 				CUnitDrawer::GetUnitDefImage(ud); // forced existance
 				const UnitDefImage* bp = ud->buildPic;
-				return {bp->imageSizeX, bp->imageSizeY};
+				return ReturnHelper(bp->imageSizeX, bp->imageSizeY);
 			}
 		} break;
 		case LUATEX_UNITRADARICON: {
 			const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
 			const icon::CIcon& it = ud->iconType;
-			return {it->GetSizeX(), it->GetSizeY()};
+			return ReturnHelper(it->GetSizeX(), it->GetSizeY());
 		} break;
 
 
 		case LUATEX_MAP_REFLECTION: {
-			return sqint2(cubeMapHandler.GetReflectionTextureSize());
+			return ReturnHelper(cubeMapHandler.GetReflectionTextureSize());
 		} break;
 		case LUATEX_SKY_REFLECTION: {
 			// note: same size as regular refltex
-			return sqint2(cubeMapHandler.GetReflectionTextureSize());
+			return ReturnHelper(cubeMapHandler.GetReflectionTextureSize());
 		} break;
 		case LUATEX_SPECULAR: {
-			return sqint2(cubeMapHandler.GetSpecularTextureSize());
+			return ReturnHelper(cubeMapHandler.GetSpecularTextureSize());
 		} break;
 
 
 		case LUATEX_SHADOWMAP: {
-			return sqint2(shadowHandler.shadowMapSize);
+			return ReturnHelper(shadowHandler.shadowMapSize);
 		} break;
 		case LUATEX_SHADOWCOLOR: {
-			return sqint2(shadowHandler.shadowMapSize);
+			return ReturnHelper(shadowHandler.shadowMapSize);
 		} break;
 		case LUATEX_HEIGHTMAP: {
 			if (heightMapTexture != nullptr)
-				return {heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY()};
+				return ReturnHelper(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
 		} break;
 
 
@@ -921,24 +926,32 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX: {
 			// convert type=LUATEX_* to MAP_*
-			if (readMap != nullptr)
-				return (readMap->GetTextureSize(type - LUATEX_SMF_GRASS));
+			if (readMap != nullptr) {
+				auto sz = readMap->GetTextureSize(type - LUATEX_SMF_GRASS);
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 		case LUATEX_SSMF_SNORMALS: {
-			if (readMap != nullptr)
-				return (readMap->GetTextureSize((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data)));
+			if (readMap != nullptr) {
+				auto sz = readMap->GetTextureSize((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data));
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 
 		case LUATEX_INFOTEX_SUFFIX: {
-			if (infoTextureHandler != nullptr)
-				return ((static_cast<const CInfoTexture*>(data))->GetTexSize());
+			if (infoTextureHandler != nullptr) {
+				auto sz = static_cast<const CInfoTexture*>(data)->GetTexSize();
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 		case LUATEX_INFOTEX_ACTIVE: {
-			if (infoTextureHandler != nullptr)
-				return infoTextureHandler->GetCurrentInfoTextureSize();
+			if (infoTextureHandler != nullptr) {
+				auto sz = infoTextureHandler->GetCurrentInfoTextureSize();
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 
@@ -948,8 +961,10 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MAP_GBUFFER_EMIT:
 		case LUATEX_MAP_GBUFFER_MISC:
 		case LUATEX_MAP_GBUFFER_ZVAL: {
-			if (readMap != nullptr)
-				return (gdGeomBuff->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
+			if (readMap != nullptr) {
+				auto sz = gdGeomBuff->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred());
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 		case LUATEX_MODEL_GBUFFER_NORM:
@@ -958,18 +973,26 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MODEL_GBUFFER_EMIT:
 		case LUATEX_MODEL_GBUFFER_MISC:
 		case LUATEX_MODEL_GBUFFER_ZVAL: {
-			if (unitDrawer != nullptr)
-				return (udGeomBuff->GetWantedSize(unitDrawer->DrawDeferred()));
+			if (unitDrawer != nullptr) {
+				auto sz = udGeomBuff->GetWantedSize(unitDrawer->DrawDeferred());
+				return ReturnHelper(sz.x, sz.y);
+			}
 		} break;
 
 
 		case LUATEX_FONT:
-			return {font->GetTextureWidth(), font->GetTextureHeight()};
+			return ReturnHelper(     font->GetTextureWidth(),      font->GetTextureHeight());
 		case LUATEX_FONTSMALL:
-			return {smallFont->GetTextureWidth(), smallFont->GetTextureHeight()};
+			return ReturnHelper(smallFont->GetTextureWidth(), smallFont->GetTextureHeight());
 
-		case LUATEX_EXPLOSIONS_ATLAS: { return projectileDrawer->textureAtlas->GetSize();   } break;
-		case LUATEX_GROUNDFX_ATLAS:   { return projectileDrawer->groundFXAtlas->GetSize();  } break;
+		case LUATEX_EXPLOSIONS_ATLAS: {
+			auto sz = projectileDrawer->textureAtlas->GetSize();
+			return ReturnHelper(sz.x, sz.y);
+		} break;
+		case LUATEX_GROUNDFX_ATLAS: {
+			auto sz = projectileDrawer->groundFXAtlas->GetSize();
+			return ReturnHelper(sz.x, sz.y);
+		} break;
 
 		case LUATEX_NONE:
 		default: break;
@@ -979,7 +1002,7 @@ int2 LuaMatTexture::GetSize() const
 	#undef gdGeomBuff
 	#undef udGeomBuff
 
-	return int2(0, 0);
+	return ReturnHelper(0);
 }
 
 
