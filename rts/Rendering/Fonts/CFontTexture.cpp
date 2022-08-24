@@ -110,7 +110,7 @@ public:
 			std::string msg = fmt::sprintf("%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
 			ScopedOnceTimer timer(msg);
 
-			if (fcInitialized = FcInit()) {
+			if ((fcInitialized = FcInit())) {
 				FtLibraryHandler::CheckGenFontConfigFast();
 			}
 		}
@@ -149,10 +149,12 @@ public:
 				printf(fmtNL.c_str(), args...);
 			}
 			else {
-				if (isError)
+				if (isError) {
 					LOG_L(L_ERROR, fmt.c_str(), args...);
-				else
+				}
+				else {
 					LOG(fmt.c_str(), args...);
+				}
 			}
 		};
 
@@ -463,7 +465,7 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 				for (auto c : characters) {
 					ss << "<" << static_cast<uint32_t>(c) << ">";
 				}
-				LOG_L(L_DEBUG, "[%s] Use \"%s\" to render chars %s", __func__, filename.c_str(), origSize, ss.str().c_str());
+				LOG_L(L_INFO, "[%s] Using \"%s\" to render chars (size=%d) %s", __func__, filename.c_str(), origSize, ss.str().c_str());
 			}
 			#endif
 
@@ -566,8 +568,10 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		for (char32_t j = 32; j < 128; ++j) {
 			const auto& rgl = GetGlyph(j);
 			const auto hash = GetKerningHash(i, j);
-			FT_Vector kerning;
-			FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+			FT_Vector kerning = {};
+			if (FT_HAS_KERNING(face))
+				FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+
 			kerningPrecached[hash] = advance + normScale * kerning.x;
 		}
 	}
