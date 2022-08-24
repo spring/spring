@@ -156,21 +156,13 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsFragProg.glsl", extraDef, GL_FRAGMENT_SHADER));
 	decalShaders[DECAL_SHADER_GLSL]->Link();
 
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx 0
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx 1
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx 2
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx 3
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx 4
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx 5
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 6
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 7
-
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform("decalTex", 0);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform("shadeTex", 1);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform("shadowTex", 2);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform("shadowColorTex", 3);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform("mapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -182,7 +174,10 @@ void CGroundDecalHandler::LoadDecalShaders() {
 void CGroundDecalHandler::SunChanged() {
 	if (globalRendering->haveGLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+		float3 ambientColor = sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
+		decalShaders[DECAL_SHADER_GLSL]->SetUniform("groundAmbientColor", ambientColor.x, ambientColor.y, ambientColor.z);
+		decalShaders[DECAL_SHADER_GLSL]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+		decalShaders[DECAL_SHADER_GLSL]->SetUniform("shadowDensity", sunLighting->groundShadowDensity);
 		decalShaders[DECAL_SHADER_GLSL]->Disable();
 	}
 }
@@ -552,7 +547,6 @@ void CGroundDecalHandler::Draw()
 	glDepthMask(0);
 
 	BindTextures();
-	BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
 	DrawDecals();
 	KillTextures();
 
@@ -579,7 +573,7 @@ void CGroundDecalHandler::BindTextures()
 		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
 		// TODO replace this madness
-		///glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
+		glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
 	}
 
 	if (infoTextureHandler->IsEnabled()) {
@@ -613,8 +607,10 @@ void CGroundDecalHandler::KillTextures()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 
-	if (shadowHandler.ShadowsLoaded())
+	if (shadowHandler.ShadowsLoaded()) {
 		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+		glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, shadowHandler.GetColorTextureID());
+	}
 
 	{
 		glActiveTexture(GL_TEXTURE1);
@@ -636,17 +632,10 @@ void CGroundDecalHandler::KillTextures()
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void CGroundDecalHandler::BindShader(const float3& ambientColor)
+void CGroundDecalHandler::DrawDecals()
 {
 	decalShaders[DECAL_SHADER_CURR]->Enable();
 
-	decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
-	decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
-}
-
-void CGroundDecalHandler::DrawDecals()
-{
 	// draw building decals
 	glPolygonOffset(-10, -200);
 	DrawObjectDecals();

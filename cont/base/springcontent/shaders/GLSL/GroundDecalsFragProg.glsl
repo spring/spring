@@ -13,8 +13,7 @@ varying vec4 vertexPos;
 
 void main() {
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
+	vertexShadowPos.xy += vec2(0.5);
 
 	float shadowCoeff = mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
 
