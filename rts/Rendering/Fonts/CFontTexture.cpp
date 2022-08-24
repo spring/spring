@@ -6,6 +6,7 @@
 #include <cstring> // for memset, memcpy
 #include <string>
 #include <vector>
+#include <sstream>
 
 #ifndef HEADLESS
 	#include <ft2build.h>
@@ -84,18 +85,18 @@ spring::mutex_wrapper_concept* GetCacheMutex() { return cacheMutexes[CFontTextur
 #ifndef HEADLESS
 class FtLibraryHandler {
 public:
-	FtLibraryHandler() {
-		std::string msg;
-		std::string err;
-
+	FtLibraryHandler()
+		: fcInitialized(false)
+		, lib(nullptr)
+	{
 		{
 			const FT_Error error = FT_Init_FreeType(&lib);
 
 			FT_Int version[3];
 			FT_Library_Version(lib, &version[0], &version[1], &version[2]);
 
-			msg = fmt::sprintf("%s::FreeTypeInit (version %d.%d.%d)", __func__, version[0], version[1], version[2]);
-			err = fmt::sprintf("[%s] FT_Init_FreeType failure \"%s\"", __func__, GetFTError(error));
+			std::string msg = fmt::sprintf("%s::FreeTypeInit (version %d.%d.%d)", __func__, version[0], version[1], version[2]);
+			std::string err = fmt::sprintf("[%s] FT_Init_FreeType failure \"%s\"", __func__, GetFTError(error));
 
 			if (error != 0)
 				throw std::runtime_error(err);
@@ -105,18 +106,13 @@ public:
 		if (!UseFontConfig())
 			return;
 
-		msg = fmt::sprintf("%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
-		err = fmt::sprintf("[%s] FcInit failure (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
-
 		{
+			std::string msg = fmt::sprintf("%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
 			ScopedOnceTimer timer(msg);
 
-			if (FcInit()) {
+			if (fcInitialized = FcInit()) {
 				FtLibraryHandler::CheckGenFontConfigFast();
-				return;
 			}
-
-			throw std::runtime_error(err);
 		}
 		#endif
 	}
@@ -129,10 +125,12 @@ public:
 			return;
 
 		FcFini();
+		fcInitialized = false;
 		#endif
 	}
 
-	//reduced set of fonts
+	// reduced set of fonts
+	// not called if FcInit() fails
 	static bool CheckGenFontConfigFast() {
 		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
 
@@ -145,6 +143,24 @@ public:
 
 	static bool CheckGenFontConfigFull(bool console) {
 	#ifndef HEADLESS
+		auto LOG_MSG = [console](const std::string& fmt, bool isError, auto&&... args) {
+			if (console) {
+				std::string fmtNL = fmt + "\n";
+				printf(fmtNL.c_str(), args...);
+			}
+			else {
+				if (isError)
+					LOG_L(L_ERROR, fmt.c_str(), args...);
+				else
+					LOG(fmt.c_str(), args...);
+			}
+		};
+
+		if (!FtLibraryHandler::CanUseFontConfig()) {
+			LOG_MSG("[%s] Fontconfig(version %d.%d.%d) failed to initialize", true, __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+			return false;
+		}
+
 		char osFontsDir[8192];
 
 		#ifdef _WIN32
@@ -161,27 +177,17 @@ public:
 			FcStrListFirst(dirs);
 			for (FcChar8* dir = FcStrListNext(dirs), *prevDir = nullptr; dir != nullptr && dir != prevDir; ) {
 				prevDir = dir;
-				if (console)
-					printf("[%s] Using Fontconfig cache dir \"%s\"\n", __func__, dir);
-				else
-					LOG("[%s] Using Fontconfig cache dir \"%s\"", __func__, dir);
+				LOG_MSG("[%s] Using Fontconfig cache dir \"%s\"", false, __func__, dir);
 			}
 			FcStrListDone(dirs);
 		}
 
-
 		if (FtLibraryHandler::CheckFontConfig()) {
-			if (console)
-				printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
-			else
-				LOG("[%s] fontconfig for directory \"%s\" up to date", __func__, osFontsDir);
+			LOG_MSG("[%s] fontconfig for directory \"%s\" up to date", false, __func__, osFontsDir);
 			return true;
 		}
 
-		if (console)
-			printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
-		else
-			LOG("[%s] creating fontconfig for directory \"%s\"", __func__, osFontsDir);
+		LOG_MSG("[%s] creating fontconfig for directory \"%s\"", false, __func__, osFontsDir);
 
 		return FcConfigBuildFonts(nullptr);
 	#endif
@@ -201,13 +207,22 @@ public:
 	#endif
 
 	static FT_Library& GetLibrary() {
-		static FtLibraryHandler singleton;
+		if (singleton == nullptr)
+			singleton = std::make_unique<FtLibraryHandler>();
 
-		return singleton.lib;
+		return singleton->lib;
 	};
+	static bool CanUseFontConfig() {
+		if (singleton == nullptr)
+			singleton = std::make_unique<FtLibraryHandler>();
 
+		return singleton->fcInitialized;
+	}
 private:
+	bool fcInitialized;
 	FT_Library lib;
+
+	static inline std::unique_ptr<FtLibraryHandler> singleton = nullptr;
 };
 #endif
 
@@ -332,6 +347,9 @@ template<typename USET>
 static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize, const USET& blackList)
 {
 #if defined(USE_FONTCONFIG)
+	if (!FtLibraryHandler::CanUseFontConfig())
+		return nullptr;
+
 	if (characters.empty())
 		return nullptr;
 
@@ -439,11 +457,21 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 			if (blackList.find(GetFaceKey(*face)) != blackList.cend())
 				continue;
 
+			#ifdef _DEBUG
+			{
+				std::ostringstream ss;
+				for (auto c : characters) {
+					ss << "<" << static_cast<uint32_t>(c) << ">";
+				}
+				LOG_L(L_DEBUG, "[%s] Use \"%s\" to render chars %s", __func__, filename.c_str(), origSize, ss.str().c_str());
+			}
+			#endif
+
 			return face;
 		}
 		catch (content_error& ex) {
-			invalidFonts.emplace(std::make_pair(filename, origSize));
-			//LOG_L(L_ERROR, "[%s] \"%s\" (s = %d): %s", __func__, filename.c_str(), origSize, ex.what());
+			invalidFonts.emplace(filename, origSize);
+			LOG_L(L_WARNING, "[%s] \"%s\" (s = %d): %s", __func__, filename.c_str(), origSize, ex.what());
 			continue;
 		}
 
@@ -485,9 +513,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	if (fontSize <= 0)
 		fontSize = 14;
 
-	static constexpr int FT_INTERNAL_DPI = 64;
-	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
-
 	fontFamily = "unknown";
 	fontStyle  = "unknown";
 
@@ -506,6 +531,18 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 	FT_Face face = *shFace;
 
+	static constexpr int FT_INTERNAL_DPI = 64;
+	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
+
+	if (!FT_IS_SCALABLE(shFace->face)) {
+		LOG_L(L_WARNING, "[%s] %s is not scalable", __func__, fontfile.c_str());
+		normScale = 1.0f;
+	}
+
+	if (!FT_HAS_KERNING(face)) {
+		LOG_L(L_WARNING, "[%s] %s has no kerning data", __func__, fontfile.c_str());
+	}
+
 	fontFamily = face->family_name;
 	fontStyle  = face->style_name;
 
@@ -523,7 +560,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 	//preload Glyphs
 	LoadWantedGlyphs(32, 128);
-
 	for (char32_t i = 32; i < 128; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
@@ -588,6 +624,9 @@ const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
 #ifndef HEADLESS
+	if (!FT_HAS_KERNING(shFace->face))
+		return lgl.advance;
+
 	// first check caches
 	const uint64_t hash = GetKerningHash(lgl.letter, rgl.letter);
 
@@ -670,6 +709,7 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
+		LOG_L(L_WARNING, "[CFontTexture::%s] Failed to load glyph %u", __func__, uint32_t(c));
 		failedToFind.insert(c);
 	}
 
@@ -677,7 +717,7 @@ void CFontTexture::LoadWantedGlyphs(const std::vector<char32_t>& wanted)
 	// read atlasAlloc glyph data back into atlasUpdate{Shadow}
 	{
 		if (!atlasAlloc.Allocate())
-			LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size and/or outlinewidth)");
+			LOG_L(L_WARNING, "[CFontTexture::%s] Texture limit reached! (try to reduce the font size and/or outlinewidth)", __func__);
 
 		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
 		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
