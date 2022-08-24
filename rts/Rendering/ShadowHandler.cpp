@@ -292,10 +292,10 @@ bool CShadowHandler::InitFBOAndTextures()
 		glBindTexture(GL_TEXTURE_2D, shadowDepthTexture);
 		constexpr float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, presets->clampMode);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, presets->clampMode);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, presets->filterMode);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, presets->filterMode);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, preset.clampMode);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, preset.clampMode);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, preset.filterMode);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, preset.filterMode);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0); //no mips
 
@@ -330,7 +330,7 @@ bool CShadowHandler::InitFBOAndTextures()
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 
 		// test the FBO
-		status = smOpaqFBO.CheckStatus(presets->name);
+		status = smOpaqFBO.CheckStatus(preset.name);
 
 		if (status) //exit on the first occasion
 			break;

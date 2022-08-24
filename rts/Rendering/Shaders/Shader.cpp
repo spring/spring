@@ -572,7 +572,7 @@ namespace Shader {
 				for (const auto& [name, index] : attribLocations) {
 					GLint indexOut = glGetAttribLocation(objID, name.c_str());
 					if (indexOut == -1) {
-						LOG_L(L_WARNING, "[GLSL-PO::%s] Attribute %s for program %u is unused(-1)", __func__, name.c_str(), objID, indexOut);
+						LOG_L(L_WARNING, "[GLSL-PO::%s] Attribute %s for program %u is unused(-1)", __func__, name.c_str(), objID);
 					} 
 					else if (indexOut != index) {
 						LOG_L(L_ERROR, "[GLSL-PO::%s] Setting attribute %s to location %d(requested %d) for program %u", __func__, name.c_str(), indexOut, index, objID);

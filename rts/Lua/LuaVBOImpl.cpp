@@ -809,8 +809,6 @@ size_t LuaVBOImpl::MatrixDataFromProjectileIDsImpl(const Iterable& ids, int attr
 	static std::vector<float> matDataVec;
 	matDataVec.resize(16 * idsSize); //16 floats (matrix) per projectile id
 
-	constexpr auto defaultValue = static_cast<lua_Number>(0);
-
 	size_t idx = 0;
 	for (const auto id : ids) {
 		const CProjectile* p = LuaUtils::SolIdToObject<CProjectile>(id, __func__);

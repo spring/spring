@@ -207,8 +207,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 			}
 		}
 	}
-	for (const auto it: unitDef->buildOptions) {
-		const UnitDef* ud = unitDefHandler->GetUnitDefByName(it.second);
+	for (const auto& bo: unitDef->buildOptions) {
+		const UnitDef* ud = unitDefHandler->GetUnitDefByName(bo.second);
 		if (ud == nullptr)
 			continue;
 		ud->PreloadModel();

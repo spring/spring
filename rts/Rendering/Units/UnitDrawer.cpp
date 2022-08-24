@@ -793,10 +793,6 @@ void CUnitDrawerLegacy::DrawAlphaAIUnitBorder(const CUnitDrawerData::TempDrawUni
 	const float zsize = buildInfo.GetZSize() * (SQUARE_SIZE >> 1);
 
 	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
-	auto& sh = rb.GetShader();
-
-	GLint progID = 0;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
 
 	const SColor col = SColor{ 0.2f, 1.0f, 0.2f, IModelDrawerState::alphaValues.w };
 
@@ -807,7 +803,14 @@ void CUnitDrawerLegacy::DrawAlphaAIUnitBorder(const CUnitDrawerData::TempDrawUni
 		{buildPos + float3( xsize, 1.0f, -zsize), col},
 		{buildPos + float3( xsize, 1.0f,  zsize), col}
 	});
+
+	GLint progID = 0;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
+
+	auto& sh = rb.GetShader();
+	sh.Enable();
 	rb.DrawArrays(GL_LINE_STRIP);
+	sh.Disable();
 
 	if (progID > 0)
 		glUseProgram(progID);

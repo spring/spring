@@ -1037,13 +1037,11 @@ void CGlobalRendering::SetWindowAttributes(SDL_Window* window)
 	      int2 newRes = GetCfgWinRes();
 
 	LOG("[GR::%s][1] cfgFullScreen=%d winPos=<%d,%d> newRes=<%d,%d>", __func__, fullScreen, winPosX, winPosY, newRes.x, newRes.y);
-
-	if (SDL_SetWindowFullscreen(window, 0) != 0)
-		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
-
 	GetWindowPosSizeBounded(winPosX, winPosY, newRes.x, newRes.y);
+	LOG("[GR::%s][2] cfgFullScreen=%d winPos=<%d,%d> newRes=<%d,%d>", __func__, fullScreen, winPosX, winPosY, newRes.x, newRes.y);
 
-	LOG("[GR::%s][3] cfgFullScreen=%d winPos=<%d,%d> newRes=<%d,%d>", __func__, fullScreen, winPosX, winPosY, newRes.x, newRes.y);
+//	if (SDL_SetWindowFullscreen(window, 0) != 0)
+//		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
 
 	SDL_RestoreWindow(window);
 	SDL_SetWindowMinimumSize(window, minRes.x, minRes.y);
