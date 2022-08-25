@@ -89,7 +89,9 @@ float GetShadowOcclusion(vec3 worldPos) {
 #ifdef opt_shadows
 	vec4 vertexShadowPos = shadowMatrix * vec4(worldPos, 1.0);
 	vertexShadowPos.xy += vec2(0.5, 0.5); // shadowParams.xy
-	return mix(1.0, shadow2DProj(shadowmap, vertexShadowPos).r, shadowDensity);
+	float sh = texture(shadowmap, vertexShadowPos.xyz).r;
+	vec3 shColor = texture(shadowColorTex, vertexShadowPos.xy).rgb;
+	return mix(1.0, sh, shadowDensity) * shColor;
 #endif
 	return 1.0;
 }
