@@ -169,15 +169,21 @@ namespace spring {
 			}
 
 			const auto it2 = pkMap.find(vault.size() - 1); //find the key that corresponds to the last position in vault
+			assert(it2 != pkMap.end());
 
-			vault[it->second] = vault.back();
-			kpMap[it2->second] = it->second;
-			pkMap[it->second] = it2->second;
+			//iterators might become invalid, use values
+			const auto kp = *it;
+			const auto pk = *it2;
+
+			kpMap.erase(it);
+			pkMap.erase(it2);
+
+			vault[kp.second] = vault.back();
+			kpMap[pk.second] = kp.second;
+			pkMap[kp.second] = pk.second;
 
 			vault.pop_back();
 			freeKeys.emplace_back(key);
-			kpMap.erase(it);
-			pkMap.erase(it2);
 		}
 
 		size_t Find(const TKey& key) const {
@@ -192,6 +198,7 @@ namespace spring {
 		void clear() {
 			vault.clear();
 			kpMap.clear();
+			pkMap.clear();
 			freeKeys.clear();
 		}
 
