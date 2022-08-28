@@ -182,6 +182,11 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 /******************************************************************************/
 /******************************************************************************/
 
+void LuaOpenGL::Init()
+{
+	RevertScreenMatrices();
+}
+
 void LuaOpenGL::Free()
 {
 	for (GL::RenderDataBufferL& wb: luaRenderBuffers) {
