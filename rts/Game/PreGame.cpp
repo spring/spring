@@ -127,6 +127,8 @@ void CPreGame::LoadSaveFile(const std::string& save)
 
 	LOG_L(L_ERROR, "[PreGame::%s] incompatible save-file specified", __func__);
 
+	spring::SafeDelete(saveFileHandler);
+
 	if (CLuaMenuController::ActivateInstance("[PreGame] incompatible save-file")) {
 		assert(pregame == this);
 		spring::SafeDelete(pregame);

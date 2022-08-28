@@ -22,21 +22,48 @@ CR_BIND(CSkirmishAIHandler,)
 
 CR_REG_METADATA(CSkirmishAIHandler, (
 	CR_MEMBER(aiInstanceData),
-	CR_MEMBER(localTeamAIs),
 	CR_MEMBER(aiKillFlags),
-	CR_MEMBER(aiLibraryKeys),
 
-	CR_MEMBER(skirmishAIDataMap),
-	CR_MEMBER(luaAIShortNames),
+	CR_MEMBER_BEGINFLAG(CM_NoSerialize),
+		CR_IGNORED(localTeamAIs),
+		CR_IGNORED(aiLibraryKeys),
 
-	CR_IGNORED(currentAIId),
-	CR_IGNORED(numSkirmishAIs),
+		CR_IGNORED(skirmishAIDataMap),
+		CR_IGNORED(luaAIShortNames),
 
-	CR_MEMBER(gameInitialized)
+		CR_IGNORED(currentAIId),
+		CR_IGNORED(numSkirmishAIs),
+
+		CR_IGNORED(gameInitialized),
+	CR_MEMBER_ENDFLAG(CM_NoSerialize),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 
 CSkirmishAIHandler skirmishAIHandler;
+
+
+void CSkirmishAIHandler::SerializeSkirmishAIHandler(creg::ISerializer* s)
+{
+	if (!s->IsWriting())
+		skirmishAIHandler.ResetState();
+
+	s->SerializeObjectInstance(&skirmishAIHandler, skirmishAIHandler.GetClass());
+}
+
+void CSkirmishAIHandler::PostLoad()
+{
+	auto aiDataCont = aiInstanceData;
+	ResetState();
+
+	for (const SkirmishAIData& aiData: aiDataCont) {
+		if (IsValidSkirmishAI(aiData))
+			AddSkirmishAI(aiData, &aiData - &aiDataCont[0]);
+	}
+
+	LoadPreGame();
+}
 
 
 void CSkirmishAIHandler::ResetState()

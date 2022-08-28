@@ -99,6 +99,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 		s->SerializeObjectInstance(&uiGroupHandlers[a], uiGroupHandlers[a].GetClass());
 	}
 	s->SerializeObjectInstance(&commandDescriptionCache, commandDescriptionCache.GetClass());
+	CSkirmishAIHandler::SerializeSkirmishAIHandler(s);
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
 	std::unique_ptr<creg::IType> mapType = creg::DeduceType<decltype(CSplitLuaHandle::gameParams)>::Get();
 	mapType->Serialize(s, &CSplitLuaHandle::gameParams);

@@ -24,6 +24,9 @@ class CSkirmishAIHandler
 	CR_DECLARE_STRUCT(CSkirmishAIHandler)
 
 public:
+	static void SerializeSkirmishAIHandler(creg::ISerializer* s);
+	void PostLoad();
+
 	void ResetState();
 	void LoadFromSetup(const CGameSetup& setup);
 
