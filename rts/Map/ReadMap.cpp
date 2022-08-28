@@ -234,11 +234,14 @@ void CReadMap::SerializeTypeMap(creg::ISerializer* s)
 	// LuaSynced can also touch the typemap, serialize it (manually)
 	MapBitmapInfo tbi;
 
-	      uint8_t*  itm = typeMap.data();
-	const uint8_t* iotm = GetInfoMap("type", &tbi);
+	uint8_t*  itm = typeMap.data();
+	uint8_t* iotm = GetInfoMap("type", &tbi);
 
 	assert(!typeMap.empty());
 	assert(typeMap.size() == (tbi.width * tbi.height));
+
+	if (iotm == nullptr)
+		return;
 
 	uint8_t type;
 
@@ -253,6 +256,8 @@ void CReadMap::SerializeTypeMap(creg::ISerializer* s)
 			itm[i] = type ^ iotm[i];
 		}
 	}
+
+	FreeInfoMap("type", iotm);
 }
 
 
