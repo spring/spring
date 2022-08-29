@@ -122,6 +122,7 @@ public:
 		if (!UseFontConfig())
 			return;
 
+		FcConfigDestroy(config);
 		FcFini();
 		config = nullptr;
 		#endif
