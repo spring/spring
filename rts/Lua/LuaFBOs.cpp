@@ -135,6 +135,7 @@ void LuaFBOs::FBO::Init(lua_State* L)
 	luaRef = LUA_NOREF;
 	xsize = 0;
 	ysize = 0;
+	zsize = 0;
 }
 
 
