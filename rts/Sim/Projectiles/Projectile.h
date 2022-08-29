@@ -134,8 +134,8 @@ protected:
 	uint32_t collisionFlags = 0;
 	uint32_t renderIndex = -1u;
 
-	static inline TypedRenderBuffer<VA_TYPE_C> mmLnsRB{ 1 << 9, 0 };
-	static inline TypedRenderBuffer<VA_TYPE_C> mmPtsRB{ 1 << 9, 0 };
+	static inline TypedRenderBuffer<VA_TYPE_C> mmLnsRB{ 1 << 12, 0 };
+	static inline TypedRenderBuffer<VA_TYPE_C> mmPtsRB{ 1 << 14, 0 };
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 	static bool IsValidTexture(const AtlasedTexture* tex);

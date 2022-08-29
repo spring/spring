@@ -5,6 +5,7 @@
 #include "VAO.h"
 
 #include "System/TypeToStr.h"
+#include "System/ContainerUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -32,20 +33,27 @@ public:
 
 	RenderBuffer()
 		:initCapacity{ 0, 0 }
-	{}
+	{
+		allRenderBuffers.emplace_back(this);
+	}
 	RenderBuffer(std::array<size_t, 2> c)
 		:initCapacity{ c }
-	{}
+	{
+		allRenderBuffers.emplace_back(this);
+	}
 
-	virtual ~RenderBuffer() {}
+	virtual ~RenderBuffer() {
+		bool result = spring::VectorErase(allRenderBuffers, this);
+		assert(result);
+	}
 
 	template <typename T>
 	static TypedRenderBuffer<T>& GetTypedRenderBuffer();
 
-	static void SwapStandardRenderBuffers() {
-		for (const auto& trb : typedRenderBuffers) {
-			if (trb) {
-				trb->SwapBuffer();
+	static void SwapRenderBuffers() {
+		for (auto* rb : allRenderBuffers) {
+			if (rb) {
+				rb->SwapBuffer();
 			}
 		}
 	}
@@ -71,9 +79,10 @@ protected:
 	// [0] := vertex, [1] := index
 	std::array<size_t, 2> initCapacity = { 0, 0 };
 private:
+	static inline std::vector<RenderBuffer*> allRenderBuffers;
 	static std::array<std::unique_ptr<RenderBuffer>, 11> typedRenderBuffers;
 public:
-	static auto GetAllRenderBuffers() -> const decltype(typedRenderBuffers)& { return typedRenderBuffers; };
+	static auto GetAllStandardRenderBuffers() -> const decltype(typedRenderBuffers)& { return typedRenderBuffers; };
 };
 
 template <typename T>

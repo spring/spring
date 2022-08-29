@@ -636,8 +636,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 		pre = spring_now();
 
-		RenderBuffer::SwapStandardRenderBuffers();
-		CglFont::SwapRenderBuffers();
+		RenderBuffer::SwapRenderBuffers(); //all RBs are swapped here
 		IStreamBufferConcept::PutBufferLocks();
 
 		//https://stackoverflow.com/questions/68480028/supporting-opengl-screen-capture-by-third-party-applications

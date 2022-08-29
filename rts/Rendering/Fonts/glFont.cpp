@@ -246,19 +246,6 @@ void CglFont::ReallocSystemFontAtlases(bool pre)
 		smallFont->ReallocAtlases(pre);
 }
 
-void CglFont::SwapRenderBuffers()
-{
-	assert(     font != nullptr);
-	assert(smallFont != nullptr);
-
-	for (auto f: allFonts) {
-		if (f.expired())
-			continue;
-
-		std::static_pointer_cast<CglFont>(f.lock())->SwapBuffers();
-	}
-}
-
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 	: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
 	, fontPath(fontFile)

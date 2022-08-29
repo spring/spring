@@ -111,7 +111,7 @@ static void DrawBufferStats(const float2 pos)
 		font->glFormat(pos.x, pos.y - 0.005f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, FMT, "FONTS", lfMetrics[0], lfMetrics[1], lfMetrics[2], lfMetrics[3]);
 
 		float bias = 0.0f;
-		for (const auto& rb : RenderBuffer::GetAllRenderBuffers()) {
+		for (const auto& rb : RenderBuffer::GetAllStandardRenderBuffers()) {
 			const auto ms = rb->GetMaxSize();
 			if (ms[0] == 0 && ms[1] == 0)
 				continue;

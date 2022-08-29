@@ -54,7 +54,6 @@ public:
 	static std::shared_ptr<CglFont> FindFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 
 	static void ReallocSystemFontAtlases(bool pre);
-	static void SwapRenderBuffers();
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
 	~CglFont() override {};
