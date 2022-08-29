@@ -26,7 +26,7 @@ class LuaOpenGL {
 		};
 
 	public:
-		static void Init() {}
+		static void Init();
 		static void Free();
 
 		static bool PushEntries(lua_State* L);
