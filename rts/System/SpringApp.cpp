@@ -319,8 +319,9 @@ bool SpringApp::InitPlatformLibs()
 bool SpringApp::InitFonts()
 {
 	FtLibraryHandlerProxy::InitFtLibrary();
-	const bool ret = CglFont::LoadConfigFonts();
-
+	FtLibraryHandlerProxy::CheckGenFontConfigFast();
+	return CglFont::LoadConfigFonts() && FtLibraryHandlerProxy::CheckGenFontConfigFull(false);
+/*
 	using namespace std::chrono_literals;
 	auto future = std::async(std::launch::async, []() {
 		return FtLibraryHandlerProxy::CheckGenFontConfigFull(false);
@@ -340,6 +341,7 @@ bool SpringApp::InitFonts()
 			globalRendering->SwapBuffers(true, true);
 		}
 	}
+*/
 }
 
 void SpringApp::CleanFonts()

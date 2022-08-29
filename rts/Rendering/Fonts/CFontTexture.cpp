@@ -86,7 +86,7 @@ spring::mutex_wrapper_concept* GetCacheMutex() { return cacheMutexes[CFontTextur
 class FtLibraryHandler {
 public:
 	FtLibraryHandler()
-		: fcInitialized(false)
+		: config(nullptr)
 		, lib(nullptr)
 	{
 		{
@@ -110,9 +110,7 @@ public:
 			std::string msg = fmt::sprintf("%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
 			ScopedOnceTimer timer(msg);
 
-			if ((fcInitialized = FcInit())) {
-				FtLibraryHandler::CheckGenFontConfigFast();
-			}
+			config = FcInitLoadConfig();
 		}
 		#endif
 	}
@@ -125,17 +123,19 @@ public:
 			return;
 
 		FcFini();
-		fcInitialized = false;
+		config = nullptr;
 		#endif
 	}
 
 	// reduced set of fonts
 	// not called if FcInit() fails
 	static bool CheckGenFontConfigFast() {
-		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
+		FcConfigAppFontClear(GetFCConfig());
+		if (!FcConfigAppFontAddDir(GetFCConfig(), reinterpret_cast<const FcChar8*>("fonts")))
+			return false;
 
 		if (!FtLibraryHandler::CheckFontConfig()) {
-			return FcConfigBuildFonts(nullptr);
+			return FcConfigBuildFonts(GetFCConfig());
 		}
 
 		return true;
@@ -171,11 +171,12 @@ public:
 			strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));
 		#endif
 
-		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
-		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>(osFontsDir));
+		FcConfigAppFontClear(GetFCConfig());
+		FcConfigAppFontAddDir(GetFCConfig(), reinterpret_cast<const FcChar8*>("fonts"));
+		FcConfigAppFontAddDir(GetFCConfig(), reinterpret_cast<const FcChar8*>(osFontsDir));
 
 		{
-			auto dirs = FcConfigGetCacheDirs(nullptr);
+			auto dirs = FcConfigGetCacheDirs(GetFCConfig());
 			FcStrListFirst(dirs);
 			for (FcChar8* dir = FcStrListNext(dirs), *prevDir = nullptr; dir != nullptr && dir != prevDir; ) {
 				prevDir = dir;
@@ -191,7 +192,7 @@ public:
 
 		LOG_MSG("[%s] creating fontconfig for directory \"%s\"", false, __func__, osFontsDir);
 
-		return FcConfigBuildFonts(nullptr);
+		return FcConfigBuildFonts(GetFCConfig());
 	#endif
 
 		return true;
@@ -201,7 +202,7 @@ public:
 
 	#ifdef USE_FONTCONFIG
 	// command-line CheckGenFontConfigFull invocation checks
-	static bool CheckFontConfig() { return (UseFontConfig() && FcConfigUptoDate(nullptr)); }
+	static bool CheckFontConfig() { return (UseFontConfig() && FcConfigUptoDate(GetFCConfig())); }
 	#else
 
 	static bool CheckFontConfig() { return false; }
@@ -214,14 +215,17 @@ public:
 
 		return singleton->lib;
 	};
-	static bool CanUseFontConfig() {
+	static FcConfig* GetFCConfig() {
 		if (singleton == nullptr)
 			singleton = std::make_unique<FtLibraryHandler>();
 
-		return singleton->fcInitialized;
+		return singleton->config;
+	}
+	static inline bool CanUseFontConfig() {
+		return GetFCConfig() != nullptr;
 	}
 private:
-	bool fcInitialized;
+	FcConfig* config;
 	FT_Library lib;
 
 	static inline std::unique_ptr<FtLibraryHandler> singleton = nullptr;
@@ -237,6 +241,15 @@ void FtLibraryHandlerProxy::InitFtLibrary()
 #endif
 }
 
+bool FtLibraryHandlerProxy::CheckGenFontConfigFast()
+{
+#ifndef HEADLESS
+	return FtLibraryHandler::CheckGenFontConfigFast();
+#else
+	return false;
+#endif
+}
+
 bool FtLibraryHandlerProxy::CheckGenFontConfigFull(bool console)
 {
 #ifndef HEADLESS
@@ -244,7 +257,6 @@ bool FtLibraryHandlerProxy::CheckGenFontConfigFull(bool console)
 #else
 	return false;
 #endif
-
 }
 
 
@@ -422,7 +434,7 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 	}
 
 	FcDefaultSubstitute(pattern);
-	if (!FcConfigSubstitute(nullptr, pattern, FcMatchPattern))
+	if (!FcConfigSubstitute(FtLibraryHandler::GetFCConfig(), pattern, FcMatchPattern))
 	{
 		return nullptr;
 	}
@@ -430,7 +442,7 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 	// search fonts that fit our request
 	FcResult res;
 	auto fs = spring::ScopedResource(
-		FcFontSort(nullptr, pattern, FcFalse, nullptr, &res),
+		FcFontSort(FtLibraryHandler::GetFCConfig(), pattern, FcFalse, nullptr, &res),
 		[](FcFontSet* f) { if (f) FcFontSetDestroy(f); }
 	);
 
