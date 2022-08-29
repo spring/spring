@@ -59,6 +59,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(quads)
 ))
 
+TypedRenderBuffer<VA_TYPE_C> CProjectile::mmLnsRB = { 1 << 12, 0 };
+TypedRenderBuffer<VA_TYPE_C> CProjectile::mmPtsRB = { 1 << 14, 0 };
+
 CProjectile::CProjectile()
 	: myrange(0.0f)
 	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)

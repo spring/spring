@@ -14,7 +14,7 @@
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/Threading/SpringThreading.h"
-#include "Rendering/GL/RenderBuffers.h"
+#include "Rendering/GL/RenderBuffersFwd.h"
 
 class CUnit;
 class CFeature;
@@ -134,8 +134,8 @@ protected:
 	uint32_t collisionFlags = 0;
 	uint32_t renderIndex = -1u;
 
-	static inline TypedRenderBuffer<VA_TYPE_C> mmLnsRB{ 1 << 12, 0 };
-	static inline TypedRenderBuffer<VA_TYPE_C> mmPtsRB{ 1 << 14, 0 };
+	static TypedRenderBuffer<VA_TYPE_C> mmLnsRB;
+	static TypedRenderBuffer<VA_TYPE_C> mmPtsRB;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 	static bool IsValidTexture(const AtlasedTexture* tex);
