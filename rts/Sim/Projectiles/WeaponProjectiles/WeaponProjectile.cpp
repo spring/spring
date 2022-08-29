@@ -361,9 +361,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 void CWeaponProjectile::DrawOnMinimap()
 {
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ pos        , color4::yellow });
-	rbMM.AddVertex({ pos + speed, color4::yellow });
+	AddMiniMapVertices({ pos        , color4::yellow }, { pos + speed, color4::yellow });
 }
 
 

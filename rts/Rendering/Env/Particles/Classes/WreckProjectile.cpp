@@ -67,9 +67,7 @@ void CWreckProjectile::Draw()
 
 void CWreckProjectile::DrawOnMinimap()
 {
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ pos        , color4::redA });
-	rbMM.AddVertex({ pos + speed, color4::redA });
+	AddMiniMapVertices({ pos        , color4::redA }, { pos + speed, color4::redA });
 }
 
 int CWreckProjectile::GetProjectilesCount() const

@@ -307,9 +307,7 @@ void CLargeBeamLaserProjectile::DrawOnMinimap()
 {
 	const SColor color = { edgeColStart[0], edgeColStart[1], edgeColStart[2], 255u };
 
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ startPos,  color });
-	rbMM.AddVertex({ targetPos, color });
+	AddMiniMapVertices({ startPos,  color }, { targetPos, color });
 }
 
 int CLargeBeamLaserProjectile::GetProjectilesCount() const

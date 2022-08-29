@@ -106,9 +106,7 @@ void CNanoProjectile::Draw()
 
 void CNanoProjectile::DrawOnMinimap()
 {
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ pos        , color4::green });
-	rbMM.AddVertex({ pos + speed, color4::green });
+	AddMiniMapVertices({ pos        , color4::green }, { pos + speed, color4::green });
 }
 
 int CNanoProjectile::GetProjectilesCount() const

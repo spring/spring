@@ -114,9 +114,7 @@ void CLightningProjectile::DrawOnMinimap()
 		color[2]
 	};
 
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ startPos,  lcolor });
-	rbMM.AddVertex({ targetPos, lcolor });
+	AddMiniMapVertices({ startPos,  lcolor }, { targetPos, lcolor });
 }
 
 int CLightningProjectile::GetProjectilesCount() const

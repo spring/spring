@@ -145,9 +145,7 @@ void CProjectile::Delete()
 
 void CProjectile::DrawOnMinimap()
 {
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ pos        , color4::whiteA });
-	rbMM.AddVertex({ pos + speed, color4::whiteA });
+	AddMiniMapVertices({ pos        , color4::whiteA }, { pos + speed, color4::whiteA });
 }
 
 
@@ -192,13 +190,13 @@ bool CProjectile::IsValidTexture(const AtlasedTexture* tex)
 	return tex && tex != &CTextureAtlas::dummy;
 }
 
-TypedRenderBuffer<VA_TYPE_C>& CProjectile::GetMiniMapRenderBuffer()
+void CProjectile::AddMiniMapVertices(VA_TYPE_C&& v1, VA_TYPE_C&& v2)
 {
-	return RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C >();
+	if (v1.p.equals(v2.p)) {
+		mmPtsRB.AddVertex(std::forward<VA_TYPE_C>(v1));
+	}
+	else {
+		mmLnsRB.AddVertex(std::forward<VA_TYPE_C>(v1));
+		mmLnsRB.AddVertex(std::forward<VA_TYPE_C>(v2));
+	}
 }
-
-TypedRenderBuffer<VA_TYPE_C>& CProjectile::GetAnimationRenderBuffer()
-{
-	return RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C >();
-}
-

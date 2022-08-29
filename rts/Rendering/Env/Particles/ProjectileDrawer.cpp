@@ -699,8 +699,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 			p->DrawOnMinimap();
 		}
 	}
-
-	CProjectile::GetMiniMapRenderBuffer().Submit(GL_LINES);
+	CProjectile::GetMiniMapLinesRB().DrawArrays(GL_LINES);
+	CProjectile::GetMiniMapPointsRB().DrawArrays(GL_POINTS);
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)

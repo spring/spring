@@ -257,9 +257,7 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::DrawOnMinimap()
 {
-	auto& rbMM = GetAnimationRenderBuffer();
-	rbMM.AddVertex({ pos        , color4::red });
-	rbMM.AddVertex({ pos + speed, color4::red });
+	AddMiniMapVertices({ pos        , color4::red }, { pos + speed, color4::red });
 }
 
 
