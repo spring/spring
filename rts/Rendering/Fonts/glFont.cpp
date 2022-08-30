@@ -280,8 +280,6 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 #ifdef HEADLESS
 
-void CglFont::SwapBuffers() {}
-
 void CglFont::Begin(Shader::IProgramObject* shader) {}
 void CglFont::End() {}
 void CglFont::DrawBuffered(Shader::IProgramObject* shader) {}
@@ -710,15 +708,6 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 	return &lightOutline;
 }
-
-
-
-
-void CglFont::SwapBuffers() {
-	primaryBufferTC.SwapBuffer();
-	outlineBufferTC.SwapBuffer();
-}
-
 
 void CglFont::Begin(Shader::IProgramObject* shader) {
 	GetFontMutex()->lock();

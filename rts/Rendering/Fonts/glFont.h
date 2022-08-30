@@ -68,8 +68,6 @@ public:
 	void DrawWorldBuffered() { DrawWorldBuffered(defShader.get()); }
 	void DrawWorldBuffered(Shader::IProgramObject* shader);
 
-	void SwapBuffers();
-
 	void glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered = false);
 
 	void SetViewMatrix(const CMatrix44f& mat) { viewMatrix = mat; }
