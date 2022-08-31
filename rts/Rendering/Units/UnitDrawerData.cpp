@@ -358,9 +358,9 @@ void CUnitDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 
 			case CCamera::CAMTYPE_SHADOW: {
 				if (u->HasDrawFlag(DrawFlags::SO_ALPHAF_FLAG))
-					continue;
-
-				u->AddDrawFlag(DrawFlags::SO_SHADOW_FLAG);
+					u->AddDrawFlag(DrawFlags::SO_SHTRAN_FLAG);
+				else
+					u->AddDrawFlag(DrawFlags::SO_SHOPAQ_FLAG);
 			} break;
 
 			default: { assert(false); } break;

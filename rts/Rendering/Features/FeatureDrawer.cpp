@@ -105,9 +105,9 @@ bool CFeatureDrawer::ShouldDrawFeatureShadow(CFeature* f)
 	assert(f);
 	assert(f->model);
 
-	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHADOW_FLAG;
+	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHOPAQ_FLAG;
 
-	if (!f->HasDrawFlag(DrawFlags::SO_SHADOW_FLAG))
+	if (!f->HasDrawFlag(DrawFlags::SO_SHOPAQ_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))

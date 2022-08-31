@@ -199,9 +199,9 @@ bool CUnitDrawer::ShouldDrawUnitShadow(CUnit* u)
 	assert(u);
 	assert(u->model);
 
-	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHADOW_FLAG;
+	static constexpr uint8_t thisPassMask = DrawFlags::SO_SHOPAQ_FLAG;
 
-	if (!u->HasDrawFlag(DrawFlags::SO_SHADOW_FLAG))
+	if (!u->HasDrawFlag(DrawFlags::SO_SHOPAQ_FLAG))
 		return false;
 
 	if (LuaObjectDrawer::AddShadowMaterialObject(u, LUAOBJ_UNIT))

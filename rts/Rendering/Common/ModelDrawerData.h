@@ -205,7 +205,7 @@ inline void CModelDrawerDataBase<T>::UpdateCommon()
 		o->previousDrawFlag = o->drawFlag;
 		UpdateObjectDrawFlags(o);
 
-		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_FARTEX_FLAG))
+		if (o->alwaysUpdateMat || (o->drawFlag > DrawFlags::SO_NODRAW_FLAG && o->drawFlag < DrawFlags::SO_DRICON_FLAG))
 			this->UpdateObjectSMMA(o);
 
 		this->UpdateObjectUniforms(o);

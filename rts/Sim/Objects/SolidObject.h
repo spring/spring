@@ -37,8 +37,8 @@ enum DrawFlags : uint8_t {
 	SO_ALPHAF_FLAG = 2,
 	SO_REFLEC_FLAG = 4,
 	SO_REFRAC_FLAG = 8,
-	SO_SHADOW_FLAG = 16,
-	SO_FARTEX_FLAG = 32, //legacy, no longer used for anything meaningful
+	SO_SHOPAQ_FLAG = 16,
+	SO_SHTRAN_FLAG = 32,
 	SO_DRICON_FLAG = 128,
 };
 

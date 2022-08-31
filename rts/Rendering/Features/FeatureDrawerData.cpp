@@ -177,16 +177,16 @@ void CFeatureDrawerData::UpdateObjectDrawFlags(CSolidObject* o) const
 
 			case CCamera::CAMTYPE_SHADOW: {
 				if (!f->HasDrawFlag(DrawFlags::SO_OPAQUE_FLAG))
-					continue;
-
-				f->AddDrawFlag(DrawFlags::SO_SHADOW_FLAG);
+					f->AddDrawFlag(DrawFlags::SO_SHTRAN_FLAG);
+				else
+					f->AddDrawFlag(DrawFlags::SO_SHOPAQ_FLAG);
 			} break;
 
 			default: { assert(false); } break;
 		}
 	}
 
-	if (f->alwaysUpdateMat || (f->drawFlag > DrawFlags::SO_NODRAW_FLAG && f->drawFlag < DrawFlags::SO_FARTEX_FLAG)) {
+	if (f->alwaysUpdateMat || (f->drawFlag > DrawFlags::SO_NODRAW_FLAG && f->drawFlag < DrawFlags::SO_DRICON_FLAG)) {
 		f->UpdateTransform(f->drawPos, false);
 	}
 }
