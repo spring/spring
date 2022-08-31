@@ -232,9 +232,6 @@ inline static void FindRadialMaximum(
 			_mm_store_ss(&maxRowHeight, best);
 		}
 
-		assert(maxRowHeight <= readMap->GetCurrMaxHeight() + 1.f);
-		assert(maxRowHeight >= GetRealGroundHeight(x, y, resolution) - 1.f);
-
 		mesh[x + y * map.x] = maxRowHeight;
 
 #ifdef SMOOTH_MESH_DEBUG_MAXIMA
@@ -338,8 +335,6 @@ inline static void BlurHorizontal(
 			LOG ( "%s: x: %d, y: %d, avg: %f (%f) (g: %f) (max h: %f)"
 				, __func__, x, y, avg, avg*weight, gh, readMap->GetCurrMaxHeight());
 #endif
-			assert(smoothed[x + y * lineSize] <= readMap->GetCurrMaxHeight() + 1.f);
-			assert(smoothed[x + y * lineSize] >= readMap->GetCurrMinHeight() - 1.f);
 		}
 	}
 }
@@ -389,8 +384,6 @@ inline static void BlurVertical(
 			LOG("%s: x: %d, y: %d, avg: %f (%f) (g: %f)", __func__, x, y, avg, avg*weight, gh);
 			LOG("%s: for next line -%f +%f", __func__, lv, rv);
 #endif
-			assert(smoothed[x + y * lineSize] <= readMap->GetCurrMaxHeight() + 1.f);
-			assert(smoothed[x + y * lineSize] >= readMap->GetCurrMinHeight() - 1.f);
 		}
 	}
 }
