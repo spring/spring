@@ -7,6 +7,7 @@
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
+#include "LuaRules.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Game.h"
@@ -71,6 +72,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Misc/SpringTime.h"
+#include "System/ScopedResource.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/OpenAL/EFX.h"
@@ -275,6 +277,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(MakeGLDBQuery);
 	REGISTER_LUA_CFUNC(GetGLDBQuery);
+
+	REGISTER_LUA_CFUNC(GetSyncedGCInfo);
 
 	return true;
 }
@@ -3255,5 +3259,26 @@ int LuaUnsyncedRead::GetGLDBQuery(lua_State* L)
 	}
 
 	lua_pushboolean(L, false); // not ready, user should come back later
+	return 1;
+}
+
+int LuaUnsyncedRead::GetSyncedGCInfo(lua_State* L) {
+	if (luaRules == nullptr)
+		return 0;
+
+	lua_State* syncedL = luaRules->syncedLuaHandle.GetLuaGCState();
+
+	if (syncedL == nullptr)
+		return 0;
+
+	auto luaLock = spring::ScopedNullResource([syncedL]() { lua_lock(syncedL); }, [syncedL]() { lua_unlock(syncedL); });
+
+	if (luaL_optboolean(L, 1, false)) { //perform collection before returning the use metric
+		lua_gc(syncedL, LUA_GCCOLLECT, 0); //mark
+		lua_gc(syncedL, LUA_GCCOLLECT, 0); //sweep
+		lua_gc(syncedL, LUA_GCSTOP, 0); //just in case
+	}
+
+	lua_pushnumber(L, lua_gc(syncedL, LUA_GCCOUNT, 0));
 	return 1;
 }

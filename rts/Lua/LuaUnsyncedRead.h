@@ -201,6 +201,8 @@ class LuaUnsyncedRead {
 
 		static int MakeGLDBQuery(lua_State* L);
 		static int GetGLDBQuery(lua_State* L);
+
+		static int GetSyncedGCInfo(lua_State* L);
 };
 
 
