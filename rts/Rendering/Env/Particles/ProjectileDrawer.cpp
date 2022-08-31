@@ -699,8 +699,13 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 			p->DrawOnMinimap();
 		}
 	}
+
+	auto& sh = TypedRenderBuffer<VA_TYPE_C>::GetShader();
+
+	sh.Enable();
 	CProjectile::GetMiniMapLinesRB().DrawArrays(GL_LINES);
 	CProjectile::GetMiniMapPointsRB().DrawArrays(GL_POINTS);
+	sh.Disable();
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
