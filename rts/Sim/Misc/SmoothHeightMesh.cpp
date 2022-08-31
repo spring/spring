@@ -232,6 +232,9 @@ inline static void FindRadialMaximum(
 			_mm_store_ss(&maxRowHeight, best);
 		}
 
+		assert(maxRowHeight <= readMap->GetCurrMaxHeight() + 1.f);
+		assert(maxRowHeight >= GetRealGroundHeight(x, y, resolution) - 1.f);
+
 		mesh[x + y * map.x] = maxRowHeight;
 
 #ifdef SMOOTH_MESH_DEBUG_MAXIMA
