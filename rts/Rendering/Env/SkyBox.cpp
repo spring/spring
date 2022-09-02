@@ -32,6 +32,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 CSkyBox::CSkyBox(const std::string& texture)
 	: skyVAO()
+	, shader{nullptr}
 {
 #ifndef HEADLESS
 	CBitmap btex;
@@ -58,11 +59,14 @@ CSkyBox::CSkyBox(const std::string& texture)
 
 CSkyBox::~CSkyBox()
 {
+#ifndef HEADLESS
 	shaderHandler->ReleaseProgramObject("[SkyBox]", "SkyBox");
+#endif
 }
 
 void CSkyBox::Draw()
 {
+#ifndef HEADLESS
 	if (!globalRendering->drawSky)
 		return;
 
@@ -106,4 +110,5 @@ void CSkyBox::Draw()
 	sky->SetupFog();
 
 	glEnable(GL_DEPTH_TEST);
+#endif
 }
