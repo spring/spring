@@ -4,8 +4,8 @@ uniform sampler2D atlasTex;
 uniform vec4 alphaCtrl = vec4(0.0, 1.0, 0.0, 0.0);  //always pass
 
 in vec4 vCol;
-in vec3 vUVW;
-in vec4 vUVb;
+in vec4 vUV;
+in float vLayer; //for sampler2Darray (future)
 in float vBF;
 
 out vec3 fragColor;
@@ -18,8 +18,8 @@ bool AlphaDiscard(float a) {
 }
 
 void main() {
-	vec4 c0 = texture(atlasTex, vUVb.xy + vUVW.xy);
-	vec4 c1 = texture(atlasTex, vUVb.zw + vUVW.xy);
+	vec4 c0 = texture(atlasTex, vUV.xy);
+	vec4 c1 = texture(atlasTex, vUV.zw);
 
 	vec4 color = vec4(mix(c0, c1, vBF));
 
