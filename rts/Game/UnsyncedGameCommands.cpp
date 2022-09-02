@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 #include <array>
+#include <functional>
+#include <tuple>
 
 #include "UnsyncedGameCommands.h"
 
@@ -3380,6 +3382,48 @@ public:
 	}
 };
 
+class DumpAtlasActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DumpAtlasActionExecutor() : IUnsyncedActionExecutor("DumpAtlas", "Save Some Atlases") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		using ArgTuple = std::tuple<uint32_t, bool, std::function<void()>>;
+		std::array argsExec = {
+			ArgTuple(hashString("proj"), false, []() {
+				LOG("Dumping projectile textures");
+				projectileDrawer->textureAtlas->DumpTexture("TextureAtlas");
+				projectileDrawer->groundFXAtlas->DumpTexture("GroundFXAtlas");
+			}),
+		};
+
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs(), 1);
+
+		for (auto& arg : args) {
+			StringToLowerInPlace(arg);
+
+			auto hs = hashString(arg.c_str());
+			for (auto& [ahs, aen, afun] : argsExec) {
+				if (ahs == hs)
+					aen = true;
+			}
+		}
+
+		if (args.empty()) {
+			for (auto& [ahs, aen, afun] : argsExec) {
+				aen = true;
+			}
+		}
+
+		for (auto& [ahs, aen, afun] : argsExec) {
+			if (aen)
+				afun();
+		}
+
+		return true;
+	}
+};
+
 
 class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3775,6 +3819,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));
 	AddActionExecutor(AllocActionExecutor<ReloadShadersActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ReloadTexturesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DumpAtlasActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugInfoActionExecutor>());
 
 	// XXX are these redirects really required?

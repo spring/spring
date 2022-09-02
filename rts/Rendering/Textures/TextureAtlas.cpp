@@ -267,6 +267,14 @@ void CTextureAtlas::ReloadTextures()
 	Finalize();
 }
 
+void CTextureAtlas::DumpTexture(const char* newFileName)
+{
+	std::string filename = newFileName ? newFileName : name.c_str();
+	filename += ".png";
+
+	glSaveTexture(atlasTexID, filename.c_str());
+}
+
 
 AtlasedTexture& CTextureAtlas::GetTexture(const std::string& name)
 {

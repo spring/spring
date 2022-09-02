@@ -253,30 +253,35 @@ void WorkaroundATIPointSizeBug()
 void glSaveTexture(const GLuint textureID, const char* filename)
 {
 	const GLenum target = GL_TEXTURE_2D;
-	GLenum format = GL_RGBA8;
 	int sizeX, sizeY;
 
 	int bits = 0;
 	int chNum = 0;
 	bool depthTex = false;
+
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+
+	glBindTexture(target, textureID);
+
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH , &sizeX);
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &sizeY);
+
 	{
-		glBindTexture(GL_TEXTURE_2D, textureID);
-
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH , &sizeX);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &sizeY);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&format);
-
 		GLint _cbits;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE  , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) { chNum++; depthTex = true; }
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_RED_SIZE  , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_BLUE_SIZE , &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) chNum++;
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits; if (_cbits > 0) { chNum++; depthTex = true; }
 	}
 
 	CBitmap bmp;
-	bmp.Alloc(sizeX, sizeY, chNum, format);
-	glGetTexImage(target, 0, format, GL_UNSIGNED_BYTE, bmp.GetRawMem());
+	GLenum extFormat = depthTex ? GL_DEPTH_COMPONENT : CBitmap::GetExtFmt(chNum);
+	GLenum dataType = depthTex ? GL_FLOAT : GL_UNSIGNED_BYTE;
+
+	bmp.Alloc(sizeX, sizeY, chNum, dataType);
+	glGetTexImage(target, 0, extFormat, GL_UNSIGNED_BYTE, bmp.GetRawMem());
 
 	if (depthTex) {
 		//doesn't work, TODO: fix
@@ -286,6 +291,8 @@ void glSaveTexture(const GLuint textureID, const char* filename)
 		assert(bits >= 24);
 		bmp.Save(filename, bits < 32);
 	}
+
+	glBindTexture(target, currentBinding);
 }
 
 

@@ -1025,7 +1025,10 @@ void CBitmap::Alloc(int w, int h, int c, uint32_t glType)
 	if (!Empty())
 		ITexMemPool::texMemPool->Free(GetRawMem(), GetMemSize());
 
-	memIdx = ITexMemPool::texMemPool->AllocIdx((xsize = w) * (ysize = h) * (channels = c));
+	dataType = glType;
+	const uint32_t dts = GetDataTypeSize();
+
+	memIdx = ITexMemPool::texMemPool->AllocIdx((xsize = w) * (ysize = h) * (channels = c) * dts);
 	memset(GetRawMem(), 0, GetMemSize());
 }
 

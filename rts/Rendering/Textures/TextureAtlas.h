@@ -112,6 +112,7 @@ public:
 	const spring::unordered_map<std::string, IAtlasAllocator::SAtlasEntry>& GetTextures() const;
 
 	void ReloadTextures();
+	void DumpTexture(const char* newFileName = nullptr);
 
 
 	//! @return reference to the Texture struct of the specified texture
