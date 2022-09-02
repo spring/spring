@@ -211,8 +211,6 @@ bool CStandardGroundFlash::Update()
 
 void CStandardGroundFlash::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
 	const float iSize = circleSize + circleGrowth * globalRendering->timeOffset;
@@ -225,7 +223,7 @@ void CStandardGroundFlash::Draw()
 		const float3 p4 = pos + (-side1 + side2) * iSize;
 
 		color.a = (unsigned char)(iAlpha * 255);
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, color },
 			{ p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, color },
 			{ p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   color },
@@ -246,7 +244,7 @@ void CStandardGroundFlash::Draw()
 		const float3 p2 = pos + ( side1 - side2) * size;
 		const float3 p3 = pos + ( side1 + side2) * size;
 		const float3 p4 = pos + (-side1 + side2) * size;
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color },
 			{ p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color },
 			{ p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color },
@@ -303,9 +301,8 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 
 void CSimpleGroundFlash::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	UpdateRotation();
+	UpdateAnimParams();
 
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
@@ -327,7 +324,7 @@ void CSimpleGroundFlash::Draw()
 			b = b.rotate(rotVal, normal);
 	}
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ pos + bounds[0], texture->xstart, texture->ystart, color },
 		{ pos + bounds[1], texture->xend  , texture->ystart, color },
 		{ pos + bounds[2], texture->xend  , texture->yend  , color },
@@ -394,8 +391,6 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 
 void CSeismicGroundFlash::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
 
 	const float3 p1 = pos + (-side1 - side2) * size;
@@ -403,7 +398,7 @@ void CSeismicGroundFlash::Draw()
 	const float3 p3 = pos + ( side1 + side2) * size;
 	const float3 p4 = pos + (-side1 + side2) * size;
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ p1, texture->xstart, texture->ystart, color },
 		{ p2, texture->xend,   texture->ystart, color },
 		{ p3, texture->xend,   texture->yend,   color },

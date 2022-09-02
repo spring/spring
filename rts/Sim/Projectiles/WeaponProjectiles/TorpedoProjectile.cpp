@@ -166,8 +166,6 @@ void CTorpedoProjectile::Draw()
 	if (model != nullptr)
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	float3 r = dir.cross(UpVector);
 
 	if (r.SqLength() < 0.001f)
@@ -179,56 +177,56 @@ void CTorpedoProjectile::Draw()
 	const float w = 2;
 	const SColor col(60, 60, 100, 255);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + (r * w),             texx, texy, col },
 		{ drawPos + (u * w),             texx, texy, col },
 		{ drawPos + (u * w) + (dir * h), texx, texy, col },
 		{ drawPos + (r * w) + (dir * h), texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + (u * w),             texx, texy, col },
 		{ drawPos - (r * w),             texx, texy, col },
 		{ drawPos - (r * w) + (dir * h), texx, texy, col },
 		{ drawPos + (u * w) + (dir * h), texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - (r * w),             texx, texy, col },
 		{ drawPos - (u * w),             texx, texy, col },
 		{ drawPos - (u * w) + (dir * h), texx, texy, col },
 		{ drawPos - (r * w) + (dir * h), texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - (u * w),             texx, texy, col },
 		{ drawPos + (r * w),             texx, texy, col },
 		{ drawPos + (r * w) + (dir * h), texx, texy, col },
 		{ drawPos - (u * w) + (dir * h), texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + (r * w) + (dir * h), texx, texy, col },
 		{ drawPos + (u * w) + (dir * h), texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + (u * w) + (dir * h), texx, texy, col },
 		{ drawPos - (r * w) + (dir * h), texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - (r * w) + (dir * h), texx, texy, col },
 		{ drawPos - (u * w) + (dir * h), texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col }
 	);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - (u * w) + (dir * h), texx, texy, col },
 		{ drawPos + (r * w) + (dir * h), texx, texy, col },
 		{ drawPos + (dir * h * 1.2f),    texx, texy, col },

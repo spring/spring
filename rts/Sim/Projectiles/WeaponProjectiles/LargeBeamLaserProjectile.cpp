@@ -92,8 +92,6 @@ void CLargeBeamLaserProjectile::Draw()
 	if (!validTextures[0])
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
@@ -129,14 +127,14 @@ void CLargeBeamLaserProjectile::Draw()
 			// draw laser start
 			tex.xstart = beamtex.xstart + startTex * texSizeX;
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
 				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
 				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
 			);
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
 				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
@@ -149,14 +147,14 @@ void CLargeBeamLaserProjectile::Draw()
 			// draw laser start
 			tex.xstart = beamtex.xstart + startTex * texSizeX;
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
 				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
 				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
 			);
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
 				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
@@ -170,14 +168,14 @@ void CLargeBeamLaserProjectile::Draw()
 				pos1 = startPos + zdir * i;
 				pos2 = startPos + zdir * (i + tilelength);
 
-				rb.AddQuadTriangles(
+				AddEffectsQuad(
 					{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
 					{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
 					{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
 					{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
 				);
 
-				rb.AddQuadTriangles(
+				AddEffectsQuad(
 					{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
 					{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
 					{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
@@ -190,14 +188,14 @@ void CLargeBeamLaserProjectile::Draw()
 			pos2 = targetPos;
 			tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texSizeX;
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
 				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
 				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
 			);
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
 				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
@@ -207,14 +205,14 @@ void CLargeBeamLaserProjectile::Draw()
 	}
 
 	if (validTextures[2]) {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos2 - (xdir * beamEdgeSize),                         WT2->xstart, WT2->ystart, edgeColStart },
 			{ pos2 + (xdir * beamEdgeSize),                         WT2->xstart, WT2->yend,   edgeColStart },
 			{ pos2 + (xdir * beamEdgeSize) + (ydir * beamEdgeSize), WT2->xend,   WT2->yend,   edgeColStart },
 			{ pos2 - (xdir * beamEdgeSize) + (ydir * beamEdgeSize), WT2->xend,   WT2->ystart, edgeColStart }
 		);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos2 - (xdir * beamCoreSize),                         WT2->xstart, WT2->ystart, coreColStart },
 			{ pos2 + (xdir * beamCoreSize),                         WT2->xstart, WT2->yend,   coreColStart },
 			{ pos2 + (xdir * beamCoreSize) + (ydir * beamCoreSize), WT2->xend,   WT2->yend,   coreColStart },
@@ -238,14 +236,14 @@ void CLargeBeamLaserProjectile::Draw()
 		// draw muzzleflare
 		pos1 = startPos - zdir * (thickness * flaresize) * 0.02f;
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 + (ydir * muzzleEdgeSize),                           sidetex.xstart, sidetex.ystart, edgeColor },
 			{ pos1 + (ydir * muzzleEdgeSize) + (zdir * muzzleEdgeSize), sidetex.xend,   sidetex.ystart, edgeColor },
 			{ pos1 - (ydir * muzzleEdgeSize) + (zdir * muzzleEdgeSize), sidetex.xend,   sidetex.yend,   edgeColor },
 			{ pos1 - (ydir * muzzleEdgeSize),                           sidetex.xstart, sidetex.yend,   edgeColor }
 		);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 + (ydir * muzzleCoreSize),                           sidetex.xstart, sidetex.ystart, coreColor },
 			{ pos1 + (ydir * muzzleCoreSize) + (zdir * muzzleCoreSize), sidetex.xend,   sidetex.ystart, coreColor },
 			{ pos1 - (ydir * muzzleCoreSize) + (zdir * muzzleCoreSize), sidetex.xend,   sidetex.yend,   coreColor },
@@ -263,7 +261,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 		muzzleEdgeSize = thickness * flaresize * pulseStartTime;
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 + (ydir * muzzleEdgeSize),                           sidetex.xstart, sidetex.ystart, edgeColor },
 			{ pos1 + (ydir * muzzleEdgeSize) + (zdir * muzzleEdgeSize), sidetex.xend,   sidetex.ystart, edgeColor },
 			{ pos1 - (ydir * muzzleEdgeSize) + (zdir * muzzleEdgeSize), sidetex.xend,   sidetex.yend,   edgeColor },
@@ -272,7 +270,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 		muzzleCoreSize = muzzleEdgeSize * 0.6f;
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 + (ydir * muzzleCoreSize),                           sidetex.xstart, sidetex.ystart, coreColor },
 			{ pos1 + (ydir * muzzleCoreSize) + (zdir * muzzleCoreSize), sidetex.xend,   sidetex.ystart, coreColor },
 			{ pos1 - (ydir * muzzleCoreSize) + (zdir * muzzleCoreSize), sidetex.xend,   sidetex.yend,   coreColor },
@@ -284,14 +282,14 @@ void CLargeBeamLaserProjectile::Draw()
 		// draw flare (moved slightly along the camera direction)
 		pos1 = startPos - (camera->GetDir() * 3.0f);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 - (camera->GetRight() * flareEdgeSize) - (camera->GetUp() * flareEdgeSize), WT4->xstart, WT4->ystart, edgeColStart },
 			{ pos1 + (camera->GetRight() * flareEdgeSize) - (camera->GetUp() * flareEdgeSize), WT4->xend  , WT4->ystart, edgeColStart },
 			{ pos1 + (camera->GetRight() * flareEdgeSize) + (camera->GetUp() * flareEdgeSize), WT4->xend  , WT4->yend  , edgeColStart },
 			{ pos1 - (camera->GetRight() * flareEdgeSize) + (camera->GetUp() * flareEdgeSize), WT4->xstart, WT4->yend  , edgeColStart }
 		);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 - (camera->GetRight() * flareCoreSize) - (camera->GetUp() * flareCoreSize), WT4->xstart, WT4->ystart, coreColStart },
 			{ pos1 + (camera->GetRight() * flareCoreSize) - (camera->GetUp() * flareCoreSize), WT4->xend  , WT4->ystart, coreColStart },
 			{ pos1 + (camera->GetRight() * flareCoreSize) + (camera->GetUp() * flareCoreSize), WT4->xend  , WT4->yend  , coreColStart },

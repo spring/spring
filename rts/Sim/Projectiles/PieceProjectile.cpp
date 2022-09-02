@@ -266,8 +266,6 @@ void CPieceProjectile::Draw()
 	if ((explFlags & PF_Fire) == 0)
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
 
 	for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
@@ -279,7 +277,7 @@ void CPieceProjectile::Draw()
 		const SColor col = lightOrange * alpha;
 
 		const auto eft = projectileDrawer->explofadetex;
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col },
 			{ interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xend,   eft->ystart, col },
 			{ interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col },

@@ -50,8 +50,7 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 void CBitmapMuzzleFlame::Draw()
 {
 	UpdateRotation();
-
-	auto& rb = GetPrimaryRenderBuffer();
+	UpdateAnimParams();
 
 	const float life = (gs->frameNum - createFrame + globalRendering->timeOffset) * invttl;
 	const float igrowth = sizeGrowth * (1.0f - Square(1.0f - life));
@@ -93,13 +92,13 @@ void CBitmapMuzzleFlame::Draw()
 	}
 
 	if (IsValidTexture(sideTexture)) {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos + bounds[0], sideTexture->xstart, sideTexture->ystart, col },
 			{ pos + bounds[1], sideTexture->xend  , sideTexture->ystart, col },
 			{ pos + bounds[2], sideTexture->xend  , sideTexture->yend  , col },
 			{ pos + bounds[3], sideTexture->xstart, sideTexture->yend  , col }
 		);
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos + bounds[4], sideTexture->xstart, sideTexture->ystart, col },
 			{ pos + bounds[5], sideTexture->xend  , sideTexture->ystart, col },
 			{ pos + bounds[6], sideTexture->xend  , sideTexture->yend  , col },
@@ -108,7 +107,7 @@ void CBitmapMuzzleFlame::Draw()
 	}
 
 	if (IsValidTexture(frontTexture)) {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ fpos + bounds[8 ], frontTexture->xstart, frontTexture->ystart, col },
 			{ fpos + bounds[9 ], frontTexture->xend  , frontTexture->ystart, col },
 			{ fpos + bounds[10], frontTexture->xend  , frontTexture->yend , col },

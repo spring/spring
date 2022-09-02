@@ -26,21 +26,26 @@ public:
 
 	//Memory handled in projectileHandler
 	static CExpGenSpawnable* CreateSpawnable(int spawnableID);
+	static TypedRenderBuffer<VA_TYPE_PROJ>& GetPrimaryRenderBuffer();
+protected:
+	CExpGenSpawnable();
 
 	//update in Draw() of CGroundFlash or CProjectile
 	void UpdateRotation();
-protected:
+	void UpdateAnimParams();
+
+	void AddEffectsQuad(VA_TYPE_TC&& tl, VA_TYPE_TC&& tr, VA_TYPE_TC&& br, VA_TYPE_TC&& bl);
+
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
+
+	float3 animParams = { 1.0f, 1.0f, 30.0f }; // numX, numY, animLength, 
+	float animProgress = 0.0f; // animProgress = (gf_dt % animLength) / animLength
 	float3 rotParams = { 0.0f, 0.0f, 0.0f }; // speed, accel, startRot |deg/s, deg/s2, deg|
 
 	float rotVal;
 	float rotVel;
 
 	int createFrame;
-
-	CExpGenSpawnable();
-	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
-public:
-	static TypedRenderBuffer<VA_TYPE_TC>& GetPrimaryRenderBuffer();
 };
 
 #endif //EXP_GEN_SPAWNABLE_H

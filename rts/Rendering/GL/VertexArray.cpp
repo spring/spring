@@ -475,35 +475,35 @@ void CVertexArray::EnlargeArrays(const unsigned int vertexes, const unsigned int
 void CVertexArray::AddVertexQ0(const float3& pos) {
 	ASSERT_SIZE(VA_SIZE_0)
 		VA_TYPE_0* vat = GetTypedVertexArrayQ<VA_TYPE_0>(1);
-	vat->p = pos;
+	vat->pos = pos;
 }
 
 void CVertexArray::AddVertexQ0(float x, float y, float z) {
 	ASSERT_SIZE(VA_SIZE_0)
 		VA_TYPE_0* vat = GetTypedVertexArrayQ<VA_TYPE_0>(1);
-	vat->p.x = x;
-	vat->p.y = y;
-	vat->p.z = z;
+	vat->pos.x = x;
+	vat->pos.y = y;
+	vat->pos.z = z;
 }
 
 void CVertexArray::AddVertexQN(const float3& pos, const float3& normal) {
 	ASSERT_SIZE(VA_SIZE_N)
 		VA_TYPE_N* vat = GetTypedVertexArrayQ<VA_TYPE_N>(1);
-	vat->p = pos;
+	vat->pos = pos;
 	vat->n = normal;
 }
 
 void CVertexArray::AddVertexQC(const float3& pos, const unsigned char* color) {
 	ASSERT_SIZE(VA_SIZE_C)
 		VA_TYPE_C* vat = GetTypedVertexArrayQ<VA_TYPE_C>(1);
-	vat->p = pos;
+	vat->pos = pos;
 	vat->c = SColor(color);
 }
 
 void CVertexArray::AddVertexQT(const float3& pos, float tx, float ty) {
 	ASSERT_SIZE(VA_SIZE_T)
 		VA_TYPE_T* vat = GetTypedVertexArrayQ<VA_TYPE_T>(1);
-	vat->p = pos;
+	vat->pos = pos;
 	vat->s = tx;
 	vat->t = ty;
 }
@@ -511,7 +511,7 @@ void CVertexArray::AddVertexQT(const float3& pos, float tx, float ty) {
 void CVertexArray::AddVertexQTN(const float3& pos, float tx, float ty, const float3& norm) {
 	ASSERT_SIZE(VA_SIZE_TN)
 		VA_TYPE_TN* vat = GetTypedVertexArrayQ<VA_TYPE_TN>(1);
-	vat->p = pos;
+	vat->pos = pos;
 	vat->s = tx;
 	vat->t = ty;
 	vat->n = norm;
@@ -520,7 +520,7 @@ void CVertexArray::AddVertexQTN(const float3& pos, float tx, float ty, const flo
 void CVertexArray::AddVertexQTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt) {
 	ASSERT_SIZE(VA_SIZE_TNT)
 		VA_TYPE_TNT* vat = GetTypedVertexArrayQ<VA_TYPE_TNT>(1);
-	vat->p = p;
+	vat->pos = p;
 	vat->s = tx;
 	vat->t = ty;
 	vat->n = n;
@@ -531,7 +531,7 @@ void CVertexArray::AddVertexQTNT(const float3& p, float tx, float ty, const floa
 void CVertexArray::AddVertexQTC(const float3& pos, float tx, float ty, const unsigned char* col) {
 	ASSERT_SIZE(VA_SIZE_TC)
 		VA_TYPE_TC* vat = GetTypedVertexArrayQ<VA_TYPE_TC>(1);
-	vat->p = pos;
+	vat->pos = pos;
 	vat->s = tx;
 	vat->t = ty;
 	vat->c = SColor(col);

@@ -147,8 +147,6 @@ void CFireProjectile::Draw()
 	size_t sz2 = subParticles2.size();
 	size_t sz = subParticles.size();
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	for (const SubParticle& pi: subParticles2) {
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
 		const float size = pi.maxSize * age;
@@ -166,7 +164,7 @@ void CFireProjectile::Draw()
 		col[1] = (uint8_t) ((1 - age) * 255);
 		col[2] = (uint8_t) ((1 - age) * 255);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col },
 			{ interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col },
 			{ interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col },
@@ -194,7 +192,7 @@ void CFireProjectile::Draw()
 			col[2] = (uint8_t) ((1 - age * 1.3f) * 255);
 			col[3] = 1;
 
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col },
 				{ interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col },
 				{ interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col },
@@ -213,7 +211,7 @@ void CFireProjectile::Draw()
 		col2[2] = (uint8_t) (c * 0.6f);
 		col2[3] = c;
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos - dir1 - dir2, at->xstart, at->ystart, col2 },
 			{ interPos + dir1 - dir2, at->xend,   at->ystart, col2 },
 			{ interPos + dir1 + dir2, at->xend,   at->yend,   col2 },

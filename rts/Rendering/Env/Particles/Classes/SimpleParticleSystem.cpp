@@ -85,7 +85,7 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 
 void CSimpleParticleSystem::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
+	UpdateAnimParams();
 
 	std::array<float3, 4> bounds;
 
@@ -134,7 +134,7 @@ void CSimpleParticleSystem::Draw()
 				for (auto& b : bounds)
 					b = b.rotate(p->rotVal, *fwdDir);
 			}
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ interPos + bounds[0], texture->xstart, texture->ystart, color },
 				{ interPos + bounds[1], texture->xend,   texture->ystart, color },
 				{ interPos + bounds[2], texture->xend,   texture->yend,   color },
@@ -169,7 +169,7 @@ void CSimpleParticleSystem::Draw()
 			for (auto& b : bounds)
 				b = b.rotate(p->rotVal, camera->GetForward());
 		}
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos + bounds[0], texture->xstart, texture->ystart, color },
 			{ interPos + bounds[1], texture->xend,   texture->ystart, color },
 			{ interPos + bounds[2], texture->xend,   texture->yend,   color },

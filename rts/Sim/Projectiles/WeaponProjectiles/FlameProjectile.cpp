@@ -75,12 +75,10 @@ void CFlameProjectile::Draw()
 	if (!validTextures[0])
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	weaponDef->visuals.colorMap->GetColor(col, curTime);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col },
 		{ drawPos + camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col },
 		{ drawPos + camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col },

@@ -62,6 +62,11 @@ struct float4 : public float3
 		z *= f.z; w *= f.w;
 		return *this;
 	}
+	float4& operator *= (const float f) {
+		x *= f; y *= f;
+		z *= f; w *= f;
+		return *this;
+	}
 #if 0
 	float4 operator + (const float3& f) const { return float4(x + f.x, y + f.y, z + f.z, w); }
 	float4 operator - (const float3& f) const { return float4(x - f.x, y - f.y, z - f.z, w); }

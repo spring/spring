@@ -51,8 +51,6 @@ void CMuzzleFlame::Update()
 
 void CMuzzleFlame::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	float alpha = std::max(0.0f, 1 - (age / (4 + size * 30)));
 	float modAge = fastmath::apxsqrt(static_cast<float>(age + 2));
@@ -72,7 +70,7 @@ void CMuzzleFlame::Draw()
 		col[3] = (unsigned char) (255 * alpha * fade);
 
 		#define st projectileDrawer->GetSmokeTexture(tex)
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col },
 			{ interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col },
 			{ interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col },
@@ -88,7 +86,7 @@ void CMuzzleFlame::Draw()
 			col[3] = (unsigned char) (1);
 
 			#define mft projectileDrawer->muzzleflametex
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col },
 				{ interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col },
 				{ interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col },

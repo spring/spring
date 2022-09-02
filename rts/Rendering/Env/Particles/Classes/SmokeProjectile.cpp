@@ -95,8 +95,6 @@ void CSmokeProjectile::Update()
 
 void CSmokeProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);
@@ -112,7 +110,7 @@ void CSmokeProjectile::Draw()
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->GetSmokeTexture(textureNum)
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - pos2, st->xstart, st->ystart, col },
 		{ drawPos + pos1, st->xend,   st->ystart, col },
 		{ drawPos + pos2, st->xend,   st->yend,   col },

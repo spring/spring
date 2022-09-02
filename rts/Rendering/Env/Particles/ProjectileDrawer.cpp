@@ -268,9 +268,8 @@ void CProjectileDrawer::Init() {
 		fsShadowShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragShadowProg.glsl", "", GL_FRAGMENT_SHADER));
 
 		{
-			fsShadowShader->BindAttribLocation("pos", 0);
-			fsShadowShader->BindAttribLocation("uv", 1);
-			fsShadowShader->BindAttribLocation("col", 2);
+			using VAT = std::decay_t<decltype(CProjectile::GetPrimaryRenderBuffer())>::VertType;
+			fsShadowShader->BindAttribLocations<VAT>();
 		}
 
 		fsShadowShader->Link();
@@ -292,9 +291,8 @@ void CProjectileDrawer::Init() {
 		fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
 
 		{
-			fxShader->BindAttribLocation("pos", 0);
-			fxShader->BindAttribLocation("uv", 1);
-			fxShader->BindAttribLocation("col", 2);
+			using VAT = std::decay_t<decltype(CProjectile::GetPrimaryRenderBuffer())>::VertType;
+			fxShader->BindAttribLocations<VAT>();
 		}
 
 		fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
@@ -303,7 +301,7 @@ void CProjectileDrawer::Init() {
 
 		fxShader->Link();
 		fxShader->Enable();
-		fxShader->SetUniform("atlasTex",  0);
+		fxShader->SetUniform("atlasTex", 0);
 		if (fxShader == fxShaders[1]) {
 			fxShader->SetUniform("depthTex", 15);
 			fxShader->SetUniform("softenExponent", softenExponent[0], softenExponent[1]);
@@ -791,18 +789,20 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 	if (rb.ShouldSubmit()) {
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		/*
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(1.0f, 1.0f, 1.0f, 0.2f);
 		glAlphaFunc(GL_GREATER, 0.0f);
 		glEnable(GL_ALPHA_TEST);
+		*/
+
 		glDepthMask(GL_FALSE);
 
 		// send event after the default state has been set, allows overriding
 		// it for specific cases such as proper blending with depth-aware fog
 		// (requires mask=true and func=always)
 		eventHandler.DrawWorldPreParticles();
-
 
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
 
@@ -812,6 +812,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		}
 
 		fxShaders[needSoften]->Enable();
+		fxShaders[needSoften]->SetUniform("alphaCtrl", 0.0f, 1.0f, 0.0f, 0.0f);
 		if (needSoften) {
 			fxShaders[needSoften]->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
@@ -964,12 +965,14 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
+/*
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.01f);
+*/
 	glPolygonOffset(-20, -1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFogfv(GL_FOG_COLOR, black);
+//	glFogfv(GL_FOG_COLOR, black);
 
 	bool depthTest = true;
 	bool depthMask = false;
@@ -984,6 +987,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	}
 
 	fxShaders[needSoften]->Enable();
+	fxShaders[needSoften]->SetUniform("alphaCtrl", 0.01f, 1.0f, 0.0f, 0.0f);
 	if (needSoften) {
 		fxShaders[needSoften]->SetUniform("softenThreshold", -CProjectileDrawer::softenThreshold[1]);
 	}
@@ -1027,9 +1031,9 @@ void CProjectileDrawer::DrawGroundFlashes()
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glFogfv(GL_FOG_COLOR, sky->fogColor);
+//	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
+//	glDisable(GL_ALPHA_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);

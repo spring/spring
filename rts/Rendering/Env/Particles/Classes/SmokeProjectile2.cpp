@@ -104,8 +104,6 @@ void CSmokeProjectile2::Update()
 
 void CSmokeProjectile2::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
@@ -127,7 +125,7 @@ void CSmokeProjectile2::Draw()
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->GetSmokeTexture(textureNum)
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ interPos - pos2, st->xstart, st->ystart, col },
 		{ interPos + pos1, st->xend,   st->ystart, col },
 		{ interPos + pos2, st->xend,   st->yend,   col },

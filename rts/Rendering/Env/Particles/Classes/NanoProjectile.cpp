@@ -72,8 +72,6 @@ void CNanoProjectile::Update()
 
 void CNanoProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	{
 		const float t = (gs->frameNum - createFrame + globalRendering->timeOffset);
 		// rotParams.y is acceleration in angle per frame^2
@@ -96,7 +94,7 @@ void CNanoProjectile::Draw()
 	}
 
 	const auto* gfxt = projectileDrawer->gfxtex;
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + bounds[0], gfxt->xstart, gfxt->ystart, color },
 		{ drawPos + bounds[1], gfxt->xend  , gfxt->ystart, color },
 		{ drawPos + bounds[2], gfxt->xend  , gfxt->yend  , color },

@@ -111,8 +111,6 @@ void CFlareProjectile::Draw()
 	if (gs->frameNum <= activateFrame)
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	constexpr float rad = 6.0f;
 	const     float alpha = std::max(0.0f, 1.0f - (gs->frameNum - activateFrame) * alphaFalloff);
 
@@ -127,7 +125,7 @@ void CFlareProjectile::Draw()
 		const float3 interPos = subProjPos[a] + subProjVel[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col },
 			{ interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col },
 			{ interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col },

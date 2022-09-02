@@ -47,8 +47,6 @@ void CWreckProjectile::Update()
 
 void CWreckProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	col[0] = (unsigned char) (0.15f * 200);
 	col[1] = (unsigned char) (0.1f  * 200);
@@ -56,7 +54,7 @@ void CWreckProjectile::Draw()
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col },
 		{ drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col },
 		{ drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col },

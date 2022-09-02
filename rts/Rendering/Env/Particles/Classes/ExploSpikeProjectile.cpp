@@ -80,8 +80,6 @@ void CExploSpikeProjectile::Update()
 
 void CExploSpikeProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
@@ -96,7 +94,7 @@ void CExploSpikeProjectile::Draw()
 	const float3 w = dir2 * width;
 
 	#define let projectileDrawer->laserendtex
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + l + w, let->xend,   let->yend,   col },
 		{ drawPos + l - w, let->xend,   let->ystart, col },
 		{ drawPos - l - w, let->xstart, let->ystart, col },

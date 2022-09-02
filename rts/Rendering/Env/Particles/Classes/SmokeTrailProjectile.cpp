@@ -100,8 +100,6 @@ void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
 
 void CSmokeTrailProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
 	const float invLifeTime = (1.0f / lifeTime);
 
@@ -135,21 +133,21 @@ void CSmokeTrailProjectile::Draw()
 
 		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1   - (odir1 * size1),  texture->xstart, texture->ystart, col  },
 			{ pos1   + (odir1 * size1),  texture->xstart, texture->yend,   col  },
 			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
 			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 }
 		);
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 },
 			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
 			{ pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2 },
 			{ pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2 }
 		);
 	} else {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ pos1 - (odir1 * size1),   texture->xstart, texture->ystart, col  },
 			{ pos1 + (odir1 * size1),   texture->xstart, texture->yend,   col  },
 			{ pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2 },

@@ -87,8 +87,6 @@ void CHeatCloudProjectile::Draw()
 {
 	UpdateRotation();
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	const float dheat = std::max(0.0f, heat-globalRendering->timeOffset);
 	const float alpha = (dheat / maxheat) * 255.0f;
@@ -114,12 +112,12 @@ void CHeatCloudProjectile::Draw()
 		for (auto& b : bounds)
 			b = b.rotate(rotVal, camera->GetForward());
 	}
-  rb.AddQuadTriangles(
-    { drawPos + bounds[0], texture->xstart, texture->ystart, col },
-    { drawPos + bounds[1], texture->xend,   texture->ystart, col },
-    { drawPos + bounds[2], texture->xend,   texture->yend,   col },
-    { drawPos + bounds[3], texture->xstart, texture->yend,   col }
-  );
+	AddEffectsQuad(
+		{ drawPos + bounds[0], texture->xstart, texture->ystart, col },
+		{ drawPos + bounds[1], texture->xend,   texture->ystart, col },
+		{ drawPos + bounds[2], texture->xend,   texture->yend,   col },
+		{ drawPos + bounds[3], texture->xstart, texture->yend,   col }
+	);
 }
 
 int CHeatCloudProjectile::GetProjectilesCount() const

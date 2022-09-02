@@ -1,4 +1,4 @@
-#version 150 compatibility
+#version 130
 
 uniform sampler2D atlasTex;
 #ifdef SMOOTH_PARTICLES
@@ -9,14 +9,15 @@ uniform sampler2D atlasTex;
 #endif
 uniform vec4 alphaCtrl = vec4(0.0, 0.0, 0.0, 1.0); //always pass
 
-in Data{
-	vec4 vsPos;
-	vec4 vCol;
-	vec2 vUV;
-};
+in vec4 vsPos;
+in vec4 vCol;
+in vec3 vUVW;
+in vec4 vUVb;
+in float vBF;
+
+out vec4 fragColor;
 
 #define projMatrix gl_ProjectionMatrix
-
 
 #define NORM2SNORM(value) (value * 2.0 - 1.0)
 #define SNORM2NORM(value) (value * 0.5 + 0.5)
@@ -38,8 +39,12 @@ bool AlphaDiscard(float a) {
 }
 
 void main() {
-	vec4 color = texture(atlasTex, vUV);
-	gl_FragColor  = color * vCol;
+	vec4 c0 = texture(atlasTex, vUVb.xy + vUVW.xy);
+	vec4 c1 = texture(atlasTex, vUVb.zw + vUVW.xy);
+
+	vec4 color = vec4(mix(c0, c1, vBF));
+
+	fragColor = color * vCol;
 
 	#ifdef SMOOTH_PARTICLES
 	vec2 screenUV = gl_FragCoord.xy * invScreenSize;
@@ -48,13 +53,13 @@ void main() {
 
 	if (softenThreshold > 0.0) {
 		float edgeSmoothness = smoothstep(0.0, softenThreshold, vsPos.z - depthVS); // soften edges
-		gl_FragColor *= pow(edgeSmoothness, softenExponent.x);
+		fragColor *= pow(edgeSmoothness, softenExponent.x);
 	} else {
 		float edgeSmoothness = smoothstep(softenThreshold, 0.0, vsPos.z - depthVS); // follow the surface up
-		gl_FragColor *= pow(edgeSmoothness, softenExponent.y);
+		fragColor *= pow(edgeSmoothness, softenExponent.y);
 	}
 	#endif
 
-	if (AlphaDiscard(gl_FragColor.a))
+	if (AlphaDiscard(fragColor.a))
 		discard;
 }

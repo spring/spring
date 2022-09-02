@@ -204,10 +204,6 @@ float3 ShieldSegmentCollection::GetShieldDrawPos() const
 	return shield->owner->GetObjectSpaceDrawPos(shield->relWeaponMuzzlePos);
 }
 
-
-#define NUM_VERTICES_X 5
-#define NUM_VERTICES_Y 3
-
 ShieldSegmentProjectile::ShieldSegmentProjectile(
 	ShieldSegmentCollection* collection_,
 	const WeaponDef* shieldWeaponDef,
@@ -339,8 +335,6 @@ void ShieldSegmentProjectile::Draw()
 	if (!collection->AllowDrawing())
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float3 shieldPos = collection->GetShieldDrawPos();
 	const float size = collection->GetSize();
 
@@ -349,7 +343,7 @@ void ShieldSegmentProjectile::Draw()
 		for (int x = 0; x < (NUM_VERTICES_X - 1); ++x) {
 			const int idxTL = (y    ) * NUM_VERTICES_X + x, idxTR = (y    ) * NUM_VERTICES_X + x + 1;
 			const int idxBL = (y + 1) * NUM_VERTICES_X + x, idxBR = (y + 1) * NUM_VERTICES_X + x + 1;
-			rb.AddQuadTriangles(
+			AddEffectsQuad(
 				{ shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color },
 				{ shieldPos + vertices[idxTR] * size, texCoors[idxTR].x, texCoors[idxTR].y, color },
 				{ shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color },

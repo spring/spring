@@ -58,8 +58,6 @@ void CGenericParticleProjectile::Update()
 
 void CGenericParticleProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	float3 dir1 = camera->GetRight();
 	float3 dir2 = camera->GetUp();
 	if (directional) {
@@ -71,7 +69,7 @@ void CGenericParticleProjectile::Draw()
 
 	unsigned char color[4];
 	colorMap->GetColor(color, life);
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + (-dir1 - dir2) * size, texture->xstart, texture->ystart, color },
 		{ drawPos + (-dir1 + dir2) * size, texture->xend,   texture->ystart, color },
 		{ drawPos + ( dir1 + dir2) * size, texture->xend,   texture->yend,   color },

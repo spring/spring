@@ -1,10 +1,12 @@
 #version 130
 
 uniform sampler2D atlasTex;
-uniform vec4 alphaCtrl = vec4(0.0, 1.0, 0.0, 0.0);
+uniform vec4 alphaCtrl = vec4(0.0, 1.0, 0.0, 0.0);  //always pass
 
 in vec4 vCol;
-in vec2 vUV;
+in vec3 vUVW;
+in vec4 vUVb;
+in float vBF;
 
 out vec3 fragColor;
 
@@ -16,7 +18,11 @@ bool AlphaDiscard(float a) {
 }
 
 void main() {
-	vec4 color = texture(atlasTex, vUV);
+	vec4 c0 = texture(atlasTex, vUVb.xy + vUVW.xy);
+	vec4 c1 = texture(atlasTex, vUVb.zw + vUVW.xy);
+
+	vec4 color = vec4(mix(c0, c1, vBF));
+
 	color *= vCol;
 
 	if (AlphaDiscard(color.a))

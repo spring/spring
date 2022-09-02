@@ -52,8 +52,6 @@ void CGeoSquareProjectile::Draw()
 	col[2] = (unsigned char) (b * a * 255);
 	col[3] = (unsigned char) (    a * 255);
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	float3 dif(p1 - camera->GetPos()); dif.ANormalize();
 	float3 dir1(dif.cross(v1)); dir1.ANormalize();
 
@@ -66,14 +64,14 @@ void CGeoSquareProjectile::Draw()
 	const float v1 = projectileDrawer->geosquaretex->yend;
 
 	if (w2 != 0) {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ p1 - dir1 * w1, u, v1, col },
 			{ p1 + dir1 * w1, u, v0, col },
 			{ p2 + dir2 * w2, u, v0, col },
 			{ p2 - dir2 * w2, u, v1, col }
 		);
 	} else {
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ p1 - dir1 * w1, u, v1,                    col },
 			{ p1 + dir1 * w1, u, v0,                    col },
 			{ p2,             u, v0 + (v1 - v0) * 0.5f, col },

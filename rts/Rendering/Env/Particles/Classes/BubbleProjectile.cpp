@@ -83,12 +83,10 @@ void CBubbleProjectile::Draw()
 	col[2] = (unsigned char)(255 * alpha);
 	col[3] = (unsigned char)(255 * alpha);
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 
 	#define bt projectileDrawer->bubbletex
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col },
 		{ drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col },
 		{ drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col },

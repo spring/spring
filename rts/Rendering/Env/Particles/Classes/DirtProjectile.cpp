@@ -80,8 +80,6 @@ void CDirtProjectile::Draw()
 	if (!IsValidTexture(texture))
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	float partAbove = (pos.y / (size * camera->GetUp().y));
 
 	if (partAbove < -1.0f)
@@ -98,7 +96,7 @@ void CDirtProjectile::Draw()
 	const float interSize = size + globalRendering->timeOffset * sizeExpansion;
 	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col },
 		{ drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->yend,   col },
 		{ drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col },

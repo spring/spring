@@ -14,6 +14,7 @@
 #include "System/UnorderedMap.hpp"
 #include "System/StringHash.h"
 #include "System/Cpp11Compat.hpp"
+#include "Rendering/GL/VertexArrayTypes.h"
 
 struct fast_hash : public spring::unary_function<int, size_t>
 {
@@ -115,6 +116,8 @@ namespace Shader {
 		bool LoadFromLua(const std::string& filename);
 
 		virtual void BindAttribLocation(const std::string& name, uint32_t index) {}
+		template<typename VAT>
+		void BindAttribLocations();
 
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
@@ -412,21 +415,13 @@ namespace Shader {
 		unsigned int curSrcHash;
 	};
 
-	/*
-	struct GLSLARBProgramObject: public Shader::IProgramObject {
-		glCreateProgramObjectARB <==> glCreateProgram
-		glCreateShaderObjectARB  <==> glCreateShader
-		glDeleteObjectARB        <==> glDelete{Shader,Program}
-		glCompileShaderARB       <==> glCompileShader
-		glShaderSourceARB        <==> glShaderSource
-		glAttachObjectARB        <==> glAttachShader
-		glDetachObjectARB        <==> glDetachShader
-		glLinkProgramARB         <==> glLinkProgram
-		glUseProgramObjectARB    <==> glUseProgram
-		glUniform*ARB            <==> glUniform*
-		glGetUniformLocationARB  <==> glGetUniformLocation
-	};
-	*/
+	template<typename VAT>
+	inline void IProgramObject::BindAttribLocations()
+	{
+		for (const AttributeDef& def : VAT::attributeDefs) {
+			BindAttribLocation(def.name, def.index);
+		}
+	}
 
 	extern NullShaderObject* nullShaderObject;
 	extern NullProgramObject* nullProgramObject;

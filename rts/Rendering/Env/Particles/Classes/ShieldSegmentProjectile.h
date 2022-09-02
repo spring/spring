@@ -94,10 +94,6 @@ public:
 
 	int GetProjectilesCount() const override { return ((NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1)); }
 
-public:
-	static constexpr unsigned int NUM_VERTICES_X = 5;
-	static constexpr unsigned int NUM_VERTICES_Y = 3;
-
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);
 	static const float2* GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart);
@@ -107,6 +103,8 @@ private:
 	const float3* vertices;
 	const float2* texCoors;
 
+	static constexpr int NUM_VERTICES_X = 5;
+	static constexpr int NUM_VERTICES_Y = 3;
 };
 
 #endif

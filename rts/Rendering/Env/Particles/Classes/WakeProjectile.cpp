@@ -82,8 +82,6 @@ void CWakeProjectile::Update()
 
 void CWakeProjectile::Draw()
 {
-	auto& rb = GetPrimaryRenderBuffer();
-
 	unsigned char col[4];
 	col[0] = (unsigned char) (255 * alpha);
 	col[1] = (unsigned char) (255 * alpha);
@@ -97,7 +95,7 @@ void CWakeProjectile::Draw()
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex
-	rb.AddQuadTriangles(
+	AddEffectsQuad(
 		{ drawPos + dir1 + dir2, wt->xstart, wt->ystart, col },
 		{ drawPos + dir1 - dir2, wt->xstart, wt->yend,   col },
 		{ drawPos - dir1 - dir2, wt->xend,   wt->yend,   col },

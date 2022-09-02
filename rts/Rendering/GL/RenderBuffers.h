@@ -80,7 +80,7 @@ protected:
 	std::array<size_t, 2> initCapacity = { 0, 0 };
 private:
 	static inline std::vector<RenderBuffer*> allRenderBuffers;
-	static std::array<std::unique_ptr<RenderBuffer>, 11> typedRenderBuffers;
+	static std::array<std::unique_ptr<RenderBuffer>, 12> typedRenderBuffers;
 public:
 	static auto GetAllStandardRenderBuffers() -> const decltype(typedRenderBuffers)& { return typedRenderBuffers; };
 };
@@ -313,6 +313,13 @@ template<>
 inline const std::string RenderBufferShader<VA_TYPE_TC>::GetFragOutput()
 {
 	return "\toutColor = vcolor * texture(tex, vuv);";
+}
+
+template<>
+inline const std::string RenderBufferShader<VA_TYPE_PROJ>::GetFragOutput()
+{
+	assert(false); //change tex type to sampler2darray
+	return "\toutColor = vcolor * texture(tex, vuvw);";
 }
 
 template<>
@@ -870,10 +877,11 @@ GET_TYPED_RENDER_BUFFER(VA_TYPE_N   , 2)
 GET_TYPED_RENDER_BUFFER(VA_TYPE_T   , 3)
 GET_TYPED_RENDER_BUFFER(VA_TYPE_TN  , 4)
 GET_TYPED_RENDER_BUFFER(VA_TYPE_TC  , 5)
-GET_TYPED_RENDER_BUFFER(VA_TYPE_TNT , 6)
-GET_TYPED_RENDER_BUFFER(VA_TYPE_2D0 , 7)
-GET_TYPED_RENDER_BUFFER(VA_TYPE_2DC , 8)
-GET_TYPED_RENDER_BUFFER(VA_TYPE_2DT , 9)
-GET_TYPED_RENDER_BUFFER(VA_TYPE_2DTC, 10)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_PROJ , 6)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_TNT , 7)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_2D0 , 8)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_2DC , 9)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_2DT , 10)
+GET_TYPED_RENDER_BUFFER(VA_TYPE_2DTC, 11)
 
 #undef GET_TYPED_RENDER_BUFFER

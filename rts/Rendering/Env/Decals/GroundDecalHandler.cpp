@@ -286,12 +286,12 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		VA_TYPE_TC* mem = va.GetTypedVertexArray<VA_TYPE_TC>(numVerts);
 
 		for (int i = 0; i < numVerts; ++i) {
-			const int x = int(mem[i].p.x) >> 3;
-			const int z = int(mem[i].p.z) >> 3;
+			const int x = int(mem[i].pos.x) >> 3;
+			const int z = int(mem[i].pos.z) >> 3;
 
 			// update the height and alpha
-			mem[i].p.y = hm[z * gsmx1 + x];
-			mem[i].c   = color;
+			mem[i].pos.y = hm[z * gsmx1 + x];
+			mem[i].c     = color;
 		}
 
 		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
@@ -377,12 +377,12 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 			VA_TYPE_TC* mem = va.GetTypedVertexArray<VA_TYPE_TC>(num);
 
 			for (int i = 0; i < num; ++i) {
-				const int x = int(mem[i].p.x) >> 3;
-				const int z = int(mem[i].p.z) >> 3;
+				const int x = int(mem[i].pos.x) >> 3;
+				const int z = int(mem[i].pos.z) >> 3;
 
 				// update the height and alpha
-				mem[i].p.y = hm[z * gsmx1 + x];
-				mem[i].c   = color;
+				mem[i].pos.y = hm[z * gsmx1 + x];
+				mem[i].c     = color;
 			}
 		}
 

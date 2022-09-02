@@ -1111,7 +1111,7 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 {
 	bool isLoaded = false;
 	bool isValid  = false;
-	bool noAlpha  =  true;
+	bool hasAlpha = false;
 
 	// LHS is only true for "image.dds", "IMAGE.DDS" would be loaded by IL
 	// which does not vertically flip DDS images by default, unlike nv_dds
@@ -1213,11 +1213,17 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 			isValid = (isLoaded && IsValidImageFormat(currFormat));
 			dataType = ilGetInteger(IL_IMAGE_TYPE);
 			uint32_t bytesPerChannel = std::max(GetDataTypeSize(), 1u); //make sure we don't div by 0 later on
-			uint32_t bytesPerPixel   = ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL);
+
+			uint32_t bytesPerPixel;
+			if (currFormat == IL_COLOUR_INDEX)
+				bytesPerPixel = ilGetInteger(IL_PALETTE_BPP);
+			else
+				bytesPerPixel = ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL);
+
 			uint32_t numChannels = bytesPerPixel / bytesPerChannel;
 			assert(numChannels > 0 && numChannels <= 4);
 
-			noAlpha = (isValid && numChannels != 4);
+			hasAlpha = (numChannels == 4) || (currFormat == IL_LUMINANCE_ALPHA);
 
 			// FPU control word has to be restored as well
 			streflop::streflop_init<streflop::Simple>();
@@ -1268,7 +1274,7 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 		return false;
 	}
 
-	if (noAlpha)
+	if (!hasAlpha)
 		ReplaceAlpha(defaultAlpha);
 
 	return true;

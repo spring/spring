@@ -74,8 +74,6 @@ void CExplosiveProjectile::Draw()
 	if (!validTextures[0])
 		return;
 
-	auto& rb = GetPrimaryRenderBuffer();
-
 	uint8_t col[4] = {0};
 
 	const WeaponDef::Visuals& wdVisuals = weaponDef->visuals;
@@ -113,7 +111,7 @@ void CExplosiveProjectile::Draw()
 		col[2] = stageDecay * col[2];
 		col[3] = stageDecay * col[3];
 
-		rb.AddQuadTriangles(
+		AddEffectsQuad(
 			{ stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col },
 			{ stagePos + xdirCam - ydirCam, tex->xend,   tex->ystart, col },
 			{ stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col },

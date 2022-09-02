@@ -34,11 +34,11 @@ struct AttributeDef {
 };
 
 struct VA_TYPE_0 {
-	float3 p;
+	float3 pos;
 
 	VA_TYPE_0 operator* (float t) const {
 		VA_TYPE_0 v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		return v;
 	}
@@ -46,12 +46,12 @@ struct VA_TYPE_0 {
 	static std::array<AttributeDef, 1> attributeDefs;
 };
 struct VA_TYPE_N {
-	float3 p;
+	float3 pos;
 	float3 n;
 
 	VA_TYPE_N operator* (float t) const {
 		VA_TYPE_N v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.n *= t; v.n.ANormalize();
 
@@ -61,12 +61,12 @@ struct VA_TYPE_N {
 	static std::array<AttributeDef, 2> attributeDefs;
 };
 struct VA_TYPE_C {
-	float3 p;
+	float3 pos;
 	SColor c;
 
 	VA_TYPE_C operator* (float t) const {
 		VA_TYPE_C v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.c *= t;
 
@@ -76,12 +76,12 @@ struct VA_TYPE_C {
 	static std::array<AttributeDef, 2> attributeDefs;
 };
 struct VA_TYPE_T {
-	float3 p;
+	float3 pos;
 	float  s, t;
 
 	VA_TYPE_T operator* (float t) const {
 		VA_TYPE_T v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.s *= t;
 		v.t *= t;
@@ -92,13 +92,13 @@ struct VA_TYPE_T {
 	static std::array<AttributeDef, 2> attributeDefs;
 };
 struct VA_TYPE_TN {
-	float3 p;
+	float3 pos;
 	float  s, t;
 	float3 n;
 
 	VA_TYPE_TN operator* (float t) const {
 		VA_TYPE_TN v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.s *= t;
 		v.t *= t;
@@ -111,13 +111,13 @@ struct VA_TYPE_TN {
 	static std::array<AttributeDef, 3> attributeDefs;
 };
 struct VA_TYPE_TC {
-	float3 p;
+	float3 pos;
 	float  s, t;
 	SColor c;
 
 	VA_TYPE_TC operator* (float t) const {
 		VA_TYPE_TC v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.s *= t;
 		v.t *= t;
@@ -129,8 +129,32 @@ struct VA_TYPE_TC {
 
 	static std::array<AttributeDef, 3> attributeDefs;
 };
+struct VA_TYPE_PROJ {
+	float3 pos;
+	float  layer;
+	float4 uvmm;
+	float3 aparams;
+	SColor c;
+
+	VA_TYPE_PROJ operator* (float t) const {
+		VA_TYPE_PROJ v = *this;
+		v.pos *= t;
+
+		v.layer *= t;
+
+		v.uvmm *= t;
+
+		v.aparams *= t;
+
+		v.c *= t;
+
+		return v;
+	}
+
+	static std::array<AttributeDef, 5> attributeDefs;
+};
 struct VA_TYPE_TNT {
-	float3 p;
+	float3 pos;
 	float  s, t;
 	float3 n;
 	float3 uv1;
@@ -138,7 +162,7 @@ struct VA_TYPE_TNT {
 
 	VA_TYPE_TNT operator* (float t) const {
 		VA_TYPE_TNT v = *this;
-		v.p *= t;
+		v.pos *= t;
 
 		v.s *= t;
 		v.t *= t;
@@ -228,6 +252,7 @@ constexpr size_t VA_SIZE_N    = (sizeof(VA_TYPE_N) / sizeof(float));
 constexpr size_t VA_SIZE_T    = (sizeof(VA_TYPE_T) / sizeof(float));
 constexpr size_t VA_SIZE_TN   = (sizeof(VA_TYPE_TN) / sizeof(float));
 constexpr size_t VA_SIZE_TC   = (sizeof(VA_TYPE_TC) / sizeof(float));
+constexpr size_t VA_SIZE_T4C  = (sizeof(VA_TYPE_PROJ) / sizeof(float));
 constexpr size_t VA_SIZE_TNT  = (sizeof(VA_TYPE_TNT) / sizeof(float));
 constexpr size_t VA_SIZE_2D0  = (sizeof(VA_TYPE_2D0) / sizeof(float));
 constexpr size_t VA_SIZE_2DT  = (sizeof(VA_TYPE_2DT) / sizeof(float));
