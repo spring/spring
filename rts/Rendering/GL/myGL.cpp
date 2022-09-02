@@ -281,7 +281,7 @@ void glSaveTexture(const GLuint textureID, const char* filename)
 	GLenum dataType = depthTex ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
 	bmp.Alloc(sizeX, sizeY, chNum, dataType);
-	glGetTexImage(target, 0, extFormat, GL_UNSIGNED_BYTE, bmp.GetRawMem());
+	glGetTexImage(target, 0, extFormat, dataType, bmp.GetRawMem());
 
 	if (depthTex) {
 		//doesn't work, TODO: fix
