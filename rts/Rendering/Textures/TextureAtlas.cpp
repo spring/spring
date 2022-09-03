@@ -22,7 +22,7 @@ CONFIG(int, MaxTextureAtlasSizeX).defaultValue(2048).minimumValue(512).maximumVa
 CONFIG(int, MaxTextureAtlasSizeY).defaultValue(2048).minimumValue(512).maximumValue(32768);
 
 CR_BIND(AtlasedTexture, )
-CR_REG_METADATA(AtlasedTexture, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
+CR_REG_METADATA(AtlasedTexture, (CR_IGNORED(x), CR_IGNORED(y), CR_IGNORED(z), CR_IGNORED(w)))
 
 CTextureAtlas::CTextureAtlas(uint32_t allocType_, int32_t atlasSizeX_, int32_t atlasSizeY_, const std::string& name_, bool reloadable_)
 	: name{ name_ }

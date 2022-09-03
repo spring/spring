@@ -15,10 +15,17 @@
 /** @brief texture coordinates of an atlas subimage. */
 //typedef float4 AtlasedTexture;
 
-struct AtlasedTexture : public float4
+struct AtlasedTexture
 {
-	AtlasedTexture() : float4() {}
-	AtlasedTexture(const float4& f) : float4(f) {};
+	CR_DECLARE_STRUCT(AtlasedTexture)
+
+	AtlasedTexture() = default;
+	AtlasedTexture(const float4& f)
+		: x(f.x)
+		, y(f.y)
+		, z(f.z)
+		, w(f.w)
+	{};
 /*
 	AtlasedTexture(AtlasedTexture&& f) noexcept { *this = std::move(f); }
 	AtlasedTexture& operator= (AtlasedTexture&& f) = default;
@@ -26,7 +33,18 @@ struct AtlasedTexture : public float4
 	AtlasedTexture(const AtlasedTexture& f) { *this = f; }
 	AtlasedTexture& operator= (const AtlasedTexture& f) = default;
 */
-	CR_DECLARE_STRUCT(AtlasedTexture)
+	bool operator==(const AtlasedTexture& rhs) {
+		float4 f0(x    , y    , z    , w    );
+		float4 f1(rhs.x, rhs.y, rhs.z, rhs.w);
+		return f0 == f1;
+	}
+
+	union {
+		struct { float x, y, z, w; };
+		struct { float x1, y1, x2, y2; };
+		struct { float s, t, p, q; };
+		struct { float xstart, ystart, xend, yend; };
+	};
 };
 
 
