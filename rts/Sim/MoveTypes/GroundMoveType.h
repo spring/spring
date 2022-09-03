@@ -29,6 +29,7 @@ public:
 	};
 
 	void PostLoad();
+	void* GetPreallocContainer() { return owner; }  // creg
 
 	bool Update() override;
 	void SlowUpdate() override;

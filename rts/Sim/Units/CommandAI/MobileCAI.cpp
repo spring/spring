@@ -75,7 +75,9 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(lastCloseInTry),
 	CR_MEMBER(lastBuggerOffTime),
 	CR_MEMBER(numNonMovingCalls),
-	CR_MEMBER(lastIdleCheck)
+	CR_MEMBER(lastIdleCheck),
+
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 CMobileCAI::CMobileCAI():

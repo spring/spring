@@ -26,6 +26,8 @@ public:
 	CCommandAI();
 	virtual ~CCommandAI();
 
+	void* GetPreallocContainer() { return owner; }  // creg
+
 	void DependentDied(CObject* o);
 
 	static void InitCommandDescriptionCache();

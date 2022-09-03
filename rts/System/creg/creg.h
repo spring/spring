@@ -99,6 +99,7 @@ namespace creg {
 
 		/// Allocate an instance of the class
 		void* CreateInstance(size_t size);
+		void* CreateInstance(size_t size, void* addr);
 		void DeleteInstance(void* inst);
 
 		/// Calculate a checksum from the class metadata
@@ -122,18 +123,22 @@ namespace creg {
 		typedef void(*SerializeProc)(void* object, ISerializer* s);
 		typedef void(*PostLoadProc)(void* object);
 		typedef size_t (*GetSizeProc)(void* object);
+		typedef void* (*GetPreallocProc)(void* object);
 
 
 
 		void SetSerialize(SerializeProc proc) { serializeProc = proc; }
 		void SetPostLoad(PostLoadProc proc) { postLoadProc = proc; }
 		void SetGetSize(GetSizeProc proc) { getSizeProc = proc; }
+		void SetPrealloc(GetPreallocProc proc) { getPreallocProc = proc; }
 		bool HasSerialize() const { return (serializeProc != nullptr); }
 		bool HasPostLoad() const { return (postLoadProc != nullptr); }
 		bool HasGetSize() const { return (getSizeProc != nullptr); }
+		bool HasPrealloc() const { return (getPreallocProc != nullptr); }
 		void CallSerializeProc(void* object, ISerializer* s) { serializeProc(object, s); }
 		void CallPostLoadProc(void* object)                  { postLoadProc(object); }
-		size_t CallGetSizeProc(void* object)                  { return getSizeProc(object); }
+		size_t CallGetSizeProc(void* object)                 { return getSizeProc(object); }
+		void* CallGetPreallocProc(void* object)              { return getPreallocProc(object); }
 
 
 		Class* baseClass;
@@ -169,6 +174,7 @@ namespace creg {
 		SerializeProc serializeProc;
 		PostLoadProc postLoadProc;
 		GetSizeProc getSizeProc;
+		GetPreallocProc getPreallocProc;
 	};
 
 
@@ -295,7 +301,7 @@ public: \
 	void TSuper::TCls::_DestructInstance(void* d) { ((TCls*)d)->~TCls(); }  \
 	creg::Class TSuper::TCls::creg_class(#TSuper "::" #TCls, creg::CF_None, &TBase::creg_class, &TSuper::TCls::_CregRegisterMembers, sizeof(TSuper::TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance, nullptr, nullptr);
 
-/** @def CR_BIND_DERIVED
+/** @def CR_BIND_DERIVED_POOL
  * Bind a derived class declared with CR_DECLARE to creg
  * Should be used in the source file
  * @param TCls class to bind
@@ -516,8 +522,8 @@ public: \
  */
 #define CR_SERIALIZER(SerializeFunc) \
 	(class_->SetSerialize([](void* object, creg::ISerializer* s) { \
-				static_cast<Type*>(object)->SerializeFunc(s); \
-			}))
+		static_cast<Type*>(object)->SerializeFunc(s); \
+	}))
 
 /** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
@@ -527,18 +533,25 @@ public: \
  */
 #define CR_POSTLOAD(PostLoadFunc) \
 	(class_->SetPostLoad([](void* object) { \
-				static_cast<Type*>(object)->PostLoadFunc(); \
-			}))
+		static_cast<Type*>(object)->PostLoadFunc(); \
+	}))
 
 /** @def CR_SIZE
- * Registers a custom post-loading method for the class/struct
- * this function will be called during package loading when all serialization is
- * finished.
- * There can only be one postload method per class/struct
+ * Registers a custom GetSize method for the class/struct serialization
+ * There can only be one GetSize method per class/struct
  */
 #define CR_GETSIZE(GetSizeFunc) \
 	(class_->SetGetSize([](void* object) { \
-				return static_cast<Type*>(object)->GetSizeFunc(); \
-			}))
+		return static_cast<Type*>(object)->GetSizeFunc(); \
+	}))
+
+/** @def CR_PREALLOC
+ * Registers a placement-new container getter for the class/struct serialization.
+ * There can only be one placement-new container getter per class/struct
+ */
+#define CR_PREALLOC(GetContainerFunc) \
+	(class_->SetPrealloc([](void* object) { \
+		return (void*)static_cast<Type*>(object)->GetContainerFunc(); \
+	}))
 
 #endif // _CREG_H

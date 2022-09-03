@@ -47,7 +47,8 @@ CR_REG_METADATA(CCobInstance, (
 	CR_MEMBER(staticVars),
 	CR_MEMBER(threadIDs),
 
-	CR_POSTLOAD(PostLoad)
+	CR_POSTLOAD(PostLoad),
+	CR_PREALLOC(GetUnit)
 ))
 
 

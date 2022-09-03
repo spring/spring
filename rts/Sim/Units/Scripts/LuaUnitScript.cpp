@@ -33,7 +33,8 @@ CR_REG_METADATA(CLuaUnitScript, (
 	CR_MEMBER(scriptNames),
 	CR_IGNORED(inKilled),
 	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
+	CR_POSTLOAD(PostLoad),
+	CR_PREALLOC(GetUnit)
 ))
 
 void CLuaUnitScript::PostLoad()

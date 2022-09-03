@@ -42,7 +42,9 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(groundStop),
 	CR_MEMBER(limitsStop),
 
-	CR_MEMBER(scriptNotify)
+	CR_MEMBER(scriptNotify),
+
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 

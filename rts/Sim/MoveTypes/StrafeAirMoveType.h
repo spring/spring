@@ -24,6 +24,8 @@ public:
 
 	CStrafeAirMoveType(CUnit* owner);
 
+	void* GetPreallocContainer() { return owner; }  // creg
+
 	bool Update() override;
 	void SlowUpdate() override;
 

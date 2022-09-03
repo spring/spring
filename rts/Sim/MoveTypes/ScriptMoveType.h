@@ -13,6 +13,8 @@ class CScriptMoveType : public AMoveType
 		CScriptMoveType(CUnit* owner);
 		virtual ~CScriptMoveType();
 
+		void* GetPreallocContainer() { return owner; }  // creg
+
 	public:
 		bool Update() override;
 		void ForceUpdates();

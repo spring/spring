@@ -75,7 +75,9 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(repeatOrders),
 	CR_MEMBER(lastSelectedCommandPage),
 	CR_MEMBER(commandDeathDependences),
-	CR_MEMBER(targetLostTimer)
+	CR_MEMBER(targetLostTimer),
+
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 CCommandAI::CCommandAI():

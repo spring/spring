@@ -44,7 +44,9 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(targetAge),
 
 	CR_MEMBER(lastPC1),
-	CR_MEMBER(lastPC2)
+	CR_MEMBER(lastPC2),
+
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 CAirCAI::CAirCAI()

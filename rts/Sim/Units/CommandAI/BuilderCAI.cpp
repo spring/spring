@@ -49,7 +49,8 @@ CR_REG_METADATA(CBuilderCAI , (
 	CR_MEMBER(lastPC1),
 	CR_MEMBER(lastPC2),
 	CR_MEMBER(lastPC3),
-	CR_POSTLOAD(PostLoad)
+	CR_POSTLOAD(PostLoad),
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 // not adding to members, should repopulate itself

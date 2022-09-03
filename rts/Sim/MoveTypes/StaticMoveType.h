@@ -15,6 +15,8 @@ public:
 		useWantedSpeed[ true] = false;
 	}
 
+	void* GetPreallocContainer() { return owner; }  // creg
+
 	void StartMoving(float3 pos, float goalRadius) override {}
 	void StartMoving(float3 pos, float goalRadius, float speed) override {}
 	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override {}

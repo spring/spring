@@ -362,8 +362,22 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		char isEmbedded = oRef.isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
 		stream->write((char*)&isEmbedded, sizeof(char));
-		if (!isEmbedded && oRef.class_ != nullptr && oRef.class_->HasGetSize())
+
+		if (isEmbedded || oRef.class_ == nullptr)
+			continue;
+		if (oRef.class_->HasGetSize())
 			WriteVarSizeUInt(stream, oRef.class_->CallGetSizeProc(oRef.ptr));
+
+		if (oRef.class_->HasPrealloc()) {
+			void* container = oRef.class_->CallGetPreallocProc(oRef.ptr);
+			const auto it = ptrToId.find(container);
+			if (container == nullptr || it == ptrToId.end())
+				throw std::string("Preallocation container of (") + oRef.class_->name + ") doesn't exist";
+			ObjectRef* objCont = it->second.front();
+			// write container ID and offset of placement-new location
+			WriteVarSizeUInt(stream, objCont->id);
+			WriteVarSizeUInt(stream, (char*)oRef.ptr - (char*)container);
+		}
 	}
 
 	// Calculate a checksum for metadata verification
@@ -554,6 +568,13 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	s->seekg(ph.objTableOffset);
 	objects.resize(ph.numObjects);
 
+	struct PreallocObj {
+		size_t size;
+		int contID;
+		size_t offset;
+	};
+	std::map<int, PreallocObj> preallocObjs;  // objID -> PreallocObj
+
 	for (int a = 0; a < ph.numObjects; a++) {
 		unsigned int classRefIndex;
 		char isEmbedded;
@@ -570,13 +591,41 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 			if (c->HasGetSize())
 				ReadVarSizeUInt(stream, &size);
 
-			// Allocate and construct
-			objects[a].obj = c->CreateInstance(size);
+			if (c->HasPrealloc()) {
+				PreallocObj po;
+				po.size = size;
+				ReadVarSizeUInt(stream, &po.contID);
+				ReadVarSizeUInt(stream, &po.offset);
+				// Postpone objects with placement-new
+				preallocObjs[a] = po;
+			} else {
+				// Allocate and construct
+				objects[a].obj = c->CreateInstance(size);
+			}
 		}
 
 		objects[a].isEmbedded = !!isEmbedded;
 		objects[a].classRef = classRefIndex;
 	}
+
+	size_t numPreallocs = 0;  // in case of nested preallocation containers
+	while (numPreallocs != preallocObjs.size()) {
+		numPreallocs = preallocObjs.size();
+		const auto pro = preallocObjs;
+		for (const auto& kv : pro) {
+			const PreallocObj& po = kv.second;
+			void* container = objects[po.contID].obj;
+			if (container == nullptr)  // parent container wasn't created yet
+				continue;
+			StoredObject& so = objects[kv.first];
+			Class* c = classRefs[so.classRef];
+			// Allocate with placement-new and construct
+			so.obj = c->CreateInstance(po.size, (char*)container + po.offset);
+			preallocObjs.erase(kv.first);
+		}
+	}
+	if (!preallocObjs.empty())
+		throw std::string("Placement-new error: Referencing non-serialized container");
 
 	const int endOffset = s->tellg();
 

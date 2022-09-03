@@ -48,6 +48,7 @@
 #define CR_MEMBER_ENDFLAG(Flag)
 #define CR_SERIALIZER(SerializeFunc)
 #define CR_POSTLOAD(PostLoadFunc)
+#define CR_PREALLOC(GetContainerFunc)
 #endif // NOT_USING_CREG
 
 #endif // _CREG_COND_H_

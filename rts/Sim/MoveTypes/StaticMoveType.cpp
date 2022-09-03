@@ -7,7 +7,9 @@
 #include "Sim/Units/UnitDef.h"
 
 CR_BIND_DERIVED(CStaticMoveType, AMoveType, (nullptr))
-CR_REG_METADATA(CStaticMoveType, )
+CR_REG_METADATA(CStaticMoveType, (
+	CR_PREALLOC(GetPreallocContainer)
+))
 
 void CStaticMoveType::SlowUpdate()
 {

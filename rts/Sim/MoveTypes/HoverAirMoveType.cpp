@@ -47,7 +47,9 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(forcedHeading),
 
 	CR_MEMBER(waitCounter),
-	CR_MEMBER(lastMoveRate)
+	CR_MEMBER(lastMoveRate),
+
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 

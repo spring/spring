@@ -147,7 +147,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(useMainHeading),
 	CR_MEMBER(useRawMovement),
 
-	CR_POSTLOAD(PostLoad)
+	CR_POSTLOAD(PostLoad),
+	CR_PREALLOC(GetPreallocContainer)
 ))
 
 

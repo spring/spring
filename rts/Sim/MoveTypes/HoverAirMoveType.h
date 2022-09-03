@@ -13,6 +13,8 @@ class CHoverAirMoveType: public AAirMoveType
 public:
 	CHoverAirMoveType(CUnit* owner);
 
+	void* GetPreallocContainer() { return owner; }  // creg
+
 	// MoveType interface
 	bool Update() override;
 	void SlowUpdate() override;

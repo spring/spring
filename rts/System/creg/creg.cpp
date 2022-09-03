@@ -197,6 +197,16 @@ void* Class::CreateInstance(size_t size)
 	return inst;
 }
 
+void* Class::CreateInstance(size_t size, void* addr)
+{
+	void* inst = ::operator new(size, addr);
+
+	if (constructor != nullptr)
+		constructor(inst);
+
+	return inst;
+}
+
 void Class::DeleteInstance(void* inst)
 {
 	if (destructor != nullptr)
