@@ -598,7 +598,7 @@ bool CGroundMoveType::Update()
 	moveFeatures.clear();
 	
 	if (resultantForces.SqLength() > 0.f) {
-		if (owner->moveDef->TestMoveSquare(owner, owner->pos + resultantForces, resultantForces))
+		//if (owner->moveDef->TestMoveSquare(owner, owner->pos + resultantForces, resultantForces))
 			owner->Move(resultantForces, true);
 	}
 
@@ -2646,7 +2646,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		const bool moveCollider = ((pushCollider || !pushCollidee) && colliderMobile);
 
-		if (moveCollider)
+		if (moveCollider && colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec))
 			resultantForces += colliderMoveVec;
 	}
 }
