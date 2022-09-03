@@ -597,10 +597,8 @@ bool CGroundMoveType::Update()
 	}
 	moveFeatures.clear();
 	
-	if (resultantForces.SqLength() > 0.f) {
-		//if (owner->moveDef->TestMoveSquare(owner, owner->pos + resultantForces, resultantForces))
-			owner->Move(resultantForces, true);
-	}
+	if (resultantForces.SqLength() > 0.f)
+		owner->Move(resultantForces, true);
 
 	AdjustPosToWaterLine();
 
@@ -2284,7 +2282,7 @@ void CGroundMoveType::HandleObjectCollisions()
 				ReRequestPath(PATH_REQUEST_TIMING_DELAYED|PATH_REQUEST_UPDATE_FULLPATH);
 		}
 
-		bool sanitizeForces = (resultantForces.SqLength() > maxSpeed*maxSpeed);
+		bool sanitizeForces = (resultantForces.SqLength() > maxSpeed*maxSpeed*modInfo.maxCollisionPushMultiplier);
 		if (sanitizeForces)
 			(resultantForces.Normalize()) *= maxSpeed;
 	}

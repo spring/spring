@@ -98,6 +98,8 @@ void CModInfo::ResetState()
 		pfRawDistMult    = 1.25f;
 		pfUpdateRate     = 0.007f;
 
+		maxCollisionPushMultiplier = 1.f;
+
 		enableSmoothMesh = true;
 
 		allowTake = true;
@@ -140,6 +142,8 @@ void CModInfo::Init(const std::string& modFileName)
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", pfUpdateRate);
 
 		enableSmoothMesh = system.GetBool("enableSmoothMesh", enableSmoothMesh);
+
+		maxCollisionPushMultiplier = system.GetFloat("maxCollisionPushMultiplier", maxCollisionPushMultiplier);
 
 		allowTake = system.GetBool("allowTake", allowTake);
 	}
