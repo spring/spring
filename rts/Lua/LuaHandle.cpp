@@ -1236,6 +1236,8 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
+	static bool returnValueDepractionWarningIssued = false;
+
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty())
 		return false;
@@ -1259,6 +1261,15 @@ bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 	RunCallInTraceback(L, cmdStr, 2, 1, traceBack.GetErrFuncIdx(), false);
 
+	// if nothing is returned, this is the correct behaviour now.
+	if (lua_isnone(L, -1))
+		return false;
+
+	if (!returnValueDepractionWarningIssued) {
+		LOG_L(L_ERROR, "[%s] return value is deprecated and ignored.", __func__);
+		returnValueDepractionWarningIssued = true;
+	}
+
 	const bool ret = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return ret;
@@ -1266,6 +1277,8 @@ bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 bool CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
+	static bool returnValueDepractionWarningIssued = false;
+
 	// if empty, we are not a LuaHandleSynced (and must always return false)
 	if (watchUnitDefs.empty())
 		return false;
@@ -1290,6 +1303,15 @@ bool CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	lua_pushnumber(L, collidee->id);
 
 	RunCallInTraceback(L, cmdStr, 2, 1, traceBack.GetErrFuncIdx(), false);
+
+	// if nothing is returned, this is the correct behaviour now.
+	if (lua_isnone(L, -1))
+		return false;
+
+	if (!returnValueDepractionWarningIssued) {
+		LOG_L(L_ERROR, "[%s] return value is deprecated and ignored.", __func__);
+		returnValueDepractionWarningIssued = true;
+	}
 
 	const bool ret = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
