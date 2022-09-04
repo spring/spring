@@ -35,7 +35,6 @@ void CModInfo::ResetState()
 		allowHoverUnitStrafing     = true;
 
 		maxCollisionPushMultiplier = std::numeric_limits<float>::infinity();
-		goalReachedEarlyDuringCollisionCount = 3;
 	}
 	{
 		constructionDecay      = true;
@@ -162,7 +161,6 @@ void CModInfo::Init(const std::string& modFileName)
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
 		maxCollisionPushMultiplier = movementTbl.GetFloat("maxCollisionPushMultiplier", maxCollisionPushMultiplier);
-		goalReachedEarlyDuringCollisionCount = movementTbl.GetFloat("goalReachedEarlyDuringCollisionCount", goalReachedEarlyDuringCollisionCount);
 	}
 
 	{

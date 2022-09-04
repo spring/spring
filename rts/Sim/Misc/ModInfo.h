@@ -54,7 +54,6 @@ public:
 
 	// relative to a unit's maxspeed (default: inf)
 	float maxCollisionPushMultiplier;
-	int goalReachedEarlyDuringCollisionCount;
 
 	// Build behaviour
 	/// Should constructions without builders decay?

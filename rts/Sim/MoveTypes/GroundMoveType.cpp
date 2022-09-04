@@ -938,7 +938,6 @@ bool CGroundMoveType::FollowPath(int thread)
 					}
 				}
 				#endif
-				//Arrived(false);
 				pathingArrived = true;
 			} else {
 				#ifdef PATHING_DEBUG
