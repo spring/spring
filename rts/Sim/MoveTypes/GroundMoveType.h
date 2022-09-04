@@ -240,6 +240,8 @@ private:
 	unsigned int pathID = 0;
 	unsigned int nextObstacleAvoidanceFrame = 0;
 
+	unsigned int goalReachedShareStrength = 0;
+
 	unsigned int numIdlingUpdates = 0;      /// {in, de}creased every Update if idling is true/false and pathId != 0
 	unsigned int numIdlingSlowUpdates = 0;  /// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
 

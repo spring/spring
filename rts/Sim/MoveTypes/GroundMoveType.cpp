@@ -513,6 +513,9 @@ void CGroundMoveType::UpdatePreCollisions()
 			ChangeSpeed(0.0f, false);
 			setHeading = 0;
 			break;
+		case 3:
+			ChangeSpeed(0.0f, false);
+			break;
 	}
 
  	if (pathingFailed) {
@@ -613,7 +616,8 @@ bool CGroundMoveType::Update()
 void CGroundMoveType::UpdateOwnerAccelAndHeading()
 {
 	if (owner->IsStunned() || owner->beingBuilt) {
-		ChangeSpeed(0.0f, false);
+		// ChangeSpeed(0.0f, false);
+		setHeading = 3;
 		return;
 	}
 

@@ -52,6 +52,10 @@ public:
 	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
 	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
 
+	// relative to a unit's maxspeed (default: inf)
+	float maxCollisionPushMultiplier;
+	int goalReachedEarlyDuringCollisionCount;
+
 	// Build behaviour
 	/// Should constructions without builders decay?
 	bool constructionDecay;
@@ -167,9 +171,6 @@ public:
 
 	float pfRawDistMult;
 	float pfUpdateRate;
-
-	// relative to a unit's maxspeed (default: inf)
-	float maxCollisionPushMultiplier;
 
 	bool enableSmoothMesh;
 
