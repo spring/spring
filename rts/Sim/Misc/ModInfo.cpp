@@ -98,7 +98,7 @@ void CModInfo::ResetState()
 		pfRawDistMult    = 1.25f;
 		pfUpdateRate     = 0.007f;
 
-		maxCollisionPushMultiplier = 1.f;
+		maxCollisionPushMultiplier = std::numeric_limits<float>::infinity();
 
 		enableSmoothMesh = true;
 
@@ -143,8 +143,6 @@ void CModInfo::Init(const std::string& modFileName)
 
 		enableSmoothMesh = system.GetBool("enableSmoothMesh", enableSmoothMesh);
 
-		maxCollisionPushMultiplier = system.GetFloat("maxCollisionPushMultiplier", maxCollisionPushMultiplier);
-
 		allowTake = system.GetBool("allowTake", allowTake);
 	}
 
@@ -162,6 +160,7 @@ void CModInfo::Init(const std::string& modFileName)
 		allowSepAxisCollisionTest = movementTbl.GetBool("allowSepAxisCollisionTest", allowSepAxisCollisionTest);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
+		maxCollisionPushMultiplier = movementTbl.GetFloat("maxCollisionPushMultiplier", maxCollisionPushMultiplier);
 	}
 
 	{

@@ -168,7 +168,7 @@ public:
 	float pfRawDistMult;
 	float pfUpdateRate;
 
-	// relative to a unit's maxspeed (default 1)
+	// relative to a unit's maxspeed (default: inf)
 	float maxCollisionPushMultiplier;
 
 	bool enableSmoothMesh;
