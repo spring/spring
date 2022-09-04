@@ -2644,7 +2644,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		const bool moveCollider = ((pushCollider || !pushCollidee) && colliderMobile);
 
-		if (moveCollider && colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec))
+		if (moveCollider && colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec, true, true, false, nullptr, nullptr, curThread))
 			resultantForces += colliderMoveVec;
 	}
 }
