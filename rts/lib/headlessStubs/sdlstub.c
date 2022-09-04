@@ -292,8 +292,13 @@ extern DECLSPEC SDL_bool SDL_SetHint(const char* name, const char* value) {
 	return SDL_TRUE;
 }
 
+#if SDL_VERSION_ATLEAST(2,24,0)
+extern DECLSPEC void SDLCALL SDL_SetTextInputRect(const SDL_Rect *rect) {
+}
+#else
 extern DECLSPEC void SDLCALL SDL_SetTextInputRect(SDL_Rect *rect) {
 }
+#endif
 
 extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
 }
