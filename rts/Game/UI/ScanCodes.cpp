@@ -60,6 +60,10 @@ void CScanCodes::Reset()
 	AddPair("sc_escape",    SDL_SCANCODE_ESCAPE);
 	AddPair("sc_space",     SDL_SCANCODE_SPACE, true);
 	AddPair("sc_delete",    SDL_SCANCODE_DELETE);
+	AddPair("sc_-",         SDL_SCANCODE_MINUS);
+	AddPair("sc_minus",     SDL_SCANCODE_MINUS);
+	AddPair("sc_=",         SDL_SCANCODE_EQUALS);
+	AddPair("sc_equals",    SDL_SCANCODE_EQUALS);
 
 	AddPair("sc_a",    SDL_SCANCODE_A);
 	AddPair("sc_b",    SDL_SCANCODE_B);
