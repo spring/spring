@@ -33,7 +33,7 @@ private:
 		int wt;
 	};
 
-	struct CCobThreadComp: public std::binary_function<const SleepingThread&, const SleepingThread&, bool> {
+	struct CCobThreadComp {
 	public:
 		bool operator() (const SleepingThread& a, const SleepingThread& b) const {
 			return (a.wt > b.wt);
