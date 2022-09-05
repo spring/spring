@@ -134,24 +134,24 @@ void CSmokeTrailProjectile::Draw()
 		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
 
 		AddEffectsQuad(
-			{ pos1   - (odir1 * size1),  texture->xstart, texture->ystart, col  },
-			{ pos1   + (odir1 * size1),  texture->xstart, texture->yend,   col  },
-			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
-			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 }
+			{ pos1   - (odir1 * size1), texture->xstart, texture->ystart, col  },
+			{ midpos - (odir3 * size3), midtexx        , texture->ystart, col3 },
+			{ midpos + (odir3 * size3), midtexx        , texture->yend  , col3 },
+			{ pos1   + (odir1 * size1), texture->xstart, texture->yend  , col  }
 		);
 
 		AddEffectsQuad(
-			{ midpos - (odir3 * size3), midtexx,         texture->ystart, col3 },
-			{ midpos + (odir3 * size3), midtexx,         texture->yend,   col3 },
-			{ pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2 },
-			{ pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2 }
+			{ midpos - (odir3 * size3), midtexx      ,   texture->ystart, col3 },
+			{ pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2 },
+			{ pos2   + (odir2 * size2), texture->xend,   texture->yend  , col2 },
+			{ midpos + (odir3 * size3), midtexx      ,   texture->yend  , col3 }
 		);
 	} else {
 		AddEffectsQuad(
-			{ pos1 - (odir1 * size1),   texture->xstart, texture->ystart, col  },
-			{ pos1 + (odir1 * size1),   texture->xstart, texture->yend,   col  },
-			{ pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2 },
-			{ pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2 }
+			{ pos1 - (odir1 * size1), texture->xstart, texture->ystart, col  },
+			{ pos2 - (odir2 * size2), texture->xend  , texture->ystart, col2 },
+			{ pos2 + (odir2 * size2), texture->xend  , texture->yend  , col2 },
+			{ pos1 + (odir1 * size1), texture->xstart, texture->yend  , col  }
 		);
 	}
 }

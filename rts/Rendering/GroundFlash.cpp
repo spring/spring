@@ -240,15 +240,16 @@ void CStandardGroundFlash::Draw()
 
 		color.a = Clamp(iAlpha, 0.0f, 1.0f) * 255;
 
-		const float3 p1 = pos + (-side1 - side2) * size;
-		const float3 p2 = pos + ( side1 - side2) * size;
-		const float3 p3 = pos + ( side1 + side2) * size;
-		const float3 p4 = pos + (-side1 + side2) * size;
+		const float3 p1 = pos + (-side1 + side2) * size;
+		const float3 p2 = pos + ( side1 + side2) * size;
+		const float3 p3 = pos + ( side1 - side2) * size;
+		const float3 p4 = pos + (-side1 - side2) * size;
+
 		AddEffectsQuad(
-			{ p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color },
-			{ p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color },
-			{ p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color },
-			{ p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color }
+			{ p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color },
+			{ p2, projectileDrawer->groundflashtex->xend  , projectileDrawer->groundflashtex->ystart, color },
+			{ p3, projectileDrawer->groundflashtex->xend  , projectileDrawer->groundflashtex->yend  , color },
+			{ p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend  , color }
 		);
 	}
 }

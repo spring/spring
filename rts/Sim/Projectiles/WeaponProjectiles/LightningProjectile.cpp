@@ -80,9 +80,9 @@ void CLightningProjectile::Draw()
 		#define WDV (&weaponDef->visuals)
 		AddEffectsQuad(
 			{ tempPosO + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col },
-			{ tempPosO + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col },
+			{ tempPos  + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col },
 			{ tempPos  + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col },
-			{ tempPos  + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col }
+			{ tempPosO + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col }
 		);
 		#undef WDV
 	}
@@ -96,9 +96,9 @@ void CLightningProjectile::Draw()
 		#define WDV (&weaponDef->visuals)
 		AddEffectsQuad(
 			{ tempPosO + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col },
-			{ tempPosO + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col },
+			{ tempPos  + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col },
 			{ tempPos  + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col },
-			{ tempPos  + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col }
+			{ tempPosO + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col }
 		);
 		#undef WDV
 	}

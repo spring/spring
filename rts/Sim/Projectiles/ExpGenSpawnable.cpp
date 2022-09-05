@@ -176,12 +176,38 @@ void CExpGenSpawnable::AddEffectsQuad(VA_TYPE_TC&& tl, VA_TYPE_TC&& tr, VA_TYPE_
 	float minS = std::numeric_limits<float>::max()   ; float minT = std::numeric_limits<float>::max()   ;
 	float maxS = std::numeric_limits<float>::lowest(); float maxT = std::numeric_limits<float>::lowest();
 
-	std::invoke([&minS, &minT, &maxS, &maxT](auto&&... args) {
-		((minS = std::min(minS, args.s)), ...);
-		((minT = std::min(minT, args.t)), ...);
-		((maxS = std::max(maxS, args.s)), ...);
-		((maxT = std::max(maxT, args.t)), ...);
-	}, std::forward<VA_TYPE_TC>(tl), std::forward<VA_TYPE_TC>(tr), std::forward<VA_TYPE_TC>(br), std::forward<VA_TYPE_TC>(bl));
+	std::array qpts = { std::forward<VA_TYPE_TC>(tl), std::forward<VA_TYPE_TC>(tr), std::forward<VA_TYPE_TC>(br), std::forward<VA_TYPE_TC>(bl) };
+	for (const auto& qpt : qpts) {
+		minS = std::min(minS, qpt.s);
+		minT = std::min(minT, qpt.t);
+		maxS = std::max(maxS, qpt.s);
+		maxT = std::max(maxT, qpt.t);
+	}
+
+	//TODO: remove me after all effects are battle-tested
+	const std::array uvRef = { float2{ minS, minT },  float2{ maxS, minT }, float2{ maxS, maxT },  float2{ minS, maxT } };
+
+	for (size_t i = 0; i < 4; ++i) {
+		if (uvRef[i] == float2{ qpts[i].s, qpts[i].t })
+			continue;
+
+#if 1
+		LOG_L(L_ERROR, "[%s] Internal Error: invalid effect quad winding/order, projectile type (%s)", __func__, this->GetClass()->name);
+		break;
+#endif
+// Fix inconsistency
+#if 0
+		for (size_t j = 0; j < 4; ++j) {
+			if (i == j)
+				continue;
+
+			if (uvRef[i] == float2{ qpts[j].s, qpts[j].t }) {
+				std::swap(qpts[i], qpts[j]);
+				break;
+			}
+		}
+#endif
+	}
 
 	auto& rb = GetPrimaryRenderBuffer();
 
@@ -191,9 +217,9 @@ void CExpGenSpawnable::AddEffectsQuad(VA_TYPE_TC&& tl, VA_TYPE_TC&& tr, VA_TYPE_
 
 	//pos, uvw, uvmm, col
 	rb.AddQuadTriangles(
-		{ tl.pos, layer, mm, animInfo, std::move(tl.c) },
-		{ tr.pos, layer, mm, animInfo, std::move(tr.c) },
-		{ br.pos, layer, mm, animInfo, std::move(br.c) },
-		{ bl.pos, layer, mm, animInfo, std::move(bl.c) }
+		{ qpts[0].pos, layer, mm, animInfo, qpts[0].c },
+		{ qpts[1].pos, layer, mm, animInfo, qpts[1].c },
+		{ qpts[2].pos, layer, mm, animInfo, qpts[2].c },
+		{ qpts[3].pos, layer, mm, animInfo, qpts[3].c }
 	);
 }

@@ -129,16 +129,16 @@ void CLargeBeamLaserProjectile::Draw()
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
-				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
+				{ pos2 - (xdir * beamEdgeSize), tex.xend  , tex.ystart, edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
-				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
+				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
-				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
+				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
-				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart }
+				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart }
 			);
 		} else {
 			// beam longer than one polygon
@@ -149,16 +149,16 @@ void CLargeBeamLaserProjectile::Draw()
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
-				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
+				{ pos2 - (xdir * beamEdgeSize), tex.xend  , tex.ystart, edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
-				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
+				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
-				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
+				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
-				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart }
+				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart }
 			);
 
 			// draw continous beam
@@ -170,16 +170,16 @@ void CLargeBeamLaserProjectile::Draw()
 
 				AddEffectsQuad(
 					{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
-					{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
+					{ pos2 - (xdir * beamEdgeSize), tex.xend  , tex.ystart, edgeColStart },
 					{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
-					{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
+					{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart }
 				);
 
 				AddEffectsQuad(
 					{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
-					{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
+					{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart },
 					{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
-					{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart }
+					{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart }
 				);
 			}
 
@@ -190,16 +190,16 @@ void CLargeBeamLaserProjectile::Draw()
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart },
-				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart },
+				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart },
 				{ pos2 + (xdir * beamEdgeSize), tex.xend  , tex.yend  , edgeColStart },
-				{ pos2 - (xdir * beamEdgeSize), tex.xend,   tex.ystart, edgeColStart }
+				{ pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
 				{ pos1 - (xdir * beamCoreSize), tex.xstart, tex.ystart, coreColStart },
-				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart },
+				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart },
 				{ pos2 + (xdir * beamCoreSize), tex.xend  , tex.yend  , coreColStart },
-				{ pos2 - (xdir * beamCoreSize), tex.xend  , tex.ystart, coreColStart }
+				{ pos1 + (xdir * beamCoreSize), tex.xstart, tex.yend  , coreColStart }
 			);
 		}
 	}
@@ -207,16 +207,16 @@ void CLargeBeamLaserProjectile::Draw()
 	if (validTextures[2]) {
 		AddEffectsQuad(
 			{ pos2 - (xdir * beamEdgeSize),                         WT2->xstart, WT2->ystart, edgeColStart },
-			{ pos2 + (xdir * beamEdgeSize),                         WT2->xstart, WT2->yend,   edgeColStart },
+			{ pos2 - (xdir * beamEdgeSize) + (ydir * beamEdgeSize), WT2->xend,   WT2->ystart, edgeColStart },
 			{ pos2 + (xdir * beamEdgeSize) + (ydir * beamEdgeSize), WT2->xend,   WT2->yend,   edgeColStart },
-			{ pos2 - (xdir * beamEdgeSize) + (ydir * beamEdgeSize), WT2->xend,   WT2->ystart, edgeColStart }
+			{ pos2 + (xdir * beamEdgeSize),                         WT2->xstart, WT2->yend,   edgeColStart }
 		);
 
 		AddEffectsQuad(
 			{ pos2 - (xdir * beamCoreSize),                         WT2->xstart, WT2->ystart, coreColStart },
-			{ pos2 + (xdir * beamCoreSize),                         WT2->xstart, WT2->yend,   coreColStart },
+			{ pos2 - (xdir * beamCoreSize) + (ydir * beamCoreSize), WT2->xend,   WT2->ystart, coreColStart },
 			{ pos2 + (xdir * beamCoreSize) + (ydir * beamCoreSize), WT2->xend,   WT2->yend,   coreColStart },
-			{ pos2 - (xdir * beamCoreSize) + (ydir * beamCoreSize), WT2->xend,   WT2->ystart, coreColStart }
+			{ pos2 + (xdir * beamCoreSize),                         WT2->xstart, WT2->yend,   coreColStart }
 		);
 	}
 

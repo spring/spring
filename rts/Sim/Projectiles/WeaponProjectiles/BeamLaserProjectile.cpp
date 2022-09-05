@@ -124,63 +124,63 @@ void CBeamLaserProjectile::Draw()
 	if (playerCamDistSq < Square(1000.0f)) {
 		if (validTextures[2]) {
 			AddEffectsQuad(
-				{ pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart },
-				{ pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart },
-				{ pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart },
-				{ pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart }
+				{ pos1 - xdir * beamEdgeSize,                       midtexx  , WT2->ystart, edgeColStart },
+				{ pos1 - xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart },
+				{ pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend  , edgeColStart },
+				{ pos1 + xdir * beamEdgeSize,                       midtexx  , WT2->yend  , edgeColStart }
 			);
 			AddEffectsQuad(
-				{ pos1 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart },
-				{ pos1 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart },
-				{ pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart },
-				{ pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart }
+				{ pos1 - xdir * beamCoreSize,                       midtexx  , WT2->ystart, coreColStart },
+				{ pos1 - xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart },
+				{ pos1 + xdir * beamCoreSize - ydir * beamCoreSize, WT2->xend, WT2->yend  , coreColStart },
+				{ pos1 + xdir * beamCoreSize,                       midtexx  , WT2->yend  , coreColStart }
 			);
 
 		}
 		if (validTextures[1]) {
 			AddEffectsQuad(
 				{ pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart },
-				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart },
-				{ pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd },
-				{ pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd }
+				{ pos2 - xdir * beamEdgeSize,                       WT1->xend  , WT1->ystart, edgeColEnd   },
+				{ pos2 + xdir * beamEdgeSize,                       WT1->xend  , WT1->yend  , edgeColEnd   },
+				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
 				{ pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart },
-				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart },
-				{ pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd },
-				{ pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd }
+				{ pos2 - xdir * beamCoreSize,                       WT1->xend  , WT1->ystart, coreColEnd   },
+				{ pos2 + xdir * beamCoreSize,                       WT1->xend  , WT1->yend  , coreColEnd   },
+				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend  , coreColStart }
 			);
 		}
 		if (validTextures[2]) {
 			AddEffectsQuad(
-				{ pos2 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart },
-				{ pos2 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart },
-				{ pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart },
-				{ pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart }
+				{ pos2 - xdir * beamEdgeSize,                       midtexx  , WT2->ystart, edgeColStart },
+				{ pos2 - xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->ystart, edgeColStart },
+				{ pos2 + xdir * beamEdgeSize + ydir * beamEdgeSize, WT2->xend, WT2->yend  , edgeColStart },
+				{ pos2 + xdir * beamEdgeSize,                       midtexx  , WT2->yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
-				{ pos2 - xdir * beamCoreSize,                       midtexx,   WT2->ystart, coreColStart },
-				{ pos2 + xdir * beamCoreSize,                       midtexx,   WT2->yend,   coreColStart },
-				{ pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend,   coreColStart },
-				{ pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart }
+				{ pos2 - xdir * beamCoreSize,                       midtexx  , WT2->ystart, coreColStart },
+				{ pos2 - xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->ystart, coreColStart },
+				{ pos2 + xdir * beamCoreSize + ydir * beamCoreSize, WT2->xend, WT2->yend  , coreColStart },
+				{ pos2 + xdir * beamCoreSize,                       midtexx  , WT2->yend  , coreColStart }
 			);
 		}
 	} else {
 		if (validTextures[1]) {
 			AddEffectsQuad(
 				{ pos1 - xdir * beamEdgeSize,                       WT1->xstart, WT1->ystart, edgeColStart },
-				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend,   edgeColStart },
-				{ pos2 + xdir * beamEdgeSize,                       WT1->xend,   WT1->yend,   edgeColEnd },
-				{ pos2 - xdir * beamEdgeSize,                       WT1->xend,   WT1->ystart, edgeColEnd }
+				{ pos2 - xdir * beamEdgeSize,                       WT1->xend  , WT1->ystart, edgeColEnd   },
+				{ pos2 + xdir * beamEdgeSize,                       WT1->xend  , WT1->yend  , edgeColEnd   },
+				{ pos1 + xdir * beamEdgeSize,                       WT1->xstart, WT1->yend  , edgeColStart }
 			);
 
 			AddEffectsQuad(
 				{ pos1 - xdir * beamCoreSize,                       WT1->xstart, WT1->ystart, coreColStart },
-				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend,   coreColStart },
-				{ pos2 + xdir * beamCoreSize,                       WT1->xend,   WT1->yend,   coreColEnd },
-				{ pos2 - xdir * beamCoreSize,                       WT1->xend,   WT1->ystart, coreColEnd }
+				{ pos2 - xdir * beamCoreSize,                       WT1->xend  , WT1->ystart, coreColEnd   },
+				{ pos2 + xdir * beamCoreSize,                       WT1->xend  , WT1->yend  , coreColEnd   },
+				{ pos1 + xdir * beamCoreSize,                       WT1->xstart, WT1->yend  , coreColStart }
 			);
 		}
 	}
