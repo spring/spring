@@ -16,9 +16,9 @@ out float vBF;
 // gl_VertexID with glDrawElements represents vertex index not indices, so just specify the full quad
 const vec2 vertUVs[4] = vec2[4](
 	vec2(0.0, 0.0),
-	vec2(0.0, 1.0),
+	vec2(1.0, 0.0),
 	vec2(1.0, 1.0),
-	vec2(1.0, 0.0)
+	vec2(0.0, 1.0)
 );
 
 void main() {
