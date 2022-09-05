@@ -516,6 +516,7 @@ void CGroundMoveType::UpdatePreCollisions()
 			break;
 		case 3:
 			ChangeSpeed(0.0f, false);
+			setHeading = 0;
 			break;
 	}
 
