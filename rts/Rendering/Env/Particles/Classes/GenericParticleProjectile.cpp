@@ -5,6 +5,7 @@
 #include "GenericParticleProjectile.h"
 #include "Rendering/GL/RenderBuffers.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/creg/DefTypes.h"
 
@@ -12,7 +13,7 @@ CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
-	CR_MEMBER(texture),
+	CR_IGNORED(texture),
 	CR_MEMBER(colorMap),
 	CR_MEMBER(directional),
 	CR_MEMBER(life),
@@ -20,7 +21,8 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(size),
 	CR_MEMBER(airdrag),
 	CR_MEMBER(sizeGrowth),
-	CR_MEMBER(sizeMod)
+	CR_MEMBER(sizeMod),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -44,6 +46,15 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	deleteMe  = false;
 }
 
+void CGenericParticleProjectile::Serialize(creg::ISerializer* s)
+{
+	std::string name;
+	if (s->IsWriting())
+		name = projectileDrawer->textureAtlas->GetTextureName(texture);
+	creg::GetType(name)->Serialize(s, &name);
+	if (!s->IsWriting())
+		texture = projectileDrawer->textureAtlas->GetTexturePtr(name);
+}
 
 void CGenericParticleProjectile::Update()
 {

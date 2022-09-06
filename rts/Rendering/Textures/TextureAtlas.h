@@ -80,6 +80,7 @@ public:
 			memTextures = std::move(ta.memTextures);
 			files = std::move(ta.files);
 			textures = std::move(ta.textures);
+			texToName = std::move(ta.texToName);
 			atlasTexID = ta.atlasTexID;
 			initialized = ta.initialized;
 			freeTexture = ta.freeTexture;
@@ -144,6 +145,8 @@ public:
 	 *         otherwise return a backup texture.
 	 */
 	AtlasedTexture& GetTextureWithBackup(const std::string& name, const std::string& backupName);
+
+	std::string GetTextureName(AtlasedTexture* tex);
 
 
 	IAtlasAllocator* GetAllocator() { return atlasAllocator; }
@@ -213,6 +216,7 @@ protected:
 
 	spring::unordered_map<std::string, size_t> files;
 	spring::unordered_map<std::string, AtlasedTexture> textures;
+	spring::unordered_map<AtlasedTexture*, std::string> texToName;  // non-creg serialization
 
 	uint32_t atlasTexID = 0;
 

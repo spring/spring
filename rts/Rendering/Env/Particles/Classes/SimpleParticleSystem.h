@@ -19,6 +19,8 @@ public:
 	CSimpleParticleSystem();
 	virtual ~CSimpleParticleSystem() { particles.clear(); }
 
+	void Serialize(creg::ISerializer* s);
+
 	void Draw() override;
 	void Update() override;
 	void Init(const CUnit* owner, const float3& offset) override;

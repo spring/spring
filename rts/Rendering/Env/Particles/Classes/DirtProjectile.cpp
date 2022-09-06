@@ -23,8 +23,9 @@ CR_REG_METADATA(CDirtProjectile,
 		CR_MEMBER(sizeExpansion),
 		CR_MEMBER(slowdown),
 		CR_MEMBER(color),
-		CR_MEMBER(texture),
-	CR_MEMBER_ENDFLAG(CM_Config)
+		CR_IGNORED(texture),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -62,6 +63,16 @@ CDirtProjectile::CDirtProjectile() :
 	texture = projectileDrawer->randdotstex;
 }
 
+void CDirtProjectile::Serialize(creg::ISerializer* s)
+{
+	std::string name;
+	if (s->IsWriting())
+		name = projectileDrawer->textureAtlas->GetTextureName(texture);
+	creg::GetType(name)->Serialize(s, &name);
+	if (!s->IsWriting())
+		texture = name.empty() ? projectileDrawer->randdotstex
+				: projectileDrawer->textureAtlas->GetTexturePtr(name);
+}
 
 void CDirtProjectile::Update()
 {

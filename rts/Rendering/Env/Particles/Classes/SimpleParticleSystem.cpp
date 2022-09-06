@@ -25,7 +25,7 @@ CR_REG_METADATA(CSimpleParticleSystem,
 		CR_MEMBER(emitMul),
 		CR_MEMBER(gravity),
 		CR_MEMBER(colorMap),
-		CR_MEMBER(texture),
+		CR_IGNORED(texture),
 		CR_MEMBER(airdrag),
 		CR_MEMBER(particleLife),
 		CR_MEMBER(particleLifeSpread),
@@ -40,7 +40,8 @@ CR_REG_METADATA(CSimpleParticleSystem,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizeMod),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_MEMBER(particles)
+	CR_MEMBER(particles),
+	CR_SERIALIZER(Serialize)
 ))
 
 CR_BIND(CSimpleParticleSystem::Particle, )
@@ -81,6 +82,16 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 {
 	checkCol = false;
 	useAirLos = true;
+}
+
+void CSimpleParticleSystem::Serialize(creg::ISerializer* s)
+{
+	std::string name;
+	if (s->IsWriting())
+		name = projectileDrawer->textureAtlas->GetTextureName(texture);
+	creg::GetType(name)->Serialize(s, &name);
+	if (!s->IsWriting())
+		texture = projectileDrawer->textureAtlas->GetTexturePtr(name);
 }
 
 void CSimpleParticleSystem::Draw()

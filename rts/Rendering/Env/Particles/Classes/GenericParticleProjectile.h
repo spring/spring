@@ -20,6 +20,8 @@ public:
 		const float3& speed
 	);
 
+	void Serialize(creg::ISerializer* s);
+
 	void Draw() override;
 	void Update() override;
 

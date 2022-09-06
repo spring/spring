@@ -31,7 +31,8 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawSegmented),
 	CR_MEMBER(firstSegment),
 	CR_MEMBER(lastSegment),
-	CR_MEMBER(texture)
+	CR_IGNORED(texture),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -75,6 +76,11 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10.0f);
 }
 
+void CSmokeTrailProjectile::Serialize(creg::ISerializer* s)
+{
+	if (!s->IsWriting())
+		texture = projectileDrawer->smoketrailtex;
+}
 
 void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
 {

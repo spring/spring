@@ -19,15 +19,16 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 (
 	CR_MEMBER(invttl),
 	CR_MEMBER_BEGINFLAG(CM_Config),
-		CR_MEMBER(sideTexture),
-		CR_MEMBER(frontTexture),
+		CR_IGNORED(sideTexture),
+		CR_IGNORED(frontTexture),
 		CR_MEMBER(colorMap),
 		CR_MEMBER(size),
 		CR_MEMBER(length),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
 		CR_MEMBER(frontOffset),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_SERIALIZER(Serialize)
 ))
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame()
@@ -45,6 +46,21 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	useAirLos = true;
 	checkCol  = false;
 	deleteMe  = false;
+}
+
+void CBitmapMuzzleFlame::Serialize(creg::ISerializer* s)
+{
+	std::string sideName, frontName;
+	if (s->IsWriting()) {
+		sideName = projectileDrawer->textureAtlas->GetTextureName(sideTexture);
+		frontName = projectileDrawer->textureAtlas->GetTextureName(frontTexture);
+	}
+	creg::GetType(sideName)->Serialize(s, &sideName);
+	creg::GetType(frontName)->Serialize(s, &frontName);
+	if (!s->IsWriting()) {
+		sideTexture = projectileDrawer->textureAtlas->GetTexturePtr(sideName);
+		frontTexture = projectileDrawer->textureAtlas->GetTexturePtr(frontName);
+	}
 }
 
 void CBitmapMuzzleFlame::Draw()

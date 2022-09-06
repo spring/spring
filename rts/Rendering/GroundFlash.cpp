@@ -47,12 +47,13 @@ CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (ZeroVector, 1, 0, 1, 1, 1, Z
 CR_REG_METADATA(CSeismicGroundFlash, (
 	CR_MEMBER(side1),
 	CR_MEMBER(side2),
-	CR_MEMBER(texture),
+	CR_IGNORED(texture),
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(alpha),
 	CR_MEMBER(fade),
 	CR_MEMBER(ttl),
-	CR_MEMBER(color)
+	CR_MEMBER(color),
+	CR_SERIALIZER(Serialize)
 ))
 
 CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, )
@@ -66,8 +67,9 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
 		CR_MEMBER(colorMap),
-		CR_MEMBER(texture),
-	CR_MEMBER_ENDFLAG(CM_Config)
+		CR_IGNORED(texture),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -282,6 +284,16 @@ CSimpleGroundFlash::CSimpleGroundFlash()
 
 }
 
+void CSimpleGroundFlash::Serialize(creg::ISerializer* s)
+{
+	std::string name;
+	if (s->IsWriting())
+		name = projectileDrawer->groundFXAtlas->GetTextureName(texture);
+	creg::GetType(name)->Serialize(s, &name);
+	if (!s->IsWriting())
+		texture = projectileDrawer->groundFXAtlas->GetTexturePtr(name);
+}
+
 void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 {
 	pos += offset;
@@ -388,6 +400,12 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	side2 = side1.cross(normal);
 
 	projectileHandler.AddGroundFlash(this);
+}
+
+void CSeismicGroundFlash::Serialize(creg::ISerializer* s)
+{
+	if (!s->IsWriting())
+		texture = projectileDrawer->seismictex;
 }
 
 void CSeismicGroundFlash::Draw()

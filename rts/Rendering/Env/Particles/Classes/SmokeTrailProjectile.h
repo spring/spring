@@ -28,6 +28,8 @@ public:
 		bool castShadow = true
 	);
 
+	void Serialize(creg::ISerializer* s);
+
 	void Update() override;
 	void Draw() override;
 

@@ -15,6 +15,8 @@ class CBitmapMuzzleFlame : public CProjectile
 public:
 	CBitmapMuzzleFlame();
 
+	void Serialize(creg::ISerializer* s);
+
 	void Draw() override;
 	void Update() override;
 

@@ -93,6 +93,8 @@ public:
 
 	CSimpleGroundFlash();
 
+	void Serialize(creg::ISerializer* s);
+
 	void Init(const CUnit* owner, const float3& offset) override;
 	void Draw() override;
 	bool Update() override;
@@ -132,6 +134,8 @@ public:
 		float _alpha,
 		const float3& _color
 	);
+
+	void Serialize(creg::ISerializer* s);
 
 	void Draw() override;
 	/// @return false when it should be deleted

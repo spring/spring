@@ -296,6 +296,16 @@ AtlasedTexture& CTextureAtlas::GetTextureWithBackup(const std::string& name, con
 	return CTextureAtlas::dummy;
 }
 
+std::string CTextureAtlas::GetTextureName(AtlasedTexture* tex)
+{
+	if (texToName.empty()) {
+		for (auto& kv : textures)
+			texToName[&kv.second] = kv.first;
+	}
+	const auto it = texToName.find(tex);
+	return (it != texToName.end()) ? it->second : "";
+}
+
 int2 CTextureAtlas::GetSize() const {
 	return (atlasAllocator->GetAtlasSize());
 }

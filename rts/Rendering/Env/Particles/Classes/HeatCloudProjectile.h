@@ -21,6 +21,8 @@ public:
 		const float size
 	);
 
+	void Serialize(creg::ISerializer* s);
+
 	void Draw() override;
 	void Update() override;
 

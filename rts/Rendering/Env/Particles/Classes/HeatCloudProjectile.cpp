@@ -23,8 +23,9 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizemod),
 		CR_MEMBER(sizemodmod),
-		CR_MEMBER(texture),
-	CR_MEMBER_ENDFLAG(CM_Config)
+		CR_IGNORED(texture),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -66,6 +67,16 @@ CHeatCloudProjectile::CHeatCloudProjectile(
 	SetRadiusAndHeight(size + sizeGrowth * heat / heatFalloff, 0.0f);
 }
 
+void CHeatCloudProjectile::Serialize(creg::ISerializer* s)
+{
+	std::string name;
+	if (s->IsWriting())
+		name = projectileDrawer->textureAtlas->GetTextureName(texture);
+	creg::GetType(name)->Serialize(s, &name);
+	if (!s->IsWriting())
+		texture = name.empty() ? projectileDrawer->heatcloudtex
+				: projectileDrawer->textureAtlas->GetTexturePtr(name);
+}
 
 void CHeatCloudProjectile::Update()
 {
