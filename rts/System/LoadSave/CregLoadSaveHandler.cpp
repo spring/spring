@@ -12,6 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
@@ -236,6 +237,10 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 {
 #ifdef USING_CREG
 	LOG("[LSH::%s] saving game to \"%s\"", __func__, path.c_str());
+
+	// NB: Selection leaves CObject reference as Unit's listener,
+	//     But isn't serialized - leak on load.
+	selectedUnitsHandler.ClearSelected();
 
 	try {
 		std::stringstream oss;
