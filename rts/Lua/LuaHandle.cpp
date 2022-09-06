@@ -1236,7 +1236,7 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	static bool returnValueDeprecationWarningIssued = false;
+	static int returnValueDeprecationWarningIssued = -1;
 
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty())
@@ -1265,9 +1265,9 @@ bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	if (lua_isnone(L, -1))
 		return false;
 
-	if (!returnValueDeprecationWarningIssued) {
+	if (returnValueDeprecationWarningIssued < gs->frameNum) {
 		LOG_L(L_ERROR, "[%s] return value is deprecated and ignored.", __func__);
-		returnValueDeprecationWarningIssued = true;
+		returnValueDeprecationWarningIssued = gs->frameNum;
 	}
 
 	const bool ret = luaL_optboolean(L, -1, false);
@@ -1277,7 +1277,7 @@ bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 bool CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	static bool returnValueDeprecationWarningIssued = false;
+	static int returnValueDeprecationWarningIssued = -1;
 
 	// if empty, we are not a LuaHandleSynced (and must always return false)
 	if (watchUnitDefs.empty())
@@ -1308,9 +1308,9 @@ bool CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	if (lua_isnone(L, -1))
 		return false;
 
-	if (!returnValueDeprecationWarningIssued) {
+	if (returnValueDeprecationWarningIssued < gs->frameNum) {
 		LOG_L(L_ERROR, "[%s] return value is deprecated and ignored.", __func__);
-		returnValueDeprecationWarningIssued = true;
+		returnValueDeprecationWarningIssued = gs->frameNum;
 	}
 
 	const bool ret = luaL_optboolean(L, -1, false);
