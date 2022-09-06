@@ -2568,7 +2568,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			killUnits.push_back(collidee);
 
-		collidedUnits.push_back(collidee);
+		// Only trigger this event once for each colliding pair of units.
+		if (collider->id < collidee->id)
+			collidedUnits.push_back(collidee);
 
 		if (collideeMobile)
 			HandleUnitCollisionsAux(collider, collidee, this, static_cast<CGroundMoveType*>(collidee->moveType));
