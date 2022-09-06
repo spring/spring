@@ -95,9 +95,9 @@ void CExploSpikeProjectile::Draw()
 
 	#define let projectileDrawer->laserendtex
 	AddEffectsQuad(
-		{ drawPos + l + w, let->xend,   let->yend,   col },
-		{ drawPos + l - w, let->xend,   let->ystart, col },
 		{ drawPos - l - w, let->xstart, let->ystart, col },
+		{ drawPos + l - w, let->xend,   let->ystart, col },
+		{ drawPos + l + w, let->xend,   let->yend,   col },
 		{ drawPos - l + w, let->xstart, let->yend,   col }
 	);
 	#undef let
