@@ -97,9 +97,9 @@ void CWakeProjectile::Draw()
 	#define wt projectileDrawer->waketex
 	AddEffectsQuad(
 		{ drawPos + dir1 + dir2, wt->xstart, wt->ystart, col },
-		{ drawPos + dir1 - dir2, wt->xstart, wt->yend,   col },
+		{ drawPos - dir1 + dir2, wt->xend,   wt->ystart, col },
 		{ drawPos - dir1 - dir2, wt->xend,   wt->yend,   col },
-		{ drawPos - dir1 + dir2, wt->xend,   wt->ystart, col }
+		{ drawPos + dir1 - dir2, wt->xstart, wt->yend,   col }
 	);
 	#undef wt
 }
