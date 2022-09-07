@@ -1003,6 +1003,8 @@ EXPORT(bool             ) skirmishAiCallback_FeatureDef_isDestructable(int skirm
 
 EXPORT(bool             ) skirmishAiCallback_FeatureDef_isReclaimable(int skirmishAIId, int featureDefId);
 
+EXPORT(bool             ) skirmishAiCallback_FeatureDef_isAutoreclaimable(int skirmishAIId, int featureDefId);
+
 EXPORT(bool             ) skirmishAiCallback_FeatureDef_isBlocking(int skirmishAIId, int featureDefId);
 
 EXPORT(bool             ) skirmishAiCallback_FeatureDef_isBurnable(int skirmishAIId, int featureDefId);

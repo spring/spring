@@ -1830,6 +1830,8 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *FeatureDef_isReclaimable)(int skirmishAIId, int featureDefId);
 
+	bool              (CALLING_CONV *FeatureDef_isAutoreclaimable)(int skirmishAIId, int featureDefId);
+
 	bool              (CALLING_CONV *FeatureDef_isBlocking)(int skirmishAIId, int featureDefId);
 
 	bool              (CALLING_CONV *FeatureDef_isBurnable)(int skirmishAIId, int featureDefId);

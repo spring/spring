@@ -4137,6 +4137,10 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isReclaimable(int skirmishAIId, int f
 	return getFeatureDefById(skirmishAIId, featureDefId)->reclaimable;
 }
 
+EXPORT(bool) skirmishAiCallback_FeatureDef_isAutoreclaimable(int skirmishAIId, int featureDefId) {
+	return getFeatureDefById(skirmishAIId, featureDefId)->autoreclaim;
+}
+
 EXPORT(bool) skirmishAiCallback_FeatureDef_isBlocking(int skirmishAIId, int featureDefId) {
 	return getFeatureDefById(skirmishAIId, featureDefId)->collidable;
 }
@@ -5520,6 +5524,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->FeatureDef_getSmokeTime = &skirmishAiCallback_FeatureDef_getSmokeTime;
 	callback->FeatureDef_isDestructable = &skirmishAiCallback_FeatureDef_isDestructable;
 	callback->FeatureDef_isReclaimable = &skirmishAiCallback_FeatureDef_isReclaimable;
+	callback->FeatureDef_isAutoreclaimable = &skirmishAiCallback_FeatureDef_isAutoreclaimable;
 	callback->FeatureDef_isBlocking = &skirmishAiCallback_FeatureDef_isBlocking;
 	callback->FeatureDef_isBurnable = &skirmishAiCallback_FeatureDef_isBurnable;
 	callback->FeatureDef_isFloating = &skirmishAiCallback_FeatureDef_isFloating;
