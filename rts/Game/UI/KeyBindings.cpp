@@ -880,7 +880,7 @@ void CKeyBindings::BuildHotkeyMap()
 
 	for (const auto& action: GetActionList()) {
 		HotkeyList& hl = hotkeys[action.command + (action.extra.empty() ? "" : " " + action.extra)];
-		hl.insert(action.boundWith);
+		hl.push_back(action.boundWith);
 	}
 }
 
