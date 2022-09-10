@@ -1110,7 +1110,7 @@ int32_t CBitmap::ExtFmtToChannels(int32_t extFmt) { return 0; }
 uint32_t CBitmap::GetDataTypeSize() const { return 0; }
 #endif
 
-bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t reqChannel, uint32_t reqDataType)
+bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t reqChannel, uint32_t reqDataType, bool forceReplaceAlpha)
 {
 	bool isLoaded = false;
 	bool isValid  = false;
@@ -1226,7 +1226,8 @@ bool CBitmap::Load(std::string const& filename, float defaultAlpha, uint32_t req
 			uint32_t numChannels = bytesPerPixel / bytesPerChannel;
 			assert(numChannels > 0 && numChannels <= 4);
 
-			hasAlpha = (numChannels == 4) || (currFormat == IL_LUMINANCE_ALPHA);
+			hasAlpha  = (numChannels == 4) || (currFormat == IL_LUMINANCE_ALPHA);
+			hasAlpha &= !forceReplaceAlpha;
 
 			// FPU control word has to be restored as well
 			streflop::streflop_init<streflop::Simple>();

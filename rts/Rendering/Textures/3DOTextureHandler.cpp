@@ -239,7 +239,7 @@ TexFile C3DOTextureHandler::CreateTex(const std::string& name, const std::string
 {
 	TexFile texFile;
 	static constexpr float defaultAlpha = 30.0f / 255.0f;
-	texFile.tex.Load(name, defaultAlpha);
+	texFile.tex.Load(name, defaultAlpha, 4, GL_UNSIGNED_BYTE, true);
 	texFile.name = name2;
 
 	texFile.tex2.Alloc(texFile.tex.xsize, texFile.tex.ysize);
