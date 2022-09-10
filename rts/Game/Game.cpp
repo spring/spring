@@ -1600,6 +1600,8 @@ void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
 	ASSERT_SYNCED(gsRNG.GetGenState());
 
+	DumpRNG(-1, -1);
+
 	good_fpu_control_registers("CGame::SimFrame");
 
 	// note: starts at -1, first actual frame is 0

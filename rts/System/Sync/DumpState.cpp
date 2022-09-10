@@ -33,11 +33,6 @@
 #include "System/Log/ILog.h"
 #include "System/SpringHash.h"
 
-static std::fstream file;
-
-static int gMinFrameNum = -1;
-static int gMaxFrameNum = -1;
-static int gFramePeriod =  1;
 static bool onlyHash = true;
 
 namespace {
@@ -117,6 +112,11 @@ namespace {
 void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod, bool outputFloats)
 {
 	onlyHash = !outputFloats;
+
+	static std::fstream file;
+	static int gMinFrameNum = -1;
+	static int gMaxFrameNum = -1;
+	static int gFramePeriod =  1;
 
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
@@ -494,4 +494,82 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod, bool 
 	#endif
 
 	file.flush();
+	if (gs->frameNum == gMaxFrameNum)
+		file.close();
+}
+
+void DumpRNG(int newMinFrameNum, int newMaxFrameNum)
+{
+	static std::fstream file;
+	static int gMinFrameNum = -1;
+	static int gMaxFrameNum = -1;
+
+	const int oldMinFrameNum = gMinFrameNum;
+	const int oldMaxFrameNum = gMaxFrameNum;
+
+	if (!gs->cheatEnabled)
+		return;
+	// check if the range is valid
+	if (newMaxFrameNum < newMinFrameNum)
+		return;
+
+
+	// adjust the bounds if the new values are valid
+	if (newMinFrameNum >= 0) gMinFrameNum = newMinFrameNum;
+	if (newMaxFrameNum >= 0) gMaxFrameNum = newMaxFrameNum;
+
+	if ((gMinFrameNum != oldMinFrameNum) || (gMaxFrameNum != oldMaxFrameNum)) {
+		LOG("[%s] dumping RNG state (from %d to %d)", __func__, gMinFrameNum, gMaxFrameNum);
+		// bounds changed, open a new file
+		if (file.is_open()) {
+			file.flush();
+			file.close();
+		}
+
+		std::string name = (gameServer != nullptr) ? "Server" : "Client";
+		name += "SyncedRNG-";
+		name += IntToString(guRNG.NextInt());
+		name += "-[";
+		name += IntToString(gMinFrameNum);
+		name += "-";
+		name += IntToString(gMaxFrameNum);
+		name += "].txt";
+
+		file.open(name.c_str(), std::ios::out);
+
+		if (file.is_open()) {
+			file << " mapName: " << gameSetup->mapName << "\n";
+			file << " modName: " << gameSetup->modName << "\n";
+			file << "minFrame: " << gMinFrameNum << "\n";
+			file << "maxFrame: " << gMaxFrameNum << "\n";
+			file << "randSeed: " << gsRNG.GetLastSeed() << "\n";
+			file << "initSeed: " << gsRNG.GetInitSeed() << "\n";
+		}
+
+		LOG("[%s] using RNG dump-file \"%s\"", __func__, name.c_str());
+	}
+
+	if (file.bad() || !file.is_open())
+		return;
+
+	if (gs->frameNum == gMaxFrameNum + 1) { //close the file and remove debug callback early next frame after gMaxFrameNum
+		gsRNG.SetDebug();
+		file.close();
+	}
+	// check if the CURRENT frame lies within the bounds
+	if (gs->frameNum < gMinFrameNum)
+		return;
+	if (gs->frameNum > gMaxFrameNum)
+		return;
+
+	//must be static to not get destroyed when the function scope is lost
+	static auto fcb = [](auto N, auto R) {
+		file << "N=" << N << ", R=" << R << "\n";
+	};
+
+	if (gs->frameNum == gMinFrameNum)
+		gsRNG.SetDebug(fcb);
+
+	file.flush(); //before the next frame begins
+	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
 }

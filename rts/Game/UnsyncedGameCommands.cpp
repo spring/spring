@@ -3286,6 +3286,26 @@ public:
 	}
 };
 
+class DumpRNGActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DumpRNGActionExecutor() : IUnsyncedActionExecutor("DumpRNG", "dump SyncedRNG-state to file") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs());
+
+		switch (args.size()) {
+		case 1: { DumpRNG(StringToInt(args[0]), StringToInt(args[0])); } break;
+		case 2: { DumpRNG(StringToInt(args[0]), StringToInt(args[1])); } break;
+		default: {
+			LOG_L(L_WARNING, "/DumpRNG: wrong syntax");
+		} break;
+		}
+
+		return true;
+	}
+};
+
 
 
 /// /save [-y ]<savename>
@@ -3815,6 +3835,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<DestroyActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SendActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DumpStateActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DumpRNGActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(true));
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));
 	AddActionExecutor(AllocActionExecutor<ReloadShadersActionExecutor>());

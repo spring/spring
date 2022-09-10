@@ -93,12 +93,12 @@ private:
 	val_type seq;
 };
 
-
-
 template<typename RNG, bool synced> class CGlobalRNG {
 public:
 	typedef typename RNG::val_type rng_val_type;
 	typedef typename RNG::res_type rng_res_type;
+
+	using FuncCB = void (*)(rng_res_type, rng_res_type);
 
 	static_assert(std::numeric_limits<float>::digits == 24, "sign plus mantissa bits should be 24");
 
@@ -117,8 +117,8 @@ public:
 	rng_val_type GetGenState() const { return (gen.state()); }
 
 	// needed for std::{random_}shuffle
-	rng_res_type operator()(              ) { return (gen. next( )); }
-	rng_res_type operator()(rng_res_type N) { return (gen.bnext(N)); }
+	rng_res_type operator()(              ) { return (this->*gnext )( ); }
+	rng_res_type operator()(rng_res_type N) { return (this->*gbnext)(N); }
 
 	static constexpr rng_res_type  min() { return RNG::min_res; }
 	static constexpr rng_res_type  max() { return RNG::max_res; }
@@ -144,8 +144,23 @@ public:
 		return ret;
 	}
 
+	void SetDebug(FuncCB fcb = nullptr) {
+		this->fcb = fcb;
+		gnext  = (fcb == nullptr) ? &CGlobalRNG::gnext_r  : &CGlobalRNG::gnext_d;
+		gbnext = (fcb == nullptr) ? &CGlobalRNG::gbnext_r : &CGlobalRNG::gbnext_d;
+	}
 private:
 	RNG gen;
+
+	FuncCB fcb = nullptr;
+
+	inline rng_res_type gnext_r() { return gen.next(); }
+	inline rng_res_type gnext_d() { rng_res_type R = gen.next(); fcb(0, R); return R; }
+	inline rng_res_type gbnext_r(rng_res_type N) { return gen.bnext(N); }
+	inline rng_res_type gbnext_d(rng_res_type N) { rng_res_type R = gen.bnext(N); fcb(N, R); return R; }
+
+	decltype(&CGlobalRNG::gnext_r )  gnext = &CGlobalRNG::gnext_r;
+	decltype(&CGlobalRNG::gbnext_r) gbnext = &CGlobalRNG::gbnext_r;
 
 	// initial and last-set seed
 	rng_val_type initSeed = 0;
@@ -154,7 +169,7 @@ private:
 
 
 // synced and unsynced RNG's no longer need to be different types
-typedef CGlobalRNG<PCG32, true> CGlobalSyncedRNG;
+typedef CGlobalRNG<PCG32, true > CGlobalSyncedRNG;
 typedef CGlobalRNG<PCG32, false> CGlobalUnsyncedRNG;
 
 #endif
