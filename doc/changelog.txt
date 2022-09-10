@@ -5,6 +5,8 @@ Spring changelog
 -- 106.0 --------------------------------------------------------
 
 Lua:
+ - Add Spring.GetKeyFromScanSymbol(scanSymbol) that receives a scancode and
+   returns the users correspondent key in the current keyboard layout
  - allow empty argument for Spring.GetKeyBindings to return all keybindings
  - `firestarter` weapon tag no longer capped at 10000 in defs (which
    becomes 100 in Lua after rescale). Now uncapped.

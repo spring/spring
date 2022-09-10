@@ -71,6 +71,7 @@
 #include "System/Platform/SDL1_keysym.h"
 #include "System/Platform/Misc.h"
 #include "System/Sound/ISoundChannels.h"
+#include "System/StringUtil.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedResource.h"
 
@@ -82,6 +83,7 @@
 #include <cctype>
 #include <algorithm>
 
+#include <SDL_keyboard.h>
 #include <SDL_clipboard.h>
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
@@ -226,6 +228,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(GetMouseStartPosition);
 
+	REGISTER_LUA_CFUNC(GetKeyFromScanSymbol);
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
@@ -2537,6 +2540,35 @@ int LuaUnsyncedRead::IsUserWriting(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+int LuaUnsyncedRead::GetKeyFromScanSymbol(lua_State* L)
+{
+	const std::string& symbol = StringToLower(luaL_optstring(L, 1, ""));
+
+	std::string result = "";
+
+	if (symbol.empty()) {
+		lua_pushstring(L, result.c_str());
+		return 1;
+	}
+
+	SDL_Scancode scanCode = (SDL_Scancode)scanCodes.GetCode(symbol);
+	if (scanCode <= 0) {
+		lua_pushstring(L, result.c_str());
+		return 1;
+	}
+
+	SDL_Keycode keyCode = (SDL_Keycode)SDL_GetKeyFromScancode(scanCode);
+	if (keyCode <= 0 || keyCode == 0x40000000) {
+		lua_pushstring(L, result.c_str());
+		return 1;
+	}
+
+	result = keyCodes.GetDefaultName(keyCode);
+
+	lua_pushstring(L, result.c_str());
+
+	return 1;
+}
 
 int LuaUnsyncedRead::GetKeyState(lua_State* L)
 {

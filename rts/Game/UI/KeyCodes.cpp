@@ -74,10 +74,25 @@ void CKeyCodes::Reset()
 		AddPair(std::string(1, i), i, true);
 	}
 
-	AddPair("§", 0xA7, true);
 	AddPair("~", SDLK_BACKQUOTE, true);
 	AddPair("tilde", SDLK_BACKQUOTE, true);
 	AddPair("backquote", SDLK_BACKQUOTE, true);
+	AddPair("caret", SDLK_CARET, true);
+
+	AddPair("§", 0xA7, true);
+	AddPair("¨", 0xA8, true);
+	AddPair("²", 0xB2, true);
+	AddPair("ß", 0xDF, true);
+	AddPair("ä", 0xE4, true);
+	AddPair("ç", 0xE7, true);
+	AddPair("ö", 0xF6, true);
+	AddPair("ü", 0xFC, true);
+	AddPair("ù", 0xF9, true);
+	// Dead keys have low reliability in keydown events and keymap translations from scancodes in SDL
+	AddPair("´", 0xFE51, true); // dead_acute
+	//AddPair("^", 0xFE52, true); // dead_circumflex
+	//AddPair("~", 0xFE53, true); // dead_tilde
+
 
 	// Numeric keypad
 	AddPair("numpad0", SDLK_KP_0, true);

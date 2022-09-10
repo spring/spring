@@ -240,6 +240,7 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetMouseState);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetMouseCursor);
 
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetKeyFromScanSymbol);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetKeyState);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetModKeyState);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetPressedKeys);
