@@ -13,6 +13,7 @@
 #include "Game.h"
 
 #include <string>
+#include <memory>
 
 cpptestai::CCppTestAI::CCppTestAI(springai::OOAICallback* callback):
 		callback(callback),
@@ -37,15 +38,18 @@ int cpptestai::CCppTestAI::HandleEvent(int topic, const void* data) {
 			// TODO: wrapp events and commands too
 
 			const std::vector<springai::Unit*> friendlyUnits = callback->GetFriendlyUnits();
-			std::string msgText = std::string("Hello Engine (from CppTestA), num my units is ") + IntToString(friendlyUnits.size());
+			std::string msgText = std::string("/say Hello Engine (from CppTestAI), num my units is ") + IntToString(friendlyUnits.size());
 			if (!friendlyUnits.empty()) {
 				springai::Unit* unit = friendlyUnits[0];
-				springai::UnitDef* unitDef = unit->GetDef();
+				const std::unique_ptr<springai::UnitDef> unitDef(unit->GetDef());
 				std::string unitDefName = unitDef->GetName();
 				msgText = msgText + ", first friendly units def name is: " + unitDefName;
 			}
-			callback->GetGame()->SendTextMessage(msgText.c_str(), 0);
+			const std::unique_ptr<springai::Game> game(callback->GetGame());
+			game->SendTextMessage(msgText.c_str(), 0);
 
+			for (springai::Unit* unit : friendlyUnits)
+				delete unit;
 			break;
 		}
 		default: {
