@@ -112,9 +112,10 @@ template<> inline float3 argmax(const float3 v1, const float3 v2) { return float
 // template<class T> T mix(const T v1, const T v2, const float a) { return (v1 * (1.0f - a) + v2 * a); }
 template<class T, typename T2> constexpr T mix(const T v1, const T v2, const T2 a) { return (v1 + (v2 - v1) * a); }
 
-// accepts angles in range (-pi,pi)
-template <class T, class T2> constexpr T mixRotation(const T v1, const T v2, const T2 a) {
-    return ClampRad(v1 + GetRadAngleToward(v1, v2) * a + math::PI) - math::PI;
+template <class T, class T2> constexpr T mixRotation(T v1, T v2, T2 a) {
+    v1=ClampRad(v1);
+    v2=ClampRad(v2);
+    return ClampRad(v1 + GetRadAngleToward(v1, v2) * a);
 }
 
 template<class T> constexpr T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
