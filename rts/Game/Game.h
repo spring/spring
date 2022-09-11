@@ -123,6 +123,8 @@ private:
 	int KeyReleased(int keyCode, int scanCode) override;
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
 	int KeyPressed(int keyCode, int scanCode, bool isRepeat) override;
+	/// Called when the keymap changes (language or keyboard switch)
+	int KeyMapChanged() override;
 	///
 	int TextInput(const std::string& utf8Text) override;
 	int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) override;

@@ -17,6 +17,7 @@ CallInsList = {
 	"ConfigureLayout",
 	"CommandNotify",
 
+	"KeyMapChanged",
 	"KeyPress",
 	"KeyRelease",
 	"TextInput",

@@ -105,6 +105,10 @@ function DrawScreen(vsx, vsy)
   return widgetHandler:DrawScreen()
 end
 
+function KeyMapChanged()
+  return widgetHandler:KeyMapChanged()
+end
+
 function KeyPress(key, mods, isRepeat, label, unicode, scanCode)
   return widgetHandler:KeyPress(key, mods, isRepeat, label, unicode, scanCode)
 end

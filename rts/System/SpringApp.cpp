@@ -1169,6 +1169,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				activeController->KeyReleased(keyCode, scanCode);
 			}
 		} break;
+		case SDL_KEYMAPCHANGED: {
+			if (activeController != nullptr) {
+				activeController->KeyMapChanged();
+			}
+
+		} break;
 	};
 
 	return false;

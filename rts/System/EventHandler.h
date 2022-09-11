@@ -214,6 +214,7 @@ class CEventHandler
 		void UnsyncedHeightMapUpdate(const SRectangle& rect);
 		void Update();
 
+		bool KeyMapChanged();
 		bool KeyPress(int keyCode, int scanCode, bool isRepeat);
 		bool KeyRelease(int keyCode, int scanCode);
 		bool TextInput(const std::string& utf8);

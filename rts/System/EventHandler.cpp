@@ -694,6 +694,11 @@ bool CEventHandler::CommandNotify(const Command& cmd)
 }
 
 
+bool CEventHandler::KeyMapChanged()
+{
+	return ControlReverseIterateDefTrue(listKeyMapChanged, &CEventClient::KeyMapChanged);
+}
+
 bool CEventHandler::KeyPress(int keyCode, int scanCode, bool isRepeat)
 {
 	return ControlReverseIterateDefTrue(listKeyPress, &CEventClient::KeyPress, keyCode, scanCode, isRepeat);

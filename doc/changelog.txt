@@ -22,6 +22,8 @@ Lua:
    changed since the last sim frame.
  - Added Spring.GetRenderUnitsDrawFlagChanged to report all units whose draw flags have changed
    since the last sim frame.
+ - Added Spring.KeyMapChanged callin for when the user switches keyboard
+   layouts, for example switching input method language.
 
 Maps:
  - New bumpwater params, most of these were just hard-coded values:

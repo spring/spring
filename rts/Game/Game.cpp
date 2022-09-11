@@ -1079,6 +1079,12 @@ int CGame::KeyReleased(int keyCode, int scanCode)
 	return 0;
 }
 
+int CGame::KeyMapChanged()
+{
+	eventHandler.KeyMapChanged();
+
+	return 0;
+}
 
 int CGame::TextInput(const std::string& utf8Text)
 {

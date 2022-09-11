@@ -2011,6 +2011,21 @@ void CLuaHandle::Pong(uint8_t pingTag, const spring_time pktSendTime, const spri
 
 /******************************************************************************/
 /******************************************************************************/
+bool CLuaHandle::KeyMapChanged()
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 3, __func__);
+	static const LuaHashString cmdStr(__func__);
+
+	// if the call is not defined, do not take the event
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	if (!RunCallIn(L, cmdStr, 0, 0))
+		return false;
+
+	return true;
+}
 
 bool CLuaHandle::KeyPress(int keyCode, int scanCode, bool isRepeat)
 {

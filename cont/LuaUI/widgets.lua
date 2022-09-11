@@ -183,6 +183,7 @@ local callInLists = {
   'AddConsoleLine',
   'ViewResize',
   'DrawScreen',
+  'KeyMapChanged',
   'KeyPress',
   'KeyRelease',
   'MousePress',
@@ -1396,6 +1397,14 @@ end
 --
 --  Keyboard call-ins
 --
+
+function widgetHandler:KeyMapChanged()
+  for _,w in ipairs(self.KeyMapChangedList) do
+    w:KeyMapChanged()
+  end
+
+  return false
+end
 
 function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode, scanCode)
   if (self.tweakMode) then

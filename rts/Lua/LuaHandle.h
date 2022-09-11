@@ -190,6 +190,7 @@ class CLuaHandle : public CEventClient
 		void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 		void Update() override;
 
+		bool KeyMapChanged() override;
 		bool KeyPress(int keyCode, int scanCode, bool isRepeat) override;
 		bool KeyRelease(int keyCode, int scanCode) override;
 		bool TextInput(const std::string& utf8) override;
