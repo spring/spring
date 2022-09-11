@@ -203,7 +203,7 @@ void CSpringController::Update()
 	rot.x = Clamp(rot.x, math::PI * 0.51f, math::PI * 0.99f);
 
 	// camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
-	dir = CCamera::GetFwdFromRot(rot);
+	dir = CCamera::GetFwdFromRot(this->GetRot());
 
 	curDist = Clamp(curDist, 20.0f, maxDist);
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * curDist * 2.0f;
