@@ -1,0 +1,13 @@
+[Unit]
+Description=BuildBot master service (spring)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/buildbot start --nodaemon
+ExecReload=/usr/bin/kill -SIGHUP $MAINPID
+WorkingDirectory=/home/buildbot/master
+User=buildbot
+Group=buildbot
+
+[Install]
+WantedBy=multi-user.target

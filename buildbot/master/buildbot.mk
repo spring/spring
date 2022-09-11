@@ -10,12 +10,6 @@
 .PHONY : start-master stop-master reload checkconfig
 .PHONY : start-stacktrace-translator stop-stacktrace-translator
 
-start-master:
-	env -i PATH=$$PATH buildbot start master
-
-stop-master:
-	buildbot stop master
-
 start-stacktrace-translator:
 	spring/buildbot/stacktrace_translator/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
 
@@ -23,12 +17,7 @@ stop-stacktrace-translator:
 	-[ -e ~/run/stacktrace_translator.pid ] && kill `cat ~/run/stacktrace_translator.pid`
 	rm -f ~/run/stacktrace_translator.pid
 
-start: start-master start-stacktrace-translator
+start: start-stacktrace-translator
 
-stop: stop-stacktrace-translator stop-master
+stop: stop-stacktrace-translator
 
-reload: checkconfig
-	@buildbot sighup master
-
-checkconfig:
-	@cd master && buildbot checkconfig
