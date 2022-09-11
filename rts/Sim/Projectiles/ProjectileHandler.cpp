@@ -85,8 +85,7 @@ void CProjectileHandler::Init()
 		flyingPieces[modelType].reserve(1000);
 	}
 
-	projectiles[true ].SeedFreeKeys(0, maxParticles * 2, true); //seed only synced free ids.
-
+	projectiles[true ].SeedFreeKeys(0, 1 << 14, true); //seed only synced free ids.
 	projectiles[false].reserve(static_cast<size_t>(maxParticles) * 2);
 
 	// register ConfigNotify()
