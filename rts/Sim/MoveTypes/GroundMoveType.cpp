@@ -129,7 +129,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotAccel),
 
 	CR_MEMBER(pathID),
-	CR_MEMBER(nextObstacleAvoidanceFrame),
 
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
@@ -1541,14 +1540,13 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		return flatFrontDir;
 
 	// Speed-optimizer. Reduces the times this system is run.
-	if (gs->frameNum < nextObstacleAvoidanceFrame)
+	if ((gs->frameNum + owner->id) % modInfo.groundUnitCollisionAvoidanceUpdateRate)
 		return lastAvoidanceDir;
 
 	float3 avoidanceVec = ZeroVector;
 	float3 avoidanceDir = desiredDir;
 
 	lastAvoidanceDir = desiredDir;
-	nextObstacleAvoidanceFrame = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
 
@@ -2182,8 +2180,6 @@ void CGroundMoveType::StartEngine(bool callScript) {
 			owner->script->StartMoving(reversing);
 		}
 	}
-
-	nextObstacleAvoidanceFrame = gs->frameNum;
 }
 
 void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
