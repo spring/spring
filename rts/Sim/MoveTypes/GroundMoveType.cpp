@@ -2555,13 +2555,13 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (!checkCollisionFuncs[allowSAT && (forceSAT || (collideeMobile && collideeMD->CalcFootPrintAxisStretchFactor() > 0.1f))](separationVect, collider, collidee, colliderMD, collideeMD))
 			continue;
 
-		if (unloadingCollidee)
-			continue;
-
 		if (unloadingCollider) {
 			collider->requestRemoveUnloadTransportId = false;
 			continue;
 		}
+
+		if (unloadingCollidee)
+			continue;
 
 		// NOTE:
 		//   we exclude aircraft (which have NULL moveDef's) landed
