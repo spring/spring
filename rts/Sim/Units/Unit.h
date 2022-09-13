@@ -395,6 +395,7 @@ public:
 	// id of transport that the unit is about to be {un}loaded by
 	int loadingTransportId = -1;
 	int unloadingTransportId = -1;
+	bool requestRemoveUnloadTransportId = false;
 
 	int transportCapacityUsed = 0;
 	float transportMassUsed = 0.0f;

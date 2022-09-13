@@ -587,6 +587,11 @@ void CGroundMoveType::ProcessCollisionEvents() {
 
 bool CGroundMoveType::Update()
 {
+	if (owner->requestRemoveUnloadTransportId) {
+		owner->unloadingTransportId = -1;
+		owner->requestRemoveUnloadTransportId = false;
+	}
+
 	// do nothing at all if we are inside a transport
 	if (owner->GetTransporter() != nullptr) return false;
 	if (owner->IsSkidding()) return false;
@@ -2519,6 +2524,12 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool colliderMobile = (colliderMD != nullptr); // always true
 		const bool collideeMobile = (collideeMD != nullptr); // maybe true
 
+		const bool unloadingCollidee = (collidee->unloadingTransportId == collider->id);
+		const bool unloadingCollider = (collider->unloadingTransportId == collidee->id);
+
+		if (unloadingCollider)
+			collider->requestRemoveUnloadTransportId = true;
+
 		// don't push/crush either party if the collidee does not block the collider (or vv.)
 		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
@@ -2544,6 +2555,13 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (!checkCollisionFuncs[allowSAT && (forceSAT || (collideeMobile && collideeMD->CalcFootPrintAxisStretchFactor() > 0.1f))](separationVect, collider, collidee, colliderMD, collideeMD))
 			continue;
 
+		if (unloadingCollidee)
+			continue;
+
+		if (unloadingCollider) {
+			collider->requestRemoveUnloadTransportId = false;
+			continue;
+		}
 
 		// NOTE:
 		//   we exclude aircraft (which have NULL moveDef's) landed
