@@ -380,7 +380,6 @@ void CUnitHandler::UpdateUnitLosStates()
 
 void CUnitHandler::SlowUpdateUnits()
 {
-	SCOPED_TIMER("Sim::Unit::SlowUpdate");
 	assert(activeSlowUpdateUnit >= 0);
 
 	// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
@@ -395,6 +394,9 @@ void CUnitHandler::SlowUpdateUnits()
 
 	activeSlowUpdateUnit = idxEnd;
 
+	{
+	SCOPED_TIMER("Sim::Unit::SlowUpdate");
+
 	// stagger the SlowUpdate's
 	for (size_t i = idxBeg; i<idxEnd; ++i) {
 		CUnit* unit = activeUnits[i];
@@ -405,7 +407,7 @@ void CUnitHandler::SlowUpdateUnits()
 		unit->localModel.UpdateBoundingVolume();
 		unit->SanityCheck();
 	}
-
+	}
 	// some paths are requested at slow rate
 	UpdateUnitPathing(idxBeg, idxEnd);
 }
