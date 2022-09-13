@@ -304,7 +304,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	SCOPED_TIMER("Sim::Unit::MoveType");
 
 	{
-	// SCOPED_TIMER("Sim::Unit::MoveType::1::UpdatePreCollisionsMT");
+	SCOPED_TIMER("Sim::Unit::MoveType::1::UpdatePreCollisionsMT");
 	for_mt(0, activeUnits.size(), [this](const int i){
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
@@ -317,7 +317,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	}
 
 	{
-	// SCOPED_TIMER("Sim::Unit::MoveType::2::UpdatePreCollisionsST");
+	SCOPED_TIMER("Sim::Unit::MoveType::2::UpdatePreCollisionsST");
 	std::size_t len = activeUnits.size();
 	for (std::size_t i=0; i<len; ++i) {
 		CUnit* unit = activeUnits[i];
@@ -328,7 +328,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	}
 
 	{
-	// SCOPED_TIMER("Sim::Unit::MoveType::3::UpdateMT");
+	SCOPED_TIMER("Sim::Unit::MoveType::3::UpdateMT");
 	for_mt(0, activeUnits.size(), [this](const int i){
 		CUnit* unit = activeUnits[i];
 		AMoveType* moveType = unit->moveType;
@@ -349,7 +349,7 @@ void CUnitHandler::UpdateUnitMoveTypes()
 	}
 
 	{
-	// SCOPED_TIMER("Sim::Unit::MoveType::5::UpdateST");
+	SCOPED_TIMER("Sim::Unit::MoveType::5::UpdateST");
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;
