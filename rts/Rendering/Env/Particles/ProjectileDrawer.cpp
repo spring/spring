@@ -1054,7 +1054,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho(0, 1,  0, 1,  -1, 1);
+	glLoadMatrixf(CMatrix44f::ClipOrthoProj01());
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -1063,9 +1063,6 @@ void CProjectileDrawer::UpdatePerlin() {
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_FOG);
 
 	unsigned char col[4];
 	float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
@@ -1073,6 +1070,12 @@ void CProjectileDrawer::UpdatePerlin() {
 	float size = 1.0f;
 
 	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_TC>();
+	assert(rb.AssertSubmission());
+
+	auto& sh = rb.GetShader();
+	sh.Enable();
+	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
+	sh.Disable();
 
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a] += time * speed;
@@ -1101,7 +1104,9 @@ void CProjectileDrawer::UpdatePerlin() {
 			{   XYVector, tsize, tsize, col },
 			{  RgtVector, tsize,     0, col }
 		);
+		sh.Enable();
 		rb.DrawElements(GL_TRIANGLES);
+		sh.Disable();
 
 		if (a == 0)
 			glEnable(GL_BLEND);
@@ -1117,7 +1122,9 @@ void CProjectileDrawer::UpdatePerlin() {
 			{ XYVector  , tsize, tsize, col },
 			{ RgtVector , tsize,     0, col }
 		);
+		sh.Enable();
 		rb.DrawElements(GL_TRIANGLES);
+		sh.Disable();
 
 		speed *= 0.6f;
 		size *= 2;
@@ -1133,6 +1140,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
+
 	glMatrixMode(GL_MODELVIEW);
 }
 

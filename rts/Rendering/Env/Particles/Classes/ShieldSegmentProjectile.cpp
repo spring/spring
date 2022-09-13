@@ -93,29 +93,25 @@ void ShieldSegmentCollection::Init(CPlasmaRepulser* shield_)
 		if (!UsingPerlinNoise())
 			return;
 
-		projectileDrawer->IncPerlinTexObjectCount();
+		// ProjectileDrawer needs to know if any shields use the Perlin-noise texture
+		if (UsingPerlinNoise())
+			projectileDrawer->IncPerlinTexObjectCount();
 	}
 }
 
 void ShieldSegmentCollection::Kill()
 {
-	{
-		shield = nullptr;
-		shieldTexture = nullptr;
-	}
-	{
-		for (ShieldSegmentProjectile* seg: shieldSegments) {
-			seg->PreDelete();
-		}
+	shield = nullptr;
 
-		shieldSegments.clear();
-	}
-	{
-		if (!UsingPerlinNoise())
-			return;
+	for (ShieldSegmentProjectile* seg : shieldSegments)
+		seg->PreDelete();
 
+	shieldSegments.clear();
+
+	if (UsingPerlinNoise())
 		projectileDrawer->DecPerlinTexObjectCount();
-	}
+
+	shieldTexture = nullptr;
 }
 
 
