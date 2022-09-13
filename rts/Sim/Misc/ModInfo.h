@@ -55,6 +55,10 @@ public:
 	// relative to a unit's maxspeed (default: inf)
 	float maxCollisionPushMultiplier;
 
+	// rate in sim frames that a unit's position in the quad grid is updated (default: 3)
+	// lower the number will increase CPU load, but increase accuracy of collision detection
+	int unitQuadPositionUpdateRate;
+
 	// Build behaviour
 	/// Should constructions without builders decay?
 	bool constructionDecay;

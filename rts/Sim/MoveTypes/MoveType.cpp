@@ -5,6 +5,8 @@
 
 #include "MoveType.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -72,6 +74,9 @@ AMoveType::AMoveType(CUnit* owner):
 
 void AMoveType::UpdateCollisionMap()
 {
+	if ((gs->frameNum + owner->id) % modInfo.unitQuadPositionUpdateRate)
+		return;
+
 	if (owner->pos != oldSlowUpdatePos) {
 		const int newMapSquare = CGround::GetSquare(oldSlowUpdatePos = owner->pos);
 
