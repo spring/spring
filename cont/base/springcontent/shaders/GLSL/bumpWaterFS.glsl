@@ -85,7 +85,7 @@ vec4 waveIntensity(const vec4 v) {
   uniform sampler2D shadowColorTex;
 #endif
 
-float GetShadowOcclusion(vec3 worldPos) {
+vec3 GetShadowOcclusion(vec3 worldPos) {
 #ifdef opt_shadows
 	vec4 vertexShadowPos = shadowMatrix * vec4(worldPos, 1.0);
 	vertexShadowPos.xy += vec2(0.5, 0.5); // shadowParams.xy
@@ -93,7 +93,7 @@ float GetShadowOcclusion(vec3 worldPos) {
 	vec3 shColor = texture(shadowColorTex, vertexShadowPos.xy).rgb;
 	return mix(1.0, sh, shadowDensity) * shColor;
 #endif
-	return 1.0;
+	return vec3(1.0);
 }
 
 
@@ -276,7 +276,7 @@ void main()
     float angle = (1.0 - abs(eyeNormalCos));
 
   // SHADOW
-    float shadowOcc = GetShadowOcclusion(worldPos + vec3(normal.x, 0.0, normal.z) * 10.0);
+    vec3 shadowOcc = GetShadowOcclusion(worldPos + vec3(normal.x, 0.0, normal.z) * 10.0);
 
   // AMBIENT & DIFFUSE
     vec3 reflectDir   = reflect(normalize(-ligVec), normal);
