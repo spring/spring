@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "glFont.h"
+#include "glFontRenderer.h"
 #include "FontLogSection.h"
 
 #include <cstdarg>
@@ -17,20 +18,6 @@
 #include "System/Log/ILog.h"
 
 #undef GetCharWidth // winapi.h
-
-#define INDEXED_FONTS_RENDERING
-
-// should be enough to hold all data for a given frame
-//constexpr size_t NUM_BUFFER_ELEMS = (1 << 17);
-constexpr size_t NUM_BUFFER_ELEMS = (1 << 14);
-
-#ifdef INDEXED_FONTS_RENDERING
-constexpr size_t NUM_TRI_BUFFER_VERTS = (4 * NUM_BUFFER_ELEMS);
-constexpr size_t NUM_TRI_BUFFER_ELEMS = (6 * NUM_BUFFER_ELEMS);
-#else
-constexpr size_t NUM_TRI_BUFFER_VERTS = (6 * NUM_BUFFER_ELEMS);
-constexpr size_t NUM_TRI_BUFFER_ELEMS = 0;
-#endif
 
 CONFIG(std::string,      FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
@@ -54,81 +41,7 @@ static const float darkLuminosity = 0.05f +
 	0.7152f * std::pow(darkOutline[1], 2.2f) +
 	0.0722f * std::pow(darkOutline[2], 2.2f);
 
-//can't be put in VFS due to initialization order
-constexpr const char* vsFont330 = R"(
-#version 150 compatibility
-#extension GL_ARB_explicit_attrib_location : enable
 
-layout (location = 0) in vec3 pos;
-layout (location = 1) in vec2 uv;
-layout (location = 2) in vec4 col;
-
-out Data {
-	vec4 vCol;
-	vec2 vUV;
-};
-
-void main() {
-	vCol = col;
-	vUV  = uv;
-	gl_Position = gl_ModelViewProjectionMatrix * vec4(pos, 1.0); // TODO: move to UBO
-}
-)";
-
-constexpr const char* fsFont330 = R"(
-#version 150
-
-uniform sampler2D tex;
-
-in Data{
-	vec4 vCol;
-	vec2 vUV;
-};
-
-out vec4 outColor;
-
-void main() {
-	vec2 texSize = vec2(textureSize(tex, 0));
-
-	float alpha = texture(tex, vUV / texSize).x;
-	outColor = vec4(vCol.r, vCol.g, vCol.b, vCol.a * alpha);
-}
-)";
-
-////////////////////
-
-constexpr const char* vsFont130 = R"(
-#version 130
-
-in vec3 pos;
-in vec2 uv;
-in vec4 col;
-
-out vec4 vCol;
-out vec2 vUV;
-
-void main() {
-	vCol = col;
-	vUV  = uv;
-	gl_Position = gl_ModelViewProjectionMatrix * vec4(pos, 1.0); // TODO: move to UBO
-}
-)";
-
-constexpr const char* fsFont130 = R"(
-#version 130
-
-uniform sampler2D tex;
-
-in vec4 vCol;
-in vec2 vUV;
-
-void main() {
-	vec2 texSize = vec2(textureSize(tex, 0));
-
-	float alpha = texture(tex, vUV / texSize).x;
-	gl_FragColor = vec4(vCol.r, vCol.g, vCol.b, vCol.a * alpha);
-}
-)";
 
 bool CglFont::LoadConfigFonts()
 {
@@ -263,27 +176,28 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	textColor    = white;
 	outlineColor = darkOutline;
 
-	primaryBufferTC = TypedRenderBuffer<VA_TYPE_TC>(NUM_TRI_BUFFER_VERTS, NUM_TRI_BUFFER_ELEMS, IStreamBufferConcept::SB_BUFFERSUBDATA);
-	outlineBufferTC = TypedRenderBuffer<VA_TYPE_TC>(NUM_TRI_BUFFER_VERTS, NUM_TRI_BUFFER_ELEMS, IStreamBufferConcept::SB_BUFFERSUBDATA);
-
 	viewMatrix = DefViewMatrix();
 	projMatrix = DefProjMatrix();
-
-	CreateDefaultShader();
-	curShader = defShader.get();
 
 	fontMutexes = {
 		std::make_unique<spring::mutex_wrapper<spring::noop_mutex     >>(),
 		std::make_unique<spring::mutex_wrapper<spring::recursive_mutex>>()
 	};
+
+	fontRenderer = CglFontRenderer::CreateInstance();
+}
+
+CglFont::~CglFont() {
+#ifndef HEADLESS
+	CglFontRenderer::DeleteInstance(fontRenderer);
+#endif
 }
 
 #ifdef HEADLESS
-
-void CglFont::Begin(Shader::IProgramObject* shader) {}
+void CglFont::Begin() {}
 void CglFont::End() {}
-void CglFont::DrawBuffered(Shader::IProgramObject* shader) {}
-void CglFont::DrawWorldBuffered(Shader::IProgramObject* shader) {}
+void CglFont::DrawBuffered() {}
+void CglFont::DrawWorldBuffered() {}
 
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered) {}
 
@@ -297,7 +211,6 @@ void CglFont::SetAutoOutlineColor(bool enable) {}
 void CglFont::SetTextColor(const float4* color) {}
 void CglFont::SetOutlineColor(const float4* color) {}
 void CglFont::SetColors(const float4* textColor, const float4* outlineColor) {}
-void CglFont::CreateDefaultShader() {}
 
 float CglFont::GetCharacterWidth(const char32_t c) { return 1.0f; }
 void CglFont::ScanForWantedGlyphs(const std::u8string& str) {}
@@ -305,6 +218,8 @@ float CglFont::GetTextWidth_(const std::u8string& text) { return (text.size() * 
 float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* numLines) { return 1.0f; }
 
 std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text) { return {}; }
+
+void CglFont::GetStats(std::array<size_t, 8>& stats) const {}
 
 #else
 
@@ -663,36 +578,6 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 	SetOutlineColor(_outlineColor);
 }
 
-
-void CglFont::CreateDefaultShader()
-{
-	if (defShader != nullptr)
-		return;
-
-	// can't use shaderHandler here because it invalidates the objects on reload
-	// but fonts are expected to be available all the time
-	defShader = std::make_unique<Shader::GLSLProgramObject>("[GL-Font]");
-
-	// 330 version was broken on AMD, probably due to bad attributes location (how?, why?). TODO: investigate
-	if (globalRendering->supportExplicitAttribLoc) {
-		LOG("[CglFont::%s] Creating Font shaders: GLEW_ARB_explicit_attrib_location = true", __func__);
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER  , vsFont330));
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont330));
-	}
-	else {
-		LOG("[CglFont::%s] Creating Font shaders: GLEW_ARB_explicit_attrib_location = false", __func__);
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER  , vsFont130));
-		defShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsFont130));
-		defShader->BindAttribLocation("pos", 0);
-		defShader->BindAttribLocation("uv",  1);
-		defShader->BindAttribLocation("col", 2);
-	}
-
-	defShader->Enable();
-	defShader->SetUniform("tex", 0);
-	defShader->Disable();
-}
-
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
 	const float luminosity =
@@ -709,7 +594,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 	return &lightOutline;
 }
 
-void CglFont::Begin(Shader::IProgramObject* shader) {
+void CglFont::Begin() {
 	GetFontMutex()->lock();
 
 	if (inBeginEndBlock) {
@@ -718,9 +603,6 @@ void CglFont::Begin(Shader::IProgramObject* shader) {
 	}
 
 	inBeginEndBlock = true;
-
-	curShader = shader;
-	assert(curShader == defShader.get()); //TODO
 }
 
 void CglFont::End() {
@@ -730,102 +612,40 @@ void CglFont::End() {
 	}
 	inBeginEndBlock = false;
 
-	{
-		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		//without this, fonts textures are empty in display lists somehow
-		GLint dl = 0;
-		glGetIntegerv(GL_LIST_INDEX, &dl);
-		if (dl == 0) {
-			UpdateGlyphAtlasTexture();
-			UploadGlyphAtlasTexture();
-		}
-
-		glBindTexture(GL_TEXTURE_2D, GetTexture());
-
-		GLint progID = 0;
-		glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
-
-		curShader->Enable();
-
-#ifdef INDEXED_FONTS_RENDERING
-		outlineBufferTC.DrawElements(GL_TRIANGLES);
-		primaryBufferTC.DrawElements(GL_TRIANGLES);
-#else
-		outlineBufferTC.DrawArrays(GL_TRIANGLES);
-		primaryBufferTC.DrawArrays(GL_TRIANGLES);
-#endif
-
-		curShader->Disable();
-
-		if (progID > 0) glUseProgram(progID);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		glPopAttrib();
+	//without this, fonts textures are empty in display lists (probably GL commands in UploadGlyphAtlasTexture are get recorded as part of the list)
+	GLint dl = 0;
+	glGetIntegerv(GL_LIST_INDEX, &dl);
+	if (dl == 0) {
+		UpdateGlyphAtlasTexture();
+		UploadGlyphAtlasTexture();
 	}
-
-	curShader = nullptr;
+	fontRenderer->PushGLState(this);
+	fontRenderer->DrawTraingleElements();
+	fontRenderer->PopGLState();
 
 	inBeginEndBlock = false;
-
 	GetFontMutex()->unlock();
 }
 
 
-void CglFont::DrawBuffered(Shader::IProgramObject* shader)
+void CglFont::DrawBuffered()
 {
 	std::lock_guard lk(*GetFontMutex());
 
-	{
-		UpdateGlyphAtlasTexture();
-		UploadGlyphAtlasTexture();
+	UpdateGlyphAtlasTexture();
+	UploadGlyphAtlasTexture();
 
-		// assume external shaders are never null and already bound
-		curShader = shader;
-		assert(curShader == defShader.get()); //TODO
-
-		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glBindTexture(GL_TEXTURE_2D, GetTexture());
-
-		GLint progID = 0;
-		glGetIntegerv(GL_CURRENT_PROGRAM, &progID);
-
-		curShader->Enable();
-
-#ifdef INDEXED_FONTS_RENDERING
-		outlineBufferTC.DrawElements(GL_TRIANGLES);
-		primaryBufferTC.DrawElements(GL_TRIANGLES);
-#else
-		outlineBufferTC.DrawArrays(GL_TRIANGLES);
-		primaryBufferTC.DrawArrays(GL_TRIANGLES);
-#endif
-
-		curShader->Disable();
-
-		if (progID > 0) glUseProgram(progID);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		glPopAttrib();
-	}
-
-	curShader = nullptr;
+	fontRenderer->PushGLState(this);
+	fontRenderer->DrawTraingleElements();
+	fontRenderer->PopGLState();
 }
 
-void CglFont::DrawWorldBuffered(Shader::IProgramObject* shader)
+void CglFont::DrawWorldBuffered()
 {
 	glPushMatrix();
 	glMultMatrixf(camera->GetBillBoardMatrix());
 
-	DrawBuffered(shader);
+	DrawBuffered();
 
 	glPopMatrix();
 }
@@ -905,44 +725,20 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 				ssY = (scaleY / fontSize) * GetOutlineWidth();
 			}
 
-#ifdef INDEXED_FONTS_RENDERING
-			outlineBufferTC.AddQuadTriangles(
+			fontRenderer->AddQuadTrianglesOB(
 				{ {dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x) },
 				{ {dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x) },
 				{ {dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x) },
 				{ {dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x) }
 			);
-#else
-			outlineBufferTC.AddVertices({
-				{ {dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x) },
-				{ {dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x) },
-				{ {dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x) },
-
-				{ {dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x) },
-				{ {dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x) },
-				{ {dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x) },
-			});
-#endif
 		}
 
-#ifdef INDEXED_FONTS_RENDERING
-		primaryBufferTC.AddQuadTriangles(
+		fontRenderer->AddQuadTrianglesPB(
 			{ {dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x) },
 			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
 			{ {dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x) },
 			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) }
 		);
-#else
-		primaryBufferTC.AddVertices({
-			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) },
-			{ {dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x) },
-			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
-
-			{ {dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x) },
-			{ {dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x) },
-			{ {dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x) },
-		});
-#endif
 	}
 }
 
@@ -955,19 +751,19 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 		//tbM.SetPos(p); // (Tr * Bm)
 		glMultMatrixf(tbM);
 
-		float3 pos = tbM.Transpose() * p;
+		const float3 pos = tbM.Transpose() * p;
 
 		Begin();
 		SetTextDepth(pos.z); SetOutlineDepth(pos.z);
 		glPrint(pos.x, pos.y, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
-		SetTextDepth(); SetOutlineDepth();
+		SetTextDepth(     ); SetOutlineDepth(     );
 		End();
 
 		glPopMatrix();
 	}
 	else {
 		CMatrix44f bm = camera->GetBillBoardMatrix();
-		float3 drawPos = bm.Transpose() * p;
+		const float3 drawPos = bm.Transpose() * p;
 
 		// drawPos negates the effect of multiplication by camera->GetBillBoardMatrix() in DrawWorldBuffered
 
@@ -1209,6 +1005,10 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	}
 }
 
+void CglFont::GetStats(std::array<size_t, 8>& stats) const
+{
+	fontRenderer->GetStats(stats);
+}
 
 #endif
 

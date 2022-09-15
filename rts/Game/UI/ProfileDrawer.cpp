@@ -89,20 +89,22 @@ static void DrawBufferStats(const float2 pos)
 
 	{
 		std::array<size_t, 4> lfMetrics = {0};
+		std::array<size_t, 8> tfMetrics = {0};
 		for (const auto ft : CglFont::GetLoadedFonts()) {
 			if (ft.expired())
 				continue;
 
 			auto lf = std::static_pointer_cast<CglFont>(ft.lock());
-			lfMetrics[0] += lf->GetPrimaryBuffer().SumElems();
-			lfMetrics[1] += lf->GetPrimaryBuffer().SumIndcs();
-			lfMetrics[2] += lf->GetPrimaryBuffer().NumSubmits(false);
-			lfMetrics[3] += lf->GetPrimaryBuffer().NumSubmits(true);
+			lf->GetStats(tfMetrics);
+			lfMetrics[0] += tfMetrics[0];
+			lfMetrics[1] += tfMetrics[1];
+			lfMetrics[2] += tfMetrics[2];
+			lfMetrics[3] += tfMetrics[3];
 
-			lfMetrics[0] += lf->GetOutlineBuffer().SumElems();
-			lfMetrics[1] += lf->GetOutlineBuffer().SumIndcs();
-			lfMetrics[2] += lf->GetOutlineBuffer().NumSubmits(false);
-			lfMetrics[3] += lf->GetOutlineBuffer().NumSubmits(true);
+			lfMetrics[0] += tfMetrics[4];
+			lfMetrics[1] += tfMetrics[5];
+			lfMetrics[2] += tfMetrics[6];
+			lfMetrics[3] += tfMetrics[7];
 		}
 
 		static constexpr const char* FMT = "\t%s={e=%u i=%u subs{e,i}={%u,%u}}";

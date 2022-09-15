@@ -40,6 +40,8 @@ namespace Shader {
 	struct IProgramObject;
 };
 
+class CglFontRenderer;
+
 class CglFont : public CTextWrap
 {
 public:
@@ -56,17 +58,14 @@ public:
 	static void ReallocSystemFontAtlases(bool pre);
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
-	~CglFont() override {};
+	~CglFont() override;
 
-	void Begin(Shader::IProgramObject* shader);
-	void Begin() { Begin(defShader.get()); };
+	void Begin();
 	void End();
 
-	void DrawBuffered() { DrawBuffered(defShader.get()); }
-	void DrawBuffered(Shader::IProgramObject* shader);
+	void DrawBuffered();
 
-	void DrawWorldBuffered() { DrawWorldBuffered(defShader.get()); }
-	void DrawWorldBuffered(Shader::IProgramObject* shader);
+	void DrawWorldBuffered();
 
 	void glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered = false);
 
@@ -111,14 +110,11 @@ public:
 
 	const std::string& GetFilePath() const { return fontPath; }
 
-	const TypedRenderBuffer<VA_TYPE_TC>& GetPrimaryBuffer() const { return primaryBufferTC; };
-	const TypedRenderBuffer<VA_TYPE_TC>& GetOutlineBuffer() const { return outlineBufferTC; };
+	void GetStats(std::array<size_t, 8>& stats) const;
 
 	static constexpr char8_t ColorCodeIndicator  = 0xFF;
 	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
 private:
-	static void CreateDefaultShader();
-
 	static const float4* ChooseOutlineColor(const float4& textColor);
 
 	template<int shiftXC, int shiftYC, bool outline>
@@ -144,16 +140,11 @@ public:
 		return allFonts;
 	}
 private:
-	inline static std::unique_ptr<Shader::IProgramObject> defShader = nullptr;
+	CglFontRenderer* fontRenderer;
 
 	std::string fontPath;
 
 	std::array<std::unique_ptr<spring::mutex_wrapper_concept>, 2> fontMutexes;
-
-	TypedRenderBuffer<VA_TYPE_TC> primaryBufferTC;
-	TypedRenderBuffer<VA_TYPE_TC> outlineBufferTC;
-
-	Shader::IProgramObject* curShader = nullptr;
 
 	bool inBeginEndBlock = false; // implies bufferMutex is locked
 	bool autoOutlineColor = false; // auto-select outline color for in-text-colorcodes

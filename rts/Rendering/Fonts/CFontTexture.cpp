@@ -39,6 +39,7 @@
 #include "fmt/format.h"
 #include "fmt/printf.h"
 
+#define SUPPORT_AMD_HACKS_HERE
 
 #ifndef HEADLESS
 	#undef __FTERRORS_H__
@@ -865,16 +866,35 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// no border to prevent artefacts in outlined text
-	constexpr GLfloat borderColor[4] = {0.0f, 1.0f, 1.0f, 1.0f};
-	// constexpr GLint swizzleMask[4] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
+	constexpr GLfloat borderColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
+	// NB:
+	// The modern and core formats like GL_R8 and GL_RED are intentionally replaced with
+	// deprecated GL_ALPHA, such that AMD-HACK users could enjoy no-shader fallback
+	// But why fallback? See: https://github.com/beyond-all-reason/spring/issues/383
+	// Remove the code under `#ifdef SUPPORT_AMD_HACKS_HERE` blocks throughout this file
+	// when all potatoes die.
+
+#ifdef SUPPORT_AMD_HACKS_HERE
+	constexpr GLint swizzleMaskF[] = { GL_ALPHA, GL_ALPHA, GL_ALPHA, GL_ALPHA };
+	constexpr GLint swizzleMaskD[] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA };
+	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMaskF);
+#endif
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	// glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+#ifdef SUPPORT_AMD_HACKS_HERE
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
+#else
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+#endif
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+#ifdef SUPPORT_AMD_HACKS_HERE
+	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMaskD);
+#endif
 
 	atlasUpdate = {};
 	atlasUpdate.Alloc(texWidth = wantedTexWidth = width, texHeight = wantedTexHeight = height, 1);
@@ -984,7 +1004,11 @@ void CFontTexture::UploadGlyphAtlasTexture() const
 #ifndef HEADLESS
 	// update texture atlas
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
+#ifdef SUPPORT_AMD_HACKS_HERE
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
+#else
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
+#endif
 	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }
