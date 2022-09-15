@@ -95,18 +95,18 @@ void CCursorIcons::DrawCursors() const
 
 	const SColor iconColor = { 1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha() };
 
-	const CMouseCursor* currentCursor = nullptr;
-
-	// force the first binding
-	int currentCommand = icons[0].cmd + 1;
+	const CMouseCursor* lastCursor = nullptr;
 
 	for (const Icon& icon : icons) {
-		if (icon.cmd != currentCommand) {
-			if ((currentCursor = GetCursor(currentCommand = icon.cmd)) == nullptr)
-				continue;
+		const CMouseCursor* currentCursor = GetCursor(icon.cmd);
+		if (!currentCursor)
+			continue;
 
+		if (currentCursor != lastCursor) {
 			rb.Submit(GL_TRIANGLES);
 			currentCursor->BindTexture();
+
+			lastCursor = currentCursor;
 		}
 
 		const float3 winCoors = camera->CalcWindowCoordinates(icon.pos);
@@ -124,11 +124,12 @@ void CCursorIcons::DrawCursors() const
 			{ cursorMat * ICON_VERTS[1], ICON_TXCDS[1].x, ICON_TXCDS[1].y, iconColor }  // bl
 		);
 	}
-
 	rb.Submit(GL_TRIANGLES);
 
 	sh.SetUniform("alphaCtrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	sh.Disable();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
