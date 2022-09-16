@@ -141,7 +141,10 @@ class CCursorIcons
 
 	protected:
 		static constexpr float3 ICON_VERTS[] = { {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-		static constexpr float2 ICON_TXCDS[] = { {0.0f, 0.0f      }, {0.0f, 1.0f      }, {1.0f, 1.0f      }, {1.0f, 0.0f      } };
+		static constexpr float AZ = 1e-2f;
+		static constexpr float AO = 1.0f - AZ;
+		// See https://github.com/beyond-all-reason/spring/issues/380
+		static constexpr float2 ICON_TXCDS[] = { {AZ, AZ}          , {AZ, AO}          , {AO, AO}          , {AO, AZ}           };
 
 		bool enabled;
 
