@@ -5,7 +5,6 @@
 #include "Rendering/Shaders/Shader.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
-#include "Rendering/GL/VertexArray.h"
 
 
 ////////////////////////////////////////

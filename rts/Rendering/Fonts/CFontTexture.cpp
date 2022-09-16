@@ -556,7 +556,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	}
 
 	if (!FT_HAS_KERNING(face)) {
-		LOG_L(L_WARNING, "[%s] %s has no kerning data", __func__, fontfile.c_str());
+		LOG_L(L_INFO, "[%s] %s has no kerning data", __func__, fontfile.c_str());
 	}
 
 	fontFamily = face->family_name;
