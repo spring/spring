@@ -131,8 +131,8 @@ struct VA_TYPE_TC {
 };
 struct VA_TYPE_PROJ {
 	float3 pos;
-	float  layer;
-	float4 uvmm;
+	float3 uvw;
+	float2 uvDiff;
 	float3 aparams;
 	SColor c;
 
@@ -140,9 +140,9 @@ struct VA_TYPE_PROJ {
 		VA_TYPE_PROJ v = *this;
 		v.pos *= t;
 
-		v.layer *= t;
+		v.uvw *= t;
 
-		v.uvmm *= t;
+		v.uvDiff *= t;
 
 		v.aparams *= t;
 

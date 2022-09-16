@@ -18,7 +18,7 @@ class CExpGenSpawnable : public CWorldObject
 public:
 	CExpGenSpawnable(const float3& pos, const float3& spd);
 
-	virtual ~CExpGenSpawnable();
+	~CExpGenSpawnable() override;
 	virtual void Init(const CUnit* owner, const float3& offset);
 
 	static bool GetSpawnableMemberInfo(const std::string& spawnableName, SExpGenSpawnableMemberInfo& memberInfo);
@@ -34,12 +34,13 @@ protected:
 	void UpdateRotation();
 	void UpdateAnimParams();
 
-	void AddEffectsQuad(VA_TYPE_TC&& tl, VA_TYPE_TC&& tr, VA_TYPE_TC&& br, VA_TYPE_TC&& bl);
+	void AddEffectsQuad(const VA_TYPE_TC& tl, const VA_TYPE_TC& tr, const VA_TYPE_TC& br, const VA_TYPE_TC& bl) const;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 	float3 animParams = { 1.0f, 1.0f, 30.0f }; // numX, numY, animLength, 
 	float animProgress = 0.0f; // animProgress = (gf_dt % animLength) / animLength
+
 	float3 rotParams = { 0.0f, 0.0f, 0.0f }; // speed, accel, startRot |deg/s, deg/s2, deg|
 
 	float rotVal;

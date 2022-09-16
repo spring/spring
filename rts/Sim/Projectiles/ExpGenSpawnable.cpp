@@ -171,55 +171,28 @@ CExpGenSpawnable* CExpGenSpawnable::CreateSpawnable(int spawnableID)
 	return nullptr;
 }
 
-void CExpGenSpawnable::AddEffectsQuad(VA_TYPE_TC&& tl, VA_TYPE_TC&& tr, VA_TYPE_TC&& br, VA_TYPE_TC&& bl)
+void CExpGenSpawnable::AddEffectsQuad(const VA_TYPE_TC& tl, const VA_TYPE_TC& tr, const VA_TYPE_TC& br, const VA_TYPE_TC& bl) const
 {
 	float minS = std::numeric_limits<float>::max()   ; float minT = std::numeric_limits<float>::max()   ;
 	float maxS = std::numeric_limits<float>::lowest(); float maxT = std::numeric_limits<float>::lowest();
-
-	std::array qpts = { std::forward<VA_TYPE_TC>(tl), std::forward<VA_TYPE_TC>(tr), std::forward<VA_TYPE_TC>(br), std::forward<VA_TYPE_TC>(bl) };
-	for (const auto& qpt : qpts) {
-		minS = std::min(minS, qpt.s);
-		minT = std::min(minT, qpt.t);
-		maxS = std::max(maxS, qpt.s);
-		maxT = std::max(maxT, qpt.t);
-	}
-
-	//TODO: remove me after all effects are battle-tested
-	const std::array uvRef = { float2{ minS, minT },  float2{ maxS, minT }, float2{ maxS, maxT },  float2{ minS, maxT } };
-
-	for (size_t i = 0; i < 4; ++i) {
-		if (uvRef[i] == float2{ qpts[i].s, qpts[i].t })
-			continue;
-
-#if 1
-		LOG_L(L_ERROR, "[%s] Internal Error: invalid effect quad winding/order, projectile type (%s)", __func__, this->GetClass()->name);
-		break;
-#endif
-// Fix inconsistency
-#if 0
-		for (size_t j = 0; j < 4; ++j) {
-			if (i == j)
-				continue;
-
-			if (uvRef[i] == float2{ qpts[j].s, qpts[j].t }) {
-				std::swap(qpts[i], qpts[j]);
-				break;
-			}
-		}
-#endif
-	}
+	std::invoke([&](auto&&... arg) {
+		((minS = std::min(minS, arg.s)), ...);
+		((minT = std::min(minT, arg.t)), ...);
+		((maxS = std::max(maxS, arg.s)), ...);
+		((maxT = std::max(maxT, arg.t)), ...);
+	}, tl, tr, br, bl);
 
 	auto& rb = GetPrimaryRenderBuffer();
 
-	const float4 mm = float4{ minS, minT, maxS, maxT };
+	const float2 uvDiff = float2{ maxS - minS, maxT - minT };
 	const float3 animInfo = float3{ animParams.x, animParams.y, animProgress };
 	constexpr float layer = 0.0f; //for future texture arrays
 
 	//pos, uvw, uvmm, col
 	rb.AddQuadTriangles(
-		{ qpts[0].pos, layer, mm, animInfo, qpts[0].c },
-		{ qpts[1].pos, layer, mm, animInfo, qpts[1].c },
-		{ qpts[2].pos, layer, mm, animInfo, qpts[2].c },
-		{ qpts[3].pos, layer, mm, animInfo, qpts[3].c }
+		{ tl.pos, float3{ tl.s, tl.t, layer }, uvDiff, animInfo, tl.c },
+		{ tr.pos, float3{ tr.s, tr.t, layer }, uvDiff, animInfo, tr.c },
+		{ br.pos, float3{ br.s, br.t, layer }, uvDiff, animInfo, br.c },
+		{ bl.pos, float3{ bl.s, bl.t, layer }, uvDiff, animInfo, bl.c }
 	);
 }
