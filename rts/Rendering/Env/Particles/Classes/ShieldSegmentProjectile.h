@@ -21,9 +21,9 @@ class ShieldSegmentCollection
 	CR_DECLARE_STRUCT(ShieldSegmentCollection)
 public:
 	// creg only
-	ShieldSegmentCollection() {}
-	ShieldSegmentCollection(CPlasmaRepulser* shield) { Init(shield); }
-	ShieldSegmentCollection(ShieldSegmentCollection&& ssc) { *this = std::move(ssc); }
+	ShieldSegmentCollection() = default;
+	explicit ShieldSegmentCollection(CPlasmaRepulser* shield) { Init(shield); }
+	ShieldSegmentCollection(ShieldSegmentCollection&& ssc) noexcept { *this = std::move(ssc); }
 	~ShieldSegmentCollection() { Kill(); }
 
 	ShieldSegmentCollection& operator=(ShieldSegmentCollection&& ssc) noexcept;
@@ -46,8 +46,8 @@ public:
 	void PostLoad();
 
 public:
-	static constexpr unsigned int NUM_SEGMENTS_X = 6;
-	static constexpr unsigned int NUM_SEGMENTS_Y = 4;
+	static constexpr unsigned int NUM_SEGMENTS_X = 10;
+	static constexpr unsigned int NUM_SEGMENTS_Y = 6;
 
 private:
 	bool UsingPerlinNoise() const;
@@ -71,7 +71,7 @@ class ShieldSegmentProjectile: public CProjectile
 {
 	CR_DECLARE_DERIVED(ShieldSegmentProjectile)
 public:
-	ShieldSegmentProjectile() { }
+	ShieldSegmentProjectile() = default;
 	ShieldSegmentProjectile(
 		ShieldSegmentCollection* collection,
 		const WeaponDef* shieldWeaponDef,
