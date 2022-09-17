@@ -710,6 +710,8 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 		if (y_ < size.y) {
 			const unsigned sx = Clamp(pos.x - width,     0, size.x);
 			const unsigned ex = Clamp(pos.x + width + 1, 0, size.x);
+			if (sx == ex)
+				return;
 
 			const size_t oidx = ToAngleMapIdx(int2(sx - pos.x, y), radius);
 
