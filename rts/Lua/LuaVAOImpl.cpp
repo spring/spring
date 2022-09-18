@@ -188,7 +188,7 @@ void LuaVAOImpl::CondInitVAO()
 	GLenum indMax =  0u;
 
 	const auto glVertexAttribPointerFunc = [](GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer) {
-		if (type == GL_FLOAT)
+		if (type == GL_FLOAT || normalized)
 			glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 		else //assume int types
 			glVertexAttribIPointer(index, size, type, stride, pointer);
