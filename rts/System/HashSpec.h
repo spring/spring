@@ -44,6 +44,12 @@ namespace spring {
         seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         return seed;
     }
+    template <class T>
+    inline uint64_t hash_combine(uint64_t hashValue, std::uint64_t seed = 1337u)
+    {
+        seed ^= hashValue + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
+    }
 }
 
 template <typename ... TT>

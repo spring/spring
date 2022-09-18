@@ -47,6 +47,8 @@
 #include "System/StringUtil.h"
 #include "System/MemPoolTypes.h"
 #include "System/SpringMath.h"
+#include "System/HashSpec.h"
+#include "System/SpringHash.h"
 
 #include "System/Threading/ThreadPool.h"
 
@@ -1140,28 +1142,75 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	std::vector<float3> featureSquares; // occupied squares
 	std::vector<float3> illegalSquares; // non-buildable squares
 
+	struct BuildCache {
+		uint64_t key;
+		int createFrame;
+		bool canBuild;
+		std::vector<float3> buildableSquares; // buildable squares
+		std::vector<float3> featureSquares; // occupied squares
+		std::vector<float3> illegalSquares; // non-buildable squares
+	};
+
+	static std::vector<BuildCache> buildCache;
+
 	const float3& pos = buildInfo.pos;
+
+	uint64_t hashKey = spring::LiteHash(pos);
+	/*
+	for (const auto& cmd : commands) {
+		const BuildInfo bc(cmd);
+		spring::hash_combine(spring::LiteHash(bc), hash);
+	}
+	*/
+
+	static constexpr int CACHE_VALIDITY_PERIOD = 15;
+	spring::VectorEraseAllIf(buildCache, [](const BuildCache& bc) {
+		return gs->frameNum - bc.createFrame >= CACHE_VALIDITY_PERIOD;
+	});
+
 	const int x1 = pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
 	const int x2 = x1 + (buildInfo.GetXSize() * SQUARE_SIZE);
 	const int z1 = pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
 	const int z2 = z1 + (buildInfo.GetZSize() * SQUARE_SIZE);
 	const float h = CGameHelper::GetBuildHeight(pos, buildInfo.def, false);
 
-	const bool canBuild = !!CGameHelper::TestUnitBuildSquare(
-		buildInfo,
-		feature,
-		-1,
-		false,
-		&buildableSquares,
-		&featureSquares,
-		&illegalSquares,
-		&commands
-	);
+	bool canBuild;
 
-	static constexpr float buildColorT[4]  = { 0.0f, 0.9f, 0.0f, 0.7f };
-	static constexpr float buildColorF[4]  = { 0.9f, 0.8f, 0.0f, 0.7f };
-	static constexpr float featureColor[4] = { 0.9f, 0.8f, 0.0f, 0.7f };
-	static constexpr float illegalColor[4] = { 0.9f, 0.0f, 0.0f, 0.7f };
+	const auto it = std::find_if(buildCache.begin(), buildCache.end(), [hashKey](const BuildCache& bc) {
+		return bc.key == hashKey;
+	});
+	if (it != buildCache.end()) {
+		buildableSquares.assign(it->buildableSquares.begin(), it->buildableSquares.end());
+		featureSquares.assign(it->featureSquares.begin(), it->featureSquares.end());
+		illegalSquares.assign(it->illegalSquares.begin(), it->illegalSquares.end());
+		canBuild = it->canBuild;
+	}
+	else {
+		canBuild = !!CGameHelper::TestUnitBuildSquare(
+			buildInfo,
+			feature,
+			-1,
+			false,
+			&buildableSquares,
+			&featureSquares,
+			&illegalSquares,
+			&commands
+		);
+		buildCache.emplace_back();
+		auto& buildCacheItem = buildCache.back();
+
+		buildCacheItem.key = hashKey;
+		buildCacheItem.canBuild = canBuild;
+		buildCacheItem.createFrame = gs->frameNum;
+		buildCacheItem.buildableSquares.assign(buildableSquares.begin(), buildableSquares.end());
+		buildCacheItem.featureSquares.assign(featureSquares.begin(), featureSquares.end());
+		buildCacheItem.illegalSquares.assign(illegalSquares.begin(), illegalSquares.end());
+	}
+
+	static constexpr std::array<float, 4> buildColorT  = { 0.0f, 0.9f, 0.0f, 0.7f };
+	static constexpr std::array<float, 4> buildColorF  = { 0.9f, 0.8f, 0.0f, 0.7f };
+	static constexpr std::array<float, 4> featureColor = { 0.9f, 0.8f, 0.0f, 0.7f };
+	static constexpr std::array<float, 4> illegalColor = { 0.9f, 0.0f, 0.0f, 0.7f };
 
 	static auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
 	assert(rb.AssertSubmission());
@@ -1202,8 +1251,8 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	rb.Submit(GL_LINES);
 
 	if (h < 0.0f) {
-		constexpr uint8_t s[4] = { 0,   0, 255, 128 }; // start color
-		constexpr uint8_t e[4] = { 0, 128, 255, 255 }; // end color
+		constexpr uint8_t s[] = { 0,   0, 255, 128 }; // start color
+		constexpr uint8_t e[] = { 0, 128, 255, 255 }; // end color
 
 		rb.AddVertex({ float3(x1, h, z1), s }); rb.AddVertex({ float3(x1, 0.f, z1), e });
 		rb.AddVertex({ float3(x1, h, z2), s }); rb.AddVertex({ float3(x1, 0.f, z2), e });
@@ -1219,6 +1268,7 @@ bool CUnitDrawerLegacy::ShowUnitBuildSquare(const BuildInfo& buildInfo, const st
 	}
 
 	sh.Disable();
+
 
 	glEnable(GL_DEPTH_TEST);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
