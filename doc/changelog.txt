@@ -5,6 +5,8 @@ Spring changelog
 -- 106.0 --------------------------------------------------------
 
 Lua:
+ - Add minx, maxy, maxx, miny = Spring.GetSelectionBox() returning coordinates
+   for current selection box. Returns nil if no valid selection active.
  - Add Spring.GetKeyFromScanSymbol(scanSymbol) that receives a scancode and
    returns the users correspondent key in the current keyboard layout
  - allow empty argument for Spring.GetKeyBindings to return all keybindings

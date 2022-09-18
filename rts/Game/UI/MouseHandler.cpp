@@ -340,7 +340,41 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	}
 }
 
+/**
+ * GetSelectionBoxVertices
+ *  returns the vertices of the SelectionBox in (cam->right, cam->up)-space
+ */
+bool CMouseHandler::GetSelectionBoxVertices(float3& bl, float3& br, float3& tl, float3& tr) const
+{
+	if (gu->fpsMode)
+		return false;
 
+	const ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
+
+	if (bp.chorded)
+		return false;
+	if (bp.movement <= dragSelectionThreshold)
+		return false;
+
+	float2 topRight, bttmLeft;
+
+	GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topRight, bttmLeft);
+
+	// do not let the rectangle verts be clipped
+	const float dirScale = camera->GetNearPlaneDist() * 2.0f;
+
+	const float3 xmin   = camera->GetRight() * bttmLeft.x;
+	const float3 xmax   = camera->GetRight() * topRight.x;
+	const float3 ymin   = camera->GetUp()    * bttmLeft.y;
+	const float3 ymax   = camera->GetUp()    * topRight.y;
+
+	bl = camera->GetPos() + (xmin + ymin + camera->GetForward()) * dirScale;
+	tr = camera->GetPos() + (xmax + ymax + camera->GetForward()) * dirScale;
+	br = camera->GetPos() + (xmax + ymin + camera->GetForward()) * dirScale;
+	tl = camera->GetPos() + (xmin + ymax + camera->GetForward()) * dirScale;
+
+	return true;
+}
 /**
  * GetSelectionBoxCoeff
  *  returns the topright & bottomleft corner positions of the SelectionBox in (cam->right, cam->up)-space
@@ -493,52 +527,33 @@ void CMouseHandler::MouseWheel(float delta)
 
 void CMouseHandler::DrawSelectionBox()
 {
-	dir = GetCursorCameraDir(lastx, lasty);
+	float3 btLeft, btRight, tpLeft, tpRight;
 
 	if (activeReceiver != nullptr)
-		return;
-
-	if (gu->fpsMode)
-		return;
-
-	const ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
-
-	if (!bp.pressed)
-		return;
-	if (bp.chorded)
-		return;
-	if (bp.movement <= dragSelectionThreshold)
 		return;
 
 	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
 		return;
 
+	const ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-	float2 topRight;
-	float2 bttmLeft;
+	if (!bp.pressed){
+		return;
+	}
 
-	GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topRight, bttmLeft);
+	dir = GetCursorCameraDir(lastx, lasty);
 
-	// do not let the rectangle verts be clipped
-	const float dirScale = camera->GetNearPlaneDist() * 2.0f;
-
-	const float3 camPos    = camera->GetPos();
-	const float3 camDirs[] = {
-		camera->GetRight()   * bttmLeft.x, // xmin
-		camera->GetRight()   * topRight.x, // xmax
-		camera->GetUp()      * bttmLeft.y, // ymin
-		camera->GetUp()      * topRight.y, // ymax
-		camera->GetForward()
-	};
+	if (!GetSelectionBoxVertices(btLeft, btRight, tpLeft, tpRight))
+		return;
 
 	auto& rb = RenderBuffer::GetTypedRenderBuffer<VA_TYPE_C>();
 	auto& sh = rb.GetShader();
 
 	rb.AddVertices({
-		{camPos + (camDirs[1] + camDirs[3] + camDirs[4]) * dirScale, cmdColors.mouseBox},
-		{camPos + (camDirs[1] + camDirs[2] + camDirs[4]) * dirScale, cmdColors.mouseBox},
-		{camPos + (camDirs[0] + camDirs[2] + camDirs[4]) * dirScale, cmdColors.mouseBox},
-		{camPos + (camDirs[0] + camDirs[3] + camDirs[4]) * dirScale, cmdColors.mouseBox},
+		{btLeft , cmdColors.mouseBox},
+		{btRight, cmdColors.mouseBox},
+		{tpRight, cmdColors.mouseBox},
+		{tpLeft , cmdColors.mouseBox},
 	});
 
 	glPushAttrib(GL_ENABLE_BIT);

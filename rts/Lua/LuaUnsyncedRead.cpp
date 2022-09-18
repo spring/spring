@@ -116,6 +116,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetScreenGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapDualScreen);
+	REGISTER_LUA_CFUNC(GetSelectionBox);
 	REGISTER_LUA_CFUNC(IsAboveMiniMap);
 	REGISTER_LUA_CFUNC(IsGUIHidden);
 
@@ -601,6 +602,28 @@ int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 	return 1;
 }
 
+
+int LuaUnsyncedRead::GetSelectionBox(lua_State* L)
+{
+	float3 bl, br, tl, tr;
+	if (!mouse->GetSelectionBoxVertices(bl, br, tl, tr)) {
+		lua_pushnil(L);
+
+		return 1;
+	}
+
+	const auto bottomLeft = camera->CalcWindowCoordinates(bl);
+	const auto topRight   = camera->CalcWindowCoordinates(tr);
+
+	lua_createtable(L, 4, 0);
+
+	lua_pushnumber(L, bottomLeft.x);
+	lua_pushnumber(L, topRight.y);
+	lua_pushnumber(L, topRight.x);
+	lua_pushnumber(L, bottomLeft.y);
+
+	return 4;
+}
 
 int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 {
