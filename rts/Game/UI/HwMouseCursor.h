@@ -17,6 +17,7 @@ public:
 	virtual void SetHotSpot(CMouseCursor::HotSpot hs) = 0;
 	virtual void SetDelay(float delay) = 0;
 	virtual void Finish() = 0;
+	virtual void Update(float animTime) {}
 
 	virtual bool NeedsYFlip() const = 0;
 	virtual bool IsValid() const = 0;

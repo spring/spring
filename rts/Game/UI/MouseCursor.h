@@ -29,6 +29,7 @@ public:
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
 	void BindTexture() const;                     // software mouse cursor
+	void UpdateHwCursor() const;                  // hardware mouse cursor animation
 	void BindHwCursor() const;                    // hardware mouse cursor
 
 	int GetMaxSizeX() const { return xmaxsize; }

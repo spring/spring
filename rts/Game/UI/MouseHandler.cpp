@@ -915,8 +915,10 @@ void CMouseHandler::DrawCursor()
 	if (hideCursor)
 		return;
 
-	if (hardwareCursor && loadedCursors[activeCursorIdx].IsHWValid())
+	if (hardwareCursor && loadedCursors[activeCursorIdx].IsHWValid()) {
+		loadedCursors[activeCursorIdx].UpdateHwCursor();
 		return;
+	}
 
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
