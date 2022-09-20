@@ -3462,10 +3462,10 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		return 0;
 
 	lua_createtable(L, 0, 5);
-	auto texSize = tex.GetSize();
-	HSTR_PUSH_NUMBER(L, "xsize", std::get<0>(texSize));
-	HSTR_PUSH_NUMBER(L, "ysize", std::get<1>(texSize));
-	HSTR_PUSH_NUMBER(L, "zsize", std::get<2>(texSize));
+	const auto [xsize, ysize, zsize] = tex.GetSize();
+	HSTR_PUSH_NUMBER(L, "xsize", xsize)
+	HSTR_PUSH_NUMBER(L, "ysize", ysize)
+	HSTR_PUSH_NUMBER(L, "zsize", zsize)
 
 	HSTR_PUSH_NUMBER(L, "id"    , tex.GetTextureID());
 	HSTR_PUSH_NUMBER(L, "target", tex.GetTextureTarget());
