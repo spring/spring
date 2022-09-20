@@ -1679,8 +1679,6 @@ void CMiniMap::DrawWorldStuff() const
 
 	// draw the projectiles
 	if (drawProjectiles) {
-		glPointSize(1.0f);
-		WorkaroundATIPointSizeBug();
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 

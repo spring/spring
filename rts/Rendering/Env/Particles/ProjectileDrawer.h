@@ -130,7 +130,7 @@ private:
 
 	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
-	void DrawFlyingPieces(int modelType);
+	void DrawFlyingPieces(int modelType) const;
 
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);

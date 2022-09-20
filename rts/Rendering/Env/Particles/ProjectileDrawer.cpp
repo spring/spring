@@ -700,13 +700,16 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 	auto& sh = TypedRenderBuffer<VA_TYPE_C>::GetShader();
 
+	glLineWidth(1.0f);
+	glPointSize(1.0f);
+	WorkaroundATIPointSizeBug();
 	sh.Enable();
 	CProjectile::GetMiniMapLinesRB().DrawArrays(GL_LINES);
 	CProjectile::GetMiniMapPointsRB().DrawArrays(GL_POINTS);
 	sh.Disable();
 }
 
-void CProjectileDrawer::DrawFlyingPieces(int modelType)
+void CProjectileDrawer::DrawFlyingPieces(int modelType) const
 {
 	const FlyingPieceContainer& container = projectileHandler.flyingPieces[modelType];
 

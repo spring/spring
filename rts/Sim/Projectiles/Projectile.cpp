@@ -194,10 +194,10 @@ bool CProjectile::IsValidTexture(const AtlasedTexture* tex)
 void CProjectile::AddMiniMapVertices(VA_TYPE_C&& v1, VA_TYPE_C&& v2)
 {
 	if (v1.pos.equals(v2.pos)) {
-		mmPtsRB.AddVertex(std::forward<VA_TYPE_C>(v1));
+		mmPtsRB.AddVertex(std::move(v1));
 	}
 	else {
-		mmLnsRB.AddVertex(std::forward<VA_TYPE_C>(v1));
-		mmLnsRB.AddVertex(std::forward<VA_TYPE_C>(v2));
+		mmLnsRB.AddVertex(std::move(v1));
+		mmLnsRB.AddVertex(std::move(v2));
 	}
 }

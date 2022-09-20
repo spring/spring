@@ -535,6 +535,7 @@ public:
 
 	void DrawArrays(uint32_t mode, bool rewind = true);
 	void DrawElements(uint32_t mode, bool rewind = true);
+	void DrainCurrent(bool drainIndcs = true);
 
 	bool ShouldSubmit(bool indexed) const {
 		if (indexed)
@@ -810,6 +811,25 @@ inline void TypedRenderBuffer<T>::DrawElements(uint32_t mode, bool rewind)
 	vboStartIndex = verts.size();
 
 	numSubmits[1] += 1;
+}
+
+template<typename T>
+inline void TypedRenderBuffer<T>::DrainCurrent(bool drainIndcs) {
+	{
+		size_t elemsCount = (verts.size() - vboUploadIndex);
+		vboUploadIndex += elemsCount;
+		size_t vertsCount = (verts.size() - vboStartIndex);
+		vboStartIndex += vertsCount;
+		if (!drainIndcs)
+			vboStartIndex += vertsCount;
+	}
+	if (drainIndcs) {
+		size_t elemsCount = (indcs.size() - eboUploadIndex);
+		eboUploadIndex += elemsCount;
+		size_t indcsCount = (indcs.size() - eboStartIndex);
+		eboStartIndex += indcsCount;
+		vboStartIndex = verts.size();
+	}
 }
 
 
