@@ -3493,14 +3493,14 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 	glBindTexture(tex->target, tex->id);
 	glEnable(tex->target); // leave it bound and enabled
 
-	const GLint xoff =   (GLint)luaL_checknumber(L, 2);
-	const GLint yoff =   (GLint)luaL_checknumber(L, 3);
-	const GLint    x =   (GLint)luaL_checknumber(L, 4);
-	const GLint    y =   (GLint)luaL_checknumber(L, 5);
-	const GLsizei  w = (GLsizei)luaL_checknumber(L, 6);
-	const GLsizei  h = (GLsizei)luaL_checknumber(L, 7);
-	const GLenum target = (GLenum)luaL_optnumber(L, 8, tex->target);
-	const GLenum level  = (GLenum)luaL_optnumber(L, 9, 0);
+	const auto xoff = (GLint)luaL_checknumber(L, 2);
+	const auto yoff = (GLint)luaL_checknumber(L, 3);
+	const auto x = (GLint)luaL_checknumber(L, 4);
+	const auto y = (GLint)luaL_checknumber(L, 5);
+	const auto w = (GLsizei)luaL_checknumber(L, 6);
+	const auto h = (GLsizei)luaL_checknumber(L, 7);
+	const auto target = (GLenum)luaL_optnumber(L, 8, tex->target);
+	const auto level  = (GLenum)luaL_optnumber(L, 9, 0);
 
 	glCopyTexSubImage2D(target, level, xoff, yoff, x, y, w, h);
 
