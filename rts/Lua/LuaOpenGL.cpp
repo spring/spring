@@ -3574,10 +3574,11 @@ int LuaOpenGL::GenerateMipmap(lua_State* L)
 		return 0;
 
 	GLint currentBinding;
-	glGetIntegerv(LuaTextures::Format2Query.find(tex->format)->second, &currentBinding);
-	glBindTexture(tex->format, tex->id);
-	glGenerateMipmapEXT(tex->format);
-	glBindTexture(tex->format, currentBinding);
+	assert(LuaTextures::Format2Query.find(tex->target) != LuaTextures::Format2Query.end());
+	glGetIntegerv(LuaTextures::Format2Query.find(tex->target)->second, &currentBinding);
+	glBindTexture(tex->target, tex->id);
+	glGenerateMipmapEXT(tex->target);
+	glBindTexture(tex->target, currentBinding);
 
 	return 0;
 }
