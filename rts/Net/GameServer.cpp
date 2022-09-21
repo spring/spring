@@ -667,7 +667,7 @@ void CGameServer::CheckSync()
 		desyncSpecs.clear();
 
 		for (GameParticipant& p: players) {
-			if (p.clientLink == nullptr)
+			if (p.clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING)
 				continue;
 
 			const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
