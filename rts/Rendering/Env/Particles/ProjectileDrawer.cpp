@@ -701,12 +701,21 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	auto& sh = TypedRenderBuffer<VA_TYPE_C>::GetShader();
 
 	glLineWidth(1.0f);
-	glPointSize(1.0f);
-	WorkaroundATIPointSizeBug();
+
+	// Note: glPointSize(1.0f); doesn't work here on AMD drivers.
+	// AMD drivers draw huge circles instead of small point for some reason
+	// so disable GL_PROGRAM_POINT_SIZE
+	const bool pntsz = glIsEnabled(GL_PROGRAM_POINT_SIZE);
+	if (pntsz)
+		glDisable(GL_PROGRAM_POINT_SIZE);
+
 	sh.Enable();
 	CProjectile::GetMiniMapLinesRB().DrawArrays(GL_LINES);
 	CProjectile::GetMiniMapPointsRB().DrawArrays(GL_POINTS);
 	sh.Disable();
+
+	if (pntsz)
+		glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType) const
