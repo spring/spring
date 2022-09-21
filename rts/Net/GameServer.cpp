@@ -853,7 +853,7 @@ void CGameServer::Update()
 		bool hasPlayers = false;
 
 		for (const GameParticipant& p: players) {
-			if ((hasPlayers |= (p.clientLink != nullptr)))
+			if ((hasPlayers |= (p.clientLink != nullptr && p.myState != GameParticipant::State::DISCONNECTING)))
 				break;
 		}
 
@@ -2971,7 +2971,7 @@ unsigned CGameServer::BindConnection(
 		clientLink->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
 
 	// there is an open link -> reconnect
-	if (newPlayer.clientLink != nullptr) {
+	if (newPlayer.clientLink != nullptr && p.myState != GameParticipant::State::DISCONNECTING) {
 		newPlayer.clientLink->ReconnectTo(*clientLink);
 
 		if (udpListener != nullptr)

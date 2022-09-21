@@ -23,7 +23,7 @@ GameParticipant::~GameParticipant()
 
 void GameParticipant::SendData(std::shared_ptr<const netcode::RawPacket> packet)
 {
-	if (clientLink != nullptr)
+	if (clientLink != nullptr && myState != GameParticipant::State::DISCONNECTING)
 		clientLink->SendData(packet);
 }
 
@@ -41,7 +41,7 @@ void GameParticipant::Kill(const std::string& reason, const bool flush)
 {
 	bool disconnected = true;
 
-	if (clientLink != nullptr) {
+	if (clientLink != nullptr && myState != GameParticipant::State::DISCONNECTING) {
 		clientLink->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 
 		if (flush) {
