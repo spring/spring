@@ -37,7 +37,7 @@
 vec3 GetShadowMult(float NdotL) {
 	#if (USE_SHADOWS == 1)
 		vec3 shadowCoord = shadowVertexPos.xyz / shadowVertexPos.w;
-		float sh = min(shadow2DProj(shadowTex, shadowVertexPos), smoothstep(0.0, 0.35, NdotL));
+		float sh = min(shadow2DProj(shadowTex, shadowVertexPos).r, smoothstep(0.0, 0.35, NdotL));
 		vec3 shColor = texture2D(shadowColorTex, shadowCoord.xy).rgb;
 		return mix(1.0, sh, shadowDensity) * shColor;
 	#else
