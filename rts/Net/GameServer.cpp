@@ -2722,7 +2722,7 @@ void CGameServer::UpdateLoop()
 void CGameServer::KickPlayer(int playerNum)
 {
 	// only kick connected players
-	if (players[playerNum].clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
+	if (players[playerNum].clientLink == nullptr || players[playerNum].myState == GameParticipant::State::DISCONNECTING) {
 		Message(spring::format("Attempt to kick user %d who is not connected", playerNum));
 		return;
 	}
@@ -2751,7 +2751,7 @@ void CGameServer::MutePlayer(int playerNum, bool muteChat, bool muteDraw)
 
 void CGameServer::SpecPlayer(int player)
 {
-	if (players[player].clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
+	if (players[player].clientLink == nullptr || players[player].myState == GameParticipant::State::DISCONNECTING) {
 		Message(spring::format("Attempt to spec user %d who is not connected", player));
 		return;
 	}
@@ -2882,7 +2882,7 @@ unsigned CGameServer::BindConnection(
 			if (gp.isFromDemo)
 				return {"User name duplicated in the demo", false, false};
 
-			if (gp.clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
+			if (gp.clientLink == nullptr || gp.myState == GameParticipant::State::DISCONNECTING) {
 				// not an existing connection
 				if (reconnect)
 					return {"User is not ingame", false, false};
@@ -2971,7 +2971,7 @@ unsigned CGameServer::BindConnection(
 		clientLink->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
 
 	// there is an open link -> reconnect
-	if (newPlayer.clientLink != nullptr && p.myState != GameParticipant::State::DISCONNECTING) {
+	if (newPlayer.clientLink != nullptr && newPlayer.myState != GameParticipant::State::DISCONNECTING) {
 		newPlayer.clientLink->ReconnectTo(*clientLink);
 
 		if (udpListener != nullptr)
