@@ -144,14 +144,14 @@ void CglShaderFontRenderer::DrawTraingleElements()
 	primaryBufferTC.DrawElements(GL_TRIANGLES);
 }
 
-void CglShaderFontRenderer::PushGLState(const CglFont* font)
+void CglShaderFontRenderer::PushGLState(const CglFont* fnt)
 {
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glBindTexture(GL_TEXTURE_2D, font->GetTexture());
+	glBindTexture(GL_TEXTURE_2D, fnt->GetTexture());
 
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgID);
 
@@ -248,7 +248,7 @@ void CglNoShaderFontRenderer::DrawTraingleElements()
 		i.clear();
 }
 
-void CglNoShaderFontRenderer::PushGLState(const CglFont* font)
+void CglNoShaderFontRenderer::PushGLState(const CglFont* fnt)
 {
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glDisable(GL_LIGHTING);
@@ -261,13 +261,13 @@ void CglNoShaderFontRenderer::PushGLState(const CglFont* font)
 	glMatrixMode(GL_TEXTURE);
 	glPushMatrix();
 	glLoadIdentity();
-	glScalef(1.0f / font->GetTextureWidth(), 1.0f / font->GetTextureHeight(), 1.0f);
+	glScalef(1.0f / fnt->GetTextureWidth(), 1.0f / fnt->GetTextureHeight(), 1.0f);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	glBindTexture(GL_TEXTURE_2D, font->GetTexture());
+	glBindTexture(GL_TEXTURE_2D, fnt->GetTexture());
 }
 
 void CglNoShaderFontRenderer::PopGLState()
@@ -294,6 +294,7 @@ void CglNoShaderFontRenderer::GetStats(std::array<size_t, 8>& stats) const
 
 CglFontRenderer* CglFontRenderer::CreateInstance()
 {
+	return new CglNoShaderFontRenderer();
 	if (globalRendering->amdHacks)
 		return new CglNoShaderFontRenderer();
 

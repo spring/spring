@@ -39,7 +39,7 @@ std::array<AttributeDef, 3> VA_TYPE_TC::attributeDefs = {
 std::array<AttributeDef, 5> VA_TYPE_PROJ::attributeDefs = {
 	VA_ATTR_DEF(VA_TYPE_PROJ, 0, 3, GL_FLOAT, pos, false, "pos"),
 	VA_ATTR_DEF(VA_TYPE_PROJ, 1, 3, GL_FLOAT, uvw, false, "uvw"),
-	VA_ATTR_DEF(VA_TYPE_PROJ, 2, 2, GL_FLOAT, uvDiff, false, "uvDiff"),
+	VA_ATTR_DEF(VA_TYPE_PROJ, 2, 4, GL_FLOAT, uvInfo, false, "uvInfo"),
 	VA_ATTR_DEF(VA_TYPE_PROJ, 3, 3, GL_FLOAT, aparams, false, "aparams"),
 	VA_ATTR_DEF(VA_TYPE_PROJ, 4, 4, GL_UNSIGNED_BYTE, c, true, "color")
 };

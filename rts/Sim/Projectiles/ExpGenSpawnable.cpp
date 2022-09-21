@@ -184,15 +184,15 @@ void CExpGenSpawnable::AddEffectsQuad(const VA_TYPE_TC& tl, const VA_TYPE_TC& tr
 
 	auto& rb = GetPrimaryRenderBuffer();
 
-	const float2 uvDiff = float2{ maxS - minS, maxT - minT };
-	const float3 animInfo = float3{ animParams.x, animParams.y, animProgress };
+	const auto uvInfo = float4{ minS, minT, maxS - minS, maxT - minT };
+	const auto animInfo = float3{ animParams.x, animParams.y, animProgress };
 	constexpr float layer = 0.0f; //for future texture arrays
 
 	//pos, uvw, uvmm, col
 	rb.AddQuadTriangles(
-		{ tl.pos, float3{ tl.s, tl.t, layer }, uvDiff, animInfo, tl.c },
-		{ tr.pos, float3{ tr.s, tr.t, layer }, uvDiff, animInfo, tr.c },
-		{ br.pos, float3{ br.s, br.t, layer }, uvDiff, animInfo, br.c },
-		{ bl.pos, float3{ bl.s, bl.t, layer }, uvDiff, animInfo, bl.c }
+		{ tl.pos, float3{ tl.s, tl.t, layer }, uvInfo, animInfo, tl.c },
+		{ tr.pos, float3{ tr.s, tr.t, layer }, uvInfo, animInfo, tr.c },
+		{ br.pos, float3{ br.s, br.t, layer }, uvInfo, animInfo, br.c },
+		{ bl.pos, float3{ bl.s, bl.t, layer }, uvInfo, animInfo, bl.c }
 	);
 }

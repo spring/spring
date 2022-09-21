@@ -3,7 +3,7 @@
 
 in vec3 pos;
 in vec3 uvw;
-in vec2 uvDiff;
+in vec4 uvInfo;
 in vec3 aparams;
 in vec4 color;
 
@@ -24,14 +24,19 @@ void main() {
 
 	vBF = fract(ap); //blending factor
 
-	vUV = uvw.xyxy + vec4(
-		floor(mod(i0 , aparams.x)),
-		floor(   (i0 / aparams.x)),
-		floor(mod(i1 , aparams.x)),
-		floor(   (i1 / aparams.x))
-	) * uvDiff.xyxy;
-
-	vUV /= aparams.xyxy; //scale
+	if (maxImgIdx > 1.0) {
+		vec2 uvDiff = (uvw.xy - uvInfo.xy);
+		vUV = uvDiff.xyxy + vec4(
+			floor(mod(i0 , aparams.x)),
+			floor(   (i0 / aparams.x)),
+			floor(mod(i1 , aparams.x)),
+			floor(   (i1 / aparams.x))
+		) * uvInfo.zwzw;
+		vUV /= aparams.xyxy; //scale
+		vUV += uvInfo.xyxy;
+	} else {
+		vUV = uvw.xyxy;
+	}
 
 	vLayer = uvw.z;
 	vCol = color;
