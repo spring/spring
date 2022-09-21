@@ -615,7 +615,7 @@ void CGameServer::CheckSync()
 			checksums.reserve(players.size());
 
 			for (const GameParticipant& p: players) {
-				if (p.clientLink == nullptr)
+				if (p.clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING)
 					continue;
 
 				const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
@@ -2722,7 +2722,7 @@ void CGameServer::UpdateLoop()
 void CGameServer::KickPlayer(int playerNum)
 {
 	// only kick connected players
-	if (players[playerNum].clientLink == nullptr) {
+	if (players[playerNum].clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
 		Message(spring::format("Attempt to kick user %d who is not connected", playerNum));
 		return;
 	}
@@ -2751,7 +2751,7 @@ void CGameServer::MutePlayer(int playerNum, bool muteChat, bool muteDraw)
 
 void CGameServer::SpecPlayer(int player)
 {
-	if (players[player].clientLink == nullptr) {
+	if (players[player].clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
 		Message(spring::format("Attempt to spec user %d who is not connected", player));
 		return;
 	}
@@ -2882,7 +2882,7 @@ unsigned CGameServer::BindConnection(
 			if (gp.isFromDemo)
 				return {"User name duplicated in the demo", false, false};
 
-			if (gp.clientLink == nullptr) {
+			if (gp.clientLink == nullptr || p.myState == GameParticipant::State::DISCONNECTING) {
 				// not an existing connection
 				if (reconnect)
 					return {"User is not ingame", false, false};
