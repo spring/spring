@@ -5,6 +5,8 @@ Spring changelog
 -- 106.0 --------------------------------------------------------
 
 Lua:
+ - Add Spring.GetPressedScans, for new returns output similar to
+   GetPressedKeys but with scancodes
  - Add minx, maxy, maxx, miny = Spring.GetSelectionBox() returning coordinates
    for current selection box. Returns nil if no valid selection active.
  - Add Spring.GetKeyFromScanSymbol(scanSymbol) that receives a scancode and

@@ -6,16 +6,18 @@
 #include <vector>
 
 namespace KeyInput {
-	void Update(int currKeycode, int fakeMetaKey);
+	void Update(int fakeMetaKey);
 	void ReleaseAllKeys();
 
 	bool IsKeyPressed(int idx);
+	bool IsScanPressed(int idx);
 	void SetKeyModState(int mod, bool pressed);
 	bool GetKeyModState(int mod);
 
 	typedef std::pair<int, bool> Key;
 
 	const std::vector<Key>& GetPressedKeys();
+	const std::vector<Key>& GetPressedScans();
 }
 
 #endif

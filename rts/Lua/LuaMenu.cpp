@@ -292,6 +292,7 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetKeyState);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetModKeyState);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetPressedKeys);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetPressedScans);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetInvertQueueKey);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetKeyCode);

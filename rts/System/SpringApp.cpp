@@ -1090,7 +1090,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
 					// update keydown table
-					KeyInput::Update(0, keyBindings.GetFakeMetaKey());
+					KeyInput::Update(keyBindings.GetFakeMetaKey());
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_LOST: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
@@ -1150,7 +1150,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 		} break;
 		case SDL_KEYDOWN: {
-			KeyInput::Update(event.key.keysym.sym, keyBindings.GetFakeMetaKey());
+			KeyInput::Update(keyBindings.GetFakeMetaKey());
 
 			if (activeController != nullptr) {
 				int keyCode = CKeyCodes::GetNormalizedSymbol(event.key.keysym.sym);
@@ -1160,7 +1160,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 		} break;
 		case SDL_KEYUP: {
-			KeyInput::Update(event.key.keysym.sym, keyBindings.GetFakeMetaKey());
+			KeyInput::Update(keyBindings.GetFakeMetaKey());
 
 			if (activeController != nullptr) {
 				gameTextInput.ignoreNextChar = false;

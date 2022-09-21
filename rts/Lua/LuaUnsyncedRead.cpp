@@ -233,6 +233,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
+	REGISTER_LUA_CFUNC(GetPressedScans);
 	REGISTER_LUA_CFUNC(GetInvertQueueKey);
 
 	REGISTER_LUA_CFUNC(GetClipboard);
@@ -2629,6 +2630,32 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 
 		// ["keyName"] = true
 		lua_pushsstring(L, keyCodes.GetName(keyCode));
+		lua_pushboolean(L, true);
+		lua_rawset(L, -3);
+	}
+
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetPressedScans(lua_State* L)
+{
+	const auto& scans = KeyInput::GetPressedScans();
+
+	lua_createtable(L, scans.size(), 0);
+
+	for (auto scan: scans) {
+		if (!scan.second)
+			continue;
+
+		const int scanCode = scan.first;
+
+		// [scanCode] = true
+		lua_pushboolean(L, true);
+		lua_rawseti(L, -2, scanCode);
+
+		// ["scanName"] = true
+		lua_pushsstring(L, scanCodes.GetName(scanCode));
 		lua_pushboolean(L, true);
 		lua_rawset(L, -3);
 	}
