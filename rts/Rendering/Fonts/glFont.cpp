@@ -612,11 +612,11 @@ void CglFont::End() {
 	}
 	inBeginEndBlock = false;
 
+	UpdateGlyphAtlasTexture();
 	//without this, fonts textures are empty in display lists (probably GL commands in UploadGlyphAtlasTexture are get recorded as part of the list)
 	GLint dl = 0;
 	glGetIntegerv(GL_LIST_INDEX, &dl);
 	if (dl == 0) {
-		UpdateGlyphAtlasTexture();
 		UploadGlyphAtlasTexture();
 	}
 	fontRenderer->PushGLState(this);
