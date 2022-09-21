@@ -177,6 +177,8 @@ private:
 
 	CBitmap atlasUpdate;
 	CBitmap atlasUpdateShadow;
+
+	static std::vector<char32_t> nonPrintableRanges;
 public:
 	auto GetGlyphs() const -> const decltype(glyphs) { return glyphs; }
 	auto GetGlyphs()       ->       decltype(glyphs) { return glyphs; }
