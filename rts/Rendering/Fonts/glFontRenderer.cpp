@@ -294,7 +294,6 @@ void CglNoShaderFontRenderer::GetStats(std::array<size_t, 8>& stats) const
 
 CglFontRenderer* CglFontRenderer::CreateInstance()
 {
-	return new CglNoShaderFontRenderer();
 	if (globalRendering->amdHacks)
 		return new CglNoShaderFontRenderer();
 
