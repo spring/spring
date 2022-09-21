@@ -207,7 +207,7 @@ void CInMapDrawView::Draw()
 			rbl.DrawArrays(GL_LINES, true ); // width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 		}
 		else {
-			rbl.DrawArrays(GL_LINES, false); //! draw lines
+			rbl.DrawArrays(GL_LINES, true ); //! draw lines
 		}
 		sh.Disable();
 		glLineWidth(1.0f);
