@@ -75,7 +75,7 @@ RUN apt-get update -y; \
 # GCC-10 PPA (linux-64)
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y; \
     apt update -y; \
-    apt install -y gcc-10 g++-10
+    apt install -y gcc-11 g++-11
 
 # Install Build Dependencies (linux-64)
 RUN apt-get install --fix-missing -y \
