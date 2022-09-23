@@ -81,10 +81,12 @@ void COverheadController::MouseMove(float3 move)
 		move.y = -move.y;
 	}
 
+	const bool moveFast = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_FST];
+
 	// ignore middleClickScrollSpeed sign in locked MMB-scroll mode
 	move = mix(move, move * Sign(middleClickScrollSpeed), mouse->locked) * middleClickScrollSpeed * 100.0f;
-	pos.x += (move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed);
-	pos.z += (move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed);
+	pos.x += (move.x * pixelSize * (1 + moveFast * 3) * scrollSpeed);
+	pos.z += (move.y * pixelSize * (1 + moveFast * 3) * scrollSpeed);
 
 	Update();
 }
@@ -102,18 +104,22 @@ void COverheadController::MouseWheelMove(float move)
 
 	camHandler->CameraTransition(0.05f);
 
-	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
+	const bool moveFast     = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_FST];
+	const bool moveTilt     = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_TLT];
+	const float shiftSpeed  = (moveFast ? 3.0f : 1.0f);
 	const float altZoomDist = height * move * 0.007f * shiftSpeed;
 
 	// tilt the camera if LCTRL is pressed
 	//
 	// otherwise holding down LALT uses 'instant-zoom'
 	// from here to the end of the function (smoothed)
-	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
+	if (moveTilt) {
 		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
 		angle = Clamp(angle, 0.01f, math::HALFPI);
 		camHandler->CameraTransition(0.125f);
 	} else {
+		const bool moveReset = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_RST];
+
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
 			float3 cpos = pos - dir * height;
@@ -123,7 +129,7 @@ void COverheadController::MouseWheelMove(float move)
 				dif = height - 60.0f;
 
 			// instazoom in to standard view
-			if (KeyInput::GetKeyModState(KMOD_ALT))
+			if (moveReset)
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 
 			float3 wantedPos = cpos + mouse->dir * dif;
@@ -143,7 +149,7 @@ void COverheadController::MouseWheelMove(float move)
 			}
 		} else {
 			// ZOOM OUT from mid screen
-			if (KeyInput::GetKeyModState(KMOD_ALT)) {
+			if (moveReset) {
 				// instazoom out to maximum height
 				if (height < maxHeight * 0.5f && changeAltHeight) {
 					oldAltHeight = height;
@@ -159,7 +165,7 @@ void COverheadController::MouseWheelMove(float move)
 		}
 
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
-		if (KeyInput::GetKeyModState(KMOD_ALT)) {
+		if (moveReset) {
 			angle = DEFAULT_ANGLE;
 			camHandler->CameraTransition(1.0f);
 		} else {

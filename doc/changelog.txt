@@ -5,6 +5,10 @@ Spring changelog
 -- 106.0 --------------------------------------------------------
 
 Lua:
+ - Add movetilt and movereset for previously hardcoded ALT and CTRL camera
+   bindings
+ - Fix moveslow and movefast camera bindings not being respected in favor of
+   hardcoded ones
  - Add Spring.GetPressedScans, for new returns output similar to
    GetPressedKeys but with scancodes
  - Add minx, maxy, maxx, miny = Spring.GetSelectionBox() returning coordinates

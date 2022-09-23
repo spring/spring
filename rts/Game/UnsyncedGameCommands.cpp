@@ -3613,6 +3613,12 @@ bool CGame::ActionReleased(const Action& action)
 		case hashString("moveslow"): {
 			camera->SetMovState(CCamera::MOVE_STATE_SLW, false);
 		} break;
+		case hashString("movetilt"): {
+			camera->SetMovState(CCamera::MOVE_STATE_TLT, false);
+		} break;
+		case hashString("movereset"): {
+			camera->SetMovState(CCamera::MOVE_STATE_RST, false);
+		} break;
 
 		case hashString("mouse1"): {
 			mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
@@ -3686,14 +3692,16 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(5));
 	AddActionExecutor(AllocActionExecutor<MouseCancelSelectionRectangleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ViewSelectionActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(0, "Forward"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(1, "Back"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(2, "Left"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(3, "Right"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(4, "Up"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(5, "Down"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(6, "Fast"));
-	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(7, "Slow"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_FWD, "Forward"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_BCK, "Back"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_LFT, "Left"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_RGT, "Right"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_UP , "Up"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_DWN, "Down"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_FST, "Fast"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_SLW, "Slow"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_TLT, "Tilt"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(CCamera::MOVE_STATE_RST, "Reset"));
 	AddActionExecutor(AllocActionExecutor<AIKillReloadActionExecutor>(true));
 	AddActionExecutor(AllocActionExecutor<AIKillReloadActionExecutor>(false));
 	AddActionExecutor(AllocActionExecutor<AIControlActionExecutor>());

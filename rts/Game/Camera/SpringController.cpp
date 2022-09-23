@@ -41,7 +41,9 @@ void CSpringController::KeyMove(float3 move)
 {
 	move *= math::sqrt(move.z);
 
-	if (KeyInput::GetKeyModState(KMOD_ALT)) {
+	const bool moveReset = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_RST];
+
+	if (moveReset) {
 		rot.x = Clamp(rot.x + move.y, math::PI * 0.51f, math::PI * 0.99f);
 		MoveAzimuth(move.x);
 		Update();
@@ -57,8 +59,10 @@ void CSpringController::KeyMove(float3 move)
 
 void CSpringController::MouseMove(float3 move)
 {
+	const bool moveFast = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_FST];
+
 	move *= 0.005f;
-	move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
+	move *= (1 + moveFast * 3);
 	move.y = -move.y;
 	move.z = 1.0f;
 
@@ -71,10 +75,11 @@ void CSpringController::ScreenEdgeMove(float3 move)
 	const bool doRotate = configHandler->GetBool("CamSpringEdgeRotate");
 	const bool belowMax = (mouse->lasty < globalRendering->viewSizeY /  3);
 	const bool aboveMin = (mouse->lasty > globalRendering->viewSizeY / 10);
+	const bool moveFast = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_FST];
 
 	if (doRotate && aboveMin && belowMax) {
 		// rotate camera when mouse touches top screen borders
-		move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
+		move *= (1 + moveFast * 3);
 		MoveAzimuth(move.x * 0.75f);
 		move.x = 0.0f;
 	}
@@ -85,14 +90,16 @@ void CSpringController::ScreenEdgeMove(float3 move)
 
 void CSpringController::MouseWheelMove(float move)
 {
-	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 2.0f : 1.0f);
+	const bool moveFast    = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_FST];
+	const bool moveTilt    = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_TLT];
+	const float shiftSpeed = (moveFast ? 2.0f : 1.0f);
 	const float scaledMove = 1.0f + (move * shiftSpeed * 0.007f);
 	const float curDistPre = curDist;
 
 	// tilt the camera if CTRL is pressed, otherwise zoom
 	// no tweening during tilt, position is not fixed but
 	// moves along an arc segment
-	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
+	if (moveTilt) {
 		rot.x -= (move * shiftSpeed * 0.005f);
 	} else {
 		// depends on curDist
@@ -120,7 +127,9 @@ void CSpringController::MouseWheelMove(float move)
 
 float CSpringController::ZoomIn(const float3& curCamPos, const float2& zoomParams)
 {
-	if (KeyInput::GetKeyModState(KMOD_ALT) && zoomBack) {
+	const bool moveReset = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_RST];
+
+	if (moveReset && zoomBack) {
 		// instazoom in to standard view
 		curDist = oldDist;
 		zoomBack = false;
@@ -157,7 +166,8 @@ float CSpringController::ZoomIn(const float3& curCamPos, const float2& zoomParam
 
 float CSpringController::ZoomOut(const float3& curCamPos, const float2& zoomParams)
 {
-	if (KeyInput::GetKeyModState(KMOD_ALT)) {
+	const bool moveReset = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_RST];
+	if (moveReset) {
 		// instazoom out to maximum height
 		if (!zoomBack) {
 			oldDist = zoomParams.x;
@@ -231,14 +241,15 @@ static float GetRotationWithCardinalLock(float rot)
 
 float CSpringController::MoveAzimuth(float move)
 {
-	const float minRot = std::floor(rot.y / math::HALFPI) * math::HALFPI;
-	const float maxRot = std::ceil(rot.y / math::HALFPI) * math::HALFPI;
+	const float minRot  = std::floor(rot.y / math::HALFPI) * math::HALFPI;
+	const float maxRot  = std::ceil(rot.y / math::HALFPI) * math::HALFPI;
+	const bool moveTilt = camHandler->GetActiveCamera()->GetMovState()[CCamera::MOVE_STATE_TLT];
 
 	rot.y -= move;
 
 	if (configHandler->GetBool("CamSpringLockCardinalDirections"))
 		return GetRotationWithCardinalLock(rot.y);
-	if (KeyInput::GetKeyModState(KMOD_CTRL))
+	if (moveTilt)
 		rot.y = Clamp(rot.y, minRot + 0.02f, maxRot - 0.02f);
 
 	return rot.y;

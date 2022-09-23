@@ -238,6 +238,9 @@ static const DefaultBinding defaultBindings[] = {
 	{    "Any+ctrl",     "moveslow"     },
 	{    "Any+shift",    "movefast"     },
 
+	{    "Any+ctrl",     "movetilt"     },
+	{    "Any+alt",      "movereset"    },
+
 	// selection keys
 	{ "Ctrl+a",    "select AllMap++_ClearSelection_SelectAll+"                                         },
 	{ "Ctrl+b",    "select AllMap+_Builder_Idle+_ClearSelection_SelectOne+"                            },
@@ -277,6 +280,8 @@ void CKeyBindings::Init()
 	statefulCommands.insert("movedown");
 	statefulCommands.insert("moveslow");
 	statefulCommands.insert("movefast");
+	statefulCommands.insert("movetilt");
+	statefulCommands.insert("movereset");
 
 	RegisterAction("bind");
 	RegisterAction("unbind");
