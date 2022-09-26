@@ -4,7 +4,7 @@ shift
 case "${COMMAND}" in
 
   build)
-    . build.sh
+    . build.sh "$@"
     ;;
 
   dev)

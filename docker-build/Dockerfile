@@ -116,3 +116,5 @@ RUN mkdir -p /usr/lib/ccache; \
 VOLUME /publish
 
 ENTRYPOINT ["/bin/bash", "/scripts/entrypoint.sh"]
+
+COPY Dockerfile /Dockerfile

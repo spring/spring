@@ -1,12 +1,13 @@
 cd "${SPRING_DIR}"
 
-rm -rf "${BUILD_DIR}"
-mkdir -p "${BUILD_DIR}"
-mkdir -p "${BUILD_DIR}"/bin-dir
+if [ ! ${LOCAL_BUILD} ]; then
+    rm -rf "${BUILD_DIR}"
+fi
+mkdir -p "${BUILD_DIR}/bin-dir"
 
 EXTRA_CMAKE_ARGS=()
 if [ "${PLATFORM}" == "linux-64" ]; then
-    WORKDIR=$(pwd)/spring-static-libs
+    WORKDIR=${LIBS_DIR}
     LIBDIR=$WORKDIR/lib
     INCLUDEDIR=$WORKDIR/include
 
@@ -56,6 +57,17 @@ if [ "${PLATFORM}" == "linux-64" ]; then
         -DVORBISENC_LIBRARY:PATH=${LIBDIR}/libvorbisenc.a
         -DVORBISFILE_LIBRARY:PATH=${LIBDIR}/libvorbisfile.a
         -DVORBIS_LIBRARY:PATH=${LIBDIR}/libvorbis.a
+    )
+elif [ "${PLATFORM}" == "windows-64" ]; then
+    EXTRA_CMAKE_ARGS+=(
+        -DMINGWLIBS=${LIBS_DIR}
+    )
+fi
+
+if [ ${ONLY_LEGACY} ]; then
+    EXTRA_CMAKE_ARGS+=(
+        -DBUILD_spring-headless=FALSE
+        -DBUILD_spring-dedicated=FALSE
     )
 fi
 

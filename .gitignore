@@ -126,6 +126,7 @@ progress.make
 
 #buildbot generated dir
 /build
+/docker-build/cache
 
 #installer downloaded/generated stuff
 /installer/Springlobby/
