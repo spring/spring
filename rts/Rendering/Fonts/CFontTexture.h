@@ -130,8 +130,9 @@ public:
 protected:
 	void LoadWantedGlyphs(char32_t begin, char32_t end);
 	void LoadWantedGlyphs(const std::vector<char32_t>& wanted);
+	bool GlyphAtlasTextureNeedsUpdate() const;
 	void UpdateGlyphAtlasTexture();
-	void UploadGlyphAtlasTexture() const;
+	void UploadGlyphAtlasTexture();
 private:
 	void CreateTexture(const int width, const int height);
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
@@ -164,6 +165,7 @@ private:
 	int curTextureUpdate = 0;
 #ifndef HEADLESS
 	int lastTextureUpdate = 0;
+	bool needsTextureUpload = true;
 #endif
 	std::shared_ptr<FontFace> shFace;
 

@@ -1273,20 +1273,29 @@ void CFontTexture::Update() {
 	// check unused fonts
 	spring::VectorEraseAllIf(allFonts, [](std::weak_ptr<CFontTexture> item) { return item.expired(); });
 
-	for_mt_chunk(0, allFonts.size(), [](int i) {
-		allFonts[i].lock()->UpdateGlyphAtlasTexture();
+	static std::vector<std::shared_ptr<CFontTexture>> fontsToUpdate;
+	fontsToUpdate.clear();
+
+	for (const auto& font : allFonts) {
+		auto lf = font.lock();
+		if (lf->GlyphAtlasTextureNeedsUpdate())
+			fontsToUpdate.emplace_back(std::move(lf));
+	}
+
+	for_mt_chunk(0, fontsToUpdate.size(), [](int i) {
+		fontsToUpdate[i]->UpdateGlyphAtlasTexture();
 	});
 
-	for (const auto& font : allFonts)
-		font.lock()->UploadGlyphAtlasTexture();
+	for (const auto& font : fontsToUpdate)
+		font->UploadGlyphAtlasTexture();
+
+	fontsToUpdate.clear();
 }
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
 #ifndef HEADLESS
-	const auto it = glyphs.find(ch);
-
-	if (it != glyphs.end())
+	if (const auto it = glyphs.find(ch); it != glyphs.end())
 		return it->second;
 #endif
 
@@ -1628,13 +1637,20 @@ void CFontTexture::ReallocAtlases(bool pre)
 #endif
 }
 
+bool CFontTexture::GlyphAtlasTextureNeedsUpdate() const
+{
+#ifndef HEADLESS
+	return curTextureUpdate != lastTextureUpdate;
+#else
+	return false;
+#endif
+}
 
 void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
 	// no need to lock, MT safe
-
-	if (curTextureUpdate == lastTextureUpdate)
+	if (!GlyphAtlasTextureNeedsUpdate())
 		return;
 
 	lastTextureUpdate = curTextureUpdate;
@@ -1660,20 +1676,27 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 
 		atlasUpdateShadow = {}; // MT-safe
 	}
+
+	needsTextureUpload = true;
 #endif
 }
 
-void CFontTexture::UploadGlyphAtlasTexture() const
+void CFontTexture::UploadGlyphAtlasTexture()
 {
 #ifndef HEADLESS
+	if (!needsTextureUpload)
+		return;
+
 	// update texture atlas
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
-#ifdef SUPPORT_AMD_HACKS_HERE
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
-#else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
-#endif
+	#ifdef SUPPORT_AMD_HACKS_HERE
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
+	#else
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
+	#endif
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	needsTextureUpload = false;
 #endif
 }
 

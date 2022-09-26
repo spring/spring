@@ -730,9 +730,11 @@ static inline void for_mt(int start, int end, F&& f)
 template <typename F>
 static inline void for_mt_chunk(int b, int e, F&& f, int chunkOrMinChinkSize = 0)
 {
-	static const int maxThreads = ThreadPool::GetNumThreads();
+	const int numElems = e - b;
+	if (numElems <= 0)
+		return;
 
-	const int numElems  = e - b;
+	static const int maxThreads = ThreadPool::GetNumThreads();
 
 	int chunkSize = chunkOrMinChinkSize;
 	if (chunkOrMinChinkSize <= 0) {
