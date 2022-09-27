@@ -1343,6 +1343,10 @@ int LuaOpenGL::Text(lua_State* L)
 		}
 	}
 
+	std::array<float, 4> currentColor;
+	glGetFloatv(GL_CURRENT_COLOR, currentColor.data());
+	font->SetTextColor(SColor(currentColor.data()));
+
 	font->glPrint(x, y, size, options, text);
 
 	return 0;
