@@ -131,6 +131,7 @@ protected:
 	void LoadWantedGlyphs(char32_t begin, char32_t end);
 	void LoadWantedGlyphs(const std::vector<char32_t>& wanted);
 	bool GlyphAtlasTextureNeedsUpdate() const;
+	bool GlyphAtlasTextureNeedsUpload() const;
 	void UpdateGlyphAtlasTexture();
 	void UploadGlyphAtlasTexture();
 private:

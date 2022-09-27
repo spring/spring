@@ -1278,7 +1278,7 @@ void CFontTexture::Update() {
 
 	for (const auto& font : allFonts) {
 		auto lf = font.lock();
-		if (lf->GlyphAtlasTextureNeedsUpdate())
+		if (lf->GlyphAtlasTextureNeedsUpdate() || lf->GlyphAtlasTextureNeedsUpload())
 			fontsToUpdate.emplace_back(std::move(lf));
 	}
 
@@ -1646,6 +1646,15 @@ bool CFontTexture::GlyphAtlasTextureNeedsUpdate() const
 #endif
 }
 
+bool CFontTexture::GlyphAtlasTextureNeedsUpload() const
+{
+#ifndef HEADLESS
+	return needsTextureUpload;
+#else
+	return false;
+#endif
+}
+
 void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
@@ -1675,16 +1684,16 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 		}
 
 		atlasUpdateShadow = {}; // MT-safe
+		needsTextureUpload = true;
 	}
 
-	needsTextureUpload = true;
 #endif
 }
 
 void CFontTexture::UploadGlyphAtlasTexture()
 {
 #ifndef HEADLESS
-	if (!needsTextureUpload)
+	if (!GlyphAtlasTextureNeedsUpload())
 		return;
 
 	// update texture atlas
