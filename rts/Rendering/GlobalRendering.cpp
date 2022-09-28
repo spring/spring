@@ -940,13 +940,14 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
 	LOG("\tMSAA frame-buffer support : %i (%i)", supportMSAAFrameBuffer, glewIsExtensionSupported("GL_EXT_framebuffer_multisample"));
-	LOG("\tZ-buffer depth            : %i (-)", supportDepthBufferBitDepth);
+	LOG("\tZ-buffer depth            : %i (-)" , supportDepthBufferBitDepth);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
 	LOG("\tfrag-depth layout support : %i (%i)", supportFragDepthLayout, glewIsExtensionSupported("GL_ARB_conservative_depth"));
 	LOG("\tpersistent maps support   : %i (%i)", supportPersistentMapping, glewIsExtensionSupported("GL_ARB_buffer_storage"));
 	LOG("\texplicit attribs location : %i (%i)", supportExplicitAttribLoc, glewIsExtensionSupported("GL_ARB_explicit_attrib_location"));
+	LOG("\tmulti draw indirect       : %i (-)" , glewIsExtensionSupported("GL_ARB_multi_draw_indirect"));
 
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
