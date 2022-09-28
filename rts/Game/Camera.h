@@ -114,7 +114,7 @@ public:
 	void SetRotZ(const float z) { SetRot(float3(rot.x, rot.y,     z)); }
 
 	float3 CalcPixelDir(int x, int y) const;
-	float3 CalcWindowCoordinates(const float3& objPos) const;
+	float3 CalcViewPortCoordinates(const float3& objPos) const;
 
 	bool InView(const float3& point, float radius = 0.0f) const { return (frustum.IntersectSphere(pos, {point, radius})); }
 	bool InView(const float3& mins, const float3& maxs) const { return (InView(AABB{mins, maxs})); }

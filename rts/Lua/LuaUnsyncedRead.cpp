@@ -613,8 +613,8 @@ int LuaUnsyncedRead::GetSelectionBox(lua_State* L)
 		return 1;
 	}
 
-	const auto bottomLeft = camera->CalcWindowCoordinates(bl);
-	const auto topRight   = camera->CalcWindowCoordinates(tr);
+	const auto bottomLeft = camera->CalcViewPortCoordinates(bl);
+	const auto topRight   = camera->CalcViewPortCoordinates(tr);
 
 	lua_createtable(L, 4, 0);
 
@@ -1420,15 +1420,15 @@ int LuaUnsyncedRead::GetUnitsInScreenRectangle(lua_State* L)
 
 			unit->tempNum = tempNum;
 
-			const float3 winPos = camera->CalcWindowCoordinates(unit->drawPos);
+			const float3 vpPos = camera->CalcViewPortCoordinates(unit->drawPos);
 
-			if (winPos.x > r || winPos.x < l)
+			if (vpPos.x > r || vpPos.x < l)
 				continue;
 
-			if (winPos.y > b || winPos.y < t)
+			if (vpPos.y > b || vpPos.y < t)
 				continue;
 
-			if (winPos.z > 1.0f || winPos.z < 0.0f)
+			if (vpPos.z > 1.0f || vpPos.z < 0.0f)
 				continue;
 
 			lua_pushnumber(L, unit->id);
@@ -1864,10 +1864,10 @@ int LuaUnsyncedRead::WorldToScreenCoords(lua_State* L)
 	const float3 worldPos(luaL_checkfloat(L, 1),
 	                      luaL_checkfloat(L, 2),
 	                      luaL_checkfloat(L, 3));
-	const float3 winPos = camera->CalcWindowCoordinates(worldPos);
-	lua_pushnumber(L, winPos.x);
-	lua_pushnumber(L, winPos.y);
-	lua_pushnumber(L, winPos.z);
+	const float3 vpPos = camera->CalcViewPortCoordinates(worldPos);
+	lua_pushnumber(L, vpPos.x);
+	lua_pushnumber(L, vpPos.y);
+	lua_pushnumber(L, vpPos.z);
 	return 3;
 }
 

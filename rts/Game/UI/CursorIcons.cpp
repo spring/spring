@@ -109,9 +109,9 @@ void CCursorIcons::DrawCursors() const
 			lastCursor = currentCursor;
 		}
 
-		const float3 winCoors = camera->CalcWindowCoordinates(icon.pos);
-		const float2 winScale = { cmdColors.QueueIconScale(), 1.0f };
-		const float4& matParams = currentCursor->CalcFrameMatrixParams(winCoors, winScale);
+		const float3 vpCoors = camera->CalcViewPortCoordinates(icon.pos);
+		const float2 vpScale = { cmdColors.QueueIconScale(), 1.0f };
+		const float4& matParams = currentCursor->CalcFrameMatrixParams(vpCoors, vpScale);
 
 		CMatrix44f cursorMat;
 		cursorMat.Translate(matParams.x, matParams.y, 0.0f);
@@ -151,10 +151,10 @@ void CCursorIcons::DrawTexts() const
 	font->SetColors(); //default
 
 	for (const auto& text : texts) {
-		const float3 winPos = camera->CalcWindowCoordinates(text.pos);
-		if (winPos.z <= 1.0f) {
-			const float x = (winPos.x * globalRendering->pixelX);
-			const float y = (winPos.y * globalRendering->pixelY) + yOffset;
+		const float3 vpPos = camera->CalcViewPortCoordinates(text.pos);
+		if (vpPos.z <= 1.0f) {
+			const float x = (vpPos.x * globalRendering->pixelX);
+			const float y = (vpPos.y * globalRendering->pixelY) + yOffset;
 
 			if (guihandler->GetOutlineFonts()) {
 				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, text.text);

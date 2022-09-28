@@ -269,8 +269,8 @@ void CUnitDrawerData::UpdateUnitIconStateScreen(CUnit* unit)
 	float3 pos = unit->pos;
 	float3 radiusPos = pos + camera->right * unit->radius;
 
-	pos = camera->CalcWindowCoordinates(pos);
-	radiusPos = camera->CalcWindowCoordinates(radiusPos);
+	pos = camera->CalcViewPortCoordinates(pos);
+	radiusPos = camera->CalcViewPortCoordinates(radiusPos);
 
 	unit->iconRadius = unit->radius * ((limit * 0.9) / std::abs(pos.x - radiusPos.x)); // used for clicking on iconified units (world space!!!)
 

@@ -3946,12 +3946,12 @@ void CGuiHandler::DrawCentroidCursor()
 	}
 	pos /= (float)selUnits.size();
 
-	const float3 winPos = camera->CalcWindowCoordinates(pos);
-	if (winPos.z <= 1.0f) {
+	const float3 vpPos = camera->CalcViewPortCoordinates(pos);
+	if (vpPos.z <= 1.0f) {
 		const CMouseCursor* mc = mouse->FindCursor("Centroid");
 		if (mc != nullptr) {
 			glDisable(GL_DEPTH_TEST);
-			mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
+			mc->Draw((int)vpPos.x, globalRendering->viewSizeY - (int)vpPos.y, 1.0f);
 			glEnable(GL_DEPTH_TEST);
 		}
 	}
