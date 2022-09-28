@@ -352,7 +352,17 @@ static float3 CalcSpeedVectorExclGravity(const CUnit* owner, const CGroundMoveTy
 	// to owner->speed which gets overridden below, so
 	// need to calculate hSpeedScale from it (not from
 	// currentSpeed) directly
-	return (owner->frontdir * (owner->speed.w * Sign(int(!mt->IsReversing())) + hAcc));
+
+	// When currentSpeed is <0.1, then delta gets dropped to 0.f, but
+	// that means units will be left drifting very slowly. Catch that
+	// here and force the velocity to zero. The slightly higher check
+	// is because speed.w and currentSpeed are calculated differently
+	// and that causes  a slight variation that we need to compensate
+	// for.
+	if ((hAcc == 0.f) && (math::fabs(owner->speed.w) <= 0.012f))
+		return ZeroVector;
+	else
+		return (owner->frontdir * (owner->speed.w * Sign(int(!mt->IsReversing())) + hAcc));
 }
 
 

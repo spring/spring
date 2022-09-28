@@ -118,7 +118,6 @@ public:
 			nextWayPoint = earlyNextWayPoint;
 	}
 	unsigned int GetPathId() { return pathID; }
-	
 
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
