@@ -147,6 +147,7 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 	if ((Square(diffBlk.x) + Square(diffBlk.y)) > Square(pfDef.maxRawPathLen))
 		return IPath::Error;
 
+	int curThread = ThreadPool::GetThreadNum();
 
 	const/*expr*/ auto StepFunc = [](const int2& dir, const int2& dif, int2& pos, int2& err) {
 		pos.x += (dir.x * (err.y >= 0));
@@ -175,16 +176,14 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 	//   goal until owner reaches it
 	for (blkStepCtr += int2{1, 1}; (blkStepCtr.x > 0 && blkStepCtr.y > 0); blkStepCtr -= int2{1, 1}) {
 		{
-			//if ((blockCheckFunc(moveDef, fwdTestBlk.x, fwdTestBlk.y, owner) & MMBT::BLOCK_STRUCTURE) != 0)
-			if ((CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, prevFwdTestBlk, fwdTestBlk, owner) & MMBT::BLOCK_STRUCTURE) != 0)
+			if ((CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, prevFwdTestBlk, fwdTestBlk, owner, curThread) & MMBT::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
 			if (CMoveMath::GetPosSpeedMod(moveDef, fwdTestBlk.x, fwdTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
 		}
 
 		{
-			//if ((blockCheckFunc(moveDef, revTestBlk.x, revTestBlk.y, owner) & MMBT::BLOCK_STRUCTURE) != 0)
-			if ((CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, prevRevTestBlk, revTestBlk, owner) & MMBT::BLOCK_STRUCTURE) != 0)
+			if ((CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, prevRevTestBlk, revTestBlk, owner, curThread) & MMBT::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
 			if (CMoveMath::GetPosSpeedMod(moveDef, revTestBlk.x, revTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
@@ -216,6 +215,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 	const CSolidObject* owner
 ) {
 	bool foundGoal = false;
+	int curThread = ThreadPool::GetThreadNum();
 
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 
@@ -246,7 +246,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 			continue;
 		}
 
-		TestNeighborSquares(moveDef, pfDef, openSquare, owner);
+		TestNeighborSquares(moveDef, pfDef, openSquare, owner, curThread);
 	}
 
 	if (foundGoal)
@@ -268,7 +268,8 @@ void CPathFinder::TestNeighborSquares(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
 	const PathNode* square,
-	const CSolidObject* owner
+	const CSolidObject* owner,
+	int thread
 ) {
 	struct SquareState {
 		CMoveMath::BlockType blockMask = MMBT::BLOCK_IMPASSABLE;
@@ -301,8 +302,7 @@ void CPathFinder::TestNeighborSquares(
 			continue;
 
 		// IsBlockedNoSpeedModCheck; very expensive call but with a ~20% (?) chance of early-out
-		//if ((sqState.blockMask = blockCheckFunc(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner)) & MMBT::BLOCK_STRUCTURE) {
-		sqState.blockMask = CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, squarePos, ngbSquareCoors, owner);
+		sqState.blockMask = CMoveMath::IsBlockedNoSpeedModCheckDiff(moveDef, squarePos, ngbSquareCoors, owner, thread);
 		if (sqState.blockMask & MMBT::BLOCK_STRUCTURE) {
 			blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
 			dirtyBlocks.push_back(ngbSquareIdx);

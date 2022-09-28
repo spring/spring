@@ -229,11 +229,9 @@ void PathingState::InitEstimator(const std::string& peFileName, const std::strin
 		// note: only really needed if numExtraThreads > 0
 		spring::barrier pathBarrier(numThreads);
 
-		TKPFS::PathingSystemActive = true;
 		for_mt(0, numThreads, [this, &pathBarrier](int i) {
-			CalcOffsetsAndPathCosts(i, &pathBarrier);
+			CalcOffsetsAndPathCosts(ThreadPool::GetThreadNum(), &pathBarrier);
 		});
-		TKPFS::PathingSystemActive = false;
 
 		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, peFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
@@ -368,7 +366,7 @@ void PathingState::EstimatePathCosts(unsigned int blockIdx, unsigned int threadN
 {
 	const int2 blockPos = BlockIdxToPos(blockIdx);
 
-	if (ThreadPool::GetThreadNum() == 0 && blockIdx >= nextCostMessageIdx) {
+	if (threadNum == 0 && blockIdx >= nextCostMessageIdx) {
 		nextCostMessageIdx = blockIdx + blockStates.GetSize() / 16;
 
 		char calcMsg[128];
@@ -745,15 +743,13 @@ void PathingState::UpdateVertexPathCosts(int blocksToUpdate)
 		std::atomic<std::int64_t> updateCostBlockNum = consumedBlocks.size();
 		const size_t threadsUsed = std::min(consumedBlocks.size(), (size_t)ThreadPool::GetNumThreads());
 
-		TKPFS::PathingSystemActive = true;
-		for_mt (0, threadsUsed, [this, &updateCostBlockNum](int threadNum){
+		for_mt(0, threadsUsed, [this, &updateCostBlockNum](int threadNum){
 			std::int64_t n;
 			while ((n = --updateCostBlockNum) >= 0){
 				//LOG("TK PathingState::Update: PROC moveDef = %d %p (%p)", n, &consumedBlocks[n], consumedBlocks[n].moveDef);
 				CalcVertexPathCosts(*consumedBlocks[n].moveDef, consumedBlocks[n].blockPos, threadNum);
 			}
 		});
-		TKPFS::PathingSystemActive = false;
 	}
 }
 

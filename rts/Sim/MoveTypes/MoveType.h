@@ -61,7 +61,7 @@ public:
 	virtual void SetWaterline(float depth) { waterline = depth; }
 
 	virtual bool Update() = 0;
-	virtual void SlowUpdate() {};
+	virtual void SlowUpdate();
 	void UpdateCollisionMap();
 
 	virtual void UpdatePreCollisionsMt() {};
@@ -109,6 +109,7 @@ public:
 	float3 goalPos;
 	float3 oldPos;                          // owner position at last Update()
 	float3 oldSlowUpdatePos;                // owner position at last SlowUpdate()
+	float3 oldCollisionUpdatePos;                // owner position at last SlowUpdate()
 
 	enum ProgressState {
 		Done   = 0,

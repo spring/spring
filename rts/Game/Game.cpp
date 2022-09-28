@@ -579,7 +579,7 @@ void CGame::PreLoadSimulation(LuaParser* defsParser)
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler.Init(defsParser);
-	quadField.Init(int2(mapDims.mapx, mapDims.mapy), CQuadField::BASE_QUAD_SIZE);
+	quadField.Init(int2(mapDims.mapx, mapDims.mapy), modInfo.quadFieldQuadSizeInElmos);
 	damageArrayHandler.Init(defsParser);
 	explGenHandler.Init();
 }

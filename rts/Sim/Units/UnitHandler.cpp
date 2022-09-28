@@ -415,7 +415,6 @@ void CUnitHandler::SlowUpdateUnits()
 void CUnitHandler::UpdateUnitPathing(const size_t idxBeg, const size_t idxEnd)
 {
 	SCOPED_TIMER("Sim::Unit::RequestPath");
-	TKPFS::PathingSystemActive = true;
 
 	std::vector<CUnit*> unitsToMove;
 	unitsToMove.reserve(activeUnits.size());
@@ -426,8 +425,6 @@ void CUnitHandler::UpdateUnitPathing(const size_t idxBeg, const size_t idxEnd)
 		MultiThreadPathRequests(unitsToMove);
 	else
 		SingleThreadPathRequests(unitsToMove);
-
-	TKPFS::PathingSystemActive = false;
 }
 
 void CUnitHandler::GetUnitsWithPathRequests(std::vector<CUnit*>& unitsToMove, const size_t idxBeg, const size_t idxEnd)
@@ -508,8 +505,9 @@ void CUnitHandler::UpdateUnits()
 {
 	SCOPED_TIMER("Sim::Unit::Update");
 
-	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-		CUnit* unit = activeUnits[activeUpdateUnit];
+	size_t activeUnitCount = activeUnits.size();
+	for (size_t i = 0; i < activeUnitCount; ++i) {
+		CUnit* unit = activeUnits[i];
 
 		unit->SanityCheck();
 		unit->Update();
@@ -518,7 +516,7 @@ void CUnitHandler::UpdateUnits()
 		// unit->UpdateLocalModel();
 		unit->SanityCheck();
 
-		assert(activeUnits[activeUpdateUnit] == unit);
+		assert(activeUnits[i] == unit);
 	}
 }
 

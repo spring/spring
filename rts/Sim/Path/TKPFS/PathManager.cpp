@@ -35,7 +35,6 @@ static CPathEstimator gLowResPE;
 namespace TKPFS {
 
 int debugLoggingActive = -1;
-bool PathingSystemActive = false;
 
 enum {
 	PATH_LOW_RES = 0,

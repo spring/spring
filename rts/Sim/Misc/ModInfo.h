@@ -181,6 +181,8 @@ public:
 
 	bool enableSmoothMesh;
 
+	int quadFieldQuadSizeInElmos;
+
 	bool allowTake;
 };
 

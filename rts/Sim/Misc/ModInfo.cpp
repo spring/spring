@@ -103,6 +103,7 @@ void CModInfo::ResetState()
 		pfUpdateRate     = 0.007f;
 
 		enableSmoothMesh = true;
+		quadFieldQuadSizeInElmos = 128;
 
 		allowTake = true;
 	}
@@ -145,6 +146,8 @@ void CModInfo::Init(const std::string& modFileName)
 
 		enableSmoothMesh = system.GetBool("enableSmoothMesh", enableSmoothMesh);
 
+		quadFieldQuadSizeInElmos = Clamp(system.GetInt("quadFieldQuadSizeInElmos", quadFieldQuadSizeInElmos), 8, 1024);
+
 		allowTake = system.GetBool("allowTake", allowTake);
 	}
 
@@ -163,8 +166,8 @@ void CModInfo::Init(const std::string& modFileName)
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
 		maxCollisionPushMultiplier = movementTbl.GetFloat("maxCollisionPushMultiplier", maxCollisionPushMultiplier);
-		unitQuadPositionUpdateRate = movementTbl.GetInt("unitQuadPositionUpdateRate",  unitQuadPositionUpdateRate);
-		groundUnitCollisionAvoidanceUpdateRate = movementTbl.GetInt("groundUnitCollisionAvoidanceUpdateRate",  groundUnitCollisionAvoidanceUpdateRate);
+		unitQuadPositionUpdateRate = Clamp(movementTbl.GetInt("unitQuadPositionUpdateRate",  unitQuadPositionUpdateRate), 1, 15);
+		groundUnitCollisionAvoidanceUpdateRate = Clamp(movementTbl.GetInt("groundUnitCollisionAvoidanceUpdateRate",  groundUnitCollisionAvoidanceUpdateRate), 1, 15);
 	}
 
 	{

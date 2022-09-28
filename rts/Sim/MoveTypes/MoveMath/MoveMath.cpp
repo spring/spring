@@ -138,7 +138,7 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 }
 
 /* Check if a given square-position is accessable by the MoveDef footprint. */
-CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckDiff(const MoveDef& moveDef, int2 prevSqr, int2 newSqr, const CSolidObject* collider)
+CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckDiff(const MoveDef& moveDef, int2 prevSqr, int2 newSqr, const CSolidObject* collider, int thread)
 {
 	// prev allows {-1, -1} so that the first check is always treated as a full test
 	const int prev_xmin = std::max(prevSqr.x - moveDef.xsizeh,               -1);
@@ -153,8 +153,9 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckDiff(const MoveDef& move
 
 	BlockType ret = BLOCK_NONE;
 
+	const int tempNum = gs->GetMtTempNum(thread);
+
 	// footprints are point-symmetric around <xSquare, zSquare>
-	// same as RangeIsBlocked but without anti-duplication test
 	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
 
@@ -167,7 +168,12 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckDiff(const MoveDef& move
 			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
 			for (size_t i = 0, n = cell.size(); i < n; i++) {
-				const CSolidObject* collidee = cell[i];
+				CSolidObject* collidee = cell[i];
+
+				if (collidee->mtTempNum[thread] == tempNum)
+					continue;
+
+				collidee->mtTempNum[thread] = tempNum;
 
 				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
 					continue;

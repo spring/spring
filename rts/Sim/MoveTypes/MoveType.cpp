@@ -21,6 +21,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(goalPos),
 	CR_MEMBER(oldPos),
 	CR_MEMBER(oldSlowUpdatePos),
+	CR_MEMBER(oldCollisionUpdatePos),
 
 	CR_MEMBER(progressState),
 
@@ -72,11 +73,8 @@ AMoveType::AMoveType(CUnit* owner):
 {
 }
 
-void AMoveType::UpdateCollisionMap()
+void AMoveType::SlowUpdate()
 {
-	if ((gs->frameNum + owner->id) % modInfo.unitQuadPositionUpdateRate)
-		return;
-
 	if (owner->pos != oldSlowUpdatePos) {
 		const int newMapSquare = CGround::GetSquare(oldSlowUpdatePos = owner->pos);
 
@@ -92,7 +90,16 @@ void AMoveType::UpdateCollisionMap()
 				}
 			}
 		}
+	}
+}
 
+void AMoveType::UpdateCollisionMap()
+{
+	if ((gs->frameNum + owner->id) % modInfo.unitQuadPositionUpdateRate)
+		return;
+
+	if (owner->pos != oldCollisionUpdatePos){
+		oldCollisionUpdatePos = owner->pos;
 		quadField.MovedUnit(owner);
 	}
 }

@@ -81,7 +81,8 @@ private:
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentSquare,
-		const CSolidObject* owner
+		const CSolidObject* owner,
+		int thread
 	);
 
 	/**

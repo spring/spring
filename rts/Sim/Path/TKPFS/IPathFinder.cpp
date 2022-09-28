@@ -158,7 +158,7 @@ IPath::SearchResult IPathFinder::GetPath(
 
 		//if (ci.pathType == -1)
 		// When the MT 'Pathing System' is running, it will handle updating the cache separately.
-		if (!TKPFS::PathingSystemActive)
+		if (!ThreadPool::inMultiThreadedSection)
 			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 		// else{
 		// 	if (debugLoggingActive == ThreadPool::GetThreadNum()){
