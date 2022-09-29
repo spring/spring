@@ -104,6 +104,8 @@ public:
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
+
+	bool CheckShaderGL4() const;
 public:
 	//helper function
 	static int DepthBitsToFormat(int bits);

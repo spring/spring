@@ -781,7 +781,7 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveGL4 = static_cast<bool>(GLEW_ARB_multi_draw_indirect);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_uniform_buffer_object);
 	haveGL4 &= static_cast<bool>(GLEW_ARB_shader_storage_buffer_object);
-	haveGL4 &= (globalRenderingInfo.glslVersionNum >= 430); // #version 430 is what engine shaders use
+	haveGL4 &= CheckShaderGL4();
 	haveGL4 &= !forceDisableGL4;
 
 	{
@@ -1414,6 +1414,54 @@ void CGlobalRendering::InitGLState()
 	// this does not accomplish much
 	// SwapBuffers(true, true);
 	LogDisplayMode(sdlWindows[0]);
+}
+
+bool CGlobalRendering::CheckShaderGL4() const
+{
+	//the code below doesn't make any sense, but here only to test if the shader can be compiled
+	constexpr static const char* vsSrc = R"(
+#version 430 core
+
+layout (location = 0) in vec3 pos;
+layout (location = 6) in uvec4 instData;
+
+layout(std140, binding = 0) readonly buffer MatrixBuffer {
+	mat4 mat[];
+};
+
+out Data {
+	float vFloat;
+};
+void main()
+{
+	vFloat = float(instData.y);
+	gl_Position = mat[instData.x] * vec4(pos, 1.0);
+}
+)";
+
+	constexpr static const char* fsSrc = R"(
+#version 430 core
+
+in Data {
+	float vFloat;
+};
+out vec4 fragColor;
+void main()
+{
+	fragColor = vec4(1.0, 1.0, 1.0, vFloat);
+}
+)";
+
+	auto testShader = std::make_unique<Shader::GLSLProgramObject>("[GL-TestShader]");
+	testShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_VERTEX_SHADER  , vsSrc));
+	testShader->AttachShaderObject(new Shader::GLSLShaderObject(GL_FRAGMENT_SHADER, fsSrc));
+	testShader->Link();
+	testShader->Enable();
+	testShader->Disable();
+	testShader->Validate();
+
+	return testShader->IsValid();
+	//no need for explicit destuction here
 }
 
 int CGlobalRendering::DepthBitsToFormat(int bits)
