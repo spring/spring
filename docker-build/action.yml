@@ -13,10 +13,20 @@ inputs:
     description: 'Archtune flags'
     required: false
     default: ''
-  relwithdeb-flags:
-    description: 'RELWITHDEBINFO Compilation flags'
+  buildtype:
+    type: choice
+    description: Build Type
     required: false
-    default: '-O3 -g -DNDEBUG'
+    options:
+      - RELWITHDEBINFO
+      - DEBUG
+      - RELEASE
+      - PROFILE
+    default: 'RELWITHDEBINFO'
+  buildtype-flags:
+    description: 'Build Type Compilation Flags Override'
+    required: false
+    default: ''
   compilation-flags:
     description: 'Extra Compilation Flags'
     required: false
@@ -118,7 +128,12 @@ runs:
         fi
 
         # Image args
-        ARGS+=("${DOCKER_IMAGE}" build -p "${{ inputs.platform }}" -u "${{ inputs.repository-url }}" -b "${{ inputs.branch }}" -c "${{ inputs.archtune-flags }}" -r "${{ inputs.relwithdeb-flags }}" -f "${{ inputs.compilation-flags }}")
+        ARGS+=("${DOCKER_IMAGE}" build -p "${{ inputs.platform }}" -u "${{ inputs.repository-url }}" -b "${{ inputs.branch }}" -c "${{ inputs.archtune-flags }}" -t "${{ inputs.buildtype }}" -f "${{ inputs.compilation-flags }}")
+
+        if [ ! -z "${{ inputs.buildtype-flags }}" ]; then
+          ARGS+=(-r "${{ inputs.buildtype-flags }}")
+        fi
+
         if [ "${use-cache}" == "true" ]; then
           ARGS+=(-h 1)
         fi

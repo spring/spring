@@ -2,7 +2,7 @@ If normal compilation fails or produces broken builds, it is possible to compile
 
 1. Once run `init_container.sh` to init the Docker container.
 2. Use `build.sh` to compile. `cache` directory will be created which contains static libraries and ccache to speed up subsequent builds.
-3. Build will be located at `(source directory)/build/install`.
+3. Build will be located at `(source directory)/build-(platform)-(build type)/install`.
 
 List of available building flags can be printed with `build.sh -h`.
 

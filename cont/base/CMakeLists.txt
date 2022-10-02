@@ -10,9 +10,9 @@ add_custom_target(basecontent ALL)
 
 macro(create_base_content_archive outputdir filename files)
 	### FIXME: find a nicer way to silence 7z
-	if(UNIX)
+	if(CMAKE_HOST_UNIX)
 		set(QUIET ">/dev/null")
-	elseif(WIN32)
+	elseif(CMAKE_HOST_WIN32)
 		set(QUIET ">nul")
 	endif()
 	set(outputfile "${Spring_BINARY_DIR}/${outputdir}/${filename}")

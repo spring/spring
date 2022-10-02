@@ -14,10 +14,20 @@ on:
         description: Arch/Tune Flags
         required: false
         default: ''
-      relwithdeb-flags:
-        description: RELWITHDEBINFO Compilation flags
-        required: true
-        default: '-O3 -g -DNDEBUG'
+      buildtype:
+        type: choice
+        description: Build Type
+        required: false
+        options:
+          - RELWITHDEBINFO
+          - DEBUG
+          - RELEASE
+          - PROFILE
+        default: 'RELWITHDEBINFO'
+      buildtype-flags:
+        description: Build Type Compilation Flags Override
+        required: false
+        default: ''
       compilation-flags:
         description: Extra Compilation Flags
         required: false
@@ -118,7 +128,8 @@ jobs:
         id: run-docker-build
         with:
           archtune-flags: "${{ github.event.inputs.archtune-flags }}"
-          relwithdeb-flags: "${{ github.event.inputs.relwithdeb-flags }}"
+          buildtype: "${{ github.event.inputs.buildtype }}"
+          buildtype-flags: "${{ github.event.inputs.buildtype-flags }}"
           compilation-flags: "${{ github.event.inputs.compilation-flags }}"
           use-cache: "${{ github.event.inputs.use-caches }}"
           platform: "${{ matrix.config.os }}"

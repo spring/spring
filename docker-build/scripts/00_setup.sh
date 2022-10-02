@@ -9,7 +9,11 @@ STRIP_SYMBOLS=1
 
 MYARCHTUNE=""
 MYCFLAGS=""
-MYRWDIFLAGS="-O3 -g -DNDEBUG"
+MYBUILDTYPE="RELWITHDEBINFO"
+RELWITHDEBINFOFLAGS="-O3 -g -DNDEBUG"
+DEBUGFLAGS="-Og -g -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS"
+RELEASEFLAGS="-O3 -DNDEBUG"
+PROFILEFLAGS="-O3 -pg -DNDEBUG -DPROFILE"
 
 SPRING_DIR="/spring"
 BUILD_DIR="/spring/build"
@@ -26,7 +30,8 @@ function print_usage() {
     echo "  -d      dummy mode"
     echo "  -e      enable ccache"
     echo "  -c      archtune flags"
-    echo "  -r      release with debug flags"
+    echo "  -t      build type: RELWITHDEBINFO (default), DEBUG, RELEASE, PROFILE"
+    echo "  -r      build type flags override"
     echo "  -f      c/c++ flags"
     echo "  -s      strip debug symbols"
     echo "  -z      enable ccache debug"
@@ -37,7 +42,7 @@ function print_usage() {
     exit 1
 }
 
-while getopts :b:u:a:p:dc:hr:f:s:z:e:lwo flag
+while getopts :b:u:a:p:dc:ht:r:f:s:z:e:lwo flag
 do
     case "${flag}" in
         b) BRANCH_NAME=${OPTARG};;
@@ -48,7 +53,8 @@ do
         h) print_usage;;
         e) ENABLE_CCACHE=${OPTARG};;
         c) MYARCHTUNE=${OPTARG};;
-        r) MYRWDIFLAGS=${OPTARG};;
+        t) MYBUILDTYPE=${OPTARG};;
+        r) MYBUILDTYPEFLAGS=${OPTARG};;
         f) MYCFLAGS=${OPTARG};;
         s) STRIP_SYMBOLS=${OPTARG};;
         z) DEBUG_CCACHE=${OPTARG};;
@@ -79,6 +85,14 @@ if [ ${LOCAL_BUILD} ]; then
             esac
         fi
     fi
+
+    BUILD_DIR="${BUILD_DIR}-${PLATFORM}-${MYBUILDTYPE}"
+    INSTALL_DIR="${BUILD_DIR}/install"
+fi
+
+if [ -z ${MYBUILDTYPEFLAGS+x} ]; then
+    var="${MYBUILDTYPE}FLAGS"
+    MYBUILDTYPEFLAGS="${!var}"
 fi
 
 if [ "${PLATFORM}" != "windows-64" ] && [ "${PLATFORM}" != "linux-64" ]; then
@@ -94,7 +108,8 @@ echo "Use Spring Git URL: ${SPRINGRTS_GIT_URL}"
 echo "Use Git URL prefix for auxiliary projects: ${SPRINGRTS_AUX_URL_PREFIX}"
 echo "Local artifact publish dir: ${PUBLISH_DIR}"
 echo "Local SpringRTS source dir: ${SPRING_DIR}"
-echo "RELWITHDEBINFO compilation flags: ${MYRWDIFLAGS}"
+echo "Build type: ${MYBUILDTYPE}"
+echo "${MYBUILDTYPE} compilation flags: ${MYBUILDTYPEFLAGS}"
 echo "Archtune flags: ${MYARCHTUNE}"
 echo "Extra compilation flags: ${MYCFLAGS}"
 echo "Dummy mode: ${DUMMY}"

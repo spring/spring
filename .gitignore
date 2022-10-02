@@ -126,6 +126,7 @@ progress.make
 
 #buildbot generated dir
 /build
+/build-*
 /docker-build/cache
 
 #installer downloaded/generated stuff
