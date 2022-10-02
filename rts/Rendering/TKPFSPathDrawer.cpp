@@ -462,7 +462,7 @@ void TKPFSPathDrawer::Draw(const TKPFS::CPathEstimator* pe) const {
 					p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
 				font->SetTextColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f);
-				font->glWorldPrint(p2, 5.0f, IntToString(blockNr, "B(%i)"), true);
+				font->glWorldPrint(p2, 5.0f, IntToString(blockNr, "B(%i)"));
 			}
 		}
 		font->DrawWorldBuffered();
@@ -515,9 +515,9 @@ void TKPFSPathDrawer::Draw(const TKPFS::CPathEstimator* pe) const {
 
 					font->SetTextColor(1.0f, 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f);
 					if (rawCost >= PATHCOST_INFINITY)
-						font->glWorldPrint(p2, 5.0f, IntToString(vertexNr, "v(%d)"), true);
+						font->glWorldPrint(p2, 5.0f, IntToString(vertexNr, "v(%d)"));
 					else
-						font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"), true);
+						font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"));
 				}
 			}
 		}
@@ -590,7 +590,7 @@ void TKPFSPathDrawer::Draw(const TKPFS::CPathEstimator* pe) const {
 
 				SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
 				font->SetTextColor(1.0f, 0.7f, 0.75f * drawLowResPE, 1.0f);
-				font->glWorldPrint(p1, 5.0f, blockCostsStr, true);
+				font->glWorldPrint(p1, 5.0f, blockCostsStr);
 			}
 		}
 		font->DrawWorldBuffered();

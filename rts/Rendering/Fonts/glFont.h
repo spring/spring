@@ -67,7 +67,7 @@ public:
 
 	void DrawWorldBuffered();
 
-	void glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered = false);
+	void glWorldPrint(const float3& p, const float size, const std::string& str, int options = FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED);
 
 	void SetViewMatrix(const CMatrix44f& mat) { viewMatrix = mat; }
 	void SetProjMatrix(const CMatrix44f& mat) { projMatrix = mat; }

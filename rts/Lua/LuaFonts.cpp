@@ -37,9 +37,12 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 
 		// push userdata callouts
 		REGISTER_LUA_CFUNC(Print);
+		REGISTER_LUA_CFUNC(PrintWorld);
 
 		REGISTER_LUA_CFUNC(Begin);
 		REGISTER_LUA_CFUNC(End);
+
+		REGISTER_LUA_CFUNC(SubmitBuffered);
 
 		REGISTER_LUA_CFUNC(WrapText);
 
@@ -243,6 +246,55 @@ int LuaFonts::Print(lua_State* L)
 	return 0;
 }
 
+int LuaFonts::PrintWorld(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	const int args = lua_gettop(L); // number of arguments
+
+	auto f = tofont(L, 1);
+
+	const string text(luaL_checkstring(L, 2), lua_strlen(L, 2));
+	float3 pos = {
+		luaL_checkfloat(L, 3),
+		luaL_checkfloat(L, 4),
+		luaL_checkfloat(L, 5)
+	};
+	const auto size = luaL_optfloat(L, 6, f->GetSize());
+
+	int options = FONT_NEAREST;
+
+	if ((args >= 7) && lua_isstring(L, 7)) {
+		const char* c = lua_tostring(L, 7);
+		while (*c != 0) {
+			switch (*(c++)) {
+			case 'c': { options |= FONT_CENTER;       } break;
+			case 'r': { options |= FONT_RIGHT;        } break;
+
+			case 'a': { options |= FONT_ASCENDER;     } break;
+			case 't': { options |= FONT_TOP;          } break;
+			case 'v': { options |= FONT_VCENTER;      } break;
+			case 'x': { options |= FONT_BASELINE;     } break;
+			case 'b': { options |= FONT_BOTTOM;       } break;
+			case 'd': { options |= FONT_DESCENDER;    } break;
+
+			case 's': { options |= FONT_SHADOW;       } break;
+			case 'o':
+			case 'O': { options |= FONT_OUTLINE;      } break;
+
+			case 'n': { options ^= FONT_NEAREST;      } break;
+			case 'B': { options |= FONT_BUFFERED;     } break; // for DrawBuffered
+
+			case 'N': { options |= FONT_NORM;         } break;
+			case 'S': { options |= FONT_SCALE;        } break;
+			default: break;
+			}
+		}
+	}
+
+	f->glWorldPrint(pos, size, text, options);
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -260,6 +312,19 @@ int LuaFonts::End(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	auto f = tofont(L, 1);
 	f->End();
+	return 0;
+}
+
+int LuaFonts::SubmitBuffered(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+	auto f = tofont(L, 1);
+
+	if (luaL_optboolean(L, 2, false)) // world or not
+		f->DrawBuffered();
+	else
+		f->DrawWorldBuffered();
+
 	return 0;
 }
 

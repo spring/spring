@@ -199,7 +199,7 @@ void CglFont::End() {}
 void CglFont::DrawBuffered() {}
 void CglFont::DrawWorldBuffered() {}
 
-void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered) {}
+void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, int options) {}
 
 CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }
 CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::Identity(); }
@@ -742,8 +742,9 @@ void CglFont::RenderStringImpl(float x, float y, float scaleX, float scaleY, con
 	}
 }
 
-void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, bool buffered)
+void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str, int options)
 {
+	const bool buffered = (options & FONT_BUFFERED) == FONT_BUFFERED;
 	if (!buffered) {
 		glPushMatrix();
 
@@ -755,7 +756,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 		Begin();
 		SetTextDepth(pos.z); SetOutlineDepth(pos.z);
-		glPrint(pos.x, pos.y, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
+		glPrint(pos.x, pos.y, size, options, str);
 		SetTextDepth(     ); SetOutlineDepth(     );
 		End();
 
@@ -768,7 +769,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 		// drawPos negates the effect of multiplication by camera->GetBillBoardMatrix() in DrawWorldBuffered
 
 		SetTextDepth(drawPos.z); SetOutlineDepth(drawPos.z);
-		glPrint(drawPos.x, drawPos.y, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
+		glPrint(drawPos.x, drawPos.y, size, options | FONT_BUFFERED, str);
 		SetTextDepth(         ); SetOutlineDepth(         );
 	}
 }

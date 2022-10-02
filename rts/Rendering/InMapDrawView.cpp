@@ -235,7 +235,7 @@ void CInMapDrawView::Draw()
 			const SColor color = point->IsBySpectator() ? color4::white : SColor{ team->color };
 
 			font->SetTextColor(color);
-			font->glWorldPrint(pos, 26.0f, point->GetLabel(), true);
+			font->glWorldPrint(pos, 26.0f, point->GetLabel());
 		}
 
 		font->DrawWorldBuffered();

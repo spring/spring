@@ -25,9 +25,12 @@ class LuaFonts {
 
 	private: // userdata call-outs
 		static int Print(lua_State* L);
+		static int PrintWorld(lua_State* L);
 
 		static int Begin(lua_State* L);
 		static int End(lua_State* L);
+
+		static int SubmitBuffered(lua_State* L);
 
 		static int WrapText(lua_State* L);
 
