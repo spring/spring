@@ -93,6 +93,7 @@ bool CubeMapHandler::Init() {
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 	// reflectionCubeFBO is no-op constructed, has to be initialized manually
 	reflectionCubeFBO.Init(false);

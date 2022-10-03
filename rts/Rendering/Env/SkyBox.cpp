@@ -41,10 +41,14 @@ CSkyBox::CSkyBox(const std::string& texture)
 	} else {
 		skyTex.SetRawTexID(btex.CreateTexture());
 		skyTex.SetRawSize(int2(btex.xsize, btex.ysize));
+		glEnable(GL_TEXTURE_CUBE_MAP);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+		glDisable(GL_TEXTURE_CUBE_MAP);
 	}
+
 	shader = shaderHandler->CreateProgramObject("[SkyBox]", "SkyBox");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/CubeMapVS.glsl", "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/CubeMapFS.glsl", "", GL_FRAGMENT_SHADER));
@@ -85,6 +89,7 @@ void CSkyBox::Draw()
 	glPushMatrix();
 	glLoadMatrixf(camera->GetProjectionMatrix());
 
+	glEnable(GL_TEXTURE_CUBE_MAP);
 	if (globalRendering->drawDebugCubeMap)
 		glBindTexture(GL_TEXTURE_CUBE_MAP, debugCubeMapTexture.GetId());
 	else
@@ -100,6 +105,7 @@ void CSkyBox::Draw()
 	skyVAO.Unbind();
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glDisable(GL_TEXTURE_CUBE_MAP);
 
 	// glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
