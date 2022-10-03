@@ -18,6 +18,8 @@ Lua:
  - allow empty argument for Spring.GetKeyBindings to return all keybindings
  - `firestarter` weapon tag no longer capped at 10000 in defs (which
    becomes 100 in Lua after rescale). Now uncapped.
+ - add modrule `reclaim.unitDrainHealth`, bool on whether reclaiming units drains health.
+   To be used with the revert-to-nanoframe method (since the 'classic' method relies on health drain).
  - add Spring.AddUnitExperience(unitID, delta_xp). Can subtract, but the result cannot be negative.
  - change widget, gadget and action handlers to support scancodes
  - Added Lua SyncedControl callins to modify the original/base heightmap (i.e. the values that the

@@ -50,6 +50,7 @@ void CModInfo::ResetState()
 		reclaimUnitEnergyCostFactor    = 0.0f;
 		reclaimUnitEfficiency          = 1.0f;
 		reclaimFeatureEnergyCostFactor = 0.0f;
+		reclaimUnitDrainHealth         = true;
 		reclaimAllowEnemies            = true;
 		reclaimAllowAllies             = true;
 	}
@@ -189,6 +190,7 @@ void CModInfo::Init(const std::string& modFileName)
 		reclaimUnitEnergyCostFactor = reclaimTbl.GetFloat("unitEnergyCostFactor", reclaimUnitEnergyCostFactor);
 		reclaimUnitEfficiency = reclaimTbl.GetFloat("unitEfficiency", reclaimUnitEfficiency);
 		reclaimFeatureEnergyCostFactor = reclaimTbl.GetFloat("featureEnergyCostFactor", reclaimFeatureEnergyCostFactor);
+		reclaimUnitDrainHealth = reclaimTbl.GetBool("unitDrainHealth", reclaimUnitDrainHealth);
 		reclaimAllowEnemies = reclaimTbl.GetBool("allowEnemies", reclaimAllowEnemies);
 		reclaimAllowAllies = reclaimTbl.GetBool("allowAllies", reclaimAllowAllies);
 	}

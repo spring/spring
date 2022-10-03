@@ -84,6 +84,8 @@ public:
 	float reclaimUnitEfficiency;
 	/// How much should energy should reclaiming a feature cost, default 0.0
 	float reclaimFeatureEnergyCostFactor;
+	/// Does wireframe reclaim drain health? default true
+	bool reclaimUnitDrainHealth;
 	/// Allow reclaiming enemies? default true
 	bool reclaimAllowEnemies;
 	/// Allow reclaiming allies? default true

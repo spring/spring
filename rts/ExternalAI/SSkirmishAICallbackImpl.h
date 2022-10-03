@@ -839,6 +839,8 @@ EXPORT(float            ) skirmishAiCallback_Mod_getReclaimUnitEfficiency(int sk
 
 EXPORT(float            ) skirmishAiCallback_Mod_getReclaimFeatureEnergyCostFactor(int skirmishAIId);
 
+EXPORT(bool             ) skirmishAiCallback_Mod_getReclaimUnitDrainHealth(int skirmishAIId);
+
 EXPORT(bool             ) skirmishAiCallback_Mod_getReclaimAllowEnemies(int skirmishAIId);
 
 EXPORT(bool             ) skirmishAiCallback_Mod_getReclaimAllowAllies(int skirmishAIId);

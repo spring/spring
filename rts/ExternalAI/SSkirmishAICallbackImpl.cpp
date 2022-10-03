@@ -1802,6 +1802,10 @@ EXPORT(float) skirmishAiCallback_Mod_getReclaimFeatureEnergyCostFactor(int skirm
 	return modInfo.reclaimFeatureEnergyCostFactor;
 }
 
+EXPORT(bool) skirmishAiCallback_Mod_getReclaimUnitDrainHealth(int skirmishAIId) {
+	return modInfo.reclaimUnitDrainHealth;
+}
+
 EXPORT(bool) skirmishAiCallback_Mod_getReclaimAllowEnemies(int skirmishAIId) {
 	return modInfo.reclaimAllowEnemies;
 }

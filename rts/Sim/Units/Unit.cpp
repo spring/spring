@@ -1946,7 +1946,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		const float metalRefundStep  =  cost.metal * step;
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
-		const float healthStep        = maxHealth * step;
+		const float healthStep        = modInfo.reclaimUnitDrainHealth ? maxHealth * step : 0;
 		const float buildProgressStep = int(modInfo.reclaimUnitMethod == 0) * step;
 		const float postHealth        = health + healthStep;
 		const float postBuildProgress = buildProgress + buildProgressStep;
