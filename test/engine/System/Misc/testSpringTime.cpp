@@ -206,7 +206,6 @@ TEST_CASE("ClockQualityCheck")
 #endif
 
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
-void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -275,7 +274,6 @@ TEST_CASE("ThreadSleepTime")
 	BenchmarkSleepFnc("sleep_posix_nanosec", &sleep_posix_nanosec, 500, 1e6);
 #endif
 	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 500, 1e0);
-	BenchmarkSleepFnc("sleep_spring2", &sleep_spring2, 500, 1e6);
 }
 
 
