@@ -175,8 +175,7 @@ namespace spring_clock {
 
 std::int64_t spring_time::xs = 0;
 
-static std::atomic_int avgThreadYieldTimeMicroSecs = {0};
-static std::atomic_int avgThreadSleepTimeMicroSecs = {0};
+static std::atomic_int avgThreadYieldTimeMicroSecs = {100};
 
 
 static void thread_yield()
@@ -188,9 +187,9 @@ static void thread_yield()
 
 	if (t1 >= t0) {
 		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
-		int avg = avgThreadYieldTimeMicroSecs.load();
+		int avg = avgThreadYieldTimeMicroSecs.load(std::memory_order_relaxed);
 		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
-		avgThreadYieldTimeMicroSecs.store(newAvg);
+		avgThreadYieldTimeMicroSecs.store(newAvg, std::memory_order_relaxed);
 	}
 }
 
@@ -203,8 +202,8 @@ void spring_time::sleep(bool forceThreadSleep)
 	}
 
 
-	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMicroSecsi() < (avgThreadSleepTimeMicroSecs + avgThreadYieldTimeMicroSecs * 5)) {
+	static const size_t MAXIMUM_YIELD_ITERATIONS = 5;
+	if (toMicroSecsi() < (avgThreadYieldTimeMicroSecs.load(std::memory_order_relaxed) * MAXIMUM_YIELD_ITERATIONS)) {
 		const spring_time s = gettime();
 
 		while ((gettime() - s) < *this)
@@ -212,21 +211,7 @@ void spring_time::sleep(bool forceThreadSleep)
 
 		return;
 	}
-
-	// expected wakeup time
-	const spring_time t0 = gettime() + *this;
-
 	spring::this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
-
-	const spring_time t1 = gettime();
-	const spring_time dt = t1 - t0;
-
-	if (t1 >= t0) {
-		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
-		int avg = avgThreadSleepTimeMicroSecs.load();
-		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
-		avgThreadSleepTimeMicroSecs.store(newAvg);
-	}
 }
 
 void spring_time::sleep_until()
