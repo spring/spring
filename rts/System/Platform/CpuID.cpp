@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CpuID.h"
-#include "libcpuid/libcpuid/libcpuid.h"
+#include "lib/libcpuid/libcpuid/libcpuid.h"
 #include "System/MainDefines.h"
 #include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"

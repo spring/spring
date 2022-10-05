@@ -219,6 +219,7 @@ endif()
 	set(test_libs
 			${REALTIME_LIBRARY}
 			${WINMM_LIBRARY}
+			cpuid
 		)
 
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
