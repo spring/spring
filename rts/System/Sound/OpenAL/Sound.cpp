@@ -454,9 +454,15 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 {
 	assert(curDevice == nullptr);
 
-	hasAlcSoftLoopBack = (alcIsExtensionPresent(nullptr, "ALC_SOFT_loopback") == AL_FALSE);
-	if (!hasAlcSoftLoopBack)
+#ifndef ALC_SOFT_loopback
+	LOG("[Sound::%s] ALC_SOFT_loopback define was NOT set, expect audio to not work!", __func__);
+#endif
+
+	hasAlcSoftLoopBack = (alcIsExtensionPresent(nullptr, "ALC_SOFT_loopback") == AL_TRUE);
+	if (!hasAlcSoftLoopBack) {
+		LOG("[Sound::%s] ALC_SOFT_loopback extension NOT found using alcIsExtensionPresent(...)!", __func__);
 		return;
+	}
 
 #ifdef ALC_SOFT_loopback
 #define LOAD_PROC(x) ((x) = (decltype(x)) alcGetProcAddress(nullptr, #x))
@@ -468,11 +474,20 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	if (alcLoopbackOpenDeviceSOFT == nullptr || alcIsRenderFormatSupportedSOFT == nullptr || alcRenderSamplesSOFT == nullptr)
 		return;
 
-	if (!configHandler->GetBool("UseSDLAudio"))
+	if (!configHandler->GetBool("UseSDLAudio")) {
+		LOG("[Sound::%s] UseSDLAudio is NOT set, falling back to openal-soft backends", __func__);
 		return;
+	} else {
+		LOG("[Sound::%s] UseSDLAudio is set, rendering openal-soft audio to SDL buffer and let SDL audio handle the hardware", __func__);
+	}
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
 		LOG("[Sound::%s] failed to initialize SDL audio, error:  \"%s\"", __func__, SDL_GetError());
+		return;
+	}
+
+	if (SDL_GetNumAudioDevices(0) <= 0) {
+		LOG("[Sound::%s] UseSDLAudio is set, but no SDL sound devices for playback can be found. Falling back to openal-soft backends", __func__);
 		return;
 	}
 
@@ -487,8 +502,13 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	desiredSpec.callback = RenderSDLSamples;
 	desiredSpec.userdata = this;
 
+	unsigned int count = SDL_GetNumAudioDevices(0);
+    LOG("[Sound::%s] SDL audio device(s): ", __func__);
+    for (unsigned int i = 0; i < count; ++i) {
+        LOG("[Sound::%s]  * \"%d\" \"%s\"", __func__, i, SDL_GetAudioDeviceName(i, 0));
+    }
 
-	sdlDeviceID = -1;
+	sdlDeviceID = 0;
 
 	if (!deviceName.empty()) {
 		LOG("[Sound::%s] opening configured device \"%s\"", __func__, deviceName.c_str());
@@ -506,7 +526,7 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 		return;
 	}
 
-	selectedDeviceName = SDL_GetAudioDeviceName(sdlDeviceID, false);
+	selectedDeviceName = SDL_GetAudioDeviceName(sdlDeviceID, 0);
 
 	// needs to be at least 1 or the callback will divide by 0
 	if ((frameSize = obtainedSpec.channels * SDL_AUDIO_BITSIZE(obtainedSpec.format) / 8) <= 0) {
