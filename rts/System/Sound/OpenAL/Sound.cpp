@@ -502,9 +502,8 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	desiredSpec.callback = RenderSDLSamples;
 	desiredSpec.userdata = this;
 
-	unsigned int count = SDL_GetNumAudioDevices(0);
     LOG("[Sound::%s] SDL audio device(s): ", __func__);
-    for (unsigned int i = 0; i < count; ++i) {
+    for (int i = 0, n = SDL_GetNumAudioDevices(0); i < n; ++i) {
         LOG("[Sound::%s]  * \"%d\" \"%s\"", __func__, i, SDL_GetAudioDeviceName(i, 0));
     }
 
@@ -513,11 +512,13 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	if (!deviceName.empty()) {
 		LOG("[Sound::%s] opening configured device \"%s\"", __func__, deviceName.c_str());
 		sdlDeviceID = SDL_OpenAudioDevice(deviceName.c_str(), 0, &desiredSpec, &obtainedSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
+		selectedDeviceName = deviceName;
 	}
 
 	if (sdlDeviceID == 0) {
 		LOG("[Sound::%s] opening default device", __func__);
 		sdlDeviceID = SDL_OpenAudioDevice(nullptr, 0, &desiredSpec, &obtainedSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
+		selectedDeviceName = "default";
 	}
 
 	if (sdlDeviceID == 0) {
@@ -525,8 +526,6 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 		return;
 	}
-
-	selectedDeviceName = SDL_GetAudioDeviceName(sdlDeviceID, 0);
 
 	// needs to be at least 1 or the callback will divide by 0
 	if ((frameSize = obtainedSpec.channels * SDL_AUDIO_BITSIZE(obtainedSpec.format) / 8) <= 0) {
