@@ -53,6 +53,7 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaParser.h"
+#include "Lua/LuaRender.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
 #include "Map/MapDamage.h"
@@ -848,6 +849,9 @@ void CGame::KillLua(bool dtor)
 
 
 	LOG("[Game::%s][4] dtor=%d", __func__, dtor);
+	LuaRender::Free();
+
+	LOG("[Game::%s][5] dtor=%d", __func__, dtor);
 	LuaOpenGL::Free();
 }
 

@@ -37,6 +37,11 @@ class LuaOpenGL {
 		static bool GetSafeMode() { return inSafeMode; }
 		static void SetSafeMode(bool value) { inSafeMode = value; }
 
+		static const CMatrix44f& GetScreenViewMatrix() { return screenViewMatrix; };
+		static const CMatrix44f& GetScreenProjMatrix() { return screenProjMatrix; };
+
+		static DrawMode GetDrawMode() { return currDrawMode; };
+
 		#define NOOP_STATE_FUNCS(Name)    \
 		static void Enable  ## Name () {} \
 		static void Disable ## Name () {} \
@@ -133,6 +138,12 @@ class LuaOpenGL {
 	private:
 		static bool inSafeMode;
 		static bool inBeginEnd;
+
+		static CMatrix44f screenViewMatrix;
+		static CMatrix44f screenProjMatrix;
+
+		static DrawMode currDrawMode;
+		static DrawMode prevDrawMode;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);

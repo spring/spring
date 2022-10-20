@@ -33,7 +33,6 @@ end
 
 include("colors.h.lua")
 include("keysym.h.lua")
-include("fonts.lua")
 
 
 local floor = math.floor
@@ -50,20 +49,7 @@ local pageStep  = math.floor(maxEntries / 2) - 1
 local fontSize = 11
 local fontSpace = 5
 local yStep = fontSize + fontSpace
-
-local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
-local headerFont  = "LuaUI/Fonts/FreeMonoBold_12"
---local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
---local entryFont  = "LuaUI/Fonts/mephisto_12"
---local entryFont  = "LuaUI/Fonts/VeraMoBd_12"
---local entryFont  = "LuaUI/Fonts/fragileb_16"
---local entryFont  = "LuaUI/Fonts/edenmb___16"
---local headerFont = "LuaUI/Fonts/abaddon_22"
-if (1 > 0) then
-  entryFont  = ":n:" .. entryFont
-  headerFont = ":n:" .. headerFont
-end
-
+local font = nil
 
 local maxWidth = 0.01
 local borderx = yStep * 0.75
@@ -90,9 +76,16 @@ local scrollbargrabpos = 0.0
 -------------------------------------------------------------------------------
 
 function widget:Initialize()
+  font = gl.LoadFont("LuaUI/Fonts/FreeSansBold.otf", 14, 2, 10.0)
+  font:SetAutoOutlineColor(true)
   widgetHandler.knownChanged = true
 end
 
+function widget:Shutdown()
+  if font then
+    gl.DeleteFont(font)
+  end
+end
 
 -------------------------------------------------------------------------------
 
@@ -227,23 +220,16 @@ end
 
 function widget:DrawScreen()
   UpdateList()
-  gl.BeginText()
-
-  -- draw the header
-  gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
 
   -- draw the box
-  gl.Color(0.3, 0.3, 0.3, 1.0)
   gl.Texture(":n:bitmaps/detailtex.bmp")
   local ts = (2.0 / 512)  --  texture scale 
-  gl.Shape(GL.QUADS, {
-    { v = { minx, miny }, t = { minx * ts, miny * ts } },
-    { v = { maxx, miny }, t = { maxx * ts, miny * ts } },
-    { v = { maxx, maxy }, t = { maxx * ts, maxy * ts } },
-    { v = { minx, maxy }, t = { minx * ts, maxy * ts } } 
-  })
+  Spring.Draw.Rectangle({minx, miny}, {maxx, maxy}, {color={0.3,0.3,0.3,1},
+    texcoords={minx*ts, miny*ts, maxx*ts, miny*ts, maxx*ts, maxy*ts, minx*ts, maxy*ts}})
   gl.Texture(false)
 
+  -- draw the header
+  font:Print("Widget Selector", midx, maxy + 5, fontSize * 1.25, "ocB")
 
   -- draw the widget labels
   local mx,my,lmb,mmb,rmb = Spring.GetMouseState()
@@ -252,12 +238,12 @@ function widget:DrawScreen()
   if minx < mx and mx < minx + 30 and miny - 20 < my and my < miny then
     tcol = '\255\031\031\255'
   end
-  gl.Text(tcol .. 'All', minx + 15, miny - 15, fontSize * 1.25, "oc")
+  font:Print(tcol .. 'All', minx + 15, miny - 15, fontSize * 1.25, "ocB")
   tcol = WhiteStr
   if maxx - 50 < mx and mx < maxx and miny - 20 < my and my < miny then
     tcol = '\255\031\031\255'
   end
-  gl.Text(tcol .. 'None', maxx - 25, miny - 15, fontSize * 1.25, "oc")
+  font:Print(tcol .. 'None', maxx - 25, miny - 15, fontSize * 1.25, "ocB")
   
   
   local nd = not widgetHandler.tweakMode and self:AboveLabel(mx, my)
@@ -296,10 +282,12 @@ function widget:DrawScreen()
       tmpName = color .. name
     end
 
-    gl.Text(color..tmpName, midx, posy + fontSize * 0.5, fontSize, "vc")
+    font:Print(color..tmpName, midx, posy + fontSize * 0.5, fontSize, "vcB")
     posy = posy - yStep
   end
-  
+
+  font:DrawBuffered()
+
   if #widgetsList < #fullWidgetsList then
     sby2 = posy + yStep - fontSpace * 0.5
     sbheight = sby1 - sby2
@@ -317,82 +305,36 @@ function widget:DrawScreen()
     sbposy = sby1 - sbsize - sbheight * (startEntry - 1) / #fullWidgetsList
     sbsizex = yStep
     sbsizey = sbsize
-    
-    gl.Color(0.0, 0.0, 0.0, 0.8)
-    gl.Shape(GL.QUADS, {
-      { v = { sbposx, miny } }, { v = { sbposx, maxy } },
-      { v = { sbposx + sbsizex, maxy } }, { v = { sbposx + sbsizex, miny } }
-    })    
 
-    gl.Color(1.0, 1.0, 1.0, 0.8)
-    gl.Shape(GL.TRIANGLES, {
-      { v = { sbposx + sbsizex / 2, miny } }, { v = { sbposx, sby2 - 1 } },
-      { v = { sbposx + sbsizex, sby2 - 1 } }
-    })    
+    Spring.Draw.Rectangle({sbposx, miny}, {sbposx + sbsizex, maxy}, {color={0,0,0,0.8}})
+    Spring.Draw.Triangle({sbposx + sbsizex / 2, miny}, {sbposx, sby2 - 1}, {sbposx + sbsizex, sby2 - 1}, {color={1,1,1,0.8}})
+    Spring.Draw.Triangle({sbposx + sbsizex / 2, maxy}, {sbposx + sbsizex, sby2 + sbheight + 1}, {sbposx, sby2 + sbheight + 1}, {color={1,1,1,0.8}})
 
-    gl.Shape(GL.TRIANGLES, {
-      { v = { sbposx + sbsizex / 2, maxy } }, { v = { sbposx + sbsizex, sby2 + sbheight + 1 } },
-      { v = { sbposx, sby2 + sbheight + 1 } }
-    })
-    
     if (sbposx < mx and mx < sbposx + sbsizex and miny < my and my < maxy) or activescrollbar then
-      gl.Color(0.2, 0.2, 1.0, 0.6)
       gl.Blending(false)
-      gl.Shape(GL.LINE_LOOP, {
-        { v = { sbposx, miny } }, { v = { sbposx, maxy } },
-        { v = { sbposx + sbsizex, maxy } }, { v = { sbposx + sbsizex, miny } }
-      })    
+      Spring.Draw.Lines({sbposx, miny}, {sbposx, maxy}, {sbposx + sbsizex, maxy}, {sbposx + sbsizex, miny}, {color={0.2,0.2,1,0.6}, loop=true})
       gl.Blending(GL.SRC_ALPHA, GL.ONE)
-      gl.Shape(GL.QUADS, {
-        { v = { sbposx + 0.5, miny + 0.5 } }, { v = { sbposx + 0.5, maxy - 0.5 } },
-        { v = { sbposx + sbsizex - 0.5, maxy - 0.5 } }, { v = { sbposx + sbsizex - 0.5, miny + 0.5 } }
-      })
+      Spring.Draw.Rectangle({sbposx + 0.5, miny + 0.5}, {sbposx + sbsizex - 0.5, maxy - 0.5}, {color={0.2,0.2,1,0.6}})
       gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
     end      
     
     if (sbposx < mx and mx < sbposx + sbsizex and sby2 < my and my < sby2 + sbheight) then
-      gl.Color(0.2, 0.2, 1.0, 0.2)
       gl.Blending(false)
-      gl.Shape(GL.LINE_LOOP, {
-        { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
-        { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
-      })    
+      Spring.Draw.Lines({sbposx, sbposy}, {sbposx, sbposy + sbsizey}, {sbposx + sbsizex, sbposy + sbsizey}, {sbposx + sbsizex, sbposy}, {color={0.2,0.2,1.0,0.2}, loop=true})
       gl.Blending(GL.SRC_ALPHA, GL.ONE)
-      gl.Shape(GL.QUADS, {
-        { v = { sbposx + 0.5, sbposy + 0.5 } }, { v = { sbposx + 0.5, sbposy + sbsizey - 0.5 } },
-        { v = { sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5 } }, { v = { sbposx + sbsizex - 0.5, sbposy + 0.5 } }
-      })
+      Spring.Draw.Rectangle({sbposx + 0.5, sbposy + 0.5}, {sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5}, {color={0.2,0.2,1,0.2}})
       gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
     end    
 
-    gl.Color(0.25, 0.25, 0.25, 0.8)
-    gl.Shape(GL.QUADS, {
-      { v = { sbposx, sby2 } }, { v = { sbposx, sby2 + sbheight } },
-      { v = { sbposx + sbsizex, sby2 + sbheight } }, { v = { sbposx + sbsizex, sby2 } }
-    })    
-    gl.Color(1.0, 1.0, 1.0, 0.4)
-    gl.Shape(GL.LINE_LOOP, {
-      { v = { sbposx, sby2 } }, { v = { sbposx, sby2 + sbheight } },
-      { v = { sbposx + sbsizex, sby2 + sbheight } }, { v = { sbposx + sbsizex, sby2 } }
-    })    
+    Spring.Draw.Rectangle({sbposx, sby2}, {sbposx + sbsizex, sby2 + sbheight}, {color={0.25,0.25,0.25,0.8}})
+    Spring.Draw.Lines({sbposx, sby2}, {sbposx, sby2 + sbheight}, {sbposx + sbsizex, sby2 + sbheight}, {sbposx + sbsizex, sby2}, {color={1,1,1,0.4}, loop=true})
+    Spring.Draw.Rectangle({sbposx, sbposy}, {sbposx + sbsizex, sbposy + sbsizey}, {color={0.8,0.8,0.8,0.8}})
 
-    gl.Color(0.8, 0.8, 0.8, 0.8)
-    gl.Shape(GL.QUADS, {
-      { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
-      { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
-    })    
     if activescrollbar or (sbposx < mx and mx < sbposx + sbsizex and sbposy < my and my < sbposy + sbsizey) then
-      gl.Color(0.2, 0.2, 1.0, 0.2)
       gl.Blending(false)
-      gl.Shape(GL.LINE_LOOP, {
-        { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
-        { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
-      })    
+      Spring.Draw.Lines({sbposx, sbposy}, {sbposx, sbposy + sbsizey}, {sbposx + sbsizex, sbposy + sbsizey}, {sbposx + sbsizex, sbposy}, {color={0.2,0.2,1,0.2}, loop=true})
       gl.Blending(GL.SRC_ALPHA, GL.ONE)
-      gl.Shape(GL.QUADS, {
-        { v = { sbposx + 0.5, sbposy + 0.5 } }, { v = { sbposx + 0.5, sbposy + sbsizey - 0.5 } },
-        { v = { sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5 } }, { v = { sbposx + sbsizex - 0.5, sbposy + 0.5 } }
-      })
+      Spring.Draw.Rectangle({sbposx + 0.5, sbposy + 0.5}, {sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5}, {color={0.2,0.2,1,0.2}})
       gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
     end  
   else
@@ -405,33 +347,26 @@ function widget:DrawScreen()
 
   -- outline the highlighted label
   if (pointedY) then
+    color = {0.2, 0.2, 1.0, 0.2}
     if (lmb or mmb or rmb) then
       if (pointedEnabled) then
-        gl.Color(1.0, 0.2, 0.2, 0.2)
+        color = {1.0, 0.2, 0.2, 0.2}
       else
-        gl.Color(0.2, 1.0, 1.0, 0.2)
+        color = {0.2, 1.0, 1.0, 0.2}
       end
-    else
-      gl.Color(0.2, 0.2, 1.0, 0.2)
     end
     local xn = minx + 0.5
     local xp = maxx - 0.5
     local yn = pointedY - fontSpace * 0.5
     local yp = pointedY + fontSize + fontSpace * 0.5
     gl.Blending(false)
-    gl.Shape(GL.LINE_LOOP, {
-      { v = { xn, yn } }, { v = { xp, yn } },
-      { v = { xp, yp } }, { v = { xn, yp } }
-    })
+    Spring.Draw.Lines({xn, yn}, {xp, yn}, {xp, yp}, {xn, yp}, {color=color, loop=true})
     xn = minx
     xp = maxx
     yn = yn + 0.5
     yp = yp - 0.5
     gl.Blending(GL.SRC_ALPHA, GL.ONE)
-    gl.Shape(GL.QUADS, {
-      { v = { xn, yn } }, { v = { xp, yn } },
-      { v = { xp, yp } }, { v = { xn, yp } }
-    })
+    Spring.Draw.Rectangle({xn, yn}, {xp, yp}, {color=color})
     gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
   end
 
@@ -440,22 +375,12 @@ function widget:DrawScreen()
   yn = miny - 0.5
   xp = maxx + 0.5
   yp = maxy + 0.5
-  gl.Color(1, 1, 1)
-  gl.Shape(GL.LINE_LOOP, {
-    { v = { xn, yn } }, { v = { xp, yn } },
-    { v = { xp, yp } }, { v = { xn, yp } }
-  })
+  Spring.Draw.Lines({xn, yn}, {xp, yn}, {xp, yp}, {xn, yp}, {width=1, color={1,1,1,1}, loop=true})
   xn = xn - 1
   yn = yn - 1
   xp = xp + 1
   yp = yp + 1
-  gl.Color(0, 0, 0)
-  gl.Shape(GL.LINE_LOOP, {
-    { v = { xn, yn } }, { v = { xp, yn } },
-    { v = { xp, yp } }, { v = { xn, yp } }
-  })
-
-  gl.EndText()
+  Spring.Draw.Lines({xn, yn}, {xp, yn}, {xp, yp}, {xn, yp}, {width=1, color={0,0,0,1}, loop=true})
 end
 
 

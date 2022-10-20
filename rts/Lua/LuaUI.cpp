@@ -13,6 +13,7 @@
 #include "LuaConstEngine.h"
 #include "LuaConstGame.h"
 #include "LuaConstPlatform.h"
+#include "LuaRender.h"
 #include "LuaSyncedRead.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -150,6 +151,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries)      ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries)      ||
 	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)         ||
+	    !AddEntriesToTable(L, "Spring",      LuaRender::PushEntries)            ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
 	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||

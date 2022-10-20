@@ -84,12 +84,12 @@ static VA_TYPE_L luaBufferVertex = {
 // .x := screen width (meters), .y := eye-to-screen (meters)
 static float2 screenParameters = {0.36f, 0.60f};
 
-static CMatrix44f screenViewMatrix;
-static CMatrix44f screenProjMatrix;
+CMatrix44f LuaOpenGL::screenViewMatrix;
+CMatrix44f LuaOpenGL::screenProjMatrix;
 
 
-static LuaOpenGL::DrawMode currDrawMode = LuaOpenGL::DRAW_NONE;
-static LuaOpenGL::DrawMode prevDrawMode = LuaOpenGL::DRAW_NONE; // for minimap (when drawn in Screen mode)
+LuaOpenGL::DrawMode LuaOpenGL::currDrawMode = LuaOpenGL::DRAW_NONE;
+LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE; // for minimap (when drawn in Screen mode)
 
 
 // allocated by CreateVertexArray
