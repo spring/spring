@@ -280,7 +280,7 @@ static inline bool SkipColorCodesAndNewLines(
 
 			case 0x0d: {
 				// CR; fall-through
-				idx += (idx < end && text[idx] == 0x0a);
+				idx += ((idx + 1) < end && text[idx + 1] == 0x0a);
 			}
 			case 0x0a: {
 				// LF
