@@ -13,6 +13,7 @@
 #include "LuaConstGame.h"
 #include "LuaConstPlatform.h"
 #include "LuaInterCall.h"
+#include "LuaRender.h"
 #include "LuaUnsyncedRead.h"
 #include "LuaScream.h"
 #include "LuaSyncedRead.h"
@@ -107,6 +108,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
 	    // !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
+	    !AddEntriesToTable(L, "Spring",      LuaRender::PushEntries)            ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
 	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||

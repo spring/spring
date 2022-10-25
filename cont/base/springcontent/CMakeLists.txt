@@ -16,6 +16,12 @@ set(FILES
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
+	shaders/GLSL/LuaRenderLineVertProg.glsl
+	shaders/GLSL/LuaRenderLineGeoProg.glsl
+	shaders/GLSL/LuaRenderLineFragProg.glsl
+	shaders/GLSL/LuaRenderPolygonVertProg.glsl
+	shaders/GLSL/LuaRenderPolygonFragProg.glsl
+	shaders/GLSL/LuaRenderScreenRectFragProg.glsl
 	shaders/GLSL/MiniMapVertProg.glsl
 	shaders/GLSL/MiniMapFragProg.glsl
 	shaders/GLSL/MapShadowGenVertProg.glsl
@@ -130,6 +136,8 @@ set(FILES
 	anims/cursornumber_01.png
 	anims/cursornumber_03.png
 	modinfo.lua
+	bitmaps/arrow.png
+	bitmaps/demotexture.png
 	bitmaps/icons/frame_slate_faded_128x96.png
 	bitmaps/icons/frame_slate_128x96.png
 	bitmaps/icons/frame.png

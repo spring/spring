@@ -41,6 +41,7 @@
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaRender.h"
 #include "Lua/LuaVFSDownload.h"
 #include "Menu/LuaMenuController.h"
 #include "Menu/SelectMenu.h"
@@ -274,6 +275,7 @@ bool SpringApp::Init()
 
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
+	LuaRender::Init();
 	ISound::Initialize(false);
 
 	// Lua socket restrictions
@@ -696,8 +698,10 @@ void SpringApp::Reload(const std::string script)
 
 	shaderHandler->ClearShaders(false);
 
+	LuaRender::Free();
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
+	LuaRender::Init();
 
 	#if 0
 	// rely only on defrag for now since WindowManagerHelper also keeps a global bitmap

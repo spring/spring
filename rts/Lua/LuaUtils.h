@@ -136,6 +136,48 @@ class LuaUtils {
 		                          vector<int>& vec);
 		static int ParseFloatVector(lua_State* L, int tableIndex,
 		                            vector<float>& vec);
+
+		/**
+		 * @brief Parse float list at stack index {@code index} or as many float arguments
+		 * as possible, starting from stack index {@code index}.
+		 * @details One level of nested lists is parsed.
+		 * For Lua arguments like {@code 0, 1, 2, 3, 4}, {@code 0, 1, {2, 3}, 4}},
+		 * {@code {0, 1, 2, 3, 4}} or {@code {{0, 1}, {2, 3}, 4},
+		 * the numbers from 0 to 4 are appended to vec.
+		 * @param L Lua state.
+		 * @param index Stack index from where to start parsing.
+		 * @param vec Destination vector to append to.
+		 * @return Number of processed stack elements.
+		 * This is not necessarily the numer of elements appended to {@code vec}.
+		 */
+		static int ParseFloatsFlattened(lua_State* L, int index, vector<float>& vec);
+
+		/**
+		 * @brief Parse as many float arguments as possible, starting from stack index {@code index}.
+		 * @details One level of nested lists is parsed.
+		 * For Lua arguments like {@code 0, 1, 2, 3, 4} or {@code 0, 1, {2, 3}, 4}},
+		 * the numbers from 0 to 4 are appended to vec.
+		 * @param L Lua state.
+		 * @param index Stack index from where to start parsing.
+		 * @param vec Destination vector to append to.
+		 * @return Number of processed stack elements.
+		 * This is not necessarily the numer of elements appended to {@code vec}.
+		 */
+		static int ParseFloatParamsFlattened(lua_State* L, int index, vector<float>& vec);
+
+		/**
+		 * @brief Parse float list at stack index {@code index}.
+		 * @details One level of nested lists is parsed.
+		 * For Lua arguments like {@code {0, 1, 2, 3, 4}} or {@code {{0, 1}, {2, 3}, 4},
+		 * the numbers from 0 to 4 are appended to vec.
+		 * @param L Lua state.
+		 * @param index Stack index of the list.
+		 * @param vec Destination vector to append to.
+		 * @return Number of processed table elements.
+		 * This is not necessarily the numer of elements appended to {@code vec}.
+		 */
+		static int ParseFloatTableFlattened(lua_State* L, int index, vector<float>& vec);
+
 		static int ParseStringVector(lua_State* L, int tableIndex,
 		                             vector<string>& vec);
 
