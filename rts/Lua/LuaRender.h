@@ -79,7 +79,7 @@ private:
 	 * @brief Enable shader program and bind vertex buffer.
 	 * @param defaultProgram Shader program to use if there is no active program.
 	 */
-	static void Bind(Shader::IProgramObject* defaultProgram);
+	static void Bind(Shader::IProgramObject* defaultProgram=nullptr);
 
 	/**
 	 * @brief Disable shader program and unbind vertex buffer.
@@ -135,6 +135,28 @@ private:
 	 * @param relative true iff bevel, radius and border are given in relative screen coordinates.
 	 */
 	static void TransformParameters(float& bevel, float& radius, float& border, bool relative);
+
+	/**
+	 * @brief Submit vertices with custom vertex attributes.
+	 * @details Lua call: Vertices(numVertices, {vertexAttribute}, ...)
+	 * vertexAttribute = {v1,v2,v3,...}|{{v1},{v2},{v3},...}
+	 *
+	 * - All vertex attributes are of type 'float'.
+	 * - Vertex attributes are flattened during parsing.
+	 * - The sizes of the attributes are determined by dividing by numVertices.
+	 *
+	 * This can be used to submit vertex attributes to a custom Lua shader.
+	 * Note that you have to manage your shader completely from Lua.
+	 * No uniforms are set by Spring.Draw and no screen/world context is evaluated.
+	 *
+	 * Example: Spring.Draw.Vertices(3,
+	 *                              {{0, 0, 0}, {100, 0, 0}, {100, 0, 100}},
+	 *                              {{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}})
+	 *
+	 * @param L Lua state.
+	 * @return 1 on success, else 0.
+	 */
+	static int Vertices(lua_State* L);
 
 	/**
 	 * @brief Draw connected line segments.

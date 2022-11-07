@@ -71,6 +71,7 @@ bool LuaRender::PushEntries(lua_State* L)
 	lua_pushstring(L, "Draw");
 	lua_newtable(L);
 
+	REGISTER_LUA_CFUNC(Vertices);
 	REGISTER_LUA_CFUNC(Lines);
 	REGISTER_LUA_CFUNC(Triangle);
 	REGISTER_LUA_CFUNC(Rectangle);
@@ -185,7 +186,7 @@ void LuaRender::Bind(Shader::IProgramObject* defaultProgram)
 	// Use default program if there is no active program.
 	GLuint currentProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, reinterpret_cast<GLint*>(&currentProgram));
-	if (currentProgram == 0) {
+	if (currentProgram == 0 && defaultProgram != nullptr) {
 		defaultProgram->Enable();
 
 		GLint glTexture = 0;
@@ -193,11 +194,10 @@ void LuaRender::Bind(Shader::IProgramObject* defaultProgram)
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &glTexture);
 
 		// Use specified texture if there is one bound.
-		int textureFlagLocation = 2;
 		if (glTexture == 0) {
-			defaultProgram->SetUniform1f(textureFlagLocation, 0.0f);
+			defaultProgram->SetUniform1f(2, 0.0f);
 		} else {
-			defaultProgram->SetUniform1f(textureFlagLocation, 1.0f);
+			defaultProgram->SetUniform1f(2, 1.0f);
 		}
 
 		switch (LuaOpenGL::GetDrawMode()) {
@@ -217,6 +217,9 @@ void LuaRender::Bind(Shader::IProgramObject* defaultProgram)
 				defaultProgram->SetUniformMatrix4fv(1, false, camera->GetProjectionMatrix());
 		}
 	}
+
+	// Shaders can use gl_PointSize.
+	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glBindVertexArray(sVertexArray);
 	glBindBuffer(GL_ARRAY_BUFFER, sVertexBuffer);
@@ -404,6 +407,76 @@ void LuaRender::TransformParameters(float& bevel, float& radius, float& border, 
 		radius *= f;
 		border *= f;
 	}
+}
+
+int LuaRender::Vertices(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	GLuint currentProgram;
+	glGetIntegerv(GL_CURRENT_PROGRAM, reinterpret_cast<GLint*>(&currentProgram));
+	if (currentProgram == 0) {
+		luaL_error(L, "No shader program enabled");
+		return 0;
+	}
+
+	const int args = lua_gettop(L);
+	if (args < 2) {
+		luaL_error(L, "Incorrect arguments to %s: need at least two arguments", __func__);
+		return 0;
+	}
+
+	const int numVertices = luaL_checkfloat(L, 1);
+	int bufferElements = 0;
+
+	std::list<std::vector<float>> attributes;
+	for (int i=2; i<=args; ++i) {
+		std::vector<float> values;
+		values.reserve(numVertices * 4);
+		LuaUtils::ParseFloatTableFlattened(L, i, values);
+		if (values.size() % numVertices != 0) {
+			luaL_error(L, "Incorrect argument %d to %s: vertex attribute length not divisible by %d", i, __func__, numVertices);
+			return 0;
+		}
+		attributes.push_back(values);
+		bufferElements += values.size();
+	}
+
+	Bind();
+
+	// Update buffer.
+	float* buffer;
+	GLuint offset = MapBuffer(bufferElements * sizeof(float), reinterpret_cast<GLvoid**>(&buffer));
+	if (buffer == nullptr) {
+		luaL_error(L, "Failed to map vertex buffer");
+		return 0;
+	}
+
+	int o = 0;
+	for (const auto &values: attributes) {
+		memcpy(&buffer[o], values.data(), values.size() * sizeof(float));
+		o += values.size();
+	}
+
+	UnmapBuffer();
+
+	int index = 0;
+	for (const auto &values: attributes) {
+		glVertexAttribPointer(index, values.size() / numVertices, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLvoid*>(offset));
+		glEnableVertexAttribArray(index);
+		offset += values.size() * sizeof(float);
+		++index;
+	}
+
+	glDrawArrays(GL_POINTS, 0, numVertices);
+
+	for (int i=0; i<attributes.size(); ++i) {
+		glDisableVertexAttribArray(i);
+	}
+
+	Unbind();
+
+	return 1;
 }
 
 int LuaRender::Lines(lua_State* L)
