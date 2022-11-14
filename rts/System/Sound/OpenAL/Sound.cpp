@@ -416,7 +416,9 @@ static void SDLCALL RenderSDLSamples(void* userdata, Uint8* stream, int len)
 	ALCdevice* dev = snd->GetCurrentDevice();
 
 	assert(snd->GetFrameSize() > 0);
-	alcRenderSamplesSOFT(dev, stream, len / snd->GetFrameSize());
+	// Prevent sigsegv when openal has been closed before sdl
+	if (dev != nullptr) // FIXME: Perhaps can be fixed by reordering ::Cleanup properly?
+		alcRenderSamplesSOFT(dev, stream, len / snd->GetFrameSize());
 }
 
 static const char* ChannelsName(ALCenum chans)
