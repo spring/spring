@@ -925,6 +925,25 @@ addDemo("Rectangle, radius=32", function (px, py, width, height)
         })
 end)
 
+addDemo("Rectangle, fractional coords, radius=8", function (px, py, width, height)
+    local vertices
+    if world then
+        return
+    else
+        vertices = {
+            px+0.5, py-height+0.5,
+            px+width-0.5, py-0.5,
+        }
+    end
+
+    Spring.Draw.Rectangle(
+        vertices,
+        {
+            color={0,0,0,0.8},
+            radius=8,
+        })
+end)
+
 local function drawDemosScreen(size, gap)
     world = false
 

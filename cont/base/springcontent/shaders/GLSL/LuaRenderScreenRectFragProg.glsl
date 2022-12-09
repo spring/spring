@@ -82,7 +82,7 @@ void main() {
         float intensity = 1.0 - smoothstep(0.0, 1.0, d);
         outColor = mix(vec4(0), outColor, intensity);
 
-        float borderIntensity = min(step(0.0, d), step(d, border));
+        float borderIntensity = min(border, min(step(0.0, d), step(d, border)));
         outColor = mix(outColor, inData.borderColor, borderIntensity);
 
     } else {
