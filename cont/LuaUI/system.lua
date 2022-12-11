@@ -18,7 +18,6 @@ if (System == nil) then
     --  Custom LuaUI variables
     --
     Commands = Commands,
-    fontHandler = fontHandler,
     LUAUI_DIRNAME = LUAUI_DIRNAME,
 
     --
