@@ -267,7 +267,7 @@ function canDeleteDocumentation() {
 	# remove possible comment at end of line: // foo bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
-	if (match(funcStartLine, /\;$/)) {
+	if (match(funcStartLine, /;$/)) {
 		# function ends in this line
 		wrappFunction(funcStartLine, commentEolTot);
 	} else {
