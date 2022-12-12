@@ -1028,6 +1028,7 @@ void CGlobalRendering::UpdateViewPortGeometry()
 	viewPosX = (winSizeX >> 1) * dualScreenMode * dualScreenMiniMapOnLeft;
 	viewPosY = 0;
 
+	CglFont::ReloadAllRelative();
 	CglFont::UpdateAllProjMatrices();
 }
 

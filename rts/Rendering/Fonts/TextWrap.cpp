@@ -53,8 +53,8 @@ static inline int SkipColorCodes(const std::u8string& text, T* pos, SColor* colo
 /*******************************************************************************/
 /*******************************************************************************/
 
-CTextWrap::CTextWrap(const std::string& fontfile, int size, int outlinewidth, float  outlineweight)
-: CFontTexture(fontfile,size,outlinewidth,outlineweight)
+CTextWrap::CTextWrap(const std::string& fontfile, int size, int outlinewidth, float  outlineweight, bool relativeSize)
+: CFontTexture(fontfile,size,outlinewidth,outlineweight,relativeSize)
 {
 }
 
