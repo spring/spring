@@ -98,7 +98,6 @@ function CommandNotify(id, params, options)
 end
 
 function DrawScreen(vsx, vsy)
-  widgetHandler:SetViewSize(vsx, vsy)
   return widgetHandler:DrawScreen()
 end
 

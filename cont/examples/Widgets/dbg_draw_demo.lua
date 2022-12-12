@@ -34,7 +34,7 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local vsx, vsy = Spring.GetViewGeometry()
+local vsx, vsy
 local fontsize = 14
 local font
 
@@ -1050,7 +1050,7 @@ end
 --------------------------------------------------------------------------------
 function widget:Initialize()
     Spring.Echo("Draw Demo - Initialize")
-    Spring.Echo("Size: " .. vsx .. "x" .. vsy)
+    widget:ViewResize(Spring.GetViewGeometry())
     font = gl.LoadFont("LuaUI/Fonts/FreeSansBold.otf", fontsize, 4, 2.0)
     font:SetAutoOutlineColor(true)
 end
