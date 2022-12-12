@@ -207,7 +207,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 			}
 		}
 	}
-	for (const auto it: unitDef->buildOptions) {
+	for (const auto& it: unitDef->buildOptions) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(it.second);
 		if (ud == nullptr)
 			continue;

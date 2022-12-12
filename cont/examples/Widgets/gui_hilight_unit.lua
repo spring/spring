@@ -54,12 +54,14 @@ local glCallList                = gl.CallList
 local glColor                   = gl.Color
 local glCreateList              = gl.CreateList
 local glCulling                 = gl.Culling
+local glDeleteFont              = gl.DeleteFont
 local glDeleteList              = gl.DeleteList
 local glDeleteTexture           = gl.DeleteTexture
 local glDepthTest               = gl.DepthTest
 local glFeature                 = gl.Feature
 local glGetTextWidth            = gl.GetTextWidth
 local glLineWidth               = gl.LineWidth
+local glLoadFont                = gl.LoadFont
 local glLogicOp                 = gl.LogicOp
 local glPointSize               = gl.PointSize
 local glPolygonMode             = gl.PolygonMode
@@ -102,11 +104,10 @@ local spTraceScreenRay          = Spring.TraceScreenRay
 --------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("fonts.lua")
 
-local font = 'FreeMonoBold'
+local font
+local fontFile = LUAUI_DIRNAME..'Fonts/FreeSansBold.otf'
 local fontSize = 16
-local fontName = ':n:'..LUAUI_DIRNAME..'Fonts/'..font..'_'..fontSize
 
 
 local showName = (1 > 0)
@@ -134,12 +135,14 @@ local smoothPolys = (glSmoothing ~= nil) and false
 
 function widget:Initialize()
   cylList = glCreateList(DrawCylinder, cylDivs)
+  font = glLoadFont(fontFile, fontSize)
 end
 
 
 function widget:Shutdown()
   glDeleteList(cylList)
   glDeleteTexture(customTex)
+  glDeleteFont(font)
 end
 
 
@@ -475,51 +478,25 @@ function widget:DrawScreen()
     end
   end
 
-  local fh = fontHandler
-  if (fh.UseFont(fontName)) then
+  local f = font.size
+  local gx = 16
+  local gy = 8
 
-    local f = fh.GetFontSize() * 0.5
-    local gx = 12 -- gap x
-    local gy = 8  -- gap y
+  local lt = f * font:GetTextWidth(typeStr)
+  local lp = pName and (f * font:GetTextWidth(pName)) or 0
+  local lm = (lt > lp) and lt or lp  --  max len
 
-    local lt = fh.GetTextWidth(typeStr)
-    local lp = pName and fh.GetTextWidth(pName) or 0
-    local lm = (lt > lp) and lt or lp  --  max len
+  pName = pName and (colorStr .. pName)
 
-    pName = pName and (colorStr .. pName)
-
-    if ((mx + lm + gx) < vsx) then
-      fh.Draw(typeStr, mx + gx, my + gy)
-      if (pName) then
-        fh.Draw(pName, mx + gx, my - gy - f)
-      end
-    else
-      fh.DrawRight(typeStr, mx - gx, my + gy)
-      if (pName) then
-        fh.DrawRight(pName, mx - gx, my - gy - f)
-      end
+  if ((mx + lm + gx) < vsx) then
+    font:Print(typeStr, mx + gx, my + gy, f, 'o')
+    if (pName) then
+      font:Print(pName, mx + gx, my - gy - f, f, outlineChar)
     end
   else
-    local f = 14
-    local gx = 16
-    local gy = 8
-
-    local lt = f * glGetTextWidth(typeStr)
-    local lp = pName and (f * glGetTextWidth(pName)) or 0
-    local lm = (lt > lp) and lt or lp  --  max len
-
-    pName = pName and (colorStr .. pName)
-
-    if ((mx + lm + gx) < vsx) then
-      glText(typeStr, mx + gx, my + gy, f, 'o')
-      if (pName) then
-        glText(pName, mx + gx, my - gy - f, f, outlineChar)
-      end
-    else
-      glText(typeStr, mx - gx, my + gy, f, 'or')
-      if (pName) then
-        glText(pName, mx - gx, my - gy - f, f, outlineChar .. 'r')
-      end
+    font:Print(typeStr, mx - gx, my + gy, f, 'or')
+    if (pName) then
+      font:Print(pName, mx - gx, my - gy - f, f, outlineChar .. 'r')
     end
   end
 end

@@ -169,7 +169,7 @@ CALLIN_LIST = {
 	"DefaultCommand",
 	"CommandNotify",
 
-	"ViewResize", -- FIXME ?
+	"ViewResize",
 	"LayoutButtons",
 	"ConfigureLayout",
 

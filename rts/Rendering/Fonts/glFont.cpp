@@ -106,10 +106,10 @@ CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
 }
 
 
-CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
+CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight, bool relativeSize)
 {
 	try {
-		return (new CglFont(fontFile, size, outlinewidth, outlineweight));
+		return (new CglFont(fontFile, size, outlinewidth, outlineweight, relativeSize));
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
 		return nullptr;
@@ -141,8 +141,16 @@ void CglFont::UpdateAllProjMatrices() {
 	}
 }
 
-CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
-: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
+void CglFont::ReloadAllRelative() {
+	for (CglFont* f: loadedFonts) {
+		if (f->relativeSize) {
+			f->Load();
+		}
+	}
+}
+
+CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight, bool _relativeSize)
+: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight, _relativeSize)
 , fontPath(fontFile)
 {
 	textColor    = white;

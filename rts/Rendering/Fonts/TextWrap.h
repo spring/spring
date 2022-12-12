@@ -14,7 +14,7 @@
 class CTextWrap : public CFontTexture
 {
 public:
-	CTextWrap(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
+	CTextWrap(const std::string& fontfile, int size, int outlinesize, float  outlineweight, bool relativeSize);
 	virtual ~CTextWrap() {}
 
 	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight

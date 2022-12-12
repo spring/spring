@@ -74,6 +74,16 @@ bool LuaConstGL::PushEntries(lua_State* L)
 	PUSH_GL(NAND);
 	PUSH_GL(SET);
 
+	// Stencil operations
+	// GL_INVERT
+	// GL_ZERO
+	// GL_REPLACE
+	PUSH_GL(KEEP);
+	PUSH_GL(INCR);
+	PUSH_GL(INCR_WRAP);
+	PUSH_GL(DECR);
+	PUSH_GL(DECR_WRAP);
+
 	// Culling
 	PUSH_GL(BACK);
 	PUSH_GL(FRONT);

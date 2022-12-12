@@ -80,7 +80,7 @@ public:
 	static bool GenFontConfig();
 
 public:
-	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
+	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight, bool relativeSize=false);
 	virtual ~CFontTexture();
 
 public:
@@ -101,6 +101,7 @@ public:
 public:
 	void ReallocAtlases(bool pre);
 protected:
+	void Load();
 	void UpdateGlyphAtlasTexture();
 private:
 	void CreateTexture(const int width, const int height);
@@ -114,6 +115,11 @@ protected:
 
 protected:
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
+
+	const std::string fontfile;
+	int baseSize;
+	int baseOutlineSize;
+	bool relativeSize;
 
 	int outlineSize;
 	float outlineWeight;

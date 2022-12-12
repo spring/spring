@@ -94,8 +94,6 @@ widgetHandler = {
 
   xViewSize    = 1,
   yViewSize    = 1,
-  xViewSizeOld = 1,
-  yViewSizeOld = 1,
 }
 
 
@@ -1217,29 +1215,11 @@ end
 --  Drawing call-ins
 --
 
-
--- generates ViewResize() calls for the widgets
-function widgetHandler:SetViewSize(vsx, vsy)
-  self.xViewSize = vsx
-  self.yViewSize = vsy
-  if ((self.xViewSizeOld ~= vsx) or
-      (self.yViewSizeOld ~= vsy)) then
-    widgetHandler:ViewResize(vsx, vsy)
-    self.xViewSizeOld = vsx
-    self.yViewSizeOld = vsy
-  end
-end
-
-
-function widgetHandler:ViewResize(vsx, vsy)
-  if (type(vsx) == 'table') then
-    vsy = vsx.viewSizeY
-    vsx = vsx.viewSizeX
-    print('real ViewResize') -- FIXME
-  end
-
+function widgetHandler:ViewResize(geometry)
+  self.xViewSize = geometry.viewSizeX
+  self.yViewSize = geometry.viewSizeY
   for _,w in ipairs(self.ViewResizeList) do
-    w:ViewResize(vsx, vsy)
+    w:ViewResize(self.xViewSize, self.yViewSize)
   end
   return
 end

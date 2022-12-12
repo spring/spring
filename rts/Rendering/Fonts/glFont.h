@@ -45,12 +45,13 @@ public:
 	static bool LoadConfigFonts();
 	static bool LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile);
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
-	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
+	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f, bool relativeSize=false);
 	static void ReallocAtlases(bool pre);
 	static void SwapRenderBuffers();
 	static void UpdateAllProjMatrices();
+	static void ReloadAllRelative();
 
-	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
+	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight, bool relativeSize=false);
 	~CglFont();
 
 

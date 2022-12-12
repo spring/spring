@@ -53,8 +53,8 @@ static inline int SkipColorCodes(const std::u8string& text, T* pos, SColor* colo
 /*******************************************************************************/
 /*******************************************************************************/
 
-CTextWrap::CTextWrap(const std::string& fontfile, int size, int outlinewidth, float  outlineweight)
-: CFontTexture(fontfile,size,outlinewidth,outlineweight)
+CTextWrap::CTextWrap(const std::string& fontfile, int size, int outlinewidth, float  outlineweight, bool relativeSize)
+: CFontTexture(fontfile,size,outlinewidth,outlineweight,relativeSize)
 {
 }
 
@@ -128,7 +128,10 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		w2 = w;
 		w.isSpace = true;
 	} else if (w.isSpace) {
-		const int split = (int)std::floor(wantedWidth / spaceAdvance);
+		int split = (int)std::floor(wantedWidth / spaceAdvance);
+		if (!smart) {
+			split = std::max(1, split);
+		}
 		w2.isSpace   = true;
 		w2.numSpaces = split;
 		w2.width     = spaceAdvance * w2.numSpaces;
@@ -176,6 +179,10 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 				goodbreak = i;
 			}
 		} while(i < w.text.length());
+
+		if (!smart) {
+			goodbreak = std::max(1U, goodbreak);
+		}
 
 		w2.text  = toustring(w.text.substr(0,goodbreak));
 		w2.width = GetTextWidth(w2.text);
@@ -360,6 +367,9 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 						wL = SplitWord(*wi, freeWordSpace, false);
 					}
 
+					// we need some progress
+					assert(wL.width > 0.0f);
+
 					// increase by the width of the L-part of *wi
 					currLine->width += wL.width;
 
@@ -374,7 +384,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 				linebreak.pos = wi->pos;
 				currLine->end = words.insert(wi, linebreak);
 
-				while (wi != words.end() && wi->isSpace)
+				while (wi != words.end() && (wi->isSpace || (wi->width == 0.0f && !wi->isLineBreak)))
 					wi = words.erase(wi);
 
 				lines.emplace_back();
@@ -559,6 +569,10 @@ void CTextWrap::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& 
 
 int CTextWrap::WrapInPlace(std::u8string& text, float _fontSize, float maxWidth, float maxHeight)
 {
+	if (text.empty()) {
+		return 0;
+	}
+
 	// TODO make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
 
 	if (_fontSize <= 0.0f)

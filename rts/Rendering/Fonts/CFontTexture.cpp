@@ -3,6 +3,7 @@
 #include "CFontTexture.h"
 #include "FontLogSection.h"
 
+#include <cmath>
 #include <cstring> // for memset, memcpy
 #include <string>
 #include <vector>
@@ -348,65 +349,30 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 /*******************************************************************************/
 
 
-CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight)
-	: outlineSize(_outlinesize)
+CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight, bool relativeSize)
+	: fontfile(fontfile)
+	, baseSize(size)
+	, baseOutlineSize(_outlinesize)
+	, relativeSize(relativeSize)
+	, outlineSize(0)
 	, outlineWeight(_outlineweight)
 	, lineHeight(0)
 	, fontDescender(0)
-	, fontSize(size)
+	, fontSize(0)
 	, texWidth(0)
 	, texHeight(0)
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
+	, glyphAtlasTextureID(0)
 {
 	atlasGlyphs.reserve(1024);
 
-	if (fontSize <= 0)
-		fontSize = 14;
+	if (baseSize <= 0)
+		baseSize = 14;
 
-	static constexpr int FT_INTERNAL_DPI = 64;
-	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
-
-	fontFamily = "unknown";
-	fontStyle  = "unknown";
+	Load();
 
 #ifndef HEADLESS
-	face = nullptr;
-	shFace = GetFontFace(fontfile, fontSize);
-
-	if (shFace == nullptr)
-		return;
-
-	face = *shFace;
-
-	fontFamily = face->family_name;
-	fontStyle  = face->style_name;
-
-	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
-	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
-	lineHeight = face->height / face->units_per_EM;
-
-	if (lineHeight <= 0)
-		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
-
-	// has to be done before first GetGlyph() call!
-	CreateTexture(32, 32);
-
-	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
-	memset(kerningPrecached, 0, sizeof(kerningPrecached));
-
-	for (char32_t i = 32; i < 127; ++i) {
-		const auto& lgl = GetGlyph(i);
-		const float advance = lgl.advance;
-		for (char32_t j = 32; j < 127; ++j) {
-			const auto& rgl = GetGlyph(j);
-			const auto hash = GetKerningHash(i, j);
-			FT_Vector kerning;
-			FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
-			kerningPrecached[hash] = advance + normScale * kerning.x;
-		}
-	}
-
 	allFonts.insert(this);
 #endif
 }
@@ -561,16 +527,16 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 			LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size and/or outlinewidth)");
 
 		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
-		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
+		wantedTexHeight = std::max(atlasUpdate.ysize, atlasAlloc.GetAtlasSize().y);
 
 		if ((atlasUpdate.xsize != wantedTexWidth) || (atlasUpdate.ysize != wantedTexHeight))
-			atlasUpdate = std::move(atlasUpdate.CanvasResize(wantedTexWidth, wantedTexHeight, false));
+			atlasUpdate = atlasUpdate.CanvasResize(wantedTexWidth, wantedTexHeight, false);
 
 		if (atlasUpdateShadow.Empty())
 			atlasUpdateShadow.Alloc(wantedTexWidth, wantedTexHeight, 1);
 
 		if ((atlasUpdateShadow.xsize != wantedTexWidth) || (atlasUpdateShadow.ysize != wantedTexHeight))
-			atlasUpdateShadow = std::move(atlasUpdateShadow.CanvasResize(wantedTexWidth, wantedTexHeight, false));
+			atlasUpdateShadow = atlasUpdateShadow.CanvasResize(wantedTexWidth, wantedTexHeight, false);
 
 		for (char32_t i = start; i < end; ++i) {
 			const std::string glyphName  = IntToString(i);
@@ -678,6 +644,10 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 void CFontTexture::CreateTexture(const int width, const int height)
 {
 #ifndef HEADLESS
+	if (glyphAtlasTextureID != 0) {
+		glDeleteTextures(1, &glyphAtlasTextureID);
+	}
+
 	glGenTextures(1, &glyphAtlasTextureID);
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
 
@@ -756,6 +726,75 @@ void CFontTexture::ReallocAtlases(bool pre)
 #endif
 }
 
+void CFontTexture::Load()
+{
+	if (!relativeSize) {
+		fontSize = baseSize;
+		outlineSize = baseOutlineSize;
+	} else {
+		float scale = std::sqrt(std::pow(globalRendering->viewSizeX, 2) + std::pow(globalRendering->viewSizeY, 2)) / 2202.0f;
+
+		int newFontSize = std::ceil(baseSize * scale);
+		int newOutlineSize = std::ceil(baseOutlineSize * scale);
+
+		if (newFontSize == fontSize && newOutlineSize == outlineSize) {
+			return;
+		}
+
+		fontSize = newFontSize;
+		outlineSize = newOutlineSize;
+	}
+
+	LOG_L(L_INFO, "Loading font %s, %d", fontfile.c_str(), fontSize);
+
+	static constexpr int FT_INTERNAL_DPI = 64;
+	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
+
+	fontFamily = "unknown";
+	fontStyle = "unknown";
+
+#ifndef HEADLESS
+	face = nullptr;
+	shFace = GetFontFace(fontfile, fontSize);
+
+	if (shFace == nullptr)
+		return;
+
+	face = *shFace;
+
+	fontFamily = face->family_name;
+	fontStyle = face->style_name;
+
+	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
+	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
+	lineHeight = face->height / face->units_per_EM;
+
+	if (lineHeight <= 0)
+		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
+
+	// has to be done before first GetGlyph() call!
+	CreateTexture(32, 32);
+
+	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
+	memset(kerningPrecached, 0, sizeof(kerningPrecached));
+
+	glyphs.clear();
+	kerningDynamic.clear();
+	atlasAlloc = {};
+
+	for (char32_t i = 32; i < 127; ++i) {
+		const auto& lgl = GetGlyph(i);
+		const float advance = lgl.advance;
+		for (char32_t j = 32; j < 127; ++j) {
+			const auto& rgl = GetGlyph(j);
+			const auto hash = GetKerningHash(i, j);
+			FT_Vector kerning;
+			FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+			kerningPrecached[hash] = advance + normScale * kerning.x;
+		}
+	}
+#endif
+}
 
 void CFontTexture::UpdateGlyphAtlasTexture()
 {

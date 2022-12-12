@@ -19,7 +19,6 @@ include("setupdefs.lua")
 include("savetable.lua")
 
 include("debug.lua")
-include("fonts.lua")
 include("layout.lua")   -- contains a simple LayoutButtons()
 include("widgets.lua")  -- the widget handler
 
@@ -74,8 +73,6 @@ function Update()
   end
   activePage = currentPage
 
-  fontHandler.Update()
-
   widgetHandler:Update()
 
   return
@@ -101,7 +98,6 @@ function CommandNotify(id, params, options)
 end
 
 function DrawScreen(vsx, vsy)
-  widgetHandler:SetViewSize(vsx, vsy)
   return widgetHandler:DrawScreen()
 end
 

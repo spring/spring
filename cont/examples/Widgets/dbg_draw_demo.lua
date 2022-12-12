@@ -34,7 +34,7 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local vsx, vsy = Spring.GetViewGeometry()
+local vsx, vsy
 local fontsize = 14
 local font
 
@@ -925,6 +925,25 @@ addDemo("Rectangle, radius=32", function (px, py, width, height)
         })
 end)
 
+addDemo("Rectangle, fractional coords, radius=8", function (px, py, width, height)
+    local vertices
+    if world then
+        return
+    else
+        vertices = {
+            px+0.5, py-height+0.5,
+            px+width-0.5, py-0.5,
+        }
+    end
+
+    Spring.Draw.Rectangle(
+        vertices,
+        {
+            color={0,0,0,0.8},
+            radius=8,
+        })
+end)
+
 local function drawDemosScreen(size, gap)
     world = false
 
@@ -1031,7 +1050,7 @@ end
 --------------------------------------------------------------------------------
 function widget:Initialize()
     Spring.Echo("Draw Demo - Initialize")
-    Spring.Echo("Size: " .. vsx .. "x" .. vsy)
+    widget:ViewResize(Spring.GetViewGeometry())
     font = gl.LoadFont("LuaUI/Fonts/FreeSansBold.otf", fontsize, 4, 2.0)
     font:SetAutoOutlineColor(true)
 end
