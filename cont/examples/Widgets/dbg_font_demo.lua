@@ -228,7 +228,6 @@ end
 --------------------------------------------------------------------------------
 function widget:Initialize()
     Spring.Echo("Font Demo - Initialize")
-    widget:ViewResize(Spring.GetViewGeometry())
     for i = 1, #demo, 1 do
         demo[i].font = gl.LoadFont(unpack(demo[i].fontParams))
     end

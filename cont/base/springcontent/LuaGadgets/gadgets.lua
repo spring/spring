@@ -143,6 +143,10 @@ end
 function gadgetHandler:Initialize()
   local syncedHandler = Script.GetSynced()
 
+  if not syncedHandler then
+    self.xViewSize, self.yViewSize = Spring.GetViewGeometry()
+  end
+
   local unsortedGadgets = {}
   -- get the gadget names
   local gadgetFiles = VFS.DirList(GADGETS_DIR, "*.lua", VFSMODE)
@@ -479,10 +483,17 @@ function gadgetHandler:InsertGadget(gadget)
   end
 
   self:UpdateCallIns()
+
   if (gadget.Initialize) then
     gadget:Initialize()
   end
-  self:UpdateCallIns()
+
+  if self.knownGadgets[gadget.ghInfo.name].active then
+    -- Gadget initialized successfully and did not remove itself.
+    if gadget.ViewResize then
+      gadget:ViewResize(self.xViewSize, self.yViewSize)
+    end
+  end
 end
 
 
