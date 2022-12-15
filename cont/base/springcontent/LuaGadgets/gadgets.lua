@@ -76,8 +76,6 @@ gadgetHandler = {
 
   xViewSize    = 1,
   yViewSize    = 1,
-  xViewSizeOld = 1,
-  yViewSizeOld = 1,
 
   actionHandler = actionHandler,
   mouseOwner = nil,
@@ -960,22 +958,11 @@ end
 --  Drawing call-ins
 --
 
--- generates ViewResize() calls for the gadgets
-function gadgetHandler:SetViewSize(vsx, vsy)
-  self.xViewSize = vsx
-  self.yViewSize = vsy
-  if ((self.xViewSizeOld ~= vsx) or
-      (self.yViewSizeOld ~= vsy)) then
-    gadgetHandler:ViewResize(vsx, vsy)
-    self.xViewSizeOld = vsx
-    self.yViewSizeOld = vsy
-  end
-end
-
-
-function gadgetHandler:ViewResize(vsx, vsy)
+function gadgetHandler:ViewResize(view)
+  self.xViewSize = view.viewSizeX
+  self.yViewSize = view.viewSizeY
   for _,g in r_ipairs(self.ViewResizeList) do
-    g:ViewResize(vsx, vsy)
+    g:ViewResize(self.xViewSize, self.yViewSize)
   end
 end
 
