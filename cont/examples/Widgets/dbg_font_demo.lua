@@ -237,7 +237,7 @@ end
 function widget:Shutdown()
     Spring.Echo("Font Demo - Shutdown")
     for i = 1, #demo, 1 do
-        gl.DeleteFont(demo.font)
+        gl.DeleteFont(demo[i].font)
     end
 end
 
