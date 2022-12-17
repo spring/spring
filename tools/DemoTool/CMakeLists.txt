@@ -8,11 +8,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 set(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
-
-include_directories(${ENGINE_SRC_ROOT_DIR})
-include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
-include_directories(${gflags_BINARY_DIR}/include)
-
 add_definitions(-DTOOLS)
 
 set(demoToolSpringSources
@@ -38,6 +33,11 @@ set(demoToolSpringSources
 )
 
 add_executable(demotool EXCLUDE_FROM_ALL DemoTool.cpp ${demoToolSpringSources})
+target_include_directories(demotool PRIVATE
+	${ENGINE_SRC_ROOT_DIR}
+	${CMAKE_BINARY_DIR}/src-generated/engine
+	${gflags_BINARY_DIR}/include
+)
 if (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
