@@ -50,9 +50,6 @@ if    (NOT NO_SOUND)
 	find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIR})
 
-	include_directories(${CMAKE_SOURCE_DIR}/include/)
-	include_directories(${CMAKE_SOURCE_DIR}/include/AL)
-
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	target_link_libraries(sound ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY})
 	target_link_libraries(sound ${OPENAL_LIBRARY})
