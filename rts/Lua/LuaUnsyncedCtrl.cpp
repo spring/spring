@@ -2271,10 +2271,13 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		return 0;
 
 	ud->iconType = icon::iconHandler.GetIcon(luaL_checksstring(L, 2));
+	unitDrawer->UpdateUnitDefMiniMapIcons(ud);
 
 	// set decoys to the same icon
-	if (ud->decoyDef != nullptr)
+	if (ud->decoyDef != nullptr) {
 		ud->decoyDef->iconType = ud->iconType;
+		unitDrawer->UpdateUnitDefMiniMapIcons(ud->decoyDef);
+	}
 
 	// spring::unordered_map<int, std::vector<int> >
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
@@ -2286,10 +2289,10 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		for (const int decoyDefID: decoySet) {
 			const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
 			decoyDef->iconType = ud->iconType;
+			unitDrawer->UpdateUnitDefMiniMapIcons(decoyDef);
 		}
 	}
 
-	//!! unitDrawer->UpdateUnitDefMiniMapIcons(ud);
 	return 0;
 }
 

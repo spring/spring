@@ -8,7 +8,6 @@
 #include <cctype>
 #include <cmath>
 
-#include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
@@ -92,7 +91,7 @@ bool CIconHandler::AddIcon(
 	bool radAdj
 ) {
 	if (numIcons == iconData.size()) {
-		LOG_L(L_DEBUG, "[IconHandler::%s] too many icons added (maximum=%u)", __func__, numIcons);
+		LOG_L(L_WARNING, "[IconHandler::%s] too many icons added (maximum=%u)", __func__, numIcons);
 		return false;
 	}
 
@@ -120,7 +119,7 @@ bool CIconHandler::AddIcon(
 		}
 	} catch (const content_error& ex) {
 		// bail on non-existant file
-		LOG_L(L_DEBUG, "[IconHandler::%s] exception \"%s\" adding icon \"%s\" with texture \"%s\"", __func__, ex.what(), iconName.c_str(), texName.c_str());
+		LOG_L(L_WARNING, "[IconHandler::%s] exception \"%s\" adding icon \"%s\" with texture \"%s\"", __func__, ex.what(), iconName.c_str(), texName.c_str());
 		return false;
 	}
 

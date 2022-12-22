@@ -231,6 +231,7 @@ public:
 	void DrawUnitIcons();
 	void DrawUnitMiniMapIcon(const CUnit* unit, GL::RenderDataBufferTC* buffer) const;
 	void DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const;
+	void UpdateUnitDefMiniMapIcons(const UnitDef* unitDef);
 
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);

@@ -1774,6 +1774,14 @@ void CUnitDrawer::DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const {
 	}
 }
 
+void CUnitDrawer::UpdateUnitDefMiniMapIcons(const UnitDef* unitDef) {
+	for (CUnit* unit: unsortedUnits) {
+		if (unit->unitDef == unitDef) {
+			UpdateUnitMiniMapIcon(unit, false, false);
+		}
+	}
+}
+
 void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
 	// CUnit* u = const_cast<CUnit*>(unit);
 
