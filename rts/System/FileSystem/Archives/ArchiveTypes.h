@@ -5,12 +5,13 @@
 
 enum {
 	ARCHIVE_TYPE_SDP = 0, // pool
-	ARCHIVE_TYPE_SDD = 1, // dir
-	ARCHIVE_TYPE_SDZ = 2, // zip
-	ARCHIVE_TYPE_SD7 = 3, // 7zip
-	ARCHIVE_TYPE_SDV = 4, // virtual
-	ARCHIVE_TYPE_CNT = 5,
-	ARCHIVE_TYPE_BUF = 6, // buffered, not created directly
+	ARCHIVE_TYPE_GIT = 1, // git repo
+	ARCHIVE_TYPE_SDD = 2, // dir
+	ARCHIVE_TYPE_SDZ = 3, // zip
+	ARCHIVE_TYPE_SD7 = 4, // 7zip
+	ARCHIVE_TYPE_SDV = 5, // virtual
+	ARCHIVE_TYPE_CNT = 6,
+	ARCHIVE_TYPE_BUF = 7, // buffered, not created directly
 };
 
 #endif

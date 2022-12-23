@@ -1,12 +1,9 @@
-set(SOURCE_ROOT ../../..)
+find_package(LibGit2 REQUIRED)
 
-include_directories(${SOURCE_ROOT})
-include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
-
-add_definitions(${PIC_FLAG})
 add_library(archives STATIC
 	BufferedArchive.cpp
 	DirArchive.cpp
+	GitArchive.cpp
 	IArchive.cpp
 	PoolArchive.cpp
 	SevenZipArchive.cpp
@@ -16,8 +13,17 @@ add_library(archives STATIC
 	${sources_engine_System_Log_sinkConsole}
 )
 
-include_directories(${ZLIB_INCLUDE_DIR})
+target_include_directories(archives PRIVATE
+	../../..
+	${SPRING_MINIZIP_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	${GIT2_INCLUDE_PATH}
+)
+
 target_link_libraries(archives
 	7zip
 	${SPRING_MINIZIP_LIBRARY}
+	${GIT2_LIBRARY}
 )
+
+target_compile_options(archives PRIVATE ${PIC_FLAG})
