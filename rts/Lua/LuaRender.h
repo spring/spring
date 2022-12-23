@@ -294,14 +294,14 @@ private:
 	static GLuint sVertexArray;
 
 	/**
-	 * @brief OpenGl name of vertex buffer.
+	 * @brief OpenGL name of vertex buffer.
 	 */
 	static GLuint sVertexBuffer;
 
 	/**
 	 * @brief Size of vertex buffer in bytes.
 	 */
-	static const GLsizeiptr sVertexBufferSize = 4096;
+	static const GLsizeiptr sVertexBufferSize = 32768;
 
 	/**
 	 * @brief Current offset in vertex buffer.
