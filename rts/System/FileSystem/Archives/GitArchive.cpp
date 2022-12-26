@@ -124,7 +124,27 @@ CommitInfoT extractVersion(std::string const & Log, std::string const & Revision
 	return {std::string("test-") + RevisionString, false};
 }
 
-static std::string GetVersion(git_repository* Repo, const git_reference* reference)
+static std::size_t GetCommitCount(git_repository* const Repo, const git_oid* DestOid)
+{
+	git_revwalk * Walker;
+	checkRet(git_revwalk_new(&Walker, Repo), "git_revwalk_new");
+	checkRet(git_revwalk_push(Walker, DestOid), "git_revwalk_push");
+
+	std::size_t CommitCount = 0;
+	while (true) {
+		git_oid WalkerOid;
+		int Ret = git_revwalk_next(&WalkerOid, Walker);
+		if (Ret == GIT_ITEROVER) break;
+		checkRet(Ret, "git_revwalk_next");
+		++CommitCount;
+	}
+	git_revwalk_free(Walker);
+	return CommitCount;
+
+}
+
+
+static std::string GetVersionByDescribe(git_repository* Repo, const git_reference* reference)
 {
 	const git_oid* DestOid = git_reference_target(reference);
 	git_object* obj;
@@ -144,6 +164,36 @@ static std::string GetVersion(git_repository* Repo, const git_reference* referen
 	git_buf_dispose(&buf);
 	return version;
 }
+
+static std::string GetVersionByMessage(git_repository* Repo, const git_reference* reference)
+{
+	const git_oid* DestOid = git_reference_target(reference);
+	const std::size_t CommitCount = GetCommitCount(Repo, DestOid);
+
+	const char* cbranch = git_reference_shorthand(reference);
+	const std::string branch(cbranch);
+
+	// Extract the commit type from the commit message
+	git_commit * Commit;
+	checkRet(git_commit_lookup(&Commit, Repo, DestOid), "git_commit_lookup");
+
+	//std::size_t AncestorCount = git_commit_parentcount(Commit);
+	std::string TestVersion = std::to_string(CommitCount) +  '-' + git_oid_tostr_s(DestOid);
+	auto CommitInfo = extractVersion(git_commit_message_raw(Commit), TestVersion);
+	git_commit_free(Commit);
+	return branch + "-" + IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
+
+}
+
+
+static std::string GetVersion(git_repository* Repo, const git_reference* reference)
+{
+	std::string version = GetVersionByDescribe(Repo, reference);
+	if (!version.empty())
+		return version;
+	return GetVersionByMessage(Repo, reference);
+}
+
 
 bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
