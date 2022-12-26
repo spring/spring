@@ -53,10 +53,11 @@ CGitArchive::CGitArchive(const std::string& archiveName)
         checkRet(git_reference_name_to_id(&oid, Repo, GitHash.c_str()), "git_reference_name_to_id");
 	*/
 
-	git_reference * Reference = NULL;
+	git_reference * Reference = nullptr;
 	checkRet(git_repository_head(&Reference, Repo), "git_repository_head");
 
 	checkRet(git_reference_peel((git_object **) &tree_root, Reference, GIT_OBJ_TREE), "git_reference_peel");
+	git_reference_free(Reference);
 
 	LoadFilenames("", tree_root);
 
@@ -72,9 +73,10 @@ void CGitArchive::LoadFilenames(const std::string dirname, git_tree *tree)
 		const git_tree_entry *entry = git_tree_entry_byindex(tree, i);
 		const char *name = git_tree_entry_name(entry);
 		if (git_tree_entry_type(entry) == GIT_OBJECT_TREE) {
-			git_tree *subtree = NULL;
+			git_tree *subtree = nullptr;
 			checkRet(git_tree_lookup(&subtree, Repo, git_tree_entry_id(entry)), "git_tree_lookup2");
 			LoadFilenames(dirname + name + "/", subtree);
+			git_tree_free(subtree);
 		} else {
 			searchFiles.push_back({dirname + name, 0, nullptr});
 		}
@@ -87,9 +89,10 @@ static git_blob * GetBlob(searchfile& file, git_repository * Repo, const git_tre
 	if (file.blob)
 		return file.blob;
 	//LOG_L(L_INFO, "loading blob");
-	git_tree_entry * TreeEntry;
+	git_tree_entry * TreeEntry = nullptr;
 	checkRet(git_tree_entry_bypath(&TreeEntry, tree_root, file.filename.c_str()), "git_tree_entry_bypath");
 	checkRet(git_blob_lookup(&file.blob, Repo, git_tree_entry_id(TreeEntry)), "git_blob_lookup");
+	git_tree_entry_free(TreeEntry);
 	return file.blob;
 }
 
@@ -137,5 +140,6 @@ CGitArchive::~CGitArchive()
 		//TODO: GetBlob seems to load the data, find a way to avoid loading in FileInfo / duplicate load
 		FreeBlob(searchFiles[i]);
 	}
+	git_tree_free(tree_root);
 	git_libgit2_shutdown();
 }
