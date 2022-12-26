@@ -124,10 +124,8 @@ CommitInfoT extractVersion(std::string const & Log, std::string const & Revision
 	return {std::string("test-") + RevisionString, false};
 }
 
-static std::string GetVersion(git_repository* Repo, const git_reference* reference)
+static std::size_t GetCommitCount(git_repository* const Repo, const git_oid* DestOid)
 {
-	// Find the commit count
-	const git_oid* DestOid = git_reference_target(reference);
 	git_revwalk * Walker;
 	checkRet(git_revwalk_new(&Walker, Repo), "git_revwalk_new");
 	checkRet(git_revwalk_push(Walker, DestOid), "git_revwalk_push");
@@ -141,6 +139,36 @@ static std::string GetVersion(git_repository* Repo, const git_reference* referen
 		++CommitCount;
 	}
 	git_revwalk_free(Walker);
+	return CommitCount;
+
+}
+
+
+static std::string GetVersionByDescribe(git_repository* Repo, const git_reference* reference)
+{
+	const git_oid* DestOid = git_reference_target(reference);
+	git_object* obj;
+	checkRet(git_object_lookup(&obj, Repo, DestOid, GIT_OBJECT_ANY), "git_object_lookup");
+
+	git_describe_result * result;
+	git_describe_options opts;
+	git_describe_options_init(&opts, GIT_DESCRIBE_OPTIONS_VERSION);
+	opts.describe_strategy = GIT_DESCRIBE_TAGS;
+	checkRet(git_describe_commit(&result, obj, &opts), "git_describe_commit");
+
+	git_buf buf = {0};
+	checkRet(git_describe_format(&buf, result, nullptr), "git_describe_format");
+
+	std::string version(buf.ptr, buf.size);
+	git_describe_result_free(result);
+	git_buf_dispose(&buf);
+	return version;
+}
+
+static std::string GetVersionByMessage(git_repository* Repo, const git_reference* reference)
+{
+	const git_oid* DestOid = git_reference_target(reference);
+	const std::size_t CommitCount = GetCommitCount(Repo, DestOid);
 
 	const char* cbranch = git_reference_shorthand(reference);
 	const std::string branch(cbranch);
@@ -148,11 +176,22 @@ static std::string GetVersion(git_repository* Repo, const git_reference* referen
 	// Extract the commit type from the commit message
 	git_commit * Commit;
 	checkRet(git_commit_lookup(&Commit, Repo, DestOid), "git_commit_lookup");
+
 	//std::size_t AncestorCount = git_commit_parentcount(Commit);
 	std::string TestVersion = std::to_string(CommitCount) +  '-' + git_oid_tostr_s(DestOid);
 	auto CommitInfo = extractVersion(git_commit_message_raw(Commit), TestVersion);
 	git_commit_free(Commit);
 	return branch + "-" + IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
+
+}
+
+
+static std::string GetVersion(git_repository* Repo, const git_reference* reference)
+{
+	std::string version = GetVersionByDescribe(Repo, reference);
+	if (!version.empty())
+		return version;
+	return GetVersionByMessage(Repo, reference);
 }
 
 
