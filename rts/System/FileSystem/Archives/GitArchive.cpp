@@ -93,6 +93,14 @@ static git_blob * GetBlob(searchfile& file, git_repository * Repo, const git_tre
 	return file.blob;
 }
 
+static void FreeBlob(searchfile& file)
+{
+	if (!file.blob)
+		return;
+	git_blob_free(file.blob);
+	file.blob = nullptr;
+}
+
 bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
@@ -110,6 +118,7 @@ bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	buffer.resize(Size);
 	const void * BlobBuf = git_blob_rawcontent(Blob);
 	memcpy(buffer.data(), BlobBuf, Size);
+	FreeBlob(searchFiles[fid]);
 	return true;
 }
 
@@ -126,8 +135,7 @@ CGitArchive::~CGitArchive()
 {
 	for (size_t i = 0; i < searchFiles.size(); i++) {
 		//TODO: GetBlob seems to load the data, find a way to avoid loading in FileInfo / duplicate load
-		git_blob_free(searchFiles[i].blob);
-		searchFiles[i].blob = nullptr;
+		FreeBlob(searchFiles[i]);
 	}
 	git_libgit2_shutdown();
 }
