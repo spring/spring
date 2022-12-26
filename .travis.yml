@@ -3,7 +3,7 @@ os:
 #  - osx
 
 sudo: required
-dist: bionic
+dist: focal
 cache: ccache
 
 addons:
