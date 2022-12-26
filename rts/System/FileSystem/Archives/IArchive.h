@@ -88,17 +88,6 @@ public:
 		return info;
 	}
 
-	unsigned int ExtractedSize() const {
-		unsigned int size = 0;
-
-		// no archive should be larger than 4GB when extracted
-		for (unsigned int fid = 0; fid < NumFiles(); fid++) {
-			size += (FileInfo(fid).second);
-		}
-
-		return size;
-	}
-
 	/**
 	 * Fetches the name and size in bytes of a file by its ID.
 	 */
