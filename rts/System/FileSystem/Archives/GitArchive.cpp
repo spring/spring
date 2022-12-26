@@ -102,28 +102,6 @@ static void FreeBlob(searchfile& file)
 	file.blob = nullptr;
 }
 
-struct CommitInfoT
-{
-	std::string Version;
-	bool release;
-};
-
-CommitInfoT extractVersion(std::string const & Log, std::string const & RevisionString)
-{
-	std::string const StableString{"STABLE"};
-	std::string const VersionString{"VERSION{"};
-
-	if ( Log.size() >= StableString.size() && std::equal(StableString.begin(), StableString.end(), Log.begin())) {
-		return {std::string("stable-") + RevisionString, true};
-	} else if ( Log.size() >= VersionString.size() && std::equal(VersionString.begin(), VersionString.end(), Log.begin())) {
-		auto First = Log.begin() + VersionString.size();
-		auto Last = Log.end();
-		auto EndPos = std::find(First, Last, '}');
-		if (EndPos != Last) return {{First, EndPos}, true};
-	}
-	return {std::string("test-") + RevisionString, false};
-}
-
 static std::size_t GetCommitCount(git_repository* const Repo, const git_oid* DestOid)
 {
 	git_revwalk * Walker;
@@ -150,18 +128,18 @@ static std::string GetVersionByDescribe(git_repository* Repo, const git_referenc
 	git_object* obj;
 	checkRet(git_object_lookup(&obj, Repo, DestOid, GIT_OBJECT_ANY), "git_object_lookup");
 
-	git_describe_result * result;
+	git_describe_result * result = nullptr;
 	git_describe_options opts;
 	git_describe_options_init(&opts, GIT_DESCRIBE_OPTIONS_VERSION);
 	opts.describe_strategy = GIT_DESCRIBE_TAGS;
-	checkRet(git_describe_commit(&result, obj, &opts), "git_describe_commit");
-
-	git_buf buf = {0};
-	checkRet(git_describe_format(&buf, result, nullptr), "git_describe_format");
-
-	std::string version(buf.ptr, buf.size);
+	std::string version;
+	if (git_describe_commit(&result, obj, &opts) == 0) {
+		git_buf buf = {0};
+		checkRet(git_describe_format(&buf, result, nullptr), "git_describe_format");
+		version.assign(buf.ptr, buf.size);
+		git_buf_dispose(&buf);
+	}
 	git_describe_result_free(result);
-	git_buf_dispose(&buf);
 	return version;
 }
 
@@ -177,11 +155,9 @@ static std::string GetVersionByMessage(git_repository* Repo, const git_reference
 	git_commit * Commit;
 	checkRet(git_commit_lookup(&Commit, Repo, DestOid), "git_commit_lookup");
 
-	//std::size_t AncestorCount = git_commit_parentcount(Commit);
-	std::string TestVersion = std::to_string(CommitCount) +  '-' + git_oid_tostr_s(DestOid);
-	auto CommitInfo = extractVersion(git_commit_message_raw(Commit), TestVersion);
+	std::string commithash = git_oid_tostr_s(DestOid);
 	git_commit_free(Commit);
-	return branch + "-" + IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
+	return branch + "-" + IntToString(CommitCount) +  "-" + commithash.substr(commithash.length() - 8);
 
 }
 
