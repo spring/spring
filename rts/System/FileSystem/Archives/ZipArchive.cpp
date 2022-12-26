@@ -71,15 +71,19 @@ CZipArchive::~CZipArchive()
 	}
 }
 
-
-void CZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CZipArchive::FileInfoName(unsigned int fid, std::string& name) const
 {
 	assert(IsFileId(fid));
 
 	name = fileEntries[fid].origName;
-	size = fileEntries[fid].size;
 }
 
+void CZipArchive::FileInfoSize(unsigned int fid, int& size) const
+{
+	assert(IsFileId(fid));
+
+	size = fileEntries[fid].size;
+}
 
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more

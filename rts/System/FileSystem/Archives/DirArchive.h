@@ -37,7 +37,8 @@ public:
 
 	unsigned int NumFiles() const override { return (searchFiles.size()); }
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	void FileInfoName(unsigned int fid, std::string& name) const override;
+	void FileInfoSize(unsigned int fid, int& size) const override;
 	const std::string& GetOrigFileName(unsigned int fid) const { return searchFiles[fid]; }
 
 private:

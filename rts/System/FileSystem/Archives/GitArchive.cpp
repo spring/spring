@@ -186,13 +186,19 @@ bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	return true;
 }
 
-void CGitArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CGitArchive::FileInfoName(unsigned int fid, std::string& name) const
+{
+	assert(IsFileId(fid));
+	// LOG_L(L_INFO, "FileInfo %s", searchFiles[fid].filename.c_str());
+	name = searchFiles[fid].filename;
+}
+
+void CGitArchive::FileInfoSize(unsigned int fid, int& size) const
 {
 	assert(IsFileId(fid));
 	// LOG_L(L_INFO, "FileInfo %s", searchFiles[fid].filename.c_str());
 	git_blob * Blob = GetBlob(searchFiles[fid], Repo, tree_root);
 	size = git_blob_rawsize(Blob);
-	name = searchFiles[fid].filename;
 }
 
 CGitArchive::~CGitArchive()

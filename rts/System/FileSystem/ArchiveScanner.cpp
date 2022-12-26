@@ -571,16 +571,17 @@ bool CArchiveScanner::CheckCompression(const IArchive* ar, const std::string& fu
 		if (ar->HasLowReadingCost(fid))
 			continue;
 
-		const std::pair<std::string, int>& info = ar->FileInfo(fid);
+		std::string name;
+		ar->FileInfoName(fid, name);
 
-		switch (GetMetaFileClass(StringToLower(info.first))) {
+		switch (GetMetaFileClass(StringToLower(name))) {
 			case 1: {
-				error += "reading primary meta-file " + info.first + " too expensive; ";
+				error += "reading primary meta-file " + name + " too expensive; ";
 				error += "please repack this archive with non-solid compression";
 				return false;
 			} break;
 			case 2: {
-				LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "Archive %s: reading secondary meta-file %s too expensive", fullName.c_str(), info.first.c_str());
+				LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "Archive %s: reading secondary meta-file %s too expensive", fullName.c_str(), name.c_str());
 			} break;
 			case 0:
 			default: {
@@ -598,11 +599,12 @@ std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& erro
 
 	// check for smf and if the uncompression of important files is too costy
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		const std::pair<std::string, int>& info = ar->FileInfo(fid);
-		const std::string& ext = FileSystem::GetExtension(StringToLower(info.first));
+		std::string filename;
+		ar->FileInfoName(fid, filename);
+		const std::string& ext = FileSystem::GetExtension(StringToLower(filename));
 
 		if (ext == "smf")
-			return info.first;
+			return filename;
 	}
 
 	return "";
@@ -934,13 +936,14 @@ bool CArchiveScanner::GetArchiveChecksum(const std::string& archiveName, Archive
 	fileHashes.reserve(ar->NumFiles());
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		const std::pair<std::string, int>& info = ar->FileInfo(fid);
+		std::string filename;
+		ar->FileInfoName(fid, filename);
 
-		if (ignore->Match(info.first))
+		if (ignore->Match(filename))
 			continue;
 
 		// create case-insensitive hashes
-		fileNames.push_back(StringToLower(info.first));
+		fileNames.push_back(StringToLower(filename));
 		fileHashes.emplace_back();
 	}
 

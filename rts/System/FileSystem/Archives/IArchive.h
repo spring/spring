@@ -82,16 +82,14 @@ public:
 	 */
 	bool GetFile(const std::string& name, std::vector<std::uint8_t>& buffer);
 
-	std::pair<std::string, int> FileInfo(unsigned int fid) const {
-		std::pair<std::string, int> info;
-		FileInfo(fid, info.first, info.second);
-		return info;
-	}
-
 	/**
 	 * Fetches the name and size in bytes of a file by its ID.
 	 */
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const = 0;
+	virtual void FileInfoName(unsigned int fid, std::string& name) const = 0;
+	/**
+	 * Fetches the name and size in bytes of a file by its ID.
+	 */
+	virtual void FileInfoSize(unsigned int fid, int& size) const = 0;
 
 	/**
 	 * Returns true if the cost of reading the file is qualitatively relative

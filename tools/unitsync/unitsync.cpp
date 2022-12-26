@@ -2158,9 +2158,8 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 		if (file < arch->NumFiles()) {
 			const int nameBufSize = *size;
 			std::string fileName;
-			int fileSize;
-			arch->FileInfo(file, fileName, fileSize);
-			*size = fileSize;
+			arch->FileInfoName(file, fileName);
+			arch->FileInfoSize(file, *size);
 
 			if (nameBufSize > fileName.length()) {
 				STRCPY(nameBuf, fileName.c_str());
@@ -2229,7 +2228,7 @@ EXPORT(int) SizeArchiveFile(int archive, int file)
 		IArchive* a = openArchives[archive];
 		std::string name;
 		int s;
-		a->FileInfo(file, name, s);
+		a->FileInfoSize(file, s);
 		return s;
 	}
 	UNITSYNC_CATCH_BLOCKS;

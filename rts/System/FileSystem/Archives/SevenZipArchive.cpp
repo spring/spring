@@ -252,13 +252,17 @@ int CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& b
 	return 1;
 }
 
-void CSevenZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CSevenZipArchive::FileInfoName(unsigned int fid, std::string& name) const
 {
 	assert(IsFileId(fid));
 	name = fileEntries[fid].origName;
-	size = fileEntries[fid].size;
 }
 
+void CSevenZipArchive::FileInfoSize(unsigned int fid, int& size) const
+{
+	assert(IsFileId(fid));
+	size = fileEntries[fid].size;
+}
 
 bool CSevenZipArchive::HasLowReadingCost(unsigned int fid) const
 {

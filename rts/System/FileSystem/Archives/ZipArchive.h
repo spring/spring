@@ -38,7 +38,8 @@ public:
 	bool IsOpen() override { return (zip != nullptr); }
 
 	unsigned int NumFiles() const override { return (fileEntries.size()); }
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	void FileInfoName(unsigned int fid, std::string& name) const override;
+	void FileInfoSize(unsigned int fid, int& size) const override;
 
 	#if 0
 	unsigned int GetCrc32(unsigned int fid) {
