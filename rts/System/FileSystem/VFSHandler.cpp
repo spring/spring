@@ -440,7 +440,7 @@ IArchive* CVFSHandler::GetFileData(const std::string& normalizedFilePath, Sectio
 	}
 
 	// file does not exist in the VFS
-	return {nullptr};
+	return nullptr;
 }
 
 
