@@ -161,3 +161,9 @@ Spring.VC.VC.opendb
 /rts/lib/gflags/gflags-targets.cmake
 /rts/lib/gflags/include/
 
+# tests
+/test/test_*
+/test/tools/CompileFailTest/.ninja_log
+/test/tools/CompileFailTest/CMakeCache.txt
+/test/tools/CompileFailTest/build.ninja
+/test/Testing
