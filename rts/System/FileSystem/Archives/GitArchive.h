@@ -53,6 +53,7 @@ private:
 	mutable std::vector<searchfile> searchFiles;
 	git_repository * Repo = nullptr;
 	git_tree *tree_root = nullptr;
+	git_commit *commit = nullptr;
 };
 
 #endif // _GIT_ARCHIVE_H

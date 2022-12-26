@@ -44,7 +44,7 @@ CGitArchive::CGitArchive(const std::string& archiveName)
 	git_libgit2_init();
 	git_libgit2_version(&major, &minor, &rev);
 	LOG_L(L_INFO, "libgit version %d.%d.%d loading %s", major, minor, rev, archiveName.c_str());
-	checkRet(git_repository_open_ext(&Repo, archiveName.c_str(), 0, nullptr), "git_repository_open_ext");
+	checkRet(git_repository_open_bare(&Repo, archiveName.c_str()), "git_repository_open_bare");
 
 	/*
 	// FIXME: extend like rapidhandler so all git versions are shown (+ find a way how to show +10k versions to users)
@@ -57,6 +57,7 @@ CGitArchive::CGitArchive(const std::string& archiveName)
 	checkRet(git_repository_head(&Reference, Repo), "git_repository_head");
 
 	checkRet(git_reference_peel((git_object **) &tree_root, Reference, GIT_OBJ_TREE), "git_reference_peel");
+	checkRet(git_reference_peel((git_object **) &commit, Reference, GIT_OBJ_COMMIT), "git_reference_peel2");
 	git_reference_free(Reference);
 
 	LoadFilenames("", tree_root);
@@ -104,23 +105,82 @@ static void FreeBlob(searchfile& file)
 	file.blob = nullptr;
 }
 
+struct CommitInfoT
+{
+	std::string Branch;
+	std::string Version;
+	bool MakeZip;
+};
+
+CommitInfoT extractVersion(std::string const & Log, std::string const & RevisionString)
+{
+	std::string const StableString{"STABLE"};
+	std::string const VersionString{"VERSION{"};
+
+	if ( Log.size() >= StableString.size() && std::equal(StableString.begin(), StableString.end(), Log.begin())) {
+		return {"stable", std::string("stable-") + RevisionString, true};
+	} else if ( Log.size() >= VersionString.size() && std::equal(VersionString.begin(), VersionString.end(), Log.begin())) {
+		auto First = Log.begin() + VersionString.size();
+		auto Last = Log.end();
+		auto EndPos = std::find(First, Last, '}');
+		if (EndPos != Last) return {"stable", {First, EndPos}, true};
+	}
+	return {"test", std::string("test-") + RevisionString, false};
+}
+
+static std::string GetVersion(git_repository* Repo, const git_oid* DestOid)
+{
+	// Find the commit count
+	git_revwalk * Walker;
+	checkRet(git_revwalk_new(&Walker, Repo), "git_revwalk_new");
+	checkRet(git_revwalk_push(Walker, DestOid), "git_revwalk_push");
+	git_revwalk_free(Walker);
+
+	std::size_t CommitCount = 0;
+	while (true) {
+		git_oid WalkerOid;
+		int Ret = git_revwalk_next(&WalkerOid, Walker);
+		if (Ret == GIT_ITEROVER) break;
+		checkRet(Ret, "git_revwalk_next");
+		++CommitCount;
+	}
+
+	// Extract the commit type from the commit message
+	git_commit * Commit;
+	checkRet(git_commit_lookup(&Commit, Repo, DestOid), "git_commit_lookup");
+	//std::size_t AncestorCount = git_commit_parentcount(Commit);
+	std::string TestVersion = std::to_string(CommitCount) +  '-' + git_oid_tostr_s(DestOid);
+	auto CommitInfo = extractVersion(git_commit_message_raw(Commit), TestVersion);
+	git_commit_free(Commit);
+	return IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
+}
+
+
 bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 	const std::string filename = searchFiles[fid].filename;
 	//LOG_L(L_INFO, "GetFile %s", filename.c_str());
 
-	if (filename == "modinfo.lua") {
-		// FIXME:
-		// Rapid::replaceVersion()
-		// first replace by git tag when exists, else parse from commit message
-	}
-
 	git_blob * Blob = GetBlob(searchFiles[fid], Repo, tree_root);
 	const size_t Size = git_blob_rawsize(Blob);
-	buffer.resize(Size);
+	if (Size == 0)
+		return true;
 	const void * BlobBuf = git_blob_rawcontent(Blob);
-	memcpy(buffer.data(), BlobBuf, Size);
+
+	if (filename == "modinfo.lua") {
+		// FIXME: adjust return info of FileInfo, too
+		const std::string tmp((const char*)BlobBuf, Size);
+		const git_oid* DestOid = git_commit_parent_id(commit, 0);
+		const std::string version = GetVersion(Repo, DestOid);
+		const std::string out = StringReplace(tmp, "$VERSION", version);
+		buffer.assign(out.begin(), out.end());
+		// first replace by git tag when exists, else parse from commit message
+
+	} else {
+		buffer.resize(Size);
+		memcpy(buffer.data(), BlobBuf, Size);
+	}
 	FreeBlob(searchFiles[fid]);
 	return true;
 }
