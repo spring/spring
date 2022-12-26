@@ -186,8 +186,6 @@ bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	if (filename == "modinfo.lua") {
 		// FIXME: adjust return info of FileInfo, too
 		const std::string tmp((const char*)BlobBuf, Size);
-		git_commit* commit=nullptr;
-		checkRet(git_reference_peel((git_object **) &commit, reference_root, GIT_OBJ_COMMIT), "git_reference_peel2");
 		const std::string version = GetVersion(Repo, reference_root);
 		const std::string out = StringReplace(tmp, "$VERSION", version);
 		buffer.assign(out.begin(), out.end());
