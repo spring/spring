@@ -3,7 +3,7 @@ os:
 #  - osx
 
 sudo: required
-dist: focal
+dist: jammy
 cache: ccache
 
 addons:
