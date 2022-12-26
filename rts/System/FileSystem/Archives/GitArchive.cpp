@@ -46,17 +46,8 @@ CGitArchive::CGitArchive(const std::string& archiveName)
 	LOG_L(L_INFO, "libgit version %d.%d.%d loading %s", major, minor, rev, archiveName.c_str());
 	checkRet(git_repository_open_bare(&Repo, archiveName.c_str()), "git_repository_open_bare");
 
-	/*
-	// FIXME: extend like rapidhandler so all git versions are shown (+ find a way how to show +10k versions to users)
-	const std::string GitHash = "HEAD";
-	git_oid oid;
-        checkRet(git_reference_name_to_id(&oid, Repo, GitHash.c_str()), "git_reference_name_to_id");
-	*/
-
 	checkRet(git_repository_head(&reference_root, Repo), "git_repository_head");
-
 	checkRet(git_reference_peel((git_object **) &tree_root, reference_root, GIT_OBJ_TREE), "git_reference_peel");
-
 	LoadFilenames("", tree_root);
 
 	for (size_t i=0; i < searchFiles.size(); i++) {
@@ -80,7 +71,6 @@ void CGitArchive::LoadFilenames(const std::string dirname, git_tree *tree)
 		}
 	}
 }
-
 
 static git_blob * GetBlob(searchfile& file, git_repository * Repo, const git_tree * tree_root)
 {
@@ -121,7 +111,6 @@ static std::size_t GetCommitCount(git_repository* const Repo, const git_oid* Des
 
 }
 
-
 static std::string GetVersionByDescribe(git_repository* Repo, const git_reference* reference)
 {
 	const git_oid* DestOid = git_reference_target(reference);
@@ -161,7 +150,6 @@ static std::string GetVersionByMessage(git_repository* Repo, const git_reference
 
 }
 
-
 static std::string GetVersion(git_repository* Repo, const git_reference* reference)
 {
 	std::string version = GetVersionByDescribe(Repo, reference);
@@ -170,6 +158,20 @@ static std::string GetVersion(git_repository* Repo, const git_reference* referen
 	return GetVersionByMessage(Repo, reference);
 }
 
+static void GetModInfo(const git_reference *reference_root, git_repository* Repo, const git_blob* Blob, std::vector<std::uint8_t>& buffer)
+{
+	const void * BlobBuf = git_blob_rawcontent(Blob);
+	const size_t Size = git_blob_rawsize(Blob);
+	const std::string tmp((const char*)BlobBuf, Size);
+	const std::string version = GetVersion(Repo, reference_root);
+	const std::string out = StringReplace(tmp, "$VERSION", version);
+	buffer.assign(out.begin(), out.end());
+}
+
+static bool isModInfo(const std::string& filename)
+{
+	return filename == "modinfo.lua";
+}
 
 bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
@@ -178,20 +180,11 @@ bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	//LOG_L(L_INFO, "GetFile %s", filename.c_str());
 
 	git_blob * Blob = GetBlob(searchFiles[fid], Repo, tree_root);
-	const size_t Size = git_blob_rawsize(Blob);
-	if (Size == 0)
-		return true;
-	const void * BlobBuf = git_blob_rawcontent(Blob);
-
-	if (filename == "modinfo.lua") {
-		// FIXME: adjust return info of FileInfo, too
-		const std::string tmp((const char*)BlobBuf, Size);
-		const std::string version = GetVersion(Repo, reference_root);
-		const std::string out = StringReplace(tmp, "$VERSION", version);
-		buffer.assign(out.begin(), out.end());
-		// first replace by git tag when exists, else parse from commit message
-
+	if (isModInfo(filename)) {
+		GetModInfo(reference_root, Repo, Blob, buffer);
 	} else {
+		const void * BlobBuf = git_blob_rawcontent(Blob);
+		const size_t Size = git_blob_rawsize(Blob);
 		buffer.resize(Size);
 		memcpy(buffer.data(), BlobBuf, Size);
 	}
@@ -211,7 +204,14 @@ void CGitArchive::FileInfoSize(unsigned int fid, int& size) const
 	assert(IsFileId(fid));
 	// LOG_L(L_INFO, "FileInfo %s", searchFiles[fid].filename.c_str());
 	git_blob * Blob = GetBlob(searchFiles[fid], Repo, tree_root);
-	size = git_blob_rawsize(Blob);
+	if (isModInfo(searchFiles[fid].filename)) {
+		// need to parse / format modinfo.lua to get real size
+		std::vector<std::uint8_t> buffer;
+		GetModInfo(reference_root, Repo, Blob, buffer);
+		size = buffer.size();
+	} else {
+		size = git_blob_rawsize(Blob);
+	}
 }
 
 CGitArchive::~CGitArchive()
