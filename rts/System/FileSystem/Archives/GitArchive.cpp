@@ -53,12 +53,9 @@ CGitArchive::CGitArchive(const std::string& archiveName)
         checkRet(git_reference_name_to_id(&oid, Repo, GitHash.c_str()), "git_reference_name_to_id");
 	*/
 
-	git_reference * Reference = nullptr;
-	checkRet(git_repository_head(&Reference, Repo), "git_repository_head");
+	checkRet(git_repository_head(&reference_root, Repo), "git_repository_head");
 
-	checkRet(git_reference_peel((git_object **) &tree_root, Reference, GIT_OBJ_TREE), "git_reference_peel");
-	checkRet(git_reference_peel((git_object **) &commit, Reference, GIT_OBJ_COMMIT), "git_reference_peel2");
-	git_reference_free(Reference);
+	checkRet(git_reference_peel((git_object **) &tree_root, reference_root, GIT_OBJ_TREE), "git_reference_peel");
 
 	LoadFilenames("", tree_root);
 
@@ -107,9 +104,8 @@ static void FreeBlob(searchfile& file)
 
 struct CommitInfoT
 {
-	std::string Branch;
 	std::string Version;
-	bool MakeZip;
+	bool release;
 };
 
 CommitInfoT extractVersion(std::string const & Log, std::string const & RevisionString)
@@ -118,23 +114,23 @@ CommitInfoT extractVersion(std::string const & Log, std::string const & Revision
 	std::string const VersionString{"VERSION{"};
 
 	if ( Log.size() >= StableString.size() && std::equal(StableString.begin(), StableString.end(), Log.begin())) {
-		return {"stable", std::string("stable-") + RevisionString, true};
+		return {std::string("stable-") + RevisionString, true};
 	} else if ( Log.size() >= VersionString.size() && std::equal(VersionString.begin(), VersionString.end(), Log.begin())) {
 		auto First = Log.begin() + VersionString.size();
 		auto Last = Log.end();
 		auto EndPos = std::find(First, Last, '}');
-		if (EndPos != Last) return {"stable", {First, EndPos}, true};
+		if (EndPos != Last) return {{First, EndPos}, true};
 	}
-	return {"test", std::string("test-") + RevisionString, false};
+	return {std::string("test-") + RevisionString, false};
 }
 
-static std::string GetVersion(git_repository* Repo, const git_oid* DestOid)
+static std::string GetVersion(git_repository* Repo, const git_reference* reference)
 {
 	// Find the commit count
+	const git_oid* DestOid = git_reference_target(reference);
 	git_revwalk * Walker;
 	checkRet(git_revwalk_new(&Walker, Repo), "git_revwalk_new");
 	checkRet(git_revwalk_push(Walker, DestOid), "git_revwalk_push");
-	git_revwalk_free(Walker);
 
 	std::size_t CommitCount = 0;
 	while (true) {
@@ -144,6 +140,10 @@ static std::string GetVersion(git_repository* Repo, const git_oid* DestOid)
 		checkRet(Ret, "git_revwalk_next");
 		++CommitCount;
 	}
+	git_revwalk_free(Walker);
+
+	const char* cbranch = git_reference_shorthand(reference);
+	const std::string branch(cbranch);
 
 	// Extract the commit type from the commit message
 	git_commit * Commit;
@@ -152,7 +152,7 @@ static std::string GetVersion(git_repository* Repo, const git_oid* DestOid)
 	std::string TestVersion = std::to_string(CommitCount) +  '-' + git_oid_tostr_s(DestOid);
 	auto CommitInfo = extractVersion(git_commit_message_raw(Commit), TestVersion);
 	git_commit_free(Commit);
-	return IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
+	return branch + "-" + IntToString(CommitCount) +  "-" + CommitInfo.Version.substr(CommitInfo.Version.length() - 8);
 }
 
 
@@ -171,8 +171,9 @@ bool CGitArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	if (filename == "modinfo.lua") {
 		// FIXME: adjust return info of FileInfo, too
 		const std::string tmp((const char*)BlobBuf, Size);
-		const git_oid* DestOid = git_commit_parent_id(commit, 0);
-		const std::string version = GetVersion(Repo, DestOid);
+		git_commit* commit=nullptr;
+		checkRet(git_reference_peel((git_object **) &commit, reference_root, GIT_OBJ_COMMIT), "git_reference_peel2");
+		const std::string version = GetVersion(Repo, reference_root);
 		const std::string out = StringReplace(tmp, "$VERSION", version);
 		buffer.assign(out.begin(), out.end());
 		// first replace by git tag when exists, else parse from commit message
@@ -201,5 +202,6 @@ CGitArchive::~CGitArchive()
 		FreeBlob(searchFiles[i]);
 	}
 	git_tree_free(tree_root);
+	git_reference_free(reference_root);
 	git_libgit2_shutdown();
 }
