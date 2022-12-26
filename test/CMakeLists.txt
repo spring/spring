@@ -15,13 +15,9 @@ else ()
 	set(REALTIME_LIBRARY "")
 endif ()
 
-include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 set(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
-include_directories(${ENGINE_SOURCE_DIR})
-include_directories(${ENGINE_SOURCE_DIR}/lib/asio/include)
 
-add_definitions(-DSYNCCHECK -DUNIT_TEST)
 remove_definitions(-DTHREADPOOL)
 
 if (WIN32)
@@ -62,7 +58,16 @@ macro (add_spring_test target sources libraries flags)
 	add_dependencies(install-tests test_${target})
 	add_executable(test_${target} EXCLUDE_FROM_ALL ${sources})
 	target_link_libraries(test_${target} ${libraries})
-	set_target_properties(test_${target} PROPERTIES COMPILE_FLAGS "${flags}")
+	target_include_directories(test_${target} PRIVATE
+		${ENGINE_SOURCE_DIR}
+		${ENGINE_SOURCE_DIR}/lib/asio/include
+		${CMAKE_BINARY_DIR}/src-generated/engine
+	)
+	target_compile_definitions(test_${target} PRIVATE
+		SYNCCHECK
+		UNIT_TEST
+		"${flags}"
+	)
 	#install(TARGETS test_${target} DESTINATION ${BINDIR})
 endmacro()
 
@@ -144,7 +149,7 @@ endif ()
 			""
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG")
 
 ################################################################################
 ### Float3
@@ -164,7 +169,7 @@ endif ()
 			${WINMM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
 
 ################################################################################
 ### Matrix44f
@@ -185,7 +190,7 @@ endif ()
 			${WINMM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
 
 ################################################################################
 ### Matrix44fRotation
@@ -202,7 +207,7 @@ endif ()
 			${WINMM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
 
 ################################################################################
 ### SpringTime
@@ -221,7 +226,7 @@ endif ()
 			${WINMM_LIBRARY}
 		)
 
-	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
@@ -242,9 +247,9 @@ endif ()
 	add_dependencies(tests test_BitwiseEnum)
 
 	# negative tests (must not compile)
-	spring_test_compile_fail(testBitwiseEnum_fail1 ${test_src} "-DTEST1")
-	spring_test_compile_fail(testBitwiseEnum_fail2 ${test_src} "-DTEST2")
-	spring_test_compile_fail(testBitwiseEnum_fail3 ${test_src} "-DTEST3")
+	spring_test_compile_fail(testBitwiseEnum_fail1 ${test_src} "TEST1")
+	spring_test_compile_fail(testBitwiseEnum_fail2 ${test_src} "TEST2")
+	spring_test_compile_fail(testBitwiseEnum_fail3 ${test_src} "TEST3")
 
 
 ################################################################################
@@ -276,7 +281,7 @@ endif ()
 			""
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTEST")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "TEST")
 
 	if    (NOT NO_CREG)
 ################################################################################
@@ -297,7 +302,7 @@ endif ()
 				""
 			)
 
-		add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+		add_spring_test(${test_name} "${test_src}" "${test_libs}" "TEST")
 ###
 ################################################################################
 	endif ()
@@ -320,7 +325,7 @@ endif ()
 			unitsync
 		)
 
-	set(test_flags "-DUNITSYNC")
+	set(test_flags UNITSYNC)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	add_dependencies(test_${test_name} springcontent.sdz)
 
@@ -364,7 +369,7 @@ endif ()
 			${WS2_32_LIBRARY}
 		)
 
-	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
@@ -377,7 +382,7 @@ endif ()
 	set(test_libs
 			""
 		)
-	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
@@ -391,7 +396,7 @@ endif ()
 	set(test_libs
 			""
 		)
-	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
@@ -412,7 +417,7 @@ endif ()
 			${WINMM_LIBRARY}
 			headlessStubs
 		)
-	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
 
@@ -424,7 +429,7 @@ endif ()
 		${test_Log_sources}
 	)
 	set(test_libs ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES} ${SDL2_LIBRARY})
-	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
@@ -443,7 +448,7 @@ endif ()
 			streflop
 			${WINMM_LIBRARY}
 		)
-	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
+	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
@@ -476,7 +481,7 @@ endif ()
 			lua
 			headlessStubs
 		)
-	set(test_flags "-DNOT_USING_STREFLOP")
+	set(test_flags NOT_USING_STREFLOP)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
 
