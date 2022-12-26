@@ -23,7 +23,6 @@ private:
 
 struct searchfile {
 	std::string filename;
-	size_t size = 0;
 	git_blob* blob = nullptr;
 };
 

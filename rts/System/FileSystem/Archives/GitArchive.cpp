@@ -25,7 +25,6 @@ static void checkRet(int Error, char const * Message, std::string const & Extra 
 	throw std::runtime_error{Extra};
 }
 
-
 CGitArchiveFactory::CGitArchiveFactory()
 	: IArchiveFactory("git")
 {
@@ -67,7 +66,7 @@ void CGitArchive::LoadFilenames(const std::string dirname, git_tree *tree)
 			LoadFilenames(dirname + name + "/", subtree);
 			git_tree_free(subtree);
 		} else {
-			searchFiles.push_back({dirname + name, 0, nullptr});
+			searchFiles.push_back({dirname + name, nullptr});
 		}
 	}
 }
@@ -114,7 +113,7 @@ static std::size_t GetCommitCount(git_repository* const Repo, const git_oid* Des
 static std::string GetVersionByDescribe(git_repository* Repo, const git_reference* reference)
 {
 	const git_oid* DestOid = git_reference_target(reference);
-	git_object* obj;
+	git_object* obj = nullptr;
 	checkRet(git_object_lookup(&obj, Repo, DestOid, GIT_OBJECT_ANY), "git_object_lookup");
 
 	git_describe_result * result = nullptr;
@@ -128,6 +127,7 @@ static std::string GetVersionByDescribe(git_repository* Repo, const git_referenc
 		version.assign(buf.ptr, buf.size);
 		git_buf_dispose(&buf);
 	}
+	git_object_free(obj);
 	git_describe_result_free(result);
 	return version;
 }
@@ -140,8 +140,7 @@ static std::string GetVersionByMessage(git_repository* Repo, const git_reference
 	const char* cbranch = git_reference_shorthand(reference);
 	const std::string branch(cbranch);
 
-	// Extract the commit type from the commit message
-	git_commit * Commit;
+	git_commit * Commit = nullptr;
 	checkRet(git_commit_lookup(&Commit, Repo, DestOid), "git_commit_lookup");
 
 	std::string commithash = git_oid_tostr_s(DestOid);
