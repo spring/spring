@@ -1551,8 +1551,7 @@ void CGame::SimFrame() {
 
 	eventHandler.DbgTimingInfo(TIMING_SIM, lastFrameTime, lastSimFrameTime);
 
-	#ifdef HEADLESS
-	{
+	if (BuildType::IsHeadless()) {
 		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
 		const float msecDifSimFrameTime = (lastSimFrameTime - lastFrameTime).toMilliSecsf();
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
@@ -1562,7 +1561,6 @@ void CGame::SimFrame() {
 			spring_sleep(spring_msecs(msecSleepTime));
 		}
 	}
-	#endif
 
 	// useful for desync-debugging (enter instead of -1 start & end frame of the range you want to debug)
 	DumpState(-1, -1, 1);
@@ -1599,10 +1597,9 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	eventHandler.GameOver(winningAllyTeams);
 
 	CEndGameBox::Create(winningAllyTeams);
-#ifdef    HEADLESS
-	profiler.PrintProfilingInfo();
-#endif // HEADLESS
-
+	if (BuildType::IsHeadless()) {
+		profiler.PrintProfilingInfo();
+	}
 	CDemoRecorder* record = clientNet->GetDemoRecorder();
 
 	if (!record->IsValid())

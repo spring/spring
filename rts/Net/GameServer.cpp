@@ -36,6 +36,7 @@
 #ifdef interface
 	#undef interface
 #endif
+#include "System/BuildType/BuildType.h"
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
@@ -567,10 +568,9 @@ void CGameServer::Message(const std::string& message, bool broadcast, bool inter
 		if (hostif != nullptr)
 			hostif->Message(message);
 	}
-
-	#ifdef DEDICATED
-	LOG("%s", message.c_str());
-	#endif
+	if (BuildType::IsDedicated()) {
+		LOG("%s", message.c_str());
+	}
 }
 
 void CGameServer::PrivateMessage(int playerNum, const std::string& message) {
