@@ -12,7 +12,7 @@ add_library(archives STATIC
 	${sources_engine_System_Log_sinkConsole}
 )
 
-target_include_directories(
+target_include_directories(archives PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${ZLIB_INCLUDE_DIR}
 	${SPRING_MINIZIP_INCLUDE_DIR}
