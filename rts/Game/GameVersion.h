@@ -87,6 +87,9 @@ namespace SpringVersion
 	/// Returns true if this build is a "UNITSYNC" build
 	extern bool IsUnitsync();
 
+	/// Returns true if this build is a "DEDICATED" build
+	extern bool IsDedicated();
+
 	/**
 	 * The basic part of a spring version.
 	 * This may only be used for sync-checking if IsRelease() returns true.

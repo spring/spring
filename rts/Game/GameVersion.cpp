@@ -194,6 +194,15 @@ bool IsUnitsync()
 #endif
 }
 
+bool IsDedicated()
+{
+#ifdef DEDICATED
+	return true;
+#else
+	return false;
+#endif
+}
+
 const std::string& Get()
 {
 	static const std::string base = IsRelease()
