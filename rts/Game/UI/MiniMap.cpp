@@ -31,6 +31,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -988,9 +989,8 @@ void CMiniMap::Update()
 
 void CMiniMap::ResizeTextureCache()
 {
-	#ifdef HEADLESS
-	return;
-	#endif
+	if (BuildType::IsHeadless())
+		return;
 
 	if (minimapTexSize == curDim)
 		return;
