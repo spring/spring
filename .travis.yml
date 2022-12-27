@@ -42,7 +42,7 @@ before_script:
 
 script:
   - test "${TRAVIS_BRANCH}" != "coverity_scan" || exit 0
-  - make -k $TARGET
+  - make $TARGET
 
 notifications:
   irc:
