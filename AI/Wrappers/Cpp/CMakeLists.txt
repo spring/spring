@@ -265,10 +265,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_dependencies(generateSources ${myGenTarget})
 
 	# build the static lib
-	include_directories(${mySourceDir} ${myGeneratedSourceDir})
 	set(myCompleteSources ${mySources} ${myGeneratedSources})
 	list(APPEND myCompleteSources ${ai_common_SRC})
 	add_library(${myTarget} STATIC ${myCompleteSources})
+	target_include_directories(${myTarget} PRIVATE
+		${mySourceDir}
+		${myGeneratedSourceDir}
+		${Spring_SOURCE_DIR}/rts
+	)
 	add_dependencies(${myTarget} generateVersionFiles)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "${myName}")
 endif ()

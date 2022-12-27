@@ -255,7 +255,6 @@ if    (AI_TYPES_JAVA)
 		find_package(JNI REQUIRED)
 		if (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND TRUE)
-			include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
 		else ()
 			set (JNI_FOUND FALSE)
 			message(WARNING "No Java includes found!")
@@ -530,14 +529,21 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# Build the native part
 	# ---------------------
+	add_library(${myNativeTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${myVersionDepFile})
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,
 		# and this file contains OS (win32) specific information.
-		include_directories(BEFORE ${MINGWLIBS}/include/java)
+		target_include_directories(${myNativeTarget} PRIVATE ${MINGWLIBS}/include/java)
 	endif ()
-	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
-	add_library(${myNativeTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${myVersionDepFile})
+	target_include_directories(${myNativeTarget} PRIVATE 
+		${rts}/lib/streflop
+		${myNativeSourceDir}
+		${myNativeGeneratedSourceDir}
+		${JAVA_INCLUDE_PATH}
+		${JAVA_INCLUDE_PATH2}
+		${JNI_INCLUDE_DIRS}
+	)
 	add_dependencies(${myNativeTarget} generateVersionFiles)
 	target_link_libraries(${myNativeTarget} CUtils streflop)
 	set_target_properties(${myNativeTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")

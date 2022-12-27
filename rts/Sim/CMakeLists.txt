@@ -141,8 +141,12 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponTarget.cpp"
 	)
 
-target_include_directories(engineSim
-	PRIVATE ${GLEW_INCLUDE_DIR} ${SDL2_INCLUDE_DIR})
+target_include_directories(engineSim PRIVATE
+	${Spring_SOURCE_DIR}/rts
+	${Spring_SOURCE_DIR}/rts/lib/lua/include
+	${GLEW_INCLUDE_DIR}
+	${SDL2_INCLUDE_DIR}
+)
 
 if( CMAKE_COMPILER_IS_GNUCXX)
 	# FIXME: hack to avoid linkers to remove not referenced symbols. required because of

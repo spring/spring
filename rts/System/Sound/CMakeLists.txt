@@ -12,7 +12,9 @@ set(noSoundSources
 
 add_library(no-sound STATIC EXCLUDE_FROM_ALL ${noSoundSources})
 set_target_properties(no-sound PROPERTIES COMPILE_FLAGS "-DNO_SOUND")
-
+target_include_directories(no-sound PRIVATE
+		${Spring_SOURCE_DIR}/rts
+)
 
 # Define default sound implementation
 if    (NO_SOUND)
@@ -43,14 +45,17 @@ if    (NOT NO_SOUND)
 		)
 
 	find_package_static(OpenAL REQUIRED)
-	include_directories(${OPENAL_INCLUDE_DIR})
 	find_package_static(OggVorbis REQUIRED)
-	include_directories(${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR})
 
 	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
 
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	target_link_libraries(sound ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY})
 	target_link_libraries(sound ${OPENAL_LIBRARY})
+	target_include_directories(sound PRIVATE
+		${Spring_SOURCE_DIR}/rts
+		${OPENAL_INCLUDE_DIR}
+		${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR}
+		${SDL2_INCLUDE_DIR}
+	)
 endif ()
