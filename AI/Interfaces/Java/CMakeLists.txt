@@ -537,7 +537,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 		target_include_directories(${myNativeTarget} PRIVATE ${MINGWLIBS}/include/java)
 	endif ()
 	target_include_directories(${myNativeTarget} PRIVATE 
-		${rts}/lib/streflop
+		${Spring_SOURCE_DIR}/rts
+		${Spring_SOURCE_DIR}/AI/Wrappers
 		${myNativeSourceDir}
 		${myNativeGeneratedSourceDir}
 		${JAVA_INCLUDE_PATH}
