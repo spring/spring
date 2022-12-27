@@ -1,7 +1,3 @@
-set(SOURCE_ROOT ../../..)
-
-include_directories(${SOURCE_ROOT})
-include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
 
 add_definitions(${PIC_FLAG})
 add_library(archives STATIC
@@ -16,7 +12,11 @@ add_library(archives STATIC
 	${sources_engine_System_Log_sinkConsole}
 )
 
-include_directories(${ZLIB_INCLUDE_DIR})
+target_include_directories(
+	${Spring_SOURCE_DIR}/rts
+	${ZLIB_INCLUDE_DIR}
+	${SPRING_MINIZIP_INCLUDE_DIR}
+)
 target_link_libraries(archives
 	7zip
 	${SPRING_MINIZIP_LIBRARY}
