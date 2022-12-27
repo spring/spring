@@ -207,6 +207,6 @@ else ()
 		)
 endif ()
 
-
+add_subdirectory(BuildType)
 add_subdirectory(FileSystem)
 add_subdirectory(Net)

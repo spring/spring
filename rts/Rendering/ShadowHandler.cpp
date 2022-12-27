@@ -4,7 +4,6 @@
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
-#include "Game/GameVersion.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -20,6 +19,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
@@ -90,7 +90,7 @@ void CShadowHandler::Init()
 		shadowGenBits &= (~shadowConfig);
 
 	// no warnings when running headless
-	if (SpringVersion::IsHeadless())
+	if (BuildType::IsHeadless())
 		return;
 
 	if (!InitDepthTarget()) {

@@ -3,6 +3,7 @@
 #include "GameSetup.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/BuildType/BuildType.h"
 #include "System/GlobalRNG.h"
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
@@ -537,7 +538,7 @@ bool CGameSetup::Init(const std::string& buf)
 	if (!file.SectionExist("GAME"))
 		return false;
 
-	#ifdef DEDICATED
+	if (BuildType::IsDedicated())
 	{
 		// read script-provided hashes for dedicated server
 		const std::string mapHashHexStr = file.SGetValueDef("",  "GAME\\MapHash");
@@ -577,7 +578,6 @@ bool CGameSetup::Init(const std::string& buf)
 		std::memcpy(dsMapHash, mapHashRaw.data(), sizeof(dsMapHash));
 		std::memcpy(dsModHash, modHashRaw.data(), sizeof(dsModHash));
 	}
-	#endif
 
 	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 

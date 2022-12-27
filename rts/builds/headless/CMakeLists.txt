@@ -16,20 +16,17 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
 
-# headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
-list(APPEND engineHeadlessLibraries headlessStubs)
-list(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
-list(APPEND engineHeadlessLibraries engineSystemNet)
-list(APPEND engineHeadlessLibraries ${engineCommonLibraries})
-list(APPEND engineHeadlessLibraries no-sound)
-list(APPEND engineHeadlessLibraries engineSim)
-list(APPEND engineHeadlessLibraries pr-downloader_static)
-
-
-
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
-target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
+target_link_libraries(engine-headless
+	headlessStubs
+	${SPRING_SIM_LIBRARIES}
+	engineSystemNet
+	${engineCommonLibraries}
+	engineSim
+	pr-downloader_static
+	no-sound
+)
 target_include_directories(engine-headless PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${Spring_SOURCE_DIR}/rts/lib/lua/include

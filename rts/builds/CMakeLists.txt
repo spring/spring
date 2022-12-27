@@ -70,6 +70,9 @@ macro    (create_engine_build_and_install_target targetName)
 		${gflags_BINARY_DIR}/include
 		${CMAKE_BINARY_DIR}/src-generated/engine
 	)
+	target_link_libraries(engine-${targetName}
+		buildtype_${targetName}
+	)
 endmacro ()
 
 

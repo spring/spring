@@ -104,6 +104,7 @@
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
 #include "UI/Groups/GroupHandler.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -231,7 +232,7 @@ CGame::CGame(const std::string& mapFileName, const std::string& modFileName, ILo
 	memset(gameID, 0, sizeof(gameID));
 
 	// set "Headless" in config overlay (not persisted)
-	configHandler->Set("Headless", (SpringVersion::IsHeadless()) ? 1 : 0, true);
+	configHandler->Set("Headless", (BuildType::IsHeadless()) ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
 	windowedEdgeMove   = configHandler->GetBool("WindowedEdgeMove");
