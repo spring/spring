@@ -50,16 +50,3 @@ notifications:
       - chat.freenode.net#taspring
     on_success: change
     on_failure: change
-matrix:
-  include:
-    - language: python
-      name: CMake lint
-      python: 3.10
-      compiler: ""
-      env: ""
-      before_install: ""
-      install: ""
-      before_script:
-        - pip3 install cmakelint
-      script:
-        - find . \( -name "CMakeLists.txt" -o -name "*.cmake" \) -not -path './rts/lib/*' -exec cmakelint --config=.cmakelintrc {} \;
