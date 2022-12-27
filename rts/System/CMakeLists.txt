@@ -145,7 +145,6 @@ set(sources_engine_System_Threading_Linux
 	)
 set(sources_engine_System_Threading_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CriticalSection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/Future.cpp"
 	)
 
 
