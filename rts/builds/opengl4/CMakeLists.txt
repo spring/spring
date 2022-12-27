@@ -84,6 +84,7 @@ target_include_directories(engine-opengl4 PRIVATE
 	${SDL2_INCLUDE_DIR}
 	${GLEW_INCLUDE_DIR}
 	${FREETYPE_INCLUDE_DIRS}
+	${SPRING_MINIZIP_INCLUDE_DIR}
 )
 
 
