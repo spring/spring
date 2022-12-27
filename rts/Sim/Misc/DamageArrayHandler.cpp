@@ -7,7 +7,6 @@
 #include <cctype>
 
 #include "DamageArrayHandler.h"
-#include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "System/creg/STL_Map.h"
 #include "System/Log/ILog.h"

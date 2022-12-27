@@ -3,10 +3,11 @@
 #ifndef STRING_HASH_H
 #define STRING_HASH_H
 
+#include <stddef.h>
+#include <string>
+
 unsigned HashString(const char* s, size_t n);
 static inline unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
-
-
 
 constexpr unsigned int hashString(const char* str, unsigned int length = -1u, unsigned int hash = 5381u)
 {

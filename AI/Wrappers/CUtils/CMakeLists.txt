@@ -18,5 +18,8 @@ set(mySources
 	)
 add_library(CUtils STATIC ${mySources})
 target_link_libraries(CUtils ${CMAKE_DL_LIBS})
+target_include_directories(CUtils PRIVATE
+	${Spring_SOURCE_DIR}/rts
+)
 
 ai_message(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")

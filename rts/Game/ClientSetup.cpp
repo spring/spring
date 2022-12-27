@@ -2,15 +2,14 @@
 
 #include "ClientSetup.h"
 
+#include "System/BuildType/BuildType.h"
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
 #include "System/MsgStrings.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
-#ifdef DEDICATED
 #include "System/Platform/errorhandler.h"
-#endif
 
 
 CONFIG(std::string, HostIPDefault).defaultValue("localhost").dedicatedValue("").description("Default IP to use for hosting if not specified in script.txt");
@@ -52,10 +51,8 @@ void ClientSetup::LoadFromStartScript(const std::string& setup)
 	if (!file.GetValue(isHost, "GAME\\IsHost"))
 		LOG_L(L_WARNING, "[ClientSetup::%s] IsHost-entry missing from setup-script; assuming this is a client", __func__);
 
-#ifdef DEDICATED
-	if (!isHost)
+	if (BuildType::IsDedicated() && !isHost)
 		handleerror(nullptr, "setup-script error", "dedicated server needs \"IsHost=1\" in GAME-section", MBF_OK | MBF_EXCL);
-#endif
 
 	// FIXME WTF
 	std::string sourceport;

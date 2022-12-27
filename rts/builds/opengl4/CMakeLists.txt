@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Assemble libraries
 find_package(SDL2 REQUIRED)
-set(engineIncludes ${SDL2_INCLUDE_DIR})
+set(engineIncludes "")
 set(engineLibraries ${SDL2_LIBRARY})
 if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
 	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
@@ -21,7 +21,6 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package_static(OpenGL REQUIRED)
 find_package_static(GLEW 1.5.1 REQUIRED)
 list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-list(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 
 find_package_static(FONTCONFIG)
 if    (FONTCONFIG_FOUND)
@@ -41,9 +40,6 @@ endif ()
 
 find_freetype_hack() # hack to find different named freetype.dll
 find_package_static(Freetype REQUIRED)
-foreach(f ${FREETYPE_INCLUDE_DIRS})
-	list(APPEND engineIncludes ${f})
-endforeach(f)
 if    (NOT EXISTS "${FREETYPE_INCLUDE_DIR_ft2build}/ft2build.h")
 	message(FATAL_ERROR "FreeType 2 was found and will be used, but (at least some) headers are missing (ft2build.h)!")
 endif ()
@@ -73,16 +69,23 @@ list(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
 list(APPEND engineLibraries engineSim)
 list(APPEND engineLibraries pr-downloader_static)
 
-### Assemble external incude dirs
-list(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
-list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
-include_directories(${engineIncludes})
 
 ### Build the executable
 add_executable(engine-opengl4 ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 target_link_libraries(engine-opengl4 ${engineLibraries})
+target_include_directories(engine-opengl4 PRIVATE
+	${Spring_SOURCE_DIR}/rts
+	${Spring_SOURCE_DIR}/rts/lib/lua/include
+	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
+	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
+	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
+	${OPENAL_INCLUDE_DIR}
+	${SDL2_INCLUDE_DIR}
+	${GLEW_INCLUDE_DIR}
+	${FREETYPE_INCLUDE_DIRS}
+	${SPRING_MINIZIP_INCLUDE_DIR}
+)
 
 
 ### Install the executable

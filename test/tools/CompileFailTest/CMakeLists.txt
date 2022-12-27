@@ -10,7 +10,7 @@ project(CompileFailTest)
 
 string(REPLACE ":" ";" INCLUDE_PATHS ${INCLUDES})
 separate_arguments(INCLUDE_PATHS)
-include_directories (${INCLUDE_PATHS})
+target_include_directories (compile ${INCLUDE_PATHS})
 add_library(compile STATIC "${SOURCE}")
 add_definitions(-DFAIL)
 add_definitions(${DEF_FLAG})

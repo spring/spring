@@ -35,16 +35,20 @@ if (NOT ${IPV6_RET} EQUAL 0)
 	message(STATUS "No ipv6 support, disabling test")
 endif ()
 
-set(test_Log_sources
-		"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
-		"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
-		"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
-		"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
-		"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
-		"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
-		"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
-		"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
-	)
+add_library(test_Log STATIC EXCLUDE_FROM_ALL
+	"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
+	"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
+	"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
+	"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
+	"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
+	"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
+	"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
+	"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
+)
+
+target_include_directories(test_Log PRIVATE
+	${ENGINE_SOURCE_DIR}
+)
 
 add_custom_target(tests)
 add_custom_target(check ${CMAKE_CTEST_COMMAND} --output-on-failure -V
@@ -91,7 +95,6 @@ if(NOT DEFINED ENV{CI})
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
 		${sources_engine_System_Threading}
-		${test_Log_sources}
 	)
 
 	set(test_libs
@@ -100,6 +103,7 @@ if(NOT DEFINED ENV{CI})
 		${WINMM_LIBRARY}
 		${WS2_32_LIBRARY}
 		7zip
+		test_Log
 	)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
@@ -113,11 +117,10 @@ endif ()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Log/TestILog.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/FileSink.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/OutputDebugStringSink.cpp"
-			${test_Log_sources}
 		)
 
 	set(test_libs
-			""
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
@@ -142,11 +145,10 @@ endif ()
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/RectangleOverlapHandler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/RectangleOverlapHandler.cpp"
-			${test_Log_sources}
 		)
 
 	set(test_libs
-			""
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG")
@@ -162,11 +164,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringHash.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${WINMM_LIBRARY}
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
@@ -183,11 +185,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${WINMM_LIBRARY}
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
@@ -200,11 +202,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${WINMM_LIBRARY}
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "NOT_USING_CREG;NOT_USING_STREFLOP;BUILDING_AI")
@@ -218,10 +220,10 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringHash.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
+			test_Log
 			${REALTIME_LIBRARY}
 			${WINMM_LIBRARY}
 		)
@@ -261,10 +263,9 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringUtil.cpp"
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/FileSystem/TestFileSystem.cpp"
-			${test_Log_sources}
 		)
 	set(test_libs
-			""
+			test_Log
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_${test_name} generateVersionFiles)
@@ -274,11 +275,10 @@ endif ()
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/lib/luasocket/TestRestriction.cpp"
 			"${ENGINE_SOURCE_DIR}/lib/luasocket/src/restrictions.cpp"
-			${test_Log_sources}
 		)
 
 	set(test_libs
-			""
+			test_Log
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "TEST")
@@ -295,11 +295,10 @@ endif ()
 				"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
 				"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
 				"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
-				${test_Log_sources}
 			)
 
 		set(test_libs
-				""
+				test_Log
 			)
 
 		add_spring_test(${test_name} "${test_src}" "${test_libs}" "TEST")
@@ -317,12 +316,12 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/GlobalConfig.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${CMAKE_DL_LIBS}
 			unitsync
+			test_Log
 		)
 
 	set(test_flags UNITSYNC)
@@ -339,11 +338,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${WINMM_LIBRARY}
+			test_Log
 		)
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		list(APPEND test_libs atomic)
@@ -361,12 +360,12 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringHash.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 
 	set(test_libs
 			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
+			test_Log
 		)
 
 	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
@@ -377,10 +376,9 @@ endif ()
 	set(test_name Ellipsoid)
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/Sim/Misc/testEllipsoid.cpp"
-			${test_Log_sources}
 		)
 	set(test_libs
-			""
+			test_Log
 		)
 	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -391,10 +389,9 @@ endif ()
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/Sim/Misc/testQuadField.cpp"
 			"${ENGINE_SOURCE_DIR}/Sim/Misc/QuadField.cpp"
-			${test_Log_sources}
 		)
 	set(test_libs
-			""
+			test_Log
 		)
 	set(test_flags NOT_USING_CREG NOT_USING_STREFLOP BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -409,13 +406,13 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringHash.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 	set(test_libs
 			streflop
 			lua
 			${WINMM_LIBRARY}
 			headlessStubs
+			test_Log
 		)
 	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -426,9 +423,13 @@ endif ()
 	set(test_name GLContextCreation)
 	set(test_src
 		"${CMAKE_CURRENT_SOURCE_DIR}/other/testGLContextCreation.cpp"
-		${test_Log_sources}
 	)
-	set(test_libs ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES} ${SDL2_LIBRARY})
+	set(test_libs
+		 ${OPENGL_gl_LIBRARY}
+		${GLEW_LIBRARIES}
+		${SDL2_LIBRARY}
+		test_Log
+	)
 	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
@@ -442,11 +443,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/StringHash.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 	set(test_libs
 			streflop
 			${WINMM_LIBRARY}
+			test_Log
 		)
 	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -456,10 +457,9 @@ endif ()
 	set(test_name EventClient)
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/EventClient.cpp"
-			${test_Log_sources}
 		)
 	set(test_libs
-			""
+			test_Log
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
@@ -475,11 +475,11 @@ endif ()
 			"${ENGINE_SOURCE_DIR}/System/creg/SerializeLuaState.cpp"
 			"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
 			${sources_engine_System_Threading}
-			${test_Log_sources}
 		)
 	set(test_libs
 			lua
 			headlessStubs
+			test_Log
 		)
 	set(test_flags NOT_USING_STREFLOP)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")

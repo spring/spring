@@ -16,25 +16,26 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
 
-# headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
-list(APPEND engineHeadlessLibraries headlessStubs)
-list(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
-list(APPEND engineHeadlessLibraries engineSystemNet)
-list(APPEND engineHeadlessLibraries ${engineCommonLibraries})
-list(APPEND engineHeadlessLibraries no-sound)
-list(APPEND engineHeadlessLibraries engineSim)
-list(APPEND engineHeadlessLibraries pr-downloader_static)
-
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
-
-
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
-target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
-target_include_directories(engine-headless
-	PRIVATE ${SDL2_INCLUDE_DIR}
+target_link_libraries(engine-headless
+	headlessStubs
+	${SPRING_SIM_LIBRARIES}
+	engineSystemNet
+	${engineCommonLibraries}
+	engineSim
+	pr-downloader_static
+	no-sound
+)
+target_include_directories(engine-headless PRIVATE
+	${Spring_SOURCE_DIR}/rts
+	${Spring_SOURCE_DIR}/rts/lib/lua/include
+	${SDL2_INCLUDE_DIR}
+	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
+	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
+	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
+	${SPRING_MINIZIP_INCLUDE_DIR}
+	${LIBUNWIND_INCLUDE_DIRS}
 )
 
 if    (MINGW)

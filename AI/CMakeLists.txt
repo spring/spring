@@ -18,12 +18,7 @@ option(AI_FIND_QUIETLY  "Whether to find AI Interfaces and Skirmish AIs quietly"
 
 set(rts             "${CMAKE_SOURCE_DIR}/rts")
 
-include_directories(
-	${rts}
-	${CMAKE_BINARY_DIR}/src-generated/engine
-	${rts}/ExternalAI/Interface
-	Wrappers
-	)
+
 
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -74,8 +69,8 @@ add_subdirectory(Wrappers)
 add_subdirectory(Skirmish)
 
 set(DEPS_AI_ALL
-		${DEPS_AI_INTERFACES}
-		${DEPS_AI_WRAPPERS}
-		${DEPS_AI_SKIRMISH}
-	)
+	${DEPS_AI_INTERFACES}
+	${DEPS_AI_WRAPPERS}
+	${DEPS_AI_SKIRMISH}
+)
 make_global(DEPS_AI_ALL)

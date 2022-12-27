@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "System/type2.h"
 #include "System/float4.h"
 
 class CBitmap;

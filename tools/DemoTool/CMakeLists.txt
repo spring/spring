@@ -8,7 +8,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 set(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
-add_definitions(-DTOOLS)
 
 set(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
@@ -32,6 +31,8 @@ set(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 )
 
+find_package(ZLIB REQUIRED)
+
 add_executable(demotool EXCLUDE_FROM_ALL DemoTool.cpp ${demoToolSpringSources})
 target_include_directories(demotool PRIVATE
 	${ENGINE_SRC_ROOT_DIR}
@@ -42,9 +43,13 @@ if (MINGW)
 	# To enable console output/force a console window to open
 	set_target_properties(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 endif ()
-add_definitions(-DNOT_USING_CREG)
+target_compile_definitions(demotool PRIVATE
+	TOOLS
+	NOT_USING_CREG
+)
 target_link_libraries(demotool
-		${SPRING_MINIZIP_LIBRARY}
-		gflags
-	)
+	${SPRING_MINIZIP_LIBRARY}
+	${ZLIB_LIBRARY}
+	gflags
+)
 add_dependencies(demotool generateVersionFiles)

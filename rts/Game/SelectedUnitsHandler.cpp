@@ -670,7 +670,7 @@ void CSelectedUnitsHandler::Draw()
 		// draw queued build sites if a GUI build-icon has been
 		// clicked or whenever the shift key is being held down
 		if (!selectedUnits.empty() && (shiftPressed || buildQueued)) {
-			for (const auto bi: unitHandler.GetBuilderCAIs()) {
+			for (const auto& bi: unitHandler.GetBuilderCAIs()) {
 				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 

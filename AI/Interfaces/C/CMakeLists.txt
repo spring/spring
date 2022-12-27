@@ -51,6 +51,10 @@ macro    (configure_native_skirmish_ai mySourceDirRel_var additionalSources_var 
 
 		add_dependencies(${myTarget} generateVersionFiles)
 		target_link_libraries(${myTarget} ${additionalLibraries})
+		target_include_directories(${myTarget} PRIVATE
+			${Spring_SOURCE_DIR}/rts
+			${Spring_SOURCE_DIR}/AI/Wrappers
+		)
 		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
 
@@ -113,6 +117,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
 	set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 	target_link_libraries(${myTarget} CUtils)
+	target_include_directories(${myTarget} PRIVATE
+		${Spring_SOURCE_DIR}/rts
+		${Spring_SOURCE_DIR}/AI/Wrappers/
+	)
 	fix_lib_name(${myTarget})
 
 	add_dependencies(${myTarget} generateVersionFiles)

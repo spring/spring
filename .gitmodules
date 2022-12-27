@@ -10,9 +10,6 @@
 [submodule "AI/Skirmish/KAIK"]
 	path = AI/Skirmish/KAIK
 	url = https://github.com/spring/KAIK.git
-[submodule "AI/Skirmish/CircuitAI"]
-	path = AI/Skirmish/CircuitAI
-	url = https://github.com/spring/CircuitAI.git
 [submodule "tools/unitsync/python"]
 	path = tools/unitsync/python
 	url = https://github.com/spring/pyunitsync.git

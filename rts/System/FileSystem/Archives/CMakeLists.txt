@@ -14,7 +14,7 @@ add_library(archives STATIC
 )
 
 target_include_directories(archives PRIVATE
-	../../..
+	${Spring_SOURCE_DIR}/rts
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
 	${GIT2_INCLUDE_PATH}

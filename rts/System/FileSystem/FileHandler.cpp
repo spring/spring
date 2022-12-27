@@ -300,13 +300,13 @@ std::string CFileHandler::GetFileAbsolutePath(const std::string& filePath, const
 
 std::string CFileHandler::GetArchiveContainingFile(const std::string& filePath, const std::string& modes)
 {
-	for (char c: modes) {
 #ifndef TOOLS
+	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
 		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section) == 1)
 			return vfsHandler->GetFileArchiveName(filePath, section);
-#endif
 	}
+#endif
 
 	return "";
 }

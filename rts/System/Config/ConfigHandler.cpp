@@ -3,6 +3,7 @@
 #include "ConfigHandler.h"
 #include "ConfigLocater.h"
 #include "ConfigSource.h"
+#include "System/BuildType/BuildType.h"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
@@ -87,12 +88,9 @@ ConfigHandlerImpl::ConfigHandlerImpl(const std::vector<std::string>& locations, 
 	size_t sources_num = 3;
 	sources_num += (safemode) ? 1 : 0;
 	sources_num += locations.size() - 1;
-#ifdef DEDICATED
-	sources_num++;
-#endif
-#ifdef HEADLESS
-	sources_num++;
-#endif
+	if (BuildType::IsDedicated() || BuildType::IsHeadless()) {
+		sources_num++;
+	}
 	sources.reserve(sources_num);
 
 	sources.push_back(overlay);
@@ -107,12 +105,15 @@ ConfigHandlerImpl::ConfigHandlerImpl(const std::vector<std::string>& locations, 
 	for (auto loc = ++(locations.cbegin()); loc != locations.cend(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
-#ifdef DEDICATED
-	sources.push_back(new DedicatedConfigSource());
-#endif
-#ifdef HEADLESS
-	sources.push_back(new HeadlessConfigSource());
-#endif
+
+	if (BuildType::IsDedicated()) {
+		sources.push_back(new DedicatedConfigSource());
+	}
+
+	if (BuildType::IsHeadless()) {
+		sources.push_back(new HeadlessConfigSource());
+	}
+
 	sources.push_back(new DefaultConfigSource());
 
 	assert(sources.size() <= sources_num);

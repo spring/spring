@@ -104,6 +104,7 @@
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
 #include "UI/Groups/GroupHandler.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -231,7 +232,7 @@ CGame::CGame(const std::string& mapFileName, const std::string& modFileName, ILo
 	memset(gameID, 0, sizeof(gameID));
 
 	// set "Headless" in config overlay (not persisted)
-	configHandler->Set("Headless", (SpringVersion::IsHeadless()) ? 1 : 0, true);
+	configHandler->Set("Headless", (BuildType::IsHeadless()) ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
 	windowedEdgeMove   = configHandler->GetBool("WindowedEdgeMove");
@@ -1550,8 +1551,7 @@ void CGame::SimFrame() {
 
 	eventHandler.DbgTimingInfo(TIMING_SIM, lastFrameTime, lastSimFrameTime);
 
-	#ifdef HEADLESS
-	{
+	if (BuildType::IsHeadless()) {
 		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
 		const float msecDifSimFrameTime = (lastSimFrameTime - lastFrameTime).toMilliSecsf();
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
@@ -1561,7 +1561,6 @@ void CGame::SimFrame() {
 			spring_sleep(spring_msecs(msecSleepTime));
 		}
 	}
-	#endif
 
 	// useful for desync-debugging (enter instead of -1 start & end frame of the range you want to debug)
 	DumpState(-1, -1, 1);
@@ -1598,10 +1597,9 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	eventHandler.GameOver(winningAllyTeams);
 
 	CEndGameBox::Create(winningAllyTeams);
-#ifdef    HEADLESS
-	profiler.PrintProfilingInfo();
-#endif // HEADLESS
-
+	if (BuildType::IsHeadless()) {
+		profiler.PrintProfilingInfo();
+	}
 	CDemoRecorder* record = clientNet->GetDemoRecorder();
 
 	if (!record->IsValid())

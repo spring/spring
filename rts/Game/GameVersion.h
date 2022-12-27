@@ -81,12 +81,6 @@ namespace SpringVersion
 	/// Returns whether this is a release build of the engine
 	extern bool IsRelease();
 
-	/// Returns true if this build is a "HEADLESS" build
-	extern bool IsHeadless();
-
-	/// Returns true if this build is a "UNITSYNC" build
-	extern bool IsUnitsync();
-
 	/**
 	 * The basic part of a spring version.
 	 * This may only be used for sync-checking if IsRelease() returns true.
