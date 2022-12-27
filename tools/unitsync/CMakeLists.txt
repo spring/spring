@@ -83,7 +83,7 @@ set(unitsync_files
 	${main_files}
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
-	)
+)
 
 # Add list of all exported functions to .def file to prevent decoration
 if (MSVC)
@@ -95,7 +95,10 @@ endif ()
 #   to be able to link to it
 add_library(unitsync SHARED ${unitsync_files})
 add_dependencies(unitsync generateVersionFiles)
-target_link_libraries(unitsync ${unitsync_libs})
+target_link_libraries(unitsync
+	${unitsync_libs}
+	buildtype_unitsync
+)
 target_include_directories(unitsync PRIVATE
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${ENGINE_SRC_ROOT}/lib/lua/include
