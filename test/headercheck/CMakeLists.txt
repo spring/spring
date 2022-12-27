@@ -4,17 +4,15 @@ option(HEADERCHECK "adds the target headercheck which compiles every header file
 if(HEADERCHECK)
 
 file(GLOB_RECURSE headers
-	${Spring_SOURCE_DIR}/tools/unitsync/*.h
-	${Spring_SOURCE_DIR}/rts/ExternalAI/*.h
-	${Spring_SOURCE_DIR}/rts/Game/*.h
-	${Spring_SOURCE_DIR}/rts/Rendering/*.h
-	${Spring_SOURCE_DIR}/rts/Map/*.h
-	${Spring_SOURCE_DIR}/rts/aGui/*.h
-	${Spring_SOURCE_DIR}/rts/Lua/*.h
-	${Spring_SOURCE_DIR}/rts/Sim/*.h
-	${Spring_SOURCE_DIR}/rts/Menu/*.h
-	${Spring_SOURCE_DIR}/rts/System/*.h
+	${Spring_SOURCE_DIR}/**/*.h
 )
+if(UNIX)
+	list(FILTER headers EXCLUDE REGEX "^${Spring_SOURCE_DIR}/rts/System/Platform/Win.*")
+endif()
+list(FILTER headers EXCLUDE REGEX "^${Spring_SOURCE_DIR}/rts/System/creg/.*")
+list(FILTER headers EXCLUDE REGEX "^${Spring_SOURCE_DIR}/rts/lib/.*")
+list(FILTER headers EXCLUDE REGEX "^${Spring_SOURCE_DIR}/AI/.*")
+list(FILTER headers EXCLUDE REGEX "^${Spring_SOURCE_DIR}/tools/.*")
 
 set(headerchecklibs "")
 
