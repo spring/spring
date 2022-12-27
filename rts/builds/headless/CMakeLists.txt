@@ -25,16 +25,16 @@ list(APPEND engineHeadlessLibraries no-sound)
 list(APPEND engineHeadlessLibraries engineSim)
 list(APPEND engineHeadlessLibraries pr-downloader_static)
 
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
 target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
-target_include_directories(engine-headless
-	PRIVATE ${SDL2_INCLUDE_DIR}
+target_include_directories(engine-headless PRIVATE
+	${SDL2_INCLUDE_DIR}
+	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
+	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
+	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
 )
 
 if    (MINGW)

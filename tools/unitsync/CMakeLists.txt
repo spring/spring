@@ -26,23 +26,11 @@ if (NOT WIN32)
 	add_definitions(-fPIC)
 	add_definitions(${PIC_FLAG})
 endif ()
-add_definitions(-DNOT_USING_CREG)
-add_definitions(-DHEADLESS)
-add_definitions(-DNO_SOUND)
-add_definitions(-DBITMAP_NO_OPENGL)
-add_definitions(-DENABLE_DEPRECATED_FUNCTIONS)
+
 remove_definitions(-DTHREADPOOL)
 
+
 set(ENGINE_SRC_ROOT "../../rts")
-
-include_directories(${ZLIB_INCLUDE_DIR})
-include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
-include_directories(${ENGINE_SRC_ROOT}/lib/lua/include)
-include_directories(${ENGINE_SRC_ROOT}/lib/7zip)
-include_directories(${ENGINE_SRC_ROOT})
-include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
-
-
 set(main_files
 	"${ENGINE_SRC_ROOT}/ExternalAI/LuaAIImplHandler.cpp"
 	"${ENGINE_SRC_ROOT}/Game/GameVersion.cpp"
@@ -108,8 +96,21 @@ endif ()
 add_library(unitsync SHARED ${unitsync_files})
 add_dependencies(unitsync generateVersionFiles)
 target_link_libraries(unitsync ${unitsync_libs})
-target_include_directories(unitsync
-	PRIVATE ${SDL2_INCLUDE_DIR}
+target_include_directories(unitsync PRIVATE
+	${SPRING_MINIZIP_INCLUDE_DIR}
+	${ENGINE_SRC_ROOT}/lib/lua/include
+	${ENGINE_SRC_ROOT}/lib/7zip
+	${ENGINE_SRC_ROOT}
+	${CMAKE_BINARY_DIR}/src-generated/engine
+	${ZLIB_INCLUDE_DIR}
+	${SDL2_INCLUDE_DIR}
+)
+target_compile_definitions(unitsync PRIVATE
+	NOT_USING_CREG
+	HEADLESS
+	NO_SOUND
+	BITMAP_NO_OPENGL
+	ENABLE_DEPRECATED_FUNCTIONS
 )
 
 # hide exported symbols

@@ -78,12 +78,11 @@ list(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
 list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
-include_directories(${engineIncludes})
 
 ### Build the executable
 add_executable(engine-opengl4 ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 target_link_libraries(engine-opengl4 ${engineLibraries})
-
+target_include_directories(engine-opengl4 PRIVATE ${engineIncludes})
 
 ### Install the executable
 install(TARGETS engine-opengl4 DESTINATION ${BINDIR})

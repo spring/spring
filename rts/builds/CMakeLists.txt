@@ -4,8 +4,6 @@
 # * create_engine_build_and_install_target
 #
 
-include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
-include_directories(${gflags_BINARY_DIR}/include)
 
 # Only install the given engine target executable & dependencies
 # example:
@@ -68,6 +66,10 @@ macro    (create_engine_build_and_install_target targetName)
 	else ()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
 	endif ()
+	target_include_directories(engine-${targetName} PRIVATE
+		${gflags_BINARY_DIR}/include
+		${CMAKE_BINARY_DIR}/src-generated/engine
+	)
 endmacro ()
 
 

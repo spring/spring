@@ -43,12 +43,6 @@ if    (UNIX AND NOT MINGW)
 	endif ()
 endif ()
 
-### Assemble the incude dirs
-include_directories(${ENGINE_SRC_ROOT_DIR}/)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
-include_directories(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-
 
 
 ### Assemble sources
@@ -151,9 +145,15 @@ add_executable(engine-dedicated
 		${ENGINE_ICON}
 		main.cpp
 	)
-target_include_directories(engine-dedicated
-	PRIVATE ${SDL2_INCLUDE_DIR}
+
+target_include_directories(engine-dedicated PRIVATE
+	${ENGINE_SRC_ROOT_DIR}/
+	${ENGINE_SRC_ROOT_DIR}/lib/lua/include
+	${ENGINE_SRC_ROOT_DIR}/lib/7zip
+	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
+	${SDL2_INCLUDE_DIR}
 )
+
 target_link_libraries(engine-dedicated ${engineDedicatedLibraries})
 if    (MINGW)
 	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${IPHLPAPI_LIBRARY} ${WINMM_LIBRARY})
