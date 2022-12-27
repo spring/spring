@@ -6,6 +6,7 @@
 #include <limits>
 #include <array>
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/type2.h"
 
 static constexpr float PATHCOST_INFINITY = std::numeric_limits<float>::infinity();
 

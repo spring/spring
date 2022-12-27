@@ -8,7 +8,7 @@
 #include <algorithm> // for std::fill
 
 #include "PathConstants.h"
-#include "System/type2.h"
+#include "System/float3.h"
 #include <cinttypes>
 
 /// represents either a single square (PF) or a block of squares (PE)

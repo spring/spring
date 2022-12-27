@@ -3,6 +3,8 @@
 #ifndef VSYNC_H
 #define VSYNC_H
 
+#include <string>
+
 class CVerticalSync {
 public:
 	void WrapNotifyOnChange();

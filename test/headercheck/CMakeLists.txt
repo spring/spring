@@ -37,11 +37,11 @@ foreach( HEADER ${headers} )
 	add_library( ${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_FILE} )
 	target_include_directories(${TEST_NAME} PRIVATE
 		${Spring_SOURCE_DIR}/rts
-		${Spring_SOURCE_DIR}/include
 		${Spring_SOURCE_DIR}/rts/lib
 		${Spring_SOURCE_DIR}/rts/lib/lua/include
 		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
 		${Spring_SOURCE_DIR}/rts/lib/assimp/include
+		${Spring_SOURCE_DIR}/rts/lib/asio/include
 		${SDL2_INCLUDE_DIR}
 		${OPENAL_INCLUDE_DIR}
 	)
