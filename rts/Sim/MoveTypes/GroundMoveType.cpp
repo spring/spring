@@ -761,6 +761,10 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	if ((wantedSpeed = newWantedSpeed) <= 0.0f && currentSpeed < 0.01f) {
 		currentSpeed = 0.0f;
 		deltaSpeed = 0.0f;
+
+		// also zero unit speed, it is read by calcSpeedVectorFuncs
+		owner->SetSpeed(ZeroVector);
+
 		return;
 	}
 
