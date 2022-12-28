@@ -4,6 +4,7 @@
 
 #include "System/StringUtil.h"
 #include "Game/GameVersion.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/DefaultFilter.h"
@@ -52,22 +53,21 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 	std::string enabledSections = ",";
 	std::string envSections = ",";
 
-#if defined(UNITSYNC)
-	#if defined(DEBUG)
-	// unitsync logging in debug mode always on
-	// configHandler cannot be accessed here in unitsync, as it may not exist.
-	enabledSections += "unitsync,ArchiveScanner,";
-	#endif
-#else
-	#if defined(DEDICATED)
-	enabledSections += "DedicatedServer,";
-	#endif
-	#if !defined(DEBUG)
-	// Always show at least INFO level of these sections
-	enabledSections += "Sound:35,VFS:30";
-	#endif
-	enabledSections += StringToLower(configHandler->GetString("LogSections"));
-#endif
+	if (BuildType::IsUnitsync()) {
+		#if defined(DEBUG)
+		// unitsync logging in debug mode always on
+		// configHandler cannot be accessed here in unitsync, as it may not exist.
+		enabledSections += "unitsync,ArchiveScanner,";
+		#endif
+	} else {
+		if (BuildType::IsDedicated())
+			enabledSections += "DedicatedServer,";
+		#if !defined(DEBUG)
+		// Always show at least INFO level of these sections
+		enabledSections += "Sound:35,VFS:30";
+		#endif
+		enabledSections += StringToLower(configHandler->GetString("LogSections"));
+	}
 
 	if (getenv("SPRING_LOG_SECTIONS") != nullptr) {
 		// allow disabling all sections from the env var by setting it to "none"

@@ -9,6 +9,7 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/BuildType/BuildType.h"
 #include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
@@ -47,7 +48,8 @@ CFarTextureHandler::CFarTextureHandler()
 	createQueue.reserve(MAX_CREATE_QUEUE_SIZE);
 	renderQueue.reserve(128);
 
-#ifndef HEADLESS
+	if (BuildType::IsHeadless())
+		return;
 	if (!fbo.IsValid()) {
 		LOG_L(L_WARNING, "framebuffer not valid!");
 		return;
@@ -71,7 +73,6 @@ CFarTextureHandler::CFarTextureHandler()
 	fbo.Unbind();
 
 	fbo.reloadOnAltTab = true;
-#endif
 }
 
 

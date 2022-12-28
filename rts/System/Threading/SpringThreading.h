@@ -9,7 +9,7 @@
 #include <atomic>
 #include <thread>
 #include <condition_variable>
-
+#include <future>
 
 #if   defined(_WIN32)
 	#include "System/Platform/Win/CriticalSection.h"
@@ -18,18 +18,6 @@
 #elif !defined(__APPLE__) && defined(USE_FUTEX)
 	#include "System/Platform/Linux/Futex.h"
 #endif
-
-
-#if defined(__MINGW32__) && !defined(_GLIBCXX_HAS_GTHREADS)
-	#include "System/Platform/Win/Future.h"
-#else
-	#include <future>
-#endif
-
-
-
-
-
 
 namespace spring {
 #if   defined(_WIN32)

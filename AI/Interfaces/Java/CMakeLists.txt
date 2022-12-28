@@ -536,7 +536,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# and this file contains OS (win32) specific information.
 		target_include_directories(${myNativeTarget} PRIVATE ${MINGWLIBS}/include/java)
 	endif ()
-	target_include_directories(${myNativeTarget} PRIVATE 
+	target_include_directories(${myNativeTarget} PRIVATE
 		${Spring_SOURCE_DIR}/rts
 		${Spring_SOURCE_DIR}/AI/Wrappers
 		${myNativeSourceDir}

@@ -24,6 +24,7 @@
 
 #include "CacheDir.h"
 #include "FileSystem.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Exceptions.h"
 #include "System/MainDefines.h" // for sPS, cPS, cPD
 #include "System/Config/ConfigHandler.h"
@@ -65,11 +66,9 @@ static inline std::string GetUnitsyncLibName()
 
 static std::string GetBinaryLocation()
 {
-#if  defined(UNITSYNC)
-	return Platform::GetModulePath();
-#else
+	if (BuildType::IsUnitsync())
+		return Platform::GetModulePath();
 	return Platform::GetProcessExecutablePath();
-#endif
 }
 
 
@@ -497,19 +496,17 @@ void DataDirLocater::ChangeCwdToWriteDir()
 bool DataDirLocater::IsInstallDirDataDir()
 {
 	// Check if spring binary & unitsync library are in the same folder
-#if defined(UNITSYNC)
-	const std::string dir = Platform::GetModulePath();
-	const std::string fileExe = FileSystem::EnsurePathSepAtEnd(dir) + GetSpringBinaryName();
+	if (BuildType::IsUnitsync()) {
+		const std::string dir = Platform::GetModulePath();
+		const std::string fileExe = FileSystem::EnsurePathSepAtEnd(dir) + GetSpringBinaryName();
 
-	return FileSystem::FileExists(fileExe);
+		return FileSystem::FileExists(fileExe);
+	}
 
-#else
 	const std::string dir = Platform::GetProcessExecutablePath();
 	const std::string fileUnitsync = FileSystem::EnsurePathSepAtEnd(dir) + GetUnitsyncLibName();
 
 	return FileSystem::FileExists(fileUnitsync);
-
-#endif
 }
 
 

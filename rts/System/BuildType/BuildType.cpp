@@ -1,8 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-// IMPORTANT NOTE: external systems sed -i this file, so DO NOT CHANGE without
-// major thought in advance, and deliberation with bibim and tvo/Tobi!
-
 #include "BuildType.h"
 
 namespace BuildType {
