@@ -95,13 +95,13 @@ public:
 protected:
 	bool slowGuard;
 	bool moveDir;
+	bool buggeringOff;
 
 	int cancelDistance = 1024;
 
 	/// last frame certain types of area-commands were handled, helps avoid infinite loops
 	int lastCommandFrame = -1;
 	int lastCloseInTry = -1;
-	int lastBuggerOffTime = -BUGGER_OFF_TTL;
 	int lastIdleCheck = 0;
 	int numNonMovingCalls = 0;
 

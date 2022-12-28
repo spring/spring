@@ -68,12 +68,12 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(tempOrder),
 	CR_MEMBER(slowGuard),
 	CR_MEMBER(moveDir),
+	CR_MEMBER(buggeringOff),
 
 	CR_MEMBER(cancelDistance),
 
 	CR_MEMBER(lastCommandFrame),
 	CR_MEMBER(lastCloseInTry),
-	CR_MEMBER(lastBuggerOffTime),
 	CR_MEMBER(numNonMovingCalls),
 	CR_MEMBER(lastIdleCheck)
 ))
@@ -89,7 +89,8 @@ CMobileCAI::CMobileCAI():
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f)
+	moveDir(gsRNG.NextFloat() > 0.5f),
+	buggeringOff(false)
 {}
 
 
@@ -104,7 +105,8 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f)
+	moveDir(gsRNG.NextFloat() > 0.5f),
+	buggeringOff(false)
 {
 	CalculateCancelDistance();
 
@@ -991,15 +993,15 @@ void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
 	if (radius < 0.0f) {
 		// AttachUnit call
-		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}
 
-	lastBuggerOffTime = gs->frameNum;
 	// numNonMovingCalls = 0;
 
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
+
+	buggeringOff = true;
 }
 
 void CMobileCAI::NonMoving()
@@ -1012,7 +1014,7 @@ void CMobileCAI::NonMoving()
 	if (owner->UsingScriptMoveType())
 		return;
 
-	if (lastBuggerOffTime <= (gs->frameNum - BUGGER_OFF_TTL))
+	if (!buggeringOff)
 		return;
 
 	if (((owner->pos - buggerOffPos) * XZVector).SqLength() >= Square(buggerOffRadius * 1.5f))
@@ -1052,6 +1054,8 @@ void CMobileCAI::NonMoving()
 	c.SetTimeOut(gs->frameNum + BUGGER_OFF_TTL);
 	commandQue.push_front(c);
 
+	lastBuggerGoalPos = buggerPos;
+
 	numNonMovingCalls = 0;
 }
 
@@ -1063,6 +1067,7 @@ void CMobileCAI::FinishCommand()
 		lastUserGoal = owner->pos;
 
 	tempOrder = false;
+	buggeringOff = false;
 
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
@@ -1097,7 +1102,8 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 		NonMoving();
 		return false;
 	}
-	if ((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) {
+	if (((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) ||
+		((owner->pos - lastBuggerGoalPos).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST))) {
 		NonMoving();
 		return false;
 	}
