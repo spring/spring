@@ -159,14 +159,10 @@ public:
 	void SwapArchiveSections(Section src, Section dst);
 
 private:
-	struct FileData {
-		IArchive* ar;
-		int size;
-	};
-	typedef std::pair<std::string, FileData> FileEntry;
+	typedef std::pair<std::string, IArchive*> FileEntry;
 
 	std::string GetNormalizedPath(const std::string& rawPath);
-	FileData GetFileData(const std::string& normalizedFilePath, Section section) const;
+	IArchive* GetFileData(const std::string& normalizedFilePath, Section section) const;
 
 private:
 	std::array<std::vector<FileEntry>, Section::Count> files;

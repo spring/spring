@@ -11,6 +11,7 @@
 #include "Archives/ZipArchive.h"
 #include "Archives/SevenZipArchive.h"
 #include "Archives/VirtualArchive.h"
+#include "Archives/GitArchive.h"
 
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
@@ -21,6 +22,7 @@ static CDirArchiveFactory sddArchiveFactory;
 static CZipArchiveFactory sdzArchiveFactory;
 static CSevenZipArchiveFactory sd7ArchiveFactory;
 static CVirtualArchiveFactory sdvArchiveFactory;
+static CGitArchiveFactory gitArchiveFactory;
 
 CArchiveLoader::CArchiveLoader()
 {
@@ -28,6 +30,7 @@ CArchiveLoader::CArchiveLoader()
 		archiveFactories[archiveType] = {factory.GetDefaultExtension(), &factory};
 	};
 	AddFactory(ARCHIVE_TYPE_SDP, sdpArchiveFactory);
+	AddFactory(ARCHIVE_TYPE_GIT, gitArchiveFactory);
 	AddFactory(ARCHIVE_TYPE_SDD, sddArchiveFactory);
 	AddFactory(ARCHIVE_TYPE_SDZ, sdzArchiveFactory);
 	AddFactory(ARCHIVE_TYPE_SD7, sd7ArchiveFactory);

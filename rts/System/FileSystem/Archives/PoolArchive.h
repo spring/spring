@@ -83,11 +83,17 @@ public:
 	bool IsOpen() override { return isOpen; }
 
 	unsigned NumFiles() const override { return (files.size()); }
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override {
+
+	void FileInfoName(unsigned int fid, std::string& name) const override {
 		assert(IsFileId(fid));
 		name = files[fid].name;
+	}
+
+	void FileInfoSize(unsigned int fid, int& size) const override {
+		assert(IsFileId(fid));
 		size = files[fid].size;
 	}
+
 	bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN], std::vector<std::uint8_t>& fb) override {
 		assert(IsFileId(fid));
 

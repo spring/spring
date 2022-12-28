@@ -63,12 +63,11 @@ bool CDirArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	return true;
 }
 
-void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CDirArchive::FileInfoSize(unsigned int fid, int& size) const
 {
 	assert(IsFileId(fid));
 
-	name = searchFiles[fid];
-	const std::string rawPath = dataDirsAccess.LocateFile(dirName + name);
+	const std::string rawPath = dataDirsAccess.LocateFile(dirName + searchFiles[fid]);
 	std::ifstream ifs(rawPath.c_str(), std::ios::in | std::ios::binary);
 
 	if (!ifs.bad() && ifs.is_open()) {
@@ -77,4 +76,10 @@ void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 	} else {
 		size = 0;
 	}
+}
+
+void CDirArchive::FileInfoName(unsigned int fid, std::string& name) const
+{
+	assert(IsFileId(fid));
+	name = searchFiles[fid];
 }

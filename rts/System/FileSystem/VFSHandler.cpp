@@ -176,12 +176,13 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 	files[Section::Temp].reserve(ar->NumFiles());
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		std::pair<std::string, int> fi = ar->FileInfo(fid);
-		std::string name = std::move(StringToLower(fi.first));
+		std::string filename;
+		ar->FileInfoName(fid, filename);
+		std::string name = std::move(StringToLower(filename));
 
 		if (!overwrite) {
 			const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
-			const auto iter = std::lower_bound(files[rawSection].begin(), files[rawSection].end(), FileEntry{name, FileData{}}, pred);
+			const auto iter = std::lower_bound(files[rawSection].begin(), files[rawSection].end(), FileEntry{name, nullptr}, pred);
 
 			if (iter != files[rawSection].end() && iter->first == name) {
 				LOG_L(L_DEBUG, "[%s::%s<this=%p>] skipping \"%s\", exists", vfsName, __func__, this, name.c_str());
@@ -195,7 +196,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 		// can not add directly to files[section], would break lower_bound
 		// note: this means an archive can *internally* contain duplicates
-		files[Section::Temp].emplace_back(name, FileData{ar, fi.second});
+		files[Section::Temp].emplace_back(name, ar);
 	}
 
 	for (FileEntry& fileEntry: files[Section::Temp]) {
@@ -255,7 +256,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	for (auto& pair: files[section]) {
 		auto& name = pair.first;
 
-		if ((pair.second).ar != ar)
+		if (pair.second != ar)
 			continue;
 
 		// mark entry for removal
@@ -411,7 +412,7 @@ std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 }
 
 
-CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFilePath, Section section) const
+IArchive* CVFSHandler::GetFileData(const std::string& normalizedFilePath, Section section) const
 {
 	assert(section < Section::Count);
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
@@ -419,7 +420,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	const auto& vect = files[section];
 	const auto  cbeg = vect.cbegin();
 	const auto  cend = vect.cend();
-	const auto  file = FileEntry{normalizedFilePath, FileData{}};
+	const auto  file = FileEntry{normalizedFilePath, nullptr};
 	const auto  sane = [&]() -> bool {
 		for (size_t i = 1, n = vect.size(); i < n; i++) {
 			if (vect[i - 1].first > vect[i].first)
@@ -435,11 +436,11 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 		const auto iter = std::lower_bound(cbeg, cend, file, pred);
 
 		if (iter != cend && iter->first == normalizedFilePath)
-			return {iter->second.ar, iter->second.size};
+			return iter->second;
 	}
 
 	// file does not exist in the VFS
-	return {nullptr, 0};
+	return nullptr;
 }
 
 
@@ -449,13 +450,13 @@ int CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>
 	LOG_L(L_DEBUG, "[%s::%s<this=%p>(filePath=\"%s\", section=%d)]", vfsName, __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const FileData& fileData = GetFileData(normalizedPath, section);
+	IArchive* ar = GetFileData(normalizedPath, section);
 
-	if (fileData.ar == nullptr)
+	if (ar == nullptr)
 		return -1;
 
 	// 0 or 1
-	return (fileData.ar->GetFile(normalizedPath, buffer));
+	return ar->GetFile(normalizedPath, buffer);
 }
 
 int CVFSHandler::FileExists(const std::string& filePath, Section section)
@@ -463,13 +464,13 @@ int CVFSHandler::FileExists(const std::string& filePath, Section section)
 	LOG_L(L_DEBUG, "[%s::%s<this=%p>(filePath=\"%s\", section=%d)]", vfsName, __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const FileData& fileData = GetFileData(normalizedPath, section);
+	const IArchive* ar = GetFileData(normalizedPath, section);
 
-	if (fileData.ar == nullptr)
+	if (ar == nullptr)
 		return -1;
 
 	// 0 or 1
-	return (fileData.ar->FileExists(normalizedPath));
+	return ar->FileExists(normalizedPath);
 }
 
 std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Section section)
@@ -477,16 +478,16 @@ std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Sectio
 	LOG_L(L_DEBUG, "[%s::%s<this=%p>(filePath=\"%s\", section=%d)]", vfsName, __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const FileData& fileData = GetFileData(normalizedPath, section);
+	const IArchive* ar = GetFileData(normalizedPath, section);
 
 	// Only directory archives have an absolute path on disk
-	const auto dirArchive = dynamic_cast<const CDirArchive*>(fileData.ar);
+	const CDirArchive* dirArchive = dynamic_cast<const CDirArchive*>(ar);
 
 	if (dirArchive == nullptr)
 		return "";
 
 	const std::string& origFilePath = dirArchive->GetOrigFileName(dirArchive->FindFile(filePath));
-	return (fileData.ar->GetArchiveFile() + "/" + origFilePath);
+	return ar->GetArchiveFile() + "/" + origFilePath;
 }
 
 std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section section)
@@ -494,8 +495,8 @@ std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section
 	LOG_L(L_DEBUG, "[%s::%s<this=%p>(filePath=\"%s\", section=%d)]", vfsName, __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const auto& fileData = GetFileData(normalizedPath, section);
-	const auto& archiveFile = fileData.ar->GetArchiveFile();
+	const auto& ar = GetFileData(normalizedPath, section);
+	const auto& archiveFile = ar->GetArchiveFile();
 	const auto& baseName = FileSystem::GetFilename(archiveFile);
 	const auto& archiveName = archiveScanner->NameFromArchive(baseName);
 
@@ -545,8 +546,8 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 			dir += "/";
 
 		// limit the iterator range; turn '/' into '0' for filesEnd
-		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() += 1;
-		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() -= 1;
+		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, nullptr}, filesPred); dir.back() += 1;
+		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, nullptr}, filesPred); dir.back() -= 1;
 	}
 
 	dirFiles.reserve(std::distance(filesBeg, filesEnd));
@@ -598,8 +599,8 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 			dir += "/";
 
 		// limit the iterator range (as in GetFilesInDir)
-		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() += 1;
-		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() -= 1;
+		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, nullptr}, filesPred); dir.back() += 1;
+		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, nullptr}, filesPred); dir.back() -= 1;
 	}
 
 	dirs.reserve(std::distance(filesBeg, filesEnd));

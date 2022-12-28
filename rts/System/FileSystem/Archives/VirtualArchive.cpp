@@ -58,12 +58,15 @@ bool CVirtualArchiveOpen::GetFile( unsigned int fid, std::vector<std::uint8_t>& 
 	return archive->GetFile(fid, buffer);
 }
 
-void CVirtualArchiveOpen::FileInfo( unsigned int fid, std::string& name, int& size ) const
+void CVirtualArchiveOpen::FileInfoName( unsigned int fid, std::string& name) const
 {
-	return archive->FileInfo(fid, name, size);
+	return archive->FileInfoName(fid, name);
 }
 
-
+void CVirtualArchiveOpen::FileInfoSize( unsigned int fid, int& size ) const
+{
+	return archive->FileInfoSize(fid, size);
+}
 
 CVirtualArchiveOpen* CVirtualArchive::Open()
 {
@@ -80,13 +83,21 @@ bool CVirtualArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffe
 	return true;
 }
 
-void CVirtualArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CVirtualArchive::FileInfoName(unsigned int fid, std::string& name) const
 {
 	assert(fid < files.size());
 
 	name = files[fid].name;
+}
+
+void CVirtualArchive::FileInfoSize(unsigned int fid, int& size) const
+{
+	assert(fid < files.size());
+
 	size = files[fid].buffer.size();
 }
+
+
 
 unsigned int CVirtualArchive::AddFile(const std::string& name)
 {

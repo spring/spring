@@ -70,7 +70,8 @@ public:
 	bool IsOpen() override { return true; }
 	unsigned int NumFiles() const override;
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	void FileInfoName(unsigned int fid, std::string& name) const override;
+	void FileInfoSize(unsigned int fid, int& size) const override;
 
 private:
 	CVirtualArchive* archive;
@@ -92,7 +93,8 @@ public:
 	unsigned int NumFiles() const { return (files.size()); }
 
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
-	void FileInfo(unsigned int fid, std::string& name, int& size) const;
+	void FileInfoName(unsigned int fid, std::string& name) const;
+	void FileInfoSize(unsigned int fid, int& size) const;
 
 	const std::string& GetFileName() const { return fileName; }
 	const spring::unordered_map<std::string, unsigned int>& GetNameIndex() const { return lcNameIndex; }

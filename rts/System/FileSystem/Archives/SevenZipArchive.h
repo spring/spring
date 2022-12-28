@@ -43,7 +43,8 @@ public:
 
 	unsigned int NumFiles() const override { return (fileEntries.size()); }
 	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
-	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	void FileInfoName(unsigned int fid, std::string& name) const override;
+	void FileInfoSize(unsigned int fid, int& size) const override;
 
 	#if 0
 	unsigned GetCrc32(unsigned int fid) {
