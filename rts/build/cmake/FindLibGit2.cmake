@@ -7,6 +7,6 @@ find_library(GIT2_LIBRARY NAMES git2
     HINTS ${GIT2_LIBRARYDIR}
 )
 
-find_package_handle_standard_args(LibGit2 DEFAULTMSG GIT2_INCLUDE_PATH GIT2_LIBRARY)
+find_package_handle_standard_args(LibGit2 DEFAULT_MSG GIT2_INCLUDE_PATH GIT2_LIBRARY)
 mark_as_advanced(GIT2_LIBRARYDIR GIT2_INCLUDE_PATH)
 
