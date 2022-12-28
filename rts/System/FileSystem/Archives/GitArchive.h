@@ -4,11 +4,19 @@
 #define _GIT_ARCHIVE_H
 
 #include <map>
-#include <git2.h>
 
 #include "IArchiveFactory.h"
 #include "IArchive.h"
 
+#ifndef LIBGIT2
+class CGitArchiveFactory : public IArchiveFactory {
+public:
+        CGitArchiveFactory():IArchiveFactory("git"){}
+private:
+	IArchive* DoCreateArchive(const std::string& filePath) const override { return nullptr;};
+};
+#else
+#include <git2.h>
 
 /**
  * Creates file-system/dir oriented archives.
@@ -55,5 +63,6 @@ private:
 	git_tree *tree_root = nullptr;
 	git_reference *reference_root = nullptr;
 };
+#endif
 
 #endif // _GIT_ARCHIVE_H
