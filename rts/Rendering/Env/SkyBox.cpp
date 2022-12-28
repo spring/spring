@@ -5,6 +5,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
+#include "System/BuildType/BuildType.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 
@@ -62,7 +63,8 @@ void CSkyBox::LoadTexture(const std::string& texture)
 
 void CSkyBox::LoadBuffer()
 {
-	#ifndef HEADLESS
+	if (BuildType::IsHeadless())
+		return;
 	const std::string& vsText = Shader::GetShaderSource("GLSL/SkyBoxVertProg.glsl");
 	const std::string& fsText = Shader::GetShaderSource("GLSL/SkyBoxFragProg.glsl");
 
@@ -90,13 +92,13 @@ void CSkyBox::LoadBuffer()
 	vtxPos = vtxPtr;
 
 	memset(vtxPos, 0, SKYBOX_BUFFER_LEN * sizeof(SkyBoxVertType));
-	#endif
 }
 
 
 void CSkyBox::Draw(Game::DrawMode mode)
 {
-	#ifndef HEADLESS
+	if (BuildType::IsHeadless())
+		return;
 	if (!globalRendering->drawSky)
 		return;
 
@@ -138,6 +140,5 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	glAttribStatePtr->EnableDepthMask();
 	glAttribStatePtr->EnableDepthTest();
-	#endif
 }
 

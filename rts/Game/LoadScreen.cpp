@@ -24,6 +24,7 @@
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "System/BuildType/BuildType.h"
 #include "System/Matrix44f.h"
 #include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
@@ -90,16 +91,15 @@ bool CLoadScreen::Init()
 	skirmishAIHandler.LoadPreGame();
 
 
-#ifdef HEADLESS
-	mtLoading = false;
-#else
-	const int mtCfg = configHandler->GetInt("LoadingMT");
-	// user override
-	mtLoading = (mtCfg > 0);
-	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
-	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
-#endif
-
+	if (BuildType::IsHeadless()) {
+		mtLoading = false;
+	} else {
+		const int mtCfg = configHandler->GetInt("LoadingMT");
+		// user override
+		mtLoading = (mtCfg > 0);
+		// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
+		mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
+	}
 
 	// Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
