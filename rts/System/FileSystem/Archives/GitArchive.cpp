@@ -12,6 +12,12 @@
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
+#ifndef LIBGIT2
+CGitArchiveFactory::CGitArchiveFactory():IArchiveFactory("git"){}
+IArchive* CGitArchiveFactory::DoCreateArchive(const std::string& filePath) const { return nullptr;};
+#else
+#include <git2.h>
+
 
 static void checkRet(int Error, char const * Message, std::string const & Extra = "")
 {
@@ -223,3 +229,4 @@ CGitArchive::~CGitArchive()
 	git_reference_free(reference_root);
 	git_libgit2_shutdown();
 }
+#endif

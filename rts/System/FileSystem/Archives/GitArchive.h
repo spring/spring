@@ -8,16 +8,11 @@
 #include "IArchiveFactory.h"
 #include "IArchive.h"
 
-#ifndef LIBGIT2
-class CGitArchiveFactory : public IArchiveFactory {
-public:
-        CGitArchiveFactory():IArchiveFactory("git"){}
-private:
-	IArchive* DoCreateArchive(const std::string& filePath) const override { return nullptr;};
-};
-#else
-#include <git2.h>
 
+struct git_blob;
+struct git_reference;
+struct git_tree;
+struct git_repository;
 /**
  * Creates file-system/dir oriented archives.
  * @see CDirArchive
@@ -63,6 +58,5 @@ private:
 	git_tree *tree_root = nullptr;
 	git_reference *reference_root = nullptr;
 };
-#endif
 
 #endif // _GIT_ARCHIVE_H
