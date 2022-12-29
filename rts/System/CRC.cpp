@@ -2,10 +2,7 @@
 
 #include "CRC.h"
 
-extern "C" {
-#include "lib/7z/7zCrc.h"
-}
-
+#include <7zCrc.h>
 
 CRC::CRC(): crc(CRC_INIT_VAL)
 {

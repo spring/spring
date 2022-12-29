@@ -3,10 +3,8 @@
 #ifndef _7ZIP_ARCHIVE_H
 #define _7ZIP_ARCHIVE_H
 
-extern "C" {
-#include "lib/7z/7zFile.h"
-#include "lib/7z/7z.h"
-}
+#include <7z.h>
+#include <7zFile.h>
 
 #include "IArchiveFactory.h"
 #include "BufferedArchive.h"
@@ -46,16 +44,6 @@ public:
 	void FileInfoName(unsigned int fid, std::string& name) const override;
 	void FileInfoSize(unsigned int fid, int& size) const override;
 
-	#if 0
-	unsigned GetCrc32(unsigned int fid) {
-		assert(IsFileId(fid));
-		return fileEntries[fid].crc;
-	}
-	#endif
-
-private:
-	int GetFileName(const CSzArEx* db, int i);
-
 private:
 	/**
 	 * How much more unpacked data may be allowed in a solid block,
@@ -78,12 +66,9 @@ private:
 		int fp;
 		/**
 		 * Real/unpacked size of the file in bytes.
-		 * @see #unpackedSize
-		 * @see #packedSize
 		 */
 		int size;
 		std::string origName;
-		unsigned int crc;
 		/**
 		 * How many bytes of files have to be unpacked to get to this file.
 		 * This either equal to size, or is larger, if there are other files
@@ -107,14 +92,11 @@ private:
 
 	UInt32 blockIndex = 0xFFFFFFFF;
 	size_t outBufferSize = 0;
-
 	Byte* outBuffer = nullptr;
-	// used for file names
-	UInt16 tempBuffer[2048];
 
 	CFileInStream archiveStream;
 	CSzArEx db;
-	CLookToRead lookStream;
+	CLookToRead2 lookStream;
 	ISzAlloc allocImp;
 	ISzAlloc allocTempImp;
 
