@@ -17,12 +17,6 @@ make_global_var(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/InputHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/KeyInput.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/MouseInput.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/CregLoadSaveHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/Demo.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/DemoReader.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/DemoRecorder.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/LoadSaveHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LoadSave/LuaLoadSaveHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LogOutput.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Main.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Matrix44f.cpp"
@@ -209,3 +203,4 @@ endif ()
 add_subdirectory(BuildType)
 add_subdirectory(FileSystem)
 add_subdirectory(Net)
+add_subdirectory(LoadSave)

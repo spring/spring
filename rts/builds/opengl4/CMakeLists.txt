@@ -61,19 +61,21 @@ if (APPLE)
 	list(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
 endif ()
 
-list(APPEND engineLibraries ${sound-impl})
-list(APPEND engineLibraries engineSystemNet)
-list(APPEND engineLibraries ${engineCommonLibraries})
-list(APPEND engineLibraries engineaGui)
-list(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
-list(APPEND engineLibraries engineSim)
-list(APPEND engineLibraries pr-downloader_static)
-
 
 
 ### Build the executable
 add_executable(engine-opengl4 ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-target_link_libraries(engine-opengl4 ${engineLibraries})
+target_link_libraries(engine-opengl4
+	${engineLibraries}
+	${sound-impl}
+	engineSystemNet
+	${engineCommonLibraries}
+	engineaGui
+	${SPRING_SIM_LIBRARIES}
+	engineSim
+	pr-downloader_static
+	engineLoadsave
+)
 target_include_directories(engine-opengl4 PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${Spring_SOURCE_DIR}/rts/lib/lua/include
