@@ -322,6 +322,7 @@ endif ()
 			${CMAKE_DL_LIBS}
 			unitsync
 			test_Log
+			7zip
 		)
 
 	set(test_flags UNITSYNC)

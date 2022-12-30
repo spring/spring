@@ -5,7 +5,6 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/Option.h"
 #include "System/Log/ILog.h"
-#include "System/VersionGenerated.h"
 
 #include <stdio.h>
 #include <stdlib.h>
