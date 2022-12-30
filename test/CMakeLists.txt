@@ -65,6 +65,7 @@ macro (add_spring_test target sources libraries flags)
 	target_include_directories(test_${target} PRIVATE
 		${ENGINE_SOURCE_DIR}
 		${ENGINE_SOURCE_DIR}/lib/asio/include
+		${CMAKE_SOURCE_DIR}/tools/pr-downloader/src/lib/7z
 		${CMAKE_BINARY_DIR}/src-generated/engine
 	)
 	target_compile_definitions(test_${target} PRIVATE
