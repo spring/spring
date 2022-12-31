@@ -13,8 +13,6 @@ set(archives_sources
 
 add_library(archives STATIC
 	${archives_sources}
-	${sources_engine_System_Log}
-	${sources_engine_System_Log_sinkConsole}
 )
 
 target_include_directories(archives
