@@ -226,4 +226,5 @@ target_include_directories(engineMisc
 target_link_libraries(engineMisc
 	PRIVATE
 		7zip
+		${IPHLPAPI_LIBRARY}
 )
