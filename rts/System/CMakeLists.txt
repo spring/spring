@@ -11,6 +11,7 @@ make_global_var(sources_engine_System_common
 	"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/StringUtil.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Threading/ThreadPool.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Main.cpp"
 )
 if    (NO_CREG)
 	make_global_var(sources_engine_System_creg )
@@ -174,7 +175,6 @@ add_library(engineMisc STATIC
 	Input/InputHandler.cpp
 	Input/KeyInput.cpp
 	LogOutput.cpp
-	Main.cpp
 	Matrix44f.cpp
 	Misc/RectangleOverlapHandler.cpp
 	Misc/SpringTime.cpp
