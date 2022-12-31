@@ -11,8 +11,9 @@ add_library(engineaGui STATIC
 	"${CMAKE_CURRENT_SOURCE_DIR}/Window.cpp"
 )
 target_include_directories(engineaGui PRIVATE
-	${Spring_SOURCE_DIR}/rts
-	${Spring_SOURCE_DIR}/rts/lib/slimsig/include
-	${SDL2_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR}
+		${Spring_SOURCE_DIR}/rts
+		${SDL2_INCLUDE_DIR}
+		${GLEW_INCLUDE_DIR}
+	PUBLIC
+		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
 )

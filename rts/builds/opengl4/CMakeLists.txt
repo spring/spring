@@ -74,13 +74,13 @@ target_link_libraries(engine-opengl4
 	${SPRING_SIM_LIBRARIES}
 	engineSim
 	pr-downloader_static
-	engineLoadsave
+	engineMisc
 )
 target_include_directories(engine-opengl4 PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${Spring_SOURCE_DIR}/rts/lib/lua/include
 	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
-	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
+	#${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
 	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
 	${OPENAL_INCLUDE_DIR}
 	${SDL2_INCLUDE_DIR}

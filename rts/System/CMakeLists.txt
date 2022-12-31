@@ -3,73 +3,25 @@
 # > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 make_global_var(sources_engine_System_common
-		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Color.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigVariable.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/CRC.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalConfig.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Info.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Input/InputHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Input/KeyInput.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Input/MouseInput.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LogOutput.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Main.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Matrix44f.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RectangleOverlapHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SpringTime.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Clipboard.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/errorhandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Misc.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SharedLib.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/ScopedFileLock.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SDL1_keysym.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Watchdog.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/WindowManagerHelper.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Rectangle.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SafeCStrings.c"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SplashScreen.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/StartScriptGen.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/DumpState.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SHA512.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncDebugger.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncedFloat3.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/backtrace.c"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/get_executable_name.c"
-		"${CMAKE_CURRENT_SOURCE_DIR}/TdfParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/ThreadPool.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/UriParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/StringHash.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/StringUtil.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SpringMath.cpp"
-	)
+	"${CMAKE_CURRENT_SOURCE_DIR}/GlobalConfig.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Input/MouseInput.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Platform/errorhandler.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/SplashScreen.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/StringUtil.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Threading/ThreadPool.cpp"
+)
 if    (NO_CREG)
 	make_global_var(sources_engine_System_creg )
 else ()
 	make_global_var(sources_engine_System_creg
-			"${CMAKE_CURRENT_SOURCE_DIR}/creg/SerializeLuaState.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
-		)
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/SerializeLuaState.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
+	)
 endif ()
 make_global_var(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveNameResolver.cpp"
@@ -142,17 +94,15 @@ set(sources_engine_System_Threading_Windows
 	)
 
 
-if(CMAKE_VERSION VERSION_GREATER 3.1.2)
-	target_sources(platform_sources
-		PRIVATE
-			${sources_engine_System_Platform_Windows}
-			${sources_engine_System_Platform_Linux}
-			${sources_engine_System_Platform_Mac}
-			${sources_engine_System_Threading_Windows}
-			${sources_engine_System_Threading_Linux}
-			${sources_engine_System_Threading_Mac}
-		)
-endif ()
+target_sources(platform_sources
+	PRIVATE
+		${sources_engine_System_Platform_Windows}
+		${sources_engine_System_Platform_Linux}
+		${sources_engine_System_Platform_Mac}
+		${sources_engine_System_Threading_Windows}
+		${sources_engine_System_Threading_Linux}
+		${sources_engine_System_Threading_Mac}
+	)
 
 set(sources_engine_System_Threading
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CpuID.cpp"
@@ -203,4 +153,76 @@ endif ()
 add_subdirectory(BuildType)
 add_subdirectory(FileSystem)
 add_subdirectory(Net)
-add_subdirectory(LoadSave)
+
+add_library(engineMisc STATIC
+	LoadSave/CregLoadSaveHandler.cpp
+	LoadSave/Demo.cpp
+	LoadSave/DemoReader.cpp
+	LoadSave/DemoRecorder.cpp
+	LoadSave/LoadSaveHandler.cpp
+	LoadSave/LuaLoadSaveHandler.cpp
+	AIScriptHandler.cpp
+	Color.cpp
+	Config/ConfigHandler.cpp
+	Config/ConfigLocater.cpp
+	Config/ConfigSource.cpp
+	Config/ConfigVariable.cpp
+	CRC.cpp
+	EventClient.cpp
+	EventHandler.cpp
+	Info.cpp
+	Input/InputHandler.cpp
+	Input/KeyInput.cpp
+	LogOutput.cpp
+	Main.cpp
+	Matrix44f.cpp
+	Misc/RectangleOverlapHandler.cpp
+	Misc/SpringTime.cpp
+	Object.cpp
+	OffscreenGLContext.cpp
+	Option.cpp
+	Platform/Clipboard.cpp
+	Platform/Misc.cpp
+	Platform/SharedLib.cpp
+	Platform/ScopedFileLock.cpp
+	Platform/SDL1_keysym.cpp
+	Platform/Watchdog.cpp
+	Platform/WindowManagerHelper.cpp
+	Rectangle.cpp
+	SafeCStrings.c
+	StartScriptGen.cpp
+	Sync/DumpState.cpp
+	Sync/FPUCheck.cpp
+	Sync/Logger.cpp
+	Sync/SHA512.cpp
+	Sync/SyncChecker.cpp
+	Sync/SyncDebugger.cpp
+	Sync/SyncedFloat3.cpp
+	Sync/backtrace.c
+	Sync/get_executable_name.c
+	TdfParser.cpp
+	TimeProfiler.cpp
+	TimeUtil.cpp
+	UriParser.cpp
+	StringHash.cpp
+	type2.cpp
+	float3.cpp
+	float4.cpp
+	SpringMath.cpp
+)
+
+target_include_directories(engineMisc
+	PRIVATE
+		${Spring_SOURCE_DIR}/rts
+		${SDL2_INCLUDE_DIR}
+		${Spring_SOURCE_DIR}/rts/lib/lua/include	
+		${Spring_SOURCE_DIR}/tools/pr-downloader/src/lib/7z
+		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
+	PUBLIC
+		${SPRING_MINIZIP_INCLUDE_DIR}
+)
+
+target_link_libraries(engineMisc
+	PRIVATE
+		7zip
+)

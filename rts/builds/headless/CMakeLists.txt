@@ -24,7 +24,7 @@ target_link_libraries(engine-headless
 	engineSystemNet
 	${engineCommonLibraries}
 	engineSim
-	engineLoadsave
+	engineMisc
 	pr-downloader_static
 	no-sound
 )
