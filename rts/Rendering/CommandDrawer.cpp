@@ -549,13 +549,15 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai, GL::RenderDataB
 			} break;
 
 			case CMD_UNLOAD_UNITS: {
-				if (command.GetNumParams() == 5) {
+				if (command.GetNumParams() >= 4 && command.GetParam(3) > 0.0f) {
 					const float3& endPos = command.GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
 					glSurfaceCircle(rdb, {endPos, command.GetParam(3)}, cmdColors.unload, 20.0f);
 					lineDrawer.RestartWithColor(cmdColors.unload);
+				} else {
+					lineDrawer.DrawLineAndIcon(cmdID, command.GetPos(0), cmdColors.unload);
 				}
 			} break;
 
