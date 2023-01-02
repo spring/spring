@@ -1554,8 +1554,14 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 {
 	const UnitDef* unitDef = owner->unitDef;
 
-	const float sqSpreadDiv = (spread * spread) / 100.0f;
-	const float maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
+	float maxAttempts;
+
+	if (radius == 0.0f) {
+		maxAttempts = 1.0f;
+	} else {
+		const float sqSpreadDiv = Square(spread) / 100.0f;
+		maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
+	}
 
 	// radius is the size of the command unloading-zone (e.g. dragged by player);
 	// spread is the *minimum* distance between any pair of unloaded units which
