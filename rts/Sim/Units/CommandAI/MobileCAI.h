@@ -70,6 +70,13 @@ public:
 	bool SpotIsClear(float3 pos, CUnit* u);
 	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unloadee);
 
+	/**
+	 * @brief Move mobile units out of the unload spot.
+	 * @param pos Unload spot.
+	 * @return false if units were sent away, else true.
+	 */
+	bool ClearUnloadSpot(const float3& pos);
+
 	void UnloadUnits_Land(Command& c);
 	void UnloadUnits_Drop(Command& c);
 	void UnloadUnits_LandFlood(Command& c);
