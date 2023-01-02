@@ -1141,11 +1141,18 @@ void CGlobalRendering::InitGLState()
 		}
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glStencilMask(0xFF);
+		glClearStencil(0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
 		// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), minViewRange, maxViewRange));
 	} else {
+		// clear stencil buffer only
+		glStencilMask(0xFF);
+		glClearStencil(0);
+		glClear(GL_STENCIL_BUFFER_BIT);
+
 		// resize event, no need to reinitialize state in modern times
 		glAttribStatePtr->ViewPort(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	}

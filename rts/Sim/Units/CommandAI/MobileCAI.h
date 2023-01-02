@@ -70,6 +70,13 @@ public:
 	bool SpotIsClear(float3 pos, CUnit* u);
 	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unloadee);
 
+	/**
+	 * @brief Move mobile units out of the unload spot.
+	 * @param pos Unload spot.
+	 * @return false if units were sent away, else true.
+	 */
+	bool ClearUnloadSpot(const float3& pos);
+
 	void UnloadUnits_Land(Command& c);
 	void UnloadUnits_Drop(Command& c);
 	void UnloadUnits_LandFlood(Command& c);
@@ -95,13 +102,13 @@ public:
 protected:
 	bool slowGuard;
 	bool moveDir;
+	bool buggeringOff;
 
 	int cancelDistance = 1024;
 
 	/// last frame certain types of area-commands were handled, helps avoid infinite loops
 	int lastCommandFrame = -1;
 	int lastCloseInTry = -1;
-	int lastBuggerOffTime = -BUGGER_OFF_TTL;
 	int lastIdleCheck = 0;
 	int numNonMovingCalls = 0;
 

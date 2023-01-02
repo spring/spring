@@ -55,25 +55,26 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	box.x2 = 0.86f;
 	box.y2 = 0.8f;
 
+	float fontHeight = static_cast<float>(font->GetSize()) / globalRendering->viewSizeY;
 	exitBox.x1 = 0.31f;
-	exitBox.y1 = 0.02f;
+	exitBox.y1 = 0.02f - fontHeight / 2;
 	exitBox.x2 = 0.41f;
-	exitBox.y2 = 0.06f;
+	exitBox.y2 = 0.04f + fontHeight / 2;
 
 	playerBox.x1 = 0.05f;
 	playerBox.y1 = 0.62f;
 	playerBox.x2 = 0.15f;
-	playerBox.y2 = 0.65f;
+	playerBox.y2 = 0.62f + fontHeight;
 
 	sumBox.x1 = 0.16f;
 	sumBox.y1 = 0.62f;
 	sumBox.x2 = 0.26f;
-	sumBox.y2 = 0.65f;
+	sumBox.y2 = 0.62f + fontHeight;
 
 	difBox.x1 = 0.27f;
 	difBox.y1 = 0.62f;
 	difBox.x2 = 0.38f;
-	difBox.y2 = 0.65f;
+	difBox.y2 = 0.62f + fontHeight;
 
 	CBitmap bm;
 	if (!bm.Load("bitmaps/graphPaper.bmp"))
@@ -251,7 +252,7 @@ void CEndGameBox::Draw()
 
 
 	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
-	font->glPrint(box.x1 +   exitBox.x1 + 0.025f, box.y1 +   exitBox.y1 + 0.005f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Exit");
+	font->glPrint(box.x1 + (exitBox.x1 + exitBox.x2) / 2, box.y1 + (exitBox.y1 + exitBox.y2) / 2, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Exit");
 	font->glPrint(box.x1 + playerBox.x1 + 0.015f, box.y1 + playerBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Player stats");
 	font->glPrint(box.x1 +    sumBox.x1 + 0.015f, box.y1 +    sumBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team stats");
 	font->glPrint(box.x1 +    difBox.x1 + 0.015f, box.y1 +    difBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team delta stats");
@@ -378,7 +379,7 @@ void CEndGameBox::Draw()
 
 
 
-		float ypos = 0.55f;
+		float ypos = 0.555f;
 		float maxy = 1.0f;
 
 		for (const auto& stat: stats) {
@@ -405,18 +406,19 @@ void CEndGameBox::Draw()
 			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%02i:%02i", mins, secs);
 		}
 
-		font->glPrint(box.x1 + 0.55f, box.y1 + 0.65f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED,                 stats[stat1].name     );
-		font->glPrint(box.x1 + 0.55f, box.y1 + 0.63f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, (stat2 != -1) ? stats[stat2].name : "");
+		font->glPrint(box.x1 + 0.555f, box.y1 + 0.66f, 0.8f, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED,                 stats[stat1].name     );
+		font->glPrint(box.x1 + 0.555f, box.y1 + 0.64f, 0.8f, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, (stat2 != -1) ? stats[stat2].name : "");
 
 
 
 		bufferC->SafeAppend({{box.x1 + 0.50f, box.y1 + 0.66f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
 		bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.66f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
 
-		// no more stippling, minor sacrifice
-		// glLineStipple(3, 0x5555);
-		bufferC->SafeAppend({{box.x1 + 0.50f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
-		bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+		if (stat2 != -1) {
+			// FIXME: Line stippling is gone with OpenGL4. Use another method to differentiate between stats selected with left and right button.
+			bufferC->SafeAppend({{box.x1 + 0.50f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+			bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+		}
 
 
 		for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
@@ -449,8 +451,7 @@ void CEndGameBox::Draw()
 			if (stat2 != -1) {
 				const std::vector<float>& statValues = stats[stat2].values[teamNum];
 
-				// ditto
-				// glLineStipple(3, 0x5555);
+				// FIXME: Line stippling is gone with OpenGL4. Use another method to differentiate between stats selected with left and right button.
 
 				for (size_t a = 0, n = numPoints - 1; a < n; ++a) {
 					float v0 = 0.0f;

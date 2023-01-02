@@ -68,12 +68,12 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(tempOrder),
 	CR_MEMBER(slowGuard),
 	CR_MEMBER(moveDir),
+	CR_MEMBER(buggeringOff),
 
 	CR_MEMBER(cancelDistance),
 
 	CR_MEMBER(lastCommandFrame),
 	CR_MEMBER(lastCloseInTry),
-	CR_MEMBER(lastBuggerOffTime),
 	CR_MEMBER(numNonMovingCalls),
 	CR_MEMBER(lastIdleCheck)
 ))
@@ -89,7 +89,8 @@ CMobileCAI::CMobileCAI():
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f)
+	moveDir(gsRNG.NextFloat() > 0.5f),
+	buggeringOff(false)
 {}
 
 
@@ -104,7 +105,8 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f)
+	moveDir(gsRNG.NextFloat() > 0.5f),
+	buggeringOff(false)
 {
 	CalculateCancelDistance();
 
@@ -991,15 +993,15 @@ void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
 	if (radius < 0.0f) {
 		// AttachUnit call
-		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}
 
-	lastBuggerOffTime = gs->frameNum;
 	// numNonMovingCalls = 0;
 
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
+
+	buggeringOff = true;
 }
 
 void CMobileCAI::NonMoving()
@@ -1012,7 +1014,7 @@ void CMobileCAI::NonMoving()
 	if (owner->UsingScriptMoveType())
 		return;
 
-	if (lastBuggerOffTime <= (gs->frameNum - BUGGER_OFF_TTL))
+	if (!buggeringOff)
 		return;
 
 	if (((owner->pos - buggerOffPos) * XZVector).SqLength() >= Square(buggerOffRadius * 1.5f))
@@ -1052,6 +1054,8 @@ void CMobileCAI::NonMoving()
 	c.SetTimeOut(gs->frameNum + BUGGER_OFF_TTL);
 	commandQue.push_front(c);
 
+	lastBuggerGoalPos = buggerPos;
+
 	numNonMovingCalls = 0;
 }
 
@@ -1063,6 +1067,7 @@ void CMobileCAI::FinishCommand()
 		lastUserGoal = owner->pos;
 
 	tempOrder = false;
+	buggeringOff = false;
 
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
@@ -1097,7 +1102,8 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 		NonMoving();
 		return false;
 	}
-	if ((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) {
+	if (((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) ||
+		((owner->pos - lastBuggerGoalPos).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST))) {
 		NonMoving();
 		return false;
 	}
@@ -1548,8 +1554,14 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 {
 	const UnitDef* unitDef = owner->unitDef;
 
-	const float sqSpreadDiv = (spread * spread) / 100.0f;
-	const float maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
+	float maxAttempts;
+
+	if (radius == 0.0f) {
+		maxAttempts = 1.0f;
+	} else {
+		const float sqSpreadDiv = Square(spread) / 100.0f;
+		maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
+	}
 
 	// radius is the size of the command unloading-zone (e.g. dragged by player);
 	// spread is the *minimum* distance between any pair of unloaded units which
@@ -1742,6 +1754,22 @@ bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<
 	return (!dropSpots.empty());
 }
 
+bool CMobileCAI::ClearUnloadSpot(const float3& pos)
+{
+	const auto& transportees = owner->transportedUnits;
+	const float radius = (transportees.front().unit)->radius + owner->unitDef->unloadSpread;
+
+	QuadFieldQuery qfQuery;
+	quadField.GetUnitsExact(qfQuery, pos, radius, false);
+	for (CUnit* unit: *qfQuery.units) {
+		if (unit != owner && !unit->transporter && !unit->unitDef->IsImmobileUnit()) {
+			CGameHelper::BuggerOff(pos, radius, false, true, owner->team, owner);
+			return false;
+		}
+	}
+
+	return true;
+}
 
 void CMobileCAI::UnloadUnits_Land(Command& c)
 {
@@ -1750,10 +1778,21 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 
 	float3 unloadPos;
 
-	for (const CUnit::TransportedUnit& tu: transportees) {
-		const float3 pos = c.GetPos(0);
+	const float3 pos = c.GetPos(0);
 
-		const float radius = c.GetParam(3);
+	const float radius = c.GetParam(3);
+
+	const float dist = std::max(64.0f, owner->unitDef->loadingRadius - radius);
+
+	if (pos.SqDistance2D(owner->pos) > Square(dist)) {
+		SetGoal(pos, owner->pos, dist);
+		return;
+	}
+
+	if (radius == 0.0f && !ClearUnloadSpot(pos))
+		return;
+
+	for (const CUnit::TransportedUnit& tu: transportees) {
 		const float spread = (tu.unit)->radius * owner->unitDef->unloadSpread;
 
 		if (FindEmptySpot(tu.unit, pos, radius, spread, unloadPos)) {
@@ -1811,15 +1850,26 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 	const float radius = c.GetParam(3);
 	const float dist = std::max(64.0f, owner->unitDef->loadingRadius - radius);
 
-	if (pos.SqDistance2D(owner->pos) > dist) {
+	if (pos.SqDistance2D(owner->pos) > Square(dist)) {
 		SetGoal(pos, owner->pos, dist);
 		return;
 	}
 
-	const auto& transportees = owner->transportedUnits;
-	const CUnit* transportee = transportees[0].unit;
+	if (radius == 0.0f && !ClearUnloadSpot(pos))
+		return;
 
-	if (FindEmptySpot(transportee, pos, radius, transportee->radius * owner->unitDef->unloadSpread, found)) {
+	const auto& transportees = owner->transportedUnits;
+	
+	// Determine biggest cargo.
+	const CUnit* biggestCargo = transportees[0].unit;
+	for (const auto& transportee : transportees) {
+		if (transportee.unit->radius > biggestCargo->radius) {
+			biggestCargo = transportee.unit;
+		}
+	}
+
+	// Find spot to unload all units.
+	if (FindEmptySpot(biggestCargo, pos, radius, biggestCargo->radius * owner->unitDef->unloadSpread, found)) {
 		commandQue.push_front(Command(CMD_UNLOAD_UNIT, c.GetOpts() | INTERNAL_ORDER, found));
 		SlowUpdate();
 		return;
@@ -1868,6 +1918,9 @@ void CMobileCAI::UnloadLand(Command& c)
 	wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, transportee);
 
 	if ((am = dynamic_cast<CHoverAirMoveType*>(owner->moveType)) == nullptr) {
+		if (!ClearUnloadSpot(wantedPos))
+			return;
+
 		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, true))
 			return;
 
@@ -1892,6 +1945,9 @@ void CMobileCAI::UnloadLand(Command& c)
 		const bool isInRange = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
 		const bool isAligned = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
 		const bool isUpright = (owner->updir.dot(UpVector) > 0.99f);
+
+		if (!ClearUnloadSpot(wantedPos))
+			return;
 
 		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, isInRange && isAligned && isUpright))
 			return;
@@ -1964,11 +2020,10 @@ void CMobileCAI::UnloadLandFlood(Command& c)
 	// land, then release all units at once
 	CUnit* transportee = nullptr;
 
-	float3 wantedPos = c.GetPos(0);
+	float3 pos = c.GetPos(0);
+	float3 wantedPos = pos;
 
 	const auto& transportees = owner->transportedUnits;
-
-	SetGoal(wantedPos, owner->pos);
 
 	if (c.GetNumParams() < 4) {
 		transportee = transportees[0].unit;
@@ -1989,42 +2044,61 @@ void CMobileCAI::UnloadLandFlood(Command& c)
 		}
 	}
 
-	if (wantedPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
+	if (wantedPos.SqDistance2D(owner->pos) >= Square(owner->unitDef->loadingRadius * 0.9f)) {
+		SetGoal(wantedPos, owner->pos);
+	} else {
 		CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 		wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, transportee);
 
 		if (am != nullptr) {
-			// lower to ground
-			SetGoal(wantedPos, owner->pos);
+			if (am->aircraftState != am->AIRCRAFT_LANDED) {
+				// lower to ground
+				SetGoal(wantedPos, owner->pos);
 
-			am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
-			am->ForceHeading(owner->GetTransporteeWantedHeading(transportee));
-			am->SetAllowLanding(true);
-			am->maxDrift = 1.0f;
+				am->SetWantedAltitude(std::max(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z), 0.01f));
+				am->ForceHeading(owner->GetTransporteeWantedHeading(transportee));
+				am->SetAllowLanding(true);
+				am->maxDrift = 1.0f;
 
-			// once at ground
-			if (owner->pos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z) < SQUARE_SIZE) {
-				// nail it to the ground before it tries jumping up, only to land again...
-				am->SetState(am->AIRCRAFT_LANDED);
-				// call this so that other animations such as opening doors may be started
-				owner->script->TransportDrop(transportees[0].unit, wantedPos);
-				owner->DetachUnitFromAir(transportee, wantedPos);
+				if (!ClearUnloadSpot(pos))
+					return;
+
+				// once at ground
+				if (math::fabs(owner->pos.y - wantedPos.y) < SQUARE_SIZE) {
+					// nail it to the ground before it tries jumping up, only to land again...
+					am->SetState(am->AIRCRAFT_LANDED);
+				}
+			}
+
+			if (am->aircraftState == am->AIRCRAFT_LANDED) {
+				for (const auto& cargo : transportees) {
+					// call this so that other animations such as opening doors may be started
+					owner->script->TransportDrop(cargo.unit, wantedPos);
+					owner->DetachUnitFromAir(cargo.unit, wantedPos);
+				}
 
 				FinishCommand();
 
 				if (transportees.empty()) {
 					am->SetAllowLanding(true);
 					owner->script->EndTransport();
-					am->UpdateLanded();
+
+					if (am->dontLand || !am->autoLand)
+						am->SetState(am->AIRCRAFT_TAKEOFF);
 				}
 			}
 		} else {
+			if (!ClearUnloadSpot(pos))
+				return;
+
 			// land transports
 			inCommand = true;
 
 			StopMove();
-			owner->script->TransportDrop(transportee, wantedPos);
-			owner->DetachUnitFromAir(transportee, wantedPos);
+			for (const auto& cargo : transportees) {
+				owner->script->TransportDrop(cargo.unit, wantedPos);
+				owner->DetachUnitFromAir(cargo.unit, wantedPos);
+			}
 
 			if (transportees.empty()) {
 				owner->script->EndTransport();
