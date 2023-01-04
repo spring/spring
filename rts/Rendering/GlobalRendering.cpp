@@ -58,7 +58,6 @@ CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 
-
 /**
  * @brief global rendering
  *
@@ -382,6 +381,11 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 {
+
+#ifdef __linux
+	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+#endif
+
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
 		return false;
