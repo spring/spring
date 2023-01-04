@@ -41,6 +41,7 @@
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -1469,27 +1470,55 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-	if ((lua_gettop(L) >= 6) && lua_isnumber(L, 6)) {
-		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 8, 0));
+	// FIXME: This setup can be omitted for consecutive calls in the same frame.
+	bool onMiniMap = (currDrawMode == DRAW_MINIMAP_BACKGROUND || currDrawMode == DRAW_MINIMAP);
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
+
+	float width = luaL_optfloat(L, 10, 1.0f);
+
+	GL::WideLineAdapterC* wla = nullptr;
+	if (width != 1.0f) {
+		wla = GL::GetWideLineAdapterC();
+		const int xScale = onMiniMap? minimap->GetSizeX(): globalRendering->viewSizeX;
+		const int yScale = onMiniMap? minimap->GetSizeY(): globalRendering->viewSizeY;
+		wla->Setup(buffer, xScale, yScale, width, projMat * viewMat, onMiniMap);
+	}
+
+	if (lua_gettop(L) >= 11 && lua_isnumber(L, 11)) {
+		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 11, 0));
 
 		if (wd == nullptr)
 			return 0;
 
 		const float  radius = luaL_checkfloat(L, 4);
-		const float   slope = luaL_checkfloat(L, 6);
-		const float gravity = luaL_optfloat(L, 7, mapInfo->map.gravity);
+		const float   slope = luaL_optfloat(L, 12, 0.0f);
+		const float gravity = luaL_optfloat(L, 13, mapInfo->map.gravity);
 
 		const float4 defColor = cmdColors.rangeAttack;
-		const float4 argColor = {luaL_optfloat(L, 8, defColor.x), luaL_optfloat(L, 9, defColor.y), luaL_optfloat(L, 10, defColor.z), 1.0f};
+		const float4 argColor = {luaL_optfloat(L, 6, defColor.r), luaL_optfloat(L, 7, defColor.g), luaL_optfloat(L, 8, defColor.b), luaL_optfloat(L, 9, defColor.a)};
 
 		glSetupRangeRingDrawState();
-		glBallisticCircle(buffer, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		if (wla == nullptr) {
+			glBallisticCircle(buffer, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		} else {
+			glBallisticCircleW(wla, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		}
 		glResetRangeRingDrawState();
 	} else {
-		glSurfaceCircle(buffer, {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
-		// immediate submission
-		buffer->Submit(GL_LINES);
+		if (wla == nullptr) {
+			glSurfaceCircle(buffer, {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 6, 1.0f), luaL_optfloat(L, 7, 1.0f), luaL_optfloat(L, 8, 1.0f), luaL_optfloat(L, 9, 1.0f)}, luaL_checkint(L, 5));
+			buffer->Submit(GL_LINES);
+		} else {
+			glSurfaceCircleW(wla, {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 6, 1.0f), luaL_optfloat(L, 7, 1.0f), luaL_optfloat(L, 8, 1.0f), luaL_optfloat(L, 9, 1.0f)}, luaL_checkint(L, 5));
+			wla->Submit(GL_LINES);
+		}
 	}
 
 	return 0;

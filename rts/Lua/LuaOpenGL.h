@@ -259,7 +259,17 @@ class LuaOpenGL {
 
 
 		static int DrawFuncAtUnit(lua_State* L);
+
+		/**
+		 * @brief Draw ground circle or ballistic ground circle.
+		 * @details Lua calls:
+		 * DrawGroundCircle(x, y, z, radius, numSegments, r=1, g=1, b=1, a=1, width=1)
+		 * DrawGroundCircle(x, y, z, radius, numSegments, r, g, b, a, width, weaponDefID, slope=0, gravity=map.gravity)
+		 * @param L Lua state.
+		 * @return Always zero.
+		 */
 		static int DrawGroundCircle(lua_State* L);
+
 		static int DrawGroundQuad(lua_State* L);
 
 		static int ClipDist(lua_State* L);
