@@ -382,8 +382,12 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 {
 
-#ifdef __linux
+#if defined(__linux)
+#if defined(SDL_HINT_VIDEODRIVER)
 	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+#else
+	#warning SDL_HINT_VIDEODRIVER not supported, update SDL!
+#endif
 #endif
 
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
