@@ -118,7 +118,6 @@ class LuaOpenGL {
 		static void ResetDrawInMiniMapBackground();
 		static void DisableDrawInMiniMapBackground();
 
-		inline static void InitMatrixState(lua_State* L, const char* fn);
 		inline static void CheckMatrixState(lua_State* L, const char* fn, int error);
 
 	protected:
@@ -321,18 +320,6 @@ class LuaOpenGL {
 		static int GetWaterRendering(lua_State* L);
 		static int GetMapRendering(lua_State* L);
 };
-
-inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {
-#if !defined(NDEBUG) && !defined(HEADLESS)
-	if (IsDrawingEnabled(L)) {
-		GLint curmode; // the matrix mode should be set to GL_MODELVIEW before calling any lua code
-		glGetIntegerv(GL_MATRIX_MODE, &curmode);
-		if (curmode != GL_MODELVIEW)
-			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", fn);
-		GL::MatrixMode(GL_MODELVIEW);
-	}
-#endif
-}
 
 inline void LuaOpenGL::CheckMatrixState(lua_State* L, const char* fn, int error) {
 	if (!GetLuaContextData(L)->glMatrixTracker.HasMatrixStateError())
