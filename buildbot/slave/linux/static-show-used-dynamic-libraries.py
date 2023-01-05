@@ -36,8 +36,10 @@ for line in output.split("\n"):
 
 exitcode = 0
 for lib in libs:
-	if not lib in allowed_libs:
-		print("linked to not whitelisted lib:", lib)
+	if lib in allowed_libs:
+		print("OK: ", lib)
+	else:
+		print("WARN: ", lib)
 		exitcode = 1
 
 sys.exit(exitcode)
