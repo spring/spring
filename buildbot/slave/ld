@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Surrounds the linker command with a lock, so that
-# only one linker process can run at any one time.
-
-# The real linker should be renamed to `ld.orig'
-
-echo "DEBUG: $0 $@"
-exec /usr/bin/flock / $0.orig $@
