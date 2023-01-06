@@ -316,7 +316,6 @@ int CLuaHandle::RunCallInTraceback(
 
 			if (canDraw) {
 				prevMatState = matTracker.PushMatrixState();
-				LuaOpenGL::InitMatrixState(state, luaFunc);
 			}
 
 			top = lua_gettop(state);
