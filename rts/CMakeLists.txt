@@ -45,19 +45,6 @@ endif ()
 
 ### Find include directories and add platform specific libraries
 if    (UNIX AND NOT MINGW)
-	if    (PREFER_STATIC_LIBS)
-		prefer_static_libs()
-		#find_library(C_LIBRARY c)
-		find_library(MATH_LIBRARY m)
-		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
-		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
-		unprefer_static_libs()
-		# can't link to libc: is basicly unsupported (requires i.e. musl and not libc)
-		#list(APPEND engineCommonLibraries ${C_LIBRARY})
-		list(APPEND engineCommonLibraries ${MATH_LIBRARY})
-		#list(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
-	endif ()
-
 	# Needed for dynamically loading shared libraries (on some OS)
 	list(APPEND engineCommonLibraries ${CMAKE_DL_LIBS})
 
