@@ -84,6 +84,10 @@ else ()
 	set(MACOSX_BUNDLE FALSE)
 endif ()
 
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
 ### Compiler flags and defines based on build type
 include(TestCXXFlags)
 

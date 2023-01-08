@@ -133,12 +133,6 @@ else ()
 	message(WARNING "linker doesn't support -Wl,--exclude-libs,ALL this leads to a broken unitsync.so")
 endif ()
 
-set_target_properties(unitsync PROPERTIES
-	C_VISIBILITY_PRESET hidden
-	CXX_VISIBILITY_PRESET hidden
-	VISIBILITY_INLINES_HIDDEN ON
-)
-
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif ()
