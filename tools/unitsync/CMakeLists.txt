@@ -135,6 +135,7 @@ endif ()
 
 set_target_properties(unitsync PROPERTIES
 	C_VISIBILITY_PRESET hidden
+	CXX_VISIBILITY_PRESET hidden
 	VISIBILITY_INLINES_HIDDEN ON
 )
 
