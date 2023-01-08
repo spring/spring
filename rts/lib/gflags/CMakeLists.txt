@@ -70,7 +70,7 @@
 ## - GFLAGS_INSTALL_SHARED_LIBS
 ## - GFLAGS_INSTALL_STATIC_LIBS
 
-cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.3 FATAL_ERROR)
 
 if (POLICY CMP0042)
   cmake_policy (SET CMP0042 NEW)
