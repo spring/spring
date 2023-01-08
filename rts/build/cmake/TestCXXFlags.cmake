@@ -5,8 +5,6 @@
 # They will be empty if the flag is not supported,
 # or contain the flag if it is supported.
 #
-# VISIBILITY_HIDDEN            -fvisibility=hidden
-# VISIBILITY_INLINES_HIDDEN    -fvisibility-inlines-hidden
 # SSE_FLAGS                    -msse -mfpmath=sse
 # IEEE_FP_FLAG                 -fvisibility-inlines-hidden
 # LTO_FLAGS                    -flto -fwhopr
@@ -27,24 +25,6 @@ macro (CHECK_AND_ADD_FLAGS dest)
 		endif ()
 	endforeach ()
 endmacro ()
-
-
-
-if (NOT DEFINED VISIBILITY_HIDDEN)
-	set(VISIBILITY_HIDDEN "")
-	if (NOT WIN32 AND NOT APPLE)
-		check_and_add_flags(VISIBILITY_HIDDEN -fvisibility=hidden)
-	endif ()
-endif ()
-
-
-if (NOT DEFINED VISIBILITY_INLINES_HIDDEN)
-	set(VISIBILITY_INLINES_HIDDEN "")
-	if (NOT WIN32)
-		check_and_add_flags(VISIBILITY_INLINES_HIDDEN -fvisibility-inlines-hidden)
-	endif ()
-endif ()
-
 
 if (NOT DEFINED SSE_FLAGS)
 	if (MSVC)
