@@ -2,7 +2,6 @@
 
 #include "ArchiveNameResolver.h"
 
-#include "Game/GlobalUnsynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
@@ -98,17 +97,15 @@ namespace ArchiveNameResolver {
 	}
 
 
-	static bool GetRandomGame(const std::string& lazyName, std::string* applicableName)
+	static bool GetRandomGame(const std::string& lazyName, std::string& applicableName)
 	{
-#if !defined(UNITSYNC) && !defined(DEDICATED)
 		if (lazyName == "random") {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
-				*applicableName = games[guRNG.NextInt(games.size())].GetNameVersioned();
+				applicableName = games[0].GetNameVersioned();
 				return true;
 			}
 		}
-#endif //UNITSYNC
 		return false;
 	}
 
@@ -176,17 +173,15 @@ namespace ArchiveNameResolver {
 	}
 
 
-	static bool GetRandomMap(const std::string& lazyName, std::string* applicableName)
+	static bool GetRandomMap(const std::string& lazyName, std::string& applicableName)
 	{
-#if !defined(UNITSYNC) && !defined(DEDICATED)
 		if (lazyName == "random") {
 			const std::vector<std::string>& maps = archiveScanner->GetMaps();
 			if (!maps.empty()) {
-				*applicableName = maps[guRNG.NextInt(maps.size())];
+				applicableName = maps[0];
 				return true;
 			}
 		}
-#endif //UNITSYNC
 		return false;
 	}
 
@@ -214,7 +209,7 @@ std::string GetGame(const std::string& lazyName)
 	if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 	if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
 	if (GetGameByRapidTag(lazyName, applicableName))   return applicableName;
-	if (GetRandomGame(lazyName, &applicableName))      return applicableName;
+	if (GetRandomGame(lazyName, applicableName))      return applicableName;
 	if (lazyName == "last")                            return configHandler->GetString("LastSelectedMod");
 
 	return lazyName;
@@ -225,7 +220,7 @@ std::string GetMap(const std::string& lazyName)
 	std::string applicableName = lazyName;
 	if (GetMapByExactName(lazyName, &applicableName)) return applicableName;
 	if (GetMapBySubString(lazyName, &applicableName)) return applicableName;
-	if (GetRandomMap(lazyName, &applicableName))      return applicableName;
+	if (GetRandomMap(lazyName, applicableName))      return applicableName;
 	if (lazyName == "last")	                          return configHandler->GetString("LastSelectedMap");
 	//TODO add a string similarity search?
 
