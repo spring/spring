@@ -10,6 +10,9 @@ Misc:
 Lua:
  - add SyncedPlayerChanged callin: similar to PlayerChanged, not called for demo-watching spectators but available for synced Lua
 
+Unitsync:
+ ! remove IsSpringReleaseVersion() / GetSpringVersionPatchset()
+
 -- 106.0 --------------------------------------------------------
 Sim:
  - allow resurrecting indestructable features

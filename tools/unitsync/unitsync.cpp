@@ -2400,19 +2400,5 @@ private:
 	msg.print(); \
 	SetLastError("deprecated unitsync function called: " \
 			+ std::string(__FUNCTION__))
-
-
-EXPORT(const char*) GetSpringVersionPatchset()
-{
-	DEPRECATED;
-	return "";
-}
-
-
-EXPORT(bool) IsSpringReleaseVersion()
-{
-	DEPRECATED;
-	return false;
-}
 #endif
 
