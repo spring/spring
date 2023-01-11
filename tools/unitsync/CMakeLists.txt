@@ -113,7 +113,7 @@ target_compile_definitions(unitsync PRIVATE
 	HEADLESS
 	NO_SOUND
 	BITMAP_NO_OPENGL
-	# ENABLE_DEPRECATED_FUNCTIONS
+	ENABLE_DEPRECATED_FUNCTIONS
 )
 
 # hide exported symbols

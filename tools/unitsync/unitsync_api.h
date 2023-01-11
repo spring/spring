@@ -1089,6 +1089,8 @@ EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
 /* deprecated functions */
 
 #ifdef ENABLE_DEPRECATED_FUNCTIONS
+EXPORT(const char* ) GetSpringVersionPatchset();
+EXPORT(bool        ) IsSpringReleaseVersion();
 #endif // ENABLE_DEPRECATED_FUNCTIONS
 /** @} */
 
