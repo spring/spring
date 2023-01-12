@@ -154,7 +154,7 @@ private:
 	 *                              {{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}})
 	 *
 	 * @param L Lua state.
-	 * @return 1 on success, else 0.
+	 * @return Always 0.
 	 */
 	static int Vertices(lua_State* L);
 
@@ -187,7 +187,7 @@ private:
 	 * Example: Spring.Draw.Lines({10, 10}, {10, 100}, {100, 100}, {width=5, color={0.5,0,0,1}, loop=true})
 	 *
 	 * @param L Lua state.
-	 * @return 1 on success, else 0.
+	 * @return Always 0.
 	 */
 	static int Lines(lua_State* L);
 
@@ -215,7 +215,7 @@ private:
 	 * Example: Spring.Draw.Triangle({10, 10}, {10, 100}, {100, 100}, {color={0.5,0,0,1}})
 	 *
 	 * @param L Lua state.
-	 * @return 1 on success, else 0.
+	 * @return Always 0.
 	 */
 	static int Triangle(lua_State* L);
 
@@ -261,7 +261,7 @@ private:
 	 * Example: Spring.Draw.Rectangle({10, 10}, {100, 100}, {radius=5, color={0.5,0,0,1}, border=1, bordercolor={0,1,0,1}})
 	 *
 	 * @param L Lua state.
-	 * @return 1 on success, else 0.
+	 * @return Always 0.
 	 */
 	static int Rectangle(lua_State* L);
 
@@ -269,7 +269,7 @@ private:
 	 * @brief Reload and recompile shader programs if the files changed.
 	 * @details Note that this will not pick up changes of files in VFS.
 	 * @param L Lua state.
-	 * @return 1 on success, else 0.
+	 * @return Always 0.
 	 */
 	static int ReloadShaders(lua_State* L);
 

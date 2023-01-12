@@ -476,7 +476,7 @@ int LuaRender::Vertices(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Lines(lua_State* L)
@@ -656,7 +656,7 @@ int LuaRender::Lines(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Triangle(lua_State* L)
@@ -782,7 +782,7 @@ int LuaRender::Triangle(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Rectangle(lua_State* L)
@@ -1096,7 +1096,7 @@ int LuaRender::Rectangle(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::ReloadShaders(lua_State* L)
@@ -1110,5 +1110,5 @@ int LuaRender::ReloadShaders(lua_State* L)
 			program->Reload(true, true);
 		}
 	}
-	return 1;
+	return 0;
 }
