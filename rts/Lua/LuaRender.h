@@ -39,6 +39,13 @@ public:
 	static bool PushEntries(lua_State* L);
 
 private:
+#ifdef HEADLESS
+	static int Vertices(lua_State* L) { return 1; };
+	static int Lines(lua_State* L) { return 1; };
+	static int Triangle(lua_State* L) { return 1; };
+	static int Rectangle(lua_State* L) { return 1; };
+	static int ReloadShaders(lua_State* L) { return 1; };
+#else
 	/**
 	 * @brief Texture transformations.
 	 */
@@ -307,6 +314,7 @@ private:
 	 * @brief Current offset in vertex buffer.
 	 */
 	static GLuint sVertexBufferOffset;
+#endif
 };
 
 #endif /* LUA_RENDER_H */
