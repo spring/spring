@@ -86,7 +86,11 @@ endif ()
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+# FIXME:
+# https://springrts.com/mantis/view.php?id=6454
+# breaks static linking to pthread/glibc/...
+# either use musl or flatpak / appimage
+#set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 ### Compiler flags and defines based on build type
 include(TestCXXFlags)
