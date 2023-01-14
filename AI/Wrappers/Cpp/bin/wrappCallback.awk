@@ -20,7 +20,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS = "(\\()|(\\)\\;)";
+	FS = "(\\()|(\\);)";
 	IGNORECASE = 0;
 
 	# These vars can be assigned externally, see file header.
@@ -1415,7 +1415,7 @@ function doWrappMember(fullName_dwm) {
 #EXPORT(float) bridged_UnitDef_getUpkeep(int _skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
 function wrappFunctionDef(funcDef, commentEolTot) {
 
-	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged_)|(\\)\\;)");
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged_)|(\\);)");
 	# because the empty part after ");" would count as part as well
 	size_funcParts--;
 
@@ -1458,7 +1458,7 @@ function canDeleteDocumentation() {
 	# remove possible comment at end of line: // foo bar
 	sub(/\/\/.*$/, "", funcLine);
 	funcLine = trim(funcLine);
-	if (match(funcLine, /\;$/)) {
+	if (match(funcLine, /;$/)) {
 		wrappFunctionDef(funcLine, commentEol);
 	} else {
 		print("Error: Function not declared in a single line.");
