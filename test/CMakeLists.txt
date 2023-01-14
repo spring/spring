@@ -287,7 +287,10 @@ endif ()
 	if    (NOT NO_CREG)
 ################################################################################
 ### CREG
-		add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+
+add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+add_test(NAME testDedicated COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --version)
+add_test(NAME testEngine COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SUFFIX} --version)
 
 ### CREG LoadSave
 		set(test_name LoadSave)
