@@ -56,15 +56,5 @@ endif ()
 ### Install dependencies (windows, mingwlibs DLLs)
 if    (MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
-
-	#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libstdc++-6.dll" OUTPUT_VARIABLE STDCXX_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
-	#install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
-
-	# pthreadGC2 is a dependency of ThreadPool
-#	find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
-#	if(NOT EXISTS ${PTHREADGC2_LIBRARY})
-#		message(SEND_ERROR "pthreadGC2 not found!")
-#	endif ()
-#	install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
 endif ()
 
