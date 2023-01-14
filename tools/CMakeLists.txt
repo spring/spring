@@ -12,6 +12,7 @@ set(CLEAR_COMPILER_FLAGS true)
 set(PRD_TESTS OFF CACHE BOOL "" FORCE)
 set(PRD_BINDIR ${BINDIR} CACHE PATH "" FORCE)
 set(PRD_LIBDIR ${LIBDIR} CACHE PATH "" FORCE)
+set(PRD_SHAREDLIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(pr-downloader)
 # add install-pr-downloader target
 set(myInstallDeps pr-downloader)
