@@ -284,3 +284,10 @@ macro (make_global_var varname)
         set(${varname} ${ARGN} PARENT_SCOPE)
         set(${varname} ${ARGN})
 endmacro ()
+
+
+macro(make_target_invisible targetname)
+	set_target_properties(${targetname} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+	set_target_properties(${targetname} PROPERTIES C_VISIBILITY_PRESET hidden)
+	set_target_properties(${targetname} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+endmacro()

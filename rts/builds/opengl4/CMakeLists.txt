@@ -53,7 +53,7 @@ endif ()
 
 if    (UNIX)
 	find_package(X11 REQUIRED)
-	list(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
+	list(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB} Threads::Threads)
 endif ()
 
 if (APPLE)

@@ -36,6 +36,7 @@ if    (UNIX AND NOT MINGW)
 
 	# Needed for dynamically loading shared libraries (on some OS)
 	list(APPEND engineDedicatedLibraries ${CMAKE_DL_LIBS})
+	list(APPEND engineDedicatedLibraries Threads::Threads)
 
 	# Needed for backtrace* on some systems
 	if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")

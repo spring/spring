@@ -16,6 +16,7 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
 
+
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
 target_link_libraries(engine-headless
@@ -28,6 +29,10 @@ target_link_libraries(engine-headless
 	pr-downloader_static
 	no-sound
 )
+if (UNIX)
+	target_link_libraries(engine-headless Threads::Threads)
+endif()
+
 target_include_directories(engine-headless PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${Spring_SOURCE_DIR}/rts/lib/lua/include

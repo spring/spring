@@ -73,6 +73,7 @@ macro    (create_engine_build_and_install_target targetName)
 	target_link_libraries(engine-${targetName}
 		buildtype_${targetName}
 	)
+	make_target_invisible(engine-${targetName})
 endmacro ()
 
 

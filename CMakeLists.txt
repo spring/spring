@@ -84,14 +84,6 @@ else ()
 	set(MACOSX_BUNDLE FALSE)
 endif ()
 
-set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-# FIXME:
-# https://springrts.com/mantis/view.php?id=6454
-# breaks static linking to pthread/glibc/...
-# either use musl or flatpak / appimage
-#set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
-
 ### Compiler flags and defines based on build type
 include(TestCXXFlags)
 
@@ -450,12 +442,14 @@ else ()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
 	endif ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing")
-	if (UNIX)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-	endif ()
-	if    (MINGW)
+
+	if(UNIX)
+		find_package(Threads REQUIRED)
+	endif()
+
+	if(MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mthreads")
-	endif ()
+	endif()
 
 	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} ${CXX_RELWITHDEBINFO_DEFINES}")
