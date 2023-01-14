@@ -2,7 +2,7 @@
 // impl/error.ipp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2022 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -31,12 +31,12 @@ namespace detail {
 class netdb_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
   {
     return "asio.netdb";
   }
 
-  std::string message(int value) const override
+  std::string message(int value) const
   {
     if (value == error::host_not_found)
       return "Host not found (authoritative)";
@@ -63,12 +63,12 @@ namespace detail {
 class addrinfo_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
   {
     return "asio.addrinfo";
   }
 
-  std::string message(int value) const override
+  std::string message(int value) const
   {
     if (value == error::service_not_found)
       return "Service not found";
@@ -93,12 +93,12 @@ namespace detail {
 class misc_category : public asio::error_category
 {
 public:
-  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT override
+  const char* name() const ASIO_ERROR_CATEGORY_NOEXCEPT
   {
     return "asio.misc";
   }
 
-  std::string message(int value) const override
+  std::string message(int value) const
   {
     if (value == error::already_open)
       return "Already open";

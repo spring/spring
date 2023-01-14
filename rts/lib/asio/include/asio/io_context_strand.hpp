@@ -2,7 +2,7 @@
 // io_context_strand.hpp
 // ~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2022 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,8 @@
 
 #include "asio/detail/config.hpp"
 
-#if !defined(ASIO_NO_EXTENSIONS)
+#if !defined(ASIO_NO_EXTENSIONS) \
+  && !defined(ASIO_NO_TS_EXECUTORS)
 
 #include "asio/async_result.hpp"
 #include "asio/detail/handler_type_requirements.hpp"
@@ -87,6 +88,12 @@ namespace asio {
  */
 class io_context::strand
 {
+private:
+#if !defined(ASIO_NO_DEPRECATED)
+  struct initiate_dispatch;
+  struct initiate_post;
+#endif // !defined(ASIO_NO_DEPRECATED)
+
 public:
   /// Constructor.
   /**
@@ -112,36 +119,6 @@ public:
   ~strand()
   {
   }
-
-#if !defined(ASIO_NO_DEPRECATED)
-  /// (Deprecated: Use context().) Get the io_context associated with the
-  /// strand.
-  /**
-   * This function may be used to obtain the io_context object that the strand
-   * uses to dispatch handlers for asynchronous operations.
-   *
-   * @return A reference to the io_context object that the strand will use to
-   * dispatch handlers. Ownership is not transferred to the caller.
-   */
-  asio::io_context& get_io_context()
-  {
-    return service_.get_io_context();
-  }
-
-  /// (Deprecated: Use context().) Get the io_context associated with the
-  /// strand.
-  /**
-   * This function may be used to obtain the io_context object that the strand
-   * uses to dispatch handlers for asynchronous operations.
-   *
-   * @return A reference to the io_context object that the strand will use to
-   * dispatch handlers. Ownership is not transferred to the caller.
-   */
-  asio::io_context& get_io_service()
-  {
-    return service_.get_io_context();
-  }
-#endif // !defined(ASIO_NO_DEPRECATED)
 
   /// Obtain the underlying execution context.
   asio::io_context& context() const ASIO_NOEXCEPT
@@ -212,19 +189,14 @@ public:
    * @code void handler(); @endcode
    */
   template <typename LegacyCompletionHandler>
-  ASIO_INITFN_RESULT_TYPE(LegacyCompletionHandler, void ())
+  ASIO_INITFN_AUTO_RESULT_TYPE_PREFIX(LegacyCompletionHandler, void ())
   dispatch(ASIO_MOVE_ARG(LegacyCompletionHandler) handler)
+    ASIO_INITFN_AUTO_RESULT_TYPE_SUFFIX((
+      async_initiate<LegacyCompletionHandler, void ()>(
+          declval<initiate_dispatch>(), handler, this)))
   {
-    // If you get an error on the following line it means that your handler does
-    // not meet the documented type requirements for a LegacyCompletionHandler.
-    ASIO_LEGACY_COMPLETION_HANDLER_CHECK(
-        LegacyCompletionHandler, handler) type_check;
-
-    async_completion<LegacyCompletionHandler, void ()> init(handler);
-
-    service_.dispatch(impl_, init.completion_handler);
-
-    return init.result.get();
+    return async_initiate<LegacyCompletionHandler, void ()>(
+        initiate_dispatch(), handler, this);
   }
 #endif // !defined(ASIO_NO_DEPRECATED)
 
@@ -267,19 +239,14 @@ public:
    * @code void handler(); @endcode
    */
   template <typename LegacyCompletionHandler>
-  ASIO_INITFN_RESULT_TYPE(LegacyCompletionHandler, void ())
+  ASIO_INITFN_AUTO_RESULT_TYPE_PREFIX(LegacyCompletionHandler, void ())
   post(ASIO_MOVE_ARG(LegacyCompletionHandler) handler)
+    ASIO_INITFN_AUTO_RESULT_TYPE_SUFFIX((
+      async_initiate<LegacyCompletionHandler, void ()>(
+          declval<initiate_post>(), handler, this)))
   {
-    // If you get an error on the following line it means that your handler does
-    // not meet the documented type requirements for a LegacyCompletionHandler.
-    ASIO_LEGACY_COMPLETION_HANDLER_CHECK(
-        LegacyCompletionHandler, handler) type_check;
-
-    async_completion<LegacyCompletionHandler, void ()> init(handler);
-
-    service_.post(impl_, init.completion_handler);
-
-    return init.result.get();
+    return async_initiate<LegacyCompletionHandler, void ()>(
+        initiate_post(), handler, this);
   }
 #endif // !defined(ASIO_NO_DEPRECATED)
 
@@ -371,6 +338,42 @@ public:
   }
 
 private:
+#if !defined(ASIO_NO_DEPRECATED)
+  struct initiate_dispatch
+  {
+    template <typename LegacyCompletionHandler>
+    void operator()(ASIO_MOVE_ARG(LegacyCompletionHandler) handler,
+        strand* self) const
+    {
+      // If you get an error on the following line it means that your
+      // handler does not meet the documented type requirements for a
+      // LegacyCompletionHandler.
+      ASIO_LEGACY_COMPLETION_HANDLER_CHECK(
+          LegacyCompletionHandler, handler) type_check;
+
+      detail::non_const_lvalue<LegacyCompletionHandler> handler2(handler);
+      self->service_.dispatch(self->impl_, handler2.value);
+    }
+  };
+
+  struct initiate_post
+  {
+    template <typename LegacyCompletionHandler>
+    void operator()(ASIO_MOVE_ARG(LegacyCompletionHandler) handler,
+        strand* self) const
+    {
+      // If you get an error on the following line it means that your
+      // handler does not meet the documented type requirements for a
+      // LegacyCompletionHandler.
+      ASIO_LEGACY_COMPLETION_HANDLER_CHECK(
+          LegacyCompletionHandler, handler) type_check;
+
+      detail::non_const_lvalue<LegacyCompletionHandler> handler2(handler);
+      self->service_.post(self->impl_, handler2.value);
+    }
+  };
+#endif // !defined(ASIO_NO_DEPRECATED)
+
   asio::detail::strand_service& service_;
   mutable asio::detail::strand_service::implementation_type impl_;
 };
@@ -380,5 +383,6 @@ private:
 #include "asio/detail/pop_options.hpp"
 
 #endif // !defined(ASIO_NO_EXTENSIONS)
+       //   && !defined(ASIO_NO_TS_EXECUTORS)
 
 #endif // ASIO_IO_CONTEXT_STRAND_HPP

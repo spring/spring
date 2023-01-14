@@ -2,7 +2,7 @@
 // detail/impl/socket_select_interrupter.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2022 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -60,11 +60,11 @@ void socket_select_interrupter::open_descriptors()
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = socket_ops::host_to_network_long(INADDR_LOOPBACK);
   addr.sin_port = 0;
-  if (socket_ops::bind(acceptor.get(), (const socket_addr_type*)&addr,
+  if (socket_ops::bind(acceptor.get(), &addr,
         addr_len, ec) == socket_error_retval)
     asio::detail::throw_error(ec, "socket_select_interrupter");
 
-  if (socket_ops::getsockname(acceptor.get(), (socket_addr_type*)&addr,
+  if (socket_ops::getsockname(acceptor.get(), &addr,
         &addr_len, ec) == socket_error_retval)
     asio::detail::throw_error(ec, "socket_select_interrupter");
 
@@ -83,7 +83,7 @@ void socket_select_interrupter::open_descriptors()
   if (client.get() == invalid_socket)
     asio::detail::throw_error(ec, "socket_select_interrupter");
 
-  if (socket_ops::connect(client.get(), (const socket_addr_type*)&addr,
+  if (socket_ops::connect(client.get(), &addr,
         addr_len, ec) == socket_error_retval)
     asio::detail::throw_error(ec, "socket_select_interrupter");
 
@@ -155,11 +155,20 @@ bool socket_select_interrupter::reset()
   socket_ops::buf b;
   socket_ops::init_buf(b, data, sizeof(data));
   asio::error_code ec;
-  int bytes_read = socket_ops::recv(read_descriptor_, &b, 1, 0, ec);
-  bool was_interrupted = (bytes_read > 0);
-  while (bytes_read == sizeof(data))
-    bytes_read = socket_ops::recv(read_descriptor_, &b, 1, 0, ec);
-  return was_interrupted;
+  for (;;)
+  {
+    int bytes_read = socket_ops::recv(read_descriptor_, &b, 1, 0, ec);
+    if (bytes_read == sizeof(data))
+      continue;
+    if (bytes_read > 0)
+      return true;
+    if (bytes_read == 0)
+      return false;
+    if (ec == asio::error::would_block
+        || ec == asio::error::try_again)
+      return true;
+    return false;
+  }
 }
 
 } // namespace detail

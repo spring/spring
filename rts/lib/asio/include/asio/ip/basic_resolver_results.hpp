@@ -2,7 +2,7 @@
 // ip/basic_resolver_results.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2022 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -232,19 +232,19 @@ public:
   /// Get the number of entries in the results range.
   size_type size() const ASIO_NOEXCEPT
   {
-    return this->values_->size();
+    return this->values_ ? this->values_->size() : 0;
   }
 
   /// Get the maximum number of entries permitted in a results range.
   size_type max_size() const ASIO_NOEXCEPT
   {
-    return this->values_->max_size();
+    return this->values_ ? this->values_->max_size() : values_type().max_size();
   }
 
   /// Determine whether the results range is empty.
   bool empty() const ASIO_NOEXCEPT
   {
-    return this->values_->empty();
+    return this->values_ ? this->values_->empty() : true;
   }
 
   /// Obtain a begin iterator for the results range.
@@ -252,7 +252,7 @@ public:
   {
     basic_resolver_results tmp(*this);
     tmp.index_ = 0;
-    return tmp;
+    return ASIO_MOVE_CAST(basic_resolver_results)(tmp);
   }
 
   /// Obtain an end iterator for the results range.
