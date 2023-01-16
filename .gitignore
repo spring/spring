@@ -168,3 +168,6 @@ Spring.VC.VC.opendb
 /test/tools/CompileFailTest/build.ninja
 /test/Testing
 /Testing
+
+# flatpak
+/.flatpak-builder/
