@@ -39,13 +39,9 @@ SET(luaSources
 )
 
 add_library(lua STATIC EXCLUDE_FROM_ALL ${luaSources})
-find_package_static(GLEW 1.5.1 REQUIRED) #FIXME: LuaUser.cpp requires glew...
 target_include_directories(lua
 PUBLIC
 	include
-PRIVATE
-	../streflop
-	${GLEW_INCLUDE_DIR}
 )
 
 if (ENABLE_STREFLOP)
