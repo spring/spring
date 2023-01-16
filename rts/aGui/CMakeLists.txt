@@ -1,4 +1,4 @@
-add_library(engineaGui STATIC
+add_library(engineaGui STATIC EXCLUDE_FROM_ALL
 	"${CMAKE_CURRENT_SOURCE_DIR}/Button.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Gui.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/GuiElement.cpp"

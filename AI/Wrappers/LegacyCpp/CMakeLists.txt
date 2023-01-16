@@ -58,7 +58,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	# Compile the Legacy C++ AI wrapper static library
-	add_library(${myTarget}     STATIC ${mySources})
+	add_library(${myTarget} STATIC EXCLUDE_FROM_ALL ${mySources})
 	target_include_directories(${myTarget} PRIVATE
 		${Spring_SOURCE_DIR}/rts
 	)
@@ -66,7 +66,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_dependencies(${myTarget} generateVersionFiles)
 
 	# Compile the Legacy C++ AI wrapper static library with creg support
-	add_library(${myCregTarget} STATIC ${mySources} ${sources_engine_System_creg})
+	add_library(${myCregTarget} STATIC EXCLUDE_FROM_ALL ${mySources} ${sources_engine_System_creg})
 	target_include_directories(${myCregTarget} PRIVATE
 		${Spring_SOURCE_DIR}/rts
 	)

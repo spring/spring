@@ -11,7 +11,7 @@ set(archives_sources
 	ZipArchive.cpp
 )
 
-add_library(archives STATIC
+add_library(archives STATIC EXCLUDE_FROM_ALL
 	${archives_sources}
 )
 

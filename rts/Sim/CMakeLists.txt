@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-add_library(engineSim STATIC
+add_library(engineSim STATIC EXCLUDE_FROM_ALL
 	Features/Feature.cpp
 	Features/FeatureDef.cpp
 	Features/FeatureDefHandler.cpp

@@ -155,7 +155,7 @@ add_subdirectory(BuildType)
 add_subdirectory(FileSystem)
 add_subdirectory(Net)
 
-add_library(engineMisc STATIC
+add_library(engineMisc STATIC EXCLUDE_FROM_ALL
 	LoadSave/CregLoadSaveHandler.cpp
 	LoadSave/Demo.cpp
 	LoadSave/DemoReader.cpp

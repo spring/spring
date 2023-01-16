@@ -16,7 +16,7 @@ set(mySources
 	"${mySourceDir}/Util.c"
 	"${mySourceDir}/TimeUtil.cpp"
 	)
-add_library(CUtils STATIC ${mySources})
+add_library(CUtils STATIC EXCLUDE_FROM_ALL ${mySources})
 target_link_libraries(CUtils ${CMAKE_DL_LIBS})
 target_include_directories(CUtils PRIVATE
 	${Spring_SOURCE_DIR}/rts

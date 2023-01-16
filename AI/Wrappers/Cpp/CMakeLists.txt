@@ -267,7 +267,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# build the static lib
 	set(myCompleteSources ${mySources} ${myGeneratedSources})
 	list(APPEND myCompleteSources ${ai_common_SRC})
-	add_library(${myTarget} STATIC ${myCompleteSources})
+	add_library(${myTarget} STATIC EXCLUDE_FROM_ALL ${myCompleteSources})
 	target_include_directories(${myTarget} PRIVATE
 		${mySourceDir}
 		${myGeneratedSourceDir}
