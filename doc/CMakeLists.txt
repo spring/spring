@@ -5,6 +5,8 @@ if    (UNIX AND ENABLE_MANPAGES)
 	find_package(SevenZip)
 	set(AsciiDoc_FIND_QUIETLY TRUE)
 	find_package(AsciiDoc)
+	find_package(XSLTProc)
+	find_package(DocBook)
 	set(CREATE_MAN_PAGES)
 	if    (SEVENZIP_FOUND AND ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
 		execute_process(
