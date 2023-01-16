@@ -156,24 +156,24 @@ add_subdirectory(FileSystem)
 add_subdirectory(Net)
 
 add_library(engineMisc STATIC EXCLUDE_FROM_ALL
+	AIScriptHandler.cpp
+	CRC.cpp
+	Color.cpp
+	Config/ConfigHandler.cpp
+	Config/ConfigLocater.cpp
+	Config/ConfigSource.cpp
+	Config/ConfigVariable.cpp
+	EventClient.cpp
+	EventHandler.cpp
+	Info.cpp
+	Input/InputHandler.cpp
+	Input/KeyInput.cpp
 	LoadSave/CregLoadSaveHandler.cpp
 	LoadSave/Demo.cpp
 	LoadSave/DemoReader.cpp
 	LoadSave/DemoRecorder.cpp
 	LoadSave/LoadSaveHandler.cpp
 	LoadSave/LuaLoadSaveHandler.cpp
-	AIScriptHandler.cpp
-	Color.cpp
-	Config/ConfigHandler.cpp
-	Config/ConfigLocater.cpp
-	Config/ConfigSource.cpp
-	Config/ConfigVariable.cpp
-	CRC.cpp
-	EventClient.cpp
-	EventHandler.cpp
-	Info.cpp
-	Input/InputHandler.cpp
-	Input/KeyInput.cpp
 	LogOutput.cpp
 	Matrix44f.cpp
 	Misc/RectangleOverlapHandler.cpp
@@ -183,14 +183,16 @@ add_library(engineMisc STATIC EXCLUDE_FROM_ALL
 	Option.cpp
 	Platform/Clipboard.cpp
 	Platform/Misc.cpp
-	Platform/SharedLib.cpp
-	Platform/ScopedFileLock.cpp
 	Platform/SDL1_keysym.cpp
+	Platform/ScopedFileLock.cpp
+	Platform/SharedLib.cpp
 	Platform/Watchdog.cpp
 	Platform/WindowManagerHelper.cpp
 	Rectangle.cpp
 	SafeCStrings.c
+	SpringMath.cpp
 	StartScriptGen.cpp
+	StringHash.cpp
 	Sync/DumpState.cpp
 	Sync/FPUCheck.cpp
 	Sync/Logger.cpp
@@ -204,11 +206,9 @@ add_library(engineMisc STATIC EXCLUDE_FROM_ALL
 	TimeProfiler.cpp
 	TimeUtil.cpp
 	UriParser.cpp
-	StringHash.cpp
-	type2.cpp
 	float3.cpp
 	float4.cpp
-	SpringMath.cpp
+	type2.cpp
 )
 
 target_include_directories(engineMisc
@@ -220,6 +220,7 @@ target_include_directories(engineMisc
 		${GLEW_INCLUDE_DIR}
 	PUBLIC
 		${SPRING_MINIZIP_INCLUDE_DIR}
+
 )
 
 target_link_libraries(engineMisc
