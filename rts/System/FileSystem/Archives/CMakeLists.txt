@@ -21,7 +21,6 @@ target_include_directories(archives
 		${SPRING_MINIZIP_INCLUDE_DIR}
 	PUBLIC
 		${ZLIB_INCLUDE_DIR}
-		${Spring_SOURCE_DIR}/tools/pr-downloader/src/lib/7z
 )
 
 target_link_libraries(archives
