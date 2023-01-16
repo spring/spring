@@ -149,8 +149,6 @@ add_executable(engine-dedicated
 
 target_include_directories(engine-dedicated PRIVATE
 	${ENGINE_SRC_ROOT_DIR}/
-	${ENGINE_SRC_ROOT_DIR}/lib/lua/include
-	${ENGINE_SRC_ROOT_DIR}/lib/7zip
 	${SDL2_INCLUDE_DIR}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${LIBUNWIND_INCLUDE_DIRS}

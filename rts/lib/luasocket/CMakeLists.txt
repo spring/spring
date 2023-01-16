@@ -1,8 +1,6 @@
 # Spring supplied CMake build file
 
-INCLUDE_DIRECTORIES(BEFORE ../lua/include)
-
-SET(luaSocketSources
+set(luaSocketSources
 	src/auxiliar.cpp
 	src/buffer.cpp
 	src/except.cpp
@@ -18,19 +16,22 @@ SET(luaSocketSources
 	src/restrictions.cpp
 )
 
-IF(WIN32)
-LIST(APPEND luaSocketSources
-	src/wsocket.cpp
-)
-ELSE()
-LIST(APPEND luaSocketSources
-	src/usocket.cpp
-	src/unix.cpp
-)
-ENDIF ()
+if(WIN32)
+	list(APPEND luaSocketSources
+		src/wsocket.cpp
+	)
+else()
+	list(APPEND luaSocketSources
+		src/usocket.cpp
+		src/unix.cpp
+	)
+endif()
 
-
-ADD_LIBRARY(luasocket STATIC EXCLUDE_FROM_ALL ${luaSocketSources})
+add_library(luasocket STATIC EXCLUDE_FROM_ALL ${luaSocketSources})
+target_include_directories(luasocket
+	PRIVATE
+		../lua/include
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
 	DESTINATION ${DATADIR}

@@ -35,12 +35,11 @@ endif()
 
 target_include_directories(engine-headless PRIVATE
 	${Spring_SOURCE_DIR}/rts
-	${Spring_SOURCE_DIR}/rts/lib/lua/include
-	${SDL2_INCLUDE_DIR}
 	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
 	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${LIBUNWIND_INCLUDE_DIRS}
+	${SDL2_INCLUDE_DIR}
 )
 
 if    (MINGW)
