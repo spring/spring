@@ -13,7 +13,6 @@ add_library(engineaGui STATIC EXCLUDE_FROM_ALL
 target_include_directories(engineaGui PRIVATE
 		${Spring_SOURCE_DIR}/rts
 		${SDL2_INCLUDE_DIR}
-		${GLEW_INCLUDE_DIR}
 	PUBLIC
 		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
 )

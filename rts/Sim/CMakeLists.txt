@@ -145,7 +145,6 @@ target_include_directories(engineSim
 PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${Spring_SOURCE_DIR}/rts/lib/lua/include
-	${GLEW_INCLUDE_DIR}
 	${SDL2_INCLUDE_DIR}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 )

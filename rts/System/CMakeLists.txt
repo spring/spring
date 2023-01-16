@@ -217,7 +217,6 @@ target_include_directories(engineMisc
 		${SDL2_INCLUDE_DIR}
 		${Spring_SOURCE_DIR}/rts/lib/lua/include	
 		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
-		${GLEW_INCLUDE_DIR}
 	PUBLIC
 		${SPRING_MINIZIP_INCLUDE_DIR}
 )

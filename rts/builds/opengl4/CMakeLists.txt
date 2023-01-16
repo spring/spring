@@ -81,7 +81,6 @@ target_include_directories(engine-opengl4 PRIVATE
 	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
 	${OPENAL_INCLUDE_DIR}
 	${SDL2_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR}
 	${FREETYPE_INCLUDE_DIRS}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 )
