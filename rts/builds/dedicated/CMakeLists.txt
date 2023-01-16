@@ -151,7 +151,6 @@ target_include_directories(engine-dedicated PRIVATE
 	${ENGINE_SRC_ROOT_DIR}/
 	${ENGINE_SRC_ROOT_DIR}/lib/lua/include
 	${ENGINE_SRC_ROOT_DIR}/lib/7zip
-	${ENGINE_SRC_ROOT_DIR}/lib/asio/include
 	${SDL2_INCLUDE_DIR}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${LIBUNWIND_INCLUDE_DIRS}

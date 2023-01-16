@@ -10,9 +10,11 @@ add_library(engineSystemNet STATIC
 	"${CMAKE_CURRENT_SOURCE_DIR}/UnpackPacket.cpp"
 )
 
-target_include_directories(engineSystemNet PRIVATE
-	${Spring_SOURCE_DIR}/rts/lib/asio/include
-	${Spring_SOURCE_DIR}/rts
+target_include_directories(engineSystemNet
+	PRIVATE
+		${Spring_SOURCE_DIR}/rts
+	PUBLIC
+		${Spring_SOURCE_DIR}/rts/lib/asio/include
 )
 
 if(PREFER_STATIC_LIBS)
