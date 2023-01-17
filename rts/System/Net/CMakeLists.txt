@@ -17,8 +17,3 @@ target_include_directories(engineSystemNet
 		${Spring_SOURCE_DIR}/rts/lib/asio/include
 )
 
-if(PREFER_STATIC_LIBS)
-	target_compile_definitions(engineSystemNet INTERFACE
-		ASIO_DISABLE_GETADDRINFO
-	)
-endif()
