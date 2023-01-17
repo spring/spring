@@ -64,7 +64,6 @@ if    (UNIX AND NOT MINGW)
 endif ()
 
 find_package_static(ZLIB REQUIRED)
-list(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
 list(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 list(APPEND engineCommonLibraries lua luasocket archives assimp gflags)
 if (ENABLE_STREFLOP)

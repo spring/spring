@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Assemble libraries
 set(engineIncludes "")
-set(engineLibraries ${SDL2_LIBRARIES})
+set(engineLibraries ${SDL2_LINK_LIBRARIES})
 
 
 set(OpenGL_GL_PREFERENCE LEGACY)
@@ -19,7 +19,7 @@ pkg_check_modules(OPENGL REQUIRED opengl)
 pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
 pkg_check_modules(IL REQUIRED IL)
 
-list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES} ${IL_LINK_LIBRARIES})
+list(APPEND engineLibraries ${OPENGL_LINK_LIBRARIES} ${GLEW_LINK_LIBRARIES} ${IL_LINK_LIBRARIES})
 
 find_package_static(FONTCONFIG)
 if    (FONTCONFIG_FOUND)
