@@ -15,10 +15,6 @@ set(engineLibraries ${SDL2_LINK_LIBRARIES})
 
 set(OpenGL_GL_PREFERENCE LEGACY)
 
-pkg_check_modules(OPENGL REQUIRED opengl)
-pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
-pkg_check_modules(IL REQUIRED IL)
-
 list(APPEND engineLibraries ${OPENGL_LINK_LIBRARIES} ${GLEW_LINK_LIBRARIES} ${IL_LINK_LIBRARIES})
 
 find_package_static(FONTCONFIG)

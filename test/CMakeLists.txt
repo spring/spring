@@ -430,9 +430,9 @@ add_test(NAME testEngine COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SU
 		"${CMAKE_CURRENT_SOURCE_DIR}/other/testGLContextCreation.cpp"
 	)
 	set(test_libs
-		 ${OPENGL_gl_LIBRARY}
-		${GLEW_LIBRARIES}
-		${SDL2_LIBRARY}
+		${OPENGL_gl_LIBRARY}
+		${GLEW_LINK_LIBRARIES}
+		${SDL2_LINK_LIBRARIES}
 		test_Log
 	)
 	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)

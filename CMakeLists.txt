@@ -243,6 +243,10 @@ endif ()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2>=2)
+pkg_check_modules(OPENGL REQUIRED opengl)
+pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
+pkg_check_modules(IL REQUIRED IL)
+
 
 if    (WIN32)
 	find_package(Windres REQUIRED)
