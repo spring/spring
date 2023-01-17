@@ -13,7 +13,7 @@ set(CMAKE_RANLIB "/usr/bin/ranlib" CACHE STRING "")
 
 set(PRD_JSONCPP_INTERNAL TRUE CACHE BOOL "")
 
-set(OPENAL_INCLUDE_DIR "/usr/local/Cellar/openal-soft/1.18.2/include/AL" CACHE STRING "")
+set(OPENAL_INCLUDE_DIRS "/usr/local/Cellar/openal-soft/1.18.2/include/AL" CACHE STRING "")
 set(OPENAL_LIBRARY "/usr/local/Cellar/openal-soft/1.18.2/lib/libopenal.dylib" CACHE STRING "")
 
 set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk" CACHE STRING "")

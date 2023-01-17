@@ -34,9 +34,6 @@ if(DEBUG_GLSTATE)
 	add_definitions(-DDEBUG_GLSTATE)
 endif ()
 
-### give error when not found
-find_package_static(DevIL REQUIRED)
-
 ### Assemble common libraries
 add_subdirectory(System/Sound)
 if    (NO_SOUND)

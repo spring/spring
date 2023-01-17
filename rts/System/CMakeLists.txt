@@ -214,7 +214,7 @@ add_library(engineMisc STATIC EXCLUDE_FROM_ALL
 target_include_directories(engineMisc
 	PRIVATE
 		${Spring_SOURCE_DIR}/rts
-		${SDL2_INCLUDE_DIR}
+		${SDL2_INCLUDE_DIRS}
 		${Spring_SOURCE_DIR}/rts/lib/lua/include	
 		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
 		${GLEW_INCLUDE_DIR}

@@ -101,7 +101,7 @@ target_link_libraries(unitsync
 	buildtype_unitsync
 )
 target_include_directories(unitsync PRIVATE
-	${SPRING_MINIZIP_INCLUDE_DIR}
+	${SPRING_MINIZIP_INCLUDE_DIRS}
 	${ENGINE_SRC_ROOT}/lib/lua/include
 	${ENGINE_SRC_ROOT}/lib/7zip
 	${ENGINE_SRC_ROOT}

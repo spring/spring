@@ -39,7 +39,7 @@ target_include_directories(engine-headless PRIVATE
 	${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${LIBUNWIND_INCLUDE_DIRS}
-	${SDL2_INCLUDE_DIR}
+	${SDL2_INCLUDE_DIRS}
 )
 
 if    (MINGW)

@@ -44,19 +44,23 @@ if    (NOT NO_SOUND)
 			OpenAL/VorbisShared.cpp
 		)
 
-	find_package_static(OpenAL REQUIRED)
-	find_package_static(OggVorbis REQUIRED)
-
-	find_package(SDL2 REQUIRED)
+	pkg_check_modules(OPENAL REQUIRED openal)
+	pkg_check_modules(OGG REQUIRED ogg)
+	pkg_check_modules(VORBISFILE REQUIRED vorbisfile)
 
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
-	target_link_libraries(sound ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY})
-	target_link_libraries(sound ${OPENAL_LIBRARY})
+	target_link_libraries(sound
+		PRIVATE
+			${OPENAL_LIBRARIES}
+			${VORBISFILE_LIBRARIES}
+			${VORBIS_LIBRARIES}
+			${OGG_LIBRARIES}
+	)
 	target_include_directories(sound PRIVATE
 		${Spring_SOURCE_DIR}/rts
-		${OPENAL_INCLUDE_DIR}
+		${OPENAL_INCLUDE_DIRS}
 		${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR}
-		${SDL2_INCLUDE_DIR}
+		${SDL2_INCLUDE_DIRS}
 		${GLEW_INCLUDE_DIR}
 	)
 endif ()

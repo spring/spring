@@ -149,7 +149,7 @@ add_executable(engine-dedicated
 
 target_include_directories(engine-dedicated PRIVATE
 	${ENGINE_SRC_ROOT_DIR}/
-	${SDL2_INCLUDE_DIR}
+	${SDL2_INCLUDE_DIRS}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 	${LIBUNWIND_INCLUDE_DIRS}
 )

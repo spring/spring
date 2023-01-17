@@ -40,8 +40,8 @@ foreach( HEADER ${headers} )
 		${Spring_SOURCE_DIR}/rts/lib/slimsig/include
 		${Spring_SOURCE_DIR}/rts/lib/assimp/include
 		${Spring_SOURCE_DIR}/rts/lib/asio/include
-		${SDL2_INCLUDE_DIR}
-		${OPENAL_INCLUDE_DIR}
+		${SDL2_INCLUDE_DIRS}
+		${OPENAL_INCLUDE_DIRS}
 	)
 
 	list(APPEND headerchecklibs ${TEST_NAME})

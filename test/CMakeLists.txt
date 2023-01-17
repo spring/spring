@@ -437,7 +437,7 @@ add_test(NAME testEngine COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SU
 	)
 	set(test_flags NOT_USING_CREG STREFLOP_SSE BUILDING_AI)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
-	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
+	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR})
 
 ################################################################################
 ### SQRT

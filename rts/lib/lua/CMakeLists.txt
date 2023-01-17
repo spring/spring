@@ -2,7 +2,7 @@
 
 # deactivate signaling-NANs for this library
 remove_flag("-fsignaling-nans")
-find_package_static(GLEW 1.5.1 REQUIRED)
+pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
 
 SET(luaSources
 	"src/lapi.cpp"
@@ -42,7 +42,7 @@ add_library(lua STATIC EXCLUDE_FROM_ALL ${luaSources})
 target_include_directories(lua
 PUBLIC
 	include
-	${GLEW_INCLUDE_DIR}
+	${GLEW_INCLUDE_DIRS}
 )
 
 if (ENABLE_STREFLOP)

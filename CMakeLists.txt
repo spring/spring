@@ -135,7 +135,7 @@ else ()
 		if(NOT MSVC)
 			set(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
 		endif ()
-		set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
+		set(SDL2_INCLUDE_DIRS "${MINGWLIBS}/include/SDL2")
 		set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 		include_directories(${MINGWLIBS}/include)
 		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll ${MINGWLIBS}/lib)
@@ -241,18 +241,9 @@ if    (WIN32)
 endif ()
 
 
-# Note the missing REQUIRED, as headless & dedi may not depend on those.
-#  So req. checks are done in the build target's CMakeLists.txt.
-find_package(SDL2 REQUIRED)
-
-find_package_static(DevIL)
-if    (PREFER_STATIC_LIBS)
-	# dependencies of DevIL
-	find_package_static(JPEG REQUIRED)
-	find_package_static(PNG REQUIRED)
-	find_package_static(TIFF REQUIRED)
-	find_package_static(GIF REQUIRED)
-endif ()
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2>=2)
+pkg_check_modules(DevIL REQUIRED IL ILUT)
 
 if    (WIN32)
 	find_package(Windres REQUIRED)

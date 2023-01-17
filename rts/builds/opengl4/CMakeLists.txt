@@ -9,17 +9,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
 ### Assemble libraries
-find_package(SDL2 REQUIRED)
 set(engineIncludes "")
-set(engineLibraries ${SDL2_LIBRARY})
-if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
-	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-endif ()
+set(engineLibraries ${SDL2_LIBRARIES})
 
 
 set(OpenGL_GL_PREFERENCE LEGACY)
-find_package_static(OpenGL REQUIRED)
-find_package_static(GLEW 1.5.1 REQUIRED)
+
+pkg_check_modules(OPENGL REQUIRED opengl)
+pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
 list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
 
 find_package_static(FONTCONFIG)
@@ -38,18 +35,8 @@ if    (FONTCONFIG_FOUND)
 	endif ()
 endif ()
 
-find_freetype_hack() # hack to find different named freetype.dll
-find_package_static(Freetype REQUIRED)
-if    (NOT EXISTS "${FREETYPE_INCLUDE_DIR_ft2build}/ft2build.h")
-	message(FATAL_ERROR "FreeType 2 was found and will be used, but (at least some) headers are missing (ft2build.h)!")
-endif ()
-list(APPEND engineLibraries ${FREETYPE_LIBRARY})
-
-if    (PREFER_STATIC_LIBS)
-	# dependencies of FreeType
-	find_package_static(BZip2 REQUIRED)
-	list(APPEND engineLibraries ${BZIP2_LIBRARIES})
-endif ()
+pkg_check_modules(FREETYPE REQUIRED freetype2)
+list(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 if    (UNIX)
 	find_package(X11 REQUIRED)
@@ -79,8 +66,8 @@ target_link_libraries(engine-opengl4
 target_include_directories(engine-opengl4 PRIVATE
 	${Spring_SOURCE_DIR}/rts
 	${ENGINE_SRC_ROOT_DIR}/lib/assimp/include
-	${OPENAL_INCLUDE_DIR}
-	${SDL2_INCLUDE_DIR}
+	${OPENAL_INCLUDE_DIRS}
+	${SDL2_INCLUDE_DIRS}
 	${FREETYPE_INCLUDE_DIRS}
 	${SPRING_MINIZIP_INCLUDE_DIR}
 )
