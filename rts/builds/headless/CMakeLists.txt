@@ -15,7 +15,7 @@ remove_definitions(-DAVI_CAPTURING)
 set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
-
+pkg_check_modules(IL REQUIRED IL)
 
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
@@ -28,6 +28,7 @@ target_link_libraries(engine-headless
 	engineMisc
 	pr-downloader_static
 	no-sound
+	${IL_LINK_LIBRARIES}
 )
 if (UNIX)
 	target_link_libraries(engine-headless Threads::Threads)
