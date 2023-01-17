@@ -974,7 +974,6 @@ namespace CrashHandler
 
 		ucontext_t* uctx = reinterpret_cast<ucontext_t*>(pctx);
 
-		const char* sigdesc = strsignal(signal);
 		const char* signame = "";
 
 		// append the signal name (no OS function to map signum to signame)
@@ -989,7 +988,7 @@ namespace CrashHandler
 			default     : {                      } break;
 		}
 
-		LOG_L(L_ERROR, "%s in Spring %s", sigdesc, (SpringVersion::GetFull()).c_str());
+		LOG_L(L_ERROR, "%s in Spring %s", signame, (SpringVersion::GetFull()).c_str());
 
 		// print stacktrace
 		PrepareStacktrace();
@@ -1001,7 +1000,6 @@ namespace CrashHandler
 			char* ptr = buf;
 
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s", "Spring has crashed:\n");
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", sigdesc);
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", "A stacktrace has been written to:\n");
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", (logOutput.GetFilePath()).c_str());
 
