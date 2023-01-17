@@ -34,7 +34,7 @@ if    (FONTCONFIG_FOUND)
 endif ()
 
 pkg_check_modules(FREETYPE REQUIRED freetype2)
-list(APPEND engineLibraries ${FREETYPE_LIBRARIES})
+list(APPEND engineLibraries ${FREETYPE_LINK_LIBRARIES})
 
 if    (UNIX)
 	find_package(X11 REQUIRED)

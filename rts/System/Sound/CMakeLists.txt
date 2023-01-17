@@ -17,15 +17,15 @@ target_include_directories(no-sound PRIVATE
 )
 
 # Define default sound implementation
-if    (NO_SOUND)
+if(NO_SOUND)
 	set(sound-impl no-sound PARENT_SCOPE)
-else ()
+else()
 	set(sound-impl sound PARENT_SCOPE)
-endif ()
+endif()
 
 
 # Real Sound implementaiton
-if    (NOT NO_SOUND)
+if(NOT NO_SOUND)
 	set(soundSources
 			ISound.cpp
 			IAudioChannel.cpp
@@ -51,10 +51,10 @@ if    (NOT NO_SOUND)
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	target_link_libraries(sound
 		PRIVATE
-			${OPENAL_LIBRARIES}
-			${VORBISFILE_LIBRARIES}
-			${VORBIS_LIBRARIES}
-			${OGG_LIBRARIES}
+			${OPENAL_LINK_LIBRARIES}
+			${VORBISFILE_LINK_LIBRARIES}
+			${VORBIS_LINK_LIBRARIES}
+			${OGG_LINK_LIBRARIES}
 	)
 	target_include_directories(sound PRIVATE
 		${Spring_SOURCE_DIR}/rts
@@ -63,4 +63,4 @@ if    (NOT NO_SOUND)
 		${SDL2_INCLUDE_DIRS}
 		${GLEW_INCLUDE_DIR}
 	)
-endif ()
+endif()
