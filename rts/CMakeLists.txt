@@ -47,11 +47,11 @@ if    (UNIX AND NOT MINGW)
 		# FIXME: static linking to glibc isn't supported: try musl or switch to appimage / flatpak
 		find_library(C_LIBRARY c)
 		find_library(MATH_LIBRARY m)
-		find_library(PTHREAD_LIBRARY pthread)
+		#find_library(PTHREAD_LIBRARY pthread)
 		unprefer_static_libs()
 		list(APPEND engineCommonLibraries ${C_LIBRARY})
 		list(APPEND engineCommonLibraries ${MATH_LIBRARY})
-		list(APPEND engineCommonLibraries ${PTHREAD_LIBRARY})
+		#list(APPEND engineCommonLibraries ${PTHREAD_LIBRARY})
 	endif ()
 
 	# Needed for dynamically loading shared libraries (on some OS)
