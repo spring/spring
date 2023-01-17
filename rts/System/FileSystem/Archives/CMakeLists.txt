@@ -18,9 +18,9 @@ add_library(archives STATIC EXCLUDE_FROM_ALL
 target_include_directories(archives
 	PRIVATE
 		${Spring_SOURCE_DIR}/rts
-		${SPRING_MINIZIP_INCLUDE_DIR}
 	PUBLIC
 		${ZLIB_INCLUDE_DIR}
+		${SPRING_MINIZIP_INCLUDE_DIR}
 )
 
 target_link_libraries(archives
