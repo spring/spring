@@ -17,7 +17,9 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 
 pkg_check_modules(OPENGL REQUIRED opengl)
 pkg_check_modules(GLEW REQUIRED glew>=1.5.1)
-list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
+pkg_check_modules(IL REQUIRED IL)
+
+list(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES} ${IL_LINK_LIBRARIES})
 
 find_package_static(FONTCONFIG)
 if    (FONTCONFIG_FOUND)
