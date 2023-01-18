@@ -18,7 +18,7 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
@@ -108,7 +108,7 @@ void CWorldDrawer::InitPost() const
 	{
 		loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 
-		CProjectileDrawer::InitStatic();
+		IProjectileDrawer::InitStatic();
 		CUnitDrawer::InitStatic();
 		// see ::InitPre
 		// CFeatureDrawer::InitStatic();
@@ -139,7 +139,7 @@ void CWorldDrawer::Kill()
 
 	CFeatureDrawer::KillStatic(gu->globalReload);
 	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
-	CProjectileDrawer::KillStatic(gu->globalReload);
+	IProjectileDrawer::KillStatic(gu->globalReload);
 
 	modelLoader.Kill();
 

@@ -7,21 +7,16 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/LoadScreen.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaParser.h"
-#include "Map/ReadMap.h" // mapDims
 #include "Rendering/GroundFlash.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/Shader.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
@@ -37,35 +32,11 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
 
-CProjectileDrawer* projectileDrawer = nullptr;
-
-
-void CProjectileDrawer::InitStatic() {
-	if (projectileDrawer == nullptr)
-		projectileDrawer = new CProjectileDrawer();
-
-	projectileDrawer->Init();
-}
-void CProjectileDrawer::KillStatic(bool reload) {
-	projectileDrawer->Kill();
-
-	if (reload)
-		return;
-
-	spring::SafeDestruct(projectileDrawer);
-}
-
 void CProjectileDrawer::Init() {
-	eventHandler.AddClient(this);
-
-	loadscreen->SetLoadMessage("Creating Projectile Textures");
-
-	textureAtlas = new CTextureAtlas(); textureAtlas->SetName("ProjectileTextureAtlas");
-	groundFXAtlas = new CTextureAtlas(); groundFXAtlas->SetName("ProjectileEffectsAtlas");
+	IProjectileDrawer::Init();
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_ZIP);
@@ -259,12 +230,9 @@ void CProjectileDrawer::Init() {
 }
 
 void CProjectileDrawer::Kill() {
-	eventHandler.RemoveClient(this);
-	autoLinkedEvents.clear();
+	IProjectileDrawer::Kill();
 
 	glDeleteTextures(8, perlinData.blendTextures);
-	spring::SafeDelete(textureAtlas);
-	spring::SafeDelete(groundFXAtlas);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[modelType].Kill();

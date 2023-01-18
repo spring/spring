@@ -18,7 +18,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
