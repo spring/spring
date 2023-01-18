@@ -51,10 +51,10 @@ if(NOT NO_SOUND)
 	add_library(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	target_link_libraries(sound
 		PRIVATE
-			${OPENAL_${LINK_LIBRARIES}}
-			${VORBISFILE_${LINK_LIBRARIES}}
-			${VORBIS_${LINK_LIBRARIES}}
-			${OGG_${STATIC_LINK}${LINK_LIBRARIES}}
+			${OPENAL_LINK_LIBRARIES}
+			${VORBISFILE_LINK_LIBRARIES}
+			${VORBIS_LINK_LIBRARIES}
+			${OGG_LINK_LIBRARIES}
 	)
 	target_include_directories(sound PRIVATE
 		${Spring_SOURCE_DIR}/rts

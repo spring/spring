@@ -28,7 +28,7 @@ target_link_libraries(engine-headless
 	engineMisc
 	pr-downloader_static
 	no-sound
-	${IL_${LINK_LIBRARIES}}
+	${IL_LINK_LIBRARIES}
 )
 if (UNIX)
 	target_link_libraries(engine-headless Threads::Threads)
