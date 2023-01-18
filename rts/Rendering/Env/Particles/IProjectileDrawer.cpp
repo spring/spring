@@ -19,7 +19,11 @@ IProjectileDrawer::IProjectileDrawer():
 
 void IProjectileDrawer::InitStatic() {
 	if (projectileDrawer == nullptr) {
+#ifdef HEADLESS
+		projectileDrawer = new CNullProjectileDrawer();
+#else
 		projectileDrawer = new CProjectileDrawer();
+#endif
 	}
 
 	projectileDrawer->Init();

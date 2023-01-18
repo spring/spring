@@ -14,10 +14,14 @@ IInfoTextureHandler* infoTextureHandler = nullptr;
 
 void IInfoTextureHandler::Create()
 {
+#ifdef HEADLESS
+	infoTextureHandler = new CNullInfoTextureHandler();
+#else
 	try {
 		infoTextureHandler = new CInfoTextureHandler();
 	} catch (const opengl_error& glerr) {
 		LOG("[IInfoTextureHandler::%s] exception \"%s\"", __func__, glerr.what());
 		infoTextureHandler = new CNullInfoTextureHandler();
 	}
+#endif
 }

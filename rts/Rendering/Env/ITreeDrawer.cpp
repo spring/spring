@@ -31,12 +31,16 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 {
 	ITreeDrawer* td = nullptr;
 
+#ifdef HEADLESS
+	td = new CNullTreeDrawer();
+#else
 	try {
 		td = new CAdvTreeDrawer();
 	} catch (const content_error& e) {
 		LOG_L(L_ERROR, "[ITreeDrawer] exception \"%s\"; falling back to NullTreeDrawer", e.what());
 		td = new CNullTreeDrawer();
 	}
+#endif
 
 	td->AddTrees();
 	return td;
