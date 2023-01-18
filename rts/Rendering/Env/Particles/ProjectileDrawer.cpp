@@ -43,15 +43,10 @@
 
 CProjectileDrawer* projectileDrawer = nullptr;
 
-// can not be a CProjectileDrawer; destruction in global
-// scope might happen after ~EventHandler (referenced by
-// ~EventClient)
-static uint8_t projectileDrawerMem[sizeof(CProjectileDrawer)];
-
 
 void CProjectileDrawer::InitStatic() {
 	if (projectileDrawer == nullptr)
-		projectileDrawer = new (projectileDrawerMem) CProjectileDrawer();
+		projectileDrawer = new CProjectileDrawer();
 
 	projectileDrawer->Init();
 }
@@ -62,7 +57,6 @@ void CProjectileDrawer::KillStatic(bool reload) {
 		return;
 
 	spring::SafeDestruct(projectileDrawer);
-	memset(projectileDrawerMem, 0, sizeof(projectileDrawerMem));
 }
 
 void CProjectileDrawer::Init() {
