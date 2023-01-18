@@ -10,25 +10,21 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Assemble libraries
 set(engineIncludes "")
-set(engineLibraries ${SDL2_LINK_LIBRARIES})
-
+set(engineLibraries ${SDL2_${LINK_LIBRARIES}})
 
 set(OpenGL_GL_PREFERENCE LEGACY)
 
-list(APPEND engineLibraries ${OPENGL_LINK_LIBRARIES} ${GLEW_LINK_LIBRARIES} ${IL_LINK_LIBRARIES})
+list(APPEND engineLibraries ${OPENGL_${LINK_LIBRARIES}} ${GLEW_${LINK_LIBRARIES}} ${IL_${LINK_LIBRARIES}})
 
 pkg_check_modules(FONTCONFIG fontconfig)
 if    (FONTCONFIG_FOUND)
-	list(APPEND engineIncludes ${FONTCONFIG_INCLUDE_DIR})
-	if    (NOT EXISTS "${FONTCONFIG_INCLUDE_DIR}/fontconfig/fontconfig.h")
-		message(FATAL_ERROR "FontConfig was found and will be used, but headers are missing!")
-	endif ()
-	list(APPEND engineLibraries ${FONTCONFIG_LINK_LIBRARIES})
+	list(APPEND engineIncludes ${FONTCONFIG_INCLUDE_DIRS})
+	list(APPEND engineLibraries ${FONTCONFIG_${LINK_LIBRARIES}})
 	add_definitions(-DUSE_FONTCONFIG)
 endif ()
 
 pkg_check_modules(FREETYPE REQUIRED freetype2)
-list(APPEND engineLibraries ${FREETYPE_LINK_LIBRARIES})
+list(APPEND engineLibraries ${FREETYPE_${LINK_LIBRARIES}})
 
 if    (UNIX)
 	find_package(X11 REQUIRED)

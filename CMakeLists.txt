@@ -18,6 +18,15 @@ endif ()
 include(Util)
 include(PreferStaticLibs)
 
+if (PREFER_STATIC_LIBS)
+	# switch between normal and static link_libraries:
+	# https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
+	set(LINK_LIBRARIES "STATIC_LINK_LIBRARIES")
+else()
+	set(LINK_LIBRARIES "LINK_LIBRARIES")
+endif()
+message(STATUS "Using ${LINK_LIBRARIES}")
+
 # check for minimal gcc version
 set(MIN_GCC_VER "7.0")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
