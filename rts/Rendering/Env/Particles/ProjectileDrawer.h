@@ -5,6 +5,7 @@
 
 #include <array>
 
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VAO.h"
 #include "Rendering/GL/FBO.h"
@@ -16,8 +17,6 @@
 #include "System/UnorderedSet.hpp"
 
 class CSolidObject;
-class CTextureAtlas;
-struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
 class LuaTable;
@@ -27,90 +26,38 @@ namespace Shader {
 };
 
 
-class CProjectileDrawer: public CEventClient {
+class CProjectileDrawer: public IProjectileDrawer {
 public:
-	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinNoiseFBO(true) {}
+	CProjectileDrawer(): perlinNoiseFBO(true) {}
 
-	static void InitStatic();
-	static void KillStatic(bool reload);
+	void Init() override;
+	void Kill() override;
 
-	void Init();
-	void Kill();
-
-	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawProjectilesMiniMap();
-	void DrawGroundFlashes();
-	void DrawShadowPass();
+	void Draw(bool drawReflection, bool drawRefraction = false) override;
+	void DrawProjectilesMiniMap() override;
+	void DrawGroundFlashes() override;
+	void DrawShadowPass() override;
 
 	void LoadWeaponTextures();
-	void UpdateTextures();
+	void UpdateTextures() override;
 
-
-	bool WantsEvent(const std::string& eventName) override {
-		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
-	}
-	bool GetFullRead() const override { return true; }
-	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
 	void RenderProjectileCreated(const CProjectile* projectile) override;
 	void RenderProjectileDestroyed(const CProjectile* projectile) override;
 
 
-	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
+	unsigned int NumSmokeTextures() const override { return (smokeTextures.size()); }
 
-	void IncPerlinTexObjectCount() { perlinData.texObjects++; }
-	void DecPerlinTexObjectCount() { perlinData.texObjects--; }
-
-	bool EnableSorting(bool b) { return (drawSorted =           b); }
-	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
+	void IncPerlinTexObjectCount() override { perlinData.texObjects++; }
+	void DecPerlinTexObjectCount() override { perlinData.texObjects--; }
 
 
-	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
+	const AtlasedTexture* GetSmokeTexture(unsigned int i) const override { return smokeTextures[i]; }
 
 	GL::RenderDataBufferTC* fxBuffer = nullptr;
 	GL::RenderDataBufferTC* gfBuffer = nullptr;
 	Shader::IProgramObject* fxShader = nullptr;
 	Shader::IProgramObject* gfShader = nullptr;
-
-	CTextureAtlas* textureAtlas = nullptr;  ///< texture atlas for projectiles
-	CTextureAtlas* groundFXAtlas = nullptr; ///< texture atlas for ground fx
-
-	// texture-coordinates for projectiles
-	AtlasedTexture* flaretex = nullptr;
-	AtlasedTexture* dguntex = nullptr;            ///< dgun texture
-	AtlasedTexture* flareprojectiletex = nullptr; ///< texture used by flares that trick missiles
-	AtlasedTexture* sbtrailtex = nullptr;         ///< default first section of starburst missile trail texture
-	AtlasedTexture* missiletrailtex = nullptr;    ///< default first section of missile trail texture
-	AtlasedTexture* muzzleflametex = nullptr;     ///< default muzzle flame texture
-	AtlasedTexture* repulsetex = nullptr;         ///< texture of impact on repulsor
-	AtlasedTexture* sbflaretex = nullptr;         ///< default starburst  missile flare texture
-	AtlasedTexture* missileflaretex = nullptr;    ///< default missile flare texture
-	AtlasedTexture* beamlaserflaretex = nullptr;  ///< default beam laser flare texture
-	AtlasedTexture* explotex = nullptr;
-	AtlasedTexture* explofadetex = nullptr;
-	AtlasedTexture* heatcloudtex = nullptr;
-	AtlasedTexture* circularthingytex = nullptr;
-	AtlasedTexture* bubbletex = nullptr;          ///< torpedo trail texture
-	AtlasedTexture* geosquaretex = nullptr;       ///< unknown use
-	AtlasedTexture* gfxtex = nullptr;             ///< nanospray texture
-	AtlasedTexture* projectiletex = nullptr;      ///< appears to be unused
-	AtlasedTexture* repulsegfxtex = nullptr;      ///< used by repulsor
-	AtlasedTexture* sphereparttex = nullptr;      ///< sphere explosion texture
-	AtlasedTexture* torpedotex = nullptr;         ///< appears in-game as a 1 texel texture
-	AtlasedTexture* wrecktex = nullptr;           ///< smoking explosion part texture
-	AtlasedTexture* plasmatex = nullptr;          ///< default plasma texture
-	AtlasedTexture* laserendtex = nullptr;
-	AtlasedTexture* laserfallofftex = nullptr;
-	AtlasedTexture* randdotstex = nullptr;
-	AtlasedTexture* smoketrailtex = nullptr;
-	AtlasedTexture* waketex = nullptr;
-	AtlasedTexture* perlintex = nullptr;
-	AtlasedTexture* flametex = nullptr;
-
-	AtlasedTexture* groundflashtex = nullptr;
-	AtlasedTexture* groundringtex = nullptr;
-
-	AtlasedTexture* seismictex = nullptr;
 
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
@@ -167,10 +114,6 @@ private:
 	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
 	/// used to render particle effects in back-to-front order
 	std::vector<CProjectile*> sortedProjectiles[2];
-
-	bool drawSorted = true;
 };
-
-extern CProjectileDrawer* projectileDrawer;
 
 #endif // PROJECTILE_DRAWER_HDR

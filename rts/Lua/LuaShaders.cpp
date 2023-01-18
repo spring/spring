@@ -180,17 +180,89 @@ bool LuaShaders::DeleteProgram(Program& p)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaShaders::GetShaderLog(lua_State* L)
+#ifdef HEADLESS
+int LuaShaders::CreateShader(lua_State* L)
 {
-	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	lua_pushsstring(L, shaders.errorLog);
+	lua_pushnumber(L, 0);
 	return 1;
 }
 
+int LuaShaders::DeleteShader(lua_State* L)
+{
+	lua_pushboolean(L, true);
+	return 1;
+}
 
-/******************************************************************************/
-/******************************************************************************/
+int LuaShaders::UseShader(lua_State* L)
+{
+	lua_pushboolean(L, true);
+	return 1;
+}
 
+int LuaShaders::ActiveShader(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::GetActiveUniforms(lua_State* L)
+{
+	lua_newtable(L);
+	return 1;
+}
+
+int LuaShaders::GetUniformLocation(lua_State* L)
+{
+	lua_pushnumber(L, 0);
+	return 1;
+}
+
+int LuaShaders::GetSubroutineIndex(lua_State* L)
+{
+	lua_pushnumber(L, 0);
+	return 1;
+}
+
+int LuaShaders::Uniform(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::UniformInt(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::UniformArray(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::UniformMatrix(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::UniformSubroutine(lua_State* L)
+{
+	return 0;
+}
+
+int LuaShaders::SetGeometryShaderParameter(lua_State* )
+{
+	return 0;
+}
+
+int LuaShaders::SetTesselationShaderParameter(lua_State* )
+{
+	return 0;
+}
+
+int LuaShaders::GetShaderLog(lua_State* L)
+{
+	lua_pushsstring(L, "");
+	return 1;
+}
+#else
 enum {
 	UNIFORM_TYPE_MIXED        = 0, // includes arrays; float or int
 	UNIFORM_TYPE_INT          = 1, // includes arrays
@@ -1063,6 +1135,14 @@ int LuaShaders::SetTesselationShaderParameter(lua_State* L)
 	}
 	return 0;
 }
+
+int LuaShaders::GetShaderLog(lua_State* L)
+{
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	lua_pushsstring(L, shaders.errorLog);
+	return 1;
+}
+#endif
 
 
 /******************************************************************************/

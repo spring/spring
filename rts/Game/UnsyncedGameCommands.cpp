@@ -74,7 +74,7 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/GrassDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/Modern/Path.h"

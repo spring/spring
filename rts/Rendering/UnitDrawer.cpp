@@ -57,14 +57,8 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 
-
-
 CUnitDrawer* unitDrawer = nullptr;
 
-// can not be a CUnitDrawer; destruction in global
-// scope might happen after ~EventHandler which is
-// referenced by ~EventClient
-static uint8_t unitDrawerMem[sizeof(CUnitDrawer)];
 
 static FixedDynMemPool<sizeof(GhostSolidObject), MAX_UNITS / 1000, MAX_UNITS / 32> ghostMemPool;
 
@@ -241,7 +235,7 @@ void CUnitDrawer::PopModelRenderState(const CSolidObject* o) { PopModelRenderSta
 
 void CUnitDrawer::InitStatic() {
 	if (unitDrawer == nullptr)
-		unitDrawer = new (unitDrawerMem) CUnitDrawer();
+		unitDrawer = new CUnitDrawer();
 
 	unitDrawer->Init();
 }
@@ -252,7 +246,6 @@ void CUnitDrawer::KillStatic(bool reload) {
 		return;
 
 	spring::SafeDestruct(unitDrawer);
-	memset(unitDrawerMem, 0, sizeof(unitDrawerMem));
 }
 
 void CUnitDrawer::Init() {

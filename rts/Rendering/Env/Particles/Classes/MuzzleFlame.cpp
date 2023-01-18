@@ -4,7 +4,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "MuzzleFlame.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 

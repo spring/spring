@@ -6,7 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/SpringMath.h"

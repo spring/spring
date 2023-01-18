@@ -3,7 +3,7 @@
 
 #include "RepulseGfx.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Units/Unit.h"

@@ -5,6 +5,8 @@ if    (UNIX AND ENABLE_MANPAGES)
 	find_package(SevenZip)
 	set(AsciiDoc_FIND_QUIETLY TRUE)
 	find_package(AsciiDoc)
+	find_package(XSLTProc)
+	find_package(DocBook)
 	set(CREATE_MAN_PAGES)
 	if    (SEVENZIP_FOUND AND ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
 		execute_process(
@@ -67,7 +69,7 @@ if    (UNIX AND ENABLE_MANPAGES)
 
 		install(FILES ${man_dst} DESTINATION "${MAN_DEST_DIR}")
 
-		message(STATUS "MAN pages will be installed to {INSTALL_PREFIX}/${MAN_DEST_DIR}")
+		message(STATUS "MAN pages will be installed to ${CMAKE_INSTALL_PREFIX}/${MAN_DEST_DIR}")
 	endif ()
 endif ()
 
@@ -156,7 +158,7 @@ if     (userdoc_INSTALL_PLAIN)
 
 	install(FILES ${userdoc_plain} DESTINATION "${DOC_DEST_DIR}")
 
-	message(STATUS "user-docs (plain/text) will be installed to {INSTALL_PREFIX}/${DOC_DEST_DIR}")
+	message(STATUS "user-docs (plain/text) will be installed to ${CMAKE_INSTALL_PREFIX}/${DOC_DEST_DIR}")
 endif ()
 
 if     (userdoc_INSTALL_HTML)
@@ -170,5 +172,5 @@ if     (userdoc_INSTALL_HTML)
 
 	install(FILES ${userdoc_html} DESTINATION "${DOC_DEST_DIR}")
 
-	message(STATUS "user-docs (html/text) will be installed to {INSTALL_PREFIX}/${DOC_DEST_DIR}")
+	message(STATUS "user-docs (html/text) will be installed to ${CMAKE_INSTALL_PREFIX}/${DOC_DEST_DIR}")
 endif ()

@@ -21,6 +21,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUA_RENDER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_LUA_RENDER
 
+#ifndef HEADLESS
 Shader::IProgramObject* LuaRender::sLineProgram = nullptr;
 Shader::IProgramObject* LuaRender::sPolygonProgram = nullptr;
 Shader::IProgramObject* LuaRender::sScreenRectProgram = nullptr;
@@ -29,9 +30,11 @@ GLuint LuaRender::sVertexArray = 0;
 GLuint LuaRender::sVertexBuffer = 0;
 const GLsizeiptr LuaRender::sVertexBufferSize;
 GLuint LuaRender::sVertexBufferOffset = 0;
+#endif
 
 void LuaRender::Init()
 {
+#ifndef HEADLESS
 	CheckGLError();
 
 	LoadPrograms();
@@ -47,10 +50,12 @@ void LuaRender::Init()
 	glBindVertexArray(0);
 
 	CheckGLError();
+#endif
 }
 
 void LuaRender::Free()
 {
+#ifndef HEADLESS
 	// FIXME: Do not drop initial error state.
 	glGetError();
 
@@ -64,6 +69,7 @@ void LuaRender::Free()
 	sVertexBufferOffset = 0;
 
 	CheckGLError();
+#endif
 }
 
 bool LuaRender::PushEntries(lua_State* L)
@@ -82,6 +88,7 @@ bool LuaRender::PushEntries(lua_State* L)
 	return true;
 }
 
+#ifndef HEADLESS
 void LuaRender::LoadPrograms()
 {
 	sLineProgram = shaderHandler->CreateProgramObject("[LuaRenderLine]", "LuaRenderLine");
@@ -476,7 +483,7 @@ int LuaRender::Vertices(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Lines(lua_State* L)
@@ -656,7 +663,7 @@ int LuaRender::Lines(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Triangle(lua_State* L)
@@ -782,7 +789,7 @@ int LuaRender::Triangle(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::Rectangle(lua_State* L)
@@ -1096,7 +1103,7 @@ int LuaRender::Rectangle(lua_State* L)
 
 	Unbind();
 
-	return 1;
+	return 0;
 }
 
 int LuaRender::ReloadShaders(lua_State* L)
@@ -1110,5 +1117,6 @@ int LuaRender::ReloadShaders(lua_State* L)
 			program->Reload(true, true);
 		}
 	}
-	return 1;
+	return 0;
 }
+#endif

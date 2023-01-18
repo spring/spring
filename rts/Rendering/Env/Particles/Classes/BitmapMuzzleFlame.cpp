@@ -4,7 +4,7 @@
 
 #include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/IProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"

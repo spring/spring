@@ -49,11 +49,6 @@ CONFIG(float, FeatureFadeDistance)
 
 CFeatureDrawer* featureDrawer = nullptr;
 
-// can not be a CFeatureDrawer; destruction in global
-// scope might happen after ~EventHandler (referenced
-// by ~EventClient)
-static uint8_t featureDrawerMem[sizeof(CFeatureDrawer)];
-
 
 static bool SetFeatureDrawAlpha(
 	CFeature* f,
@@ -96,7 +91,7 @@ static bool SetFeatureDrawAlpha(
 
 void CFeatureDrawer::InitStatic() {
 	if (featureDrawer == nullptr)
-		featureDrawer = new (featureDrawerMem) CFeatureDrawer();
+		featureDrawer = new CFeatureDrawer();
 
 	featureDrawer->Init();
 }
@@ -107,7 +102,6 @@ void CFeatureDrawer::KillStatic(bool reload) {
 		return;
 
 	spring::SafeDestruct(featureDrawer);
-	memset(featureDrawerMem, 0, sizeof(featureDrawerMem));
 }
 
 void CFeatureDrawer::Init()
