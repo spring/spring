@@ -12,11 +12,6 @@ add_definitions(-DNO_SOUND)
 add_definitions(-DBITMAP_NO_OPENGL)
 remove_definitions(-DAVI_CAPTURING)
 
-set(OpenGL_GL_PREFERENCE LEGACY)
-find_package(OpenGL REQUIRED)
-
-pkg_check_modules(IL REQUIRED IL)
-
 ### Build the executable
 add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
 target_link_libraries(engine-headless

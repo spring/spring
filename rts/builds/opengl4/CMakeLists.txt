@@ -12,9 +12,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 set(engineIncludes "")
 set(engineLibraries ${SDL2_LINK_LIBRARIES})
 
-
-set(OpenGL_GL_PREFERENCE LEGACY)
-
 list(APPEND engineLibraries ${OPENGL_LINK_LIBRARIES} ${GLEW_LINK_LIBRARIES} ${IL_LINK_LIBRARIES})
 
 pkg_check_modules(FONTCONFIG fontconfig)
