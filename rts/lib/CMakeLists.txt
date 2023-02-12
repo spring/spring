@@ -1,25 +1,23 @@
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/rts)
-
-ADD_SUBDIRECTORY(lua)
-ADD_SUBDIRECTORY(luasocket)
-ADD_SUBDIRECTORY(minizip)
-ADD_SUBDIRECTORY(headlessStubs)
+add_subdirectory(lua)
+add_subdirectory(luasocket)
+add_subdirectory(minizip)
+add_subdirectory(headlessStubs)
 if (ENABLE_STREFLOP)
-ADD_SUBDIRECTORY(streflop)
+	add_subdirectory(streflop)
 endif ()
 
-SET(GFLAGS_BUILD_SHARED_LIBS          FALSE)
-SET(GFLAGS_BUILD_STATIC_LIBS          TRUE)
-SET(GFLAGS_BUILD_gflags_LIB           FALSE)
-SET(GFLAGS_BUILD_gflags_nothreads_LIB TRUE)
-SET(GFLAGS_BUILD_PACKAGING            FALSE)
-SET(GFLAGS_BUILD_TESTING              FALSE)
-SET(GFLAGS_INSTALL_HEADERS            FALSE)
-SET(GFLAGS_INSTALL_SHARED_LIBS        FALSE)
-SET(GFLAGS_INSTALL_STATIC_LIBS        FALSE)
+set(GFLAGS_BUILD_SHARED_LIBS          FALSE)
+set(GFLAGS_BUILD_STATIC_LIBS          TRUE)
+set(GFLAGS_BUILD_gflags_LIB           FALSE)
+set(GFLAGS_BUILD_gflags_nothreads_LIB TRUE)
+set(GFLAGS_BUILD_PACKAGING            FALSE)
+set(GFLAGS_BUILD_TESTING              FALSE)
+set(GFLAGS_INSTALL_HEADERS            FALSE)
+set(GFLAGS_INSTALL_SHARED_LIBS        FALSE)
+set(GFLAGS_INSTALL_STATIC_LIBS        FALSE)
 
-ADD_SUBDIRECTORY(gflags)
+add_subdirectory(gflags)
 
 
 # to change assimp for springs need, see fix_assimp.sh
@@ -59,8 +57,19 @@ foreach(var ASSIMP_BUILD_STATIC_LIB ASSIMP_NO_EXPORT)
 	set("${var}" ON CACHE STRING "forced on by spring build env" FORCE)
 endforeach()
 
-ADD_SUBDIRECTORY(assimp)
+add_subdirectory(assimp)
 target_compile_definitions(assimp PRIVATE -DASSIMP_BUILD_NO_OWN_ZLIB)
+target_include_directories(assimp
+PRIVATE
+	"${CMAKE_SOURCE_DIR}/rts"
+	assimp/include
+	assimp
+)
+target_include_directories(IrrXML
+PRIVATE
+	"${CMAKE_SOURCE_DIR}/rts"
+	assimp/include
+)
 
 # hide assimp compile warnings with g++
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

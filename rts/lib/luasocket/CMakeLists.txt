@@ -31,6 +31,7 @@ add_library(luasocket STATIC EXCLUDE_FROM_ALL ${luaSocketSources})
 target_include_directories(luasocket
 	PRIVATE
 		../lua/include
+		"${CMAKE_SOURCE_DIR}/rts"
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/

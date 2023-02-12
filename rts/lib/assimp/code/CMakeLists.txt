@@ -920,10 +920,8 @@ endif ()
 # Build against external unzip, or add ../contrib/unzip so
 # assimp can #include "unzip.h"
 if (UNZIP_FOUND)
-  INCLUDE_DIRECTORIES(${UNZIP_INCLUDE_DIRS})
   TARGET_LINK_LIBRARIES(assimp ${UNZIP_LIBRARIES})
 else ()
-  INCLUDE_DIRECTORIES("../")
 endif ()
 
 # Add RT-extension library for glTF importer with Open3DGC-compression.

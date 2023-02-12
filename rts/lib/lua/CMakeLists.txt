@@ -43,6 +43,7 @@ target_include_directories(lua
 PUBLIC
 	include
 	${GLEW_INCLUDE_DIRS}
+	"${CMAKE_SOURCE_DIR}/rts"
 )
 
 if (ENABLE_STREFLOP)
