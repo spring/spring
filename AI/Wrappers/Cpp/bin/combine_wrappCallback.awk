@@ -23,7 +23,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS = "(,)|(\\()|(\\)\\;)";
+	FS = "(,)|(\\()|(\\);)";
 
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
@@ -183,7 +183,7 @@ function wrappFunction(funcDef, commentEolTot) {
 	doParse = 1; # add a function in case you want to exclude some
 
 	if (doParse) {
-		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
+		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\);)");
 		# because the empty part after ");" would count as part as well
 		size_funcParts--;
 		retType_c   = trim(funcParts[1]);
