@@ -58,7 +58,7 @@ if    (UNIX AND NOT MINGW)
 	list(APPEND engineCommonLibraries ${CMAKE_DL_LIBS})
 
 	# Needed for backtrace* on some systems
-	if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+	if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD" OR CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
 		list(APPEND engineCommonLibraries execinfo)
 	endif ()
 endif ()
@@ -89,7 +89,7 @@ if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 endif ()
 
 
-if(UNIX)
+if(UNIX AND NOT OPENBSD)
 	find_package_static(Libunwind REQUIRED)
 	list(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
 	if(LIBUNWIND_FOUND)

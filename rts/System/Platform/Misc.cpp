@@ -28,7 +28,7 @@
 
 	#include <mach-o/dyld.h>
 
-#elif defined( __FreeBSD__)
+#elif defined( __FreeBSD__) || defined(__OpenBSD__)
 	#include <sys/types.h>
 	#include <sys/sysctl.h>
 	#include <ifaddrs.h>
@@ -249,7 +249,7 @@ namespace Platform
 		// this will only be used if moduleFilePath stays empty
 		const char* error = nullptr;
 
-	#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		#ifdef __APPLE__
 		#define SHARED_LIBRARY_EXTENSION "dylib"
 		#else
@@ -383,6 +383,8 @@ namespace Platform
 		return "Linux";
 		#elif defined(__FreeBSD__)
 		return "FreeBSD";
+		#elif defined(__OpenBSD__)
+		return "OpenBSD";
 		#elif defined(__APPLE__)
 		return "MacOS";
 		#else
@@ -716,7 +718,7 @@ namespace Platform
 		return (GetMacType(macAddr, 0), macAddr);
 	}
 
-	#elif defined(__APPLE__) || defined (__FreeBSD__)
+	#elif defined(__APPLE__) || defined (__FreeBSD__) || defined(__OpenBSD__)
 
 	std::array<uint8_t, 6> GetRawMacAddr() {
 		// TODO: http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html

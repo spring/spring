@@ -12,7 +12,7 @@
 #include <functional>
 #include <memory>
 #include <cinttypes>
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #elif defined(_WIN32)
 	#include <windows.h>
 #else
@@ -36,7 +36,7 @@ namespace Threading {
 	static NativeThreadId nativeThreadIDs[THREAD_IDX_LAST] = {};
 	static Error threadError;
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #elif defined(_WIN32)
 	static DWORD_PTR cpusSystem = 0;
 #else
@@ -46,7 +46,7 @@ namespace Threading {
 
 	void DetectCores()
 	{
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		// no-op
 
 	#elif defined(_WIN32)
@@ -65,7 +65,7 @@ namespace Threading {
 
 
 
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	#elif defined(_WIN32)
 	#else
 	static std::uint32_t CalcCoreAffinityMask(const cpu_set_t* cpuSet) {
@@ -100,7 +100,7 @@ namespace Threading {
 
 	std::uint32_t GetAffinity()
 	{
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		// no-op
 		return 0;
 
@@ -124,7 +124,7 @@ namespace Threading {
 		if (coreMask == 0)
 			return (~0);
 
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		// no-op
 		return 0;
 
@@ -180,7 +180,7 @@ namespace Threading {
 
 	std::uint32_t GetAvailableCoresMask()
 	{
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		// no-op
 		return (~0);
 	#elif defined(_WIN32)
@@ -209,7 +209,7 @@ namespace Threading {
 
 	void SetThreadScheduler()
 	{
-	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 		// no-op
 
 	#elif defined(_WIN32)

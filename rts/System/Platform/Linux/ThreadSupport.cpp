@@ -12,6 +12,10 @@
 	#include <pthread_np.h>  // for pthread_getthreadid_np
 #endif
 
+#if defined(__OpenBSD__)
+	#include <unistd.h>  // for getthrid
+#endif
+
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
@@ -48,6 +52,8 @@ enum LinuxThreadState {
 static int gettid() {
 #if defined(__FreeBSD__)
 	return pthread_getthreadid_np();
+#elif defined(__OpenBSD__)
+	return getthrid();
 #else
 	return syscall(SYS_gettid);
 #endif
