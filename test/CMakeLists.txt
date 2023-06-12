@@ -5,7 +5,7 @@ endif ()
 # defines spring_test_compile_fail macro
 include(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
-if    (UNIX AND (NOT APPLE) AND (NOT MINGW) AND (NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD"))
+if    (UNIX AND (NOT APPLE) AND (NOT MINGW) AND (NOT OPENBSD))
 	find_library(REALTIME_LIBRARY rt)
 
 	if    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")

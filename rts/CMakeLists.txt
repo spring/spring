@@ -89,7 +89,7 @@ if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 endif ()
 
 
-if(UNIX AND (NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD"))
+if(UNIX AND NOT OPENBSD)
 	find_package_static(Libunwind REQUIRED)
 	list(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
 	if(LIBUNWIND_FOUND)
