@@ -1,6 +1,6 @@
 # required for man pages (optional) and base files (mandatory)
 
-### Make base-files (aka sdz's)
+### Make base-files (aka sdz's) test
 add_subdirectory(base)
 
 ### Install base-files
