@@ -35,7 +35,7 @@ before_install:
   - tools/scripts/travis_before_install.sh
 
 install:
-  - tools/scripts/travis_install.sh
+  - tools/scripts/travis_install.shtt3653636
 
 before_script:
   - tools/scripts/travis_before_script.sh
