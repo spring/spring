@@ -4,6 +4,7 @@
 #define STRING_UTIL_H
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <sstream>

@@ -2,6 +2,7 @@
 
 #include "restrictions.h"
 
+#include <cstdint>
 #include <string>
 
 #include "System/SafeUtil.h"

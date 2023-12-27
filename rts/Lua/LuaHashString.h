@@ -3,6 +3,7 @@
 #ifndef LUA_HASH_STRING_H
 #define LUA_HASH_STRING_H
 
+#include <cstdint>
 #include <string>
 
 #include "LuaInclude.h"

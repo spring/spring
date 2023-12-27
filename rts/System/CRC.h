@@ -3,6 +3,7 @@
 #ifndef CRC_H
 #define CRC_H
 
+#include <cstdint>
 #include <string>
 
 /** @brief An updateable CRC-32 checksum. */
