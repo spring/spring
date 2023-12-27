@@ -3,6 +3,7 @@
 #ifndef PLATFORM_MISC_H
 #define PLATFORM_MISC_H
 
+#include <cstdint>
 #include <string>
 #include <array>
 

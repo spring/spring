@@ -3,6 +3,7 @@
 #ifndef _I_SOUND_H_
 #define _I_SOUND_H_
 
+#include <cstdint>
 #include <string>
 
 class float3;
